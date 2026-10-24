@@ -13,7 +13,7 @@ export function equipItem(o,id,slot='weapon'){if(!o.inventory?.items?.some(i=>i.
 export function damage(o,amount){const s=ensureStats(o);s.health=clamp(n(s.health,s.maxHealth)-Math.max(0,n(amount)),0,Math.max(1,n(s.maxHealth,100)));o.hp=s.health;return s.health}
 export function updateStats(entities,dt){for(const o of entities){if(!o.stats)continue;const s=o.stats;s.stamina=clamp(n(s.stamina)+Math.max(0,n(s.staminaRegen,14))*dt,0,Math.max(1,n(s.maxStamina,100)));}}
 export function updateAi(entities,player,dt){
- if(!player)return;
+ if(!player||((player.stats?.health??player.hp??100)<=0))return;
  const collision=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
  const blocked=(o,x,y)=>entities.some(other=>other!==o&&other!==player&&other.collision3d!==false&&(other.solid3d===true||other.type==='object'||other.type==='mesh3d')&&collision({...o,x,y},other));
  for(const e of entities){const ai=e.ai;if(!ai?.enabled||e===player)continue;
@@ -42,7 +42,23 @@ export function updateAi(entities,player,dt){
    e.animation=ai.state==='chase'?'run':'walk';
   }
   ai.clock=n(ai.clock)+dt;ai.cooldown=Math.max(0,n(ai.cooldown)-dt);
-  if(ai.state==='attack'&&ai.cooldown===0){damage(player,n(ai.attackDamage,8));ai.cooldown=Math.max(.1,n(ai.attackCooldown,1.2));e.animation='attack'}
+  if(ai.state==='attack'&&ai.cooldown===0){
+   // Prevent hits through walls or props: sample the line of sight against solid rectangles.
+   const obscured=entities.some(o=>{
+    if(o===e||o===player||o.collision3d===false||!(o.solid3d===true||o.type==='object'||o.type==='mesh3d'))return false;
+    const x0=e.x+e.w*.5,y0=e.y+e.h*.5,x1=player.x+player.w*.5,y1=player.y+player.h*.5;
+    const dx=x1-x0,dy=y1-y0;let near=0,far=1;
+    for(const [start,delta,min,max] of [[x0,dx,o.x,o.x+o.w],[y0,dy,o.y,o.y+o.h]]){
+     if(Math.abs(delta)<1e-8){if(start<min||start>max)return false;continue}
+     const first=(min-start)/delta,second=(max-start)/delta;
+     near=Math.max(near,Math.min(first,second));far=Math.min(far,Math.max(first,second));
+     if(near>far)return false;
+    }
+    return near<1&&far>0;
+   });
+   if(!obscured){damage(player,n(ai.attackDamage,8));e.animation='attack'}
+   ai.cooldown=Math.max(.1,n(ai.attackCooldown,1.2));
+  }
  }
 }
 export function attack3d(attacker,entities,{range=120,damageAmount=20,arc=1.2}={}){

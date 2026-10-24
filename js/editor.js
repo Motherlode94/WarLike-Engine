@@ -1,3 +1,4 @@
+import {initWorkspace,log} from './ui/workspace.js';
 import {catalog,urlFor} from './assets/catalog.js';
 import {state,notify} from './core/state.js';
 import {autoSave,recoverLocal,beginAutoSave,connectCloud} from './core/storage.js';
@@ -32,7 +33,5 @@ sceneTab.onclick=()=>{if(state.playing)togglePlay();syncTabs()};
 gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
 $('#play').addEventListener('click',syncTabs);
 $('#duplicate').onclick=duplicateSelected;
-const assetGrid=$('#assetGrid'),search=$('#assetSearch'),category=$('#assetCategory');
-function renderAssets(){const term=search.value.trim().toLowerCase(),kind=category.value;const found=catalog.filter(a=>(kind==='All'||a.category===kind)&&(!term||a.name.toLowerCase().includes(term)||a.id.includes(term)));assetGrid.replaceChildren();for(const asset of found){const btn=document.createElement('button');btn.className='asset';btn.title=asset.category+' / '+asset.name+' — cliquer pour insérer';const image=document.createElement('img');image.src=urlFor(asset.id);image.alt='';image.loading='lazy';const label=document.createElement('span');label.textContent=asset.name;btn.append(image,label);btn.onclick=()=>addPrefab(asset.id);assetGrid.append(btn)}$('#assetCount').textContent=found.length+' / '+catalog.length+' assets'}
-search.oninput=renderAssets;category.onchange=renderAssets;renderAssets();
+initWorkspace();
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});

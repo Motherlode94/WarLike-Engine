@@ -1,3 +1,4 @@
+import {integrateNativeGravity} from './native-3d.js';
 // WarLike 3D lightweight rigidbody simulation on the horizontal x/y plane plus elevation.
 // Intended for prototyping, not a substitute for an industrial physics engine.
 const finite=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
@@ -14,15 +15,16 @@ export function stepPhysics3d(entities,dt){
   if(!rb?.enabled||rb.kinematic||o.playable3d||o.type==='player'||o.ai?.enabled)continue;
   const mass=Math.max(.01,finite(rb.mass,1));
   const previous={x:o.x,y:o.y,elevation3d:o.elevation3d};
-  rb.vy=finite(rb.vy)-Math.max(0,finite(rb.gravity,15))*t;
+  const nativeGravity=integrateNativeGravity(finite(o.elevation3d),finite(rb.vy),finite(rb.gravity,15),finite(rb.restitution,.2),t);
+  rb.vy=nativeGravity?nativeGravity.vy:finite(rb.vy)-Math.max(0,finite(rb.gravity,15))*t;
   rb.vx=finite(rb.vx);rb.vz=finite(rb.vz);
   o.x=finite(o.x)+rb.vx*t;o.y=finite(o.y)+rb.vz*t;
   const solid=other=>other!==o&&other.collision3d!==false&&(other.solid3d===true||other.type==='object'||other.type==='mesh3d');
   if(entities.some(other=>solid(other)&&overlap3d(o,other))){
    o.x=previous.x;o.y=previous.y;rb.vx=-rb.vx*Math.min(1,Math.max(0,finite(rb.restitution,.2)));rb.vz=-rb.vz*Math.min(1,Math.max(0,finite(rb.restitution,.2)));
   }
-  o.elevation3d=Math.max(0,finite(o.elevation3d)+rb.vy*t);
-  if(o.elevation3d===0){rb.vy=Math.abs(rb.vy)>1?-rb.vy*Math.min(1,Math.max(0,finite(rb.restitution,.2))):0;const drag=Math.pow(Math.min(1,Math.max(0,finite(rb.friction,.82))),t*60);rb.vx*=drag;rb.vz*=drag}
+  o.elevation3d=nativeGravity?nativeGravity.y:Math.max(0,finite(o.elevation3d)+rb.vy*t);
+  if(o.elevation3d===0){if(!nativeGravity)rb.vy=Math.abs(rb.vy)>1?-rb.vy*Math.min(1,Math.max(0,finite(rb.restitution,.2))):0;const drag=Math.pow(Math.min(1,Math.max(0,finite(rb.friction,.82))),t*60);rb.vx*=drag;rb.vz*=drag}
   void mass;
  }
 }

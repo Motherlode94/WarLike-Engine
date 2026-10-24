@@ -1,3 +1,4 @@
+import {realModels3d,importedModels3d,model3dById} from './real-models-3d.js';
 // Native WarLike 3D Beta library: procedural mesh kits, not 2D sprites.
 export const assets3d=[
  ['primitive-cube','Cube','Primitives','#83acda','cube'],['primitive-sphere','Sphere','Primitives','#9ad9ca','sphere'],['primitive-cylinder','Cylinder','Primitives','#e1b47a','cylinder'],['primitive-cone','Cone','Primitives','#d6a0bd','cone'],
@@ -10,8 +11,9 @@ export const assets3d=[
  ['prop-crate','Crate','Props','#b79a70','cube'],['prop-barrel','Barrel','Props','#9c7671','cylinder'],['prop-bridge','Bridge','Props','#ae9778','slab'],['prop-container','Shipping Container','Props','#789caa','box'],['prop-table','Table','Props','#b99c77','table'],['prop-bench','Bench','Props','#8e8577','bench'],['prop-cone','Traffic Cone','Props','#dca56b','cone'],['prop-obstacle','Training Obstacle','Props','#bb9975','cube']
 ].map(([id,name,category,color,shape])=>({id,name,category,color,shape}));
 const lookup=new Map(assets3d.map(a=>[a.id,a]));
-export const get3dAsset=id=>lookup.get(id)||null;
-export const categories3d=['All',...new Set(assets3d.map(a=>a.category))];
+export const get3dAsset=id=>lookup.get(id)||model3dById(id)||null;
+export const allAssets3d=()=>[...assets3d,...realModels3d,...importedModels3d.values()];
+export const categories3d=['All',...new Set(allAssets3d().map(a=>a.category)),'Weapons'];
 export const dimensions3d=a=>{
  const kind=typeof a==='string'?get3dAsset(a):a;
  const shape=kind?.shape||'cube';
@@ -22,6 +24,7 @@ export const dimensions3d=a=>{
  if(shape==='car'||shape==='truck'||shape==='tank')return {w:185,h:82,d:110};
  if(shape==='bike')return {w:98,h:75,d:60};
  if(shape==='humanoid')return {w:48,h:100,d:40};
+ if(shape==='glb')return kind.category==='Characters'?{w:80,h:135,d:80}:kind.category==='Vehicles'?{w:190,h:95,d:115}:{w:90,h:105,d:85};
  if(shape==='tree'||shape==='pine')return {w:120,h:225,d:120};
  return {w:90,h:90,d:85};
 };
@@ -29,7 +32,7 @@ export function prefab3d(id,nextId=1,x=120,y=120){
  const a=get3dAsset(id);if(!a)return null;
  const size=dimensions3d(a);return {id:nextId,name:a.name+' '+nextId,type:'mesh3d',assetId:a.id,
  x,y,w:size.w,h:size.h,depth3d:size.d,meshShape:a.shape,elevation3d:0,color:a.color,rotation:0,
- collision3d:!['water','ground','road','lamp','bush'].includes(a.shape)};
+ collision3d:!['water','ground','road','lamp','bush'].includes(a.shape),...(a.shape==='glb'?{model3dId:a.id}:{}),...(a.category==='Characters'?{playable3d:true}:{})};
 }
 export function thumbnail3d(asset){
  const a=typeof asset==='string'?get3dAsset(asset):asset;if(!a)return '';

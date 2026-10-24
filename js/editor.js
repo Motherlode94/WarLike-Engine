@@ -1,3 +1,4 @@
+import {initStudioMenus} from './ui/studio-menu.js';
 import {bindGameInput} from './core/gameplay.js';
 import {initWorkspace,log} from './ui/workspace.js';
 import {catalog,urlFor} from './assets/catalog.js';
@@ -38,3 +39,5 @@ $('#play').addEventListener('click',syncTabs);
 $('#duplicate').onclick=duplicateSelected;
 initWorkspace();
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});
+
+initStudioMenus();

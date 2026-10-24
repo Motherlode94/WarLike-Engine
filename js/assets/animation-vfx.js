@@ -1,3 +1,4 @@
+import {humanoidClips} from './humanoid-rigs.js';
 // Canvas animation layer for WarLike prefabs (procedural poses and visual effects).
 export const presets={
 actor:['idle','walk','run','attack','hurt','death'],
@@ -6,7 +7,7 @@ weapon:['idle','attack','pulse'],
 prop:['idle','pulse'],
 effect:['loop','pulse','idle']
 };
-export function availableClips(kind){return presets[kind]||presets.prop}
+export function availableClips(kind,assetId=''){return kind==='actor'?humanoidClips(assetId):presets[kind]||presets.prop}
 function part(ctx,x,y,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
 export function drawEffect(ctx,id,x,y,w,h,time,speed=1,opacity=1){
  const t=time*speed, cx=x+w/2,cy=y+h/2,span=Math.min(w,h)*.48;ctx.save();ctx.globalAlpha=Math.min(1,Math.max(0,opacity));ctx.globalCompositeOperation='lighter';
@@ -18,17 +19,17 @@ export function drawEffect(ctx,id,x,y,w,h,time,speed=1,opacity=1){
  ctx.restore();
 }
 export function drawAnimatedAsset(ctx,img,o,now,playing,kind,moving=false){
- const clips=availableClips(kind),clip=clips.includes(o.animation)?o.animation:'idle',speed=Math.max(.1,Math.min(4,Number(o.animationSpeed)||1));
- const t=now*.001*speed, bob=kind==='actor'?clip==='walk'?(Math.sin(t*12)*3):clip==='run'?(Math.sin(t*18)*5):clip==='idle'?Math.sin(t*2)*1.3:0:clip==='pulse'?Math.sin(t*5)*1.5:0;
+ const clips=availableClips(kind,o.assetId),clip=clips.includes(o.animation)?o.animation:'idle',speed=Math.max(.1,Math.min(4,Number(o.animationSpeed)||1));
+ const t=now*.001*speed, running=/run|sprint/.test(clip),walking=/walk/.test(clip),striking=/attack|punch|kick|slash/.test(clip), bob=kind==='actor'?walking?Math.sin(t*12)*3:running?Math.sin(t*18)*5:clip==='idle'?Math.sin(t*2)*1.3:0:clip==='pulse'?Math.sin(t*5)*1.5:0;
  const cx=o.x+o.w/2,cy=o.y+o.h/2;ctx.save();ctx.translate(cx,cy);
  const animated=playing||o.animationPreview;
  if(animated){
- if(kind==='actor'&&['walk','run'].includes(clip)){ctx.rotate(Math.sin(t*(clip==='run'?13:8))*.06);ctx.scale(1+.025*Math.sin(t*9),1)}
- if(kind==='actor'&&clip==='attack'){ctx.rotate(Math.sin(t*11)*.16);ctx.translate(4*Math.sin(t*11),0)}
- if(clip==='hurt'){ctx.translate(Math.sin(t*29)*3,0);ctx.globalAlpha=.65+.35*Math.sin(t*18)**2}
- if(clip==='death'){ctx.rotate(Math.min(1,t%4)*.85);ctx.globalAlpha=.75}
- if(clip==='pulse'){const v=1+.08*Math.sin(t*6);ctx.scale(v,v)}
- if(clip==='move'&&kind==='vehicle')ctx.rotate(.025*Math.sin(t*9));
+ if(kind==='actor'&&(walking||running)){ctx.rotate(Math.sin(t*(running?13:8))*.06);ctx.scale(1+.025*Math.sin(t*9),1)}
+ if(kind==='actor'&&striking){ctx.rotate(Math.sin(t*11)*.16);ctx.translate(4*Math.sin(t*11),0)}
+ if(/hurt|hit|stagger|stun/.test(clip)){ctx.translate(Math.sin(t*29)*3,0);ctx.globalAlpha=.65+.35*Math.sin(t*18)**2}
+ if(/death|knockdown/.test(clip)){ctx.rotate(Math.min(1,t%4)*.85);ctx.globalAlpha=.75}
+ if(/pulse|meditate|victory/.test(clip)){const v=1+.08*Math.sin(t*6);ctx.scale(v,v)}
+ if(/roll|backflip/.test(clip))ctx.rotate(t*5);if(/crouch|stealth/.test(clip))ctx.scale(1,.77);if(/jump|fall/.test(clip))ctx.translate(0,-Math.abs(Math.sin(t*3))*12);if(/block|parry/.test(clip))ctx.translate(-3,0);if(clip==='move'&&kind==='vehicle')ctx.rotate(.025*Math.sin(t*9));
  }
  ctx.drawImage(img,-o.w/2,-o.h/2-(animated?bob:0),o.w,o.h);
  ctx.restore();

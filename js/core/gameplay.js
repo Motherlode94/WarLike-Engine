@@ -1,3 +1,4 @@
+import {resetElements,updateElements,elementsRuntime} from './game-elements.js';
 import {resetHousing,updateHousing,updateHouseAnimation,drawHousing,housingActive} from './housing.js';
 import {walkPlayer,followPlayer,motion} from './player-controller.js';
 import {resetAdvanced,updateAdvanced,drawAdvanced,consumeAmmo,consumeMedkit} from './mode-advanced.js';
@@ -9,7 +10,7 @@ import {updateVehicles,currentVehicle,drawDrivingHud,resetDriving} from './vehic
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
 export const game={projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,mouse:{x:500,y:300,down:false},kills:0};
-export function resetGame(){motion.cameraFollow=true;resetGameMode();resetAdvanced();resetLogic();resetDriving();resetHousing();Object.assign(game,{projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}}
+export function resetGame(){motion.cameraFollow=true;resetGameMode();resetAdvanced();resetLogic();resetDriving();resetHousing();resetElements();Object.assign(game,{projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}}
 const center=e=>({x:e.x+e.w/2,y:e.y+e.h/2});
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const enemy=o=>!o._modeEliminated&&o.type==='prefab'&&getAsset(o.assetId)?.category==='Monsters';
@@ -37,7 +38,7 @@ if(mode==='guard'&&d<Math.min(range,260)&&d>48)move(e,dx/d*speed*dt,dy/d*speed*d
 for(const b of game.projectiles){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;for(const e of state.entities.filter(enemy)){if(b.life<=0)break;if(currentMode()&&['teamDeathmatch','frontline'].includes(currentMode().kind)&&e.team===p.team)continue;if(b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h){e.hp=(e.hp??65)-b.damage;e._hit=.12;b.life=0;flash(b.x,b.y,'#f3a862',9);if(e.hp<=0){if(!currentMode())state.entities=state.entities.filter(o=>o!==e);game.kills++;game.score+=100;registerElimination(e,p,game)}break}}const hitObject=state.entities.find(e=>solid(e)&&b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h);if(hitObject){b.life=0;flash(b.x,b.y,'#c5b6a0',4);if(isBuilding(hitObject)){hitObject.buildHp=Math.max(0,Number(hitObject.buildHp??600)-b.damage);if(hitObject.buildHp===0)hitObject.buildState='destroyed';else if(hitObject.buildHp<(hitObject.buildMaxHp||600)*.5)hitObject.buildState='damaged'}}}
 game.projectiles=game.projectiles.filter(b=>b.life>0);
 for(const e of state.entities.filter(o=>o.type==='prefab'&&o.assetId==='medkit')){if(overlaps(p,e)){game.life=Math.min(100,game.life+35);state.entities=state.entities.filter(o=>o!==e);flash(e.x,e.y,'#5af7ad',10)}}
-updateBuildings(dt);updateLogic(dt);updateGameMode(dt,game);updateAdvanced(dt,game);if(logic.healthDelta!==0){game.life=Math.max(0,Math.min(100,game.life+logic.healthDelta));logic.healthDelta=0;if(game.life===0)game.over=true}
+updateBuildings(dt);updateElements(dt,p,game);updateLogic(dt);updateGameMode(dt,game);updateAdvanced(dt,game);if(logic.healthDelta!==0){game.life=Math.max(0,Math.min(100,game.life+logic.healthDelta));logic.healthDelta=0;if(game.life===0)game.over=true}
 for(const a of game.particles){a.x+=a.vx*dt;a.y+=a.vy*dt;a.life-=dt}
 game.particles=game.particles.filter(a=>a.life>0);
 }

@@ -41,3 +41,7 @@ Depuis **Inspector > Gameplay Components**, ajoute **Stats**, **Inventaire**, **
 Dans **Logic Sequences**, les instructions peuvent donner/retirer un objet, équiper une arme/armure, soigner et infliger des dégâts. Le panneau **Graphique des comportements** affiche une **prévisualisation** des triggers et branches ; les connexions ne sont pas encore modifiables par glisser-déposer.
 
 La navigation IA utilise un **évitement local simplifié** (pas de NavMesh ni de recherche de chemin A*). Les collisions 3D et animations restent expérimentales. Les tests ajoutés au dépôt doivent être exécutés avec `npm test`, et l'ensemble doit être vérifié en navigateur avant utilisation dans un projet de production.
+
+## Développement en C# (SDK .NET 8 expérimental)
+
+Un premier runtime C# autonome est disponible dans [`csharp/`](./csharp/README.md), avec `GameWorld`, `Actor`, `WarLikeBehaviour`, les callbacks `Awake`, `Start`, `Update`, `FixedUpdate`, `OnDestroy` et un exemple exécutable. Pour démarrer : `dotnet run --project csharp/WarLike.Demo`. Le SDK peut importer les entités depuis un export JSON du studio. **Attention : les scripts C# ne s'exécutent pas encore dans le navigateur / Play Mode WebGL** ; ce runtime .NET est une base indépendante en vue d'une intégration future.

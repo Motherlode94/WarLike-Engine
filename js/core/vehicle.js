@@ -20,7 +20,7 @@ export function updateVehicles(dt,player){
    if(exit){player.x=exit.x-player.w/2;player.y=exit.y-player.h/2;player._hiddenInVehicle=false;driving.vehicleId=null;driving.speed=0}
   }else{
    const pc=center(player);const nearest=state.entities.filter(vehicle).map(o=>({o,d:Math.hypot(center(o).x-pc.x,center(o).y-pc.y)})).sort((a,b)=>a.d-b.d)[0];
-   if(nearest&&nearest.d<115){driving.vehicleId=nearest.o.id;driving.speed=0;player._hiddenInVehicle=true}
+   if(nearest&&nearest.d<Math.max(115,(nearest.o.w+player.w)*.7)){driving.vehicleId=nearest.o.id;driving.speed=0;player._hiddenInVehicle=true}
   }
  }
  driving.enterHeld=pressed;
@@ -48,11 +48,11 @@ export function drawDrivingHud(ctx,w,h,player){
   ctx.fillStyle='#61e3c3';ctx.font='bold 13px system-ui';ctx.fillText('VEHICLE CONTROLLER',w-190,36);
   ctx.font='12px system-ui';ctx.fillStyle='#dce9f4';ctx.fillText(car.name,w-190,55);
   ctx.font='bold 20px system-ui';ctx.fillText(Math.round(Math.abs(driving.speed)*.36)+' km/h',w-190,83);
-  ctx.font='10px system-ui';ctx.fillText('ZQSD conduire · E sortir · Espace frein',w-190,103);
+  ctx.font='10px system-ui';ctx.fillText('ZQSD tourner · E sortir · Espace frein',w-190,103);
   if(driving.collisionFlash>0){ctx.strokeStyle='#ef7d5c';ctx.lineWidth=3;ctx.strokeRect(w-200,16,184,99)}
  }else{
   const pc=center(player),nearest=state.entities.filter(vehicle).map(o=>({o,d:Math.hypot(center(o).x-pc.x,center(o).y-pc.y)})).sort((a,b)=>a.d-b.d)[0];
-  if(nearest?.d<115){ctx.fillStyle='#172d37e8';ctx.fillRect(w/2-115,h-88,230,28);ctx.fillStyle='#acfce0';ctx.textAlign='center';ctx.fillText('E — Entrer dans '+nearest.o.name,w/2,h-69)}
+  if(nearest?.d<Math.max(115,(nearest.o.w+player.w)*.7)){ctx.fillStyle='#172d37e8';ctx.fillRect(w/2-115,h-88,230,28);ctx.fillStyle='#acfce0';ctx.textAlign='center';ctx.fillText('E — Entrer dans '+nearest.o.name,w/2,h-69)}
  }
  ctx.restore();
 }

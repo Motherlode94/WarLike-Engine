@@ -14,7 +14,7 @@ export function updateHousing(dt,p){
  const keys=state.keys,pressed=keys.has('e'),light=keys.has('l');
  const near=nearest(p);
  if(housing.inside){
-  if(light&&!housing.lightHeld)housing.lightOn=!housing.lightOn;
+  if(light&&!housing.lightHeld){housing.lightOn=!housing.lightOn;const building=state.entities.find(o=>o.id===housing.inside);if(building)building.houseLightsOn=housing.lightOn;}
   housing.lightHeld=light;
   const x=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
   const y=Number(keys.has('s')||keys.has('arrowdown'))-Number(keys.has('w')||keys.has('z')||keys.has('arrowup'));

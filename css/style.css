@@ -203,3 +203,9 @@ body.project-floating #projectPanel{min-height:210px!important}
 .rpg-dialogue button{display:block;width:100%;margin:6px 0;text-align:left;background:#2b4553;border-color:#4f7e82;padding:10px}
 .rpg-dialogue button:hover{background:#396875}
 .rpg-dialogue .rpg-close{width:auto;position:absolute;right:12px;top:8px;font-size:11px}
+
+.rpg-slot-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.rpg-slot{min-width:0;min-height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:7px 4px!important;text-align:center;font-size:10px!important}
+.rpg-slot .rpg-glyph{font-weight:800;color:#c6f5e6;font-size:17px;line-height:1.2}
+.rpg-slot span:last-child{overflow-wrap:anywhere;font-size:10px}
+.rpg-slot.equipped{border-color:#63e4bf;background:#28574f}

@@ -6,7 +6,7 @@ const solid=o=>o.type==='object'||isBuildingSolid(o)||o.type==='prefab'&&getAsse
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 export const motion={cameraFollow:false,footSpeed:190,sprintMultiplier:1.55};
 export function walkPlayer(player,dt,keys=state.keys){
- if(player._vehicleTransition)return {moving:false,sprinting:false};
+ if(player._vehicleTransition||player._actionAnimationUntil>performance.now()/1000)return {moving:false,sprinting:false};
  const x=Number(keys.has('arrowright')||keys.has('d'))-Number(keys.has('arrowleft')||keys.has('a')||keys.has('q'));
  const y=Number(keys.has('arrowdown')||keys.has('s'))-Number(keys.has('arrowup')||keys.has('w')||keys.has('z'));
  const length=Math.hypot(x,y);const sprint=keys.has('shift')&&length>0;

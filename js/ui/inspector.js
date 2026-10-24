@@ -1,3 +1,4 @@
+import {recipes,applyRecipe} from '../core/gameplay-recipes.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController,inventoryAdd,inventoryRemove,equipItem} from '../core/gameplay-components.js';
 import {renderSequenceEditor} from './logic-sequence-editor.js';
 import {workspace} from '../core/workspaces.js';
@@ -37,6 +38,13 @@ export function renderHierarchy(){const root=document.querySelector('#objects'),
 export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
 const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent='GameObject #'+o.id+' • '+o.type;header.append(name,meta);root.append(header);
 component(root,'Transform',body=>{field(body,o,'x','Position X');field(body,o,'y',workspace.mode==='3d'?'Position Z':'Position Y');if(workspace.mode==='3d')field(body,o,'elevation3d','Position Y (3D height)');field(body,o,'rotation','Rotation');field(body,o,'w','Size X');field(body,o,'h',workspace.mode==='3d'?'Height':'Size Y')});
+component(root,'Quick Start • Gameplay Recipes',body=>{
+ const intro=document.createElement('p');intro.textContent='Appliquer un comportement réutilisable à cet objet. Les composants existants concernés peuvent être remplacés.';body.append(intro);
+ const picker=document.createElement('select');picker.disabled=state.playing;
+ for(const recipe of recipes){const opt=document.createElement('option');opt.value=recipe.id;opt.textContent=recipe.name+' — '+recipe.description;picker.append(opt)}
+ body.append(picker);
+ const apply=document.createElement('button');apply.textContent='＋ Appliquer le modèle';apply.disabled=state.playing;apply.onclick=()=>{if(!confirm('Appliquer ce modèle à '+o.name+' ? Les composants concernés seront remplacés.'))return;if(applyRecipe(o,picker.value)){record('Gameplay Recipe : '+picker.value);notify()}};body.append(apply);
+});
 renderSequenceEditor(root,o);
 component(root,'Gameplay Components',body=>{
  const addComponent=(name,key,factory)=>{if(!o[key]){const b=document.createElement('button');b.textContent='＋ '+name;b.disabled=state.playing;b.onclick=()=>{o[key]=factory();record('Ajouter '+name);notify()};body.append(b);return false}return true};

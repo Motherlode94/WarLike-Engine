@@ -1,3 +1,4 @@
+import {defaultRigidbody3d,applyImpulse3d} from '../core/physics-3d.js';
 import {recipes,applyRecipe} from '../core/gameplay-recipes.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController,inventoryAdd,inventoryRemove,equipItem} from '../core/gameplay-components.js';
 import {renderSequenceEditor} from './logic-sequence-editor.js';
@@ -44,6 +45,16 @@ component(root,'Quick Start • Gameplay Recipes',body=>{
  for(const recipe of recipes){const opt=document.createElement('option');opt.value=recipe.id;opt.textContent=recipe.name+' — '+recipe.description;picker.append(opt)}
  body.append(picker);
  const apply=document.createElement('button');apply.textContent='＋ Appliquer le modèle';apply.disabled=state.playing;apply.onclick=()=>{if(!confirm('Appliquer ce modèle à '+o.name+' ? Les composants concernés seront remplacés.'))return;if(applyRecipe(o,picker.value)){record('Gameplay Recipe : '+picker.value);notify()}};body.append(apply);
+});
+if(workspace.mode==='3d')component(root,'Physics 3D • Rigidbody',body=>{
+ if(!o.rigidbody3d){const add=document.createElement('button');add.textContent='＋ Add Rigidbody 3D';add.disabled=state.playing;add.onclick=()=>{o.rigidbody3d=defaultRigidbody3d();record('Add Rigidbody 3D');notify()};body.append(add);return}
+ const rb=o.rigidbody3d;
+ for(const [key,label] of [['mass','Mass'],['gravity','Gravity'],['restitution','Bounciness (0-1)'],['friction','Friction (0-1)'],['vx','Velocity X'],['vy','Velocity Y'],['vz','Velocity Z']])field(body,rb,key,label);
+ for(const [key,label] of [['enabled','Enabled'],['kinematic','Kinematic (no physics)']]){
+  const row=document.createElement('label');row.className='logic-flag';const input=document.createElement('input');input.type='checkbox';input.checked=rb[key]===true;input.disabled=state.playing;input.onchange=()=>{rb[key]=input.checked;record('Rigidbody '+key);notify()};row.append(input,document.createTextNode(label));body.append(row);
+ }
+ const info=document.createElement('p');info.textContent='Prototype physique 3D : gravité, rebond au sol et collisions AABB simples. Le joueur et les agents IA utilisent leur propre contrôleur.';body.append(info);
+ const rm=document.createElement('button');rm.textContent='− Remove Rigidbody';rm.disabled=state.playing;rm.onclick=()=>{delete o.rigidbody3d;record('Remove Rigidbody');notify()};body.append(rm);
 });
 renderSequenceEditor(root,o);
 component(root,'Gameplay Components',body=>{

@@ -1,3 +1,4 @@
+import {bindAudioControls} from './core/audio.js';
 import {init3d} from './core/viewport-3d.js';
 import {motion} from './core/player-controller.js';
 import {bindModeInput} from './core/game-modes.js';
@@ -16,6 +17,7 @@ import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
+bindAudioControls($('#audioToggle'),$('#audioVolume'));
 $('#undo').onclick=undo;
 $('#redo').onclick=redo;
 $('#play').onclick=togglePlay;

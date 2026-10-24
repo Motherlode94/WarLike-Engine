@@ -158,10 +158,26 @@ const assetColor=o=>{
 };
 export function init3d(canvas,host,buttons){
  let gl=null;try{gl=canvas.getContext('webgl',{antialias:true,alpha:false})}catch(err){view3d.error=String(err.message||err)}
- if(!gl){view3d.error=view3d.error||'WebGL indisponible sur ce navigateur';buttons.status.textContent=view3d.error;buttons.toggle.disabled=true;return}
+ const renderFailure=message=>{
+  view3d.error=message;
+  const show=workspace.mode==='3d';
+  view3d.enabled=show;canvas.hidden=!show;
+  document.getElementById('canvas').hidden=show;
+  buttons.toggle.classList.toggle('active',show);
+  buttons.status.hidden=!show;
+  buttons.status.textContent='ERREUR MOTEUR 3D : '+message;
+  document.querySelector('#viewport')?.classList.toggle('view-3d-active',show);
+  canvas.style.background='#182534';
+  const host=document.getElementById('viewport');
+  let warning=host.querySelector('#webglFailure');
+  if(!warning){warning=document.createElement('div');warning.id='webglFailure';warning.setAttribute('role','alert');warning.style.cssText='position:absolute;inset:15% 12%;z-index:8;padding:22px;background:#2d1e2a;color:#ffe5e5;border:2px solid #ff7a7a;border-radius:10px;overflow:auto;font:14px system-ui';host.append(warning)}
+  warning.hidden=!show;
+  warning.textContent='Le rendu 3D WebGL ne peut pas démarrer : '+message+'. Ouvre la console F12 et vérifie l’accélération graphique / WebGL.';
+ };
+ if(!gl){renderFailure(view3d.error||'WebGL indisponible');return {setEnabled:()=>false,focus:()=>{},syncToWorkspace:()=>renderFailure(view3d.error)}}
  view3d.gl=gl;
  let program;
- try{program=program3d(gl)}catch(err){view3d.error=err.message;buttons.status.textContent='WebGL : '+err.message;buttons.toggle.disabled=true;return}
+ try{program=program3d(gl)}catch(err){renderFailure('Compilation shader : '+String(err.message||err));return {setEnabled:()=>false,focus:()=>{},syncToWorkspace:()=>renderFailure(view3d.error)}}
  const loc=n=>gl.getUniformLocation(program,n);
  const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),angle:loc('uAngle'),aspect:loc('uAspect'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal');

@@ -63,3 +63,10 @@
 .component-content p{font-size:11px;color:#adbdca}
 .delete-object{width:100%}
 @media(max-width:900px){.center-stack{grid-template-rows:39px 38px minmax(120px,1fr)190px}.project-panel{height:190px}.asset-folders{width:112px}}
+
+/* WarLike Engine V0.7 gameplay */
+#loadDemo{background:#644b3e;border-color:#b77b4b;color:#ffe5c0;font-weight:650}
+#loadDemo:hover{background:#79573b}
+.game-hint{position:absolute;bottom:13px;left:50%;transform:translateX(-50%);z-index:3;max-width:calc(100% - 30px);white-space:normal;text-align:center;background:#102a36e8;color:#c6fff1;border:1px solid #40756e;padding:8px 14px;border-radius:6px;font-size:11px;pointer-events:none}
+.game-hint[hidden]{display:none}
+#viewport:has(.game-hint:not([hidden])){cursor:crosshair}

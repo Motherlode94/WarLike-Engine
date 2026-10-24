@@ -57,3 +57,12 @@ const gate=defaultLogic();gate.prompt='Ouvrir portail';gate.conditions=[{type:'q
 add('Portail ancien','object',1000,200,42,140,'#a56f48',{logic:gate});
 for(const [x,y] of [[390,390],[770,460],[590,95]])add('Arbre','prefab',x,y,65,85,'#699b66',{assetId:'tree',hp:100});
 state.entities=entities;state.nextId=entities.length+1;state.selected=[2];setCamera({x:90,y:35,zoom:.9});record('Charger RPG Demo');notify()}
+
+export function loadNinjaZombieDemo(){
+ if(state.playing)return;
+ const all=[],add=(name,assetId,x,y,other={})=>{const prefab=getAsset(assetId);if(!prefab)return;all.push({id:all.length+1,name,type:'prefab',assetId,x,y,w:prefab.width,h:prefab.height,color:'#718a8d',hp:prefab.hp,behavior:'none',animation:'idle',animationSpeed:1,...other})};
+ add('Shadow Ninja','ninja',135,245,{hp:100,animation:'idle'});
+ for(const [id,x,y] of [['zombie',440,180],['zombie-runner',680,235],['zombie-crawler',500,420],['zombie-brute',830,355],['zombie',980,150]])add('Zombie '+(all.length+1),id,x,y,{behavior:'chase',hp:id==='zombie-brute'?200:75,aiSpeed:id==='zombie-runner'?110:id==='zombie-crawler'?36:62,animation:id==='zombie-crawler'?'crawl':'walk_zombie'});
+ for(const [id,x,y] of [['crate',360,325],['crate',730,105],['sandbag',710,450],['rock',970,450],['pine',320,80],['pine',1010,275],['fire',605,460],['smoke',860,85]])add(id,id,x,y,{behavior:'none'});
+ state.entities=all;state.nextId=all.length+1;state.selected=[1];setCamera({x:70,y:45,zoom:.85});record('Charger Ninja vs Zombies');notify();
+}

@@ -15,3 +15,5 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Check type contracts and systems
         run: npm run typecheck
+      - name: Run physics and scene unit tests
+        run: npm test

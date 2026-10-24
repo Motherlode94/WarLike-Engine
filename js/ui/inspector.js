@@ -62,8 +62,9 @@ component(root,'Gameplay Components',body=>{
  }
  if(addComponent('AI State Machine','ai',defaultAi)){
   const ai=o.ai;selectField(body,ai,'state','État initial',['idle','patrol','chase','attack','dead']);
-  for(const [key,label] of [['detection','Rayon détection'],['attackRange','Portée attaque'],['attackDamage','Dégâts'],['attackCooldown','Cooldown'],['speed','Vitesse'],['patrolRadius','Rayon patrouille']])field(body,ai,key,label);
+  for(const [key,label] of [['detection','Rayon détection'],['attackRange','Portée attaque'],['attackDamage','Dégâts'],['attackCooldown','Cooldown'],['speed','Vitesse'],['patrolRadius','Rayon patrouille'],['pathCellSize','Taille cellule A*'],['repathInterval','Recalcul chemin (s)']])field(body,ai,key,label);
   const flag=document.createElement('label');const cb=document.createElement('input');cb.type='checkbox';cb.checked=ai.enabled!==false;cb.disabled=state.playing;cb.onchange=()=>{ai.enabled=cb.checked;record('IA activée');notify()};flag.append(cb,document.createTextNode(' IA activée'));body.append(flag);
+  const pathLabel=document.createElement('label');const pathCb=document.createElement('input');pathCb.type='checkbox';pathCb.checked=ai.pathfinding!==false;pathCb.disabled=state.playing;pathCb.onchange=()=>{ai.pathfinding=pathCb.checked;record('Navigation A*');notify()};pathLabel.append(pathCb,document.createTextNode(' Navigation A*'));body.append(pathLabel);
  }
  if(addComponent('Character Controller 3D','controller3d',defaultController)){
   for(const [key,label] of [['walkSpeed','Marche'],['sprintSpeed','Sprint'],['jumpForce','Saut'],['gravity','Gravité'],['dodgeDistance','Esquive (préparation)'],['dodgeCooldown','Cooldown esquive (préparation)'],['staminaCost','Coût endurance (préparation)']])field(body,o.controller3d,key,label);

@@ -1,3 +1,4 @@
+import {isElement,elementDefaults} from '../core/game-elements.js';
 import {isHome} from '../core/housing.js';
 import {modeDefaults,modeNames,roleNames} from '../core/game-modes.js';
 import {defaults as buildingDefaults,getBuilding} from '../assets/buildings.js';
@@ -34,6 +35,13 @@ if(isHome(o))component(root,'House / Interior',body=>{
   if(o[key]===undefined)o[key]=key==='houseLightsOn';
   const row=document.createElement('label');row.className='logic-flag',input=document.createElement('input');input.type='checkbox';input.disabled=state.playing;input.checked=!!o[key];input.onchange=()=>{o[key]=input.checked;if(key==='houseDoorOpen')o.houseDoorProgress=input.checked?1:0;record('House : '+label);notify()};row.append(input,document.createTextNode(label));body.append(row)
  }
+});
+if(isElement(o))component(root,'Game Element',body=>{
+ const d=elementDefaults();for(const [k,v] of Object.entries(d))if(o[k]===undefined)o[k]=v;
+ const note=document.createElement('p');note.textContent='Gameplay : ramassage au contact ou interaction E. Configurer ici la portée, les dégâts ou la destination.';body.append(note);
+ for(const [k,label] of [['elementValue','Value / Amount'],['elementDamage','Damage'],['elementRadius','Interaction Radius'],['elementTargetX','Destination X'],['elementTargetY','Destination Y']])field(body,o,k,label);
+ field(body,o,'elementKey','Key Item Name','text');
+ const row=document.createElement('label');row.className='logic-flag';const check=document.createElement('input');check.type='checkbox';check.disabled=state.playing;check.checked=o.elementEnabled!==false;check.onchange=()=>{o.elementEnabled=check.checked;record('Element enabled');notify()};row.append(check,document.createTextNode('Enabled'));body.append(row)
 });
 if(o.type==='prefab'){component(root,'Health',body=>field(body,o,'hp','Hit Points'));if(getAsset(o.assetId)?.category==='Monsters')component(root,'AI Controller',body=>{selectField(body,o,'behavior','Behaviour',['none','patrol','chase','guard','wander','flee','follow']);if(o.aiSpeed===undefined)o.aiSpeed=65;if(o.detectionRadius===undefined)o.detectionRadius=650;field(body,o,'aiSpeed','Move speed');field(body,o,'detectionRadius','Detection range')})}
 if(o.gameMode)component(root,'Game Mode Rules',body=>{

@@ -1,3 +1,4 @@
+import {prefab3d,get3dAsset} from '../assets/catalog-3d.js';
 import {workspace,workspacePayload,restoreWorkspaces,captureWorkspace} from './workspaces.js';
 import {lighting} from './lighting.js';
 import {weaponStats,vehicleStats} from '../assets/armory-garage.js';
@@ -51,13 +52,13 @@ for(const [x,y] of [[320,100],[590,290],[770,120],[470,430]])add('Zombie '+(enti
 for(const [x,y] of [[780,390],[930,210]])add('Goblin '+(entities.length+1),'prefab','goblin',x,y,50,72,{hp:66,behavior:'chase',animation:'idle'});
 for(const [x,y] of [[280,260],[520,125],[700,335],[975,380]])add('Crate '+(entities.length+1),'prefab','crate',x,y,68,62,{hp:100,behavior:'none'});
 for(const [x,y] of [[190,430],[875,75]])add('Medkit '+(entities.length+1),'prefab','medkit',x,y,46,54,{hp:1,behavior:'none'});
-add('Jeep','prefab','jeep',1030,115,110,66,{hp:200,behavior:'none'});
+add('Jeep','prefab','jeep',230,390,110,66,{hp:200,behavior:'none'});
 add('Campfire','prefab','campfire',550,530,60,72,{hp:100,behavior:'none'});
 state.entities=entities;state.nextId=entities.length+1;state.selected=[1];setCamera({x:65,y:40,zoom:.8});record('Charger Combat Sandbox');notify()}
 
 export function loadDrivingDemo(){if(state.playing)return;const entities=[],add=(name,type,assetId,x,y,w,h,rest={})=>entities.push({id:entities.length+1,name,type,assetId,x,y,w,h,color:'#5f99af',rotation:0,...rest});
 add('Driver','character',undefined,155,250,50,72,{skin:'scout',animation:'idle'});
-add('Jeep','prefab','jeep',270,245,105,72,{hp:200,behavior:'none',maxSpeed:285,acceleration:235,brakeForce:320,turnRate:155,drag:1.3,collisionRadius:24});
+add('Jeep','prefab','jeep',226,245,105,72,{hp:200,behavior:'none',maxSpeed:285,acceleration:235,brakeForce:320,turnRate:155,drag:1.3,collisionRadius:24});
 add('Tank','prefab','tank',640,145,126,86,{hp:400,behavior:'none',maxSpeed:110,acceleration:95,brakeForce:160,turnRate:68,drag:2.1,collisionRadius:33});
 add('Buggy','prefab','buggy',540,395,100,66,{hp:130,behavior:'none',maxSpeed:345,acceleration:310,brakeForce:260,turnRate:195,drag:.8,collisionRadius:23});
 for(const [x,y] of [[410,220],[490,260],[750,350],[330,440],[850,160],[160,520]])add('Roadblock','prefab','crate',x,y,65,60,{hp:100});
@@ -105,7 +106,7 @@ export function loadBuildingDemo(){
   if(a.category==='Buildings')Object.assign(obj,{...buildingDefaults(a),...props});
   entities.push(obj)
  };
- add('scout',90,255,{name:'Commander'});
+ add('scout',90,255,{name:'Commander',type:'character',skin:'scout',animation:'idle',hp:100});
  add('rts-hq',290,180,{buildTeam:1});
  add('rts-barracks',490,230,{buildTeam:1,buildProduction:'soldier',buildQueue:3,buildTime:6});
  add('rts-factory',745,240,{buildTeam:1,buildProduction:'jeep',buildQueue:2,buildTime:9});
@@ -153,29 +154,41 @@ export function loadElementsDemo(){
  state.entities=items;state.nextId=items.length+1;state.selected=[1];setCamera({x:15,y:40,zoom:.9});record('Charger Elements Demo');notify();
 }
 
-export function load3dBetaDemo(){
- if(state.playing)return;
- const scene=[],place=(name,assetId,x,y,w,h,elevation3d=0)=>{
-  const asset=getAsset(assetId),obj={id:scene.length+1,name,type:asset?'prefab':'object',...(asset?{assetId}:{}),x,y,w,h,elevation3d,color:'#7e9fac',rotation:0,hp:asset?.hp||100,animation:'idle',behavior:'none'};
-  if(asset?.category==='Buildings')Object.assign(obj,buildingDefaults(asset));
-  if(asset?.category==='Vehicles')Object.assign(obj,{maxSpeed:asset.maxSpeed||240,acceleration:asset.acceleration||210,brakeForce:300,turnRate:140,drag:1.4,collisionRadius:25});
-  scene.push(obj);
+// Each demo is a complete, playable sandbox for its own project type.
+export function load3dBetaDemo(kind='town'){
+ if(state.playing||workspace.mode!=='3d')return;
+ const entities=[];
+ const actor=(name,x,z,id='character-hero')=>{
+  const e=prefab3d(id,entities.length+1,x,z);if(e){e.name=name;e.type='mesh3d';e.playable3d=true;entities.push(e)}
  };
- scene.push({id:1,name:'Player 3D',type:'character',x:140,y:220,w:45,h:78,elevation3d:0,color:'#41cdb5',skin:'scout',animation:'idle'});
- place('Town House','city-house',340,250,130,112);
- place('Guard Tower','military-watchtower',700,160,105,190);
- place('Command HQ','rts-hq',620,410,170,125);
- place('Jeep','jeep',225,370,115,68);
- place('Sports Car','sports-car',460,465,112,65);
- place('Barracks','rts-barracks',890,390,145,112);
- place('Stone Wall','stone-wall',480,210,90,50);
- place('Forest Tree','pine',180,510,65,100);
- place('Zombie','zombie',950,550,54,80);
- const streetLamp={id:scene.length+1,name:'Street Light 3D',type:'object',x:535,y:285,w:22,h:22,elevation3d:4,color:'#ffe3aa',lightType:'point',lightEnabled:true,lightColor:'#ffd49b',lightIntensity:5,lightRange:18,lightAngle:40};
- scene.push(streetLamp);
- const spotlight={id:scene.length+1,name:'Security Spotlight',type:'object',x:765,y:270,w:22,h:22,elevation3d:6,color:'#b6dfff',lightType:'spot',lightEnabled:true,lightColor:'#a5d6ff',lightIntensity:6,lightRange:23,lightAngle:68,rotation:95};
- scene.push(spotlight);
- scene.push({id:scene.length+1,name:'Ambient Generator Sound',type:'object',x:475,y:420,w:24,h:24,color:'#81bfd7',audioEnabled:true,audioClip:'vehicle',audioGain:.55,audioRange:20,audioInterval:2.5,audioLoop:true,audioSpatial:true});
- state.entities=scene;state.nextId=scene.length+1;state.selected=[1];
- setCamera({x:0,y:0,zoom:.75});record('Créer scène 3D Beta');notify();
+ const put=(id,x,z,opts={})=>{
+  const e=prefab3d(id,entities.length+1,x,z);
+  if(!e)return null;
+  Object.assign(e,opts);entities.push(e);return e;
+ };
+ actor('Player 3D',140,180);
+ if(kind==='town'){
+  put('environment-grass',-350,-350,{name:'Town Ground',collision3d:false});
+  put('environment-road',150,520,{name:'Main Road',collision3d:false});
+  put('building-house',420,180);put('building-garage',730,180);
+  put('building-tower',970,370);put('building-lamp',390,490);
+  put('vehicle-jeep',280,550);put('vehicle-sports',670,540);
+  put('nature-oak',80,490);put('nature-pine',1030,140);
+  put('prop-crate',860,560);
+ }else if(kind==='nature'){
+  put('environment-grass',-200,-100,{name:'Landscape',w:1400,depth3d:1000,h:4,collision3d:false});
+  for(const [id,x,z] of [['nature-oak',400,220],['nature-pine',650,310],['nature-oak',970,180],['nature-boulder',800,550],['nature-rock',270,570],['nature-cactus',1090,630],['nature-bush',500,660],['nature-log',960,470]])put(id,x,z,{collision3d:id.includes('bush')?false:true});
+  put('building-house',1160,320);
+ }else{
+  put('environment-road',40,390,{name:'Garage Track',w:1300,depth3d:460,h:4,collision3d:false});
+  put('building-hangar',680,110);
+  for(const [id,x,z] of [['vehicle-jeep',300,510],['vehicle-sports',550,520],['vehicle-tank',900,540],['vehicle-truck',1150,550],['vehicle-bike',360,740]])put(id,x,z);
+  for(const [x,z] of [[200,900],[500,900],[800,900],[1100,900]])put('prop-cone',x,z,{collision3d:false});
+ }
+ const light=put('primitive-sphere',445,360,{name:'Sunlit Lamp',w:20,h:20,depth3d:20,elevation3d:3,color:'#ffd38a',collision3d:false});
+ if(light)Object.assign(light,{lightType:'point',lightEnabled:true,lightColor:'#ffca88',lightIntensity:5,lightRange:17});
+ const sound=put('primitive-cube',760,300,{name:'Ambient 3D Sound',w:22,h:22,depth3d:22,collision3d:false});
+ if(sound)Object.assign(sound,{audioEnabled:true,audioClip:'vehicle',audioGain:.4,audioRange:18,audioInterval:3,audioLoop:true,audioSpatial:true});
+ state.entities=entities;state.nextId=entities.length+1;state.selected=[1];setCamera({x:0,y:0,zoom:.7});
+ record('Démo 3D : '+kind);notify();
 }

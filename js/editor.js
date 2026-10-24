@@ -23,7 +23,7 @@ $('#zoomOut').onclick=()=>zoomAt(.8,{x:host.clientWidth/2,y:host.clientHeight/2}
 $('#resetView').onclick=resetCamera;
 attachInput(canvas,host);
 bindGameInput(canvas);
-$('#loadDemo').onclick=()=>{if(state.playing)return;loadCombatDemo();log('Combat Sandbox chargé : sélectionne Play')};
+$('#loadDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Combat Sandbox ? La scène actuelle sera remplacée dans l’éditeur. Tu pourras l’annuler avec Ctrl+Z.'))return;loadCombatDemo();log('Combat Sandbox chargé : sélectionne Play')};
 if(!recoverLocal())record('Scène initiale');
 beginAutoSave();
 $('#cloudConnect').onclick=connectCloud;

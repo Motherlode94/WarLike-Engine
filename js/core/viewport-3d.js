@@ -63,6 +63,8 @@ const program3d=gl=>{
  }`;
  const fs=`precision mediump float;
  uniform vec4 uColor;
+ uniform vec3 uEye;
+ uniform float uRoughness,uMetallic;
  uniform vec3 uSunDir,uSunColor;
  uniform float uSunIntensity,uAmbient;
  uniform int uLightCount;
@@ -86,7 +88,13 @@ const program3d=gl=>{
   }
   irradiance+=uLightColor[i]*uLightPower[i]*max(0.,dot(normal,L))*decay*cone;
  }
- gl_FragColor=vec4(uColor.rgb*clamp(irradiance,0.,2.2),uColor.a);
+ vec3 viewDir=normalize(uEye-vWorld);
+ vec3 reflected=reflect(-normalize(uSunDir),normal);
+ float gloss=pow(max(0.,dot(reflected,viewDir)),mix(48.,5.,clamp(uRoughness,0.04,1.)));
+ vec3 specular=mix(vec3(.18),uColor.rgb,clamp(uMetallic,0.,1.))*gloss*uSunIntensity*(1.-uRoughness*.75);
+ vec3 lit=uColor.rgb*clamp(irradiance,0.,2.2)+specular;
+ float fog=clamp((length(uEye-vWorld)-28.)/85.,0.,.78);
+ gl_FragColor=vec4(mix(lit,vec3(.24,.34,.43),fog),uColor.a);
  }`;
  const p=gl.createProgram();gl.attachShader(p,shader(gl,gl.VERTEX_SHADER,vs));gl.attachShader(p,shader(gl,gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);
  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p)||'Erreur programme');
@@ -154,7 +162,7 @@ export function init3d(canvas,host,buttons){
  let program;
  try{program=program3d(gl)}catch(err){view3d.error=err.message;buttons.status.textContent='WebGL : '+err.message;buttons.toggle.disabled=true;return}
  const loc=n=>gl.getUniformLocation(program,n);
- const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),angle:loc('uAngle'),aspect:loc('uAspect'),color:loc('uColor'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
+ const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),angle:loc('uAngle'),aspect:loc('uAspect'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal');
  const makeBuffer=data=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
  const cubes=makeBuffer(cubeVerts()),sphere=makeBuffer(curvedVerts('sphere')),cylinder=makeBuffer(curvedVerts('cylinder')),cone=makeBuffer(curvedVerts('cone')),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
@@ -284,6 +292,8 @@ export function init3d(canvas,host,buttons){
   for(const o of objects){
    const b=objectBounds3d(o),color=assetColor(o),asset=getAsset(o.assetId),category=asset?.category;
    const angle=(o.rotation||0)*Math.PI/180;
+   gl.uniform1f(u.roughness,Math.max(.04,Math.min(1,Number(o.materialRoughness??.7))));
+   gl.uniform1f(u.metallic,Math.max(0,Math.min(1,Number(o.materialMetallic??0))));
    const shape=get3dAsset(o.assetId)?.shape;
    const drawShape=(mesh,p,scale,shade)=>{bind(mesh);model(p,scale,shade,angle);gl.drawArrays(gl.TRIANGLES,0,mesh.count)};
    const cube=(p,scale,shade)=>drawShape(cubes,p,scale,shade);

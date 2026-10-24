@@ -1,4 +1,5 @@
 import {playSound} from './audio.js';
+import {workspace} from './workspaces.js';
 import {resetElements,updateElements,elementsRuntime} from './game-elements.js';
 import {resetHousing,updateHousing,updateHouseAnimation,drawHousing,housingActive} from './housing.js';
 import {walkPlayer,followPlayer,motion} from './player-controller.js';
@@ -68,7 +69,7 @@ export function startGameSimulation(){
  function frame(now){
   requestAnimationFrame(frame);
   const delta=Math.min(.05,Math.max(0,(now-previous)/1000));previous=now;
-  if(state.playing)updateGame(delta);
+  if(state.playing&&workspace.mode==='2d')updateGame(delta);
  }
  requestAnimationFrame(frame);
 }

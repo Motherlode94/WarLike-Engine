@@ -3,8 +3,8 @@ import {updateLogic,drawLogic,resetLogic,logic} from './visual-logic.js';
 import {updateVehicles,currentVehicle,drawDrivingHud,resetDriving} from './vehicle.js';
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
-export const game={projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,hurtTimer:0,over:false,mouse:{x:500,y:300,down:false},kills:0};
-export function resetGame(){resetLogic();resetDriving();Object.assign(game,{projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}}
+export const game={projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,mouse:{x:500,y:300,down:false},kills:0};
+export function resetGame(){resetLogic();resetDriving();Object.assign(game,{projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}}
 const center=e=>({x:e.x+e.w/2,y:e.y+e.h/2});
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const enemy=o=>o.type==='prefab'&&getAsset(o.assetId)?.category==='Monsters';
@@ -12,11 +12,18 @@ const solid=o=>o.type==='object'||o.type==='prefab'&&getAsset(o.assetId)?.catego
 function flash(x,y,color,count=8){for(let i=0;i<count;i++){const a=Math.PI*2*i/count+Math.random()*.5,s=30+Math.random()*75;game.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.25+Math.random()*.4,color})}}
 function move(e,dx,dy){const oldX=e.x;e.x+=dx;if(state.entities.some(o=>o!==e&&solid(o)&&overlaps(e,o)))e.x=oldX;const oldY=e.y;e.y+=dy;if(state.entities.some(o=>o!==e&&solid(o)&&overlaps(e,o)))e.y=oldY}
 function shoot(p,at){const origin=center(p),dx=at.x-origin.x,dy=at.y-origin.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;game.projectiles.push({x:origin.x,y:origin.y,vx:ux*560,vy:uy*560,life:1.35,damage:34});flash(origin.x+ux*22,origin.y+uy*22,'#fcd36e',4)}
-export function updateGame(dt){if(!state.playing||game.over)return;game.time+=dt;game.fireTimer=Math.max(0,game.fireTimer-dt);game.hurtTimer=Math.max(0,game.hurtTimer-dt);const p=state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');if(!p)return;
+export function updateGame(dt){if(!state.playing||game.over)return;game.time+=dt;game.fireTimer=Math.max(0,game.fireTimer-dt);game.meleeTimer=Math.max(0,game.meleeTimer-dt);game.hurtTimer=Math.max(0,game.hurtTimer-dt);const p=state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');if(!p)return;
 const k=state.keys,x=(k.has('arrowright')||k.has('d')?1:0)-(k.has('arrowleft')||k.has('q')||k.has('a')?1:0),y=(k.has('arrowdown')||k.has('s')?1:0)-(k.has('arrowup')||k.has('z')||k.has('w')?1:0),length=Math.hypot(x,y)||1;updateVehicles(dt,p);if(!currentVehicle())move(p,x/length*190*dt,y/length*190*dt);
+if(p.assetId==='ninja'||p.assetId==='ninja-elite'){
+ if((k.has('k')||k.has('shift'))&&game.meleeTimer===0&&!currentVehicle()){
+  game.meleeTimer=.48;p.animation='katana_attack_1';p._ninjaAttackUntil=game.time+.3;
+  const pc=center(p);for(const foe of [...state.entities].filter(enemy)){const ec=center(foe),distance=Math.hypot(ec.x-pc.x,ec.y-pc.y);if(distance<100){foe.hp=(foe.hp??75)-55;foe._hit=.2;flash(ec.x,ec.y,'#a9e2f2',9);if(foe.hp<=0){state.entities=state.entities.filter(o=>o!==foe);game.kills++;game.score+=100}}}
+ }
+ if(p._ninjaAttackUntil&&game.time>p._ninjaAttackUntil){p.animation='idle';p._ninjaAttackUntil=0}
+}
 const aim=game.mouse.x===500&&game.mouse.y===300?{x:p.x+300,y:p.y}:game.mouse;
 if(!currentVehicle()&&(game.mouse.down||k.has('f')||k.has(' '))&&game.fireTimer===0){shoot(p,aim);game.fireTimer=.16}
-for(const e of state.entities.filter(enemy)){e._cooldown=Math.max(0,(e._cooldown||0)-dt);e._hit=Math.max(0,(e._hit||0)-dt);const a=center(e),b=center(p),dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;const mode=e.behavior||'none',range=Math.max(70,Number(e.detectionRadius)||650),speed=Math.max(0,Number(e.aiSpeed)||65);
+for(const e of state.entities.filter(enemy)){e._cooldown=Math.max(0,(e._cooldown||0)-dt);e._hit=Math.max(0,(e._hit||0)-dt);const a=center(e),b=center(p),dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;if(e.assetId==='zombie-runner'&&d<600)e.animation='run_zombie';else if(e.assetId==='zombie-crawler')e.animation='crawl';else if(e.assetId==='zombie-brute'&&d<80)e.animation='mutant_smash';else if(e.assetId?.startsWith('zombie')&&d<650)e.animation='walk_zombie';const mode=e.behavior||'none',range=Math.max(70,Number(e.detectionRadius)||650),speed=Math.max(0,Number(e.aiSpeed)||65);
 if(mode==='chase'&&d<range&&d>38)move(e,dx/d*speed*dt,dy/d*speed*dt);
 if(mode==='patrol'||mode==='wander'){const period=mode==='wander'?2.3:1.5;move(e,Math.cos(game.time*period+e.id)*speed*.4*dt,Math.sin(game.time*(mode==='wander'?1.8:.8)+e.id)*speed*.22*dt)}
 if(mode==='flee'&&d<range)move(e,-dx/d*speed*dt,-dy/d*speed*dt);

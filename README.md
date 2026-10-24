@@ -33,3 +33,11 @@ Le dépôt peut être hébergé sur Cloudflare Pages en site statique (framework
 ## Licences et provenance
 
 Le code WarLike Studio est un prototype original. Certains modèles de démonstration sont chargés à distance depuis [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) ; **leurs licences propres doivent être vérifiées pour tout usage ou redistribution**. L'import local exige que l'utilisateur dispose des droits sur ses modèles.
+
+## Gameplay Components (prototype)
+
+Depuis **Inspector > Gameplay Components**, ajoute **Stats**, **Inventaire**, **AI State Machine** ou **Character Controller 3D** à un objet. Le moteur dispose désormais de points de vie, endurance, sauts, sprint et esquive (**Ctrl**), d'une IA simple avec patrouille/poursuite/attaque et d'attaques 3D de proximité (**F**). Une arme équipée via l'Inspector augmente la portée et les dégâts de l'attaque ; il ne s'agit pas encore d'une représentation animée de l'arme ni d'un système de projectiles.
+
+Dans **Logic Sequences**, les instructions peuvent donner/retirer un objet, équiper une arme/armure, soigner et infliger des dégâts. Le panneau **Graphique des comportements** affiche une **prévisualisation** des triggers et branches ; les connexions ne sont pas encore modifiables par glisser-déposer.
+
+La navigation IA utilise un **évitement local simplifié** (pas de NavMesh ni de recherche de chemin A*). Les collisions 3D et animations restent expérimentales. Les tests ajoutés au dépôt doivent être exécutés avec `npm test`, et l'ensemble doit être vérifié en navigateur avant utilisation dans un projet de production.

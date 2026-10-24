@@ -1,8 +1,9 @@
+import {updateLogic,drawLogic,resetLogic} from './visual-logic.js';
 import {updateVehicles,currentVehicle,drawDrivingHud,resetDriving} from './vehicle.js';
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
 export const game={projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,hurtTimer:0,over:false,mouse:{x:500,y:300,down:false},kills:0};
-export function resetGame(){resetDriving();Object.assign(game,{projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}}
+export function resetGame(){resetLogic();resetDriving();Object.assign(game,{projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}}
 const center=e=>({x:e.x+e.w/2,y:e.y+e.h/2});
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const enemy=o=>o.type==='prefab'&&getAsset(o.assetId)?.category==='Monsters';
@@ -18,11 +19,12 @@ for(const e of state.entities.filter(enemy)){e._cooldown=Math.max(0,(e._cooldown
 for(const b of game.projectiles){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;for(const e of state.entities.filter(enemy)){if(b.life<=0)break;if(b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h){e.hp=(e.hp??65)-b.damage;e._hit=.12;b.life=0;flash(b.x,b.y,'#f3a862',9);if(e.hp<=0){state.entities=state.entities.filter(o=>o!==e);game.kills++;game.score+=100}break}}if(state.entities.some(e=>solid(e)&&b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h)){b.life=0;flash(b.x,b.y,'#c5b6a0',4)}}
 game.projectiles=game.projectiles.filter(b=>b.life>0);
 for(const e of state.entities.filter(o=>o.type==='prefab'&&o.assetId==='medkit')){if(overlaps(p,e)){game.life=Math.min(100,game.life+35);state.entities=state.entities.filter(o=>o!==e);flash(e.x,e.y,'#5af7ad',10)}}
+updateLogic(dt);
 for(const a of game.particles){a.x+=a.vx*dt;a.y+=a.vy*dt;a.life-=dt}
 game.particles=game.particles.filter(a=>a.life>0);
 }
 export function drawGame(ctx,width,height){if(!state.playing)return;ctx.save();const c=state.camera;ctx.translate(c.x,c.y);ctx.scale(c.zoom,c.zoom);for(const b of game.projectiles){ctx.fillStyle='#ffe58d';ctx.beginPath();ctx.arc(b.x,b.y,4,0,Math.PI*2);ctx.fill()}for(const p of game.particles){ctx.globalAlpha=Math.min(1,p.life*3);ctx.fillStyle=p.color;ctx.fillRect(p.x-3,p.y-3,6,6)}ctx.restore();ctx.globalAlpha=1;
 ctx.save();ctx.fillStyle='#101b28dd';ctx.fillRect(16,16,252,79);ctx.fillStyle='#dceaf2';ctx.font='bold 13px system-ui';ctx.fillText('WARLIKE // COMBAT SANDBOX',28,37);ctx.fillStyle='#344353';ctx.fillRect(28,47,215,13);ctx.fillStyle=game.life<35?'#ed6464':'#51d0aa';ctx.fillRect(28,47,Math.max(0,215*game.life/100),13);ctx.fillStyle='#fff';ctx.font='11px system-ui';ctx.fillText('HP '+game.life+' / 100   •   Kills '+game.kills+'   •   Score '+game.score,28,79);
 if(game.hurtTimer>0){ctx.fillStyle='rgba(240,50,50,.08)';ctx.fillRect(0,0,width,height)}
-if(game.over){ctx.fillStyle='#07121ad9';ctx.fillRect(0,0,width,height);ctx.textAlign='center';ctx.font='bold 32px system-ui';ctx.fillStyle='#ff8888';ctx.fillText('GAME OVER',width/2,height/2);ctx.font='15px system-ui';ctx.fillStyle='#fff';ctx.fillText('Stop puis Play pour recommencer',width/2,height/2+32)}ctx.restore();drawDrivingHud(ctx,width,height,state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters'))}
+if(game.over){ctx.fillStyle='#07121ad9';ctx.fillRect(0,0,width,height);ctx.textAlign='center';ctx.font='bold 32px system-ui';ctx.fillStyle='#ff8888';ctx.fillText('GAME OVER',width/2,height/2);ctx.font='15px system-ui';ctx.fillStyle='#fff';ctx.fillText('Stop puis Play pour recommencer',width/2,height/2+32)}ctx.restore();drawDrivingHud(ctx,width,height,state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters'));drawLogic(ctx,width,height)}
 export function bindGameInput(canvas){canvas.addEventListener('pointermove',e=>{const rect=canvas.getBoundingClientRect(),c=state.camera;game.mouse.x=(e.clientX-rect.left-c.x)/c.zoom;game.mouse.y=(e.clientY-rect.top-c.y)/c.zoom});canvas.addEventListener('pointerdown',e=>{if(state.playing&&e.button===0)game.mouse.down=true});window.addEventListener('pointerup',()=>game.mouse.down=false);window.addEventListener('blur',()=>game.mouse.down=false)}

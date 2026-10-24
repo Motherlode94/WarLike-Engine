@@ -54,7 +54,7 @@ for(const [x,y] of [[280,260],[520,125],[700,335],[975,380]])add('Crate '+(entit
 for(const [x,y] of [[190,430],[875,75]])add('Medkit '+(entities.length+1),'prefab','medkit',x,y,46,54,{hp:1,behavior:'none'});
 add('Jeep','prefab','jeep',230,390,110,66,{hp:200,behavior:'none'});
 add('Campfire','prefab','campfire',550,530,60,72,{hp:100,behavior:'none'});
-state.entities=entities;state.nextId=entities.length+1;state.selected=[1];setCamera({x:65,y:40,zoom:.8});record('Charger Combat Sandbox');notify()}
+state.entities=entities;state.nextId=entities.length+1;state.selected=[1];setCamera({x:65,y:40,zoom:.8});state.demoGuide='Combat 2D : ZQSD/WASD pour bouger, F ou clic pour tirer, H pour se soigner.';record('Charger Combat Sandbox');notify()}
 
 export function loadDrivingDemo(){if(state.playing)return;const entities=[],add=(name,type,assetId,x,y,w,h,rest={})=>entities.push({id:entities.length+1,name,type,assetId,x,y,w,h,color:'#5f99af',rotation:0,...rest});
 add('Driver','character',undefined,155,250,50,72,{skin:'scout',animation:'idle'});
@@ -63,7 +63,7 @@ add('Tank','prefab','tank',640,145,126,86,{hp:400,behavior:'none',maxSpeed:110,a
 add('Buggy','prefab','buggy',540,395,100,66,{hp:130,behavior:'none',maxSpeed:345,acceleration:310,brakeForce:260,turnRate:195,drag:.8,collisionRadius:23});
 for(const [x,y] of [[410,220],[490,260],[750,350],[330,440],[850,160],[160,520]])add('Roadblock','prefab','crate',x,y,65,60,{hp:100});
 for(const [x,y] of [[900,450],[1000,230],[390,550]])add('Rock','prefab','rock',x,y,75,64,{hp:100});
-state.entities=entities;state.nextId=entities.length+1;state.selected=[2];setCamera({x:65,y:20,zoom:.85});record('Charger Driving Sandbox');notify()}
+state.entities=entities;state.nextId=entities.length+1;state.selected=[2];setCamera({x:65,y:20,zoom:.85});state.demoGuide='Conduite 2D : E pour monter dans la Jeep proche, ZQSD/WASD pour conduire, E pour descendre.';record('Charger Driving Sandbox');notify()}
 
 export function addLogicHotspot(){if(state.playing)return;const id=state.nextId++;state.entities.push({id,name:'Hotspot '+id,type:'object',x:210+id*13,y:180+id*8,w:48,h:48,color:'#f2b65b',logic:defaultLogic()});state.selected=[id];record('Créer hotspot');notify()}
 export function loadLogicDemo(){if(state.playing)return;const entities=[],add=(name,type,x,y,w,h,color,logic)=>entities.push({id:entities.length+1,name,type,x,y,w,h,color,...(type==='character'?{skin:'scout'}:{}),...(logic?{logic}:{})});
@@ -74,7 +74,7 @@ const door=defaultLogic();door.prompt='Ouvrir la porte';door.conditions=[{type:'
 add('Porte verrouillée','object',620,177,35,95,'#91705a',door);
 const greet=defaultLogic();greet.event='onEnter';greet.prompt='Accueil';greet.once=true;greet.actions=[{type:'message',value:'Explore la scène : récupère la clé puis ouvre la porte.'}];
 add('Zone bienvenue','object',175,170,50,90,'#4b90ac',greet);
-state.entities=entities;state.nextId=entities.length+1;state.selected=[2];setCamera({x:100,y:75,zoom:1});record('Charger Visual Logic Demo');notify()}
+state.entities=entities;state.nextId=entities.length+1;state.selected=[2];setCamera({x:100,y:75,zoom:1});state.demoGuide='Logic 2D : approche le coffre, presse E pour la clé, puis ouvre la porte avec E.';record('Charger Visual Logic Demo');notify()}
 
 export function loadRpgDemo(){if(state.playing)return;const entities=[],add=(name,type,x,y,w,h,color,more={})=>entities.push({id:entities.length+1,name,type,x,y,w,h,color,...more});
 add('Hero','character',105,240,48,72,'#32c4a8',{skin:'scout',hp:100});
@@ -87,7 +87,7 @@ for(const [x,y] of [[460,150],[670,310],[870,190]]){const l=defaultLogic();l.pro
 const gate=defaultLogic();gate.prompt='Ouvrir portail';gate.conditions=[{type:'questCompleted',key:'relics'}];gate.actions=[{type:'message',value:'Le portail est déverrouillé !'},{type:'destroy'}];gate.once=true;
 add('Portail ancien','object',1000,200,42,140,'#a56f48',{logic:gate});
 for(const [x,y] of [[390,390],[770,460],[590,95]])add('Arbre','prefab',x,y,65,85,'#699b66',{assetId:'tree',hp:100});
-state.entities=entities;state.nextId=entities.length+1;state.selected=[2];setCamera({x:90,y:35,zoom:.9});record('Charger RPG Demo');notify()}
+state.entities=entities;state.nextId=entities.length+1;state.selected=[2];setCamera({x:90,y:35,zoom:.9});state.demoGuide='RPG 2D : parler à Elara avec E, accepter sa quête et ramasser les trois reliques.';record('Charger RPG Demo');notify()}
 
 export function loadNinjaZombieDemo(){
  if(state.playing)return;
@@ -95,7 +95,7 @@ export function loadNinjaZombieDemo(){
  add('Shadow Ninja','ninja',135,245,{hp:100,animation:'idle'});
  for(const [id,x,y] of [['zombie',440,180],['zombie-runner',680,235],['zombie-crawler',500,420],['zombie-brute',830,355],['zombie',980,150]])add('Zombie '+(all.length+1),id,x,y,{behavior:'chase',hp:id==='zombie-brute'?200:75,aiSpeed:id==='zombie-runner'?110:id==='zombie-crawler'?36:62,animation:id==='zombie-crawler'?'crawl':'walk_zombie'});
  for(const [id,x,y] of [['crate',360,325],['crate',730,105],['sandbag',710,450],['rock',970,450],['pine',320,80],['pine',1010,275],['fire',605,460],['smoke',860,85]])add(id,id,x,y,{behavior:'none'});
- state.entities=all;state.nextId=all.length+1;state.selected=[1];setCamera({x:70,y:45,zoom:.85});record('Charger Ninja vs Zombies');notify();
+ state.entities=all;state.nextId=all.length+1;state.selected=[1];setCamera({x:70,y:45,zoom:.85});state.demoGuide='Ninja 2D : ZQSD/WASD, K pour le katana, F pour attaquer à distance.';record('Charger Ninja vs Zombies');notify();
 }
 
 export function loadBuildingDemo(){
@@ -115,7 +115,7 @@ export function loadBuildingDemo(){
  add('city-house',290,410,{buildTeam:1});
  add('fantasy-castle',760,430,{buildTeam:2,buildState:'construction',constructionProgress:18});
  add('sports-stadium',1050,390,{buildTeam:0});
- state.entities=entities;state.nextId=entities.length+1;state.selected=[3];setCamera({x:25,y:55,zoom:.8});record('Charger Buildings RTS Demo');notify();
+ state.entities=entities;state.nextId=entities.length+1;state.selected=[3];setCamera({x:25,y:55,zoom:.8});state.demoGuide='RTS 2D : lance Play et observe les unités produites par Barracks et Factory.';record('Charger Buildings RTS Demo');notify();
 }
 
 export function setGameModeOnScene(kind='deathmatch'){
@@ -141,7 +141,7 @@ export function loadGameModeDemo(kind='deathmatch'){
  if(kind==='roleplay'){insert('Police Station','prefab','city-police',850,380);insert('Hospital','prefab','city-hospital',580,390);insert('Shop','prefab','city-shop',240,450);insert('Maison RP','prefab','city-house',110,570);insert('Garage / Workshop','prefab','city-warehouse',1030,160);insert('Military HQ','prefab','rts-hq',1110,440)}
  if(kind==='frontline'){insert('Outpost','prefab','rts-bunker',780,180);insert('Command Post','prefab','rts-hq',1050,430)}
  if(['roleplay','battleRoyale','frontline','teamDeathmatch','deathmatch'].includes(kind)){insert('Jeep jouable','prefab','jeep',175,335,{maxSpeed:280,acceleration:245,brakeForce:320,turnRate:150,drag:1.4,collisionRadius:24});insert('Buggy jouable','prefab','buggy',865,555,{maxSpeed:330,acceleration:290,brakeForce:390,turnRate:170,drag:1.6,collisionRadius:22})}
- state.entities=result;state.nextId=result.length+1;state.selected=[1];setCamera({x:45,y:45,zoom:.85});record('Démo '+kind);notify();
+ state.entities=result;state.nextId=result.length+1;state.selected=[1];setCamera({x:45,y:45,zoom:.85});state.demoGuide='Mode '+kind+' : ZQSD/WASD pour bouger, F pour tirer ; objectifs et scores en Play.';record('Démo '+kind);notify();
 }
 
 export function loadElementsDemo(){
@@ -151,7 +151,7 @@ export function loadElementsDemo(){
  items.push({id:1,name:'Explorer',type:'character',skin:'scout',animation:'idle',x:100,y:245,w:48,h:76,color:'#57bea9',hp:100});
  const map=[['coin',220,150],['gem',310,150],['health-pickup',400,150],['ammo-pickup',490,150],['keycard',580,150],['locked-gate',750,150],['lever',660,150],['checkpoint',215,340],['spike-trap',330,340],['laser-trap',440,340],['boost-pad',540,340],['teleporter',660,340],['portal-pad',910,330],['finish-line',1080,370],['shield-pickup',850,150],['quest-scroll',980,150],['supply-crate',1100,150]];
  for(const [id,x,y] of map)add(id,x,y,id==='teleporter'?{elementTargetX:950,elementTargetY:290}:{});
- state.entities=items;state.nextId=items.length+1;state.selected=[1];setCamera({x:15,y:40,zoom:.9});record('Charger Elements Demo');notify();
+ state.entities=items;state.nextId=items.length+1;state.selected=[1];setCamera({x:15,y:40,zoom:.9});state.demoGuide='Elements 2D : ramasse les bonus, E pour actionner le levier et ouvrir la porte.';record('Charger Elements Demo');notify();
 }
 
 // Each demo is a complete, playable sandbox for its own project type.
@@ -190,5 +190,5 @@ export function load3dBetaDemo(kind='town'){
  const sound=put('primitive-cube',760,300,{name:'Ambient 3D Sound',w:22,h:22,depth3d:22,collision3d:false});
  if(sound)Object.assign(sound,{audioEnabled:true,audioClip:'vehicle',audioGain:.4,audioRange:18,audioInterval:3,audioLoop:true,audioSpatial:true});
  state.entities=entities;state.nextId=entities.length+1;state.selected=[1];setCamera({x:0,y:0,zoom:.7});
- record('Démo 3D : '+kind);notify();
+ state.demoGuide='3D '+kind+' : ZQSD/WASD pour bouger, Maj pour courir, clic droit pour orbiter.';record('Démo 3D : '+kind);notify();
 }

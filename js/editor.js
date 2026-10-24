@@ -1,4 +1,4 @@
-import {initHub} from './core/project-hub.js';
+import {initHub,hub} from './core/project-hub.js';
 import {workspace} from './core/workspaces.js';
 import {lighting} from './core/lighting.js';
 import {view3d} from './core/viewport-3d.js';
@@ -72,7 +72,7 @@ startGameSimulation();
 const viewport3d=init3d($('#canvas3d'),host,{toggle:$('#view3dToggle'),focus:$('#view3dFocus'),status:$('#view3dStatus')});
 
 const sceneTab=$('#sceneTab'),gameTab=$('#gameTab');
-function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing);$('#gameHint').hidden=!state.playing;$('#gameHint').textContent=workspace.mode==='3d'?'3D Play • ZQSD/WASD : avancer • Maj : courir • Souris droite : orienter caméra • Molette : zoom':'2D Play • ZQSD/WASD : marcher • E : interagir/véhicule • F : tirer';$('#status').textContent=(workspace.mode==='3d'?'3D':'2D')+' • '+(state.playing?'Play':'Édition');$('#workspace2d').disabled=state.playing;$('#workspace3d').disabled=state.playing}
+function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing);$('#gameHint').hidden=!state.playing;$('#gameHint').textContent=workspace.mode==='3d'?'3D Play • ZQSD/WASD : avancer • Maj : courir • Souris droite : orienter caméra • Molette : zoom':'2D Play • ZQSD/WASD : marcher • E : interagir/véhicule • F : tirer';$('#status').textContent=(workspace.mode==='3d'?'3D':'2D')+' • '+(state.playing?'Play':'Édition');$('#workspace2d').disabled=state.playing||!!hub.projectId&&hub.type!=='2d';$('#workspace3d').disabled=state.playing||!!hub.projectId&&hub.type!=='3d'}
 sceneTab.onclick=()=>{if(state.playing)togglePlay();syncTabs()};
 gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
 $('#play').addEventListener('click',syncTabs);
@@ -85,8 +85,8 @@ const setWorkspaceUi=()=>{
  $('#view3dFocus').disabled=!is3d;
  renderHistory();syncTabs();
 };
-$('#workspace2d').onclick=()=>{if(state.playing)return;if(workspace.mode==='3d')$('#view3dToggle').click();setWorkspaceUi()};
-$('#workspace3d').onclick=()=>{if(state.playing)return;if(workspace.mode==='2d')$('#view3dToggle').click();setWorkspaceUi()};
+$('#workspace2d').onclick=()=>{if(state.playing||hub.projectId&&hub.type!=='2d')return;if(workspace.mode==='3d')$('#view3dToggle').click();setWorkspaceUi()};
+$('#workspace3d').onclick=()=>{if(state.playing||hub.projectId&&hub.type!=='3d')return;if(workspace.mode==='2d')$('#view3dToggle').click();setWorkspaceUi()};
 $('#view3dToggle').addEventListener('click',setWorkspaceUi);
 setWorkspaceUi();
 document.addEventListener('warlike:change',()=>{if(viewport3d&&view3d.enabled!==(workspace.mode==='3d')){viewport3d.syncToWorkspace();setWorkspaceUi()}});

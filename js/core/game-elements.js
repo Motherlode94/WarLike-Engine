@@ -1,3 +1,4 @@
+import {playSound} from './audio.js';
 // Runtime interactions for reusable WarLike Elements.
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
@@ -30,24 +31,24 @@ export function updateElements(dt,player,game){
     else if(e.assetId==='coin'){elementsRuntime.coins+=amount;giveItem('coin',amount)}
     else if(e.assetId==='gem')giveItem('gem',amount);
     else giveItem(e.assetId==='keycard'?e.elementKey||'keycard':e.assetId,amount);
-    say('Ramassé : '+e.name);
+    playSound(e.assetId==='health-pickup'?'heal':'pickup');say('Ramassé : '+e.name);
     continue;
   }
   if(touching&&touchIds.has(e.assetId)){
-    if(e.assetId==='checkpoint'||e.assetId==='spawn-pad'){if(elementsRuntime.checkpoint!==e.id){elementsRuntime.checkpoint=e.id;say('Checkpoint activé')}player._modeSpawn={x:e.x,y:e.y}}
-    if(e.assetId==='finish-line'&&!elementsRuntime.finished){elementsRuntime.finished=true;say('Ligne d’arrivée !')}
+    if(e.assetId==='checkpoint'||e.assetId==='spawn-pad'){if(elementsRuntime.checkpoint!==e.id){elementsRuntime.checkpoint=e.id;playSound('checkpoint');say('Checkpoint activé')}player._modeSpawn={x:e.x,y:e.y}}
+    if(e.assetId==='finish-line'&&!elementsRuntime.finished){elementsRuntime.finished=true;playSound('victory');say('Ligne d’arrivée !')}
     if(e.assetId==='boost-pad'){elementsRuntime.boostTime=Math.max(1,elementsRuntime.boostTime);if(inCar)driving.speed=Math.max(driving.speed,Math.max(110,Number(e.elementValue)||2)*80)}
     if(e.assetId==='jump-pad'&&!inCar){player._actionAnimationUntil=performance.now()/1000+.5;player.animation='jump_start'}
     if(['spike-trap','laser-trap','toxic-pool','mine-trap'].includes(e.assetId)&&elementsRuntime.damageCooldown<=0){
-      game.life=Math.max(0,game.life-Math.max(1,Number(e.elementDamage)||10));elementsRuntime.damageCooldown=.7;
+      game.life=Math.max(0,game.life-Math.max(1,Number(e.elementDamage)||10));elementsRuntime.damageCooldown=.7;playSound(e.assetId==='mine-trap'?'explosion':'hurt');
       if(e.assetId==='mine-trap')e.elementUsed=true;
     }
   }
   if(interacted){
     switch(e.assetId){
-      case 'lever':case 'pressure-plate':e._activated=!e._activated;for(const gate of state.entities.filter(x=>isElement(x)&&x.assetId==='locked-gate'))gate._gateOpen=!gate._gateOpen;say('Levier activé');break;
-      case 'locked-gate':if(e._gateOpen||hasItem(e.elementKey||'keycard')){e._gateOpen=true;say('Porte ouverte')}else say('Porte verrouillée : trouver une carte');break;
-      case 'teleporter':case 'portal-pad':player.x=Number(e.elementTargetX)||600;player.y=Number(e.elementTargetY)||350;say('Téléportation');break;
+      case 'lever':case 'pressure-plate':e._activated=!e._activated;for(const gate of state.entities.filter(x=>isElement(x)&&x.assetId==='locked-gate'))gate._gateOpen=!gate._gateOpen;playSound('switch');say('Levier activé');break;
+      case 'locked-gate':if(e._gateOpen||hasItem(e.elementKey||'keycard')){e._gateOpen=true;playSound('door');say('Porte ouverte')}else say('Porte verrouillée : trouver une carte');break;
+      case 'teleporter':case 'portal-pad':player.x=Number(e.elementTargetX)||600;player.y=Number(e.elementTargetY)||350;playSound('teleport');say('Téléportation');break;
       case 'save-terminal':elementsRuntime.checkpoint=e.id;player._modeSpawn={x:player.x,y:player.y};say('Point de sauvegarde de session');break;
       case 'rally-point':say('Point de ralliement activé');break;
     }

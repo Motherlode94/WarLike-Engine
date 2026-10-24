@@ -248,3 +248,17 @@ body.dragging-window,body.dragging-window *{user-select:none!important}
 .lighting-control input[type=range]{width:86px;accent-color:#e7bf6d}
 .lighting-control input[type=checkbox]{accent-color:#65c3a9}
 #sunClock{width:40px;font-variant-numeric:tabular-nums}
+
+/* Dedicated 2D and 3D workspaces: never expose mixed scene-editing toolbars. */
+#view3dToggle{display:none}
+.workspace-mode.active{background:#285e65;border-color:#71d6c5;color:#ecfffb}
+body[data-workspace="2d"] .three-d-tools,
+body[data-workspace="2d"] #view3dFocus,
+body[data-workspace="2d"] .lighting-control{display:none!important}
+body[data-workspace="3d"] .scene-tools .tools-left button[data-tool],
+body[data-workspace="3d"] .scene-tools .tools-left .tool-option,
+body[data-workspace="3d"] #zoomOut,
+body[data-workspace="3d"] #zoomIn,
+body[data-workspace="3d"] #resetView,
+body[data-workspace="3d"] #zoomLabel{display:none!important}
+body[data-workspace="3d"] #toolStatus::after{content:" · 3D caméra orbitale"}

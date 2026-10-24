@@ -1,7 +1,7 @@
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
 export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal'];
-export const sequenceConditions=['always','variable','localVariable','distanceLess','objectEnabled','not'];
+export const sequenceConditions=['always','variable','localVariable','distanceLess','objectEnabled'];
 export const sequenceInstructions=['message','setVariable','addVariable','setLocal','wait','moveObject','setColor','enableObject','emitSignal','destroyObject'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
 export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[]};
@@ -12,7 +12,7 @@ export function resetSequences(){sequenceRuntime.globals={};sequenceRuntime.mess
 export const emitSequenceSignal=name=>{if(sequenceRuntime.signals.length<MAX_SIGNALS)sequenceRuntime.signals.push(String(name||'').slice(0,60))};
 export function conditionPass(c,o,ctx){
  const value=c.scope==='local'?o.sequenceLocal?.[c.key]:sequenceRuntime.globals[c.key];
- const compare=(a,b,op)=>op==='>'?number(a)>number(b):op==='<'?number(a)<number(b):op==='>='?number(a)>=number(b):op==='!='?String(a)!==String(b):String(a)===String(b);
+ const compare=(a,b,op)=>op==='>'?number(a)>number(b):op==='<'?number(a)<number(b):op==='>='?number(a)>=number(b):op==='<='?number(a)<=number(b):op==='!='?String(a)!==String(b):String(a)===String(b);
  let pass=false;
  switch(c.type){
  case 'always':pass=true;break;
@@ -90,4 +90,14 @@ export function updateSequences(dt,ctx){
  rt.messages=rt.messages.filter(m=>(m.ttl-=dt)>0);
  // Remove objects only after action execution, never while iterating triggers.
  for(let i=objects.length-1;i>=0;i--)if(objects[i]._sequenceDestroyed)objects.splice(i,1);
+}
+
+export function drawSequenceMessages(ctx,width,height){
+ if(!sequenceRuntime.messages.length)return;
+ ctx.save();ctx.font='12px system-ui';ctx.textAlign='center';
+ sequenceRuntime.messages.slice(-3).forEach((m,i)=>{
+  const y=height-175-i*34;ctx.fillStyle='#162c3be8';ctx.fillRect(width/2-195,y-18,390,28);
+  ctx.fillStyle='#e0ffef';ctx.fillText(m.text,width/2,y+1,365);
+ });
+ ctx.restore();
 }

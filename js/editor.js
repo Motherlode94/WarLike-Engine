@@ -1,3 +1,4 @@
+import {init3d} from './core/viewport-3d.js';
 import {motion} from './core/player-controller.js';
 import {bindModeInput} from './core/game-modes.js';
 import {initializeRpgUi} from './core/rpg-systems.js';
@@ -44,6 +45,7 @@ beginAutoSave();
 $('#cloudConnect').onclick=connectCloud;
 renderUI();
 startRenderer(canvas,host);
+init3d($('#canvas3d'),host,{toggle:$('#view3dToggle'),focus:$('#view3dFocus'),status:$('#view3dStatus')});
 
 const sceneTab=$('#sceneTab'),gameTab=$('#gameTab');
 function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing);$('#gameHint').hidden=!state.playing}

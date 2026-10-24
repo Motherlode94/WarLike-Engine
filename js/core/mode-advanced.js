@@ -27,27 +27,46 @@ export function resetAdvanced(){
 const note=text=>{advanced.notifications.unshift({text,until:modeRuntime.elapsed+3});advanced.notifications.length=Math.min(4,advanced.notifications.length)};
 export function consumeAmmo(){if(currentMode()?.kind!=='battleRoyale')return true;if(advanced.inventory.ammo<=0){note('Munitions épuisées : ramasse du butin !');return false}advanced.inventory.ammo--;return true}
 export function consumeMedkit(game){if(advanced.inventory.medkits<=0)return false;advanced.inventory.medkits--;game.life=Math.min(100,game.life+45);note('Trousse de soin utilisée');return true}
-export function advancedInput(game){const m=currentMode();if(!m||!state.playing||modeRuntime.roundOver)return;const p=player();if(!p||modeRuntime.playerOut)return;const pressed=state.keys.has('e')&&!currentVehicle();
+export function advancedInput(game){
+ const m=currentMode();if(!m||!state.playing||modeRuntime.roundOver)return;
+ const p=player();if(!p||modeRuntime.playerOut)return;
+ const pressed=state.keys.has('e')&&!currentVehicle();
  if(pressed&&!advanced.interactHeld){
   if(m.kind==='battleRoyale'){
-    const loot=advanced.loot.find(l=>!l.picked&&Math.hypot(center(p).x-l.x,center(p).y-l.y)<85);
-    if(loot){loot.picked=true;if(loot.kind==='ammo')advanced.inventory.ammo+=25;if(loot.kind==='medkit')advanced.inventory.medkits++;if(loot.kind==='armor')advanced.inventory.armor=Math.min(100,advanced.inventory.armor+45);note('Ramassé : '+loot.kind)}
+   const item=advanced.loot.find(l=>!l.picked&&Math.hypot(center(p).x-l.x,center(p).y-l.y)<85);
+   if(item){
+    item.picked=true;
+    if(item.kind==='ammo')advanced.inventory.ammo+=25;
+    if(item.kind==='medkit')advanced.inventory.medkits++;
+    if(item.kind==='armor')advanced.inventory.armor=Math.min(100,advanced.inventory.armor+45);
+    note('Ramassé : '+item.kind);
+   }
   }
   if(m.kind==='roleplay'){
-    const station=state.entities.filter(o=>getAsset(o.assetId)?.category==='Buildings'&&distance(p,o)<150).sort((a,b)=>distance(p,a)-distance(p,b))[0];
-    if(station){
-      const jobs={Police:{'city-police':{money:40,text:'Patrouille terminée'},'rts-hq':{money:40,text:'Rapport de sécurité transmis'}},
-        Medic:{'city-hospital':{money:30,text:'Patient soigné'}},
-        Mechanic:{'city-warehouse':{money:35,text:'Réparation effectuée'},'rts-factory':{money:35,text:'Véhicule réparé'}},
-        Merchant:{'city-shop':{money:25,text:'Vente effectuée'}},
-        Soldier:{'rts-hq':{money:35,text:'Mission sécurisée'}},
-        Civilian:{'city-shop':{money:12,text:'Mission de livraison terminée'}}};
-      const task=jobs[modeRuntime.role]?.[station.assetId];
-      if(task){
-        if(modeRuntime.elapsed-(station._lastModeTask||-100)<8)note('Mission disponible dans quelques secondes');
-        else { station._lastModeTask=modeRuntime.elapsed; modeRuntime.money+=task.money; advanced.tasks++; if(modeRuntime.role==='Medic')game.life=Math.min(100,game.life+20); if(modeRuntime.role==='Mechanic')for(const car of state.entities.filter(e=>getAsset(e.assetId)?.category==='Vehicles'&&distance(p,e)<160))car.hp=Math.min(200,(car.hp||100)+40); note(task.text+' +'+String(task.money)); }
-      }else note('Ce lieu ne correspond pas à ton métier');
+   const stations=state.entities.filter(o=>getAsset(o.assetId)?.category==='Buildings'&&distance(p,o)<150);
+   const station=stations.sort((a,b)=>distance(p,a)-distance(p,b))[0];
+   if(station){
+    const jobs={
+     Police:{'city-police':40,'rts-hq':40},
+     Medic:{'city-hospital':30},
+     Mechanic:{'city-warehouse':35,'rts-factory':35},
+     Merchant:{'city-shop':25},
+     Soldier:{'rts-hq':35},
+     Civilian:{'city-shop':12}
+    };
+    const reward=jobs[modeRuntime.role]?.[station.assetId];
+    if(reward===undefined)note('Ce lieu ne correspond pas à ton métier');
+    else if(modeRuntime.elapsed-(station._lastModeTask??-100)<8)note('Mission en attente');
+    else{
+     station._lastModeTask=modeRuntime.elapsed;
+     modeRuntime.money+=reward;advanced.tasks++;
+     if(modeRuntime.role==='Medic')game.life=Math.min(100,game.life+20);
+     if(modeRuntime.role==='Mechanic'){
+      for(const car of state.entities.filter(e=>getAsset(e.assetId)?.category==='Vehicles'&&distance(p,e)<160))car.hp=Math.min(200,(car.hp||100)+40);
+     }
+     note('Mission terminée : +'+reward);
     }
+   }
   }
  }
  advanced.interactHeld=pressed;

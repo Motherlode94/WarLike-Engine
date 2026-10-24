@@ -1,5 +1,28 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WarLike Engine — 2D Editor</title><link rel="stylesheet" href="./css/style.css"></head><body>
-<header><strong>WARLIKE ENGINE</strong><small>Editor 2D • 0.2</small><button id="add">+ Objet</button><button id="player">+ Joueur</button><button id="undo" title="Ctrl+Z">↶ Annuler</button><button id="redo" title="Ctrl+Y">↷ Rétablir</button><button id="zoomOut">−</button><span id="zoomLabel">100%</span><button id="zoomIn">+</button><button id="resetView">Centrer</button><button id="play">▶ Play</button><button id="save">Exporter JSON</button><button id="load">Importer JSON</button><input id="file" type="file" accept=".json" hidden><span id="status">Édition</span></header>
-<main><aside><h3>Hierarchy</h3><div id="objects"></div><small>Shift + clic pour sélection multiple.</small><h3>Historique</h3><div id="history"></div></aside><section id="viewport"><canvas id="canvas"></canvas><footer>Glisser : déplacer • molette : zoom • clic droit : naviguer • Ctrl+Z : annuler</footer></section><aside><h3>Inspector</h3><div id="properties"></div></aside></main>
-<script type="module" src="./js/editor.js"></script></body></html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WarLike Engine — 2D Editor</title><link rel="stylesheet" href="./css/style.css"></head>
+<body>
+<header class="topbar">
+  <div class="brand"><strong>WARLIKE <span>ENGINE</span></strong><small>2D Editor <b>0.3</b></small></div>
+  <div class="toolbar-group"><button id="add" title="Ajouter un objet">＋ Objet</button><button id="player" title="Ajouter un joueur">＋ Joueur</button><button id="duplicate" title="Dupliquer sélection (Ctrl+D)">⧉ Dupliquer</button></div>
+  <div class="toolbar-group"><button id="undo" title="Ctrl+Z">↶</button><button id="redo" title="Ctrl+Y">↷</button></div>
+  <div class="toolbar-group transport"><button id="play" title="Lancer ou arrêter la simulation">▶ Play</button></div>
+  <div class="toolbar-group"><button id="save">↓ Export JSON</button><button id="load">↑ Import JSON</button><input id="file" type="file" accept=".json" hidden></div>
+  <span id="status" class="status">Édition</span>
+</header>
+<main class="workspace">
+  <aside class="hierarchy panel">
+    <div class="panel-title">▤ Hierarchy <span>Scene 1</span></div>
+    <div id="objects"></div>
+    <small>Maj + clic : sélection multiple</small>
+    <div class="panel-title history-title">↶ History</div>
+    <div id="history"></div>
+  </aside>
+  <div class="center-stack">
+    <div class="scene-header"><div class="scene-tabs"><button id="sceneTab" class="tab active">◫ Scene</button><button id="gameTab" class="tab">▶ Game</button></div><div class="scene-actions"><button id="zoomOut">−</button><span id="zoomLabel">100%</span><button id="zoomIn">＋</button><button id="resetView">⌖ Frame</button></div></div>
+    <section id="viewport"><canvas id="canvas"></canvas><div class="scene-axis"><span class="axis-y">Y ↑</span><span class="axis-x">X →</span></div><footer>Glisser : déplacer • molette : zoom • clic droit : panoramique • Ctrl+Z : annuler</footer></section>
+    <section class="project-panel panel"><div class="panel-title">▦ Project / Assets <span>Bibliothèque de primitives</span></div><div class="asset-grid"><button class="asset" data-template="object"><span class="asset-preview rectangle"></span><span>Square 2D</span></button><button class="asset" data-template="player"><span class="asset-preview character"></span><span>Player 2D</span></button><button class="asset" data-template="obstacle"><span class="asset-preview obstacle"></span><span>Obstacle</span></button></div><div class="project-footer">Assets / Built-in • Clique pour ajouter à la scène</div></section>
+  </div>
+  <aside class="inspector panel"><div class="panel-title">☷ Inspector <span>Properties</span></div><div id="properties"></div></aside>
+</main>
+<script type="module" src="./js/editor.js"></script>
+</body></html>

@@ -186,3 +186,20 @@ body.project-floating #projectPanel{min-height:210px!important}
 .logic-editor .logic-flag{display:flex;align-items:center;gap:8px;font-size:11px;color:#bacee0}
 .logic-editor .logic-flag input{accent-color:#54d4a4}
 #logicDemo{background:#3a5260;color:#d6fff2;border-color:#508879}
+
+/* WarLike RPG / dialogue layer v1.3 */
+#viewport{position:relative}
+.rpg-shortcuts{position:absolute;top:10px;right:12px;z-index:5;pointer-events:none;padding:7px 11px;background:#142432d9;border:1px solid #4d6578;border-radius:4px;color:#a7eacb;font:11px system-ui}
+.rpg-overlay,.rpg-dialogue{position:absolute;z-index:15;background:#182432f2;border:1px solid #5b8d8b;box-shadow:0 12px 35px #000a;border-radius:8px;padding:16px;color:#e7f2f6}
+.rpg-overlay[hidden],.rpg-dialogue[hidden]{display:none}
+.rpg-overlay{right:12px;top:50px;width:min(265px,45%);max-height:65%;overflow-y:auto}
+#rpgJournal{right:auto;left:12px;top:113px}
+.rpg-overlay h3,.rpg-dialogue h3{font-size:13px;color:#75dec6;margin:0 0 12px}
+.rpg-item,.rpg-quest{padding:8px 10px;margin-bottom:6px;background:#273747;border:1px solid #465a6c;border-radius:5px}
+.rpg-quest{display:flex;flex-direction:column;gap:5px}
+.rpg-quest small,.rpg-quest span{color:#bbcad9;font-size:11px}
+.rpg-dialogue{left:50%;bottom:34px;transform:translateX(-50%);width:min(620px,calc(100% - 24px));max-height:65%;overflow-y:auto}
+.rpg-dialogue p{line-height:1.6;margin:9px 0 16px;font-size:13px}
+.rpg-dialogue button{display:block;width:100%;margin:6px 0;text-align:left;background:#2b4553;border-color:#4f7e82;padding:10px}
+.rpg-dialogue button:hover{background:#396875}
+.rpg-dialogue .rpg-close{width:auto;position:absolute;right:12px;top:8px;font-size:11px}

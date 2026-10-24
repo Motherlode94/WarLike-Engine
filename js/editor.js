@@ -75,7 +75,7 @@ startGameSimulation();
 init3d($('#canvas3d'),host,{toggle:$('#view3dToggle'),focus:$('#view3dFocus'),status:$('#view3dStatus')});
 
 const sceneTab=$('#sceneTab'),gameTab=$('#gameTab');
-function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing);$('#gameHint').hidden=!state.playing;$('#gameHint').textContent=workspace.mode==='3d'?'3D Play • ZQSD/WASD : avancer • Maj : courir • Souris droite : orienter caméra • Molette : zoom':'2D Play • ZQSD/WASD : marcher • E : interagir/véhicule • F : tirer';$('#status').textContent=(workspace.mode==='3d'?'3D':'2D')+' • '+(state.playing?'Play':'Édition')}
+function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing);$('#gameHint').hidden=!state.playing;$('#gameHint').textContent=workspace.mode==='3d'?'3D Play • ZQSD/WASD : avancer • Maj : courir • Souris droite : orienter caméra • Molette : zoom':'2D Play • ZQSD/WASD : marcher • E : interagir/véhicule • F : tirer';$('#status').textContent=(workspace.mode==='3d'?'3D':'2D')+' • '+(state.playing?'Play':'Édition');$('#workspace2d').disabled=state.playing;$('#workspace3d').disabled=state.playing}
 sceneTab.onclick=()=>{if(state.playing)togglePlay();syncTabs()};
 gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
 $('#play').addEventListener('click',syncTabs);

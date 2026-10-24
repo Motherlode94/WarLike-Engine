@@ -22,6 +22,8 @@ import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
+// Make the project chooser visible before initializing optional editor systems.
+initHub();
 bindAudioControls($('#audioToggle'),$('#audioVolume'));
 
 $('#newPointLight').onclick=()=>addLight('point');
@@ -97,4 +99,3 @@ initDocking();
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});
 
 initStudioMenus();
-initHub();

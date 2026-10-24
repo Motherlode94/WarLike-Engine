@@ -21,7 +21,13 @@ export function renderSequenceEditor(root,o){
  const toggle=(parent,label,checked,handler)=>{
   const row=document.createElement('label');row.className='sequence-toggle';const input=document.createElement('input');input.type='checkbox';input.checked=!!checked;input.disabled=state.playing;input.onchange=()=>handler(input.checked);row.append(input,document.createTextNode(label));parent.append(row);
  };
- if(!o.sequence){button(body,'＋ Add Logic Sequence',()=>{o.sequence=newSequence();save('Ajouter')});return}
+ if(!o.sequence){
+  button(body,'＋ Add Logic Sequence',()=>{o.sequence=newSequence();save('Ajouter')});
+  button(body,'Exemple : porte à clé',()=>{o.sequence={...newSequence(),once:true,conditions:[],branches:[{conditions:[{type:'variable',key:'hasKey',operator:'==',value:1}],instructions:[{type:'message',value:'Porte ouverte !'},{type:'setColor',value:'#65ceab'}]}],elseInstructions:[{type:'message',value:'Porte verrouillée : trouve la clé.'}]};save('Modèle porte à clé')});
+  button(body,'Exemple : interrupteur',()=>{o.sequence={...newSequence(),event:'interact',once:false,instructions:[{type:'addVariable',key:'switchCount',value:1},{type:'message',value:'Interrupteur activé'}]};save('Modèle interrupteur')});
+  button(body,'Exemple : événement temporisé',()=>{o.sequence={...newSequence(),event:'start',once:true,instructions:[{type:'message',value:'Début de l’événement'},{type:'wait',value:2},{type:'setColor',value:'#4f9ce9'},{type:'message',value:'Événement terminé'}]};save('Modèle temporisé')});
+  return
+ }
  const s=o.sequence;
  button(body,'Supprimer la séquence',()=>{delete o.sequence;save('Supprimer')});
  toggle(body,'Activée',s.enabled!==false,v=>{s.enabled=v;save('Activation')});

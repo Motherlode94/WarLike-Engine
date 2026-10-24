@@ -1,3 +1,4 @@
+import {modeDefaults,modeNames,roleNames} from '../core/game-modes.js';
 import {defaults as buildingDefaults,getBuilding} from '../assets/buildings.js';
 import {availableClips} from '../assets/animation-vfx.js';
 import {defaultLogic,eventTypes,actionTypes,conditionTypes} from '../core/visual-logic.js';
@@ -26,6 +27,20 @@ if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Buildings')component(root
  const snap=document.createElement('button');snap.textContent='⌗ Snap to building grid';snap.disabled=state.playing;snap.onclick=()=>{const size=Math.max(8,Number(o.buildGrid)||32);o.x=Math.round(o.x/size)*size;o.y=Math.round(o.y/size)*size;record('Snap building to grid');notify()};body.append(snap)
 });
 if(o.type==='prefab'){component(root,'Health',body=>field(body,o,'hp','Hit Points'));if(getAsset(o.assetId)?.category==='Monsters')component(root,'AI Controller',body=>{selectField(body,o,'behavior','Behaviour',['none','patrol','chase','guard','wander','flee','follow']);if(o.aiSpeed===undefined)o.aiSpeed=65;if(o.detectionRadius===undefined)o.detectionRadius=650;field(body,o,'aiSpeed','Move speed');field(body,o,'detectionRadius','Detection range')})}
+if(o.gameMode)component(root,'Game Mode Rules',body=>{
+ const m=o.gameMode;for(const [key,value] of Object.entries(modeDefaults()))if(m[key]===undefined)m[key]=value;
+ selectField(body,m,'kind','Mode',Object.keys(modeNames));
+ const help=document.createElement('p');help.textContent=modeNames[m.kind]+' — simulation locale, sans serveur multijoueur.';body.append(help);
+ if(m.kind==='roleplay'){selectField(body,m,'role','Starting Role',roleNames);for(const [k,l] of [['startingMoney','Starting Money'],['roleSalary','Paycheck'],['rolePayInterval','Pay Interval']])field(body,m,k,l)}
+ else{for(const [k,l] of [['scoreLimit','Victory Score'],['timeLimit','Match Seconds'],['respawnSeconds','Respawn Seconds']])field(body,m,k,l)}
+ if(m.kind==='battleRoyale')for(const [k,l] of [['zoneX','Storm Center X'],['zoneY','Storm Center Y'],['zoneRadius','Start Radius'],['zoneMinRadius','Final Radius'],['zoneShrinkSeconds','Shrink Seconds'],['zoneDamage','Storm DPS']])field(body,m,k,l);
+ if(m.kind==='frontline')for(const [k,l] of [['captureX','Capture X'],['captureY','Capture Y'],['captureRadius','Capture Radius'],['captureSeconds','Capture Seconds'],['scorePerCapture','Score Per Tick']])field(body,m,k,l);
+ const rm=document.createElement('button');rm.textContent='Remove Game Mode';rm.disabled=state.playing;rm.onclick=()=>{delete o.gameMode;record('Remove Game Mode');notify()};body.append(rm)
+});
+if(o.type==='character'||o.type==='player'||o.type==='prefab'&&getAsset(o.assetId)?.kind==='actor')component(root,'Game Role / Team',body=>{
+ if(o.team===undefined)o.team=1;field(body,o,'team','Team (1 / 2)');
+ if(o.gameMode)body.append(document.createTextNode('Le Game Mode définit les règles de la partie.'));
+});
 component(root,'Box Collider 2D',body=>{const note=document.createElement('p');note.textContent='Collision rectangulaire (AABB), selon le type d’objet.';body.append(note)});
 const logicSection=document.createElement('details');logicSection.className='inspector-component';logicSection.open=true;const title=document.createElement('summary');title.textContent='⚡ Visual Logic • Triggers / Conditions / Actions';const inner=document.createElement('div');inner.className='component-content logic-editor';logicSection.append(title,inner);root.append(logicSection);
 const saveLogic=msg=>{record(msg);notify()};

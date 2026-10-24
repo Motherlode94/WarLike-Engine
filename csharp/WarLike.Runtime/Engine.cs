@@ -9,6 +9,8 @@ public sealed class Actor {
     public Vector3 Position { get; set; }
     public Vector3 Velocity { get; set; }
     public float Health { get; set; } = 100;
+    public float Rotation { get; set; }
+    public float SpinSpeed { get; set; }
     public float MaxHealth { get; set; } = 100;
     public bool Enabled { get; set; } = true;
     public Dictionary<string, object> Properties { get; } = new();
@@ -77,6 +79,11 @@ public sealed class GameWorld {
             // WarLike JSON x/y denote ground X/Z; elevation3d denotes world Y.
             var actor = world.CreateActor(name, new Vector3(Number(obj,"x") / 64f, Number(obj,"elevation3d"), Number(obj,"y") / 64f));
             if (obj.TryGetProperty("id", out var id) && id.TryGetInt32(out int value)) actor.Id = value;
+            if (obj.TryGetProperty("rotation", out var rot) && rot.TryGetSingle(out float degrees)) actor.Rotation = degrees;
+            if (obj.TryGetProperty("csharpComponent", out var component) && component.ValueKind == JsonValueKind.Object && component.TryGetProperty("kind", out var kind) && kind.GetString() == "AutoRotate") {
+                actor.SpinSpeed = Number(component,"speed");
+                world.AddComponent(actor, new AutoRotateBehaviour());
+            }
             if (obj.TryGetProperty("hp", out var hp) && hp.TryGetSingle(out float health)) actor.Health = health;
             if (obj.TryGetProperty("stats", out var stats) && stats.ValueKind == JsonValueKind.Object) {
                 actor.Health = Number(stats,"health"); actor.MaxHealth = Number(stats,"maxHealth");
@@ -84,4 +91,8 @@ public sealed class GameWorld {
         }
         return world;
     }
+}
+
+public sealed class AutoRotateBehaviour : WarLikeBehaviour {
+    public override void Update(float deltaTime) => Actor.Rotation = (Actor.Rotation + Actor.SpinSpeed * deltaTime) % 360f;
 }

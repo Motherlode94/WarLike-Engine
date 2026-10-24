@@ -89,6 +89,7 @@ $('#workspace2d').onclick=()=>{if(state.playing||hub.projectId&&hub.type!=='2d')
 $('#workspace3d').onclick=()=>{if(state.playing||hub.projectId&&hub.type!=='3d')return;if(workspace.mode==='2d')$('#view3dToggle').click();setWorkspaceUi()};
 $('#view3dToggle').addEventListener('click',setWorkspaceUi);
 setWorkspaceUi();
+document.addEventListener('warlike:project',setWorkspaceUi);
 document.addEventListener('warlike:change',()=>{if(viewport3d&&view3d.enabled!==(workspace.mode==='3d')){viewport3d.syncToWorkspace();setWorkspaceUi()}});
 $('#duplicate').onclick=duplicateSelected;
 initWorkspace();

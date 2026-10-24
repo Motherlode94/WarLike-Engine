@@ -1,3 +1,4 @@
+import {view3d,sceneCamera3d,groundHit3d} from '../core/viewport-3d.js';
 import {workspace} from '../core/workspaces.js';
 import {assets3d,categories3d,url3d,get3dAsset,prefab3d} from '../assets/catalog-3d.js';
 import {record} from '../core/history.js';
@@ -56,5 +57,20 @@ splitter.addEventListener('pointerup',()=>dragHeight=null);splitter.addEventList
 splitter.addEventListener('keydown',e=>{if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();applyHeight(document.querySelector('.project-panel').getBoundingClientRect().height+(e.key==='ArrowUp'?30:-30))}});
 render();
 const canvas=$('#canvas');canvas.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('application/x-warlike-asset'))e.preventDefault()});canvas.addEventListener('drop',e=>{e.preventDefault();const id=e.dataTransfer.getData('application/x-warlike-asset');if(state.playing)return; if(workspace.mode==='3d'){if(!get3dAsset(id))return;add3d(id);return}if(!catalog.some(a=>a.id===id))return;addPrefab(id);const item=state.entities.find(o=>o.id===state.selected.at(-1));if(item){const rect=canvas.getBoundingClientRect(),p={x:e.clientX-rect.left,y:e.clientY-rect.top};item.x=Math.round((p.x-state.camera.x)/state.camera.zoom-item.w/2);item.y=Math.round((p.y-state.camera.y)/state.camera.zoom-item.h/2);notify()}log('Déposé : '+id)});
+const canvas3d=$('#canvas3d');
+canvas3d.addEventListener('dragover',e=>{if(workspace.mode==='3d'&&e.dataTransfer.types.includes('application/x-warlike-asset'))e.preventDefault()});
+canvas3d.addEventListener('drop',e=>{
+ e.preventDefault();
+ if(workspace.mode!=='3d'||state.playing)return;
+ const id=e.dataTransfer.getData('application/x-warlike-asset');
+ if(!get3dAsset(id))return;
+ const rect=canvas3d.getBoundingClientRect();
+ const cam=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
+ const position=groundHit3d(e.clientX-rect.left,e.clientY-rect.top,cam,rect.width,rect.height);
+ add3d(id);
+ const obj=state.entities.find(o=>o.id===state.selected.at(-1));
+ if(obj&&position){obj.x=Math.round(position[0]*64-obj.w/2);obj.y=Math.round(position[2]*64-obj.h/2);record('Positionner prefab 3D');notify()}
+ log('Prefab 3D déposé : '+id);
+});
 window.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||e.ctrlKey||e.metaKey||state.playing)return;const map={q:'hand',w:'move',e:'rotate',r:'scale',t:'rect'};if(map[e.key.toLowerCase()])setTool(map[e.key.toLowerCase()])});
 log('WarLike Engine editor démarré');}

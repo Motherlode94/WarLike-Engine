@@ -48,7 +48,8 @@ const shader=(gl,type,text)=>{
  if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh)||'Erreur shader');return sh;
 };
 const program3d=gl=>{
- const vs=`attribute vec3 aPosition;attribute vec3 aNormal;
+ const vs=`precision highp float;
+ attribute vec3 aPosition;attribute vec3 aNormal;
  uniform vec3 uEye,uRight,uUp,uForward,uPosition,uScale;
  uniform float uAngle,uAspect;
  varying vec3 vNormal,vWorld;

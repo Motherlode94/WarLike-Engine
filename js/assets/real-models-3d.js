@@ -80,7 +80,7 @@ export function parseGlb(buffer){
  for(const root of roots)walk(root,identity(),0);
  if(!parts.length)throw Error('Aucun triangle compatible dans ce GLB');
  const xyz=[[],[],[]];for(const part of parts)for(let j=0;j<part.vertices.length;j+=6)for(let k=0;k<3;k++)xyz[k].push(part.vertices[j+k]);
- const min=xyz.map(a=>Math.min(...a)),max=xyz.map(a=>Math.max(...a));
+ const min=xyz.map(a=>a.reduce((n,v)=>Math.min(n,v),Infinity)),max=xyz.map(a=>a.reduce((n,v)=>Math.max(n,v),-Infinity));
  const size=max.map((n,k)=>Math.max(.0001,n-min[k])),center=max.map((n,k)=>(n+min[k])/2);
  for(const part of parts)for(let j=0;j<part.vertices.length;j+=6)for(let k=0;k<3;k++)part.vertices[j+k]=(part.vertices[j+k]-center[k])/size[k];
  return {parts,triangleCount:parts.reduce((sum,p)=>sum+p.vertices.length/18,0),source:json.asset?.generator||'glTF 2.0'};

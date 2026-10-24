@@ -1,3 +1,4 @@
+import {updateBuildings,isBuildingSolid,isBuilding} from './building-system.js';
 import {drawRpgNotices} from './rpg-systems.js';
 import {updateLogic,drawLogic,resetLogic,logic} from './visual-logic.js';
 import {updateVehicles,currentVehicle,drawDrivingHud,resetDriving} from './vehicle.js';
@@ -8,7 +9,7 @@ export function resetGame(){resetLogic();resetDriving();Object.assign(game,{proj
 const center=e=>({x:e.x+e.w/2,y:e.y+e.h/2});
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const enemy=o=>o.type==='prefab'&&getAsset(o.assetId)?.category==='Monsters';
-const solid=o=>o.type==='object'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock'].includes(o.assetId);
+const solid=o=>isBuildingSolid(o)||o.type==='object'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock'].includes(o.assetId);
 function flash(x,y,color,count=8){for(let i=0;i<count;i++){const a=Math.PI*2*i/count+Math.random()*.5,s=30+Math.random()*75;game.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.25+Math.random()*.4,color})}}
 function move(e,dx,dy){const oldX=e.x;e.x+=dx;if(state.entities.some(o=>o!==e&&solid(o)&&overlaps(e,o)))e.x=oldX;const oldY=e.y;e.y+=dy;if(state.entities.some(o=>o!==e&&solid(o)&&overlaps(e,o)))e.y=oldY}
 function shoot(p,at){const origin=center(p),dx=at.x-origin.x,dy=at.y-origin.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;game.projectiles.push({x:origin.x,y:origin.y,vx:ux*560,vy:uy*560,life:1.35,damage:34});flash(origin.x+ux*22,origin.y+uy*22,'#fcd36e',4)}
@@ -29,10 +30,10 @@ if(mode==='patrol'||mode==='wander'){const period=mode==='wander'?2.3:1.5;move(e
 if(mode==='flee'&&d<range)move(e,-dx/d*speed*dt,-dy/d*speed*dt);
 if(mode==='follow'&&d>90&&d<range)move(e,dx/d*speed*dt,dy/d*speed*dt);
 if(mode==='guard'&&d<Math.min(range,260)&&d>48)move(e,dx/d*speed*dt,dy/d*speed*dt);if(d<48&&e._cooldown===0&&game.hurtTimer===0){game.life=Math.max(0,game.life-11);game.hurtTimer=.45;e._cooldown=.7;flash(b.x,b.y,'#f35b66',6);if(game.life===0)game.over=true}}
-for(const b of game.projectiles){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;for(const e of state.entities.filter(enemy)){if(b.life<=0)break;if(b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h){e.hp=(e.hp??65)-b.damage;e._hit=.12;b.life=0;flash(b.x,b.y,'#f3a862',9);if(e.hp<=0){state.entities=state.entities.filter(o=>o!==e);game.kills++;game.score+=100}break}}if(state.entities.some(e=>solid(e)&&b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h)){b.life=0;flash(b.x,b.y,'#c5b6a0',4)}}
+for(const b of game.projectiles){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;for(const e of state.entities.filter(enemy)){if(b.life<=0)break;if(b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h){e.hp=(e.hp??65)-b.damage;e._hit=.12;b.life=0;flash(b.x,b.y,'#f3a862',9);if(e.hp<=0){state.entities=state.entities.filter(o=>o!==e);game.kills++;game.score+=100}break}}const hitObject=state.entities.find(e=>solid(e)&&b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h);if(hitObject){b.life=0;flash(b.x,b.y,'#c5b6a0',4);if(isBuilding(hitObject)){hitObject.buildHp=Math.max(0,Number(hitObject.buildHp??600)-b.damage);if(hitObject.buildHp===0)hitObject.buildState='destroyed';else if(hitObject.buildHp<(hitObject.buildMaxHp||600)*.5)hitObject.buildState='damaged'}}}
 game.projectiles=game.projectiles.filter(b=>b.life>0);
 for(const e of state.entities.filter(o=>o.type==='prefab'&&o.assetId==='medkit')){if(overlaps(p,e)){game.life=Math.min(100,game.life+35);state.entities=state.entities.filter(o=>o!==e);flash(e.x,e.y,'#5af7ad',10)}}
-updateLogic(dt);if(logic.healthDelta!==0){game.life=Math.max(0,Math.min(100,game.life+logic.healthDelta));logic.healthDelta=0;if(game.life===0)game.over=true}
+updateBuildings(dt);updateLogic(dt);if(logic.healthDelta!==0){game.life=Math.max(0,Math.min(100,game.life+logic.healthDelta));logic.healthDelta=0;if(game.life===0)game.over=true}
 for(const a of game.particles){a.x+=a.vx*dt;a.y+=a.vy*dt;a.life-=dt}
 game.particles=game.particles.filter(a=>a.life>0);
 }

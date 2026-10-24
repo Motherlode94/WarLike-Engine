@@ -1,3 +1,4 @@
+import {defaultLogic,eventTypes,actionTypes,conditionTypes} from '../core/visual-logic.js';
 import {getAsset} from '../assets/catalog.js';
 import {state,active,notify} from '../core/state.js';
 import {record} from '../core/history.js';
@@ -14,6 +15,25 @@ if(o.type==='character'||o.type==='prefab')component(root,'Animator',body=>selec
 if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Vehicles'){component(root,'Vehicle Controller 2D',body=>{for(const [key,label] of [['maxSpeed','Max Speed'],['acceleration','Acceleration'],['brakeForce','Brake Force'],['turnRate','Turn Rate °/s'],['drag','Drag'],['collisionRadius','Collision Radius']]){if(o[key]===undefined)o[key]=({maxSpeed:250,acceleration:210,brakeForce:310,turnRate:140,drag:1.4,collisionRadius:25})[key];field(body,o,key,label)}const note=document.createElement('p');note.textContent='Play : E monter/sortir • ZQSD conduite • Espace frein à main';body.append(note)})}
 if(o.type==='prefab'){component(root,'Health',body=>field(body,o,'hp','Hit Points'));if(getAsset(o.assetId)?.category==='Monsters')component(root,'AI Controller',body=>selectField(body,o,'behavior','Behaviour',['none','patrol','chase']))}
 component(root,'Box Collider 2D',body=>{const note=document.createElement('p');note.textContent='Collision rectangulaire (AABB), selon le type d’objet.';body.append(note)});
+const logicSection=document.createElement('details');logicSection.className='inspector-component';logicSection.open=true;const title=document.createElement('summary');title.textContent='⚡ Visual Logic • Triggers / Conditions / Actions';const inner=document.createElement('div');inner.className='component-content logic-editor';logicSection.append(title,inner);root.append(logicSection);
+const saveLogic=msg=>{record(msg);notify()};
+if(!o.logic){const add=document.createElement('button');add.textContent='+ Add Visual Logic';add.disabled=state.playing;add.onclick=()=>{o.logic=defaultLogic();saveLogic('Add Visual Logic')};inner.append(add)}
+else{
+const l=o.logic;selectField(inner,l,'event','Trigger',eventTypes);field(inner,l,'radius','Range');field(inner,l,'prompt','Prompt','text');
+const flag=document.createElement('label');flag.className='logic-flag';const check=document.createElement('input');check.type='checkbox';check.checked=!!l.once;check.disabled=state.playing;check.onchange=()=>{l.once=check.checked;saveLogic('Trigger once')};flag.append(check,document.createTextNode('Run only once'));inner.append(flag);
+for(const [type,arr,options] of [['Condition','conditions',conditionTypes],['Action','actions',actionTypes]]){
+const head=document.createElement('div');head.className='logic-heading';head.textContent=type+'s';inner.append(head);
+for(const [i,item] of (l[arr]||[]).entries()){
+const group=document.createElement('div');group.className='logic-step';selectField(group,item,'type',type,options);
+field(group,item,'key','Variable / Item','text');
+field(group,item,'value','Value','text');
+if(type==='Action'&&item.type==='teleport'){field(group,item,'x','Target X');field(group,item,'y','Target Y')}
+const remove=document.createElement('button');remove.textContent='Remove '+type;remove.disabled=state.playing;remove.onclick=()=>{l[arr].splice(i,1);saveLogic('Remove '+type)};group.append(remove);inner.append(group)
+}
+const add=document.createElement('button');add.textContent='+ Add '+type;add.disabled=state.playing;add.onclick=()=>{l[arr]??=[];l[arr].push(type==='Action'?{type:'message',key:'',value:'Action !'}:{type:'always',key:'',value:''});saveLogic('Add '+type)};inner.append(add)
+}
+const removeLogic=document.createElement('button');removeLogic.textContent='Remove Visual Logic component';removeLogic.disabled=state.playing;removeLogic.onclick=()=>{delete o.logic;saveLogic('Remove Visual Logic')};inner.append(removeLogic)
+}
 const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=deleteSelected;root.append(del)}
 export function renderUI(){renderHierarchy();renderInspector()}
 document.addEventListener('warlike:change',renderUI);

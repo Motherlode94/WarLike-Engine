@@ -161,7 +161,7 @@ export function init3d(canvas,host,buttons){
   const wx=(side*Math.cos(view3d.yaw)+forward*Math.sin(view3d.yaw))*speed;
   const wz=(-side*Math.sin(view3d.yaw)+forward*Math.cos(view3d.yaw))*speed;
   const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
-  const solid=o=>o!==p&&(o.type==='object'||getAsset(o.assetId)?.category==='Buildings');
+  const solid=o=>o!==p&&!o.lightType&&!o.audioEnabled&&(o.type==='object'||getAsset(o.assetId)?.category==='Buildings');
   const prevX=p.x;p.x+=wx;if(state.entities.some(o=>solid(o)&&overlaps(p,o)))p.x=prevX;
   const prevY=p.y;p.y+=wz;if(state.entities.some(o=>solid(o)&&overlaps(p,o)))p.y=prevY;
   p.animation='walk';

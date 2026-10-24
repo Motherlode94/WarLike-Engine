@@ -1,3 +1,4 @@
+import {elements,elementSvg} from './game-elements.js';
 import {buildings,buildingSvg} from './buildings.js';
 import {expansion,extraSvg} from './expansion.js';
 import {detailedSvg} from './detailed-art.js';
@@ -11,12 +12,13 @@ Props:[['crate','Crate'],['barrel','Barrel'],['explosive','Explosive Barrel'],['
 };
 for(const [category,items] of Object.entries(expansion)){if(defs[category])defs[category].push(...items);else defs[category]=items}
 defs.Buildings=buildings.map(([id,name])=>[id,name]);
-export const catalog=Object.entries(defs).flatMap(([category,items])=>items.map(([id,name],index)=>({id,category,name,index,kind:category==='Buildings'?'building':category==='Characters'||category==='Monsters'?'actor':category==='Vehicles'?'vehicle':category==='Weapons'?'weapon':category==='VFX'?'effect':'prop',width:category==='Buildings'?128:category==='Vehicles'?110:category==='Weapons'?76:category==='Props'?64:category==='VFX'?90:56,height:category==='Buildings'?112:category==='Vehicles'?66:category==='Weapons'?40:category==='Props'?64:category==='VFX'?90:80,hp:category==='Buildings'?600:category==='Monsters'?65:category==='Vehicles'?180:100,animation:'idle'})));
+defs.Elements=elements.map(([id,name])=>[id,name]);
+export const catalog=Object.entries(defs).flatMap(([category,items])=>items.map(([id,name],index)=>({id,category,name,index,kind:category==='Elements'?'element':category==='Buildings'?'building':category==='Characters'||category==='Monsters'?'actor':category==='Vehicles'?'vehicle':category==='Weapons'?'weapon':category==='VFX'?'effect':'prop',width:category==='Elements'?48:category==='Buildings'?128:category==='Vehicles'?110:category==='Weapons'?76:category==='Props'?64:category==='VFX'?90:56,height:category==='Elements'?48:category==='Buildings'?112:category==='Vehicles'?66:category==='Weapons'?40:category==='Props'?64:category==='VFX'?90:80,hp:category==='Buildings'?600:category==='Monsters'?65:category==='Vehicles'?180:100,animation:'idle'})));
 export const categories=['All',...Object.keys(defs)];
 export const getAsset=id=>catalog.find(a=>a.id===id);
 const palette={Characters:['#32c4a8','#5e92e1','#f4e0cc','#7596b2','#e0b65e','#ba85d2'],Monsters:['#6ba869','#7ade96','#d7d6b2','#799447','#839da9','#a25378'],Vehicles:['#688b78','#d3ad5b','#6e8672','#6b85b4','#7d8790'],Weapons:['#bdc5d1','#839aac','#d0b781'],Props:['#b48b57','#919ba3','#6e8c65','#a06f50']};
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
-export function svgFor(asset){if(asset.category==='Buildings')return buildingSvg(asset.id);const extra=extraSvg(asset);if(extra)return extra;if(asset.category!=='Characters'){const detailed=detailedSvg(asset);if(detailed)return detailed}const color=palette[asset.category][asset.index%palette[asset.category].length],dark='#233142',edge='#101e2b';
+export function svgFor(asset){if(asset.category==='Elements')return elementSvg(asset.id);if(asset.category==='Buildings')return buildingSvg(asset.id);const extra=extraSvg(asset);if(extra)return extra;if(asset.category!=='Characters'){const detailed=detailedSvg(asset);if(detailed)return detailed}const color=palette[asset.category][asset.index%palette[asset.category].length],dark='#233142',edge='#101e2b';
 const common='stroke="'+edge+'" stroke-width="2" stroke-linejoin="round"';
 let art='';
 if(asset.kind==='actor'){

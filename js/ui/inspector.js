@@ -27,11 +27,16 @@ for(const [i,item] of (l[arr]||[]).entries()){
 const group=document.createElement('div');group.className='logic-step';selectField(group,item,'type',type,options);
 field(group,item,'key','Variable / Item','text');
 field(group,item,'value','Value','text');
-if(type==='Action'&&item.type==='teleport'){field(group,item,'x','Target X');field(group,item,'y','Target Y')}
+if(type==='Action'&&item.type==='teleport'){field(group,item,'x','Target X');field(group,item,'y','Target Y')}if(type==='Action'&&item.type==='startQuest'){field(group,item,'goal','Target Count');field(group,item,'description','Description','text')}
 const remove=document.createElement('button');remove.textContent='Remove '+type;remove.disabled=state.playing;remove.onclick=()=>{l[arr].splice(i,1);saveLogic('Remove '+type)};group.append(remove);inner.append(group)
 }
 const add=document.createElement('button');add.textContent='+ Add '+type;add.disabled=state.playing;add.onclick=()=>{l[arr]??=[];l[arr].push(type==='Action'?{type:'message',key:'',value:'Action !'}:{type:'always',key:'',value:''});saveLogic('Add '+type)};inner.append(add)
 }
+component(inner,'Dialogue Tree',body=>{const help=document.createElement('p');help.textContent='Choix et ramifications. Ajoute une action startDialogue au trigger.';body.append(help);if(!o.dialogue){const btn=document.createElement('button');btn.textContent='+ Create Dialogue';btn.disabled=state.playing;btn.onclick=()=>{o.dialogue={title:o.name,nodes:[{text:'Bonjour, aventurier !',choices:[{text:'Continuer',next:-1}]}]};saveLogic('Créer dialogue')};body.append(btn);return}
+field(body,o.dialogue,'title','Speaker','text');
+for(const [idx,node] of o.dialogue.nodes.entries()){const group=document.createElement('div');group.className='logic-step';const heading=document.createElement('strong');heading.textContent='Node '+idx;group.append(heading);field(group,node,'text','Speech','text');for(const [j,choice] of (node.choices||[]).entries()){const line=document.createElement('div');line.className='logic-step';field(line,choice,'text','Answer','text');field(line,choice,'next','Go to node');field(line,choice,'item','Give item','text');field(line,choice,'quest','Start quest','text');const rm=document.createElement('button');rm.textContent='− Choice';rm.onclick=()=>{node.choices.splice(j,1);saveLogic('Remove dialogue choice')};line.append(rm);group.append(line)}const addChoice=document.createElement('button');addChoice.textContent='+ Choice';addChoice.onclick=()=>{node.choices??=[];node.choices.push({text:'Choisir',next:-1});saveLogic('Add dialogue choice')};group.append(addChoice);body.append(group)}
+const addNode=document.createElement('button');addNode.textContent='+ Dialogue Node';addNode.onclick=()=>{o.dialogue.nodes.push({text:'Nouvelle réplique',choices:[{text:'Terminer',next:-1}]});saveLogic('Add dialogue node')};body.append(addNode);
+})};
 const removeLogic=document.createElement('button');removeLogic.textContent='Remove Visual Logic component';removeLogic.disabled=state.playing;removeLogic.onclick=()=>{delete o.logic;saveLogic('Remove Visual Logic')};inner.append(removeLogic)
 }
 const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=deleteSelected;root.append(del)}

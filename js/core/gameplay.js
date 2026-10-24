@@ -1,3 +1,4 @@
+import {playSound} from './audio.js';
 import {resetElements,updateElements,elementsRuntime} from './game-elements.js';
 import {resetHousing,updateHousing,updateHouseAnimation,drawHousing,housingActive} from './housing.js';
 import {walkPlayer,followPlayer,motion} from './player-controller.js';
@@ -22,14 +23,14 @@ function shoot(p,at,weapon){
  const damage=Math.max(1,Number(weapon?.weaponDamage)||34),reach=Math.max(40,Number(weapon?.weaponRange)||760);
  const speed=weapon?.weaponClass==='melee'?500:660;
  game.projectiles.push({x:origin.x,y:origin.y,vx:ux*speed,vy:uy*speed,life:reach/speed,damage});
- flash(origin.x+ux*22,origin.y+uy*22,weapon?.weaponClass==='energy'?'#61dfef':'#fcd36e',4);
+ flash(origin.x+ux*22,origin.y+uy*22,weapon?.weaponClass==='energy'?'#61dfef':'#fcd36e',4);playSound(weapon?.weaponClass==='energy'?'laser':'shot');
 }
 export function updateGame(dt){if(!state.playing||game.over&&!currentMode())return;game.time+=dt;game.fireTimer=Math.max(0,game.fireTimer-dt);game.meleeTimer=Math.max(0,game.meleeTimer-dt);game.hurtTimer=Math.max(0,game.hurtTimer-dt);const p=state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');if(!p)return;
 if(modeRuntime.roundOver)return;if(modeRuntime.playerOut){updateGameMode(dt,game);return}const k=state.keys,x=(k.has('arrowright')||k.has('d')?1:0)-(k.has('arrowleft')||k.has('q')||k.has('a')?1:0),y=(k.has('arrowdown')||k.has('s')?1:0)-(k.has('arrowup')||k.has('z')||k.has('w')?1:0),length=Math.hypot(x,y)||1;updateHouseAnimation(dt);const indoors=updateHousing(dt,p);if(!indoors&&!housingActive()){updateVehicles(dt,p);if(!currentVehicle()&&!p._vehicleTransition)walkPlayer(p,dt,k);followPlayer(p,document.getElementById('canvas'),dt)}if(indoors||housingActive()){updateGameMode(dt,game);return}
 if(p.assetId==='ninja'||p.assetId==='ninja-elite'){
  if(k.has('k')&&game.meleeTimer===0&&!currentVehicle()){
   game.meleeTimer=.48;p.animation='katana_attack_1';p._ninjaAttackUntil=game.time+.3;
-  const pc=center(p);for(const foe of [...state.entities].filter(enemy)){const ec=center(foe),distance=Math.hypot(ec.x-pc.x,ec.y-pc.y);if(distance<100){foe.hp=(foe.hp??75)-55;foe._hit=.2;flash(ec.x,ec.y,'#a9e2f2',9);if(foe.hp<=0){if(!currentMode())state.entities=state.entities.filter(o=>o!==foe);game.kills++;game.score+=100;registerElimination(foe,p,game)}}}
+  const pc=center(p);for(const foe of [...state.entities].filter(enemy)){const ec=center(foe),distance=Math.hypot(ec.x-pc.x,ec.y-pc.y);if(distance<100){foe.hp=(foe.hp??75)-55;foe._hit=.2;flash(ec.x,ec.y,'#a9e2f2',9);if(foe.hp<=0){if(!currentMode())state.entities=state.entities.filter(o=>o!==foe);game.kills++;game.score+=100;playSound('impact');registerElimination(foe,p,game)}}}
  }
  if(p._ninjaAttackUntil&&game.time>p._ninjaAttackUntil){p.animation='idle';p._ninjaAttackUntil=0}
 }
@@ -46,7 +47,7 @@ if(mode==='chase'&&d<range&&d>38)move(e,dx/d*speed*dt,dy/d*speed*dt);
 if(mode==='patrol'||mode==='wander'){const period=mode==='wander'?2.3:1.5;move(e,Math.cos(game.time*period+e.id)*speed*.4*dt,Math.sin(game.time*(mode==='wander'?1.8:.8)+e.id)*speed*.22*dt)}
 if(mode==='flee'&&d<range)move(e,-dx/d*speed*dt,-dy/d*speed*dt);
 if(mode==='follow'&&d>90&&d<range)move(e,dx/d*speed*dt,dy/d*speed*dt);
-if(mode==='guard'&&d<Math.min(range,260)&&d>48)move(e,dx/d*speed*dt,dy/d*speed*dt);if(d<48&&e._cooldown===0&&game.hurtTimer===0){game.life=Math.max(0,game.life-11);game.hurtTimer=.45;e._cooldown=.7;flash(b.x,b.y,'#f35b66',6);if(game.life===0){if(currentMode())registerElimination(p,e,game);else game.over=true}}}
+if(mode==='guard'&&d<Math.min(range,260)&&d>48)move(e,dx/d*speed*dt,dy/d*speed*dt);if(d<48&&e._cooldown===0&&game.hurtTimer===0){game.life=Math.max(0,game.life-11);game.hurtTimer=.45;playSound('hurt');e._cooldown=.7;flash(b.x,b.y,'#f35b66',6);if(game.life===0){if(currentMode())registerElimination(p,e,game);else game.over=true}}}
 for(const b of game.projectiles){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;for(const e of state.entities.filter(enemy)){if(b.life<=0)break;if(currentMode()&&['teamDeathmatch','frontline'].includes(currentMode().kind)&&e.team===p.team)continue;if(b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h){e.hp=(e.hp??65)-b.damage;e._hit=.12;b.life=0;flash(b.x,b.y,'#f3a862',9);if(e.hp<=0){if(!currentMode())state.entities=state.entities.filter(o=>o!==e);game.kills++;game.score+=100;registerElimination(e,p,game)}break}}const hitObject=state.entities.find(e=>solid(e)&&b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h);if(hitObject){b.life=0;flash(b.x,b.y,'#c5b6a0',4);if(isBuilding(hitObject)){hitObject.buildHp=Math.max(0,Number(hitObject.buildHp??600)-b.damage);if(hitObject.buildHp===0)hitObject.buildState='destroyed';else if(hitObject.buildHp<(hitObject.buildMaxHp||600)*.5)hitObject.buildState='damaged'}}}
 game.projectiles=game.projectiles.filter(b=>b.life>0);
 for(const e of state.entities.filter(o=>o.type==='prefab'&&o.assetId==='medkit')){if(overlaps(p,e)){game.life=Math.min(100,game.life+35);state.entities=state.entities.filter(o=>o!==e);flash(e.x,e.y,'#5af7ad',10)}}

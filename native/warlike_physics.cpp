@@ -7,6 +7,14 @@
 #define WL_API
 #endif
 extern "C" {
+// Packed boxes: x, z, elevation, width, depth, height (height uses scene pixel units).
+WL_API int wl_overlap_aabb3d(const float* a,const float* b) {
+ if(!a||!b)return 0;
+ for(int i=0;i<6;i++)if(!std::isfinite(a[i])||!std::isfinite(b[i]))return 0;
+ if(a[3]<=0||a[4]<=0||a[5]<=0||b[3]<=0||b[4]<=0||b[5]<=0)return 0;
+ return a[0]<b[0]+b[3]&&a[0]+a[3]>b[0]&&a[1]<b[1]+b[4]&&a[1]+a[4]>b[1]&&a[2]<b[2]+b[5]/64.f&&a[2]+a[5]/64.f>b[2];
+}
+
 // Integrates vertical velocity and ground contact for one 3D rigidbody.
 // inOut[0]=height, [1]=vertical velocity; all measurements use WarLike units.
 WL_API void wl_integrate_gravity(float* inOut,float gravity,float restitution,float delta) {

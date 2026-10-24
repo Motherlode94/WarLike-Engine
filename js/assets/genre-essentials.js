@@ -33,6 +33,16 @@ export const genrePack={
 export const genreAssets=Object.entries(genrePack).flatMap(([category,rows])=>rows.map(([id,name])=>({id,name,category})));
 const lookup=new Map(genreAssets.map(a=>[a.id,a]));
 export const hasGenreAsset=id=>lookup.has(id);
+export const genreKeywords=id=>{
+ if(!lookup.has(id))return '';
+ if(/football|basketball|tennis|referee|boxer|wrestler|hockey|volleyball|goal|hoop|net|ring|scoreboard|stadium|training|trophy|fencing|baseball/.test(id))return 'sport sports sports-game fight combat arena';
+ if(/harvester|resource|palisade|stone-wall|crop|farmer|orc|dragon|worm|samurai|vampire|wand|mace|scythe/.test(id))return 'rts stratégie strategy fantasy medieval';
+ if(/road|car|bus|taxi|firetruck|tractor|traffic|hydrant|trash|bicycle|barrier|seat/.test(id))return 'city ville simulation racing course conduite';
+ if(/boat|splash/.test(id))return 'water mer marine naval';
+ if(/zombie|mutant|ghost|rat|infected/.test(id))return 'survival horror zombie';
+ return 'action aventure adventure combat';
+};
+
 const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const hash=s=>[...s].reduce((n,c)=>(n*33+c.charCodeAt(0))>>>0,5381);
 const path=(d,color,stroke='#203040',sw=2)=>'<path d="'+d+'" fill="'+color+'" stroke="'+stroke+'" stroke-width="'+sw+'" stroke-linejoin="round" stroke-linecap="round"/>';

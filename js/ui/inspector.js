@@ -12,6 +12,23 @@ import {state,active,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 import {deleteSelected} from '../core/scene.js';
 function field(parent,o,key,label,type='number'){const line=document.createElement('div');line.className='property-row';const name=document.createElement('label');name.textContent=label;const input=document.createElement('input');input.type=type;input.value=o[key]??(type==='number'?0:'');input.disabled=state.playing;input.onchange=()=>{const v=type==='number'?Number(input.value):input.value;if(type==='number'&&!Number.isFinite(v))return;if(['w','h'].includes(key)&&v<=0)return;o[key]=v;record('Inspector : '+label);notify()};line.append(name,input);parent.append(line)}
+const colorsPreset=['#41cdb5','#ffffff','#1b2535','#ef5350','#ff9f43','#ffd166','#74c96c','#4f9ce9','#9b78ef','#e667b4','#926b4c','#9daab5'];
+const normalizedHex=value=>/^#[0-9a-f]{6}$/i.test(String(value||''))?String(value).toLowerCase():'#8195ef';
+function colorPalette(parent,o,key,label='Couleur'){
+ const root=document.createElement('div');root.className='warlike-color-editor';
+ const title=document.createElement('label');title.textContent=label;root.append(title);
+ const controls=document.createElement('div');controls.className='warlike-color-controls';
+ const picker=document.createElement('input');picker.type='color';picker.value=normalizedHex(o[key]);picker.disabled=state.playing;picker.title='Choisir une couleur';
+ const hex=document.createElement('input');hex.type='text';hex.maxLength=7;hex.value=picker.value;hex.disabled=state.playing;hex.spellcheck=false;hex.placeholder='#RRGGBB';hex.setAttribute('aria-label','Couleur hexadécimale');
+ const apply=value=>{const candidate=normalizedHex(value);o[key]=candidate;picker.value=candidate;hex.value=candidate;record('Inspector : '+label);notify()};
+ picker.addEventListener('input',()=>{o[key]=picker.value;hex.value=picker.value});
+ picker.addEventListener('change',()=>apply(picker.value));
+ hex.addEventListener('change',()=>{if(!/^#[0-9a-f]{6}$/i.test(hex.value.trim())){hex.value=normalizedHex(o[key]);return}apply(hex.value.trim())});
+ controls.append(picker,hex);root.append(controls);
+ const palette=document.createElement('div');palette.className='warlike-color-swatches';
+ for(const color of colorsPreset){const btn=document.createElement('button');btn.type='button';btn.className='warlike-color-swatch';btn.style.backgroundColor=color;btn.title=color;btn.setAttribute('aria-label','Appliquer '+color);btn.disabled=state.playing;btn.onclick=()=>apply(color);palette.append(btn)}
+ root.append(palette);parent.append(root);
+}
 function selectField(parent,o,key,label,opts){const line=document.createElement('div');line.className='property-row';const title=document.createElement('label');title.textContent=label;const select=document.createElement('select');select.disabled=state.playing;for(const value of opts){const option=document.createElement('option');option.value=value;option.textContent=value;select.append(option)}select.value=o[key]||opts[0];select.onchange=()=>{o[key]=select.value;record('Inspector : '+label);notify()};line.append(title,select);parent.append(line)}
 function component(parent,title,build){const details=document.createElement('details');details.className='inspector-component';details.open=true;const summary=document.createElement('summary');summary.textContent='▣ '+title;const body=document.createElement('div');body.className='component-content';details.append(summary,body);build(body);parent.append(details)}
 export function renderHierarchy(){const root=document.querySelector('#objects'),filter=(document.querySelector('#hierarchySearch')?.value||'').toLowerCase();root.replaceChildren();for(const o of state.entities.filter(o=>o.name.toLowerCase().includes(filter))){const b=document.createElement('button');b.textContent=(o.type==='prefab'?'◈ ':o.type==='character'?'♟ ':'▣ ')+o.name;b.classList.toggle('selected',state.selected.includes(o.id));b.onclick=e=>{if(state.playing)return;state.selected=e.shiftKey?(state.selected.includes(o.id)?state.selected.filter(id=>id!==o.id):[...state.selected,o.id]):[o.id];notify()};root.append(b)}}
@@ -27,7 +44,8 @@ component(root,'Lighting 3D Beta',body=>{
   cb.onchange=()=>{o.lightEnabled=cb.checked;record('Light On/Off');notify()};
   flag.append(cb,document.createTextNode(' Enabled'));body.append(flag);
   if(o.lightColor===undefined)o.lightColor='#ffd48b';
-  for(const [key,label,type] of [['lightColor','Color','color'],['lightIntensity','Intensity','number'],['lightRange','Range (meters)','number'],['lightAngle','Spot Angle','number']]){if(key==='lightAngle'&&o.lightType!=='spot')continue;field(body,o,key,label,type)}
+  colorPalette(body,o,'lightColor','Couleur de la lumière');
+  for(const [key,label,type] of [['lightIntensity','Intensity','number'],['lightRange','Range (meters)','number'],['lightAngle','Spot Angle','number']]){if(key==='lightAngle'&&o.lightType!=='spot')continue;field(body,o,key,label,type)}
  }
  const tip=document.createElement('p');tip.textContent='Les lumières modifient les volumes dans la vue 3D. 8 lumières proches rendues simultanément.';body.append(tip);
 });
@@ -58,11 +76,11 @@ component(root,'Audio Source Beta',body=>{
  const text=document.createElement('p');text.textContent=o.audioFileName?'Audio local : '+o.audioFileName+(audioClips.has(o.id)?' (chargé)':' (réimporter après rechargement)'):'Importer un WAV/MP3/OGG pour cette session (fichier non incorporé dans JSON).';body.append(text);
  const preview=document.createElement('button');preview.textContent='▶ Écouter';preview.onclick=()=>previewSound(o);body.append(preview);
 });
-component(root,'Material 3D Beta',body=>{field(body,o,'color','Tint','color');const hint=document.createElement('p');hint.textContent='Matériaux provisoires : volumes 3D sans textures. Les prefabs utilisent une palette par catégorie.';body.append(hint)});
+component(root,'Material 3D Beta',body=>{colorPalette(body,o,'color','Couleur du matériau');const hint=document.createElement('p');hint.textContent='Matériaux provisoires : volumes 3D sans textures. Les prefabs utilisent une palette par catégorie.';body.append(hint)});
 const del3d=document.createElement('button');del3d.className='delete-object';del3d.textContent='Supprimer objet 3D';del3d.disabled=state.playing;del3d.onclick=deleteSelected;root.append(del3d);
 return;
 }
-component(root,'Sprite Renderer',body=>{field(body,o,'color','Tint','color');if(o.type==='prefab'){const label=document.createElement('p');label.textContent='Source : '+(getAsset(o.assetId)?.name||o.assetId);body.append(label)}if(o.type==='character')selectField(body,o,'skin','Character',['scout','soldier'])});
+component(root,'Sprite Renderer',body=>{colorPalette(body,o,'color','Couleur de l’objet');if(o.type==='prefab'){const label=document.createElement('p');label.textContent='Source : '+(getAsset(o.assetId)?.name||o.assetId);body.append(label)}if(o.type==='character')selectField(body,o,'skin','Character',['scout','soldier'])});
 if(o.type==='character'||o.type==='prefab')component(root,'Animator 2D',body=>{const kind=o.type==='character'?'actor':getAsset(o.assetId)?.kind||'prop';selectField(body,o,'animation','Clip',availableClips(kind,o.assetId));if(o.animationSpeed===undefined)o.animationSpeed=1;field(body,o,'animationSpeed','Playback Speed');const line=document.createElement('label');line.className='logic-flag';const check=document.createElement('input');check.type='checkbox';check.checked=!!o.animationPreview;check.disabled=state.playing;check.onchange=()=>{o.animationPreview=check.checked;record('Prévisualisation animation');notify()};line.append(check,document.createTextNode('Preview animation in Scene'));body.append(line)});
 if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Weapons')component(root,'Weapon Configuration',body=>{
  const asset=getAsset(o.assetId);for(const [k,label] of [['weaponDamage','Damage'],['weaponInterval','Seconds between attacks'],['weaponRange','Projectile range']]){if(o[k]===undefined)o[k]=asset[k]??({weaponDamage:34,weaponInterval:.16,weaponRange:650})[k];field(body,o,k,label)}

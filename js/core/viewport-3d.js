@@ -65,7 +65,7 @@ const program3d=gl=>{
  gl_Position=vec4(dot(rel,uRight)*f/uAspect,dot(rel,uUp)*f,clipZ,d);
  
  }`;
- const fs=`precision mediump float;
+ const fs=`precision highp float;
  uniform vec4 uColor;
  uniform vec3 uEye;
  uniform float uRoughness,uMetallic;

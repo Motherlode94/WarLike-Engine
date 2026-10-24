@@ -162,6 +162,11 @@ export function load3dBetaDemo(){
  place('Stone Wall','stone-wall',480,210,90,50);
  place('Forest Tree','pine',180,510,65,100);
  place('Zombie','zombie',950,550,54,80);
+ const streetLamp={id:scene.length+1,name:'Street Light 3D',type:'object',x:535,y:285,w:22,h:22,elevation3d:4,color:'#ffe3aa',lightType:'point',lightEnabled:true,lightColor:'#ffd49b',lightIntensity:5,lightRange:18,lightAngle:40};
+ scene.push(streetLamp);
+ const spotlight={id:scene.length+1,name:'Security Spotlight',type:'object',x:765,y:270,w:22,h:22,elevation3d:6,color:'#b6dfff',lightType:'spot',lightEnabled:true,lightColor:'#a5d6ff',lightIntensity:6,lightRange:23,lightAngle:68,rotation:95};
+ scene.push(spotlight);
+ scene.push({id:scene.length+1,name:'Ambient Generator Sound',type:'object',x:475,y:420,w:24,h:24,color:'#81bfd7',audioEnabled:true,audioClip:'vehicle',audioGain:.55,audioRange:20,audioInterval:2.5,audioLoop:true,audioSpatial:true});
  state.entities=scene;state.nextId=scene.length+1;state.selected=[1];
  setCamera({x:0,y:0,zoom:.75});record('Créer scène 3D Beta');notify();
 }

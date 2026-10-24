@@ -300,3 +300,14 @@ body[data-workspace="2d"] [data-studio-action="threeDDemo"],body[data-workspace=
 /* Keep 2D play hints inside the viewport on narrow panels. */
 #viewport>.rpg-shortcuts{box-sizing:border-box;max-width:calc(100% - 24px);white-space:normal;overflow-wrap:anywhere;right:12px}
 body[data-workspace="3d"] #viewport>.rpg-shortcuts{display:none!important}
+
+/* Color chooser in both 2D and 3D Inspector. */
+.warlike-color-editor{display:grid;gap:9px;padding:8px 4px 12px}
+.warlike-color-editor>label{font-size:11px;color:#b7cedb;font-weight:600}
+.warlike-color-controls{display:flex;gap:8px;align-items:center}
+.warlike-color-controls input[type=color]{width:52px;height:35px;padding:3px;cursor:pointer;background:#172531;border:1px solid #5a7989;border-radius:5px;flex-shrink:0}
+.warlike-color-controls input[type=text]{min-width:0;flex:1;background:#152434;color:#e9f4fb;border:1px solid #50697b;border-radius:5px;padding:8px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.warlike-color-swatches{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.warlike-color-swatch{height:26px;min-width:0;border:2px solid #a9bcc766;border-radius:5px;padding:0}
+.warlike-color-swatch:hover{border-color:#ffffff;transform:translateY(-1px)}
+.warlike-color-swatch:disabled{transform:none;opacity:.5}

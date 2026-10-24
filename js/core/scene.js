@@ -126,3 +126,25 @@ export function loadElementsDemo(){
  for(const [id,x,y] of map)add(id,x,y,id==='teleporter'?{elementTargetX:950,elementTargetY:290}:{});
  state.entities=items;state.nextId=items.length+1;state.selected=[1];setCamera({x:15,y:40,zoom:.9});record('Charger Elements Demo');notify();
 }
+
+export function load3dBetaDemo(){
+ if(state.playing)return;
+ const scene=[],place=(name,assetId,x,y,w,h,elevation3d=0)=>{
+  const asset=getAsset(assetId),obj={id:scene.length+1,name,type:asset?'prefab':'object',...(asset?{assetId}:{}),x,y,w,h,elevation3d,color:'#7e9fac',rotation:0,hp:asset?.hp||100,animation:'idle',behavior:'none'};
+  if(asset?.category==='Buildings')Object.assign(obj,buildingDefaults(asset));
+  if(asset?.category==='Vehicles')Object.assign(obj,{maxSpeed:asset.maxSpeed||240,acceleration:asset.acceleration||210,brakeForce:300,turnRate:140,drag:1.4,collisionRadius:25});
+  scene.push(obj);
+ };
+ scene.push({id:1,name:'Player 3D',type:'character',x:140,y:220,w:45,h:78,elevation3d:0,color:'#41cdb5',skin:'scout',animation:'idle'});
+ place('Town House','city-house',340,250,130,112);
+ place('Guard Tower','military-watchtower',700,160,105,190);
+ place('Command HQ','rts-hq',620,410,170,125);
+ place('Jeep','jeep',225,370,115,68);
+ place('Sports Car','sports-car',460,465,112,65);
+ place('Barracks','rts-barracks',890,390,145,112);
+ place('Stone Wall','stone-wall',480,210,90,50);
+ place('Forest Tree','pine',180,510,65,100);
+ place('Zombie','zombie',950,550,54,80);
+ state.entities=scene;state.nextId=scene.length+1;state.selected=[1];
+ setCamera({x:0,y:0,zoom:.75});record('Créer scène 3D Beta');notify();
+}

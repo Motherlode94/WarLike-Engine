@@ -78,7 +78,7 @@ component(root,'Audio Source Beta',body=>{
  const text=document.createElement('p');text.textContent=o.audioFileName?'Audio local : '+o.audioFileName+(audioClips.has(o.id)?' (chargé)':' (réimporter après rechargement)'):'Importer un WAV/MP3/OGG pour cette session (fichier non incorporé dans JSON).';body.append(text);
  const preview=document.createElement('button');preview.textContent='▶ Écouter';preview.onclick=()=>previewSound(o);body.append(preview);
 });
-component(root,'Material 3D Beta',body=>{colorPalette(body,o,'color','Couleur du matériau');const hint=document.createElement('p');hint.textContent='Matériaux provisoires : volumes 3D sans textures. Les prefabs utilisent une palette par catégorie.';body.append(hint)});
+component(root,'Material 3D Beta',body=>{colorPalette(body,o,'color','Couleur du matériau');if(o.materialRoughness===undefined)o.materialRoughness=.7;if(o.materialMetallic===undefined)o.materialMetallic=0;field(body,o,'materialRoughness','Rugosité 0–1');field(body,o,'materialMetallic','Métal 0–1');const hint=document.createElement('p');hint.textContent='Matériaux provisoires : volumes 3D sans textures. Les prefabs utilisent une palette par catégorie.';body.append(hint)});
 const del3d=document.createElement('button');del3d.className='delete-object';del3d.textContent='Supprimer objet 3D';del3d.disabled=state.playing;del3d.onclick=deleteSelected;root.append(del3d);
 return;
 }

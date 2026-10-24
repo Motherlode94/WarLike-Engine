@@ -1,5 +1,6 @@
 import {workspace} from './core/workspaces.js';
 import {lighting} from './core/lighting.js';
+import {view3d} from './core/viewport-3d.js';
 import {updateAudioSources,stopSources} from './core/audio-sources.js';
 import {bindAudioControls} from './core/audio.js';
 import {init3d} from './core/viewport-3d.js';
@@ -72,7 +73,7 @@ $('#cloudConnect').onclick=connectCloud;
 renderUI();
 startRenderer(canvas,host);
 startGameSimulation();
-init3d($('#canvas3d'),host,{toggle:$('#view3dToggle'),focus:$('#view3dFocus'),status:$('#view3dStatus')});
+const viewport3d=init3d($('#canvas3d'),host,{toggle:$('#view3dToggle'),focus:$('#view3dFocus'),status:$('#view3dStatus')});
 
 const sceneTab=$('#sceneTab'),gameTab=$('#gameTab');
 function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing);$('#gameHint').hidden=!state.playing;$('#gameHint').textContent=workspace.mode==='3d'?'3D Play • ZQSD/WASD : avancer • Maj : courir • Souris droite : orienter caméra • Molette : zoom':'2D Play • ZQSD/WASD : marcher • E : interagir/véhicule • F : tirer';$('#status').textContent=(workspace.mode==='3d'?'3D':'2D')+' • '+(state.playing?'Play':'Édition');$('#workspace2d').disabled=state.playing;$('#workspace3d').disabled=state.playing}
@@ -91,6 +92,7 @@ $('#workspace2d').onclick=()=>{if(state.playing)return;if(workspace.mode==='3d')
 $('#workspace3d').onclick=()=>{if(state.playing)return;if(workspace.mode==='2d')$('#view3dToggle').click();setWorkspaceUi()};
 $('#view3dToggle').addEventListener('click',setWorkspaceUi);
 setWorkspaceUi();
+document.addEventListener('warlike:change',()=>{if(viewport3d&&view3d.enabled!==(workspace.mode==='3d')){viewport3d.syncToWorkspace();setWorkspaceUi()}});
 $('#duplicate').onclick=duplicateSelected;
 initWorkspace();
 initDocking();

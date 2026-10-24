@@ -50,7 +50,7 @@ export function assignModelThumbnail(image,id){
   image.src=screenshot;image.dataset.modelStatus='reference';
   image.alt='Capture officielle du véritable modèle 3D '+entry.name;
   image.title='Image de référence Khronos ; la géométrie réelle est chargée en mode 3D';
-  image.onerror=()=>{image.onerror=null;image.dataset.modelStatus='loading';image.src=placeholder('GLB','Aperçu…');realModelThumbnail(id).then(src=>{if(image.isConnected){image.src=src;image.dataset.modelStatus='ready'}}).catch(error=>{image.dataset.modelStatus='error';image.title=String(error.message||error)})};
+  image.onerror=()=>{image.onerror=null;if(!image.dataset.triedPng){image.dataset.triedPng='1';image.onerror=()=>{image.onerror=null;image.dataset.modelStatus='loading';image.src=placeholder('GLB','Aperçu…');realModelThumbnail(id).then(src=>{if(image.isConnected){image.src=src;image.dataset.modelStatus='ready'}}).catch(error=>{image.dataset.modelStatus='error';image.title=String(error.message||error)})};image.src=screenshot.replace('.jpg','.png');return}image.dataset.modelStatus='error'};
   return;
  }
  image.src=placeholder('GLB','Chargement…');

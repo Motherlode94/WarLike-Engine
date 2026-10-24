@@ -6,3 +6,16 @@
 .save-status{font-size:11px;color:#74d0af;white-space:nowrap}
 #properties .character-select{width:100%;background:#192331;color:#e2e8f0;border:1px solid #465265;padding:8px;border-radius:4px}
 @media(max-width:900px){.save-status{display:none}}
+
+/* V0.5 asset library */
+.asset-toolbar{display:flex;gap:8px;padding:10px 12px;background:#222b35;border-bottom:1px solid #3d4855}
+.asset-toolbar input,.asset-toolbar select{background:#172331;color:#e7eef6;border:1px solid #47576a;border-radius:4px;padding:7px 9px;font:inherit;min-width:0}
+.asset-toolbar input{flex:1}
+.asset-toolbar select{width:128px}
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:9px;padding:10px 12px;overflow-y:auto;align-content:start}
+.asset{width:auto;min-height:108px;height:108px;padding:7px 5px;display:flex;flex-direction:column;gap:7px}
+.asset img{height:66px;width:70px;object-fit:contain;object-position:center;image-rendering:auto;filter:drop-shadow(0 3px 4px #101926)}
+.asset span{font-size:10px;line-height:1.15;max-width:96%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.project-panel{min-height:195px}
+.center-stack{grid-template-rows:38px minmax(120px,1fr)235px}
+@media(max-width:900px){.center-stack{grid-template-rows:38px minmax(120px,1fr)190px}}

@@ -1,3 +1,4 @@
+import {defaultStats,defaultInventory,defaultAi,defaultController,inventoryAdd,inventoryRemove,equipItem} from '../core/gameplay-components.js';
 import {renderSequenceEditor} from './logic-sequence-editor.js';
 import {workspace} from '../core/workspaces.js';
 import {lightTypes,validColor} from '../core/lighting.js';
@@ -37,6 +38,30 @@ export function renderInspector(){const root=document.querySelector('#properties
 const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent='GameObject #'+o.id+' • '+o.type;header.append(name,meta);root.append(header);
 component(root,'Transform',body=>{field(body,o,'x','Position X');field(body,o,'y',workspace.mode==='3d'?'Position Z':'Position Y');if(workspace.mode==='3d')field(body,o,'elevation3d','Position Y (3D height)');field(body,o,'rotation','Rotation');field(body,o,'w','Size X');field(body,o,'h',workspace.mode==='3d'?'Height':'Size Y')});
 renderSequenceEditor(root,o);
+component(root,'Gameplay Components',body=>{
+ const addComponent=(name,key,factory)=>{if(!o[key]){const b=document.createElement('button');b.textContent='＋ '+name;b.disabled=state.playing;b.onclick=()=>{o[key]=factory();record('Ajouter '+name);notify()};body.append(b);return false}return true};
+ if(addComponent('Stats','stats',defaultStats)){
+  const s=o.stats;for(const [key,label] of [['maxHealth','Vie maximale'],['health','Vie actuelle'],['maxStamina','Endurance maximale'],['stamina','Endurance'],['staminaRegen','Régénération']])field(body,s,key,label);
+  const remove=document.createElement('button');remove.textContent='− Supprimer Stats';remove.disabled=state.playing;remove.onclick=()=>{delete o.stats;record('Retirer Stats');notify()};body.append(remove);
+ }
+ if(addComponent('Inventaire','inventory',defaultInventory)){
+  const inv=o.inventory;field(body,inv,'capacity','Emplacements');const row=document.createElement('div');row.className='property-row';
+  const item=document.createElement('input');item.placeholder='ID objet (ex: sword)';item.disabled=state.playing;const add=document.createElement('button');add.textContent='＋ Objet';add.disabled=state.playing;add.onclick=()=>{if(inventoryAdd(o,item.value.trim())){record('Inventaire : ajouter');notify()}};row.append(item,add);body.append(row);
+  for(const entry of inv.items){const line=document.createElement('div');line.className='property-row';const label=document.createElement('span');label.textContent=entry.id+' ×'+entry.count;line.append(label);
+   for(const [slot,title] of [['weapon','Arme'],['armor','Armure']]){const btn=document.createElement('button');btn.textContent=title;btn.disabled=state.playing;btn.onclick=()=>{if(equipItem(o,entry.id,slot)){record('Équiper '+slot);notify()}};line.append(btn)}
+   const remove=document.createElement('button');remove.textContent='−';remove.disabled=state.playing;remove.onclick=()=>{inventoryRemove(o,entry.id,1);record('Inventaire : retirer');notify()};line.append(remove);body.append(line)}
+  const equipped=document.createElement('small');equipped.textContent='Équipé : '+JSON.stringify(inv.equipment||{});body.append(equipped);
+ }
+ if(addComponent('AI State Machine','ai',defaultAi)){
+  const ai=o.ai;selectField(body,ai,'state','État initial',['idle','patrol','chase','attack','dead']);
+  for(const [key,label] of [['detection','Rayon détection'],['attackRange','Portée attaque'],['attackDamage','Dégâts'],['attackCooldown','Cooldown'],['speed','Vitesse'],['patrolRadius','Rayon patrouille']])field(body,ai,key,label);
+  const flag=document.createElement('label');const cb=document.createElement('input');cb.type='checkbox';cb.checked=ai.enabled!==false;cb.disabled=state.playing;cb.onchange=()=>{ai.enabled=cb.checked;record('IA activée');notify()};flag.append(cb,document.createTextNode(' IA activée'));body.append(flag);
+ }
+ if(addComponent('Character Controller 3D','controller3d',defaultController)){
+  for(const [key,label] of [['walkSpeed','Marche'],['sprintSpeed','Sprint'],['jumpForce','Saut'],['gravity','Gravité'],['dodgeDistance','Esquive (préparation)'],['dodgeCooldown','Cooldown esquive (préparation)'],['staminaCost','Coût endurance (préparation)']])field(body,o.controller3d,key,label);
+ }
+});
+
 if(workspace.mode==='3d'){
 component(root,'Lighting 3D Beta',body=>{
  selectField(body,o,'lightType','Type',['none','point','spot']);

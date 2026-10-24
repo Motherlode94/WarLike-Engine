@@ -6,7 +6,7 @@ const KEY='warlike.scene.v1';let last='',timer=null,cloudToken=sessionStorage.ge
 const indicator=()=>document.querySelector('#saveStatus');
 function serialize(){return JSON.stringify({version:5,...workspacePayload(),entities:state.entities,camera:state.camera})}
 function label(s){const el=indicator();if(el)el.textContent=s}
-export function autoSave(){if(state.playing)return;const data=serialize();if(data===last)return;try{localStorage.setItem(KEY,data);last=data;label('Sauvegarde navigateur ✓')}catch{label('Stockage navigateur indisponible')}if(cloudToken){clearTimeout(timer);timer=setTimeout(()=>pushCloud(data),900)}}
+export function autoSave(){if(state.playing||document.getElementById('hubOverlay'))return;const data=serialize();if(data===last)return;try{localStorage.setItem(KEY,data);last=data;label('Sauvegarde navigateur ✓')}catch{label('Stockage navigateur indisponible')}if(cloudToken){clearTimeout(timer);timer=setTimeout(()=>pushCloud(data),900)}}
 async function requestCloud(method,body){const response=await fetch('/api/project',{method,headers:{Authorization:'Bearer '+cloudToken,'Content-Type':'application/json'},body});if(!response.ok)throw Error('Cloud HTTP '+response.status);return response.json()}
 async function pushCloud(payload){try{await requestCloud('PUT',payload);label('Cloud sauvegardé ✓')}catch(error){label('Cloud indisponible • local OK');console.warn(error)}}
 export function hasLocalSave(){try{const data=JSON.parse(localStorage.getItem(KEY)||'null');return !!data&&Array.isArray(data.entities)&&data.entities.length<=1000}catch{return false}}

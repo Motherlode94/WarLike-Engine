@@ -1,9 +1,10 @@
+import {findPath} from './pathfinding.js';
 // Configurable gameplay components. Positions use WarLike's existing 2D ground coordinates.
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const defaultStats=()=>({maxHealth:100,health:100,maxStamina:100,stamina:100,staminaRegen:14});
 export const defaultInventory=()=>({capacity:16,items:[],equipment:{weapon:null,armor:null}});
-export const defaultAi=()=>({enabled:true,state:'idle',detection:450,attackRange:65,attackDamage:8,attackCooldown:1.2,speed:75,homeX:null,homeY:null,patrolRadius:130});
+export const defaultAi=()=>({enabled:true,state:'idle',detection:450,attackRange:65,attackDamage:8,attackCooldown:1.2,speed:75,homeX:null,homeY:null,patrolRadius:130,pathfinding:true,pathCellSize:48,repathInterval:.75});
 export const defaultController=()=>({walkSpeed:4.2,sprintSpeed:7,jumpForce:5.6,gravity:15,dodgeDistance:1.8,dodgeCooldown:.8,staminaCost:20});
 export function ensureStats(o){o.stats??=defaultStats();return o.stats}
 export function inventoryAdd(o,id,count=1){o.inventory??=defaultInventory();const inv=o.inventory;count=Math.floor(n(count));if(!id||count<=0)return false;const existing=inv.items.find(i=>i.id===id);if(!existing&&inv.items.length>=Math.max(1,n(inv.capacity,16)))return false;if(existing)existing.count+=count;else inv.items.push({id,count});return true}
@@ -24,8 +25,18 @@ export function updateAi(entities,player,dt){
   ai.state=dist<=attackRange?'attack':dist<=detection?'chase':'patrol';
   const step=Math.max(0,n(ai.speed,75))*dt;
   if(ai.state==='chase'||ai.state==='patrol'){
-   const tx=ai.state==='chase'?player.x:ai.homeX+Math.sin((ai.clock??0)*.65+e.id)*Math.max(0,n(ai.patrolRadius,130));
-   const ty=ai.state==='chase'?player.y:ai.homeY+Math.cos((ai.clock??0)*.65+e.id)*Math.max(0,n(ai.patrolRadius,130));
+   let tx=ai.state==='chase'?player.x:ai.homeX+Math.sin((ai.clock??0)*.65+e.id)*Math.max(0,n(ai.patrolRadius,130));
+   let ty=ai.state==='chase'?player.y:ai.homeY+Math.cos((ai.clock??0)*.65+e.id)*Math.max(0,n(ai.patrolRadius,130));
+   if(ai.state==='chase'&&ai.pathfinding!==false){
+    ai.repathTimer=n(ai.repathTimer)-dt;
+    if(ai.repathTimer<=0||!Array.isArray(ai.path)){
+     const obstacles=entities.filter(o=>o!==e&&o!==player&&o.collision3d!==false&&(o.solid3d===true||o.type==='object'||o.type==='mesh3d'));
+     ai.path=findPath({x:e.x,y:e.y},{x:player.x,y:player.y},obstacles,{cellSize:Math.max(24,n(ai.pathCellSize,48)),padding:Math.max(e.w,e.h)*.35,maxNodes:1200});
+     ai.repathTimer=Math.max(.2,n(ai.repathInterval,.75));
+    }
+    while(ai.path?.length&&Math.hypot(ai.path[0].x-e.x,ai.path[0].y-e.y)<Math.max(8,step*1.5))ai.path.shift();
+    if(ai.path?.length){tx=ai.path[0].x;ty=ai.path[0].y}
+   }
    const length=Math.hypot(tx-e.x,ty-e.y);
    if(length>2){const distanceStep=Math.min(step,length),ux=(tx-e.x)/length,uy=(ty-e.y)/length;const candidates=[[ux,uy],[ux,0],[0,uy],[-uy,ux],[uy,-ux]];for(const [cx,cy] of candidates){const x=e.x+cx*distanceStep,y=e.y+cy*distanceStep;if(!blocked(e,x,y)){e.x=x;e.y=y;break}}}
    e.animation=ai.state==='chase'?'run':'walk';

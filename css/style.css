@@ -209,3 +209,9 @@ body.project-floating #projectPanel{min-height:210px!important}
 .rpg-slot .rpg-glyph{font-weight:800;color:#c6f5e6;font-size:17px;line-height:1.2}
 .rpg-slot span:last-child{overflow-wrap:anywhere;font-size:10px}
 .rpg-slot.equipped{border-color:#63e4bf;background:#28574f}
+
+/* V1.7 modular game mode controls */
+.game-mode-menu{padding:7px 10px;border-top:1px solid #435466;display:flex;flex-direction:column;gap:6px}
+.game-mode-menu select{width:100%;min-height:31px;padding:6px;background:#182d3c;color:#d5f5e9;border:1px solid #62877e;border-radius:4px}
+.game-mode-menu button{width:100%;text-align:left!important;background:#315851!important;border-color:#5b9e8a!important}
+#properties .inspector-component:has(.component-content select option[value="battleRoyale"]){border-left:3px solid #57a6a4}

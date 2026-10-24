@@ -1,3 +1,4 @@
+import {initDocking} from './ui/docking.js';
 import {initStudioMenus} from './ui/studio-menu.js';
 import {bindGameInput} from './core/gameplay.js';
 import {initWorkspace,log} from './ui/workspace.js';
@@ -39,6 +40,7 @@ gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
 $('#play').addEventListener('click',syncTabs);
 $('#duplicate').onclick=duplicateSelected;
 initWorkspace();
+initDocking();
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});
 
 initStudioMenus();

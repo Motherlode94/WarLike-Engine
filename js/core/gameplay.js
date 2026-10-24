@@ -8,7 +8,7 @@ import {updateVehicles,currentVehicle,drawDrivingHud,resetDriving} from './vehic
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
 export const game={projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,mouse:{x:500,y:300,down:false},kills:0};
-export function resetGame(){resetGameMode();resetAdvanced();resetLogic();resetDriving();Object.assign(game,{projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}}
+export function resetGame(){motion.cameraFollow=true;resetGameMode();resetAdvanced();resetLogic();resetDriving();Object.assign(game,{projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}}
 const center=e=>({x:e.x+e.w/2,y:e.y+e.h/2});
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const enemy=o=>!o._modeEliminated&&o.type==='prefab'&&getAsset(o.assetId)?.category==='Monsters';
@@ -19,7 +19,7 @@ function shoot(p,at){const origin=center(p),dx=at.x-origin.x,dy=at.y-origin.y,d=
 export function updateGame(dt){if(!state.playing||game.over&&!currentMode())return;game.time+=dt;game.fireTimer=Math.max(0,game.fireTimer-dt);game.meleeTimer=Math.max(0,game.meleeTimer-dt);game.hurtTimer=Math.max(0,game.hurtTimer-dt);const p=state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');if(!p)return;
 if(modeRuntime.roundOver)return;if(modeRuntime.playerOut){updateGameMode(dt,game);return}const k=state.keys,x=(k.has('arrowright')||k.has('d')?1:0)-(k.has('arrowleft')||k.has('q')||k.has('a')?1:0),y=(k.has('arrowdown')||k.has('s')?1:0)-(k.has('arrowup')||k.has('z')||k.has('w')?1:0),length=Math.hypot(x,y)||1;updateVehicles(dt,p);if(!currentVehicle())walkPlayer(p,dt,k);followPlayer(p,document.getElementById('canvas'),dt);
 if(p.assetId==='ninja'||p.assetId==='ninja-elite'){
- if((k.has('k')||k.has('shift'))&&game.meleeTimer===0&&!currentVehicle()){
+ if(k.has('k')&&game.meleeTimer===0&&!currentVehicle()){
   game.meleeTimer=.48;p.animation='katana_attack_1';p._ninjaAttackUntil=game.time+.3;
   const pc=center(p);for(const foe of [...state.entities].filter(enemy)){const ec=center(foe),distance=Math.hypot(ec.x-pc.x,ec.y-pc.y);if(distance<100){foe.hp=(foe.hp??75)-55;foe._hit=.2;flash(ec.x,ec.y,'#a9e2f2',9);if(foe.hp<=0){if(!currentMode())state.entities=state.entities.filter(o=>o!==foe);game.kills++;game.score+=100;registerElimination(foe,p,game)}}}
  }

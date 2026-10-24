@@ -16,7 +16,7 @@ import {catalog,urlFor} from './assets/catalog.js';
 import {state,notify} from './core/state.js';
 import {autoSave,recoverLocal,hasLocalSave,backupLocalSave,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
-import {record,undo,redo} from './core/history.js';
+import {record,undo,redo,renderHistory} from './core/history.js';
 import {addEntity,addPrefab,addLogicHotspot,loadLogicDemo,loadRpgDemo,loadCombatDemo,loadDrivingDemo,addLight,addAudioEmitter,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';

@@ -1,8 +1,9 @@
+import {inventoryAdd,inventoryRemove,equipItem,damage,ensureStats} from './gameplay-components.js';
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
 export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal'];
 export const sequenceConditions=['always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','randomChance'];
-export const sequenceInstructions=['message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject'];
+export const sequenceInstructions=['message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
 export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[]};
 const number=(n,def=0)=>Number.isFinite(Number(n))?Number(n):def;
@@ -50,6 +51,11 @@ function execute(job,ctx,actionsLeft){
   case 'addLocal':entity.sequenceLocal??={};entity.sequenceLocal[key]=number(entity.sequenceLocal[key])+number(val);break;
   case 'moveObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.x+=number(a.x);target.y+=number(a.y);break}
   case 'teleportObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.x=number(a.x,target.x);target.y=number(a.y,target.y);break}
+  case 'giveItem':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;inventoryAdd(target,key,Math.max(1,number(val,1)));break}
+  case 'removeItem':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;inventoryRemove(target,key,Math.max(1,number(val,1)));break}
+  case 'equipItem':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;equipItem(target,key,a.slot||'weapon');break}
+  case 'damageObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;damage(target,number(val,10));break}
+  case 'healObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;const s=ensureStats(target);s.health=Math.min(s.maxHealth,s.health+Math.max(0,number(val,10)));target.hp=s.health;break}
   case 'setHealth':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.hp=Math.max(0,number(val,100));break}
   case 'addHealth':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.hp=Math.max(0,number(target.hp,100)+number(val));break}
   case 'setAnimation':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.animation=String(val||'idle').slice(0,64);break}

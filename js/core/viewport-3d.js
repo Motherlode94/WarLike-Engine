@@ -1,3 +1,4 @@
+import {sunAt,visibleLights,updateLighting} from './lighting.js';
 // WarLike 3D Beta: self-contained WebGL perspective scene editor.
 // Existing scene x/y become ground X/Z; object h is extrusion height. No remote dependencies.
 import {state,notify} from './state.js';
@@ -43,20 +44,46 @@ const program3d=gl=>{
  const vs=`attribute vec3 aPosition;attribute vec3 aNormal;
  uniform vec3 uEye,uRight,uUp,uForward,uPosition,uScale;
  uniform float uAngle,uAspect;
- varying float vShade;
+ varying vec3 vNormal,vWorld;
  void main(){
  vec3 q=aPosition*uScale;
  float cs=cos(uAngle),sn=sin(uAngle);
  q=vec3(q.x*cs-q.z*sn,q.y,q.x*sn+q.z*cs);
  vec3 rel=q+uPosition-uEye;
+ vWorld=q+uPosition;vNormal=normalize(vec3(aNormal.x*cs-aNormal.z*sn,aNormal.y,aNormal.x*sn+aNormal.z*cs));
  float d=max(0.01,dot(rel,uForward));
  float f=1.7320508;
  float clipZ=d*1.004-0.201;
  gl_Position=vec4(dot(rel,uRight)*f/uAspect,dot(rel,uUp)*f,clipZ,d);
- vShade=clamp(.67+.25*aNormal.y+.18*aNormal.z+.08*aNormal.x,.35,1.);
+ 
  }`;
- const fs=`precision mediump float;uniform vec4 uColor;varying float vShade;
- void main(){gl_FragColor=vec4(uColor.rgb*vShade,uColor.a);}`;
+ const fs=`precision mediump float;
+ uniform vec4 uColor;
+ uniform vec3 uSunDir,uSunColor;
+ uniform float uSunIntensity,uAmbient;
+ uniform int uLightCount;
+ uniform vec3 uLightPos[8],uLightColor[8],uLightDir[8];
+ uniform float uLightPower[8],uLightRange[8],uLightCone[8],uLightSpot[8];
+ varying vec3 vNormal,vWorld;
+ void main(){
+ vec3 normal=normalize(vNormal);
+ vec3 irradiance=vec3(uAmbient);
+ irradiance+=uSunColor*uSunIntensity*max(0.,dot(normal,normalize(uSunDir)));
+ for(int i=0;i<8;i++){
+  if(i>=uLightCount)break;
+  vec3 displacement=uLightPos[i]-vWorld;
+  float dist=length(displacement);
+  vec3 L=displacement/max(dist,.001);
+  float decay=pow(max(0.,1.-dist/max(uLightRange[i],.01)),2.);
+  float cone=1.;
+  if(uLightSpot[i]>.5){
+   float alignment=dot(normalize(-L),normalize(uLightDir[i]));
+   cone=smoothstep(uLightCone[i]-.12,uLightCone[i],alignment);
+  }
+  irradiance+=uLightColor[i]*uLightPower[i]*max(0.,dot(normal,L))*decay*cone;
+ }
+ gl_FragColor=vec4(uColor.rgb*clamp(irradiance,0.,2.2),uColor.a);
+ }`;
  const p=gl.createProgram();gl.attachShader(p,shader(gl,gl.VERTEX_SHADER,vs));gl.attachShader(p,shader(gl,gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);
  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p)||'Erreur programme');
  return p;
@@ -100,7 +127,7 @@ export function init3d(canvas,host,buttons){
  let program;
  try{program=program3d(gl)}catch(err){view3d.error=err.message;buttons.status.textContent='WebGL : '+err.message;buttons.toggle.disabled=true;return}
  const loc=n=>gl.getUniformLocation(program,n);
- const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),angle:loc('uAngle'),aspect:loc('uAspect'),color:loc('uColor')};
+ const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),angle:loc('uAngle'),aspect:loc('uAspect'),color:loc('uColor'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal');
  const makeBuffer=data=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
  const cubes=makeBuffer(cubeVerts()),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
@@ -169,13 +196,28 @@ export function init3d(canvas,host,buttons){
  canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);canvas.addEventListener('lostpointercapture',stop);
  canvas.addEventListener('wheel',e=>{if(!view3d.enabled)return;e.preventDefault();view3d.radius=clamp(view3d.radius*Math.exp(e.deltaY*.001),3,150)},{passive:false});
  window.addEventListener('pointerup',()=>game.mouse.down=false);
- function draw(){
+ let previousTime=performance.now();
+ function draw(now=performance.now()){
   requestAnimationFrame(draw);
+  const dt=Math.min(.1,Math.max(0,(now-previousTime)/1000));previousTime=now;
+  updateLighting(dt,state.playing);
   if(!view3d.enabled)return;
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
-  gl.clearColor(.07,.095,.13,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  const solar=sunAt();gl.clearColor(...solar.sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   gl.useProgram(program);const cam=camera();
   gl.uniform3fv(u.eye,cam.eye);gl.uniform3fv(u.forward,cam.forward);gl.uniform3fv(u.right,cam.right);gl.uniform3fv(u.up,cam.up);gl.uniform1f(u.aspect,w/h);
+  gl.uniform3fv(u.sunDir,solar.direction);gl.uniform3fv(u.sunColor,solar.color);
+  gl.uniform1f(u.sunIntensity,solar.intensity);gl.uniform1f(u.ambient,solar.ambient);
+  const lamps=visibleLights(state.entities,cam.eye,8);
+  const padded=(key,def)=>Array.from({length:8},(_,i)=>lamps[i]?.[key]??def).flat();
+  gl.uniform1i(u.lightCount,lamps.length);
+  gl.uniform3fv(u.lightPos,new Float32Array(padded('position',[0,0,0])));
+  gl.uniform3fv(u.lightColor,new Float32Array(padded('color',[0,0,0])));
+  gl.uniform3fv(u.lightDir,new Float32Array(padded('direction',[0,-1,0])));
+  gl.uniform1fv(u.lightPower,new Float32Array(padded('intensity',0)));
+  gl.uniform1fv(u.lightRange,new Float32Array(padded('range',1)));
+  gl.uniform1fv(u.lightCone,new Float32Array(padded('cone',.7)));
+  gl.uniform1fv(u.lightSpot,new Float32Array(lamps.map(l=>l.spot?1:0).concat(Array(8-lamps.length).fill(0))));
   gl.disable(gl.CULL_FACE);
   bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count);
   const objects=[...state.entities].filter(o=>!state.playing||!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated);

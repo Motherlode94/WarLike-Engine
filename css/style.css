@@ -296,3 +296,7 @@ body[data-workspace="2d"] [data-studio-action="threeDDemo"],body[data-workspace=
 .hub-project-card button{flex-shrink:0}#hubMessage{color:#e5ae8d;padding:0 30px 20px;margin:0;min-height:23px}
 .studio-project-name #hubOpen,.studio-project-name #hubSave{padding:3px 8px;margin-left:5px}
 @media(max-width:700px){.hub-layout{grid-template-columns:1fr}.hub-overlay{padding:8px}}
+
+/* Keep 2D play hints inside the viewport on narrow panels. */
+#viewport>.rpg-shortcuts{box-sizing:border-box;max-width:calc(100% - 24px);white-space:normal;overflow-wrap:anywhere;right:12px}
+body[data-workspace="3d"] #viewport>.rpg-shortcuts{display:none!important}

@@ -1,3 +1,5 @@
+import {lightTypes,validColor} from '../core/lighting.js';
+import {soundChoices,importSoundFile,previewSound,audioClips} from '../core/audio-sources.js';
 import {isElement,elementDefaults} from '../core/game-elements.js';
 import {isHome} from '../core/housing.js';
 import {modeDefaults,modeNames,roleNames} from '../core/game-modes.js';
@@ -15,6 +17,45 @@ export function renderHierarchy(){const root=document.querySelector('#objects'),
 export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
 const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent='GameObject #'+o.id+' • '+o.type;header.append(name,meta);root.append(header);
 component(root,'Transform',body=>{field(body,o,'x','Position X');field(body,o,'y','Position Y (Ground Z)');field(body,o,'elevation3d','Height 3D');field(body,o,'rotation','Rotation Z');field(body,o,'w','Size X');field(body,o,'h','Size Y')});
+component(root,'Lighting 3D Beta',body=>{
+ selectField(body,o,'lightType','Type',['none','point','spot']);
+ if(o.lightType!=='none'&&o.lightType){
+  const flag=document.createElement('label');flag.className='logic-flag';
+  const cb=document.createElement('input');cb.type='checkbox';cb.checked=o.lightEnabled!==false;cb.disabled=state.playing;
+  cb.onchange=()=>{o.lightEnabled=cb.checked;record('Light On/Off');notify()};
+  flag.append(cb,document.createTextNode(' Enabled'));body.append(flag);
+  if(o.lightColor===undefined)o.lightColor='#ffd48b';
+  for(const [key,label,type] of [['lightColor','Color','color'],['lightIntensity','Intensity','number'],['lightRange','Range (meters)','number'],['lightAngle','Spot Angle','number']]){if(key==='lightAngle'&&o.lightType!=='spot')continue;field(body,o,key,label,type)}
+ }
+ const tip=document.createElement('p');tip.textContent='Les lumières modifient les volumes dans la vue 3D. 8 lumières proches rendues simultanément.';body.append(tip);
+});
+component(root,'Audio Source Beta',body=>{
+ const flag=document.createElement('label');flag.className='logic-flag';const cb=document.createElement('input');
+ cb.type='checkbox';cb.checked=o.audioEnabled===true;cb.disabled=state.playing;
+ cb.onchange=()=>{o.audioEnabled=cb.checked;record('Audio Enabled');notify()};
+ flag.append(cb,document.createTextNode(' Active'));body.append(flag);
+ if(o.audioClip===undefined)o.audioClip='none';
+ selectField(body,o,'audioClip','Clip',['none',...soundChoices,'imported']);
+ if(o.audioGain===undefined)o.audioGain=.6;
+ if(o.audioRange===undefined)o.audioRange=18;
+ if(o.audioInterval===undefined)o.audioInterval=3;
+ field(body,o,'audioGain','Volume 0–1');
+ field(body,o,'audioRange','Range (meters)');
+ field(body,o,'audioInterval','Repeat seconds');
+ const flags=document.createElement('div');flags.className='logic-flags';
+ for(const [key,label,def] of [['audioLoop','Loop',true],['audioSpatial','Spatial Stereo',true]]){
+  if(o[key]===undefined)o[key]=def;
+  const row=document.createElement('label');row.className='logic-flag';
+  const box=document.createElement('input');box.type='checkbox';box.checked=o[key]!==false;box.disabled=state.playing;
+  box.onchange=()=>{o[key]=box.checked;record('Audio '+label);notify()};
+  row.append(box,document.createTextNode(' '+label));flags.append(row);
+ }body.append(flags);
+ const upload=document.createElement('input');upload.type='file';upload.accept='.wav,.mp3,.ogg,audio/*';upload.disabled=state.playing;
+ upload.onchange=async()=>{try{await importSoundFile(upload.files?.[0],o);record('Importer Audio Source');notify()}catch(e){alert(e.message)}};
+ body.append(upload);
+ const text=document.createElement('p');text.textContent=o.audioFileName?'Audio local : '+o.audioFileName+(audioClips.has(o.id)?' (chargé)':' (réimporter après rechargement)'):'Importer un WAV/MP3/OGG pour cette session (fichier non incorporé dans JSON).';body.append(text);
+ const preview=document.createElement('button');preview.textContent='▶ Écouter';preview.onclick=()=>previewSound(o);body.append(preview);
+});
 component(root,'Sprite Renderer',body=>{field(body,o,'color','Tint','color');if(o.type==='prefab'){const label=document.createElement('p');label.textContent='Source : '+(getAsset(o.assetId)?.name||o.assetId);body.append(label)}if(o.type==='character')selectField(body,o,'skin','Character',['scout','soldier'])});
 if(o.type==='character'||o.type==='prefab')component(root,'Animator 2D',body=>{const kind=o.type==='character'?'actor':getAsset(o.assetId)?.kind||'prop';selectField(body,o,'animation','Clip',availableClips(kind,o.assetId));if(o.animationSpeed===undefined)o.animationSpeed=1;field(body,o,'animationSpeed','Playback Speed');const line=document.createElement('label');line.className='logic-flag';const check=document.createElement('input');check.type='checkbox';check.checked=!!o.animationPreview;check.disabled=state.playing;check.onchange=()=>{o.animationPreview=check.checked;record('Prévisualisation animation');notify()};line.append(check,document.createTextNode('Preview animation in Scene'));body.append(line)});
 if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Weapons')component(root,'Weapon Configuration',body=>{

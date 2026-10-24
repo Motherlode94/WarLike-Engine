@@ -2,7 +2,7 @@ import {humanoidClips} from './humanoid-rigs.js';
 // Canvas animation layer for WarLike prefabs (procedural poses and visual effects).
 export const presets={
 actor:['idle','walk','run','attack','hurt','death'],
-vehicle:['idle','move','hurt','death'],
+vehicle:['idle','move','drive','brake','reverse','turn_left','turn_right','hurt','death'],
 weapon:['idle','attack','pulse'],
 prop:['idle','pulse'],
 effect:['loop','pulse','idle']
@@ -29,7 +29,7 @@ export function drawAnimatedAsset(ctx,img,o,now,playing,kind,moving=false){
  if(/hurt|hit|stagger|stun/.test(clip)){ctx.translate(Math.sin(t*29)*3,0);ctx.globalAlpha=.65+.35*Math.sin(t*18)**2}
  if(/death|knockdown/.test(clip)){ctx.rotate(Math.min(1,t%4)*.85);ctx.globalAlpha=.75}
  if(/pulse|meditate|victory/.test(clip)){const v=1+.08*Math.sin(t*6);ctx.scale(v,v)}
- if(/roll|backflip/.test(clip))ctx.rotate(t*5);if(/crouch|stealth/.test(clip))ctx.scale(1,.77);if(/jump|fall/.test(clip))ctx.translate(0,-Math.abs(Math.sin(t*3))*12);if(/block|parry/.test(clip))ctx.translate(-3,0);if(clip==='move'&&kind==='vehicle')ctx.rotate(.025*Math.sin(t*9));
+ if(/roll|backflip/.test(clip))ctx.rotate(t*5);if(/crouch|stealth/.test(clip))ctx.scale(1,.77);if(/jump|fall/.test(clip))ctx.translate(0,-Math.abs(Math.sin(t*3))*12);if(/block|parry/.test(clip))ctx.translate(-3,0);if(kind==='vehicle'){if(['move','drive','reverse'].includes(clip))ctx.translate(0,Math.sin(t*12)*1.8);if(clip==='brake')ctx.translate(0,Math.sin(t*26)*.7);if(clip==='turn_left')ctx.rotate(-.055+Math.sin(t*10)*.018);if(clip==='turn_right')ctx.rotate(.055+Math.sin(t*10)*.018)}if(/enter_vehicle|exit_vehicle|enter_house|exit_house/.test(clip)){ctx.translate(Math.sin(t*5)*7,Math.cos(t*5)*3);ctx.rotate(Math.sin(t*5)*.1)}
  }
  ctx.drawImage(img,-o.w/2,-o.h/2-(animated?bob:0),o.w,o.h);
  ctx.restore();

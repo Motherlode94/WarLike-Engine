@@ -45,3 +45,12 @@ export function integrateNativeGravity(y,vy,gravity,restitution,dt){
   return {y:native.HEAPF32[ptr>>>2],vy:native.HEAPF32[(ptr>>>2)+1]};
  } finally {native._free(ptr)}
 }
+
+export function overlapNative3d(a,b){
+ if(!native||typeof native._wl_overlap_aabb3d!=='function')return null;
+ const ptr=native._malloc(48);if(!ptr)return null;
+ try{
+  native.HEAPF32.set([a.x,a.z,a.y,a.w,a.d,a.h,b.x,b.z,b.y,b.w,b.d,b.h],ptr>>>2);
+  return native._wl_overlap_aabb3d(ptr,ptr+24)===1;
+ }finally{native._free(ptr)}
+}

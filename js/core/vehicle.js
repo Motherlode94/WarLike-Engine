@@ -1,3 +1,4 @@
+import {isBuildingSolid} from './building-system.js';
 import {sanitizeVehicle,collisionCircleRect} from '../typed/systems.js';
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
@@ -7,7 +8,7 @@ const center=o=>({x:o.x+o.w/2,y:o.y+o.h/2});
 export function vehicleDefaults(o){return sanitizeVehicle({maxSpeed:o.maxSpeed,acceleration:o.acceleration,brakeForce:o.brakeForce,turnRate:o.turnRate,drag:o.drag,collisionRadius:o.collisionRadius})}
 export function resetDriving(){Object.assign(driving,{vehicleId:null,speed:0,steer:0,enterHeld:false,collisionFlash:0})}
 export function currentVehicle(){return state.entities.find(o=>o.id===driving.vehicleId&&vehicle(o))||null}
-const solid=o=>o.type==='object'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock'].includes(o.assetId);
+const solid=o=>isBuildingSolid(o)||o.type==='object'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock'].includes(o.assetId);
 const overlapCircleRect=collisionCircleRect;
 export function updateVehicles(dt,player){
  driving.collisionFlash=Math.max(0,driving.collisionFlash-dt);

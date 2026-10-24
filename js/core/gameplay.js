@@ -1,3 +1,4 @@
+import {walkPlayer,followPlayer,motion} from './player-controller.js';
 import {resetAdvanced,updateAdvanced,drawAdvanced,consumeAmmo,consumeMedkit} from './mode-advanced.js';
 import {resetGameMode,updateGameMode,drawMode,registerElimination,currentMode,modeRuntime} from './game-modes.js';
 import {updateBuildings,isBuildingSolid,isBuilding} from './building-system.js';
@@ -16,7 +17,7 @@ function flash(x,y,color,count=8){for(let i=0;i<count;i++){const a=Math.PI*2*i/c
 function move(e,dx,dy){const oldX=e.x;e.x+=dx;if(state.entities.some(o=>o!==e&&solid(o)&&overlaps(e,o)))e.x=oldX;const oldY=e.y;e.y+=dy;if(state.entities.some(o=>o!==e&&solid(o)&&overlaps(e,o)))e.y=oldY}
 function shoot(p,at){const origin=center(p),dx=at.x-origin.x,dy=at.y-origin.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;game.projectiles.push({x:origin.x,y:origin.y,vx:ux*560,vy:uy*560,life:1.35,damage:34});flash(origin.x+ux*22,origin.y+uy*22,'#fcd36e',4)}
 export function updateGame(dt){if(!state.playing||game.over&&!currentMode())return;game.time+=dt;game.fireTimer=Math.max(0,game.fireTimer-dt);game.meleeTimer=Math.max(0,game.meleeTimer-dt);game.hurtTimer=Math.max(0,game.hurtTimer-dt);const p=state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');if(!p)return;
-if(modeRuntime.roundOver)return;if(modeRuntime.playerOut){updateGameMode(dt,game);return}const k=state.keys,x=(k.has('arrowright')||k.has('d')?1:0)-(k.has('arrowleft')||k.has('q')||k.has('a')?1:0),y=(k.has('arrowdown')||k.has('s')?1:0)-(k.has('arrowup')||k.has('z')||k.has('w')?1:0),length=Math.hypot(x,y)||1;updateVehicles(dt,p);if(!currentVehicle())move(p,x/length*190*dt,y/length*190*dt);
+if(modeRuntime.roundOver)return;if(modeRuntime.playerOut){updateGameMode(dt,game);return}const k=state.keys,x=(k.has('arrowright')||k.has('d')?1:0)-(k.has('arrowleft')||k.has('q')||k.has('a')?1:0),y=(k.has('arrowdown')||k.has('s')?1:0)-(k.has('arrowup')||k.has('z')||k.has('w')?1:0),length=Math.hypot(x,y)||1;updateVehicles(dt,p);if(!currentVehicle())walkPlayer(p,dt,k);followPlayer(p,document.getElementById('canvas'),dt);
 if(p.assetId==='ninja'||p.assetId==='ninja-elite'){
  if((k.has('k')||k.has('shift'))&&game.meleeTimer===0&&!currentVehicle()){
   game.meleeTimer=.48;p.animation='katana_attack_1';p._ninjaAttackUntil=game.time+.3;

@@ -39,9 +39,11 @@ export function playSound(name,options={}){
   osc.frequency.exponentialRampToValueAtTime(Math.max(20,end),now+duration);
   gain.gain.setValueAtTime(Math.max(.0001,amp*(options.gain??1)),now);
   gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
-  osc.connect(gain);gain.connect(audio.master);
+  osc.connect(gain);
+  const stereo=Number.isFinite(options.pan)&&audio.context.createStereoPanner?audio.context.createStereoPanner():null;
+  if(stereo){stereo.pan.value=clamp(options.pan,-1,1);gain.connect(stereo);stereo.connect(audio.master)}else gain.connect(audio.master);
   osc.start(now);osc.stop(now+duration+.01);
-  osc.onended=()=>{osc.disconnect();gain.disconnect()};
+  osc.onended=()=>{osc.disconnect();gain.disconnect();stereo?.disconnect()};
   return true;
  }catch{return false}
 }

@@ -98,6 +98,13 @@ public sealed class GameWorld {
                         case "LinearMotion":
                             world.AddComponent(actor, new LinearMotionComponent { UnitsPerSecond = new Vector3(Number(definition,"vx"),Number(definition,"vy"),Number(definition,"vz")) });
                             break;
+                        case "Rigidbody":
+                            world.AddComponent(actor, new RigidbodyComponent {
+                                Gravity = definition.TryGetProperty("gravity", out _) ? Math.Max(0, Number(definition,"gravity")) : 15f,
+                                Restitution = Math.Clamp(Number(definition,"restitution"), 0, 1),
+                                HorizontalDamping = definition.TryGetProperty("friction", out _) ? Math.Clamp(Number(definition,"friction"), 0, 1) : .985f
+                            });
+                            break;
                         case "FollowActor":
                             world.AddComponent(actor, new FollowActorComponent { TargetId = (int)Number(definition,"targetId"), Speed = Math.Max(0,Number(definition,"speed")), StopDistance = Math.Max(0,Number(definition,"stopDistance")) });
                             break;

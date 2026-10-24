@@ -1,3 +1,4 @@
+import {bindModeInput} from './core/game-modes.js';
 import {initializeRpgUi} from './core/rpg-systems.js';
 import {initDocking} from './ui/docking.js';
 import {initStudioMenus} from './ui/studio-menu.js';
@@ -25,6 +26,7 @@ $('#resetView').onclick=resetCamera;
 attachInput(canvas,host);
 bindGameInput(canvas);
 initializeRpgUi();
+bindModeInput();
 $('#rpgDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger RPG Demo ? Cette action remplace la scène actuelle (Ctrl+Z pour annuler).'))return;loadRpgDemo();log('RPG Demo chargé — Play, E, I et J')};
 $('#logicDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Visual Logic Demo ? La scène actuelle sera remplacée (Ctrl+Z pour annuler).'))return;loadLogicDemo();log('Visual Logic Demo chargé — Play et E pour interagir')};
 $('#driveDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Driving Sandbox ? Tu peux annuler ce remplacement avec Ctrl+Z.'))return;loadDrivingDemo();log('Driving Sandbox chargé — Play, puis E pour monter')};

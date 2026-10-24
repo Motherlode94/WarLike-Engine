@@ -1,9 +1,10 @@
+import {prefab3d} from '../assets/catalog-3d.js';
 // Independent 2D/3D workspaces. Each keeps its own scene, selection and camera.
 // Switching cannot happen during Play; callers stop simulation before switching.
 import {state,notify} from './state.js';
 export const workspace={mode:'2d',scenes:{
  '2d':{entities:null,selected:null,nextId:1,camera:null},
- '3d':{entities:[{id:1,name:'3D Player',type:'character',skin:'scout',animation:'idle',x:150,y:150,w:45,h:78,elevation3d:0,color:'#41cdb5'}],selected:[1],nextId:2,camera:{x:0,y:0,zoom:1}}
+ '3d':{entities:[{...prefab3d('character-hero',1,150,150),name:'3D Player',playable3d:true}],selected:[1],nextId:2,camera:{x:0,y:0,zoom:1}}
 }};
 const clone=v=>structuredClone(v);
 export function captureWorkspace(){

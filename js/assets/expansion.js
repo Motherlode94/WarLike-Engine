@@ -66,4 +66,5 @@ else if(id==='fire')art='<path d="M32 7 Q49 29 39 42 Q58 42 52 67 Q47 86 31 84 Q
 else if(id==='heal')art='<circle cx="32" cy="48" r="26" fill="none" stroke="'+c+'" stroke-width="5"/><path d="M28 27 H36 V43 H53 V52 H36 V69 H28 V52 H12 V43 H28Z" fill="'+c+'"/>';
 else art=Array.from({length:10},(_,i)=>{let a=i*2*Math.PI/10,x=32+Math.cos(a)*16,y=48+Math.sin(a)*18,X=32+Math.cos(a)*31,Y=48+Math.sin(a)*34;return '<path d="M'+x+' '+y+' L'+X+' '+Y+'" stroke="'+c+'" stroke-width="'+(id==='smoke'?9:4)+'" stroke-linecap="round" opacity="'+(id==='smoke'?.48:1)+'"/>'}).join('')+'<circle cx="32" cy="48" r="8" fill="'+c+'"/>';
 return base(a,art)}
-export function extraSvg(a){if(!(a.id in Object.fromEntries(Object.values(expansion).flat().map(([id])=>[id,true]))))return null;const c=palette(a);const type=a.category;return type==='Characters'||type==='Monsters'?figure(a,c):type==='Vehicles'?vehicle(a,c):type==='Weapons'?weapon(a,c):type==='Props'?props(a,c):type==='VFX'?effect(a,c):null}
+const expansionIds=new Set(Object.values(expansion).flat().map(([id])=>id));
+export function extraSvg(a){if(!expansionIds.has(a.id))return null;const c=palette(a);const type=a.category;return type==='Characters'||type==='Monsters'?figure(a,c):type==='Vehicles'?vehicle(a,c):type==='Weapons'?weapon(a,c):type==='Props'?props(a,c):type==='VFX'?effect(a,c):null}

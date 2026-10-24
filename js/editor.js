@@ -1,4 +1,5 @@
-import {state} from './core/state.js';
+import {state,notify} from './core/state.js';
+import {autoSave,recoverLocal,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo} from './core/history.js';
 import {addEntity,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
@@ -18,7 +19,9 @@ $('#zoomIn').onclick=()=>zoomAt(1.25,{x:host.clientWidth/2,y:host.clientHeight/2
 $('#zoomOut').onclick=()=>zoomAt(.8,{x:host.clientWidth/2,y:host.clientHeight/2});
 $('#resetView').onclick=resetCamera;
 attachInput(canvas,host);
-record('Scène initiale');
+if(!recoverLocal())record('Scène initiale');
+beginAutoSave();
+$('#cloudConnect').onclick=connectCloud;
 renderUI();
 startRenderer(canvas,host);
 
@@ -28,5 +31,5 @@ sceneTab.onclick=()=>{if(state.playing)togglePlay();syncTabs()};
 gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
 $('#play').addEventListener('click',syncTabs);
 $('#duplicate').onclick=duplicateSelected;
-document.querySelectorAll('.asset[data-template]').forEach(btn=>btn.onclick=()=>{const type=btn.dataset.template;if(type==='obstacle'){addEntity('object');const o=state.entities.find(e=>e.id===state.selected[0]);if(o){o.name='Obstacle '+o.id;o.color='#e4a05d';o.w=90;o.h=60;record('Configurer obstacle');document.dispatchEvent(new Event('warlike:change'))}}else addEntity(type)});
+document.querySelectorAll('.asset[data-template]').forEach(btn=>btn.onclick=()=>{const type=btn.dataset.template;if(type==='obstacle'){addEntity('object');const o=state.entities.find(e=>e.id===state.selected[0]);if(o){o.name='Obstacle '+o.id;o.color='#e4a05d';o.w=90;o.h=60;record('Configurer obstacle');document.dispatchEvent(new Event('warlike:change'))}}else if(type==='character'){addEntity('character');const character=state.entities.find(e=>e.id===state.selected[0]);if(character){character.skin=btn.dataset.skin||'scout';character.name=(character.skin==='scout'?'Scout ':'Soldier ')+character.id;record('Personnage '+character.skin);notify()}}else addEntity(type)});
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});

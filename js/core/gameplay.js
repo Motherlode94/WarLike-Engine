@@ -1,3 +1,4 @@
+import {updateSequences} from './logic-sequences.js';
 import {playSound} from './audio.js';
 import {workspace} from './workspaces.js';
 import {resetElements,updateElements,elementsRuntime} from './game-elements.js';
@@ -52,7 +53,7 @@ if(mode==='guard'&&d<Math.min(range,260)&&d>48)move(e,dx/d*speed*dt,dy/d*speed*d
 for(const b of game.projectiles){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;for(const e of state.entities.filter(enemy)){if(b.life<=0)break;if(currentMode()&&['teamDeathmatch','frontline'].includes(currentMode().kind)&&e.team===p.team)continue;if(b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h){e.hp=(e.hp??65)-b.damage;e._hit=.12;b.life=0;flash(b.x,b.y,'#f3a862',9);if(e.hp<=0){if(!currentMode())state.entities=state.entities.filter(o=>o!==e);game.kills++;game.score+=100;registerElimination(e,p,game)}break}}const hitObject=state.entities.find(e=>solid(e)&&b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h);if(hitObject){b.life=0;flash(b.x,b.y,'#c5b6a0',4);if(isBuilding(hitObject)){hitObject.buildHp=Math.max(0,Number(hitObject.buildHp??600)-b.damage);if(hitObject.buildHp===0)hitObject.buildState='destroyed';else if(hitObject.buildHp<(hitObject.buildMaxHp||600)*.5)hitObject.buildState='damaged'}}}
 game.projectiles=game.projectiles.filter(b=>b.life>0);
 for(const e of state.entities.filter(o=>o.type==='prefab'&&o.assetId==='medkit')){if(overlaps(p,e)){game.life=Math.min(100,game.life+35);state.entities=state.entities.filter(o=>o!==e);flash(e.x,e.y,'#5af7ad',10)}}
-updateBuildings(dt);updateElements(dt,p,game);updateLogic(dt);updateGameMode(dt,game);updateAdvanced(dt,game);if(logic.healthDelta!==0){game.life=Math.max(0,Math.min(100,game.life+logic.healthDelta));logic.healthDelta=0}if(game.life<=0){if(currentMode())registerElimination(p,null,game);else game.over=true}
+updateBuildings(dt);updateElements(dt,p,game);updateLogic(dt);updateSequences(dt,{playing:state.playing,entities:state.entities,keys:state.keys,player:p});updateGameMode(dt,game);updateAdvanced(dt,game);if(logic.healthDelta!==0){game.life=Math.max(0,Math.min(100,game.life+logic.healthDelta));logic.healthDelta=0}if(game.life<=0){if(currentMode())registerElimination(p,null,game);else game.over=true}
 for(const a of game.particles){a.x+=a.vx*dt;a.y+=a.vy*dt;a.life-=dt}
 game.particles=game.particles.filter(a=>a.life>0);
 }

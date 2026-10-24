@@ -27,7 +27,7 @@ export function registerElimination(victim,attacker,game){
  const m=currentMode();if(!m||runtime.roundOver||!participant(victim)||victim._modeEliminated)return false;
  const p=getPlayer(),local=attacker===p,team=attacker?.team||1;
  victim._modeEliminated=true;
- if(local){runtime.kills++;if(m.kind==='teamDeathmatch')runtime.teamScores[team]=(runtime.teamScores[team]||0)+1}
+ if(local){runtime.kills++}if(attacker&&m.kind==='teamDeathmatch')runtime.teamScores[team]=(runtime.teamScores[team]||0)+1;
  if(victim===p){runtime.deaths++;runtime.playerOut=true;if(m.kind==='battleRoyale')end('Éliminé — Battle Royale');else runtime.playerRespawn=Math.max(1,Number(m.respawnSeconds)||4)}
  if(m.kind==='battleRoyale'){
    const remaining=state.entities.filter(e=>participant(e)&&!e._modeEliminated).length;

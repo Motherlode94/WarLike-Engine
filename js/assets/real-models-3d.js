@@ -1,6 +1,10 @@
 // WarLike static glTF 2.0 GLB mesh loader. No eval, scripts or external binary executables.
 // Supports embedded GLB, node hierarchy/TRS, material baseColorFactor, triangle indices.
 export const realModels3d=[
+ {id:'real-rigged-figure',name:'Rigged Figure — vrai personnage GLB',category:'Characters',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/RiggedFigure/glTF-Binary/RiggedFigure.glb',license:'CC-BY-4.0 • Cesium • animations non prises en charge'},
+ {id:'real-avocado',name:'Avocado — objet 3D',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Avocado/glTF-Binary/Avocado.glb',license:'CC0 • Microsoft'},
+ {id:'real-water-bottle',name:'Water Bottle — objet PBR',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/WaterBottle/glTF-Binary/WaterBottle.glb',license:'CC0 • Microsoft'},
+ {id:'real-cesium-milk-truck',name:'Cesium Milk Truck — véhicule GLB',category:'Vehicles',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb',license:'CC-BY-4.0 • Cesium • logo Cesium présent'},
  {id:'real-cesium-man',name:'Cesium Man',category:'Characters',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CesiumMan/glTF-Binary/CesiumMan.glb',license:'CC-BY-4.0 • Cesium'},
  {id:'real-fox',name:'Fox',category:'Characters',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF-Binary/Fox.glb',license:'Consulter la licence du modèle • Khronos'},
  {id:'real-duck',name:'Duck',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Duck/glTF-Binary/Duck.glb',license:'Consulter la licence du modèle • Khronos'},

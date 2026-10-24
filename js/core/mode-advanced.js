@@ -45,7 +45,7 @@ export function advancedInput(game){const m=currentMode();if(!m||!state.playing|
       const task=jobs[modeRuntime.role]?.[station.assetId];
       if(task){
         if(modeRuntime.elapsed-(station._lastModeTask||-100)<8)note('Mission disponible dans quelques secondes');
-        else{station._lastModeTask=modeRuntime.elapsed;modeRuntime.money+=task.money;advanced.tasks++;if(modeRuntime.role==='Medic')game.life=Math.min(100,game.life+20);if(modeRuntime.role==='Mechanic'){for(const car of state.entities.filter(e=>getAsset(e.assetId)?.category==='Vehicles'&&distance(p,e)<160))car.hp=Math.min(200,(car.hp||100)+40)}note(task.text+' +'+task.money+'
+        else { station._lastModeTask=modeRuntime.elapsed; modeRuntime.money+=task.money; advanced.tasks++; if(modeRuntime.role==='Medic')game.life=Math.min(100,game.life+20); if(modeRuntime.role==='Mechanic')for(const car of state.entities.filter(e=>getAsset(e.assetId)?.category==='Vehicles'&&distance(p,e)<160))car.hp=Math.min(200,(car.hp||100)+40); note(task.text+' +'+String(task.money)); }
       }else note('Ce lieu ne correspond pas à ton métier');
     }
   }

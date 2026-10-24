@@ -1,3 +1,4 @@
+import {initializeNative3d,nativeStatus} from './core/native-3d.js';
 import {initHub,hub} from './core/project-hub.js';
 import {workspace} from './core/workspaces.js';
 import {lighting} from './core/lighting.js';
@@ -24,6 +25,7 @@ import {startRenderer} from './core/renderer.js';
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
 // Make the project chooser visible before initializing optional editor systems.
 initHub();
+initializeNative3d();
 bindAudioControls($('#audioToggle'),$('#audioVolume'));
 
 $('#newPointLight').onclick=()=>addLight('point');

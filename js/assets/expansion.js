@@ -1,7 +1,7 @@
 // Additional offline WarLike content. Original SVG illustrations and stylized effect thumbnails.
 export const expansion={
-Characters:[['ranger','Forest Ranger'],['knight','Knight'],['pilot','Pilot'],['engineer','Engineer'],['assassin','Assassin'],['mage','Battle Mage'],['guard','City Guard'],['raider','Raider']],
-Monsters:[['werewolf','Werewolf'],['spider','Giant Spider'],['bat','Cave Bat'],['wraith','Wraith'],['golem','Stone Golem'],['alien','Alien'],['mutant','Mutant'],['troll','Troll']],
+Characters:[['ranger','Forest Ranger'],['knight','Knight'],['pilot','Pilot'],['engineer','Engineer'],['assassin','Assassin'],['mage','Battle Mage'],['guard','City Guard'],['raider','Raider'],['ninja','Shadow Ninja'],['ninja-elite','Elite Ninja']],
+Monsters:[['werewolf','Werewolf'],['spider','Giant Spider'],['bat','Cave Bat'],['wraith','Wraith'],['golem','Stone Golem'],['alien','Alien'],['mutant','Mutant'],['troll','Troll'],['zombie-runner','Runner Zombie'],['zombie-crawler','Crawler Zombie'],['zombie-brute','Brute Zombie']],
 Vehicles:[['pickup','Pickup Truck'],['van','Cargo Van'],['truck','Military Truck'],['police-car','Police Car'],['ambulance','Ambulance'],['helicopter','Helicopter'],['hovercraft','Hovercraft'],['quad','Quad Bike']],
 Weapons:[['katana','Katana'],['hammer','War Hammer'],['crossbow','Crossbow'],['flamethrower','Flamethrower'],['shield','Shield'],['laser','Laser Rifle'],['dagger','Dagger'],['spear','Spear']],
 Props:[['pine','Pine Tree'],['mushroom','Mushroom'],['crystal','Mana Crystal'],['statue','Ancient Statue'],['well','Stone Well'],['tower','Watchtower'],['tent','Camp Tent'],['bench','Park Bench'],['traffic-cone','Traffic Cone'],['streetlight','Street Light'],['gas-pump','Gas Pump'],['ruins','Ruins']],

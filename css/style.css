@@ -275,7 +275,7 @@ body[data-workspace="3d"] [data-studio-action="elementsDemo"],
 body[data-workspace="3d"] [data-studio-action="gameModeAdd"],
 body[data-workspace="3d"] .game-mode-menu,
 body[data-workspace="3d"] [data-studio-action="logicDemo"]{display:none!important}
-body[data-workspace="2d"] [data-studio-action="threeDDemo"]{display:none!important}
+body[data-workspace="2d"] [data-studio-action="threeDDemo"],body[data-workspace="2d"] [data-studio-action="threeDNatureDemo"],body[data-workspace="2d"] [data-studio-action="threeDGarageDemo"]{display:none!important}
 
 /* WarLike Hub: independent project manager. */
 .hub-overlay[hidden]{display:none!important}

@@ -12,8 +12,6 @@ import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
-$('#add').onclick=()=>addEntity('object');
-$('#player').onclick=()=>addEntity('player');
 $('#undo').onclick=undo;
 $('#redo').onclick=redo;
 $('#play').onclick=togglePlay;

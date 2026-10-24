@@ -1,3 +1,4 @@
+import {renderSequenceEditor} from './logic-sequence-editor.js';
 import {workspace} from '../core/workspaces.js';
 import {lightTypes,validColor} from '../core/lighting.js';
 import {soundChoices,importSoundFile,previewSound,audioClips} from '../core/audio-sources.js';
@@ -35,6 +36,7 @@ export function renderHierarchy(){const root=document.querySelector('#objects'),
 export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
 const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent='GameObject #'+o.id+' • '+o.type;header.append(name,meta);root.append(header);
 component(root,'Transform',body=>{field(body,o,'x','Position X');field(body,o,'y',workspace.mode==='3d'?'Position Z':'Position Y');if(workspace.mode==='3d')field(body,o,'elevation3d','Position Y (3D height)');field(body,o,'rotation','Rotation');field(body,o,'w','Size X');field(body,o,'h',workspace.mode==='3d'?'Height':'Size Y')});
+renderSequenceEditor(root,o);
 if(workspace.mode==='3d'){
 component(root,'Lighting 3D Beta',body=>{
  selectField(body,o,'lightType','Type',['none','point','spot']);

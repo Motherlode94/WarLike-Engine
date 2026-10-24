@@ -2,7 +2,7 @@ import {recoverBackup} from '../core/storage.js';
 import {resetLayout} from './docking.js';
 import {state,notify} from '../core/state.js';
 import {record,undo,redo} from '../core/history.js';
-import {addEntity,duplicateSelected,deleteSelected,togglePlay,loadCombatDemo,exportScene} from '../core/scene.js';
+import {addEntity,addLogicHotspot,loadLogicDemo,duplicateSelected,deleteSelected,togglePlay,loadCombatDemo,exportScene} from '../core/scene.js';
 import {resetCamera} from '../core/camera.js';
 import {toolsState,log} from './workspace.js';
 const $=id=>document.getElementById(id);
@@ -15,7 +15,7 @@ export function initStudioMenus(){
  new(){if(state.playing)return alert('Arrête le mode Play avant de créer une scène.');if(!confirm('Créer une scène vide ? Tu peux annuler cette opération avec Ctrl+Z.'))return;state.entities=[];state.selected=[];state.nextId=1;record('Nouvelle scène');notify();$('studioProjectName').textContent='Nouvelle scène';log('Nouvelle scène créée')},
  open(){$('load').click()},recoverBackup(){if(state.playing)return alert('Arrête Play avant la récupération.');if(!confirm('Rouvrir la scène précédente ? La scène actuelle sera remplacée.'))return;if(!recoverBackup())alert('Aucune sauvegarde de secours disponible.');else log('Scène précédente restaurée')},save(){exportScene()},cloud(){$('cloudConnect').click()},
  undo,redo,duplicate:duplicateSelected,delete:deleteSelected,
- project(){$('projectTab').click();$('assetSearch').focus()},character(){addEntity('character')},object(){addEntity('object')},
+ project(){$('projectTab').click();$('assetSearch').focus()},hotspot:addLogicHotspot,logicDemo(){$('logicDemo').click()},character(){addEntity('character')},object(){addEntity('object')},
  play(){$('play').click()},demo(){$('loadDemo').click()},
  scene(){$('sceneTab').click()},console(){$('consoleTab').click()},frame:resetCamera,resetLayout,
  grid(){const input=$('gridEnabled');input.checked=!input.checked;input.dispatchEvent(new Event('change',{bubbles:true}))},

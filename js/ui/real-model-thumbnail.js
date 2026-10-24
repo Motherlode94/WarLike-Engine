@@ -37,11 +37,26 @@ export async function realModelThumbnail(id){
  try{return await task}catch(error){thumbCache.delete(id);throw error}
 }
 export function assignModelThumbnail(image,id){
- image.src='./assets/3d-real.svg';image.alt='Aperçu du modèle '+id+' en chargement';
+ // Never imply the loading placeholder is the real GLB model.
+ const placeholder=(title,subtitle)=>{
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" rx="10" fill="#1a2e3f"/><text x="60" y="54" fill="#b9d8e7" font-size="12" text-anchor="middle" font-family="Arial">'+title+'</text><text x="60" y="74" fill="#86a7ba" font-size="10" text-anchor="middle" font-family="Arial">'+subtitle+'</text></svg>';
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+ };
+ image.src=placeholder('GLB','Chargement…');
+ image.alt='Chargement du modèle 3D '+id;
+ image.dataset.modelStatus='loading';
  realModelThumbnail(id).then(src=>{
   if(!image.isConnected)return;
-  image.src=src;image.alt='Aperçu de la géométrie réelle du modèle 3D';
+  image.src=src;
+  image.dataset.modelStatus='ready';
+  image.alt='Miniature calculée à partir des triangles du modèle '+id;
+  image.title='Aperçu géométrique du véritable modèle GLB (textures non reproduites)';
  }).catch(error=>{
-  if(image.isConnected){image.alt='Modèle GLB non disponible : '+error.message;image.title=image.alt}
+  if(!image.isConnected)return;
+  image.src=placeholder('GLB indisponible','Voir console');
+  image.dataset.modelStatus='error';
+  image.alt='Échec de chargement du modèle GLB '+id;
+  image.title='Modèle GLB non disponible : '+String(error.message||error);
+  console.warn('[WarLike Thumbnail]',id,error);
  });
 }

@@ -1,3 +1,4 @@
+import {detailedSvg} from './detailed-art.js';
 // WarLike Engine built-in asset pack. All images are authored SVG, generated locally from catalog metadata.
 const defs={
 Characters:[['scout','Scout'],['soldier','Soldier'],['medic','Medic'],['sniper','Sniper'],['mechanic','Mechanic'],['survivor','Survivor']],
@@ -11,7 +12,7 @@ export const categories=['All',...Object.keys(defs)];
 export const getAsset=id=>catalog.find(a=>a.id===id);
 const palette={Characters:['#32c4a8','#5e92e1','#f4e0cc','#7596b2','#e0b65e','#ba85d2'],Monsters:['#6ba869','#7ade96','#d7d6b2','#799447','#839da9','#a25378'],Vehicles:['#688b78','#d3ad5b','#6e8672','#6b85b4','#7d8790'],Weapons:['#bdc5d1','#839aac','#d0b781'],Props:['#b48b57','#919ba3','#6e8c65','#a06f50']};
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
-export function svgFor(asset){const color=palette[asset.category][asset.index%palette[asset.category].length],dark='#233142',edge='#101e2b';
+export function svgFor(asset){if(asset.category!=='Characters'){const detailed=detailedSvg(asset);if(detailed)return detailed}const color=palette[asset.category][asset.index%palette[asset.category].length],dark='#233142',edge='#101e2b';
 const common='stroke="'+edge+'" stroke-width="2" stroke-linejoin="round"';
 let art='';
 if(asset.kind==='actor'){

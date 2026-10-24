@@ -1,3 +1,5 @@
+import {lighting} from './core/lighting.js';
+import {updateAudioSources,stopSources} from './core/audio-sources.js';
 import {bindAudioControls} from './core/audio.js';
 import {init3d} from './core/viewport-3d.js';
 import {motion} from './core/player-controller.js';
@@ -12,12 +14,33 @@ import {state,notify} from './core/state.js';
 import {autoSave,recoverLocal,hasLocalSave,backupLocalSave,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo} from './core/history.js';
-import {addEntity,addPrefab,addLogicHotspot,loadLogicDemo,loadRpgDemo,loadCombatDemo,loadDrivingDemo,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
+import {addEntity,addPrefab,addLogicHotspot,loadLogicDemo,loadRpgDemo,loadCombatDemo,loadDrivingDemo,addLight,addAudioEmitter,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
 bindAudioControls($('#audioToggle'),$('#audioVolume'));
+
+$('#newPointLight').onclick=()=>addLight('point');
+$('#newSpotLight').onclick=()=>addLight('spot');
+$('#newAudioSource').onclick=addAudioEmitter;
+const hourInput=$('#sunHour'),clock=$('#sunClock'),cycle=$('#dayNightToggle');
+const clockText=()=>{const h=Math.floor(lighting.hour)%24,m=Math.floor((lighting.hour%1)*60);clock.textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');hourInput.value=String(lighting.hour);cycle.checked=lighting.dayNight};
+hourInput.addEventListener('input',()=>{lighting.hour=Number(hourInput.value);clockText()});
+hourInput.addEventListener('change',()=>record('Lighting: time of day'));
+cycle.addEventListener('change',()=>{lighting.dayNight=cycle.checked;lighting.speed=lighting.dayNight?30:0;record('Lighting: day night cycle')});
+document.addEventListener('warlike:change',clockText);
+clockText();
+let wasPlaying=false,lastClock=0;
+function audioFrame(timestamp){
+ requestAnimationFrame(audioFrame);
+ if(wasPlaying&&!state.playing)stopSources();
+ wasPlaying=state.playing;
+ updateAudioSources(timestamp/1000);
+ if(timestamp-lastClock>300){clockText();lastClock=timestamp}
+}
+requestAnimationFrame(audioFrame);
+
 $('#undo').onclick=undo;
 $('#redo').onclick=redo;
 $('#play').onclick=togglePlay;

@@ -60,8 +60,8 @@ namespace WarLike.UnityBridge
             root.transform.SetParent(transform, false);
             foreach (WarLikeSceneEntity data in scene.entities)
             {
-                if (data == null || !float.IsFinite(data.x) || !float.IsFinite(data.y) ||
-                    !float.IsFinite(data.w) || !float.IsFinite(data.h) || data.w <= 0 || data.h <= 0)
+                if (data == null || float.IsNaN(data.x) || float.IsInfinity(data.x) || float.IsNaN(data.y) || float.IsInfinity(data.y) ||
+                    float.IsNaN(data.w) || float.IsInfinity(data.w) || float.IsNaN(data.h) || float.IsInfinity(data.h) || data.w <= 0 || data.h <= 0)
                     continue;
                 GameObject go = new GameObject(string.IsNullOrWhiteSpace(data.name) ? "Entity" : data.name);
                 go.transform.SetParent(root.transform, false);

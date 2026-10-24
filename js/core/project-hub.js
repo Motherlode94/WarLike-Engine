@@ -16,8 +16,8 @@ export function setHubAccent(value,{persist=true}={}){
  const rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));
  const highlight=rgb.map(n=>Math.round(n*.78)).map(n=>n.toString(16).padStart(2,'0')).join('');
  const target=document.querySelector('#hubOverlay');
- if(target){target.style.setProperty('--hub-accent',color);target.style.setProperty('--hub-accent-dark','#'+highlight)}
- if(hub.projectId)document.body.style.setProperty('--project-accent',color)
+ if(target?.style){target.style.setProperty('--hub-accent',color);target.style.setProperty('--hub-accent-dark','#'+highlight)}
+ if(hub.projectId)document.body?.style?.setProperty('--project-accent',color)
  if(persist){hub.accent=color;if(hub.projectId&&!state.playing)saveProject();else try{localStorage.setItem(THEME_KEY,color)}catch{}}
  return true;
 }
@@ -55,7 +55,7 @@ export function openProject(id){
 export function deleteProject(id){
  if(state.playing)throw Error('Arrête Play avant de supprimer.');
  localStorage.removeItem(PREFIX+id);localStorage.setItem(INDEX,JSON.stringify(indexed().filter(p=>p.id!==id)));
- if(hub.projectId===id){Object.assign(hub,{projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT});document.body.style.removeProperty('--project-accent')}
+ if(hub.projectId===id){Object.assign(hub,{projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT});document.body?.style?.removeProperty('--project-accent')}
 }
 export function renameProject(id,name){
  name=assertName(name);

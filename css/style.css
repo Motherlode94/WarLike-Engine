@@ -225,3 +225,14 @@ body.project-floating #projectPanel{min-height:210px!important}
 body.dragging-window,body.dragging-window *{user-select:none!important}
 .dock-title[data-dock-handle]::after{content:'⋮⋮';margin-left:8px;opacity:.5;font-size:14px;line-height:1}
 #projectPanel>.dock-title::after{order:8;margin-left:auto}
+
+/* 3.0 beta: immersive WebGL scene preview, non-destructive switching */
+#viewport{isolation:isolate}
+#viewport>#canvas,#viewport>#canvas3d{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#viewport>#canvas[hidden],#viewport>#canvas3d[hidden]{display:none!important}
+#canvas3d{cursor:crosshair;background:#111a24}
+#canvas3d:active{cursor:grabbing}
+#view3dStatus{position:absolute;top:10px;left:12px;max-width:calc(100% - 20px);pointer-events:none;z-index:7;color:#bff5e5;background:#122a39ed;border:1px solid #438f87;padding:7px 10px;border-radius:5px;font:11px system-ui}
+#view3dStatus[hidden]{display:none}
+#view3dToggle.active{background:#25665b;color:#f6fffa;border-color:#75e7c9}
+#viewport.view-3d-active>.rpg-shortcuts,#viewport.view-3d-active>.scene-axis{display:none}

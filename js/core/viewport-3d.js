@@ -184,7 +184,10 @@ export function init3d(canvas,host,buttons){
  canvas.addEventListener('pointerdown',e=>{
   if(!view3d.enabled)return;
   const p=rectPoint(e),cam=camera();
-  if(state.playing)return;
+  if(state.playing){
+   if(e.button===2){view3d.drag={button:2,x:p.x,y:p.y,yaw:view3d.yaw,pitch:view3d.pitch,pointer:e.pointerId,selected:null,moved:false};canvas.setPointerCapture(e.pointerId)}
+   return;
+  }
   const selected=e.button===0?pick(p,cam):null;
   if(e.button===0&&selected){
    if(e.ctrlKey||e.metaKey||e.shiftKey){state.selected=state.selected.includes(selected.id)?state.selected.filter(i=>i!==selected.id):[...state.selected,selected.id];notify()}
@@ -196,7 +199,10 @@ export function init3d(canvas,host,buttons){
  });
  canvas.addEventListener('pointermove',e=>{
   if(!view3d.enabled)return;const p=rectPoint(e),cam=camera();
-  if(state.playing)return;
+  if(state.playing){
+   const d=view3d.drag;if(d?.button===2&&d.pointer===e.pointerId){view3d.yaw=d.yaw-(p.x-d.x)*.009;view3d.pitch=clamp(d.pitch+(p.y-d.y)*.009,.08,1.5)}
+   return;
+  }
   const drag=view3d.drag;if(!drag||drag.pointer!==e.pointerId)return;
   const dx=p.x-drag.x,dy=p.y-drag.y;
   if(Math.hypot(dx,dy)>4)drag.moved=true;

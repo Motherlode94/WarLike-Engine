@@ -84,6 +84,26 @@ public sealed class GameWorld {
                 actor.SpinSpeed = Number(component,"speed");
                 world.AddComponent(actor, new AutoRotateBehaviour());
             }
+            if (obj.TryGetProperty("csharpComponents", out var components) && components.ValueKind == JsonValueKind.Array) {
+                foreach (var definition in components.EnumerateArray()) {
+                    if (definition.ValueKind != JsonValueKind.Object || !definition.TryGetProperty("kind", out var type)) continue;
+                    switch (type.GetString()) {
+                        case "AutoRotate":
+                            actor.SpinSpeed = Number(definition,"speed");
+                            world.AddComponent(actor, new AutoRotateBehaviour());
+                            break;
+                        case "Health":
+                            world.AddComponent(actor, new HealthComponent { RegenerationPerSecond = Number(definition,"regen") });
+                            break;
+                        case "LinearMotion":
+                            world.AddComponent(actor, new LinearMotionComponent { UnitsPerSecond = new Vector3(Number(definition,"vx"),Number(definition,"vy"),Number(definition,"vz")) });
+                            break;
+                        case "FollowActor":
+                            world.AddComponent(actor, new FollowActorComponent { TargetId = (int)Number(definition,"targetId"), Speed = Math.Max(0,Number(definition,"speed")), StopDistance = Math.Max(0,Number(definition,"stopDistance")) });
+                            break;
+                    }
+                }
+            }
             if (obj.TryGetProperty("hp", out var hp) && hp.TryGetSingle(out float health)) actor.Health = health;
             if (obj.TryGetProperty("stats", out var stats) && stats.ValueKind == JsonValueKind.Object) {
                 actor.Health = Number(stats,"health"); actor.MaxHealth = Number(stats,"maxHealth");

@@ -68,6 +68,8 @@ $('#loadDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Combat 
 record('Scène initiale');
 beginAutoSave();
 $('#cloudConnect').onclick=connectCloud;
+// Populate the 2D/3D asset browser before starting either graphics renderer.
+initWorkspace();
 renderUI();
 startRenderer(canvas,host);
 startGameSimulation();
@@ -94,7 +96,6 @@ setWorkspaceUi();
 document.addEventListener('warlike:project',setWorkspaceUi);
 document.addEventListener('warlike:change',()=>{if(viewport3d&&view3d.enabled!==(workspace.mode==='3d')){viewport3d.syncToWorkspace();setWorkspaceUi()}});
 $('#duplicate').onclick=duplicateSelected;
-initWorkspace();
 initDocking();
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});
 

@@ -4,7 +4,7 @@ import {bindGameInput} from './core/gameplay.js';
 import {initWorkspace,log} from './ui/workspace.js';
 import {catalog,urlFor} from './assets/catalog.js';
 import {state,notify} from './core/state.js';
-import {autoSave,recoverLocal,beginAutoSave,connectCloud} from './core/storage.js';
+import {autoSave,recoverLocal,hasLocalSave,backupLocalSave,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo} from './core/history.js';
 import {addEntity,addPrefab,loadCombatDemo,loadDrivingDemo,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
@@ -25,7 +25,13 @@ attachInput(canvas,host);
 bindGameInput(canvas);
 $('#driveDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Driving Sandbox ? Tu peux annuler ce remplacement avec Ctrl+Z.'))return;loadDrivingDemo();log('Driving Sandbox chargé — Play, puis E pour monter')};
 $('#loadDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Combat Sandbox ? La scène actuelle sera remplacée dans l’éditeur. Tu pourras l’annuler avec Ctrl+Z.'))return;loadCombatDemo();log('Combat Sandbox chargé : sélectionne Play')};
-if(!recoverLocal())record('Scène initiale');
+if(hasLocalSave()){
+ if(window.confirm('WarLike Studio a retrouvé une scène sauvegardée.\n\nOK : rouvrir la dernière scène.\nAnnuler : commencer une nouvelle session (l’ancienne scène sera conservée en sauvegarde de secours).')){
+  if(!recoverLocal())record('Scène initiale');
+ }else{
+  backupLocalSave();record('Nouvelle session');
+ }
+}else record('Scène initiale');
 beginAutoSave();
 $('#cloudConnect').onclick=connectCloud;
 renderUI();

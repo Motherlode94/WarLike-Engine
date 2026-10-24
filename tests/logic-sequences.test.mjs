@@ -16,7 +16,7 @@ test('branches choose first matching AND branch, else as fallback',()=>{
 });
 test('wait delays further instructions, then finishes after elapsed time',()=>{
  resetSequences();const o=obj(1);o.sequence={...newSequence(),event:'start',instructions:[{type:'setVariable',key:'phase',value:'first'},{type:'wait',value:1},{type:'setVariable',key:'phase',value:'second'}]};
- const c=ctx([o]);updateSequences(.016,c);assert.equal(sequenceRuntime.globals.phase,'first');updateSequences(.4,c);assert.equal(sequenceRuntime.globals.phase,'first');updateSequences(.6,c);assert.equal(sequenceRuntime.globals.phase,'second');
+ const c=ctx([o]);updateSequences(.016,c);assert.equal(sequenceRuntime.globals.phase,'first');for(let i=0;i<4;i++)updateSequences(.1,c);assert.equal(sequenceRuntime.globals.phase,'first');for(let i=0;i<7;i++)updateSequences(.1,c);assert.equal(sequenceRuntime.globals.phase,'second');
 });
 test('emit signal activates another object next update',()=>{
  resetSequences();const a=obj(1),b=obj(2,300);

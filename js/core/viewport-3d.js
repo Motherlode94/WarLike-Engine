@@ -1,3 +1,4 @@
+import {get3dAsset} from '../assets/catalog-3d.js';
 import {workspace,switchWorkspace} from './workspaces.js';
 import {sunAt,visibleLights,updateLighting} from './lighting.js';
 // WarLike 3D Beta: self-contained WebGL perspective scene editor.
@@ -17,8 +18,8 @@ const V={
  norm:a=>{const d=Math.hypot(...a)||1;return a.map(v=>v/d)}
 };
 export const objectBounds3d=o=>{
- const asset=getAsset(o.assetId);
- const width=Math.max(.25,o.w/64),depth=Math.max(.25,(asset?.category==='Vehicles'?o.h*.65:o.w*.8)/64);
+ const asset=getAsset(o.assetId)||get3dAsset(o.assetId);
+ const width=Math.max(.25,o.w/64),depth=Math.max(.25,(o.depth3d??(asset?.category==='Vehicles'?o.h*.65:o.w*.8))/64);
  const height=Math.max(.2,(asset?.category==='Buildings'?o.h*1.45:asset?.category==='Vehicles'?o.h*.60:o.h)/64);
  return {x:(o.x+o.w/2)/64,y:height/2+(Number(o.elevation3d)||0),z:(o.y+o.h/2)/64,w:width,h:height,d:depth};
 };
@@ -102,6 +103,28 @@ const cubeVerts=()=>{
  ...face([[a,a,a],[b,a,a],[b,a,b],[a,a,b]],[0,-1,0])
  ]);
 };
+const curvedVerts=(kind,segments=16,rings=10)=>{
+ const values=[],push=(p,n)=>values.push(...p,...n);
+ const surface=(a,b,c)=>{push(a,a.map(v=>v*2));push(b,b.map(v=>v*2));push(c,c.map(v=>v*2))};
+ if(kind==='sphere'){
+  for(let y=0;y<rings;y++){const v0=-Math.PI/2+y*Math.PI/rings,v1=-Math.PI/2+(y+1)*Math.PI/rings;
+   for(let i=0;i<segments;i++){const u0=i*2*Math.PI/segments,u1=(i+1)*2*Math.PI/segments;
+    const point=(u,v)=>[Math.cos(u)*Math.cos(v)*.5,Math.sin(v)*.5,Math.sin(u)*Math.cos(v)*.5];
+    const a=point(u0,v0),b=point(u1,v0),c=point(u1,v1),d=point(u0,v1);
+    surface(a,b,c);surface(a,c,d);
+   }}
+ }else {
+  for(let i=0;i<segments;i++){const u0=i*2*Math.PI/segments,u1=(i+1)*2*Math.PI/segments;
+   const x0=Math.cos(u0)*.5,z0=Math.sin(u0)*.5,x1=Math.cos(u1)*.5,z1=Math.sin(u1)*.5;
+   const a=[x0,-.5,z0],b=[x1,-.5,z1],c=[kind==='cone'?0:x1,.5,kind==='cone'?0:z1],d=[kind==='cone'?0:x0,.5,kind==='cone'?0:z0];
+   const n=[Math.cos((u0+u1)/2),kind==='cone'?.5:0,Math.sin((u0+u1)/2)];
+   for(const p of [a,b,c,a,c,d])push(p,n);
+   if(kind!=='cone'){for(const p of [[0,.5,0],d,c])push(p,[0,1,0]);}
+   for(const p of [[0,-.5,0],b,a])push(p,[0,-1,0]);
+  }
+ }
+ return new Float32Array(values);
+};
 const lines=(vertices)=>new Float32Array(vertices.flatMap(([a,b])=>[...a,0,1,0,...b,0,1,0]));
 const gridVerts=()=>{
  const out=[];for(let n=-50;n<=50;n+=2){
@@ -132,7 +155,7 @@ export function init3d(canvas,host,buttons){
  const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),angle:loc('uAngle'),aspect:loc('uAspect'),color:loc('uColor'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal');
  const makeBuffer=data=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
- const cubes=makeBuffer(cubeVerts()),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
+ const cubes=makeBuffer(cubeVerts()),sphere=makeBuffer(curvedVerts('sphere')),cylinder=makeBuffer(curvedVerts('cylinder')),cone=makeBuffer(curvedVerts('cone')),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
  const bind=mesh=>{gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aNormal)};
  const model=(pos,scale,color,angle=0)=>{gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform1f(u.angle,angle);gl.uniform4fv(u.color,color)};
@@ -161,7 +184,7 @@ export function init3d(canvas,host,buttons){
   const wx=(side*Math.cos(view3d.yaw)+forward*Math.sin(view3d.yaw))*speed;
   const wz=(-side*Math.sin(view3d.yaw)+forward*Math.cos(view3d.yaw))*speed;
   const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
-  const solid=o=>o!==p&&!o.lightType&&!o.audioEnabled&&(o.type==='object'||getAsset(o.assetId)?.category==='Buildings');
+  const solid=o=>o!==p&&!o.lightType&&!o.audioEnabled&&(o.type==='object'||getAsset(o.assetId)?.category==='Buildings'||o.type==='mesh3d'&&o.collision3d!==false);
   const prevX=p.x;p.x+=wx;if(state.entities.some(o=>solid(o)&&overlaps(p,o)))p.x=prevX;
   const prevY=p.y;p.y+=wz;if(state.entities.some(o=>solid(o)&&overlaps(p,o)))p.y=prevY;
   p.animation='walk';
@@ -258,7 +281,41 @@ export function init3d(canvas,host,buttons){
   for(const o of objects){
    const b=objectBounds3d(o),color=assetColor(o),asset=getAsset(o.assetId),category=asset?.category;
    const angle=(o.rotation||0)*Math.PI/180;
-   const cube=(p,scale,shade)=>{model(p,scale,shade,angle);gl.drawArrays(gl.TRIANGLES,0,cubes.count)};
+   const shape=get3dAsset(o.assetId)?.shape;
+   const drawShape=(mesh,p,scale,shade)=>{bind(mesh);model(p,scale,shade,angle);gl.drawArrays(gl.TRIANGLES,0,mesh.count)};
+   const cube=(p,scale,shade)=>drawShape(cubes,p,scale,shade);
+   const round=(p,scale,shade)=>drawShape(sphere,p,scale,shade);
+   const cyl=(p,scale,shade)=>drawShape(cylinder,p,scale,shade);
+   if(shape){
+    if(['sphere','rock','bush'].includes(shape))round([b.x,b.y,b.z],[b.w,b.h,b.d],color);
+    else if(['cylinder','barrel','log'].includes(shape))cyl([b.x,b.y,b.z],[b.w,b.h,b.d],color);
+    else if(['cone','cactus'].includes(shape))drawShape(cone,[b.x,b.y,b.z],[b.w,b.h,b.d],color);
+    else if(['tree','pine'].includes(shape)){
+     cyl([b.x,b.y-b.h*.22,b.z],[b.w*.22,b.h*.55,b.d*.22],[.48,.34,.22,1]);
+     if(shape==='tree')round([b.x,b.y+b.h*.2,b.z],[b.w,b.h*.66,b.d],color);
+     else{drawShape(cone,[b.x,b.y+b.h*.19,b.z],[b.w,b.h*.77,b.d],color)}
+    }else if(shape==='humanoid'){
+     cube([b.x,b.y,b.z],[b.w*.65,b.h*.52,b.d*.65],color);
+     round([b.x,b.y+b.h*.39,b.z],[b.w*.57,b.h*.25,b.d*.57],[.82,.68,.57,1]);
+     for(const side of [-.23,.23])cube([b.x+b.w*side,b.y-b.h*.38,b.z],[b.w*.23,b.h*.38,b.d*.3],[.29,.35,.42,1]);
+    }else if(['car','truck','tank','bike'].includes(shape)){
+     cube([b.x,b.y,b.z],[b.w,b.h*.65,b.d],color);
+     cube([b.x,b.y+b.h*.39,b.z],[b.w*.52,b.h*.42,b.d*.8],[.36,.51,.61,1]);
+     for(const x of [-.36,.36])for(const z of [-.48,.48])cyl([b.x+b.w*x,b.y-b.h*.37,b.z+b.d*z],[b.w*.18,b.h*.33,b.d*.22],[.15,.19,.24,1]);
+     if(shape==='tank')cube([b.x,b.y+b.h*.63,b.z],[b.w*.65,b.h*.12,b.d*.5],[.28,.4,.3,1]);
+    }else if(['house','hangar','tower','garage'].includes(shape)){
+     cube([b.x,b.y,b.z],[b.w,b.h,b.d],color);
+     cube([b.x,b.y+b.h*.54,b.z],[b.w*1.12,b.h*.13,b.d*1.12],[.30,.39,.45,1]);
+     cube([b.x,b.y-b.h*.25,b.z+b.d*.51],[b.w*.25,b.h*.5,.05],[.22,.25,.31,1]);
+    }else if(['lamp','cactus'].includes(shape)){
+     cyl([b.x,b.y,b.z],[b.w*.22,b.h,b.d*.22],color);
+     round([b.x,b.y+b.h*.48,b.z],[b.w*.55,b.w*.55,b.d*.55],[1,.8,.4,1]);
+    }else if(shape==='table'||shape==='bench'){
+     cube([b.x,b.y+b.h*.29,b.z],[b.w,b.h*.17,b.d],color);
+     for(const x of [-.35,.35])for(const z of [-.33,.33])cube([b.x+b.w*x,b.y-b.h*.16,b.z+b.d*z],[b.w*.13,b.h*.74,b.d*.13],[.43,.33,.27,1]);
+    }else cube([b.x,b.y,b.z],[b.w,b.h,b.d],color);
+    continue;
+   }
    cube([b.x,b.y,b.z],[b.w,b.h,b.d],color);
    if(category==='Buildings'){
     cube([b.x,b.y+b.h*.51,b.z],[b.w*1.12,b.h*.12,b.d*1.14],[.24,.34,.43,1]);

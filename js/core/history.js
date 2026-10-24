@@ -2,6 +2,7 @@ import {state,notify} from './state.js';
 import {workspace} from './workspaces.js';
 const timelines={'2d':{entries:[],cursor:-1},'3d':{entries:[],cursor:-1}};const limit=80;
 const history=()=>timelines[workspace.mode];
+export function resetHistory(){for(const t of Object.values(timelines)){t.entries.length=0;t.cursor=-1}renderHistory()}
 export function record(label){if(state.playing)return;const {entries}=history();let {cursor}=history();const snapshot=JSON.stringify({entities:state.entities,nextId:state.nextId});if(entries[cursor]?.snapshot===snapshot)return;entries.splice(cursor+1);entries.push({label,snapshot});if(entries.length>limit)entries.shift();history().cursor=entries.length-1;renderHistory()}
 export function jump(index){const {entries}=history();if(state.playing||index<0||index>=entries.length)return;history().cursor=index;const snap=JSON.parse(entries[index].snapshot);state.entities=snap.entities;state.nextId=snap.nextId;state.selected=state.selected.filter(id=>state.entities.some(o=>o.id===id));if(!state.selected.length&&state.entities.length)state.selected=[state.entities[0].id];notify();renderHistory()}
 export const undo=()=>jump(history().cursor-1);export const redo=()=>jump(history().cursor+1);

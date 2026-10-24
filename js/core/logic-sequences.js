@@ -1,8 +1,8 @@
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
 export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal'];
-export const sequenceConditions=['always','variable','localVariable','distanceLess','objectEnabled'];
-export const sequenceInstructions=['message','setVariable','addVariable','setLocal','wait','moveObject','setColor','enableObject','emitSignal','destroyObject'];
+export const sequenceConditions=['always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','randomChance'];
+export const sequenceInstructions=['message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
 export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[]};
 const number=(n,def=0)=>Number.isFinite(Number(n))?Number(n):def;
@@ -19,6 +19,11 @@ export function conditionPass(c,o,ctx){
  case 'variable':pass=compare(sequenceRuntime.globals[c.key],c.value,c.operator||'==');break;
  case 'localVariable':pass=compare(o.sequenceLocal?.[c.key],c.value,c.operator||'==');break;
  case 'distanceLess':pass=!!ctx.player&&distance(o,ctx.player)<Math.max(0,number(c.value,96));break;
+ case 'distanceGreater':pass=!!ctx.player&&distance(o,ctx.player)>Math.max(0,number(c.value,96));break;
+ case 'healthBelow':pass=number(o.hp,100)<number(c.value,50);break;
+ case 'healthAbove':pass=number(o.hp,100)>number(c.value,50);break;
+ case 'hasTag':pass=Array.isArray(o.tags)&&o.tags.includes(String(c.value??''));break;
+ case 'randomChance':pass=Math.random()<Math.max(0,Math.min(1,number(c.value,.5)));break;
  case 'objectEnabled':pass=o.sequenceEnabled!==false;break;
  default:pass=false;
  }
@@ -34,7 +39,7 @@ function execute(job,ctx,actionsLeft){
  if(!entity)return;
  let count=0;
  while(job.index<job.steps.length&&count<actionsLeft){
-  const a=job.steps[job.index++];if(!a||a.disabled)continue;
+  const a=job.steps[job.index++];if(!a||a.disabled||typeof a.type!=='string')continue;
   count++;
   const key=String(a.key||'score').slice(0,60),val=a.value;
   switch(a.type){
@@ -42,7 +47,13 @@ function execute(job,ctx,actionsLeft){
   case 'setVariable':rt.globals[key]=val??0;break;
   case 'addVariable':rt.globals[key]=number(rt.globals[key])+number(val);break;
   case 'setLocal':entity.sequenceLocal??={};entity.sequenceLocal[key]=val??0;break;
-  case 'moveObject':entity.x+=number(a.x);entity.y+=number(a.y);break;
+  case 'addLocal':entity.sequenceLocal??={};entity.sequenceLocal[key]=number(entity.sequenceLocal[key])+number(val);break;
+  case 'moveObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.x+=number(a.x);target.y+=number(a.y);break}
+  case 'teleportObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.x=number(a.x,target.x);target.y=number(a.y,target.y);break}
+  case 'setHealth':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.hp=Math.max(0,number(val,100));break}
+  case 'addHealth':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.hp=Math.max(0,number(target.hp,100)+number(val));break}
+  case 'setAnimation':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.animation=String(val||'idle').slice(0,64);break}
+  case 'setBehavior':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;const behavior=String(val||'none');if(['none','patrol','chase','guard','wander','flee','follow'].includes(behavior))target.behavior=behavior;break}
   case 'setColor':if(/^#[a-f0-9]{6}$/i.test(String(val))){entity.color=val;entity.colorCustomized=true}break;
   case 'enableObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.sequenceEnabled=val!==false&&String(val)!=='false';break}
   case 'emitSignal':emitSequenceSignal(val||key);break;
@@ -60,7 +71,7 @@ export function updateSequences(dt,ctx){
  const start=(o,s)=>{
   if(rt.jobs.length>=MAX_JOBS||budget<=0)return;
   const id=o.id;if(s.once&&rt.fired.has(id))return;
-  if(!s.branches?.length&&!(s.conditions||[]).every(c=>conditionPass(c,o,ctx)))return;
+  if(!(s.conditions||[]).every(c=>conditionPass(c,o,ctx)))return;
   rt.fired.add(id);const steps=chooseSequenceBranch(s,o,ctx).slice(0,MAX_ACTIONS);
   const job={objectId:id,steps,index:0,wait:0};
   budget-=execute(job,ctx,budget)||0;

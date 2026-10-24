@@ -352,3 +352,10 @@ body{--project-accent:#48cba9}
 #projectTab.active,#sceneTab.active,#gameTab.active{border-bottom:2px solid var(--project-accent)}
 .asset.selected{outline:2px solid var(--project-accent);outline-offset:-2px}
 #hubOpen{border-color:var(--project-accent)}
+
+/* The active project controls which canvas is visible, even during WebGL failure. */
+body[data-workspace="3d"] #viewport>#canvas{display:none!important}
+body[data-workspace="3d"] #viewport>#canvas3d{display:block!important}
+body[data-workspace="2d"] #viewport>#canvas3d{display:none!important}
+body[data-workspace="2d"] #viewport>#canvas{display:block!important}
+#webglFailure{pointer-events:auto}

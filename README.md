@@ -45,3 +45,7 @@ La navigation IA utilise un **évitement local simplifié** (pas de NavMesh ni d
 ## Développement en C# (SDK .NET 8 expérimental)
 
 Un premier runtime C# autonome est disponible dans [`csharp/`](./csharp/README.md), avec `GameWorld`, `Actor`, `WarLikeBehaviour`, les callbacks `Awake`, `Start`, `Update`, `FixedUpdate`, `OnDestroy` et un exemple exécutable. Pour démarrer : `dotnet run --project csharp/WarLike.Demo`. Le SDK peut importer les entités depuis un export JSON du studio. **Attention : les scripts C# ne s'exécutent pas encore dans le navigateur / Play Mode WebGL** ; ce runtime .NET est une base indépendante en vue d'une intégration future.
+
+## C++ natif dans le moteur 3D (WebAssembly)
+
+Un nouveau module **C++17** de navigation A* est disponible dans [`native/`](./native/README.md). Le moteur 3D charge son **WebAssembly** lors du démarrage et utilise automatiquement la navigation JavaScript si le binaire compilé n'a pas été déployé. Compiler avec Emscripten : `sh native/build-wasm.sh`. Le C++ n'est pas encore un langage de scripts attachables aux objets dans l'Inspector ; il accélère actuellement une fonction interne du moteur. Le build `.wasm` n'est pas inclus par défaut.

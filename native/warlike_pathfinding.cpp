@@ -7,13 +7,13 @@
 // WarLike native C++17 pathfinder. C ABI is stable for browser WebAssembly calls.
 // Rectangle data: packed x,y,width,height float arrays.
 // Return: number of coordinate pairs; -1 means insufficient output buffer.
-extern "C" {
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #define WL_API EMSCRIPTEN_KEEPALIVE
 #else
 #define WL_API
 #endif
+extern "C" {
 WL_API int wl_find_path(float startX,float startY,float goalX,float goalY,
                         const float* rects,int rectCount,float cellSize,float padding,
                         int maxNodes,float* output,int outputCapacity) {

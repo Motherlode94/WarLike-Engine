@@ -19,3 +19,47 @@
 .project-panel{min-height:195px}
 .center-stack{grid-template-rows:38px minmax(120px,1fr)235px}
 @media(max-width:900px){.center-stack{grid-template-rows:38px minmax(120px,1fr)190px}}
+
+
+/* Unity-inspired editor v0.6 */
+.center-stack{grid-template-rows:39px 38px minmax(120px,1fr)245px}
+.scene-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#252e38;border-bottom:1px solid #455360;padding:3px 11px}
+.tools-left{display:flex;gap:4px;align-items:center}
+.scene-tools button{font-size:11px;padding:4px 9px;min-height:27px}
+.scene-tools button.active{background:#2b6572;border-color:#5eafc2}
+.tool-option{font-size:11px;display:flex;align-items:center;gap:3px;margin-left:9px;cursor:pointer}
+.tool-option input{accent-color:#65c7b6}
+#toolStatus{font-size:10px;color:#a7bbc8;white-space:nowrap}
+.panel-search{width:calc(100% - 20px);margin:8px 10px 0;background:#182633;border:1px solid #3a4d5e;border-radius:3px;color:#eee;padding:7px}
+.bottom-tabs{display:flex;background:#242c37;border-bottom:1px solid #4b5765;min-height:34px}
+.bottom-tab{border:0;border-right:1px solid #495462;border-radius:0;background:transparent;padding:7px 16px;font-size:11px}
+.bottom-tab.active{background:#354758;border-top:2px solid #6bdec0}
+#projectContent{flex:1;min-height:0;display:flex;flex-direction:column}
+#projectContent[hidden],#consoleContent[hidden]{display:none}
+#consoleContent{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.project-panel{height:245px;overflow:hidden}
+.asset-body{display:flex;flex:1;min-height:0}
+.asset-folders{width:156px;flex:none;border-right:1px solid #424e5e;background:#202a35;overflow:auto;padding:8px 6px}
+.asset-folders button{display:block;width:100%;border:0;background:transparent;font-size:11px;text-align:left;margin:1px 0;padding:7px;border-radius:3px}
+.asset-folders button.active{background:#2c5964;color:#d4fff4}
+.asset-content{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+#assetBreadcrumb{font-size:10px;color:#9eb1c3;padding:5px 12px;border-bottom:1px solid #354353}
+.asset-grid{flex:1;min-height:0;overflow-y:auto}
+.console-bar{display:flex;gap:15px;align-items:center;padding:6px 12px;border-bottom:1px solid #405065;font-size:11px}
+.console-bar label{display:flex;gap:5px;align-items:center}
+#consoleEntries{overflow-y:auto;flex:1;padding:4px 12px;font:11px ui-monospace,Consolas,monospace}
+.console-line{padding:6px;border-bottom:1px solid #344050}
+.console-line.error{color:#f49f9f}.console-line.warn{color:#efc879}
+.inspector-object{padding:5px 0 13px}
+.inspector-object input{font-weight:650}
+.inspector-object small{display:block;padding-top:6px;color:#95a5bb}
+.inspector-component{border:1px solid #3f4b58;margin:8px 0;background:#28323d;border-radius:3px;overflow:hidden}
+.inspector-component summary{cursor:pointer;list-style:none;padding:10px 9px;background:#333e4a;color:#e3edf8;font-size:11px;font-weight:650}
+.inspector-component summary::-webkit-details-marker{display:none}
+.component-content{padding:9px}
+.property-row{display:grid;grid-template-columns:78px minmax(0,1fr);gap:6px;align-items:center;margin-bottom:7px}
+#properties .property-row label{font-size:10px;margin:0;letter-spacing:0}
+.property-row input,.property-row select{min-width:0;width:100%;padding:5px!important;background:#1d2733;border:1px solid #48586a;color:#e8f0f9;border-radius:3px}
+.component-content p{font-size:11px;color:#adbdca}
+.delete-object{width:100%}
+@media(max-width:900px){.center-stack{grid-template-rows:39px 38px minmax(120px,1fr)190px}.project-panel{height:190px}.asset-folders{width:112px}}

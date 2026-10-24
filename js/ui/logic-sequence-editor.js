@@ -58,10 +58,11 @@ export function renderSequenceEditor(root,o){
    const block=document.createElement('div');block.className='sequence-step';
    const caption=document.createElement('small');caption.textContent='#'+(i+1);block.append(caption);
    select(block,'Instruction',step.type,sequenceInstructions,v=>{step.type=v;save('Instruction')});
-   if(['setVariable','addVariable','setLocal','addLocal','emitSignal'].includes(step.type))text(block,'Variable / Signal',step.key||'',v=>{step.key=v;save('Nom')});
+   if(['setVariable','addVariable','setLocal','addLocal','emitSignal','giveItem','removeItem','equipItem'].includes(step.type))text(block,'Variable / Signal',step.key||'',v=>{step.key=v;save('Nom')});
    if(!['destroyObject'].includes(step.type))text(block,'Valeur',step.value??'',v=>{step.value=v;save('Valeur')});
    if(['moveObject','teleportObject'].includes(step.type)){text(block,'Delta X',step.x??0,v=>{step.x=v;save('X')},'number');text(block,'Delta Z/Y',step.y??0,v=>{step.y=v;save('Y')},'number')}
-   if(['enableObject','moveObject','teleportObject','setHealth','addHealth','setAnimation','setBehavior'].includes(step.type))text(block,'ID cible (optionnel)',step.targetId??'',v=>{step.targetId=v;save('Cible')},'number');
+   if(['enableObject','moveObject','teleportObject','setHealth','addHealth','setAnimation','setBehavior','giveItem','removeItem','equipItem','damageObject','healObject'].includes(step.type))text(block,'ID cible (optionnel)',step.targetId??'',v=>{step.targetId=v;save('Cible')},'number');
+   if(step.type==='equipItem')select(block,'Slot',step.slot||'weapon',['weapon','armor'],v=>{step.slot=v;save('Slot')});
    toggle(block,'Désactiver instruction',step.disabled===true,v=>{step.disabled=v;save('Désactiver')});
    const tools=document.createElement('div');tools.className='sequence-buttons';
    if(i>0)button(tools,'↑',()=>{[list[i-1],list[i]]=[list[i],list[i-1]];save('Remonter')});

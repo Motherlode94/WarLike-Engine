@@ -1,19 +1,22 @@
+import {rpg,giveItem,hasItem,startQuest,progressQuest,questStatus,openDialogue,resetRpg,refreshRpg,notice} from './rpg-systems.js';
 // WarLike visual logic: original event/condition/action engine, inspired by visual-scripting workflows.
 import {state} from './state.js';
 export const eventTypes=['onStart','onInteract','onEnter','onExit','onUpdate'];
-export const actionTypes=['message','setVariable','addVariable','heal','damage','teleport','destroy','changeColor','giveItem'];
-export const conditionTypes=['always','variableEquals','variableAtLeast','hasItem','healthBelow'];
+export const actionTypes=['message','setVariable','addVariable','heal','damage','teleport','destroy','changeColor','giveItem','removeItem','startQuest','progressQuest','completeQuest','startDialogue'];
+export const conditionTypes=['always','variableEquals','variableAtLeast','hasItem','healthBelow','questActive','questCompleted'];
 export const logic={globals:{},inventory:{},messages:[],activeZones:new Set(),started:false,lastInteract:false,healthDelta:0};
 const player=()=>state.entities.find(o=>o.type==='character'||o.type==='player'||o.type==='prefab'&&['scout','soldier','medic','sniper','mechanic','survivor'].includes(o.assetId));
 const nearby=(a,b,range=85)=>Math.hypot(a.x+a.w/2-b.x-b.w/2,a.y+a.h/2-b.y-b.h/2)<=range;
 const numeric=value=>Number.isFinite(Number(value))?Number(value):0;
-export function resetLogic(){logic.globals={};logic.inventory={};logic.messages=[];logic.activeZones.clear();logic.started=false;logic.lastInteract=false;logic.healthDelta=0}
+export function resetLogic(){logic.globals={};logic.inventory={};logic.messages=[];logic.activeZones.clear();logic.started=false;logic.lastInteract=false;logic.healthDelta=0;resetRpg()}
 const variable=(obj,name)=>obj.logic?.local?.[name]??logic.globals[name]??0;
 function test(cond,obj,character){switch(cond.type){
  case 'always':return true;
  case 'variableEquals':return String(variable(obj,cond.key||'score'))===String(cond.value??0);
  case 'variableAtLeast':return numeric(variable(obj,cond.key||'score'))>=numeric(cond.value);
- case 'hasItem':return (logic.inventory[cond.key||'key']||0)>=Math.max(1,numeric(cond.value)||1);
+ case 'hasItem':return hasItem(cond.key||'key',Math.max(1,numeric(cond.value)||1));
+ case 'questActive':return questStatus(cond.key)==='active';
+ case 'questCompleted':return questStatus(cond.key)==='completed';
  case 'healthBelow':return numeric(character?.hp??100)<numeric(cond.value);
  default:return false;
 }}
@@ -26,7 +29,12 @@ case 'damage':if(character)logic.healthDelta-=Math.max(0,amount||10);break;
 case 'teleport':if(character){character.x=numeric(step.x);character.y=numeric(step.y)}break;
 case 'destroy':obj._logicDestroyed=true;break;
 case 'changeColor':if(/^#[a-f\d]{6}$/i.test(String(step.value)))obj.color=step.value;break;
-case 'giveItem':logic.inventory[key]=(logic.inventory[key]||0)+Math.max(1,amount||1);break;
+case 'giveItem':giveItem(key,Math.max(1,amount||1));logic.inventory=rpg.inventory;break;
+case 'removeItem':giveItem(key,-Math.max(1,amount||1));break;
+case 'startQuest':startQuest(key,String(step.value||key),Number(step.goal)||1,step.description||'');break;
+case 'progressQuest':progressQuest(key,amount||1);break;
+case 'completeQuest':progressQuest(key,999999);break;
+case 'startDialogue':openDialogue(obj.dialogue);break;
 }}
 function fire(obj,event,character){const data=obj.logic;if(!data||data.event!==event||obj._logicDestroyed)return;if(data.once&&obj._logicFired)return;if((data.conditions||[]).some(c=>!test(c,obj,character)))return;for(const step of data.actions||[])act(step,obj,character);obj._logicFired=true}
 export function updateLogic(dt){if(!state.playing)return;const character=player(),key=state.keys.has('e'),press=key&&!logic.lastInteract;logic.lastInteract=key;

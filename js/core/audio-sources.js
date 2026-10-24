@@ -18,7 +18,7 @@ export async function importSoundFile(file,o){
  return file.name;
 }
 export const listenerPoint=()=>{
- const player=state.entities.find(e=>e.type==='player'||e.type==='character'||e.type==='prefab'&&getAsset(e.assetId)?.category==='Characters');
+ const player=state.entities.find(e=>e.playable3d===true||e.type==='player'||e.type==='character'||e.type==='prefab'&&getAsset(e.assetId)?.category==='Characters');
  return player?[player.x+player.w/2,player.y+player.h/2]:[0,0];
 };
 export function stopSources(){for(const [id,a] of active){try{a.source.stop()}catch{}try{a.source.disconnect();a.gain.disconnect();a.panner?.disconnect()}catch{}}active.clear();last.clear()}

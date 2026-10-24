@@ -67,3 +67,23 @@ export function loadNinjaZombieDemo(){
  for(const [id,x,y] of [['crate',360,325],['crate',730,105],['sandbag',710,450],['rock',970,450],['pine',320,80],['pine',1010,275],['fire',605,460],['smoke',860,85]])add(id,id,x,y,{behavior:'none'});
  state.entities=all;state.nextId=all.length+1;state.selected=[1];setCamera({x:70,y:45,zoom:.85});record('Charger Ninja vs Zombies');notify();
 }
+
+export function loadBuildingDemo(){
+ if(state.playing)return;
+ const entities=[],add=(assetId,x,y,props={})=>{
+  const a=getAsset(assetId);if(!a)return;
+  const obj={id:entities.length+1,name:a.name+' '+(entities.length+1),type:'prefab',assetId,x,y,w:a.width,h:a.height,color:'#7797a5',hp:a.hp,animation:'idle',...props};
+  if(a.category==='Buildings')Object.assign(obj,{...buildingDefaults(a),...props});
+  entities.push(obj)
+ };
+ add('scout',90,255,{name:'Commander'});
+ add('rts-hq',290,180,{buildTeam:1});
+ add('rts-barracks',490,230,{buildTeam:1,buildProduction:'soldier',buildQueue:3,buildTime:6});
+ add('rts-factory',745,240,{buildTeam:1,buildProduction:'jeep',buildQueue:2,buildTime:9});
+ add('rts-power',515,70,{buildTeam:1});
+ add('rts-turret',985,170,{buildTeam:1});
+ add('city-house',290,410,{buildTeam:1});
+ add('fantasy-castle',760,430,{buildTeam:2,buildState:'construction',constructionProgress:18});
+ add('sports-stadium',1050,390,{buildTeam:0});
+ state.entities=entities;state.nextId=entities.length+1;state.selected=[3];setCamera({x:25,y:55,zoom:.8});record('Charger Buildings RTS Demo');notify();
+}

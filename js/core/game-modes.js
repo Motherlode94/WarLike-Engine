@@ -66,15 +66,7 @@ export function updateGameMode(dt,game){
      }
    }
  }
- if(m.kind==='frontline'){
-   const rad=Math.max(30,Number(m.captureRadius)||115),cx=Number(m.captureX)||700,cy=Number(m.captureY)||340;
-   const inside=state.entities.filter(e=>participant(e)&&!e._modeEliminated&&Math.hypot(center(e).x-cx,center(e).y-cy)<rad);
-   const team1=inside.filter(e=>e.team===1).length,team2=inside.filter(e=>e.team===2).length,advantage=Math.sign(team1-team2);
-   runtime.capture=Math.min(100,Math.max(-100,runtime.capture+advantage*dt*100/Math.max(2,Number(m.captureSeconds)||12)));
-   const owner=runtime.capture>=100?1:runtime.capture<=-100?2:0;
-   if(owner&&owner!==runtime.captureOwner){runtime.captureOwner=owner;push('Équipe '+owner+' contrôle le front')}
-   if(runtime.captureOwner){runtime.captureScoring+=dt;if(runtime.captureScoring>=5){runtime.captureScoring=0;runtime.teamScores[runtime.captureOwner]+=(Math.max(1,Number(m.scorePerCapture)||2));if(runtime.teamScores[runtime.captureOwner]>=Math.max(1,Number(m.scoreLimit)||10))end('Front remporté par équipe '+runtime.captureOwner)}}
- }
+
  if(m.kind!=='roleplay'&&Number(m.timeLimit)>0&&runtime.elapsed>=Number(m.timeLimit)){
    if(m.kind==='battleRoyale')end('Temps écoulé — Survivants : '+state.entities.filter(e=>participant(e)&&!e._modeEliminated).length);
    else if(m.kind==='deathmatch')end('Fin de match — '+runtime.kills+' éliminations');
@@ -87,16 +79,14 @@ export function drawMode(ctx,w,h){
  if(m.kind==='battleRoyale'){
    ctx.save();ctx.translate(c.x,c.y);ctx.scale(c.zoom,c.zoom);ctx.strokeStyle='#6af4db';ctx.lineWidth=4/c.zoom;ctx.setLineDash([16/c.zoom,9/c.zoom]);ctx.beginPath();ctx.arc(Number(m.zoneX)||640,Number(m.zoneY)||360,runtime.zoneRadius,0,Math.PI*2);ctx.stroke();ctx.restore();
  }
- if(m.kind==='frontline'){
-   ctx.save();ctx.translate(c.x,c.y);ctx.scale(c.zoom,c.zoom);ctx.beginPath();ctx.arc(Number(m.captureX)||700,Number(m.captureY)||340,Math.max(30,Number(m.captureRadius)||115),0,Math.PI*2);ctx.fillStyle='#56a2dd33';ctx.fill();ctx.strokeStyle='#89dfcf';ctx.lineWidth=3/c.zoom;ctx.stroke();ctx.restore();
- }
+
  const title=modeNames[m.kind];ctx.fillStyle='#101b28eb';ctx.fillRect(w-276,12,262,92);ctx.fillStyle='#83e4d0';ctx.font='bold 13px system-ui';ctx.fillText(title,w-263,32);ctx.fillStyle='#fff';ctx.font='12px system-ui';
  const score=m.kind==='deathmatch'?'Kills '+runtime.kills+' / '+m.scoreLimit:
    m.kind==='battleRoyale'?'Survivants '+state.entities.filter(e=>participant(e)&&!e._modeEliminated).length+' • Rayon '+Math.round(runtime.zoneRadius):
    m.kind==='roleplay'?'Rôle '+runtime.role+' • '+runtime.money+'$':
    'Équipe 1 : '+runtime.teamScores[1]+'   Équipe 2 : '+runtime.teamScores[2];
  ctx.fillText(score,w-263,53);
- ctx.fillText(m.kind==='roleplay'?'R : changer de métier':m.kind==='frontline'?'Contrôle : '+Math.abs(Math.round(runtime.capture))+'% / équipe '+runtime.captureOwner:runtime.playerOut?'Réapparition '+Math.ceil(runtime.playerRespawn)+'s':'Temps '+Math.max(0,Math.ceil((Number(m.timeLimit)||240)-runtime.elapsed))+'s',w-263,73);
+ ctx.fillText(m.kind==='roleplay'?'R : changer de métier':m.kind==='frontline'?'Capture A / B / C : voir la scène':runtime.playerOut?'Réapparition '+Math.ceil(runtime.playerRespawn)+'s':'Temps '+Math.max(0,Math.ceil((Number(m.timeLimit)||240)-runtime.elapsed))+'s',w-263,73);
  if(runtime.roundOver){ctx.fillStyle='#07111ae6';ctx.fillRect(w/2-235,h/2-55,470,110);ctx.fillStyle='#b6ffe1';ctx.textAlign='center';ctx.font='bold 22px system-ui';ctx.fillText(runtime.winner,w/2,h/2);ctx.font='12px system-ui';ctx.fillText('Stop puis Play pour relancer',w/2,h/2+25)}
  for(let i=0;i<runtime.events.length;i++){ctx.fillStyle='#b2f3d8';ctx.font='11px system-ui';ctx.fillText(runtime.events[i].message,24,130+i*18)}
  ctx.restore();

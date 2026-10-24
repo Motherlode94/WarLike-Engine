@@ -33,3 +33,27 @@ public sealed class FollowActorComponent : WarLikeBehaviour {
         Actor.Position += Vector3.Normalize(vector) * Math.Min(Speed * deltaTime, length - Math.Max(0, StopDistance));
     }
 }
+
+/// <summary>Fixed-timestep gravity and ground collision. World Y is vertical.</summary>
+public sealed class RigidbodyComponent : WarLikeBehaviour {
+    public float Gravity { get; set; } = 15f;
+    public float Restitution { get; set; } = 0.15f;
+    public float GroundHeight { get; set; } = 0f;
+    public float HorizontalDamping { get; set; } = 0.985f;
+    public override void FixedUpdate(float fixedDeltaTime) {
+        if (!float.IsFinite(fixedDeltaTime) || fixedDeltaTime <= 0) return;
+        var velocity = Actor.Velocity;
+        velocity.Y -= Math.Clamp(Gravity, 0, 1000) * fixedDeltaTime;
+        var position = Actor.Position + velocity * fixedDeltaTime;
+        if (position.Y < GroundHeight) {
+            position.Y = GroundHeight;
+            velocity.Y = MathF.Abs(velocity.Y) > 0.5f
+                ? -velocity.Y * Math.Clamp(Restitution, 0, 1) : 0;
+            var damping = MathF.Pow(Math.Clamp(HorizontalDamping, 0, 1), fixedDeltaTime * 60f);
+            velocity.X *= damping;
+            velocity.Z *= damping;
+        }
+        Actor.Position = position;
+        Actor.Velocity = velocity;
+    }
+}

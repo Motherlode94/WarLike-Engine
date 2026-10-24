@@ -1,8 +1,9 @@
+import {catalog,urlFor} from './assets/catalog.js';
 import {state,notify} from './core/state.js';
 import {autoSave,recoverLocal,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo} from './core/history.js';
-import {addEntity,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
+import {addEntity,addPrefab,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
@@ -31,5 +32,7 @@ sceneTab.onclick=()=>{if(state.playing)togglePlay();syncTabs()};
 gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
 $('#play').addEventListener('click',syncTabs);
 $('#duplicate').onclick=duplicateSelected;
-document.querySelectorAll('.asset[data-template]').forEach(btn=>btn.onclick=()=>{const type=btn.dataset.template;if(type==='obstacle'){addEntity('object');const o=state.entities.find(e=>e.id===state.selected[0]);if(o){o.name='Obstacle '+o.id;o.color='#e4a05d';o.w=90;o.h=60;record('Configurer obstacle');document.dispatchEvent(new Event('warlike:change'))}}else if(type==='character'){addEntity('character');const character=state.entities.find(e=>e.id===state.selected[0]);if(character){character.skin=btn.dataset.skin||'scout';character.name=(character.skin==='scout'?'Scout ':'Soldier ')+character.id;record('Personnage '+character.skin);notify()}}else addEntity(type)});
+const assetGrid=$('#assetGrid'),search=$('#assetSearch'),category=$('#assetCategory');
+function renderAssets(){const term=search.value.trim().toLowerCase(),kind=category.value;const found=catalog.filter(a=>(kind==='All'||a.category===kind)&&(!term||a.name.toLowerCase().includes(term)||a.id.includes(term)));assetGrid.replaceChildren();for(const asset of found){const btn=document.createElement('button');btn.className='asset';btn.title=asset.category+' / '+asset.name+' — cliquer pour insérer';const image=document.createElement('img');image.src=urlFor(asset.id);image.alt='';image.loading='lazy';const label=document.createElement('span');label.textContent=asset.name;btn.append(image,label);btn.onclick=()=>addPrefab(asset.id);assetGrid.append(btn)}$('#assetCount').textContent=found.length+' / '+catalog.length+' assets'}
+search.oninput=renderAssets;category.onchange=renderAssets;renderAssets();
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});

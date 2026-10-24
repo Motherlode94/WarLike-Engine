@@ -14,6 +14,7 @@ export function updateStats(entities,dt){for(const o of entities){if(!o.stats)co
 export function updateAi(entities,player,dt){
  if(!player)return;
  const collision=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+ const blocked=(o,x,y)=>entities.some(other=>other!==o&&other!==player&&other.collision3d!==false&&(other.solid3d===true||other.type==='object'||other.type==='mesh3d')&&collision({...o,x,y},other));
  for(const e of entities){const ai=e.ai;if(!ai?.enabled||e===player)continue;
   ai.homeX??=e.x;ai.homeY??=e.y;
   const dx=player.x-e.x,dy=player.y-e.y,dist=Math.hypot(dx,dy)||.001;
@@ -26,12 +27,17 @@ export function updateAi(entities,player,dt){
    const tx=ai.state==='chase'?player.x:ai.homeX+Math.sin((ai.clock??0)*.65+e.id)*Math.max(0,n(ai.patrolRadius,130));
    const ty=ai.state==='chase'?player.y:ai.homeY+Math.cos((ai.clock??0)*.65+e.id)*Math.max(0,n(ai.patrolRadius,130));
    const length=Math.hypot(tx-e.x,ty-e.y);
-   if(length>2){const ox=e.x,oy=e.y;e.x+=(tx-e.x)/length*Math.min(step,length);e.y+=(ty-e.y)/length*Math.min(step,length);if(entities.some(other=>other!==e&&other!==player&&other.collision3d!==false&&other.solid3d===true&&collision(e,other))){e.x=ox;e.y=oy}}
+   if(length>2){const distanceStep=Math.min(step,length),ux=(tx-e.x)/length,uy=(ty-e.y)/length;const candidates=[[ux,uy],[ux,0],[0,uy],[-uy,ux],[uy,-ux]];for(const [cx,cy] of candidates){const x=e.x+cx*distanceStep,y=e.y+cy*distanceStep;if(!blocked(e,x,y)){e.x=x;e.y=y;break}}}
    e.animation=ai.state==='chase'?'run':'walk';
   }
   ai.clock=n(ai.clock)+dt;ai.cooldown=Math.max(0,n(ai.cooldown)-dt);
   if(ai.state==='attack'&&ai.cooldown===0){damage(player,n(ai.attackDamage,8));ai.cooldown=Math.max(.1,n(ai.attackCooldown,1.2));e.animation='attack'}
  }
+}
+export function attack3d(attacker,entities,{range=120,damageAmount=20,arc=1.2}={}){
+ const target=entities.filter(e=>e!==attacker&&e.ai?.enabled&&(e.stats?.health??e.hp??100)>0).sort((a,b)=>Math.hypot(a.x-attacker.x,a.y-attacker.y)-Math.hypot(b.x-attacker.x,b.y-attacker.y))[0];
+ if(!target||Math.hypot(target.x-attacker.x,target.y-attacker.y)>Math.max(0,n(range,120)))return null;
+ damage(target,Math.max(0,n(damageAmount,20)));target.animation='hurt';return target;
 }
 export function updateController3d(p,keys,dt,yaw,entities){
  const cfg=p.controller3d||defaultController(),s=ensureStats(p);

@@ -1,3 +1,4 @@
+import {resetLayout} from './docking.js';
 import {state,notify} from '../core/state.js';
 import {record,undo,redo} from '../core/history.js';
 import {addEntity,duplicateSelected,deleteSelected,togglePlay,loadCombatDemo,exportScene} from '../core/scene.js';
@@ -15,7 +16,7 @@ export function initStudioMenus(){
  undo,redo,duplicate:duplicateSelected,delete:deleteSelected,
  project(){$('projectTab').click();$('assetSearch').focus()},character(){addEntity('character')},object(){addEntity('object')},
  play(){$('play').click()},demo(){$('loadDemo').click()},
- scene(){$('sceneTab').click()},console(){$('consoleTab').click()},frame:resetCamera,
+ scene(){$('sceneTab').click()},console(){$('consoleTab').click()},frame:resetCamera,resetLayout,
  grid(){const input=$('gridEnabled');input.checked=!input.checked;input.dispatchEvent(new Event('change',{bubbles:true}))},
  shortcuts(){alert('WarLike Studio — raccourcis\nQ Main • W Déplacer • E Rotation • R Échelle • T Rectangle\nCtrl+Z Annuler • Ctrl+Y Rétablir • Ctrl+D Dupliquer\nSuppr Supprimer • Souris : zoom et déplacement caméra\nPlay : ZQSD ou flèches, clic gauche/F pour tirer')}
  };

@@ -242,3 +242,9 @@ body.dragging-window,body.dragging-window *{user-select:none!important}
 .audio-tools label{display:flex;align-items:center;gap:6px;color:#9fb6c2;font-size:11px}
 .audio-tools input[type=range]{width:85px;accent-color:#6ee5be;cursor:pointer}
 .audio-tools button[aria-pressed=false]{opacity:.65}
+
+/* 3D Lighting & Audio Beta.3 controls */
+.lighting-control{display:flex;align-items:center;gap:5px;white-space:nowrap;padding:0 4px;font-size:11px;color:#c8dfed}
+.lighting-control input[type=range]{width:86px;accent-color:#e7bf6d}
+.lighting-control input[type=checkbox]{accent-color:#65c3a9}
+#sunClock{width:40px;font-variant-numeric:tabular-nums}

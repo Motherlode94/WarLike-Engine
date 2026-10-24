@@ -10,24 +10,43 @@ export const overlap3d=(a,b)=>{
  if(accelerated!==null)return accelerated;
  return A.x<B.x+B.w&&A.x+A.w>B.x&&A.z<B.z+B.d&&A.z+A.d>B.z&&A.y<B.y+B.h/64&&A.y+A.h/64>B.y;
 };
+// Resolve motion one axis at a time so contact along X does not erase valid Z travel.
 export function stepPhysics3d(entities,dt){
- const t=Math.min(.05,Math.max(0,finite(dt)));
+ const t=Math.min(.05,Math.max(0,finite(dt)));if(t===0)return;
+ const solid=(subject,other)=>other!==subject&&other.collision3d!==false&&(other.solid3d===true||other.type==='object'||other.type==='mesh3d');
  for(const o of entities){
   const rb=o.rigidbody3d;
   if(!rb?.enabled||rb.kinematic||o.playable3d||o.type==='player'||o.ai?.enabled)continue;
-  const mass=Math.max(.01,finite(rb.mass,1));
-  const previous={x:o.x,y:o.y,elevation3d:o.elevation3d};
-  const nativeGravity=integrateNativeGravity(finite(o.elevation3d),finite(rb.vy),finite(rb.gravity,15),finite(rb.restitution,.2),t);
-  rb.vy=nativeGravity?nativeGravity.vy:finite(rb.vy)-Math.max(0,finite(rb.gravity,15))*t;
-  rb.vx=finite(rb.vx);rb.vz=finite(rb.vz);
-  o.x=finite(o.x)+rb.vx*t;o.y=finite(o.y)+rb.vz*t;
-  const solid=other=>other!==o&&other.collision3d!==false&&(other.solid3d===true||other.type==='object'||other.type==='mesh3d');
-  if(entities.some(other=>solid(other)&&overlap3d(o,other))){
-   o.x=previous.x;o.y=previous.y;rb.vx=-rb.vx*Math.min(1,Math.max(0,finite(rb.restitution,.2)));rb.vz=-rb.vz*Math.min(1,Math.max(0,finite(rb.restitution,.2)));
+  const restitution=Math.min(1,Math.max(0,finite(rb.restitution,.2)));
+  const friction=Math.min(1,Math.max(0,finite(rb.friction,.82)));
+  rb.vx=finite(rb.vx);rb.vz=finite(rb.vz);rb.vy=finite(rb.vy);
+  const position=axis=>finite(o[axis]);
+  const collision=()=>entities.some(other=>solid(o,other)&&overlap3d(o,other));
+  for(const [axis,velocity] of [['x','vx'],['y','vz']]){
+   const initial=position(axis);
+   o[axis]=initial+rb[velocity]*t;
+   if(collision()){o[axis]=initial;rb[velocity]*=-restitution;}
   }
-  o.elevation3d=nativeGravity?nativeGravity.y:Math.max(0,finite(o.elevation3d)+rb.vy*t);
-  if(o.elevation3d===0){if(!nativeGravity)rb.vy=Math.abs(rb.vy)>1?-rb.vy*Math.min(1,Math.max(0,finite(rb.restitution,.2))):0;const drag=Math.pow(Math.min(1,Math.max(0,finite(rb.friction,.82))),t*60);rb.vx*=drag;rb.vz*=drag}
-  void mass;
+  // Elevation is world Y. Test it after horizontal contact resolution.
+  const initialHeight=Math.max(0,finite(o.elevation3d));
+  const gravity=Math.max(0,finite(rb.gravity,15));
+  const integrated=integrateNativeGravity(initialHeight,rb.vy,gravity,restitution,t);
+  let nextHeight=integrated?integrated.y:Math.max(0,initialHeight+(rb.vy-gravity*t)*t);
+  let nextVy=integrated?integrated.vy:rb.vy-gravity*t;
+  o.elevation3d=nextHeight;
+  if(collision()){
+   o.elevation3d=initialHeight;
+   nextVy=nextVy>0?Math.min(0,-nextVy*restitution):Math.max(0,-nextVy*restitution);
+  }else if(nextHeight===0&&!integrated){
+   nextVy=Math.abs(nextVy)>1?-nextVy*restitution:0;
+  }
+  rb.vy=nextVy;
+  if(o.elevation3d===0){
+   const drag=Math.pow(friction,t*60);
+   rb.vx*=drag;rb.vz*=drag;
+   if(Math.abs(rb.vx)<.0001)rb.vx=0;
+   if(Math.abs(rb.vz)<.0001)rb.vz=0;
+  }
  }
 }
 export function applyImpulse3d(o,x,y,z){

@@ -17,7 +17,7 @@ export const objectBounds3d=o=>{
  const asset=getAsset(o.assetId);
  const width=Math.max(.25,o.w/64),depth=Math.max(.25,(asset?.category==='Vehicles'?o.h*.65:o.w*.8)/64);
  const height=Math.max(.2,(asset?.category==='Buildings'?o.h*1.45:asset?.category==='Vehicles'?o.h*.60:o.h)/64);
- return {x:(o.x+o.w/2)/64,y:height/2,z:(o.y+o.h/2)/64,w:width,h:height,d:depth};
+ return {x:(o.x+o.w/2)/64,y:height/2+(Number(o.elevation3d)||0),z:(o.y+o.h/2)/64,w:width,h:height,d:depth};
 };
 export const sceneCamera3d=(target,yaw,pitch,radius)=>{
  const eye=[target[0]+radius*Math.cos(pitch)*Math.sin(yaw),target[1]+radius*Math.sin(pitch),target[2]+radius*Math.cos(pitch)*Math.cos(yaw)];
@@ -179,11 +179,24 @@ export function init3d(canvas,host,buttons){
   gl.disable(gl.CULL_FACE);
   bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count);
   const objects=[...state.entities].filter(o=>!state.playing||!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated);
-  // Draw nearer objects last with hardware depth testing.
+  // Depth buffering resolves overlapping faces, including the composite mesh parts.
   bind(cubes);
   for(const o of objects){
-   const b=objectBounds3d(o),color=assetColor(o);
-   model([b.x,b.y,b.z],[b.w,b.h,b.d],color,(o.rotation||0)*Math.PI/180);gl.drawArrays(gl.TRIANGLES,0,cubes.count);
+   const b=objectBounds3d(o),color=assetColor(o),asset=getAsset(o.assetId),category=asset?.category;
+   const angle=(o.rotation||0)*Math.PI/180;
+   const cube=(p,scale,shade)=>{model(p,scale,shade,angle);gl.drawArrays(gl.TRIANGLES,0,cubes.count)};
+   cube([b.x,b.y,b.z],[b.w,b.h,b.d],color);
+   if(category==='Buildings'){
+    cube([b.x,b.y+b.h*.51,b.z],[b.w*1.12,b.h*.12,b.d*1.14],[.24,.34,.43,1]);
+    cube([b.x,b.y-b.h*.25,b.z+b.d*.509],[b.w*.2,b.h*.49,.04],[.24,.20,.18,1]);
+    for(const side of [-.28,.28])cube([b.x+b.w*side,b.y+b.h*.13,b.z+b.d*.515],[b.w*.20,b.h*.19,.05],[.52,.81,.90,1]);
+   }else if(category==='Vehicles'){
+    cube([b.x,b.y+b.h*.46,b.z],[b.w*.54,b.h*.52,b.d*.84],[.37,.59,.68,1]);
+    for(const x of [-.37,.37])for(const z of [-.42,.42])cube([b.x+b.w*x,b.y-b.h*.43,b.z+b.d*z],[b.w*.14,b.h*.3,b.d*.26],[.14,.19,.22,1]);
+   }else if(category==='Characters'||category==='Monsters'||o.type==='character'||o.type==='player'){
+    cube([b.x,b.y+b.h*.59,b.z],[b.w*.48,b.h*.36,b.d*.5],category==='Monsters'?[.61,.73,.57,1]:[.89,.72,.58,1]);
+    for(const x of [-.2,.2])cube([b.x+b.w*x,b.y-b.h*.53,b.z],[b.w*.27,b.h*.38,b.d*.28],[.24,.32,.38,1]);
+   }
   }
   if(!state.playing){bind(outline);for(const o of objects.filter(o=>state.selected.includes(o.id))){const b=objectBounds3d(o);model([b.x,b.y,b.z],[b.w*1.03,b.h*1.03,b.d*1.03],[.32,1,.8,1],(o.rotation||0)*Math.PI/180);gl.drawArrays(gl.LINES,0,outline.count)}}
  }

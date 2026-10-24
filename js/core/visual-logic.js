@@ -3,11 +3,11 @@ import {state} from './state.js';
 export const eventTypes=['onStart','onInteract','onEnter','onExit','onUpdate'];
 export const actionTypes=['message','setVariable','addVariable','heal','damage','teleport','destroy','changeColor','giveItem'];
 export const conditionTypes=['always','variableEquals','variableAtLeast','hasItem','healthBelow'];
-export const logic={globals:{},inventory:{},messages:[],activeZones:new Set(),started:false,lastInteract:false};
+export const logic={globals:{},inventory:{},messages:[],activeZones:new Set(),started:false,lastInteract:false,healthDelta:0};
 const player=()=>state.entities.find(o=>o.type==='character'||o.type==='player'||o.type==='prefab'&&['scout','soldier','medic','sniper','mechanic','survivor'].includes(o.assetId));
 const nearby=(a,b,range=85)=>Math.hypot(a.x+a.w/2-b.x-b.w/2,a.y+a.h/2-b.y-b.h/2)<=range;
 const numeric=value=>Number.isFinite(Number(value))?Number(value):0;
-export function resetLogic(){logic.globals={};logic.inventory={};logic.messages=[];logic.activeZones.clear();logic.started=false;logic.lastInteract=false}
+export function resetLogic(){logic.globals={};logic.inventory={};logic.messages=[];logic.activeZones.clear();logic.started=false;logic.lastInteract=false;logic.healthDelta=0}
 const variable=(obj,name)=>obj.logic?.local?.[name]??logic.globals[name]??0;
 function test(cond,obj,character){switch(cond.type){
  case 'always':return true;
@@ -21,8 +21,8 @@ function act(step,obj,character){const n=step.key||'score',amount=numeric(step.v
 case 'message':logic.messages.push({text:String(step.value||'Interaction activée').slice(0,150),ttl:3.5});break;
 case 'setVariable':logic.globals[key]=step.value??0;break;
 case 'addVariable':logic.globals[key]=numeric(logic.globals[key])+amount;break;
-case 'heal':if(character)character.hp=Math.min(100,numeric(character.hp??100)+Math.max(0,amount||25));break;
-case 'damage':if(character)character.hp=Math.max(0,numeric(character.hp??100)-Math.max(0,amount||10));break;
+case 'heal':if(character)logic.healthDelta+=Math.max(0,amount||25);break;
+case 'damage':if(character)logic.healthDelta-=Math.max(0,amount||10);break;
 case 'teleport':if(character){character.x=numeric(step.x);character.y=numeric(step.y)}break;
 case 'destroy':obj._logicDestroyed=true;break;
 case 'changeColor':if(/^#[a-f\d]{6}$/i.test(String(step.value)))obj.color=step.value;break;

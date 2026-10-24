@@ -16,7 +16,7 @@ test('Hub and Asset Browser markup exist and the 2D/3D asset catalogue is wired'
  for(const id of ['hubOverlay','hubCreate','hubProjects','hubProjectName','hubProjectType','hubOpen','assetGrid','assetFolders','assetCategory']){
   assert.ok(html.includes('id="'+id+'"'),id+' must exist');
  }
- assert.match(workspace,/workspace\.mode==='3d'\?assets3d:catalog/);
+ assert.match(workspace,/workspace\.mode==='3d'\?allAssets3d\(\):catalog/);
  assert.match(workspace,/document\.addEventListener\('warlike:workspace'/);
 });
 test('named project Hub opens at startup',()=>{

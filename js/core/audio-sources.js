@@ -50,7 +50,7 @@ export function updateAudioSources(now=performance.now()/1000){
    source.start();
   }else if(o.audioClip!=='imported'&&factor>.03){
    const interval=o.audioLoop===false?Infinity:Math.max(.8,Number(o.audioInterval)||3);
-   if(!last.has(o.id)||now-last.get(o.id)>=interval){playSound(o.audioClip||'vehicle',{gain:level*factor,cooldown:0});last.set(o.id,now)}
+   if(!last.has(o.id)||now-last.get(o.id)>=interval){playSound(o.audioClip||'vehicle',{gain:level*factor,pan:spatial?Math.max(-1,Math.min(1,(x-listener[0])/(radius*64))):0,cooldown:0});last.set(o.id,now)}
   }
  }
  for(const [id,a] of active){if(!liveIds.has(id)){try{a.source.stop()}catch{}active.delete(id)}}

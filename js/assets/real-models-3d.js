@@ -87,7 +87,10 @@ export function parseGlb(buffer){
    const norm=primitive.attributes.NORMAL===undefined?null:readAccessor(json,binary,primitive.attributes.NORMAL);
    const idxs=primitive.indices===undefined?Array.from({length:pos.count},(_,i)=>i):readAccessor(json,binary,primitive.indices).data;
    if(idxs.length%3)continue;
-   const color=json.materials?.[primitive.material]?.pbrMetallicRoughness?.baseColorFactor||[.75,.78,.82,1];
+   const pbr=json.materials?.[primitive.material]?.pbrMetallicRoughness||{};
+   const color=pbr.baseColorFactor||[.75,.78,.82,1];
+   const roughness=Math.max(.04,Math.min(1,Number(pbr.roughnessFactor??1)));
+   const metallic=Math.max(0,Math.min(1,Number(pbr.metallicFactor??0)));
    const vertices=[];
    for(let i=0;i<idxs.length;i+=3){const points=[];
     for(let j=0;j<3;j++){const vi=idxs[i+j];if(vi>=pos.count)throw Error('Index GLB invalide');points.push(transform(m,pos.data.slice(vi*3,vi*3+3)))}
@@ -96,7 +99,7 @@ export function parseGlb(buffer){
     const len=Math.hypot(...normal)||1;const flat=normal.map(n=>n/len);
     for(let j=0;j<3;j++){let n=flat;if(norm){const raw=transform(m,norm.data.slice(idxs[i+j]*3,idxs[i+j]*3+3),0);const l=Math.hypot(...raw)||1;n=raw.map(z=>z/l)}vertices.push(...points[j],...n)}
    }
-   if(vertices.length)parts.push({vertices:new Float32Array(vertices),color});
+   if(vertices.length)parts.push({vertices:new Float32Array(vertices),color,roughness,metallic});
   }
   for(const child of node.children||[])walk(child,m,depth+1);
  };

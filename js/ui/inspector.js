@@ -1,3 +1,4 @@
+import {isHome} from '../core/housing.js';
 import {modeDefaults,modeNames,roleNames} from '../core/game-modes.js';
 import {defaults as buildingDefaults,getBuilding} from '../assets/buildings.js';
 import {availableClips} from '../assets/animation-vfx.js';
@@ -25,6 +26,14 @@ if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Buildings')component(root
  const row=document.createElement('label');row.className='logic-flag';const check=document.createElement('input');check.type='checkbox';check.checked=!!o.buildCollision;check.disabled=state.playing;check.onchange=()=>{o.buildCollision=check.checked;record('Building Collision');notify()};row.append(check,document.createTextNode('Solid collider'));body.append(row);
  const power=document.createElement('label');power.className='logic-flag';const powered=document.createElement('input');powered.type='checkbox';powered.checked=!!o.buildPowered;powered.disabled=state.playing;powered.onchange=()=>{o.buildPowered=powered.checked;o.buildState=powered.checked?'idle':'powered_off';record('Building Power');notify()};power.append(powered,document.createTextNode('Powered'));body.append(power);
  const snap=document.createElement('button');snap.textContent='⌗ Snap to building grid';snap.disabled=state.playing;snap.onclick=()=>{const size=Math.max(8,Number(o.buildGrid)||32);o.x=Math.round(o.x/size)*size;o.y=Math.round(o.y/size)*size;record('Snap building to grid');notify()};body.append(snap)
+});
+if(isHome(o))component(root,'House / Interior',body=>{
+ const note=document.createElement('p');note.textContent='Play : E entrer / sortir • ZQSD marcher • L lumière. Porte animée.';body.append(note);
+ for(const [key,label] of [['houseDoorProgress','Door Open 0–1']]){if(o[key]===undefined)o[key]=0;field(body,o,key,label)}
+ for(const [key,label] of [['houseDoorOpen','Door Open'],['houseLightsOn','Lights On']]){
+  if(o[key]===undefined)o[key]=key==='houseLightsOn';
+  const row=document.createElement('label');row.className='logic-flag',input=document.createElement('input');input.type='checkbox';input.disabled=state.playing;input.checked=!!o[key];input.onchange=()=>{o[key]=input.checked;if(key==='houseDoorOpen')o.houseDoorProgress=input.checked?1:0;record('House : '+label);notify()};row.append(input,document.createTextNode(label));body.append(row)
+ }
 });
 if(o.type==='prefab'){component(root,'Health',body=>field(body,o,'hp','Hit Points'));if(getAsset(o.assetId)?.category==='Monsters')component(root,'AI Controller',body=>{selectField(body,o,'behavior','Behaviour',['none','patrol','chase','guard','wander','flee','follow']);if(o.aiSpeed===undefined)o.aiSpeed=65;if(o.detectionRadius===undefined)o.detectionRadius=650;field(body,o,'aiSpeed','Move speed');field(body,o,'detectionRadius','Detection range')})}
 if(o.gameMode)component(root,'Game Mode Rules',body=>{

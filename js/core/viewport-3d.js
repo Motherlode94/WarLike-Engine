@@ -1,3 +1,4 @@
+import {updateController3d,updateAi,updateStats} from './gameplay-components.js';
 import {getModelGeometry,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences,sequenceRuntime} from './logic-sequences.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
@@ -213,18 +214,9 @@ export function init3d(canvas,host,buttons){
  const update3dPlay=dt=>{
   const p=playableActor(state.entities);
   if(!p)return;
-  const k=state.keys,side=Number(k.has('d')||k.has('arrowright'))-Number(k.has('a')||k.has('q')||k.has('arrowleft'));
-  const forward=Number(k.has('w')||k.has('z')||k.has('arrowup'))-Number(k.has('s')||k.has('arrowdown'));
-  const length=Math.hypot(side,forward);
-  if(!length)return;
-  const speed=(k.has('shift')?7:4.2)*64*dt/length;
-  const wx=(side*Math.cos(view3d.yaw)+forward*Math.sin(view3d.yaw))*speed;
-  const wz=(-side*Math.sin(view3d.yaw)+forward*Math.cos(view3d.yaw))*speed;
-  const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
-  const solid=o=>o!==p&&!o.lightType&&!o.audioEnabled&&(o.type==='object'||getAsset(o.assetId)?.category==='Buildings'||o.type==='mesh3d'&&o.collision3d!==false);
-  const prevX=p.x;p.x+=wx;if(state.entities.some(o=>solid(o)&&overlaps(p,o)))p.x=prevX;
-  const prevY=p.y;p.y+=wz;if(state.entities.some(o=>solid(o)&&overlaps(p,o)))p.y=prevY;
-  p.animation='walk';
+  updateStats(state.entities,dt);
+  updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
+  updateAi(state.entities,p,dt);
  };
  const camera=()=>sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
  const playerTarget=()=>{const p=playableActor(state.entities);return p?[(p.x+p.w/2)/64,.5,(p.y+p.h/2)/64]:null};

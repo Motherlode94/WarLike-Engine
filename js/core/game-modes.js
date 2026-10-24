@@ -12,20 +12,21 @@ export const modeDefaults=()=>({kind:'deathmatch',scoreLimit:10,timeLimit:240,re
 export const controller=()=>state.entities.find(e=>e.gameMode&&modeNames[e.gameMode.kind])||null;
 export const currentMode=()=>controller()?.gameMode||null;
 const runtime={elapsed:0,teamScores:{1:0,2:0},kills:0,deaths:0,alive:0,won:false,winner:'',roundOver:false,
- botTimers:new Map(),role:'Civilian',money:0,payTimer:0,zoneRadius:650,capture:0,captureOwner:0,captureScoring:0,events:[],playerRespawn:0,playerOut:false};
+ botTimers:new Map(),role:'Civilian',money:0,payTimer:0,zoneRadius:650,capture:0,captureOwner:0,captureScoring:0,events:[],playerRespawn:0,playerOut:false,leaderboard:{},assists:0};
 export const modeRuntime=runtime;
 const center=o=>({x:o.x+o.w/2,y:o.y+o.h/2});
 const participant=e=>e?.isCompetitor===true||e?.type==='player'||e?.type==='character'||e?.type==='prefab'&&['Characters','Monsters'].includes(getAsset(e.assetId)?.category);
 const getPlayer=()=>state.entities.find(e=>e.type==='player'||e.type==='character'||e.type==='prefab'&&getAsset(e.assetId)?.category==='Characters');
 const push=(message)=>{runtime.events.push({message,until:runtime.elapsed+4});if(runtime.events.length>5)runtime.events.shift()};
 export function resetGameMode(){const m=currentMode();Object.assign(runtime,{elapsed:0,teamScores:{1:0,2:0},kills:0,deaths:0,alive:0,won:false,winner:'',roundOver:false,botTimers:new Map(),
- role:m?.role||'Civilian',money:m?.startingMoney||0,payTimer:0,zoneRadius:m?.zoneRadius||650,capture:0,captureOwner:0,captureScoring:0,events:[],playerRespawn:0,playerOut:false});
+ role:m?.role||'Civilian',money:m?.startingMoney||0,payTimer:0,zoneRadius:m?.zoneRadius||650,capture:0,captureOwner:0,captureScoring:0,events:[],playerRespawn:0,playerOut:false,leaderboard:{},assists:0});
  for(const e of state.entities){delete e._modeRespawn;delete e._modeEliminated;if(participant(e)){e._modeSpawn={x:e.x,y:e.y};e._modeStartingHp=Number(e.hp)||100;if(!e.team)e.team=e===getPlayer()?(m?.team||1):2}}}
 function end(text){runtime.roundOver=true;runtime.winner=text;push(text)}
 export function registerElimination(victim,attacker,game){
  const m=currentMode();if(!m||runtime.roundOver||!participant(victim)||victim._modeEliminated)return false;
  const p=getPlayer(),local=attacker===p,team=attacker?.team||1;
  victim._modeEliminated=true;
+ if(attacker&&attacker!==victim){runtime.leaderboard[attacker.id]=(runtime.leaderboard[attacker.id]||0)+1}
  if(local){runtime.kills++}if(attacker&&m.kind==='teamDeathmatch')runtime.teamScores[team]=(runtime.teamScores[team]||0)+1;
  if(victim===p){runtime.deaths++;runtime.playerOut=true;if(m.kind==='battleRoyale')end('Éliminé — Battle Royale');else runtime.playerRespawn=Math.max(1,Number(m.respawnSeconds)||4)}
  if(m.kind==='battleRoyale'){
@@ -34,7 +35,7 @@ export function registerElimination(victim,attacker,game){
  }else if(victim!==p){
    const timeout=Math.max(.5,Number(m.respawnSeconds)||4);victim._modeRespawn=runtime.elapsed+timeout;
  }
- if(local&&m.kind==='deathmatch'&&runtime.kills>=Math.max(1,Number(m.scoreLimit)||10))end('Victoire Deathmatch');
+ if(m.kind==='deathmatch'&&attacker&&(runtime.leaderboard[attacker.id]||0)>=Math.max(1,Number(m.scoreLimit)||10))end(attacker===p?'Victoire Deathmatch':'Victoire de '+attacker.name);
  if(m.kind==='teamDeathmatch'&&Object.values(runtime.teamScores).some(v=>v>=Math.max(1,Number(m.scoreLimit)||10)))end('Victoire équipe '+(runtime.teamScores[1]>=runtime.teamScores[2]?1:2));
  push(victim.name+' éliminé');
  return true;
@@ -81,7 +82,7 @@ export function drawMode(ctx,w,h){
  }
 
  const title=modeNames[m.kind];ctx.fillStyle='#101b28eb';ctx.fillRect(w-276,12,262,92);ctx.fillStyle='#83e4d0';ctx.font='bold 13px system-ui';ctx.fillText(title,w-263,32);ctx.fillStyle='#fff';ctx.font='12px system-ui';
- const score=m.kind==='deathmatch'?'Kills '+runtime.kills+' / '+m.scoreLimit:
+ const score=m.kind==='deathmatch'?'Kills '+runtime.kills+' / '+m.scoreLimit+' • Leader '+Math.max(0,...Object.values(runtime.leaderboard)):
    m.kind==='battleRoyale'?'Survivants '+state.entities.filter(e=>participant(e)&&!e._modeEliminated).length+' • Rayon '+Math.round(runtime.zoneRadius):
    m.kind==='roleplay'?'Rôle '+runtime.role+' • '+runtime.money+'$':
    'Équipe 1 : '+runtime.teamScores[1]+'   Équipe 2 : '+runtime.teamScores[2];

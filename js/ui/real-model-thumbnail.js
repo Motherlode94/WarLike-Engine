@@ -1,3 +1,4 @@
+import {model3dById} from '../assets/real-models-3d.js';
 import {getModelGeometry} from '../assets/real-models-3d.js';
 // Thumbnail is rendered from the real mesh triangles, not a generic prefab symbol.
 // Simple software raster preview (no additional WebGL contexts).
@@ -42,6 +43,16 @@ export function assignModelThumbnail(image,id){
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" rx="10" fill="#1a2e3f"/><text x="60" y="54" fill="#b9d8e7" font-size="12" text-anchor="middle" font-family="Arial">'+title+'</text><text x="60" y="74" fill="#86a7ba" font-size="10" text-anchor="middle" font-family="Arial">'+subtitle+'</text></svg>';
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
  };
+ const entry=model3dById(id);
+ const match=entry?.url?.match(/\/Models\/([^/]+)\/glTF-Binary\/[^/]+\.glb(?:\?.*)?$/);
+ if(match){
+  const screenshot='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/'+encodeURIComponent(match[1])+'/screenshot/screenshot.jpg';
+  image.src=screenshot;image.dataset.modelStatus='reference';
+  image.alt='Capture officielle du véritable modèle 3D '+entry.name;
+  image.title='Image de référence Khronos ; la géométrie réelle est chargée en mode 3D';
+  image.onerror=()=>{image.onerror=null;image.src=placeholder('GLB','Aperçu…');image.dataset.modelStatus='loading'};
+  return;
+ }
  image.src=placeholder('GLB','Chargement…');
  image.alt='Chargement du modèle 3D '+id;
  image.dataset.modelStatus='loading';

@@ -1,3 +1,4 @@
+import {stepPhysics3d} from './physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d} from './gameplay-components.js';
 import {getModelGeometry,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences,sequenceRuntime} from './logic-sequences.js';
@@ -215,6 +216,7 @@ export function init3d(canvas,host,buttons){
   const p=playableActor(state.entities);
   if(!p)return;
   updateStats(state.entities,dt);
+  stepPhysics3d(state.entities,dt);
   updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);

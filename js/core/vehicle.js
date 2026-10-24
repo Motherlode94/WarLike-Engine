@@ -3,7 +3,7 @@ import {getAsset} from '../assets/catalog.js';
 export const driving={vehicleId:null,speed:0,steer:0,enterHeld:false,collisionFlash:0};
 const vehicle=o=>o?.type==='prefab'&&getAsset(o.assetId)?.category==='Vehicles';
 const center=o=>({x:o.x+o.w/2,y:o.y+o.h/2});
-export function vehicleDefaults(o){return {maxSpeed:Math.max(40,Number(o.maxSpeed)||250),acceleration:Math.max(10,Number(o.acceleration)||210),brakeForce:Math.max(10,Number(o.brakeForce)||310),turnRate:Math.max(15,Number(o.turnRate)||140),drag:Math.max(0,Number(o.drag)??1.4),collisionRadius:Math.max(12,Number(o.collisionRadius)||Math.min(o.w,o.h)*.35)}}
+export function vehicleDefaults(o){return {maxSpeed:Math.max(40,Number(o.maxSpeed)||250),acceleration:Math.max(10,Number(o.acceleration)||210),brakeForce:Math.max(10,Number(o.brakeForce)||310),turnRate:Math.max(15,Number(o.turnRate)||140),drag:Math.max(0,Number.isFinite(Number(o.drag))&&o.drag!=null?Number(o.drag):1.4),collisionRadius:Math.max(12,Number(o.collisionRadius)||Math.min(o.w,o.h)*.35)}}
 export function resetDriving(){Object.assign(driving,{vehicleId:null,speed:0,steer:0,enterHeld:false,collisionFlash:0})}
 export function currentVehicle(){return state.entities.find(o=>o.id===driving.vehicleId&&vehicle(o))||null}
 const solid=o=>o.type==='object'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock'].includes(o.assetId);

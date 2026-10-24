@@ -43,25 +43,26 @@ function execute(job,ctx,actionsLeft){
   const a=job.steps[job.index++];if(!a||a.disabled||typeof a.type!=='string')continue;
   count++;
   const key=String(a.key||'score').slice(0,60),val=a.value;
+  const targetObject=a.targetRole==='player'&&ctx.player?ctx.player:(ctx.entities.find(o=>o.id===number(a.targetId))||entity);
   switch(a.type){
   case 'message':rt.messages.push({text:String(val||'Action exécutée').slice(0,160),ttl:3});break;
   case 'setVariable':rt.globals[key]=val??0;break;
   case 'addVariable':rt.globals[key]=number(rt.globals[key])+number(val);break;
   case 'setLocal':entity.sequenceLocal??={};entity.sequenceLocal[key]=val??0;break;
   case 'addLocal':entity.sequenceLocal??={};entity.sequenceLocal[key]=number(entity.sequenceLocal[key])+number(val);break;
-  case 'moveObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.x+=number(a.x);target.y+=number(a.y);break}
-  case 'teleportObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.x=number(a.x,target.x);target.y=number(a.y,target.y);break}
-  case 'giveItem':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;inventoryAdd(target,key,Math.max(1,number(val,1)));break}
-  case 'removeItem':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;inventoryRemove(target,key,Math.max(1,number(val,1)));break}
-  case 'equipItem':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;equipItem(target,key,a.slot||'weapon');break}
-  case 'damageObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;damage(target,number(val,10));break}
-  case 'healObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;const s=ensureStats(target);s.health=Math.min(s.maxHealth,s.health+Math.max(0,number(val,10)));target.hp=s.health;break}
-  case 'setHealth':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.hp=Math.max(0,number(val,100));break}
-  case 'addHealth':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.hp=Math.max(0,number(target.hp,100)+number(val));break}
-  case 'setAnimation':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.animation=String(val||'idle').slice(0,64);break}
-  case 'setBehavior':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;const behavior=String(val||'none');if(['none','patrol','chase','guard','wander','flee','follow'].includes(behavior))target.behavior=behavior;break}
+  case 'moveObject':{const target=targetObject;target.x+=number(a.x);target.y+=number(a.y);break}
+  case 'teleportObject':{const target=targetObject;target.x=number(a.x,target.x);target.y=number(a.y,target.y);break}
+  case 'giveItem':{const target=targetObject;inventoryAdd(target,key,Math.max(1,number(val,1)));break}
+  case 'removeItem':{const target=targetObject;inventoryRemove(target,key,Math.max(1,number(val,1)));break}
+  case 'equipItem':{const target=targetObject;equipItem(target,key,a.slot||'weapon');break}
+  case 'damageObject':{const target=targetObject;damage(target,number(val,10));break}
+  case 'healObject':{const target=targetObject;const s=ensureStats(target);s.health=Math.min(s.maxHealth,s.health+Math.max(0,number(val,10)));target.hp=s.health;break}
+  case 'setHealth':{const target=targetObject;target.hp=Math.max(0,number(val,100));break}
+  case 'addHealth':{const target=targetObject;target.hp=Math.max(0,number(target.hp,100)+number(val));break}
+  case 'setAnimation':{const target=targetObject;target.animation=String(val||'idle').slice(0,64);break}
+  case 'setBehavior':{const target=targetObject;const behavior=String(val||'none');if(['none','patrol','chase','guard','wander','flee','follow'].includes(behavior))target.behavior=behavior;break}
   case 'setColor':if(/^#[a-f0-9]{6}$/i.test(String(val))){entity.color=val;entity.colorCustomized=true}break;
-  case 'enableObject':{const target=ctx.entities.find(o=>o.id===number(a.targetId))||entity;target.sequenceEnabled=val!==false&&String(val)!=='false';break}
+  case 'enableObject':{const target=targetObject;target.sequenceEnabled=val!==false&&String(val)!=='false';break}
   case 'emitSignal':emitSequenceSignal(val||key);break;
   case 'destroyObject':entity._sequenceDestroyed=true;break;
   case 'wait':job.wait=Math.min(120,Math.max(0,number(val,.5)));return count;

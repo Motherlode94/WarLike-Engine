@@ -1,3 +1,4 @@
+import {playSound} from './audio.js';
 // WarLike 2D foot controller with solid collisions and an optional chase camera.
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
@@ -11,7 +12,7 @@ export function walkPlayer(player,dt,keys=state.keys){
  const y=Number(keys.has('arrowdown')||keys.has('s'))-Number(keys.has('arrowup')||keys.has('w')||keys.has('z'));
  const length=Math.hypot(x,y);const sprint=keys.has('shift')&&length>0;
  const speed=Math.max(10,Number(player.footSpeed)||motion.footSpeed)*(sprint?motion.sprintMultiplier:1);
- const dx=length?x/length*speed*dt:0,dy=length?y/length*speed*dt:0;
+ const dx=length?x/length*speed*dt:0,dy=length?y/length*speed*dt:0;if(length)playSound('step',{cooldown:sprint?.2:.34,gain:sprint?1:.7});
  const barriers=state.entities.filter(o=>o!==player&&solid(o));
  const beforeX=player.x;player.x+=dx;if(barriers.some(b=>overlaps(player,b)))player.x=beforeX;
  const beforeY=player.y;player.y+=dy;if(barriers.some(b=>overlaps(player,b)))player.y=beforeY;

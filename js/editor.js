@@ -1,7 +1,7 @@
 import {state} from './core/state.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo} from './core/history.js';
-import {addEntity,togglePlay,exportScene,importScene} from './core/scene.js';
+import {addEntity,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
@@ -21,3 +21,12 @@ attachInput(canvas,host);
 record('Scène initiale');
 renderUI();
 startRenderer(canvas,host);
+
+const sceneTab=$('#sceneTab'),gameTab=$('#gameTab');
+function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing)}
+sceneTab.onclick=()=>{if(state.playing)togglePlay();syncTabs()};
+gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
+$('#play').addEventListener('click',syncTabs);
+$('#duplicate').onclick=duplicateSelected;
+document.querySelectorAll('.asset[data-template]').forEach(btn=>btn.onclick=()=>{const type=btn.dataset.template;if(type==='obstacle'){addEntity('object');const o=state.entities.find(e=>e.id===state.selected[0]);if(o){o.name='Obstacle '+o.id;o.color='#e4a05d';o.w=90;o.h=60;document.dispatchEvent(new Event('warlike:change'))}}else addEntity(type)});
+window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});

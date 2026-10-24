@@ -1,10 +1,11 @@
+import {bindGameInput} from './core/gameplay.js';
 import {initWorkspace,log} from './ui/workspace.js';
 import {catalog,urlFor} from './assets/catalog.js';
 import {state,notify} from './core/state.js';
 import {autoSave,recoverLocal,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo} from './core/history.js';
-import {addEntity,addPrefab,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
+import {addEntity,addPrefab,loadCombatDemo,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
@@ -21,6 +22,8 @@ $('#zoomIn').onclick=()=>zoomAt(1.25,{x:host.clientWidth/2,y:host.clientHeight/2
 $('#zoomOut').onclick=()=>zoomAt(.8,{x:host.clientWidth/2,y:host.clientHeight/2});
 $('#resetView').onclick=resetCamera;
 attachInput(canvas,host);
+bindGameInput(canvas);
+$('#loadDemo').onclick=()=>{if(state.playing)return;loadCombatDemo();log('Combat Sandbox chargé : sélectionne Play')};
 if(!recoverLocal())record('Scène initiale');
 beginAutoSave();
 $('#cloudConnect').onclick=connectCloud;
@@ -28,7 +31,7 @@ renderUI();
 startRenderer(canvas,host);
 
 const sceneTab=$('#sceneTab'),gameTab=$('#gameTab');
-function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing)}
+function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing);$('#gameHint').hidden=!state.playing}
 sceneTab.onclick=()=>{if(state.playing)togglePlay();syncTabs()};
 gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
 $('#play').addEventListener('click',syncTabs);

@@ -116,4 +116,3 @@ export function drawAdvanced(ctx,w,h){
  if(m.kind==='roleplay'){ctx.fillRect(w-276,110,262,45);ctx.fillStyle='#cfeee2';ctx.fillText('Missions '+advanced.tasks+' • R : métier • E : travailler',w-264,138)}
  for(const [i,n] of advanced.notifications.entries()){ctx.fillStyle='#b0fce5';ctx.fillText(n.text,24,210+i*18)}ctx.restore();
 }
-)

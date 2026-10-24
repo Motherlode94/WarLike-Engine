@@ -1,6 +1,11 @@
 // WarLike static glTF 2.0 GLB mesh loader. No eval, scripts or external binary executables.
 // Supports embedded GLB, node hierarchy/TRS, material baseColorFactor, triangle indices.
 export const realModels3d=[
+ {id:'real-specular-test',name:'Specular Material Test',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/SpecularTest.glb',license:'CC-BY-4.0 • Ed Mackey'},
+ {id:'real-normal-tangent-test',name:'Normal Map Geometry Reference',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/NormalTangentTest/glTF-Binary/NormalTangentTest.glb',license:'CC0 • Ed Mackey'},
+ {id:'real-texture-coordinate-test',name:'Textured Geometry Reference',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/TextureCoordinateTest/glTF-Binary/TextureCoordinateTest.glb',license:'CC0 • Ed Mackey'},
+ {id:'real-transmission-test',name:'Transmission Material Test',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/TransmissionTest/glTF-Binary/TransmissionTest.glb',license:'CC0 • Adobe'},
+ {id:'real-clear-coat-car-paint',name:'Clear Coat Car Paint — material reference',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/ClearCoatCarPaint/glTF-Binary/ClearCoatCarPaint.glb',license:'CC0 • Eric Chadwick'},
  {id:'real-pot-of-coals',name:'Pot of Coals',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/PotOfCoals/glTF-Binary/PotOfCoals.glb',license:'CC-BY-4.0 • Darmstadt Graphics Group'},
 
  {id:'real-iridescent-dish-with-olives',name:'Dish With Olives',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/IridescentDishWithOlives/glTF-Binary/IridescentDishWithOlives.glb',license:'CC-BY-4.0 • Wayfair'},

@@ -276,3 +276,23 @@ body[data-workspace="3d"] [data-studio-action="gameModeAdd"],
 body[data-workspace="3d"] .game-mode-menu,
 body[data-workspace="3d"] [data-studio-action="logicDemo"]{display:none!important}
 body[data-workspace="2d"] [data-studio-action="threeDDemo"]{display:none!important}
+
+/* WarLike Hub: independent project manager. */
+.hub-overlay[hidden]{display:none!important}
+.hub-overlay{position:fixed;inset:0;z-index:2000;background:#09111bdd;display:grid;place-items:center;padding:24px;backdrop-filter:blur(5px)}
+.hub-window{width:min(920px,96vw);max-height:92vh;overflow:auto;background:#1d2732;color:#dce9f3;border:1px solid #527086;border-radius:12px;box-shadow:0 28px 80px #000a}
+.hub-heading{padding:24px 30px;background:linear-gradient(115deg,#234656,#243040);display:flex;align-items:flex-start;justify-content:space-between}
+.hub-heading span{letter-spacing:.12em;color:#72e6c6;font-size:11px;font-weight:bold}
+.hub-heading h2{margin:9px 0;font-size:29px}.hub-heading p{margin:0;color:#b5c8d3}
+.hub-heading button{font-size:24px;line-height:1}
+.hub-layout{display:grid;grid-template-columns:minmax(240px,330px) minmax(260px,1fr);gap:25px;padding:25px 30px}
+.hub-create{display:flex;flex-direction:column;gap:13px}
+.hub-create h3,.hub-list h3{font-size:14px;margin:0 0 10px;color:#ebf4fb}
+.hub-create label{display:flex;flex-direction:column;gap:6px;color:#c5d9e4}
+.hub-create input,.hub-create select{width:100%;padding:12px 10px;border-radius:7px;background:#111e2b;color:#e8f6ff;border:1px solid #506478}
+.hub-create small{color:#94adba;line-height:1.6}.hub-primary{background:#286f63;border-color:#4ea88f;padding:12px;color:#eafff8;font-weight:bold}
+.hub-projects{display:grid;gap:8px;max-height:380px;overflow-y:auto}.hub-project-card{display:flex;align-items:center;gap:8px;padding:12px;background:#273442;border:1px solid #394f60;border-radius:7px}
+.hub-project-card>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}.hub-project-card strong{overflow:hidden;text-overflow:ellipsis}.hub-project-card small{color:#8fadb9}
+.hub-project-card button{flex-shrink:0}#hubMessage{color:#e5ae8d;padding:0 30px 20px;margin:0;min-height:23px}
+.studio-project-name #hubOpen,.studio-project-name #hubSave{padding:3px 8px;margin-left:5px}
+@media(max-width:700px){.hub-layout{grid-template-columns:1fr}.hub-overlay{padding:8px}}

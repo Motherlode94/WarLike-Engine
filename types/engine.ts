@@ -1,3 +1,11 @@
+export type GameModeKind = 'deathmatch'|'teamDeathmatch'|'battleRoyale'|'roleplay'|'frontline';
+export type RoleplayJob = 'Civilian'|'Police'|'Medic'|'Mechanic'|'Merchant'|'Soldier';
+export interface GameModeRules {
+ kind:GameModeKind; scoreLimit:number; timeLimit:number; respawnSeconds:number;
+ team:number; role:RoleplayJob; startingMoney:number; roleSalary:number; rolePayInterval:number;
+ zoneX:number;zoneY:number;zoneRadius:number;zoneMinRadius:number;zoneShrinkSeconds:number;zoneDamage:number;
+ captureX:number;captureY:number;captureRadius:number;captureSeconds:number;scorePerCapture:number;
+}
 /** WarLike Studio: canonical typed scene contracts and gameplay component data. */
 export type EntityKind = 'player'|'object'|'character'|'prefab';
 export type AssetCategory = 'Characters'|'Monsters'|'Vehicles'|'Weapons'|'Props'|'VFX'|'Buildings';
@@ -16,7 +24,7 @@ export interface DialogueChoice { text:string; next:number|null; item?:string; q
 export interface DialogueNode { text:string; choices:DialogueChoice[] }
 export interface DialogueTree { title:string; nodes:DialogueNode[] }
 export interface BuildingComponent { buildState?:'idle'|'construction'|'damaged'|'destroyed'|'powered_off'|'burning'; constructionProgress?:number; buildHp?:number; buildMaxHp?:number; buildLevel?:number; buildTeam?:number; buildPowered?:boolean; buildCollision?:boolean; buildProduction?:string; buildTime?:number; buildQueue?:number; buildTimer?:number; buildGrid?:number }
-export interface GameEntity extends Vector2D, BuildingComponent { id:number; name:string; type:EntityKind; w:number; h:number; color:string; rotation?:number; assetId?:string; skin?:string; animation?:AnimationClip; animationSpeed?:number; animationPreview?:boolean; hp?:number; behavior?:Behavior; aiSpeed?:number; detectionRadius?:number; logic?:VisualLogic; dialogue?:DialogueTree; maxSpeed?:number; acceleration?:number; brakeForce?:number; turnRate?:number; drag?:number; collisionRadius?:number }
+export interface GameEntity extends Vector2D, BuildingComponent { gameMode?:GameModeRules; team?:number; id:number; name:string; type:EntityKind; w:number; h:number; color:string; rotation?:number; assetId?:string; skin?:string; animation?:AnimationClip; animationSpeed?:number; animationPreview?:boolean; hp?:number; behavior?:Behavior; aiSpeed?:number; detectionRadius?:number; logic?:VisualLogic; dialogue?:DialogueTree; maxSpeed?:number; acceleration?:number; brakeForce?:number; turnRate?:number; drag?:number; collisionRadius?:number }
 export interface SceneFile { version:number; entities:GameEntity[]; camera:Camera2D }
 export interface HistoryEntry { label:string; snapshot:string }
 export interface AssetDefinition { id:string; name:string; category:AssetCategory; kind:'actor'|'vehicle'|'weapon'|'prop'|'effect'|'building'; index:number; width:number; height:number; hp:number; animation:AnimationClip }

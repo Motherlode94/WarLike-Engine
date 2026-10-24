@@ -39,7 +39,13 @@ export function updateController3d(p,keys,dt,yaw,entities){
  const axisY=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
  const len=Math.hypot(axisX,axisY);
  const sprint=keys.has('shift')&&s.stamina>0;
- const speed=Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64*dt/(len||1);
+ p._dodgeTimer=Math.max(0,n(p._dodgeTimer)-dt);
+ const dodgeDown=keys.has('control');
+ const dodgeReady=dodgeDown&&!p._dodgeHeld&&p._dodgeTimer===0&&len>0&&s.stamina>=Math.max(0,n(cfg.staminaCost,20));
+ p._dodgeHeld=dodgeDown;
+ if(dodgeReady){p._dodgeTimer=Math.max(.1,n(cfg.dodgeCooldown,.8));p._dodgeBoost=Math.max(0,n(cfg.dodgeDistance,1.8))*64/.18;s.stamina=Math.max(0,s.stamina-Math.max(0,n(cfg.staminaCost,20)))}
+ const dodgeBoost=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0;
+ const speed=(Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64+dodgeBoost)*dt/(len||1);
  const vx=(axisX*Math.cos(yaw)+axisY*Math.sin(yaw))*speed;
  const vy=(-axisX*Math.sin(yaw)+axisY*Math.cos(yaw))*speed;
  if(len&&sprint)s.stamina=clamp(s.stamina-18*dt,0,n(s.maxStamina,100));

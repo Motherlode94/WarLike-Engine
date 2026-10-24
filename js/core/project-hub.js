@@ -27,14 +27,14 @@ export function createProject(name,type){
  name=assertName(name);if(!['2d','3d'].includes(type))throw Error('Type de projet invalide.');
  const id=uniqueId(),data={workspaceMode:type,workspaces:{'2d':entry(defaults2d()),'3d':entry(defaults3d())}};
  if(!restoreWorkspaces(data))throw Error('Impossible de créer le projet.');
- Object.assign(hub,{projectId:id,projectName:name,type});resetHistory();saveProject();notify();return id;
+ Object.assign(hub,{projectId:id,projectName:name,type});state.demoGuide='';resetHistory();saveProject();notify();return id;
 }
 export function openProject(id){
  if(state.playing)throw Error('Arrête Play avant de changer de projet.');
  if(hub.projectId&&hub.projectId!==id)saveProject();
  const data=safeRead(PREFIX+id,null),meta=indexed().find(p=>p.id===id);
  if(!data||!meta||!restoreWorkspaces(data))throw Error('Projet introuvable ou corrompu.');
- Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type});state.keys.clear();resetHistory();notify();return true;
+ Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type});state.keys.clear();state.demoGuide='';resetHistory();notify();return true;
 }
 export function deleteProject(id){
  if(state.playing)throw Error('Arrête Play avant de supprimer.');
@@ -65,7 +65,7 @@ export function initHub(){
  const title=document.querySelector('#studioProjectName');
  let wasPlaying=false;
  const updateTitle=()=>{title.textContent=hub.projectName+(hub.projectId?' · '+hub.type.toUpperCase():'')};
- const hide=()=>{modal.hidden=true;document.body.classList.remove('hub-open');document.dispatchEvent(new Event('warlike:workspace'));updateTitle()};
+ const hide=()=>{modal.hidden=true;document.body.classList.remove('hub-open');document.dispatchEvent(new Event('warlike:project'));updateTitle()};
  const show=()=>{if(state.playing)return;saveProject();modal.hidden=false;document.body.classList.add('hub-open');render();message.textContent=''};
  const run=cb=>{try{cb();hide()}catch(e){message.textContent=e.message}};
  function render(){

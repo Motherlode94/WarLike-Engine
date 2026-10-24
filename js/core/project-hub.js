@@ -76,8 +76,9 @@ export function initHub(){
    const detail=document.createElement('small');detail.textContent=p.type.toUpperCase()+' · '+new Date(p.updated).toLocaleString();
    info.append(heading,detail);
    const open=document.createElement('button');open.textContent='Ouvrir';open.onclick=()=>run(()=>openProject(p.id));
+   const edit=document.createElement('button');edit.textContent='Renommer';edit.title='Renommer ce projet';edit.onclick=()=>{const next=prompt('Nouveau nom du projet',p.name);if(next!==null){try{renameProject(p.id,next);render()}catch(e){message.textContent=e.message}}};
    const del=document.createElement('button');del.textContent='×';del.title='Supprimer ce projet local';del.onclick=()=>{if(confirm('Supprimer définitivement le projet « '+p.name+' » ?')){deleteProject(p.id);render()}};
-   item.append(info,open,del);cards.append(item);
+   item.append(info,open,edit,del);cards.append(item);
   }
   document.querySelector('#hubLegacy').hidden=!safeRead('warlike.scene.v1',null)?.entities;
  }

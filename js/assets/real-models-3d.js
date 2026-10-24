@@ -105,7 +105,9 @@ export function parseGlb(buffer){
  const xyz=[[],[],[]];for(const part of parts)for(let j=0;j<part.vertices.length;j+=6)for(let k=0;k<3;k++)xyz[k].push(part.vertices[j+k]);
  const min=xyz.map(a=>a.reduce((n,v)=>Math.min(n,v),Infinity)),max=xyz.map(a=>a.reduce((n,v)=>Math.max(n,v),-Infinity));
  const size=max.map((n,k)=>Math.max(.0001,n-min[k])),center=max.map((n,k)=>(n+min[k])/2);
- for(const part of parts)for(let j=0;j<part.vertices.length;j+=6)for(let k=0;k<3;k++)part.vertices[j+k]=(part.vertices[j+k]-center[k])/size[k];
+ // A single uniform scale preserves proportions. Per-axis normalization turned humans into distorted blocks.
+ const longest=Math.max(...size);
+ for(const part of parts)for(let j=0;j<part.vertices.length;j+=6)for(let k=0;k<3;k++)part.vertices[j+k]=(part.vertices[j+k]-center[k])/longest;
  return {parts,triangleCount:parts.reduce((sum,p)=>sum+p.vertices.length/18,0),source:json.asset?.generator||'glTF 2.0'};
 }
 export async function getModelGeometry(id){

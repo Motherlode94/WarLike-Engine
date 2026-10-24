@@ -20,8 +20,8 @@ function colorPalette(parent,o,key,label='Couleur'){
  const controls=document.createElement('div');controls.className='warlike-color-controls';
  const picker=document.createElement('input');picker.type='color';picker.value=normalizedHex(o[key]);picker.disabled=state.playing;picker.title='Choisir une couleur';
  const hex=document.createElement('input');hex.type='text';hex.maxLength=7;hex.value=picker.value;hex.disabled=state.playing;hex.spellcheck=false;hex.placeholder='#RRGGBB';hex.setAttribute('aria-label','Couleur hexadécimale');
- const apply=value=>{const candidate=normalizedHex(value);o[key]=candidate;picker.value=candidate;hex.value=candidate;record('Inspector : '+label);notify()};
- picker.addEventListener('input',()=>{o[key]=picker.value;hex.value=picker.value});
+ const apply=value=>{const candidate=normalizedHex(value);o[key]=candidate;if(key==='color')o.colorCustomized=true;picker.value=candidate;hex.value=candidate;record('Inspector : '+label);notify()};
+ picker.addEventListener('input',()=>{o[key]=picker.value;if(key==='color')o.colorCustomized=true;hex.value=picker.value});
  picker.addEventListener('change',()=>apply(picker.value));
  hex.addEventListener('change',()=>{if(!/^#[0-9a-f]{6}$/i.test(hex.value.trim())){hex.value=normalizedHex(o[key]);return}apply(hex.value.trim())});
  controls.append(picker,hex);root.append(controls);

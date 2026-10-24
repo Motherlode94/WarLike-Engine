@@ -1,6 +1,20 @@
 // WarLike static glTF 2.0 GLB mesh loader. No eval, scripts or external binary executables.
 // Supports embedded GLB, node hierarchy/TRS, material baseColorFactor, triangle indices.
 export const realModels3d=[
+ {id:'real-pot-of-coals',name:'Pot of Coals',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/PotOfCoals/glTF-Binary/PotOfCoals.glb',license:'CC-BY-4.0 • Darmstadt Graphics Group'},
+
+ {id:'real-iridescent-dish-with-olives',name:'Dish With Olives',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/IridescentDishWithOlives/glTF-Binary/IridescentDishWithOlives.glb',license:'CC-BY-4.0 • Wayfair'},
+
+ {id:'real-morph-primitives-test',name:'Morph Primitives Test',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MorphPrimitivesTest/glTF-Binary/MorphPrimitivesTest.glb',license:'CC-BY-4.0 • ft-lab'},
+
+ {id:'real-animated-morph-cube',name:'Animated Morph Cube',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AnimatedMorphCube/glTF-Binary/AnimatedMorphCube.glb',license:'CC0 • Microsoft • morph non animé'},
+
+ {id:'real-materials-variants-shoe',name:'Materials Variants Shoe',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MaterialsVariantsShoe/glTF-Binary/MaterialsVariantsShoe.glb',license:'CC-BY-4.0 • Shopify'},
+
+ {id:'real-sheen-chair',name:'Sheen Chair',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SheenChair/glTF-Binary/SheenChair.glb',license:'CC0 • Wayfair'},
+
+ {id:'real-barramundi-fish',name:'Barramundi Fish',category:'Characters',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BarramundiFish/glTF-Binary/BarramundiFish.glb',license:'CC0 • Microsoft'},
+
  {id:'real-rigged-figure',name:'Rigged Figure — vrai personnage GLB',category:'Characters',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/RiggedFigure/glTF-Binary/RiggedFigure.glb',license:'CC-BY-4.0 • Cesium • animations non prises en charge'},
  {id:'real-avocado',name:'Avocado — objet 3D',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Avocado/glTF-Binary/Avocado.glb',license:'CC0 • Microsoft'},
  {id:'real-water-bottle',name:'Water Bottle — objet PBR',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/WaterBottle/glTF-Binary/WaterBottle.glb',license:'CC0 • Microsoft'},

@@ -1,3 +1,5 @@
+import {prefab3d} from '../assets/catalog-3d.js';
+import {resetHistory} from './history.js';
 // WarLike Hub — local named projects, independent 2D/3D templates.
 // Storage stays on this browser. Export JSON to transfer projects to another device.
 import {workspace,restoreWorkspaces,workspacePayload} from './workspaces.js';
@@ -5,7 +7,7 @@ import {state,notify} from './state.js';
 import {stopSources} from './audio-sources.js';
 const INDEX='warlike.hub.projects.v1',PREFIX='warlike.hub.project.';
 const defaults2d=()=>[{id:1,name:'Player',type:'player',x:100,y:110,w:38,h:38,color:'#41cdb5'}];
-const defaults3d=()=>[{id:1,name:'3D Player',type:'character',skin:'scout',animation:'idle',x:150,y:150,w:45,h:78,elevation3d:0,color:'#41cdb5'}];
+const defaults3d=()=>[{...prefab3d('character-hero',1,150,150),name:'3D Player',playable3d:true}];
 const entry=entities=>({entities,selected:[1],nextId:2,camera:{x:0,y:0,zoom:1}});
 const safeRead=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
 const indexed=()=>safeRead(INDEX,[]).filter(p=>p&&typeof p.id==='string');
@@ -25,14 +27,14 @@ export function createProject(name,type){
  name=assertName(name);if(!['2d','3d'].includes(type))throw Error('Type de projet invalide.');
  const id=uniqueId(),data={workspaceMode:type,workspaces:{'2d':entry(defaults2d()),'3d':entry(defaults3d())}};
  if(!restoreWorkspaces(data))throw Error('Impossible de créer le projet.');
- Object.assign(hub,{projectId:id,projectName:name,type});saveProject();notify();return id;
+ Object.assign(hub,{projectId:id,projectName:name,type});resetHistory();saveProject();notify();return id;
 }
 export function openProject(id){
  if(state.playing)throw Error('Arrête Play avant de changer de projet.');
  if(hub.projectId&&hub.projectId!==id)saveProject();
  const data=safeRead(PREFIX+id,null),meta=indexed().find(p=>p.id===id);
  if(!data||!meta||!restoreWorkspaces(data))throw Error('Projet introuvable ou corrompu.');
- Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type});state.keys.clear();notify();return true;
+ Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type});state.keys.clear();resetHistory();notify();return true;
 }
 export function deleteProject(id){
  if(state.playing)throw Error('Arrête Play avant de supprimer.');

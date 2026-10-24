@@ -6,6 +6,21 @@ import {workspace,restoreWorkspaces,workspacePayload} from './workspaces.js';
 import {state,notify} from './state.js';
 import {stopSources} from './audio-sources.js';
 const INDEX='warlike.hub.projects.v1',PREFIX='warlike.hub.project.';
+const THEME_KEY='warlike.hub.accent.v1';
+const DEFAULT_ACCENT='#48cba9';
+export const hubAccentPresets=['#48cba9','#58a6ff','#9b7beb','#ef709e','#e4a459','#85c66a','#e06c65','#a1a9b6'];
+export const normalizeHubAccent=value=>/^#[0-9a-f]{6}$/i.test(String(value||''))?String(value).toLowerCase():null;
+export function setHubAccent(value,{persist=true}={}){
+ const color=normalizeHubAccent(value);
+ if(!color)return false;
+ const rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));
+ const highlight=rgb.map(n=>Math.round(n*.78)).map(n=>n.toString(16).padStart(2,'0')).join('');
+ const target=document.querySelector('#hubOverlay');
+ if(target){target.style.setProperty('--hub-accent',color);target.style.setProperty('--hub-accent-dark','#'+highlight)}
+ if(persist){try{localStorage.setItem(THEME_KEY,color)}catch{}}
+ return true;
+}
+
 const defaults2d=()=>[{id:1,name:'Player',type:'player',x:100,y:110,w:38,h:38,color:'#41cdb5'}];
 const defaults3d=()=>[{...prefab3d('character-hero',1,150,150),name:'3D Player',playable3d:true}];
 const entry=entities=>({entities,selected:[1],nextId:2,camera:{x:0,y:0,zoom:1}});
@@ -63,6 +78,24 @@ export function importLegacyProject(){
 export function initHub(){
  const modal=document.querySelector('#hubOverlay'),cards=document.querySelector('#hubProjects'),name=document.querySelector('#hubProjectName'),type=document.querySelector('#hubProjectType'),message=document.querySelector('#hubMessage');
  const title=document.querySelector('#studioProjectName');
+ const picker=document.querySelector('#hubAccentColor'),hex=document.querySelector('#hubAccentHex'),palette=document.querySelector('#hubThemePalette'),reset=document.querySelector('#hubThemeReset');
+ const currentAccent=()=>{try{return normalizeHubAccent(localStorage.getItem(THEME_KEY))||DEFAULT_ACCENT}catch{return DEFAULT_ACCENT}};
+ const commitAccent=value=>{
+  if(!setHubAccent(value)){hex.value=picker.value;message.textContent='Couleur invalide : utilise le format #RRGGBB.';return}
+  picker.value=hex.value=value.toLowerCase();message.textContent='';
+  palette.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===value.toLowerCase())));
+ };
+ for(const color of hubAccentPresets){
+  const button=document.createElement('button');button.type='button';button.className='hub-theme-swatch';
+  button.dataset.color=color;button.style.backgroundColor=color;button.title=color;button.setAttribute('aria-label','Couleur '+color);
+  button.onclick=()=>commitAccent(color);palette.append(button);
+ }
+ picker.oninput=()=>{setHubAccent(picker.value,{persist:false});hex.value=picker.value};
+ picker.onchange=()=>commitAccent(picker.value);
+ hex.onchange=()=>commitAccent(hex.value.trim());
+ reset.onclick=()=>commitAccent(DEFAULT_ACCENT);
+ commitAccent(currentAccent());
+
  let wasPlaying=false;
  const updateTitle=()=>{title.textContent=hub.projectName+(hub.projectId?' · '+hub.type.toUpperCase():'')};
  const hide=()=>{modal.hidden=true;document.body.classList.remove('hub-open');document.dispatchEvent(new Event('warlike:project'));updateTitle()};

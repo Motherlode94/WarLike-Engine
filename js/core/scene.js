@@ -111,5 +111,6 @@ export function loadGameModeDemo(kind='deathmatch'){
  for(let i=0;i<8;i++){const assetId=i%3===0?'crate':i%3===1?'rock':'sandbag';insert('Cover '+(i+1),'prefab',assetId,220+(i%5)*185,95+Math.floor(i/5)*360)}
  if(kind==='roleplay'){insert('Police Station','prefab','city-police',850,380);insert('Hospital','prefab','city-hospital',580,390);insert('Shop','prefab','city-shop',240,450);insert('Garage / Workshop','prefab','city-warehouse',1030,160);insert('Military HQ','prefab','rts-hq',1110,440)}
  if(kind==='frontline'){insert('Outpost','prefab','rts-bunker',780,180);insert('Command Post','prefab','rts-hq',1050,430)}
+ if(['roleplay','battleRoyale','frontline','teamDeathmatch','deathmatch'].includes(kind)){insert('Jeep jouable','prefab','jeep',175,335,{maxSpeed:280,acceleration:245,brakeForce:320,turnRate:150,drag:1.4,collisionRadius:24});insert('Buggy jouable','prefab','buggy',865,555,{maxSpeed:330,acceleration:290,brakeForce:390,turnRate:170,drag:1.6,collisionRadius:22})}
  state.entities=result;state.nextId=result.length+1;state.selected=[1];setCamera({x:45,y:45,zoom:.85});record('Démo '+kind);notify();
 }

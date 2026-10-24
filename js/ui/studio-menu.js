@@ -1,3 +1,4 @@
+import {recoverBackup} from '../core/storage.js';
 import {resetLayout} from './docking.js';
 import {state,notify} from '../core/state.js';
 import {record,undo,redo} from '../core/history.js';
@@ -12,7 +13,7 @@ export function initStudioMenus(){
  document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target))close()});
  const actions={
  new(){if(state.playing)return alert('Arrête le mode Play avant de créer une scène.');if(!confirm('Créer une scène vide ? Tu peux annuler cette opération avec Ctrl+Z.'))return;state.entities=[];state.selected=[];state.nextId=1;record('Nouvelle scène');notify();$('studioProjectName').textContent='Nouvelle scène';log('Nouvelle scène créée')},
- open(){$('load').click()},save(){exportScene()},cloud(){$('cloudConnect').click()},
+ open(){$('load').click()},recoverBackup(){if(state.playing)return alert('Arrête Play avant la récupération.');if(!confirm('Rouvrir la scène précédente ? La scène actuelle sera remplacée.'))return;if(!recoverBackup())alert('Aucune sauvegarde de secours disponible.');else log('Scène précédente restaurée')},save(){exportScene()},cloud(){$('cloudConnect').click()},
  undo,redo,duplicate:duplicateSelected,delete:deleteSelected,
  project(){$('projectTab').click();$('assetSearch').focus()},character(){addEntity('character')},object(){addEntity('object')},
  play(){$('play').click()},demo(){$('loadDemo').click()},

@@ -1,4 +1,4 @@
-import {updateController3d,updateAi,updateStats} from './gameplay-components.js';
+import {updateController3d,updateAi,updateStats,attack3d} from './gameplay-components.js';
 import {getModelGeometry,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences,sequenceRuntime} from './logic-sequences.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
@@ -217,6 +217,8 @@ export function init3d(canvas,host,buttons){
   updateStats(state.entities,dt);
   updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
   updateAi(state.entities,p,dt);
+  p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);
+  if(state.keys.has('f')&&p._attackCooldown===0){const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit)p.animation='attack';}
  };
  const camera=()=>sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
  const playerTarget=()=>{const p=playableActor(state.entities);return p?[(p.x+p.w/2)/64,.5,(p.y+p.h/2)/64]:null};

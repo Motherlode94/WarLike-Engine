@@ -262,3 +262,17 @@ body[data-workspace="3d"] #zoomIn,
 body[data-workspace="3d"] #resetView,
 body[data-workspace="3d"] #zoomLabel{display:none!important}
 body[data-workspace="3d"] #toolStatus::after{content:" · 3D caméra orbitale"}
+
+/* Hide legacy 2D-specific tools and demos from the independent 3D project. */
+body[data-workspace="3d"] #rpgDemo,
+body[data-workspace="3d"] #logicDemo,
+body[data-workspace="3d"] #driveDemo,
+body[data-workspace="3d"] #loadDemo,
+body[data-workspace="3d"] [data-studio-action="demo"],
+body[data-workspace="3d"] [data-studio-action="ninjaZombieDemo"],
+body[data-workspace="3d"] [data-studio-action="buildingDemo"],
+body[data-workspace="3d"] [data-studio-action="elementsDemo"],
+body[data-workspace="3d"] [data-studio-action="gameModeAdd"],
+body[data-workspace="3d"] .game-mode-menu,
+body[data-workspace="3d"] [data-studio-action="logicDemo"]{display:none!important}
+body[data-workspace="2d"] [data-studio-action="threeDDemo"]{display:none!important}

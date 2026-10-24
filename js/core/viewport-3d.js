@@ -9,7 +9,7 @@ import {getAsset} from '../assets/catalog.js';
 import {game} from './gameplay.js';
 
 export const view3d={enabled:false,yaw:-.68,pitch:.62,radius:25,target:[9,0,6],drag:null,gl:null,error:null,followPlayer:true};
-export const playableActor=entities=>entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters')||null;
+export const playableActor=entities=>entities.find(o=>o.playable3d===true||o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters')||null;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const V={
  add:(a,b)=>a.map((x,i)=>x+b[i]),sub:(a,b)=>a.map((x,i)=>x-b[i]),

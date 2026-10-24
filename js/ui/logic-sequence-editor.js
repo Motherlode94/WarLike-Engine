@@ -38,7 +38,7 @@ export function renderSequenceEditor(root,o){
    select(block,'Condition',c.type,sequenceConditions,v=>{c.type=v;save('Condition')});
    if(['variable','localVariable'].includes(c.type)){
     text(block,'Nom',c.key||'',v=>{c.key=v;save('Nom variable')});
-    select(block,'Comparaison',c.operator||'==',['==','!=','>','<','>='],v=>{c.operator=v;save('Opérateur')});
+    select(block,'Comparaison',c.operator||'==',['==','!=','>','<','>=','<='],v=>{c.operator=v;save('Opérateur')});
    }
    if(['variable','localVariable','distanceLess'].includes(c.type))text(block,'Valeur',c.value??0,v=>{c.value=v;save('Valeur')});
    toggle(block,'Inverser (NOT)',c.negate===true,v=>{c.negate=v;save('NOT')});

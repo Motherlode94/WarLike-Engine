@@ -305,21 +305,51 @@ export function init3d(canvas,host,buttons){
     else if(['cone','cactus'].includes(shape))drawShape(cone,[b.x,b.y,b.z],[b.w,b.h,b.d],color);
     else if(['tree','pine'].includes(shape)){
      cyl([b.x,b.y-b.h*.22,b.z],[b.w*.22,b.h*.55,b.d*.22],[.48,.34,.22,1]);
-     if(shape==='tree')round([b.x,b.y+b.h*.2,b.z],[b.w,b.h*.66,b.d],color);
-     else{drawShape(cone,[b.x,b.y+b.h*.19,b.z],[b.w,b.h*.77,b.d],color)}
+     if(shape==='tree'){
+      for(const [dx,dy,dz,scale] of [[0,.18,0,.74],[-.26,.14,.04,.54],[.24,.19,-.08,.53],[0,.40,.12,.49]]){
+       round([b.x+b.w*dx,b.y+b.h*dy,b.z+b.d*dz],[b.w*scale,b.h*scale*.63,b.d*scale],color);
+      }
+     }else{
+      for(let level=0;level<3;level++)drawShape(cone,[b.x,b.y+b.h*(.04+level*.23),b.z],[b.w*(1-level*.22),b.h*.51,b.d*(1-level*.22)],color);
+     }
     }else if(shape==='humanoid'){
-     cube([b.x,b.y,b.z],[b.w*.65,b.h*.52,b.d*.65],color);
-     round([b.x,b.y+b.h*.39,b.z],[b.w*.57,b.h*.25,b.d*.57],[.82,.68,.57,1]);
-     for(const side of [-.23,.23])cube([b.x+b.w*side,b.y-b.h*.38,b.z],[b.w*.23,b.h*.38,b.d*.3],[.29,.35,.42,1]);
+     cube([b.x,b.y+b.h*.08,b.z],[b.w*.58,b.h*.43,b.d*.55],color);
+     cube([b.x,b.y+b.h*.34,b.z],[b.w*.5,b.h*.10,b.d*.48],[.31,.41,.49,1]);
+     round([b.x,b.y+b.h*.49,b.z],[b.w*.43,b.h*.24,b.d*.42],[.82,.68,.57,1]);
+     cube([b.x,b.y+b.h*.58,b.z-b.d*.035],[b.w*.49,b.h*.12,b.d*.45],[.27,.32,.38,1]);
+     for(const side of [-1,1]){
+      cube([b.x+b.w*side*.39,b.y+b.h*.03,b.z],[b.w*.20,b.h*.41,b.d*.30],color);
+      round([b.x+b.w*side*.39,b.y-b.h*.20,b.z],[b.w*.19,b.h*.16,b.d*.31],[.76,.60,.49,1]);
+      cube([b.x+b.w*side*.17,b.y-b.h*.31,b.z],[b.w*.21,b.h*.43,b.d*.31],[.27,.36,.42,1]);
+      cube([b.x+b.w*side*.17,b.y-b.h*.54,b.z+b.d*.11],[b.w*.26,b.h*.11,b.d*.45],[.18,.24,.28,1]);
+     }
     }else if(['car','truck','tank','bike'].includes(shape)){
-     cube([b.x,b.y,b.z],[b.w,b.h*.65,b.d],color);
-     cube([b.x,b.y+b.h*.39,b.z],[b.w*.52,b.h*.42,b.d*.8],[.36,.51,.61,1]);
-     for(const x of [-.36,.36])for(const z of [-.48,.48])cyl([b.x+b.w*x,b.y-b.h*.37,b.z+b.d*z],[b.w*.18,b.h*.33,b.d*.22],[.15,.19,.24,1]);
-     if(shape==='tank')cube([b.x,b.y+b.h*.63,b.z],[b.w*.65,b.h*.12,b.d*.5],[.28,.4,.3,1]);
+     cube([b.x,b.y,b.z],[b.w,b.h*.58,b.d],color);
+     cube([b.x,b.y+b.h*.36,b.z-b.d*.09],[b.w*.58,b.h*.40,b.d*.75],[.26,.40,.50,1]);
+     cube([b.x,b.y+b.h*.36,b.z+b.d*.29],[b.w*.48,b.h*.25,b.d*.035],[.55,.74,.79,1]);
+     for(const x of [-.37,.37])for(const z of [-.46,.46]){
+      cyl([b.x+b.w*x,b.y-b.h*.37,b.z+b.d*z],[b.w*.20,b.h*.30,b.d*.22],[.13,.16,.19,1]);
+      cyl([b.x+b.w*x,b.y-b.h*.37,b.z+b.d*z],[b.w*.11,b.h*.31,b.d*.115],[.46,.49,.51,1]);
+     }
+     for(const side of [-.33,.33]){
+      cube([b.x+b.w*side,b.y-b.h*.06,b.z+b.d*.506],[b.w*.18,b.h*.12,.035],[.85,.83,.69,1]);
+      cube([b.x+b.w*side,b.y-b.h*.10,b.z-b.d*.506],[b.w*.2,b.h*.09,.035],[.78,.14,.11,1]);
+     }
+     if(shape==='tank'){
+      cube([b.x,b.y+b.h*.62,b.z],[b.w*.58,b.h*.19,b.d*.55],[.27,.35,.30,1]);
+      cyl([b.x,b.y+b.h*.67,b.z+b.d*.54],[b.w*.15,b.h*.14,b.d*.90],[.25,.31,.29,1]);
+     }
     }else if(['house','hangar','tower','garage'].includes(shape)){
      cube([b.x,b.y,b.z],[b.w,b.h,b.d],color);
-     cube([b.x,b.y+b.h*.54,b.z],[b.w*1.12,b.h*.13,b.d*1.12],[.30,.39,.45,1]);
-     cube([b.x,b.y-b.h*.25,b.z+b.d*.51],[b.w*.25,b.h*.5,.05],[.22,.25,.31,1]);
+     cube([b.x,b.y+b.h*.52,b.z],[b.w*1.13,b.h*.14,b.d*1.13],[.30,.35,.40,1]);
+     cube([b.x,b.y-b.h*.25,b.z+b.d*.513],[b.w*.24,b.h*.5,.05],[.25,.20,.17,1]);
+     cube([b.x,b.y-b.h*.18,b.z+b.d*.548],[b.w*.04,b.h*.06,.018],[.78,.67,.42,1]);
+     for(const side of [-.31,.31])for(const level of [-.16,.22]){
+      cube([b.x+b.w*side,b.y+b.h*level,b.z+b.d*.514],[b.w*.20,b.h*.18,.055],[.21,.32,.39,1]);
+      cube([b.x+b.w*side,b.y+b.h*level,b.z+b.d*.552],[b.w*.025,b.h*.18,.012],[.76,.74,.66,1]);
+      cube([b.x+b.w*side,b.y+b.h*level,b.z+b.d*.552],[b.w*.20,b.h*.025,.012],[.76,.74,.66,1]);
+     }
+     cube([b.x,b.y-b.h*.49,b.z+b.d*.53],[b.w*1.12,b.h*.045,b.d*.13],[.44,.44,.41,1]);
     }else if(['lamp','cactus'].includes(shape)){
      cyl([b.x,b.y,b.z],[b.w*.22,b.h,b.d*.22],color);
      round([b.x,b.y+b.h*.48,b.z],[b.w*.55,b.w*.55,b.d*.55],[1,.8,.4,1]);

@@ -46,7 +46,7 @@ export function renderSequenceEditor(root,o){
     text(block,'Nom',c.key||'',v=>{c.key=v;save('Nom variable')});
     select(block,'Comparaison',c.operator||'==',['==','!=','>','<','>=','<='],v=>{c.operator=v;save('Opérateur')});
    }
-   if(['variable','localVariable','distanceLess'].includes(c.type))text(block,'Valeur',c.value??0,v=>{c.value=v;save('Valeur')});
+   if(['variable','localVariable','distanceLess','distanceGreater','healthBelow','healthAbove','hasTag','randomChance'].includes(c.type))text(block,'Valeur',c.value??0,v=>{c.value=v;save('Valeur')});
    toggle(block,'Inverser (NOT)',c.negate===true,v=>{c.negate=v;save('NOT')});
    button(block,'− Condition',()=>{conditions.splice(i,1);save('Retirer condition')});parent.append(block);
   });
@@ -58,10 +58,10 @@ export function renderSequenceEditor(root,o){
    const block=document.createElement('div');block.className='sequence-step';
    const caption=document.createElement('small');caption.textContent='#'+(i+1);block.append(caption);
    select(block,'Instruction',step.type,sequenceInstructions,v=>{step.type=v;save('Instruction')});
-   if(['setVariable','addVariable','setLocal','emitSignal'].includes(step.type))text(block,'Variable / Signal',step.key||'',v=>{step.key=v;save('Nom')});
+   if(['setVariable','addVariable','setLocal','addLocal','emitSignal'].includes(step.type))text(block,'Variable / Signal',step.key||'',v=>{step.key=v;save('Nom')});
    if(!['destroyObject'].includes(step.type))text(block,'Valeur',step.value??'',v=>{step.value=v;save('Valeur')});
-   if(step.type==='moveObject'){text(block,'Delta X',step.x??0,v=>{step.x=v;save('X')},'number');text(block,'Delta Z/Y',step.y??0,v=>{step.y=v;save('Y')},'number')}
-   if(step.type==='enableObject')text(block,'ID cible (optionnel)',step.targetId??'',v=>{step.targetId=v;save('Cible')},'number');
+   if(['moveObject','teleportObject'].includes(step.type)){text(block,'Delta X',step.x??0,v=>{step.x=v;save('X')},'number');text(block,'Delta Z/Y',step.y??0,v=>{step.y=v;save('Y')},'number')}
+   if(['enableObject','moveObject','teleportObject','setHealth','addHealth','setAnimation','setBehavior'].includes(step.type))text(block,'ID cible (optionnel)',step.targetId??'',v=>{step.targetId=v;save('Cible')},'number');
    toggle(block,'Désactiver instruction',step.disabled===true,v=>{step.disabled=v;save('Désactiver')});
    const tools=document.createElement('div');tools.className='sequence-buttons';
    if(i>0)button(tools,'↑',()=>{[list[i-1],list[i]]=[list[i],list[i-1]];save('Remonter')});
@@ -75,6 +75,7 @@ export function renderSequenceEditor(root,o){
   editConditions(body,s.conditions);editInstructions(body,s.instructions);
   button(body,'＋ Branches IF / ELSE',()=>{s.branches=[{conditions:structuredClone(s.conditions),instructions:structuredClone(s.instructions)}];s.elseInstructions=[];save('Créer branches')});
  }else{
+  const base=document.createElement('details');base.className='sequence-branch';const baseTitle=document.createElement('summary');baseTitle.textContent='Conditions globales (avant IF / ELSE)';base.append(baseTitle);editConditions(base,s.conditions);body.append(base);
   for(const [i,branch] of s.branches.entries()){
    const group=document.createElement('details');group.open=true;group.className='sequence-branch';
    const label=document.createElement('summary');label.textContent='IF / ELSE IF • Branche '+(i+1);group.append(label);

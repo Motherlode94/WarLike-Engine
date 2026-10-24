@@ -13,8 +13,8 @@ a{color:#8adaf0}li{margin:5px 0}.note{border-left:4px solid #e1b26c;background:#
 table{border-collapse:collapse;width:100%}td,th{padding:9px;text-align:left;border-bottom:1px solid #345068}th{color:#bce3e4}
 small{color:#adc1cd}footer{text-align:center;color:#95acb9;padding:25px}@media(max-width:700px){section{padding:16px}table{font-size:12px}}
 </style></head>
-<body><header><span>◈ WARLIKE STUDIO • DOCUMENTATION</span><h1>Guide officiel du moteur 2D / 3D</h1><p>Version Beta.7.2 — créer un projet, construire une scène, programmer sa logique et importer de vrais modèles GLB.</p></header>
-<nav aria-label="Chapitres"><a href="#demarrage">Démarrer</a><a href="#interface">Interface</a><a href="#jeu2d">Moteur 2D</a><a href="#jeu3d">Moteur 3D</a><a href="#prefabs">Prefabs GLB</a><a href="#logic">Visual Logic</a><a href="#play">Play / Stop</a><a href="#save">Sauvegarder</a><a href="#faq">Dépannage</a></nav>
+<body><header><span>◈ WARLIKE STUDIO • DOCUMENTATION</span><h1>Guide officiel du moteur 2D / 3D</h1><p>Version 3.0 Beta.7.3 — créer un projet, construire une scène, programmer sa logique et importer de vrais modèles GLB.</p></header>
+<nav aria-label="Chapitres"><a href="#demarrage">Démarrer</a><a href="#interface">Interface</a><a href="#jeu2d">Moteur 2D</a><a href="#jeu3d">Moteur 3D</a><a href="#prefabs">Prefabs GLB</a><a href="#logic">Visual Logic</a><a href="#gameplay">Gameplay Components</a><a href="#ai-combat">IA / Combat</a><a href="#tutorial">Tutoriel</a><a href="#play">Play / Stop</a><a href="#save">Sauvegarder</a><a href="#faq">Dépannage</a></nav>
 <main>
 <section id="demarrage"><h2>1. Démarrer avec WarLike Hub</h2>
 <p>À l’ouverture, le <strong>WarLike Hub</strong> permet de créer un projet nommé en choisissant <strong>2D</strong> ou <strong>3D</strong>. Les deux modes ont des bibliothèques et des simulations différentes. Pour ouvrir un projet existant, clique sur <strong>Ouvrir</strong> dans la liste des projets récents.</p>
@@ -53,10 +53,36 @@ small{color:#adc1cd}footer{text-align:center;color:#95acb9;padding:25px}@media(m
 <tr><td>IF / ELSE IF / ELSE</td><td>Choisir la première branche dont toutes les conditions sont vérifiées.</td></tr></table>
 <h3>Exemple : ouvrir une porte</h3><p><code>Trigger: Interact (E)</code> → <code>IF hasKey == 1</code> → afficher « Porte ouverte » et changer la couleur, <code>ELSE</code> → afficher « Porte verrouillée ».</p>
 <p>La logique est réinitialisée lors de Play/Stop et s’exécute localement dans le mode 2D ou 3D choisi. Ce système est inspiré de l’organisation de Game Creator, mais n’en est pas une copie.</p></section>
+<section id="gameplay"><h2>7. Gameplay Components : personnages, statistiques et inventaire</h2>
+<p>Sélectionne un objet dans la <strong>Hierarchy</strong>, puis ouvre <strong>Inspector → Gameplay Components</strong>. Ajoute les composants dont ton personnage a besoin. Les paramètres sont stockés avec la scène et sont inclus dans son export JSON.</p>
+<table><tr><th>Composant</th><th>Réglages</th><th>Fonction actuelle</th></tr>
+<tr><td>Stats</td><td>maxHealth, health, maxStamina, stamina, staminaRegen</td><td>Vie, endurance, dégâts, soins et régénération</td></tr>
+<tr><td>Character Controller 3D</td><td>walkSpeed, sprintSpeed, jumpForce, gravity, dodgeDistance, dodgeCooldown, staminaCost</td><td>Déplacement caméra-relatif, course, saut et esquive</td></tr>
+<tr><td>Inventaire</td><td>capacity, items, equipment</td><td>Ajouter/retirer des objets et équiper une arme ou une armure</td></tr>
+<tr><td>AI State Machine</td><td>detection, attackRange, attackDamage, attackCooldown, speed, patrolRadius</td><td>Patrouille, poursuite et attaque automatique</td></tr></table>
+<h3>Contrôles en mode Play 3D</h3><table><tr><th>Touche</th><th>Action</th></tr><tr><td>ZQSD / WASD</td><td>Déplacement</td></tr><tr><td>Maj</td><td>Sprint utilisant l'endurance</td></tr><tr><td>Espace</td><td>Saut</td></tr><tr><td>Ctrl</td><td>Esquive directionnelle, avec coût d'endurance et cooldown</td></tr><tr><td>F</td><td>Attaque de proximité contre une cible IA</td></tr><tr><td>Clic droit + souris / molette</td><td>Caméra orbitale / zoom</td></tr></table>
+<p class="note">Le contrôleur se déplace sur le plan X/Z représenté par les coordonnées x/y des entités. La collision repose sur des rectangles simplifiés, et non sur une simulation physique rigide.</p>
+<h3>Inventaire et équipement</h3><ol><li>Ajoute <strong>Inventaire</strong> à ton personnage.</li><li>Saisis un ID d'objet, par exemple <code>sword</code>, puis clique sur <strong>＋ Objet</strong>.</li><li>Utilise <strong>Arme</strong> pour l'équiper dans le slot weapon ou <strong>Armure</strong> pour le slot armor.</li><li>L'attaque 3D utilise actuellement des valeurs simplifiées : une arme équipée donne 35 dégâts et 180 unités de portée au lieu de 15 dégâts et 110 unités sans arme.</li></ol>
+<p class="warning">Le rendu d'une arme GLB et le slot d'équipement restent distincts : équiper un objet ne l'attache pas automatiquement à la main du personnage. Il n'existe pas encore de système de balistique 3D, de rechargement ou de projectiles complet.</p></section>
+<section id="ai-combat"><h2>8. IA, combat et séquences de comportements</h2>
+<h3>Créer un ennemi</h3><ol><li>Ajoute un personnage ou un prefab dans la scène 3D.</li><li>Dans l'Inspector, ajoute <strong>AI State Machine</strong> et <strong>Stats</strong>.</li><li>Configure <strong>Rayon détection</strong>, <strong>Portée attaque</strong>, <strong>Vitesse</strong>, <strong>Dégâts</strong> et <strong>Cooldown</strong>.</li><li>Ajoute un personnage jouable, lance <strong>Play</strong> et approche-toi de l'ennemi.</li></ol>
+<p>Transitions actuelles : <code>patrol</code> quand la cible est éloignée, <code>chase</code> quand elle est détectée, <code>attack</code> à courte portée et <code>dead</code> lorsque sa vie atteint zéro. L'IA tente quelques directions alternatives en cas d'obstacle. Il ne s'agit pas d'un NavMesh ou d'un pathfinding A* ; elle peut rester bloquée dans un labyrinthe.</p>
+<h3>Logique visuelle</h3><p>Ouvre <strong>Inspector → Logic Sequences</strong> et ajoute un trigger, des conditions, puis des instructions. Le panneau <strong>Graphique des comportements</strong> montre le chemin d'exécution, ses branches IF/ELSE et les instructions dans l'ordre. C'est une <strong>prévisualisation</strong> : on édite les séquences via les formulaires de l'Inspector, et non en reliant des nœuds à la souris.</p>
+<table><tr><th>Famille</th><th>Exemples</th></tr><tr><td>Conditions</td><td>distanceLess, distanceGreater, healthBelow, healthAbove, hasTag, variable, localVariable, randomChance</td></tr><tr><td>Instructions</td><td>moveObject, teleportObject, setHealth, addHealth, setAnimation, setBehavior, giveItem, removeItem, equipItem, damageObject, healObject, wait, emitSignal</td></tr></table>
+<p>Les instructions ciblant un autre GameObject acceptent son ID. Sans ID cible valide, elles s'appliquent à l'objet qui porte la séquence.</p></section>
+<section id="tutorial"><h2>9. Tutoriel : un garde, une arme et une porte</h2>
+<ol><li>Dans WarLike Hub, crée un <strong>Projet 3D</strong> nommé « Démo Gameplay ».</li>
+<li>Sélectionne le personnage jouable. Ajoute les composants <strong>Stats</strong>, <strong>Character Controller 3D</strong> et <strong>Inventaire</strong>.</li>
+<li>Ajoute l'objet <code>sword</code> à son inventaire et équipe-le comme arme.</li>
+<li>Ajoute un deuxième personnage, puis <strong>AI State Machine</strong> avec une détection de 450, une portée de 65 et une vitesse de 75.</li>
+<li>Ajoute un objet représentant une porte. Dans <strong>Logic Sequences</strong>, sélectionne l'événement <code>interact</code> et ajoute une instruction <code>message</code> « Porte activée ».</li>
+<li>Dans <strong>Graphique des comportements</strong>, examine l'ordre des nœuds.</li>
+<li>Lance <strong>Play</strong> : déplace-toi avec ZQSD, esquive avec Ctrl, attaque avec F et interagis avec E.</li></ol>
+<p class="note">Les composants et leur exécution restent expérimentaux. Exécute <code>npm test</code> et <code>npm run typecheck</code> dans le projet cloné puis valide les interactions dans ton navigateur.</p></section>
 <section id="play"><h2>7. Tester avec Play / Stop</h2>
 <p>Clique sur <strong>▶ Play</strong> pour lancer la simulation et <strong>■ Stop</strong> pour revenir à la scène d’édition. Le moteur restaure normalement la scène d’origine à l’arrêt.</p>
 <table><tr><th>Entrée</th><th>Action</th></tr><tr><td>ZQSD / WASD</td><td>Déplacement dans les scènes compatibles.</td></tr><tr><td>Maj (3D)</td><td>Courir avec le contrôleur 3D expérimental.</td></tr><tr><td>Clic droit (3D)</td><td>Faire tourner la caméra.</td></tr><tr><td>Molette (3D)</td><td>Zoom caméra.</td></tr><tr><td>E (2D ou logique)</td><td>Interagir lorsqu’un composant le permet.</td></tr></table>
-<p>Les systèmes de combat 3D, de conduite 3D et de physique avancée ne sont pas encore finalisés.</p></section>
+<p>Le combat de proximité 3D est disponible en version expérimentale. La conduite 3D, les projectiles, les animations squelettiques et la physique avancée restent à développer.</p></section>
 <section id="save"><h2>8. Sauvegarde, projets et partage</h2>
 <p>Le bouton <strong>↓</strong> en haut du studio sauvegarde le projet local nommé. <strong>Export JSON</strong> permet d’enregistrer une scène sur ton ordinateur. Pour restaurer une scène, utilise <strong>Import JSON</strong>.</p>
 <p>Attention : les fichiers GLB importés localement, les fichiers audio de session et autres ressources binaires ne sont actuellement <strong>pas emballés avec l’export JSON</strong>.</p></section>
@@ -67,4 +93,4 @@ small{color:#adc1cd}footer{text-align:center;color:#95acb9;padding:25px}@media(m
 <h3>Le modèle est déformé ou sans textures</h3><p>Les transformations, matériaux, UV et animations glTF ne sont que partiellement pris en charge. Le moteur est encore en bêta.</p>
 <div class="note">Les fonctionnalités annoncées ici correspondent au code du projet et à ses limites connues. Leur comportement complet n’a pas encore été vérifié dans tous les navigateurs et GPU.</div></section>
 <p>Pour les détails techniques : <a href="https://github.com/Motherlode94/WarLike-Engine/blob/main/REAL-3D-PREFABS-BETA72.md">Prefabs GLB</a> · <a href="https://github.com/Motherlode94/WarLike-Engine/blob/main/LOGIC-SEQUENCES-BETA7.md">Logic Sequences</a>.</p>
-</main><footer>WARLIKE STUDIO · Guide Beta.7.2 · Documentation du moteur en cours de développement</footer></body></html>
+</main><footer>WARLIKE STUDIO · Guide 3.0 Beta.7.3 · Documentation du moteur en cours de développement</footer></body></html>

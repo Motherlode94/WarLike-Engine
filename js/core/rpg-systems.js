@@ -1,8 +1,8 @@
 // WarLike Studio: no-code dialogue, quest journal, inventory and interaction UI.
 import {state} from './state.js';
-export const rpg={inventory:{},quests:{},dialogue:null,notices:[],showInventory:false,showJournal:false};
+export const rpg={inventory:{},quests:{},dialogue:null,notices:[],showInventory:false,showJournal:false,equipped:null};
 export const questStatuses=['inactive','active','completed'];
-export function resetRpg(){rpg.inventory={};rpg.quests={};rpg.dialogue=null;rpg.notices=[];rpg.showInventory=false;rpg.showJournal=false;refreshRpg()}
+export function resetRpg(){rpg.inventory={};rpg.quests={};rpg.dialogue=null;rpg.notices=[];rpg.showInventory=false;rpg.showJournal=false;rpg.equipped=null;refreshRpg()}
 export function notice(msg){rpg.notices.push({text:String(msg).slice(0,150),expires:performance.now()+3500});if(rpg.notices.length>5)rpg.notices.shift();refreshRpg()}
 export function giveItem(key,count=1){key=String(key||'item').slice(0,60);rpg.inventory[key]=Math.max(0,(rpg.inventory[key]||0)+Number(count||1));if(rpg.inventory[key]===0)delete rpg.inventory[key];refreshRpg()}
 export function hasItem(key,count=1){return (rpg.inventory[key]||0)>=count}
@@ -19,7 +19,7 @@ function addText(parent,tag,text,cls){const e=document.createElement(tag);e.text
 export function refreshRpg(){
  const inventory=el('rpgInventory'),journal=el('rpgJournal'),dialogue=el('rpgDialogue');if(!inventory||!journal||!dialogue)return;
  inventory.hidden=!state.playing||!rpg.showInventory;journal.hidden=!state.playing||!rpg.showJournal;dialogue.hidden=!state.playing||!rpg.dialogue;
- inventory.replaceChildren();if(!inventory.hidden){addText(inventory,'h3','BACKPACK — INVENTORY');const entries=Object.entries(rpg.inventory);if(!entries.length)addText(inventory,'p','Inventaire vide');for(const [name,count] of entries)addText(inventory,'div',name+' × '+count,'rpg-item')}
+ inventory.replaceChildren();if(!inventory.hidden){addText(inventory,'h3','BACKPACK — INVENTORY');const entries=Object.entries(rpg.inventory);if(!entries.length)addText(inventory,'p','Inventaire vide');const slots=document.createElement('div');slots.className='rpg-slot-grid';for(const [name,count] of entries){const slot=document.createElement('button');slot.className='rpg-item rpg-slot';slot.classList.toggle('equipped',rpg.equipped===name);const glyph=document.createElement('span');glyph.className='rpg-glyph';glyph.textContent=name.slice(0,2).toUpperCase();const label=document.createElement('span');label.textContent=name+' × '+count;slot.append(glyph,label);slot.title='Cliquer pour équiper / sélectionner : '+name;slot.onclick=()=>{rpg.equipped=rpg.equipped===name?null:name;refreshRpg()};slots.append(slot)}inventory.append(slots);if(rpg.equipped)addText(inventory,'p','Équipé : '+rpg.equipped)}
  journal.replaceChildren();if(!journal.hidden){addText(journal,'h3','QUEST JOURNAL');const quests=Object.values(rpg.quests);if(!quests.length)addText(journal,'p','Aucune quête active');for(const q of quests){const card=document.createElement('div');card.className='rpg-quest';addText(card,'strong',q.title+' — '+q.status);addText(card,'small',q.description);addText(card,'span',q.progress+' / '+q.goal);journal.append(card)}}
  dialogue.replaceChildren();if(!dialogue.hidden){const d=rpg.dialogue,node=d.nodes[d.index];if(!node){closeDialogue();return}addText(dialogue,'h3',d.title);addText(dialogue,'p',String(node.text||''));for(const [i,choice] of (node.choices||[{text:'Terminer',next:-1}]).entries()){const b=document.createElement('button');b.textContent=(i+1)+'. '+choice.text;b.onclick=()=>chooseDialogue(i);dialogue.append(b)}const close=document.createElement('button');close.textContent='× Fermer';close.className='rpg-close';close.onclick=closeDialogue;dialogue.append(close)}
 }

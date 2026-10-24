@@ -1,3 +1,4 @@
+import {workspace} from './core/workspaces.js';
 import {lighting} from './core/lighting.js';
 import {updateAudioSources,stopSources} from './core/audio-sources.js';
 import {bindAudioControls} from './core/audio.js';
@@ -7,7 +8,7 @@ import {bindModeInput} from './core/game-modes.js';
 import {initializeRpgUi} from './core/rpg-systems.js';
 import {initDocking} from './ui/docking.js';
 import {initStudioMenus} from './ui/studio-menu.js';
-import {bindGameInput} from './core/gameplay.js';
+import {bindGameInput,startGameSimulation} from './core/gameplay.js';
 import {initWorkspace,log} from './ui/workspace.js';
 import {catalog,urlFor} from './assets/catalog.js';
 import {state,notify} from './core/state.js';
@@ -70,13 +71,15 @@ beginAutoSave();
 $('#cloudConnect').onclick=connectCloud;
 renderUI();
 startRenderer(canvas,host);
+startGameSimulation();
 init3d($('#canvas3d'),host,{toggle:$('#view3dToggle'),focus:$('#view3dFocus'),status:$('#view3dStatus')});
 
 const sceneTab=$('#sceneTab'),gameTab=$('#gameTab');
-function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing);$('#gameHint').hidden=!state.playing}
+function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing);$('#gameHint').hidden=!state.playing;$('#gameHint').textContent=workspace.mode==='3d'?'3D Play • ZQSD/WASD : avancer • Maj : courir • Souris droite : orienter caméra • Molette : zoom':'2D Play • ZQSD/WASD : marcher • E : interagir/véhicule • F : tirer';$('#status').textContent=(workspace.mode==='3d'?'3D':'2D')+' • '+(state.playing?'Play':'Édition')}
 sceneTab.onclick=()=>{if(state.playing)togglePlay();syncTabs()};
 gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
 $('#play').addEventListener('click',syncTabs);
+$('#view3dToggle').addEventListener('click',()=>{renderHistory();syncTabs()});
 $('#duplicate').onclick=duplicateSelected;
 initWorkspace();
 initDocking();

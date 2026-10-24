@@ -215,3 +215,13 @@ body.project-floating #projectPanel{min-height:210px!important}
 .game-mode-menu select{width:100%;min-height:31px;padding:6px;background:#182d3c;color:#d5f5e9;border:1px solid #62877e;border-radius:4px}
 .game-mode-menu button{width:100%;text-align:left!important;background:#315851!important;border-color:#5b9e8a!important}
 #properties .inspector-component:has(.component-content select option[value="battleRoyale"]){border-left:3px solid #57a6a4}
+
+/* V2.1 — movable editor windows */
+.dock-panel>.dock-title{cursor:grab;touch-action:none}
+.dock-panel>.dock-title:active,.dock-panel.moving-panel>.dock-title{cursor:grabbing}
+.dock-panel>.dock-title button,.dock-panel>.dock-title input,.dock-panel>.dock-title select{cursor:pointer}
+.dock-panel.floating-panel{box-shadow:0 20px 55px #000a,0 0 0 1px #78c2b966!important}
+.dock-panel.floating-panel.moving-panel{box-shadow:0 24px 65px #000c,0 0 0 2px #7ceac9!important;opacity:.97}
+body.dragging-window,body.dragging-window *{user-select:none!important}
+.dock-title[data-dock-handle]::after{content:'⋮⋮';margin-left:8px;opacity:.5;font-size:14px;line-height:1}
+#projectPanel>.dock-title::after{order:8;margin-left:auto}

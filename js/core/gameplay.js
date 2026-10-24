@@ -1,4 +1,4 @@
-import {updateLogic,drawLogic,resetLogic} from './visual-logic.js';
+import {updateLogic,drawLogic,resetLogic,logic} from './visual-logic.js';
 import {updateVehicles,currentVehicle,drawDrivingHud,resetDriving} from './vehicle.js';
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
@@ -19,7 +19,7 @@ for(const e of state.entities.filter(enemy)){e._cooldown=Math.max(0,(e._cooldown
 for(const b of game.projectiles){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;for(const e of state.entities.filter(enemy)){if(b.life<=0)break;if(b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h){e.hp=(e.hp??65)-b.damage;e._hit=.12;b.life=0;flash(b.x,b.y,'#f3a862',9);if(e.hp<=0){state.entities=state.entities.filter(o=>o!==e);game.kills++;game.score+=100}break}}if(state.entities.some(e=>solid(e)&&b.x>=e.x&&b.x<=e.x+e.w&&b.y>=e.y&&b.y<=e.y+e.h)){b.life=0;flash(b.x,b.y,'#c5b6a0',4)}}
 game.projectiles=game.projectiles.filter(b=>b.life>0);
 for(const e of state.entities.filter(o=>o.type==='prefab'&&o.assetId==='medkit')){if(overlaps(p,e)){game.life=Math.min(100,game.life+35);state.entities=state.entities.filter(o=>o!==e);flash(e.x,e.y,'#5af7ad',10)}}
-updateLogic(dt);
+updateLogic(dt);if(logic.healthDelta!==0){game.life=Math.max(0,Math.min(100,game.life+logic.healthDelta));logic.healthDelta=0;if(game.life===0)game.over=true}
 for(const a of game.particles){a.x+=a.vx*dt;a.y+=a.vy*dt;a.life-=dt}
 game.particles=game.particles.filter(a=>a.life>0);
 }

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Documentation • WarLike Studio</title><style>
+:root{font-family:Inter,Segoe UI,system-ui,sans-serif;color-scheme:dark;background:#111c28;color:#e1ecf4;line-height:1.65}
+*{box-sizing:border-box}body{margin:0}header{padding:30px clamp(18px,5vw,64px);background:linear-gradient(110deg,#173846,#182737);border-bottom:2px solid #48cba9}
+header span{color:#71e3c5;font-size:12px;font-weight:700;letter-spacing:.1em}header h1{font-size:clamp(26px,3vw,38px);margin:8px 0}header p{color:#aec5d1;margin:0}
+nav{position:sticky;top:0;z-index:1;display:flex;flex-wrap:wrap;gap:8px;background:#142330f7;border-bottom:1px solid #395064;padding:12px clamp(18px,5vw,64px)}
+nav a{color:#cae8f0;font-size:13px;padding:5px 8px;background:#263949;border-radius:5px;text-decoration:none}nav a:hover{background:#346559}
+main{max-width:1050px;padding:26px 20px 80px;margin:auto}section{scroll-margin-top:90px;border:1px solid #344c61;border-radius:10px;background:#1b2b39;padding:20px 25px;margin:18px 0}
+h2{font-size:21px;color:#9fe3cf;margin-top:0}h3{color:#b8e8e4;margin-bottom:4px;font-size:16px}p{margin-top:7px}code{background:#0c1927;padding:2px 6px;border-radius:4px;color:#abebc9}
+a{color:#8adaf0}li{margin:5px 0}.note{border-left:4px solid #e1b26c;background:#293240;padding:10px 14px;border-radius:4px}
+.warning{border-left:4px solid #e3766f;background:#332d35;padding:10px 14px;border-radius:4px}
+table{border-collapse:collapse;width:100%}td,th{padding:9px;text-align:left;border-bottom:1px solid #345068}th{color:#bce3e4}
+small{color:#adc1cd}footer{text-align:center;color:#95acb9;padding:25px}@media(max-width:700px){section{padding:16px}table{font-size:12px}}
+</style></head>
+<body><header><span>◈ WARLIKE STUDIO • DOCUMENTATION</span><h1>Guide officiel du moteur 2D / 3D</h1><p>Version Beta.7.2 — créer un projet, construire une scène, programmer sa logique et importer de vrais modèles GLB.</p></header>
+<nav aria-label="Chapitres"><a href="#demarrage">Démarrer</a><a href="#interface">Interface</a><a href="#jeu2d">Moteur 2D</a><a href="#jeu3d">Moteur 3D</a><a href="#prefabs">Prefabs GLB</a><a href="#logic">Visual Logic</a><a href="#play">Play / Stop</a><a href="#save">Sauvegarder</a><a href="#faq">Dépannage</a></nav>
+<main>
+<section id="demarrage"><h2>1. Démarrer avec WarLike Hub</h2>
+<p>À l’ouverture, le <strong>WarLike Hub</strong> permet de créer un projet nommé en choisissant <strong>2D</strong> ou <strong>3D</strong>. Les deux modes ont des bibliothèques et des simulations différentes. Pour ouvrir un projet existant, clique sur <strong>Ouvrir</strong> dans la liste des projets récents.</p>
+<ol><li>Saisis un nom descriptif, par exemple <em>Fracture Line</em>.</li><li>Choisis <strong>Projet 2D</strong> pour les sprites, RPG, RTS et jeux d’action 2D, ou <strong>Projet 3D</strong> pour les volumes et modèles GLB.</li><li>Clique sur <strong>Créer le projet</strong>.</li><li>Retrouve le Hub avec le bouton <strong>▦ Hub</strong> en haut de l’éditeur.</li></ol>
+<p>Tu peux choisir une couleur pour chaque projet. Les couleurs personnalisées sont enregistrées dans ses métadonnées locales. L’option <strong>Récupérer le projet précédent</strong> peut récupérer une ancienne sauvegarde locale.</p>
+<div class="note">Le Hub n’est pas encore un stockage en ligne de projets : ses données sont enregistrées dans le navigateur. La suppression des données du site peut les effacer.</div></section>
+<section id="interface"><h2>2. Découvrir l’interface</h2>
+<table><tr><th>Panneau</th><th>Utilisation</th></tr>
+<tr><td>Hierarchy</td><td>Liste des objets de la scène, sélection et recherche.</td></tr>
+<tr><td>Scene</td><td>Vue d’édition de la scène 2D ou 3D.</td></tr>
+<tr><td>Game / Play</td><td>Simulation interactive pour tester les comportements.</td></tr>
+<tr><td>Inspector</td><td>Transform, matériaux, couleurs, éclairage, audio et composants logiques.</td></tr>
+<tr><td>Project / Assets</td><td>Catalogue d’assets 2D, prefabs géométriques et modèles GLB 3D.</td></tr>
+<tr><td>Console / History</td><td>Messages et historique d’édition.</td></tr></table>
+<p>Sélectionne un objet dans la Hierarchy ou en cliquant dans Scene. L’Inspector affiche alors ses composants modifiables.</p></section>
+<section id="jeu2d"><h2>3. Créer une scène 2D</h2>
+<p>Le moteur 2D inclut des objets, personnages, animations, collision AABB simple, véhicules, interactions, dialogues et démos spécialisées. Utilise les menus <strong>Assets</strong> ou <strong>Project / Assets</strong> pour ajouter des éléments.</p>
+<p>Les démos permettent d’explorer des cas concrets : combat, conduite, RPG, logique visuelle, Ninja/Zombies et bâtiment/RTS. Certaines fonctionnalités restent expérimentales.</p></section>
+<section id="jeu3d"><h2>4. Créer une scène 3D</h2>
+<p>Le moteur 3D utilise un rendu WebGL indépendant. Il possède une caméra orbitale, des primitives géométriques, des matériaux simples, des sources lumineuses et des sources audio spatialisées expérimentales.</p>
+<p>L’Inspector du projet 3D donne accès aux paramètres de couleur, <strong>rugosité</strong> et <strong>métal</strong>. Les démos disponibles incluent Ville, Nature et Garage.</p>
+<div class="note">Les prefabs procéduraux (maisons, voitures et personnages construits avec des volumes) sont stylisés. Pour afficher de vrais polygones détaillés, utilise un modèle GLB comme décrit ci-dessous.</div></section>
+<section id="prefabs"><h2>5. Importer de vrais prefabs 3D (.glb)</h2>
+<h3>Modèles intégrés de démonstration</h3><p>Dans un projet 3D, ouvre <strong>Project / Assets</strong> et cherche les exemples tels que <strong>Cesium Man, Fox, Duck, Lantern, BoomBox, Toy Car</strong> ou <strong>Antique Camera</strong>. Ils proviennent des exemples Khronos glTF et sont chargés à la demande.</p>
+<h3>Importer ton propre personnage, arme ou véhicule</h3>
+<ol><li>Prépare un fichier <code>.glb</code> glTF 2.0, idéalement exporté depuis Blender.</li><li>Dans <strong>Project / Assets</strong>, clique sur <strong>Importer un modèle GLB</strong>.</li><li>Choisis ton fichier (limite actuelle de <strong>25 Mo</strong>).</li><li>Sélectionne la catégorie <strong>Characters</strong>, <strong>Weapons</strong>, <strong>Vehicles</strong> ou <strong>Props</strong>.</li><li>Ajoute le prefab à la scène par double-clic ou glisser-déposer.</li></ol>
+<p>La géométrie réelle du modèle est décodée en triangles puis affichée dans WebGL. Les couleurs des matériaux peuvent être simplifiées : le moteur ne prend pas encore en charge toutes les textures glTF, les animations squelettiques, les modèles compressés Draco/Meshopt ou les accessoires attachés à des os.</p>
+<div class="warning"><strong>Important :</strong> un GLB importé depuis ton ordinateur reste en mémoire pendant la session. Le JSON de la scène mémorise sa référence, mais <strong>n’incorpore pas le fichier GLB</strong>. Après rechargement de la page, il faudra l’importer de nouveau. Les modèles en ligne nécessitent une connexion et un accès CORS autorisé par l’hébergeur.</div>
+<p>Pour les droits d’utilisation des exemples, consulte le <a href="https://github.com/KhronosGroup/glTF-Sample-Assets" target="_blank" rel="noopener noreferrer">catalogue Khronos et les licences individuelles</a>.</p></section>
+<section id="logic"><h2>6. Visual Logic — programmation sans code</h2>
+<p>Sélectionne un objet, puis ouvre <strong>Inspector → Logic Sequences</strong>. Ajoute un composant ou choisis un exemple préconfiguré (porte verrouillée, interrupteur, événement temporisé).</p>
+<table><tr><th>Élément</th><th>Rôle</th></tr>
+<tr><td>Trigger</td><td>Lancer une séquence au démarrage, à l’interaction, à l’entrée/sortie d’une zone, à une touche, à un signal ou à un intervalle.</td></tr>
+<tr><td>Conditions</td><td>Comparer des variables globales/locales, tester une distance, combiner plusieurs conditions.</td></tr>
+<tr><td>Instructions</td><td>Afficher un message, définir/modifier une variable, attendre, déplacer ou colorer un objet, envoyer un signal.</td></tr>
+<tr><td>IF / ELSE IF / ELSE</td><td>Choisir la première branche dont toutes les conditions sont vérifiées.</td></tr></table>
+<h3>Exemple : ouvrir une porte</h3><p><code>Trigger: Interact (E)</code> → <code>IF hasKey == 1</code> → afficher « Porte ouverte » et changer la couleur, <code>ELSE</code> → afficher « Porte verrouillée ».</p>
+<p>La logique est réinitialisée lors de Play/Stop et s’exécute localement dans le mode 2D ou 3D choisi. Ce système est inspiré de l’organisation de Game Creator, mais n’en est pas une copie.</p></section>
+<section id="play"><h2>7. Tester avec Play / Stop</h2>
+<p>Clique sur <strong>▶ Play</strong> pour lancer la simulation et <strong>■ Stop</strong> pour revenir à la scène d’édition. Le moteur restaure normalement la scène d’origine à l’arrêt.</p>
+<table><tr><th>Entrée</th><th>Action</th></tr><tr><td>ZQSD / WASD</td><td>Déplacement dans les scènes compatibles.</td></tr><tr><td>Maj (3D)</td><td>Courir avec le contrôleur 3D expérimental.</td></tr><tr><td>Clic droit (3D)</td><td>Faire tourner la caméra.</td></tr><tr><td>Molette (3D)</td><td>Zoom caméra.</td></tr><tr><td>E (2D ou logique)</td><td>Interagir lorsqu’un composant le permet.</td></tr></table>
+<p>Les systèmes de combat 3D, de conduite 3D et de physique avancée ne sont pas encore finalisés.</p></section>
+<section id="save"><h2>8. Sauvegarde, projets et partage</h2>
+<p>Le bouton <strong>↓</strong> en haut du studio sauvegarde le projet local nommé. <strong>Export JSON</strong> permet d’enregistrer une scène sur ton ordinateur. Pour restaurer une scène, utilise <strong>Import JSON</strong>.</p>
+<p>Attention : les fichiers GLB importés localement, les fichiers audio de session et autres ressources binaires ne sont actuellement <strong>pas emballés avec l’export JSON</strong>.</p></section>
+<section id="faq"><h2>9. Dépannage et limites</h2>
+<h3>Le Hub ne s’affiche pas</h3><p>Actualise la page avec <code>Ctrl + Maj + R</code>. Vérifie la version affichée dans la barre supérieure et ouvre la console du navigateur avec <code>F12</code> si l’initialisation échoue encore.</p>
+<h3>Un asset 3D apparaît sous forme de cube</h3><p>Le cube peut être un indicateur de chargement ou d’échec du GLB. Vérifie la connexion réseau, la taille du modèle, les restrictions CORS et la console.</p>
+<h3>Mon arme 3D est visible mais inutilisable</h3><p>Afficher un modèle d’arme ne crée pas automatiquement un système de tir, de rechargement, d’animation ou d’attachement aux mains. Ces composants doivent encore être développés pour la 3D.</p>
+<h3>Le modèle est déformé ou sans textures</h3><p>Les transformations, matériaux, UV et animations glTF ne sont que partiellement pris en charge. Le moteur est encore en bêta.</p>
+<div class="note">Les fonctionnalités annoncées ici correspondent au code du projet et à ses limites connues. Leur comportement complet n’a pas encore été vérifié dans tous les navigateurs et GPU.</div></section>
+<p>Pour les détails techniques : <a href="https://github.com/Motherlode94/WarLike-Engine/blob/main/REAL-3D-PREFABS-BETA72.md">Prefabs GLB</a> · <a href="https://github.com/Motherlode94/WarLike-Engine/blob/main/LOGIC-SEQUENCES-BETA7.md">Logic Sequences</a>.</p>
+</main><footer>WARLIKE STUDIO · Guide Beta.7.2 · Documentation du moteur en cours de développement</footer></body></html>

@@ -70,3 +70,22 @@
 .game-hint{position:absolute;bottom:13px;left:50%;transform:translateX(-50%);z-index:3;max-width:calc(100% - 30px);white-space:normal;text-align:center;background:#102a36e8;color:#c6fff1;border:1px solid #40756e;padding:8px 14px;border-radius:6px;font-size:11px;pointer-events:none}
 .game-hint[hidden]{display:none}
 #viewport:has(.game-hint:not([hidden])){cursor:crosshair}
+
+/* WarLike Studio application menu bar — V0.8 */
+.studio-menubar{height:38px;display:flex;align-items:center;gap:15px;position:relative;z-index:50;padding:0 14px;border-bottom:1px solid #3c4652;background:#171e28;color:#dee6ef}
+.studio-logo{display:flex;align-items:center;gap:6px;white-space:nowrap;color:#66dec1;font-size:12px;letter-spacing:.055em}
+.studio-logo span{color:#8398a9;font-size:9px;letter-spacing:.06em;margin-left:3px}
+.studio-menus{display:flex;align-items:center;gap:1px;height:100%}
+.studio-menus details{position:relative;height:100%;display:flex;align-items:center}
+.studio-menus summary{list-style:none;padding:9px 11px;font-size:12px;cursor:pointer;color:#c2cedc;white-space:nowrap}
+.studio-menus summary::-webkit-details-marker{display:none}
+.studio-menus details[open]>summary,.studio-menus summary:hover{background:#354553;color:#fff}
+.studio-dropdown{position:absolute;top:37px;left:0;background:#222d39;border:1px solid #506074;box-shadow:0 12px 30px #04080cc9;border-radius:0 0 5px 5px;min-width:228px;padding:6px;display:flex;flex-direction:column;gap:2px}
+.studio-dropdown button,.studio-dropdown a{display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 10px;color:#e1eaf5;text-decoration:none;background:transparent;border:0;text-align:left;border-radius:3px;font-size:12px;white-space:nowrap}
+.studio-dropdown button:hover,.studio-dropdown a:hover{background:#36636c}
+.studio-dropdown kbd{font-size:10px;color:#9fb1c1;margin-left:14px}
+.studio-project-name{margin-left:auto;color:#91a5b7;font-size:11px;white-space:nowrap}
+.studio-project-name strong{color:#d3dfeb;font-weight:500}
+.workspace{height:calc(100dvh - 94px)}
+@media(max-width:1000px){.studio-logo span,.studio-project-name{display:none}.studio-menus summary{padding:9px 7px}}
+@media(max-width:600px){.studio-menubar{overflow:visible;gap:5px;padding:0 5px}.studio-logo{font-size:10px}.studio-menus summary{padding:9px 4px;font-size:10px}}

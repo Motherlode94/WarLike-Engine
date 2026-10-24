@@ -35,3 +35,13 @@ export function findEnginePath(start,goal,obstacles=[],options={}){
  }catch(err){console.warn('[WarLike Native] Pathfinding JS fallback:',err);return jsPath(start,goal,obstacles,options)}
  finally{if(rectPtr)native._free(rectPtr);if(outPtr)native._free(outPtr)}
 }
+
+export function integrateNativeGravity(y,vy,gravity,restitution,dt){
+ if(!native||typeof native._wl_integrate_gravity!=='function')return null;
+ const ptr=native._malloc(8);if(!ptr)return null;
+ try {
+  native.HEAPF32[ptr>>>2]=y;native.HEAPF32[(ptr>>>2)+1]=vy;
+  native._wl_integrate_gravity(ptr,gravity,restitution,dt);
+  return {y:native.HEAPF32[ptr>>>2],vy:native.HEAPF32[(ptr>>>2)+1]};
+ } finally {native._free(ptr)}
+}

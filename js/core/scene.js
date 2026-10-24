@@ -30,7 +30,7 @@ export function addAudioEmitter(){
 export function deleteSelected(){if(state.playing||!state.selected.length)return;state.entities=state.entities.filter(o=>!state.selected.includes(o.id));state.selected=state.entities.length?[state.entities[0].id]:[];record('Supprimer objets');notify()}
 export function togglePlay(){state.playing=!state.playing;const btn=document.querySelector('#play');if(state.playing){
  state.playBackup=JSON.stringify(state.entities);state.playNextId=state.nextId;
- const playable=state.entities.some(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');
+ const playable=state.entities.some(o=>o.playable3d===true||o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');
  if(!playable){
   const id=state.nextId++;
   state.entities.unshift({id,name:workspace.mode==='3d'?'3D Test Player':'2D Test Player',type:'character',skin:'scout',animation:'idle',x:100,y:100,w:45,h:78,color:'#41cdb5',elevation3d:0});

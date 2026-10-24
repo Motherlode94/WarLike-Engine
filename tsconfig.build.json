@@ -1,1 +1,1 @@
-{"extends":"./tsconfig.json","compilerOptions":{"noEmit":false,"declaration":true,"outDir":"dist/typed","rootDir":"types"}}
+{"extends":"./tsconfig.json","compilerOptions":{"noEmit":false,"declaration":true,"outDir":"js/typed","rootDir":"types"}}

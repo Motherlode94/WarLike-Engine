@@ -7,7 +7,7 @@ import {state,notify} from './core/state.js';
 import {autoSave,recoverLocal,hasLocalSave,backupLocalSave,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo} from './core/history.js';
-import {addEntity,addPrefab,loadCombatDemo,loadDrivingDemo,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
+import {addEntity,addPrefab,addLogicHotspot,loadLogicDemo,loadCombatDemo,loadDrivingDemo,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
@@ -23,6 +23,7 @@ $('#zoomOut').onclick=()=>zoomAt(.8,{x:host.clientWidth/2,y:host.clientHeight/2}
 $('#resetView').onclick=resetCamera;
 attachInput(canvas,host);
 bindGameInput(canvas);
+$('#logicDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Visual Logic Demo ? La scène actuelle sera remplacée (Ctrl+Z pour annuler).'))return;loadLogicDemo();log('Visual Logic Demo chargé — Play et E pour interagir')};
 $('#driveDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Driving Sandbox ? Tu peux annuler ce remplacement avec Ctrl+Z.'))return;loadDrivingDemo();log('Driving Sandbox chargé — Play, puis E pour monter')};
 $('#loadDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Combat Sandbox ? La scène actuelle sera remplacée dans l’éditeur. Tu pourras l’annuler avec Ctrl+Z.'))return;loadCombatDemo();log('Combat Sandbox chargé : sélectionne Play')};
 if(hasLocalSave()){

@@ -141,6 +141,7 @@ const rgba=hex=>{
 };
 const assetColor=o=>{
  const a=getAsset(o.assetId),c=a?.category;
+ if(o.colorCustomized===true&&/^#[0-9a-f]{6}$/i.test(o.color||''))return rgba(o.color);
  return c==='Buildings'?[.57,.58,.68,1]:c==='Vehicles'?[.45,.67,.77,1]:
  c==='Characters'?[.23,.82,.66,1]:c==='Monsters'?[.78,.42,.46,1]:
  c==='Weapons'?[.9,.72,.42,1]:c==='VFX'?[.58,.43,.95,1]:rgba(o.color);

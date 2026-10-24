@@ -79,7 +79,18 @@ function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.c
 sceneTab.onclick=()=>{if(state.playing)togglePlay();syncTabs()};
 gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
 $('#play').addEventListener('click',syncTabs);
-$('#view3dToggle').addEventListener('click',()=>{renderHistory();syncTabs()});
+const setWorkspaceUi=()=>{
+ const is3d=workspace.mode==='3d';
+ $('#workspace2d').classList.toggle('active',!is3d);
+ $('#workspace3d').classList.toggle('active',is3d);
+ document.body.dataset.workspace=workspace.mode;
+ $('#view3dFocus').disabled=!is3d;
+ renderHistory();syncTabs();
+};
+$('#workspace2d').onclick=()=>{if(state.playing)return;if(workspace.mode==='3d')$('#view3dToggle').click();setWorkspaceUi()};
+$('#workspace3d').onclick=()=>{if(state.playing)return;if(workspace.mode==='2d')$('#view3dToggle').click();setWorkspaceUi()};
+$('#view3dToggle').addEventListener('click',setWorkspaceUi);
+setWorkspaceUi();
 $('#duplicate').onclick=duplicateSelected;
 initWorkspace();
 initDocking();

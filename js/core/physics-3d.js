@@ -1,4 +1,4 @@
-import {integrateNativeGravity} from './native-3d.js';
+import {integrateNativeGravity,overlapNative3d} from './native-3d.js';
 // WarLike 3D lightweight rigidbody simulation on the horizontal x/y plane plus elevation.
 // Intended for prototyping, not a substitute for an industrial physics engine.
 const finite=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
@@ -6,6 +6,8 @@ export const defaultRigidbody3d=()=>({enabled:true,kinematic:false,mass:1,gravit
 export const bounds3d=o=>({x:finite(o.x),z:finite(o.y),y:finite(o.elevation3d),w:Math.max(1,finite(o.w,32)),d:Math.max(1,finite(o.depth3d,o.h||32)),h:Math.max(1,finite(o.h,32))});
 export const overlap3d=(a,b)=>{
  const A=bounds3d(a),B=bounds3d(b);
+ const accelerated=overlapNative3d(A,B);
+ if(accelerated!==null)return accelerated;
  return A.x<B.x+B.w&&A.x+A.w>B.x&&A.z<B.z+B.d&&A.z+A.d>B.z&&A.y<B.y+B.h/64&&A.y+A.h/64>B.y;
 };
 export function stepPhysics3d(entities,dt){

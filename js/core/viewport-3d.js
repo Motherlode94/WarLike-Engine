@@ -1,3 +1,4 @@
+import {workspace,switchWorkspace} from './workspaces.js';
 import {sunAt,visibleLights,updateLighting} from './lighting.js';
 // WarLike 3D Beta: self-contained WebGL perspective scene editor.
 // Existing scene x/y become ground X/Z; object h is extrusion height. No remote dependencies.
@@ -6,7 +7,8 @@ import {record} from './history.js';
 import {getAsset} from '../assets/catalog.js';
 import {game} from './gameplay.js';
 
-export const view3d={enabled:false,yaw:-.68,pitch:.62,radius:25,target:[9,0,6],drag:null,gl:null,error:null};
+export const view3d={enabled:false,yaw:-.68,pitch:.62,radius:25,target:[9,0,6],drag:null,gl:null,error:null,followPlayer:true};
+export const playableActor=entities=>entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters')||null;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const V={
  add:(a,b)=>a.map((x,i)=>x+b[i]),sub:(a,b)=>a.map((x,i)=>x-b[i]),
@@ -121,8 +123,8 @@ const assetColor=o=>{
  c==='Weapons'?[.9,.72,.42,1]:c==='VFX'?[.58,.43,.95,1]:rgba(o.color);
 };
 export function init3d(canvas,host,buttons){
- const gl=canvas.getContext('webgl',{antialias:true,alpha:false});
- if(!gl){view3d.error='WebGL indisponible sur ce navigateur';buttons.status.textContent=view3d.error;buttons.toggle.disabled=true;return}
+ let gl=null;try{gl=canvas.getContext('webgl',{antialias:true,alpha:false})}catch(err){view3d.error=String(err.message||err)}
+ if(!gl){view3d.error=view3d.error||'WebGL indisponible sur ce navigateur';buttons.status.textContent=view3d.error;buttons.toggle.disabled=true;return}
  view3d.gl=gl;
  let program;
  try{program=program3d(gl)}catch(err){view3d.error=err.message;buttons.status.textContent='WebGL : '+err.message;buttons.toggle.disabled=true;return}
@@ -134,8 +136,7 @@ export function init3d(canvas,host,buttons){
  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
  const bind=mesh=>{gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aNormal)};
  const model=(pos,scale,color,angle=0)=>{gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform1f(u.angle,angle);gl.uniform4fv(u.color,color)};
- const stored=localStorage.getItem('warlike.view.3d.beta');
- view3d.enabled=stored==='true';let lastSelection=null;
+ view3d.enabled=workspace.mode==='3d';
  const resize=()=>{const d=Math.min(2,window.devicePixelRatio||1),w=Math.round(host.clientWidth*d),h=Math.round(host.clientHeight*d);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h)};
  const focusScene=()=>{
   const arr=state.selected.length?state.entities.filter(o=>state.selected.includes(o.id)):state.entities;
@@ -145,11 +146,31 @@ export function init3d(canvas,host,buttons){
   view3d.target=[(minx+maxx)/2,0,(minz+maxz)/2];view3d.radius=clamp(Math.max(12,Math.hypot(maxx-minx,maxz-minz)*1.8),7,100);
  };
  const sync=()=>{canvas.hidden=!view3d.enabled;document.getElementById('canvas').hidden=view3d.enabled;buttons.toggle.classList.toggle('active',view3d.enabled);buttons.toggle.textContent=view3d.enabled?'◈ 3D Beta':'▣ 2D';buttons.status.hidden=!view3d.enabled;document.querySelector('#viewport')?.classList.toggle('view-3d-active',view3d.enabled);if(view3d.enabled)resize()};
- const change=enabled=>{view3d.enabled=enabled;localStorage.setItem('warlike.view.3d.beta',String(enabled));sync()};
+ const change=enabled=>{if(state.playing)return false;if(!switchWorkspace(enabled?'3d':'2d'))return false;view3d.enabled=enabled;focusScene();sync();return true};
  buttons.toggle.addEventListener('click',()=>change(!view3d.enabled));
  buttons.focus.addEventListener('click',()=>{if(view3d.enabled)focusScene()});
  focusScene();sync();
+ const update3dPlay=dt=>{
+  const p=playableActor(state.entities);
+  if(!p)return;
+  const k=state.keys,side=Number(k.has('d')||k.has('arrowright'))-Number(k.has('a')||k.has('q')||k.has('arrowleft'));
+  const forward=Number(k.has('w')||k.has('z')||k.has('arrowup'))-Number(k.has('s')||k.has('arrowdown'));
+  const length=Math.hypot(side,forward);
+  if(!length)return;
+  const speed=(k.has('shift')?7:4.2)*64*dt/length;
+  const wx=(side*Math.cos(view3d.yaw)+forward*Math.sin(view3d.yaw))*speed;
+  const wz=(-side*Math.sin(view3d.yaw)+forward*Math.cos(view3d.yaw))*speed;
+  const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+  const solid=o=>o!==p&&(o.type==='object'||getAsset(o.assetId)?.category==='Buildings');
+  const prevX=p.x;p.x+=wx;if(state.entities.some(o=>solid(o)&&overlaps(p,o)))p.x=prevX;
+  const prevY=p.y;p.y+=wz;if(state.entities.some(o=>solid(o)&&overlaps(p,o)))p.y=prevY;
+  p.animation='walk';
+ };
  const camera=()=>sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
+ const playerTarget=()=>{const p=playableActor(state.entities);return p?[(p.x+p.w/2)/64,.5,(p.y+p.h/2)/64]:null};
+ let wasPlaying=false;
+ const enterPlay=()=>{const pt=playerTarget();view3d.followPlayer=!!pt;if(pt){view3d.target=pt.slice();view3d.radius=12;view3d.pitch=.5}};
+
  const rectPoint=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,w:r.width,h:r.height}};
  const pick=(point,cam)=>{
   let best=null,score=Infinity;
@@ -163,7 +184,7 @@ export function init3d(canvas,host,buttons){
  canvas.addEventListener('pointerdown',e=>{
   if(!view3d.enabled)return;
   const p=rectPoint(e),cam=camera();
-  if(state.playing){if(e.button===0)game.mouse.down=true;return}
+  if(state.playing)return;
   const selected=e.button===0?pick(p,cam):null;
   if(e.button===0&&selected){
    if(e.ctrlKey||e.metaKey||e.shiftKey){state.selected=state.selected.includes(selected.id)?state.selected.filter(i=>i!==selected.id):[...state.selected,selected.id];notify()}
@@ -175,7 +196,7 @@ export function init3d(canvas,host,buttons){
  });
  canvas.addEventListener('pointermove',e=>{
   if(!view3d.enabled)return;const p=rectPoint(e),cam=camera();
-  if(state.playing){const target=groundHit3d(p.x,p.y,cam,p.w,p.h);if(target){game.mouse.x=target[0]*64;game.mouse.y=target[2]*64}return}
+  if(state.playing)return;
   const drag=view3d.drag;if(!drag||drag.pointer!==e.pointerId)return;
   const dx=p.x-drag.x,dy=p.y-drag.y;
   if(Math.hypot(dx,dy)>4)drag.moved=true;
@@ -195,12 +216,17 @@ export function init3d(canvas,host,buttons){
  };
  canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);canvas.addEventListener('lostpointercapture',stop);
  canvas.addEventListener('wheel',e=>{if(!view3d.enabled)return;e.preventDefault();view3d.radius=clamp(view3d.radius*Math.exp(e.deltaY*.001),3,150)},{passive:false});
- window.addEventListener('pointerup',()=>game.mouse.down=false);
+
  let previousTime=performance.now();
  function draw(now=performance.now()){
   requestAnimationFrame(draw);
   const dt=Math.min(.1,Math.max(0,(now-previousTime)/1000));previousTime=now;
-  updateLighting(dt,state.playing);
+  updateLighting(dt,state.playing&&workspace.mode==='3d');
+  if(state.playing&&!wasPlaying)enterPlay();
+  if(!state.playing&&wasPlaying)view3d.followPlayer=false;
+  wasPlaying=state.playing;
+  if(state.playing&&workspace.mode==='3d')update3dPlay(dt);
+  if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=Math.min(1,dt*9);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}
   if(!view3d.enabled)return;
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
   const solar=sunAt();gl.clearColor(...solar.sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);

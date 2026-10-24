@@ -21,7 +21,6 @@ const push=(message)=>{runtime.events.push({message,until:runtime.elapsed+4});if
 export function resetGameMode(){const m=currentMode();Object.assign(runtime,{elapsed:0,teamScores:{1:0,2:0},kills:0,deaths:0,alive:0,won:false,winner:'',roundOver:false,botTimers:new Map(),
  role:m?.role||'Civilian',money:m?.startingMoney||0,payTimer:0,zoneRadius:m?.zoneRadius||650,capture:0,captureOwner:0,captureScoring:0,events:[],playerRespawn:0,playerOut:false});
  for(const e of state.entities){delete e._modeRespawn;delete e._modeEliminated;if(participant(e)){e._modeSpawn={x:e.x,y:e.y};e._modeStartingHp=Number(e.hp)||100;if(!e.team)e.team=e===getPlayer()?(m?.team||1):2}}}
-}
 function end(text){runtime.roundOver=true;runtime.winner=text;push(text)}
 export function registerElimination(victim,attacker,game){
  const m=currentMode();if(!m||runtime.roundOver||!participant(victim)||victim._modeEliminated)return false;

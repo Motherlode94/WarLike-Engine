@@ -31,6 +31,10 @@ test('keyDown is edge triggered, reset restores original variables',()=>{
  c.keys.clear();updateSequences(.016,c);c.keys.add('f');updateSequences(.016,c);assert.equal(sequenceRuntime.globals.shots,2);
  resetSequences();assert.deepEqual(sequenceRuntime.globals,{});
 });
+test('IF ELSE fallback runs when first branch fails',()=>{
+ resetSequences();const o=obj(1);o.sequence={...newSequence(),event:'start',conditions:[{type:'variable',key:'hasKey',operator:'==',value:1}],branches:[{conditions:[{type:'variable',key:'hasKey',operator:'==',value:1}],instructions:[{type:'message',value:'opened'}]}],elseInstructions:[{type:'message',value:'locked'}]};
+ updateSequences(.016,ctx([o]));assert.equal(sequenceRuntime.messages[0]?.text,'locked');
+});
 test('runtime does nothing outside Play',()=>{
  resetSequences();const o=obj(1);o.sequence={...newSequence(),event:'start',instructions:[{type:'destroyObject'}]};
  const c=ctx([o]);c.playing=false;updateSequences(.016,c);assert.equal(c.entities.length,1);

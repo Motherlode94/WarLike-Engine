@@ -1,3 +1,4 @@
+import {housingActive,housing} from './housing.js';
 import {isBuildingSolid} from './building-system.js';
 import {sanitizeVehicle,collisionCircleRect} from '../typed/systems.js';
 import {state} from './state.js';
@@ -12,7 +13,7 @@ const solid=o=>isBuildingSolid(o)||o.type==='object'||o.type==='prefab'&&getAsse
 const overlapCircleRect=collisionCircleRect;
 export function updateVehicles(dt,player){
  driving.collisionFlash=Math.max(0,driving.collisionFlash-dt);
- const k=state.keys,pressed=k.has('e');
+ const k=state.keys,pressed=k.has('e')&&!housingActive()&&housing.transition===0;
  if(driving.transition){const action=driving.transition;action.remaining-=dt;if(action.remaining<=0){if(action.type==='enter'){driving.vehicleId=action.carId;driving.speed=0;player._hiddenInVehicle=true;player.animation='drive';}else{player.x=action.x;player.y=action.y;player._hiddenInVehicle=false;driving.vehicleId=null;driving.speed=0;player.animation='exit_vehicle';player._actionAnimationUntil=performance.now()/1000+.45}driving.transition=null;player._vehicleTransition=false}else{player._vehicleTransition=true;player.animation=action.type==='enter'?'enter_vehicle':'exit_vehicle';driving.enterHeld=pressed;return}}
 
  if(pressed&&!driving.enterHeld&&player){

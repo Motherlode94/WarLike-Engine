@@ -191,7 +191,7 @@ export function init3d(canvas,host,buttons){
   if(realGlbBuffers.has(id))return;
   realGlbBuffers.set(id,{status:'loading'});
   getModelGeometry(id).then(data=>{
-   const parts=data.parts.map(part=>({mesh:makeBuffer(part.vertices),color:part.color}));
+   const parts=data.parts.map(part=>({mesh:makeBuffer(part.vertices),color:part.color,roughness:part.roughness,metallic:part.metallic}));
    realGlbBuffers.set(id,{status:'ready',parts,triangles:data.triangleCount});
   }).catch(error=>{realGlbBuffers.set(id,{status:'error',message:String(error.message||error)});console.warn('[WarLike GLB]',id,error)});
  };
@@ -329,6 +329,8 @@ export function init3d(canvas,host,buttons){
     if(cached?.status==='ready'){
      for(const part of cached.parts){
       const material=o.colorCustomized?color:part.color;
+      gl.uniform1f(u.roughness,Number.isFinite(part.roughness)?part.roughness:1);
+      gl.uniform1f(u.metallic,Number.isFinite(part.metallic)?part.metallic:0);
       drawShape(part.mesh,[b.x,b.y,b.z],[b.w,b.h,b.d],material);
      }
     }else{

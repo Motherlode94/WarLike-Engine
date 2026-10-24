@@ -1,0 +1,6 @@
+import {state,notify} from './state.js';
+const entries=[];let cursor=-1;const limit=80;
+export function record(label){if(state.playing)return;const snapshot=JSON.stringify({entities:state.entities,nextId:state.nextId});if(entries[cursor]?.snapshot===snapshot)return;entries.splice(cursor+1);entries.push({label,snapshot});if(entries.length>limit)entries.shift();cursor=entries.length-1;renderHistory()}
+export function jump(index){if(state.playing||index<0||index>=entries.length)return;cursor=index;const snap=JSON.parse(entries[index].snapshot);state.entities=snap.entities;state.nextId=snap.nextId;state.selected=state.selected.filter(id=>state.entities.some(o=>o.id===id));if(!state.selected.length&&state.entities.length)state.selected=[state.entities[0].id];notify();renderHistory()}
+export const undo=()=>jump(cursor-1);export const redo=()=>jump(cursor+1);
+export function renderHistory(){const panel=document.querySelector('#history');panel.replaceChildren();for(let i=0;i<entries.length;i++){const b=document.createElement('button');b.textContent=(i===cursor?'● ':'○ ')+entries[i].label;b.classList.toggle('selected',i===cursor);b.onclick=()=>jump(i);panel.append(b)}document.querySelector('#undo').disabled=state.playing||cursor<1;document.querySelector('#redo').disabled=state.playing||cursor>=entries.length-1}

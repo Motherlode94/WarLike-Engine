@@ -1,3 +1,4 @@
+import {workspace} from '../core/workspaces.js';
 import {lightTypes,validColor} from '../core/lighting.js';
 import {soundChoices,importSoundFile,previewSound,audioClips} from '../core/audio-sources.js';
 import {isElement,elementDefaults} from '../core/game-elements.js';
@@ -16,7 +17,8 @@ function component(parent,title,build){const details=document.createElement('det
 export function renderHierarchy(){const root=document.querySelector('#objects'),filter=(document.querySelector('#hierarchySearch')?.value||'').toLowerCase();root.replaceChildren();for(const o of state.entities.filter(o=>o.name.toLowerCase().includes(filter))){const b=document.createElement('button');b.textContent=(o.type==='prefab'?'◈ ':o.type==='character'?'♟ ':'▣ ')+o.name;b.classList.toggle('selected',state.selected.includes(o.id));b.onclick=e=>{if(state.playing)return;state.selected=e.shiftKey?(state.selected.includes(o.id)?state.selected.filter(id=>id!==o.id):[...state.selected,o.id]):[o.id];notify()};root.append(b)}}
 export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
 const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent='GameObject #'+o.id+' • '+o.type;header.append(name,meta);root.append(header);
-component(root,'Transform',body=>{field(body,o,'x','Position X');field(body,o,'y','Position Y (Ground Z)');field(body,o,'elevation3d','Height 3D');field(body,o,'rotation','Rotation Z');field(body,o,'w','Size X');field(body,o,'h','Size Y')});
+component(root,'Transform',body=>{field(body,o,'x','Position X');field(body,o,'y',workspace.mode==='3d'?'Position Z':'Position Y');if(workspace.mode==='3d')field(body,o,'elevation3d','Position Y (3D height)');field(body,o,'rotation','Rotation');field(body,o,'w','Size X');field(body,o,'h',workspace.mode==='3d'?'Height':'Size Y')});
+if(workspace.mode==='3d'){
 component(root,'Lighting 3D Beta',body=>{
  selectField(body,o,'lightType','Type',['none','point','spot']);
  if(o.lightType!=='none'&&o.lightType){
@@ -56,6 +58,10 @@ component(root,'Audio Source Beta',body=>{
  const text=document.createElement('p');text.textContent=o.audioFileName?'Audio local : '+o.audioFileName+(audioClips.has(o.id)?' (chargé)':' (réimporter après rechargement)'):'Importer un WAV/MP3/OGG pour cette session (fichier non incorporé dans JSON).';body.append(text);
  const preview=document.createElement('button');preview.textContent='▶ Écouter';preview.onclick=()=>previewSound(o);body.append(preview);
 });
+component(root,'Material 3D Beta',body=>{field(body,o,'color','Tint','color');const hint=document.createElement('p');hint.textContent='Matériaux provisoires : volumes 3D sans textures. Les prefabs utilisent une palette par catégorie.';body.append(hint)});
+const del3d=document.createElement('button');del3d.className='delete-object';del3d.textContent='Supprimer objet 3D';del3d.disabled=state.playing;del3d.onclick=deleteSelected;root.append(del3d);
+return;
+}
 component(root,'Sprite Renderer',body=>{field(body,o,'color','Tint','color');if(o.type==='prefab'){const label=document.createElement('p');label.textContent='Source : '+(getAsset(o.assetId)?.name||o.assetId);body.append(label)}if(o.type==='character')selectField(body,o,'skin','Character',['scout','soldier'])});
 if(o.type==='character'||o.type==='prefab')component(root,'Animator 2D',body=>{const kind=o.type==='character'?'actor':getAsset(o.assetId)?.kind||'prop';selectField(body,o,'animation','Clip',availableClips(kind,o.assetId));if(o.animationSpeed===undefined)o.animationSpeed=1;field(body,o,'animationSpeed','Playback Speed');const line=document.createElement('label');line.className='logic-flag';const check=document.createElement('input');check.type='checkbox';check.checked=!!o.animationPreview;check.disabled=state.playing;check.onchange=()=>{o.animationPreview=check.checked;record('Prévisualisation animation');notify()};line.append(check,document.createTextNode('Preview animation in Scene'));body.append(line)});
 if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Weapons')component(root,'Weapon Configuration',body=>{

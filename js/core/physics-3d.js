@@ -12,9 +12,11 @@ export const overlap3d=(a,b)=>{
 };
 // Resolve motion one axis at a time so contact along X does not erase valid Z travel.
 export function stepPhysics3d(entities,dt){
- const t=Math.min(.05,Math.max(0,finite(dt)));if(t===0)return;
+ const frame=Math.min(.1,Math.max(0,finite(dt)));if(frame===0)return;
+ const steps=Math.max(1,Math.ceil(frame/(1/120)));
+ const t=frame/steps;
  const solid=(subject,other)=>other!==subject&&other.collision3d!==false&&(other.solid3d===true||other.type==='object'||other.type==='mesh3d');
- for(const o of entities){
+ for(let substep=0;substep<steps;substep++)for(const o of entities){
   const rb=o.rigidbody3d;
   if(!rb?.enabled||rb.kinematic||o.playable3d||o.type==='player'||o.ai?.enabled)continue;
   const restitution=Math.min(1,Math.max(0,finite(rb.restitution,.2)));

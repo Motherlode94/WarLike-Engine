@@ -1,3 +1,4 @@
+import {initHub} from './core/project-hub.js';
 import {workspace} from './core/workspaces.js';
 import {lighting} from './core/lighting.js';
 import {view3d} from './core/viewport-3d.js';
@@ -61,13 +62,8 @@ $('#rpgDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger RPG Demo
 $('#logicDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Visual Logic Demo ? La scène actuelle sera remplacée (Ctrl+Z pour annuler).'))return;loadLogicDemo();log('Visual Logic Demo chargé — Play et E pour interagir')};
 $('#driveDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Driving Sandbox ? Tu peux annuler ce remplacement avec Ctrl+Z.'))return;loadDrivingDemo();log('Driving Sandbox chargé — Play, puis E pour monter')};
 $('#loadDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Combat Sandbox ? La scène actuelle sera remplacée dans l’éditeur. Tu pourras l’annuler avec Ctrl+Z.'))return;loadCombatDemo();log('Combat Sandbox chargé : sélectionne Play')};
-if(hasLocalSave()){
- if(window.confirm('WarLike Studio a retrouvé une scène sauvegardée.\n\nOK : rouvrir la dernière scène.\nAnnuler : commencer une nouvelle session (l’ancienne scène sera conservée en sauvegarde de secours).')){
-  if(!recoverLocal())record('Scène initiale');
- }else{
-  backupLocalSave();record('Nouvelle session');
- }
-}else record('Scène initiale');
+// The Hub handles legacy scene recovery explicitly; never overwrite a named project on startup.
+record('Scène initiale');
 beginAutoSave();
 $('#cloudConnect').onclick=connectCloud;
 renderUI();
@@ -82,6 +78,7 @@ gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
 $('#play').addEventListener('click',syncTabs);
 const setWorkspaceUi=()=>{
  const is3d=workspace.mode==='3d';
+ document.dispatchEvent(new Event('warlike:workspace'));
  $('#workspace2d').classList.toggle('active',!is3d);
  $('#workspace3d').classList.toggle('active',is3d);
  document.body.dataset.workspace=workspace.mode;
@@ -99,3 +96,4 @@ initDocking();
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});
 
 initStudioMenus();
+initHub();

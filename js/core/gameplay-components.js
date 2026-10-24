@@ -1,4 +1,4 @@
-import {findPath} from './pathfinding.js';
+import {findEnginePath as findPath} from './native-3d.js';
 // Configurable gameplay components. Positions use WarLike's existing 2D ground coordinates.
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));

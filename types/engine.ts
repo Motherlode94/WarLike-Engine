@@ -1,6 +1,6 @@
 /** WarLike Studio: canonical typed scene contracts and gameplay component data. */
 export type EntityKind = 'player'|'object'|'character'|'prefab';
-export type AssetCategory = 'Characters'|'Monsters'|'Vehicles'|'Weapons'|'Props'|'VFX';
+export type AssetCategory = 'Characters'|'Monsters'|'Vehicles'|'Weapons'|'Props'|'VFX'|'Buildings';
 export type AnimationClip = 'idle'|'walk'|'run'|'attack'|'hurt'|'death'|'move'|'pulse'|'loop';
 export type Behavior = 'none'|'patrol'|'chase'|'guard'|'wander'|'flee'|'follow';
 export type TriggerEvent = 'onStart'|'onInteract'|'onEnter'|'onExit'|'onUpdate';
@@ -15,7 +15,8 @@ export interface VisualLogic { event:TriggerEvent; radius:number; once:boolean; 
 export interface DialogueChoice { text:string; next:number|null; item?:string; quest?:string; questTitle?:string; goal?:number; progress?:string }
 export interface DialogueNode { text:string; choices:DialogueChoice[] }
 export interface DialogueTree { title:string; nodes:DialogueNode[] }
-export interface GameEntity extends Vector2D { id:number; name:string; type:EntityKind; w:number; h:number; color:string; rotation?:number; assetId?:string; skin?:string; animation?:AnimationClip; animationSpeed?:number; animationPreview?:boolean; hp?:number; behavior?:Behavior; aiSpeed?:number; detectionRadius?:number; logic?:VisualLogic; dialogue?:DialogueTree; maxSpeed?:number; acceleration?:number; brakeForce?:number; turnRate?:number; drag?:number; collisionRadius?:number }
+export interface BuildingComponent { buildState?:'idle'|'construction'|'damaged'|'destroyed'|'powered_off'|'burning'; constructionProgress?:number; buildHp?:number; buildMaxHp?:number; buildLevel?:number; buildTeam?:number; buildPowered?:boolean; buildCollision?:boolean; buildProduction?:string; buildTime?:number; buildQueue?:number; buildTimer?:number; buildGrid?:number }
+export interface GameEntity extends Vector2D, BuildingComponent { id:number; name:string; type:EntityKind; w:number; h:number; color:string; rotation?:number; assetId?:string; skin?:string; animation?:AnimationClip; animationSpeed?:number; animationPreview?:boolean; hp?:number; behavior?:Behavior; aiSpeed?:number; detectionRadius?:number; logic?:VisualLogic; dialogue?:DialogueTree; maxSpeed?:number; acceleration?:number; brakeForce?:number; turnRate?:number; drag?:number; collisionRadius?:number }
 export interface SceneFile { version:number; entities:GameEntity[]; camera:Camera2D }
 export interface HistoryEntry { label:string; snapshot:string }
-export interface AssetDefinition { id:string; name:string; category:AssetCategory; kind:'actor'|'vehicle'|'weapon'|'prop'|'effect'; index:number; width:number; height:number; hp:number; animation:AnimationClip }
+export interface AssetDefinition { id:string; name:string; category:AssetCategory; kind:'actor'|'vehicle'|'weapon'|'prop'|'effect'|'building'; index:number; width:number; height:number; hp:number; animation:AnimationClip }

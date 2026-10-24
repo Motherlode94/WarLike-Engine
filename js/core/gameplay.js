@@ -14,7 +14,7 @@ export function resetGame(){motion.cameraFollow=true;resetGameMode();resetAdvanc
 const center=e=>({x:e.x+e.w/2,y:e.y+e.h/2});
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const enemy=o=>!o._modeEliminated&&o.type==='prefab'&&getAsset(o.assetId)?.category==='Monsters';
-const solid=o=>isBuildingSolid(o)||o.type==='object'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock'].includes(o.assetId);
+const solid=o=>isBuildingSolid(o)||o.type==='object'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock','stone-wall','wooden-palisade','traffic-barrier'].includes(o.assetId);
 function flash(x,y,color,count=8){for(let i=0;i<count;i++){const a=Math.PI*2*i/count+Math.random()*.5,s=30+Math.random()*75;game.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.25+Math.random()*.4,color})}}
 function move(e,dx,dy){const oldX=e.x;e.x+=dx;if(state.entities.some(o=>o!==e&&solid(o)&&overlaps(e,o)))e.x=oldX;const oldY=e.y;e.y+=dy;if(state.entities.some(o=>o!==e&&solid(o)&&overlaps(e,o)))e.y=oldY}
 function shoot(p,at){const origin=center(p),dx=at.x-origin.x,dy=at.y-origin.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;game.projectiles.push({x:origin.x,y:origin.y,vx:ux*560,vy:uy*560,life:1.35,damage:34});flash(origin.x+ux*22,origin.y+uy*22,'#fcd36e',4)}

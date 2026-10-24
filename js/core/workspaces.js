@@ -14,7 +14,7 @@ export function switchWorkspace(mode){
  if(!['2d','3d'].includes(mode))return false;
  if(state.playing)return false;
  if(workspace.mode===mode)return true;
- captureWorkspace();const slot=workspace.scenes[mode];
+ captureWorkspace();state.keys.clear();const slot=workspace.scenes[mode];
  workspace.mode=mode;
  state.entities=clone(slot.entities||[]);state.selected=clone(slot.selected||[]);
  state.nextId=slot.nextId||1;state.camera=clone(slot.camera||{x:0,y:0,zoom:1});
@@ -24,14 +24,14 @@ export function workspacePayload(){
  captureWorkspace();
  return {workspaceMode:workspace.mode,workspaces:clone(workspace.scenes)};
 }
-export function restoreWorkspaces(data){
+export function restoreWorkspaces(data,retainCurrent=false){
  if(!data?.workspaces?.['2d']||!data.workspaces?.['3d'])return false;
  for(const key of ['2d','3d']){
   const slot=data.workspaces[key];
   if(!Array.isArray(slot.entities)||!Array.isArray(slot.selected))return false;
   workspace.scenes[key]={entities:clone(slot.entities),selected:clone(slot.selected),nextId:slot.nextId||1,camera:clone(slot.camera||{x:0,y:0,zoom:1})};
  }
- workspace.mode=data.workspaceMode==='3d'?'3d':'2d';
+ workspace.mode=retainCurrent?workspace.mode:(data.workspaceMode==='3d'?'3d':'2d');
  const slot=workspace.scenes[workspace.mode];state.entities=clone(slot.entities);state.selected=clone(slot.selected);state.nextId=slot.nextId;state.camera=clone(slot.camera);
  notify();return true;
 }

@@ -1,3 +1,4 @@
+import {getModelGeometry,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences,sequenceRuntime} from './logic-sequences.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {workspace,switchWorkspace} from './workspaces.js';
@@ -166,6 +167,16 @@ export function init3d(canvas,host,buttons){
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal');
  const makeBuffer=data=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
  const cubes=makeBuffer(cubeVerts()),sphere=makeBuffer(curvedVerts('sphere')),cylinder=makeBuffer(curvedVerts('cylinder')),cone=makeBuffer(curvedVerts('cone')),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
+ const realGlbBuffers=new Map();
+ const ensureModel=id=>{
+  if(realGlbBuffers.has(id))return;
+  realGlbBuffers.set(id,{status:'loading'});
+  getModelGeometry(id).then(data=>{
+   const parts=data.parts.map(part=>({mesh:makeBuffer(part.vertices),color:part.color}));
+   realGlbBuffers.set(id,{status:'ready',parts,triangles:data.triangleCount});
+  }).catch(error=>{realGlbBuffers.set(id,{status:'error',message:String(error.message||error)});console.warn('[WarLike GLB]',id,error)});
+ };
+
  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
  const bind=mesh=>{gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aNormal)};
  const model=(pos,scale,color,angle=0)=>{gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform1f(u.angle,angle);gl.uniform4fv(u.color,color)};
@@ -299,6 +310,20 @@ export function init3d(canvas,host,buttons){
    const cube=(p,scale,shade)=>drawShape(cubes,p,scale,shade);
    const round=(p,scale,shade)=>drawShape(sphere,p,scale,shade);
    const cyl=(p,scale,shade)=>drawShape(cylinder,p,scale,shade);
+   if(shape==='glb'){
+    const id=o.model3dId||o.assetId;ensureModel(id);
+    const cached=realGlbBuffers.get(id);
+    if(cached?.status==='ready'){
+     for(const part of cached.parts){
+      const material=o.colorCustomized?color:part.color;
+      drawShape(part.mesh,[b.x,b.y,b.z],[b.w,b.h,b.d],material);
+     }
+    }else{
+     // Placeholder only while downloading, or when a GLB cannot be opened.
+     cube([b.x,b.y,b.z],[b.w,b.h,b.d],cached?.status==='error'?[.72,.23,.23,1]:[.36,.48,.58,1]);
+    }
+    continue;
+   }
    if(shape){
     if(['sphere','rock','bush'].includes(shape))round([b.x,b.y,b.z],[b.w,b.h,b.d],color);
     else if(['cylinder','barrel','log'].includes(shape))cyl([b.x,b.y,b.z],[b.w,b.h,b.d],color);

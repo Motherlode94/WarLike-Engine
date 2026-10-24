@@ -1,6 +1,6 @@
 // Animated Canvas puppet rigs: original ninja and zombie characters (no external atlas).
 const ninjaIds=new Set(['ninja','ninja-elite']), zombieIds=new Set(['zombie','zombie-runner','zombie-crawler','zombie-brute']);
-export const universalClips=['idle','walk','run','sprint','turn_left','turn_right','crouch_idle','crouch_walk','jump_start','jump_loop','jump_land','fall','attack','attack_1','attack_2','attack_heavy','attack_air','block','parry','hurt','hit_front','hit_back','stagger','stun','death','interact','pickup','use_item','push_button','open','climb','roll','dash','victory'];
+export const universalClips=['idle','walk','run','sprint','turn_left','turn_right','crouch_idle','crouch_walk','jump_start','jump_loop','jump_land','fall','attack','attack_1','attack_2','attack_heavy','attack_air','block','parry','hurt','hit_front','hit_back','stagger','stun','death','interact','pickup','use_item','push_button','open','climb','roll','dash','victory','enter_vehicle','exit_vehicle','drive','enter_house','exit_house'];
 export const ninjaClips=['stealth_idle','stealth_walk','katana_attack_1','katana_attack_2','katana_attack_3','dash_slash','shuriken_throw','wall_run','wall_jump','backflip','evade','silent_takedown','hide','peek','meditate'];
 export const zombieClips=['idle_zombie','walk_zombie','run_zombie','lunge','bite_attack','claw_attack_1','claw_attack_2','grab','hit_react','stagger_zombie','knockdown','get_up','death_zombie','crawl','crawl_attack','scream','vomit_attack','mutant_smash','berserk_run'];
 export const humanoidClips=id=>[...universalClips,...(ninjaIds.has(id)?ninjaClips:zombieIds.has(id)?zombieClips:[])];
@@ -15,6 +15,7 @@ export function drawHumanoid(ctx,o,now,playing){
  if(active&&dead)ctx.rotate(Math.min(1,(t%5)*.8)*1.2);
  if(active&&/roll|backflip|evade/.test(c))ctx.rotate(t*5);
  if(active&&hit)ctx.translate(Math.sin(t*35)*3,0);
+ if(active&&/enter_vehicle|exit_vehicle|enter_house|exit_house/.test(c)){const v=Math.abs(Math.sin(t*5));ctx.translate((/exit/.test(c)?-1:1)*v*11,v*3);ctx.rotate((/exit/.test(c)?-1:1)*v*.13)}
  if(active&&/jump|fall/.test(c))ctx.translate(0,-Math.abs(Math.sin(t*3))*17);
  if(crawl)ctx.scale(1.15,.68);
  ctx.translate(0,-bob);

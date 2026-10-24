@@ -1,3 +1,4 @@
+import {playSound} from './audio.js';
 // Walkable 2D house interiors and animated doors for RP / survival houses.
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
@@ -14,7 +15,7 @@ export function updateHousing(dt,p){
  const keys=state.keys,pressed=keys.has('e'),light=keys.has('l');
  const near=nearest(p);
  if(housing.inside){
-  if(light&&!housing.lightHeld){housing.lightOn=!housing.lightOn;const building=state.entities.find(o=>o.id===housing.inside);if(building)building.houseLightsOn=housing.lightOn;}
+  if(light&&!housing.lightHeld){housing.lightOn=!housing.lightOn;playSound('switch');const building=state.entities.find(o=>o.id===housing.inside);if(building)building.houseLightsOn=housing.lightOn;}
   housing.lightHeld=light;
   const x=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
   const y=Number(keys.has('s')||keys.has('arrowdown'))-Number(keys.has('w')||keys.has('z')||keys.has('arrowup'));
@@ -23,7 +24,7 @@ export function updateHousing(dt,p){
   housing.y=clamp(housing.y+y/d*dt*160,80,277);
   if(pressed&&!housing.doorHeld&&housing.transition===0){
    const home=state.entities.find(o=>o.id===housing.inside);
-   if(home){home.houseDoorOpen=true;home.houseDoorTimer=2.5;p.x=home.x+home.w/2-p.w/2;p.y=home.y+home.h+8;p.animation='exit_house';p._actionAnimationUntil=performance.now()/1000+.45}
+   if(home){home.houseDoorOpen=true;home.houseDoorTimer=2.5;playSound('door');p.x=home.x+home.w/2-p.w/2;p.y=home.y+home.h+8;p.animation='exit_house';p._actionAnimationUntil=performance.now()/1000+.45}
    housing.inside=null;housing.transition=.5;p._hiddenInHouse=false;
   }
   housing.doorHeld=pressed;return true;

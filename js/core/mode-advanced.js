@@ -1,3 +1,4 @@
+import {currentVehicle} from './vehicle.js';
 // Single-player extensions for WarLike match presets: AI skirmish, loot, RP jobs, three flag fronts.
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
@@ -26,7 +27,7 @@ export function resetAdvanced(){
 const note=text=>{advanced.notifications.unshift({text,until:modeRuntime.elapsed+3});advanced.notifications.length=Math.min(4,advanced.notifications.length)};
 export function consumeAmmo(){if(currentMode()?.kind!=='battleRoyale')return true;if(advanced.inventory.ammo<=0){note('Munitions épuisées : ramasse du butin !');return false}advanced.inventory.ammo--;return true}
 export function consumeMedkit(game){if(advanced.inventory.medkits<=0)return false;advanced.inventory.medkits--;game.life=Math.min(100,game.life+45);note('Trousse de soin utilisée');return true}
-export function advancedInput(game){const m=currentMode();if(!m||!state.playing||modeRuntime.roundOver)return;const p=player();if(!p||modeRuntime.playerOut)return;const pressed=state.keys.has('e');
+export function advancedInput(game){const m=currentMode();if(!m||!state.playing||modeRuntime.roundOver)return;const p=player();if(!p||modeRuntime.playerOut)return;const pressed=state.keys.has('e')&&!currentVehicle();
  if(pressed&&!advanced.interactHeld){
   if(m.kind==='battleRoyale'){
     const loot=advanced.loot.find(l=>!l.picked&&Math.hypot(center(p).x-l.x,center(p).y-l.y)<85);

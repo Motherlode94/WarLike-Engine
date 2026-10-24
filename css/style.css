@@ -173,3 +173,16 @@ body.project-floating #projectSplitter{visibility:hidden;pointer-events:none}
 body.project-floating .center-stack{grid-template-rows:39px 38px minmax(140px,1fr) 0 0!important}
 body.project-floating #projectPanel{min-height:210px!important}
 @media(max-width:1000px){.workspace{grid-template-columns:var(--left-pane-width,175px) 6px minmax(200px,1fr) 6px var(--right-pane-width,210px)}}
+
+
+/* Game Creator-inspired visual scripting Inspector */
+.logic-editor{display:flex;flex-direction:column;gap:8px}
+.logic-editor .logic-heading{border-bottom:1px solid #567080;color:#8df2d1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:10px 4px 5px}
+.logic-editor .logic-step{padding:9px;background:#1c2a37;border:1px solid #475a6d;border-left:3px solid #74d5c4;border-radius:4px}
+.logic-editor .logic-step:has(select option[value=message]:checked){border-left-color:#eeb565}
+.logic-editor .property-row{grid-template-columns:90px minmax(0,1fr)}
+.logic-editor .property-row input,.logic-editor .property-row select{width:100%;min-width:0}
+.logic-editor button{font-size:11px;min-height:28px;white-space:normal}
+.logic-editor .logic-flag{display:flex;align-items:center;gap:8px;font-size:11px;color:#bacee0}
+.logic-editor .logic-flag input{accent-color:#54d4a4}
+#logicDemo{background:#3a5260;color:#d6fff2;border-color:#508879}

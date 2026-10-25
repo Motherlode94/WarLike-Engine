@@ -216,7 +216,6 @@ export function init3d(canvas,host,buttons){
  focusScene();sync();
  const update3dPlay=dt=>{
   const p=playableActor(state.entities);
-  if(!p)return;
   updateStats(state.entities,dt);
   if(physicsSession){
    // Keep scene mutations and scripts synchronized with the native physics world.
@@ -233,6 +232,7 @@ export function init3d(canvas,host,buttons){
    let steps=0;
    while(physicsAccumulator>=fixed&&steps++<6){stepRapierScene(physicsSession,fixed);physicsAccumulator-=fixed}
   }else stepPhysics3d(state.entities,dt);
+  if(!p)return;
   updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);

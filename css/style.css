@@ -469,3 +469,16 @@ body[data-workspace="2d"] #viewport>#canvas{display:block!important}
 .hub-empty-projects{padding:20px 12px;text-align:center;color:#9eafc2;border:1px dashed #4b6070;border-radius:9px;line-height:1.5}
 #hubProjectCount{font-weight:400;color:#96b2c4;font-size:11px}
 @media(max-width:720px){.hub-window{max-height:100dvh;width:100vw;border-radius:0}.hub-suite{margin:12px}.hub-suite-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hub-app-card{min-height:112px;padding:12px}}
+
+
+/* Project Diagnostics — a functional application within the Creative Suite Hub */
+.hub-diagnostics{margin:14px 24px;padding:17px;border:1px solid #526779;border-radius:12px;background:#182834;color:#dceaf3}
+.hub-diagnostics[hidden]{display:none!important}
+.hub-diagnostics header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.hub-diagnostics h3{margin:0;font-size:15px}
+.hub-diagnostics ul{max-height:220px;overflow:auto;padding-left:20px;line-height:1.7;font-size:12px}
+.hub-diagnostics li[data-severity=error]{color:#ff9797}
+.hub-diagnostics li[data-severity=warning]{color:#f3cb8b}
+.hub-diagnostics li[data-severity=info]{color:#a3c6da}
+.hub-diagnostics button{border-radius:7px}
+@media(max-width:720px){.hub-diagnostics{margin:12px;padding:12px}}

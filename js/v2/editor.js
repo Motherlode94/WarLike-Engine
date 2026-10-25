@@ -93,7 +93,18 @@ $('save').onclick=()=>{try{const blob=new Blob([serializeScene(scene)],{type:'ap
 $('load').onclick=()=>$('file').click();
 $('file').onchange=async event=>{try{scene=deserializeScene(await event.target.files[0].text());history=createSceneHistory(scene);selected=scene.objects[0]?.id||null;refresh();status('Scène importée')}catch(error){status('Import : '+error.message)}finally{event.target.value=''}};
 function mousePoint(event){const rect=canvas.getBoundingClientRect();return [event.clientX-rect.left,event.clientY-rect.top]}
-canvas.addEventListener('pointerdown',event=>{const [x,y]=mousePoint(event),width=canvas.clientWidth,height=canvas.clientHeight;let closest=null,distance=Infinity;for(const o of scene.objects){const [a,b]=project(position(o),width,height),dist=Math.hypot(x-a,y-b);if(dist<distance&&dist<40){distance=dist;closest=o}}if(!closest)return;selected=closest.id;drag={x,y,id:closest.id,start:position(closest)};canvas.setPointerCapture(event.pointerId);refresh()});
+canvas.addEventListener('pointerdown',event=>{const [x,y]=mousePoint(event),width=canvas.clientWidth,height=canvas.clientHeight;let closest=null,distance=Infinity;for(const o of scene.objects){const [a,b]=project(position(o),width,height),dist=Math.hypot(x-a,y-b);if(dist<distance&&dist<40){distance=dist;closest=o}}if(!closest)return;selected=closest.id;drag={x,y,id:closest.id,start:position(closest)};drag.pointerId=event.pointerId;canvas.setPointerCapture(event.pointerId);refresh()});
 canvas.addEventListener('pointermove',event=>{if(!drag)return;const [x,y]=mousePoint(event);const dx=x-drag.x,dy=y-drag.y;const shiftX=(dx+dy*2)/53.7,shiftZ=(dy*2-dx)/53.7;status('Déplacement : '+shiftX.toFixed(2)+' / '+shiftZ.toFixed(2))});
-canvas.addEventListener('pointerup',event=>{if(!drag)return;const [x,y]=mousePoint(event),dx=x-drag.x,dy=y-drag.y;const original=drag;drag=null;if(Math.hypot(dx,dy)<3)return;edit('Déplacer GameObject',s=>setComponentProperty(s,original.id,'Transform','position',[original.start[0]+(dx+dy*2)/53.7,original.start[1],original.start[2]+(dy*2-dx)/53.7]))});
+canvas.addEventListener('pointerup',event=>{if(!drag)return;const [x,y]=mousePoint(event),dx=x-drag.x,dy=y-drag.y;const original=drag;drag=null;if(canvas.hasPointerCapture(event.pointerId))canvas.releasePointerCapture(event.pointerId);if(Math.hypot(dx,dy)<3)return;edit('Déplacer GameObject',s=>setComponentProperty(s,original.id,'Transform','position',[original.start[0]+(dx+dy*2)/53.7,original.start[1],original.start[2]+(dy*2-dx)/53.7]))});
+function freeMouse(){
+ if(drag?.pointerId!==undefined&&canvas.hasPointerCapture(drag.pointerId))canvas.releasePointerCapture(drag.pointerId);
+ drag=null;
+ if(document.pointerLockElement)document.exitPointerLock();
+ canvas.style.cursor='default';
+ status('Souris libre · sélection et navigation disponibles');
+}
+canvas.addEventListener('pointercancel',freeMouse);
+canvas.addEventListener('lostpointercapture',()=>{drag=null});
+window.addEventListener('keydown',event=>{if(event.key==='Escape')freeMouse()});
+window.addEventListener('blur',()=>{drag=null});
 window.addEventListener('resize',draw);refresh();publishScene();

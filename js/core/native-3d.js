@@ -54,3 +54,23 @@ export function overlapNative3d(a,b){
   return native._wl_overlap_aabb3d(ptr,ptr+24)===1;
  }finally{native._free(ptr)}
 }
+
+/** Batch up to 100k bodies in a single C++/WASM call. Returns null if WASM unavailable. */
+export function integrateNativeGravityBatch(bodies,dt){
+ if(!native||typeof native._wl_integrate_gravity_batch!=='function')return null;
+ if(!Array.isArray(bodies)||bodies.length>100000)return null;
+ if(!bodies.length)return [];
+ const ptr=native._malloc(bodies.length*16);if(!ptr)return null;
+ try{
+  const floats=new Float32Array(bodies.length*4);
+  for(let i=0;i<bodies.length;i++){
+   const b=bodies[i];if(![b.y,b.vy,b.gravity,b.restitution].every(Number.isFinite))return null;
+   floats.set([b.y,b.vy,b.gravity,b.restitution],i*4);
+  }
+  native.HEAPF32.set(floats,ptr>>>2);
+  const result=native._wl_integrate_gravity_batch(ptr,bodies.length,dt);
+  if(result!==bodies.length)return null;
+  const base=ptr>>>2;
+  return bodies.map((_,i)=>({y:native.HEAPF32[base+4*i],vy:native.HEAPF32[base+4*i+1]}));
+ }finally{native._free(ptr)}
+}

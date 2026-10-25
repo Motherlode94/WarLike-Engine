@@ -5,7 +5,7 @@ import {renderQuality,applyHorrorAtmosphere} from '../js/core/render-quality.js'
 test('horror Blueprint library covers both 2D and 3D',()=>{
  for(const mode of ['2d','3d']){
   const horror=presetsForWorkspace(mode).filter(p=>p.category==='Horreur');
-  assert.equal(horror.length,6);
+  assert.equal(horror.length,9);
   for(const p of horror){const s=createBlueprintPreset(p.id,mode);assert.ok(s.event);assert.ok(s.instructions?.length||s.branches?.length)}
  }
 });

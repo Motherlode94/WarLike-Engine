@@ -6,7 +6,7 @@ test('3D shader handles non-uniform scales correctly',()=>{
  assert.match(source,/aNormal\/max\(abs\(uScale\),vec3\(\.0001\)\)/);
 });
 test('3D shader maps HDR lighting into display output with gamma conversion',()=>{
- assert.match(source,/vec3 mapped=fogged\/\(vec3\(1\.\)\+fogged\)/);
+ assert.match(source,/vec3 mapped=exposed\/\(vec3\(1\.\)\+exposed\)/);
  assert.match(source,/vec3\(1\.\/2\.2\)/);
 });
 test('3D renderer handles two-sided mesh faces',()=>{

@@ -1,3 +1,4 @@
+import {initBlueprintWorkspace} from './ui/blueprint-workspace.js';
 import {initEditorAppearance} from './ui/editor-appearance.js';
 import {initializeNative3d,nativeStatus} from './core/native-3d.js';
 import {initHub,hub} from './core/project-hub.js';
@@ -26,6 +27,7 @@ import {startRenderer} from './core/renderer.js';
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
 // Make the project chooser visible before initializing optional editor systems.
 initHub();
+initBlueprintWorkspace();
 initializeNative3d();
 bindAudioControls($('#audioToggle'),$('#audioVolume'));
 

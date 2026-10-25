@@ -660,3 +660,38 @@ body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector{border-color:#4848
 .unitypackage-item img{max-width:65px;max-height:52px;object-fit:contain}
 .unitypackage-item audio{max-width:170px;height:30px}
 .unitypackage-item a{color:#9dd9c1;font-weight:600;white-space:nowrap}
+
+/* WarLike Studio UI repair: avoid cropped and overlapping toolbars at desktop widths. */
+*,*::before,*::after{box-sizing:border-box}
+.studio-menubar{min-width:0;max-width:100%;gap:8px}
+.studio-menus{min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;flex:1 1 auto}
+.studio-logo{flex:0 0 auto}
+.topbar{height:auto;min-height:54px;max-width:100%;padding:7px 10px;gap:7px;overflow-x:auto;overflow-y:visible;scrollbar-width:thin;align-content:center}
+.topbar .brand{flex:0 0 auto;margin-right:3px}
+.topbar .toolbar-group{flex:0 0 auto;padding-right:8px}
+.topbar button{min-height:28px}
+.topbar #saveStatus,.topbar #status{flex:0 0 auto}
+.workspace{min-width:0;min-height:0;max-width:100%;height:calc(100dvh - 98px)}
+.workspace>.hierarchy,.workspace>.inspector,.workspace>.center-stack{min-width:0;min-height:0}
+.inspector{overflow-x:hidden;overflow-y:auto}
+.inspector .property-row{min-width:0;gap:6px}
+.inspector .property-row input,.inspector .property-row select{min-width:0;max-width:100%}
+.inspector .inspector-component{max-width:100%}
+.inspector .component-content,.inspector .logic-editor{min-width:0;max-width:100%}
+.inspector summary{overflow-wrap:anywhere}
+.scene-header,.scene-tools{min-width:0;overflow-x:auto;overflow-y:hidden}
+.scene-actions{flex:0 0 auto;white-space:nowrap}
+.center-stack{min-width:0;overflow:hidden}
+#projectPanel,.asset-body,.asset-content,#projectContent{min-width:0}
+.asset-toolbar{flex-wrap:wrap;gap:6px;padding:8px}
+.asset-toolbar #assetSearch{flex:1 1 180px}
+.asset-toolbar select{flex:0 1 115px}
+.asset-toolbar .asset-view-controls,.asset-toolbar .asset-size-label{flex:0 0 auto}
+.asset-grid{grid-template-columns:repeat(auto-fill,minmax(105px,1fr))}
+.editor-appearance{position:static}
+.editor-appearance-menu{position:fixed;top:44px;right:12px;left:auto;width:min(290px,calc(100vw - 24px));max-height:calc(100dvh - 58px);overflow-y:auto;z-index:2100}
+.render-quality-menu{position:static}
+.render-quality-panel{position:fixed;z-index:2100;right:14px;top:105px;max-height:calc(100dvh - 122px);overflow-y:auto}
+.inspector .sequence-branch,.inspector .inspector-component{margin-bottom:6px}
+@media(max-width:980px){.studio-logo span{display:none}.topbar{gap:5px}.topbar .brand small{display:none}.asset-toolbar select{flex-basis:90px}}
+@media(max-width:720px){.editor-appearance-menu{top:42px;right:8px}.render-quality-panel{right:8px;top:93px}.asset-grid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}}

@@ -340,6 +340,11 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&workspace.mode==='3d'){update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,player:playableActor(state.entities)});}
   if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=Math.min(1,dt*9);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}
   if(!view3d.enabled)return;
+  const horrorHud=document.getElementById('horror3dHud');
+  if(horrorHud){
+   horrorHud.hidden=!(state.playing&&horror.enabled);
+   if(!horrorHud.hidden)horrorHud.textContent='☾ SURVIVAL HORROR  |  L : lampe '+(horror.flashlight?'ON':'OFF')+'  |  Batterie '+Math.round(horror.battery)+'%  |  Peur '+Math.round(horror.fear)+'%';
+  }
   if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent='3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='PROJET 3D • Clic pour sélectionner • Clic droit orbite • Molette zoom'}
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
   const solar=sunAt();gl.clearColor(...solar.sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);

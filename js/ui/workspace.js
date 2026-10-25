@@ -1,3 +1,4 @@
+import {persistLocalModel,restoreLocalModels,clearLocalModels} from '../core/local-asset-library.js';
 import {addCommunityModels3d} from '../assets/community-models-3d.js';
 import {free3dLibraries} from '../assets/free-3d-libraries.js';
 import {assignModelThumbnail} from './real-model-thumbnail.js';
@@ -59,7 +60,7 @@ rapierCheckbox.onchange=()=>{localStorage.setItem('warlike.rapier3d',rapierCheck
 rapierOption.append(rapierCheckbox,rapierText);import3dPanel.append(rapierOption);
 const label3d=document.createElement('label');label3d.textContent='Importer un modèle GLB (personnage, arme, véhicule…)';
 const import3d=document.createElement('input');import3d.type='file';import3d.accept='.glb,model/gltf-binary';import3d.setAttribute('aria-label','Importer modèle 3D GLB');
-import3d.onchange=()=>{try{const file=import3d.files?.[0];if(!file)return;const model=registerLocalModel(file);const cat=prompt('Catégorie du modèle : Characters, Weapons, Vehicles ou Props','Weapons');if(['Characters','Weapons','Vehicles','Props'].includes(cat))model.category=cat;render();log('GLB importé dans la bibliothèque de cette session : '+model.name);document.dispatchEvent(new Event('warlike:workspace'))}catch(error){alert(error.message)}finally{import3d.value=''}};
+import3d.onchange=async()=>{try{const file=import3d.files?.[0];if(!file)return;const model=registerLocalModel(file);const cat=prompt('Catégorie du modèle : Characters, Weapons, Vehicles ou Props','Weapons');if(['Characters','Weapons','Vehicles','Props'].includes(cat))model.category=cat;await persistLocalModel(model);render();log('GLB importé dans la bibliothèque de cette session : '+model.name);document.dispatchEvent(new Event('warlike:workspace'))}catch(error){alert(error.message)}finally{import3d.value=''}};
 label3d.append(import3d);import3dPanel.append(label3d);
 // Import a local folder of existing GLB models; browsers cannot read arbitrary disk paths.
 const folderPanel=document.createElement('div');folderPanel.className='asset-folder-import';
@@ -90,6 +91,7 @@ folderInput.onchange=async()=>{
     const asset=registerLocalModel(file);
     asset.category=classifyLocal(file.webkitRelativePath||file.name);
     asset.sourcePath=file.webkitRelativePath||file.name;
+    await persistLocalModel(asset);
     imported++;
    }catch(error){rejected++;log('Asset ignoré '+file.name+' : '+String(error?.message||error),'warn')}
   }
@@ -100,6 +102,11 @@ folderInput.onchange=async()=>{
 };
 folderPanel.append(folderTitle,folderInput,folderStatus);
 import3dPanel.append(folderPanel);
+const localTools=document.createElement('div');localTools.className='asset-local-tools';
+const clearSaved=document.createElement('button');clearSaved.type='button';clearSaved.textContent='Supprimer mes GLB enregistrés';
+clearSaved.onclick=async()=>{if(!confirm('Supprimer les fichiers GLB enregistrés dans ce navigateur ?'))return;try{await clearLocalModels();document.dispatchEvent(new Event('warlike:workspace'));folderStatus.textContent='Bibliothèque locale effacée.'}catch(error){folderStatus.textContent='Erreur : '+error.message}};
+localTools.append(clearSaved);import3dPanel.append(localTools);
+restoreLocalModels().then(count=>{if(count){log(count+' modèles GLB locaux restaurés');document.dispatchEvent(new Event('warlike:workspace'))}}).catch(error=>log('Bibliothèque locale : '+error.message,'warn'));
 const remoteForm=document.createElement('form');remoteForm.className='external-glb-form';
 const remoteInput=document.createElement('input');remoteInput.type='url';remoteInput.placeholder='https://exemple.org/personnage.glb';remoteInput.required=true;remoteInput.setAttribute('aria-label','URL HTTPS directe du modèle GLB');
 const categoryInput=document.createElement('select');categoryInput.setAttribute('aria-label','Catégorie de modèle externe');

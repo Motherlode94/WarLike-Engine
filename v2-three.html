@@ -13,20 +13,16 @@ try{
  for(const [i,x,z,geometry,color,metalness] of [[0,-3,0,new THREE.BoxGeometry(2,2,2),0x50cbaa,.1],[1,1,1,new THREE.SphereGeometry(1,32,24),0xe7a96d,.45],[2,4,-2,new THREE.CylinderGeometry(.8,.8,2,32),0x9aa8df,.65]]){
   const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color,metalness,roughness:.35}));mesh.position.set(x,1,z);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);
  }
- // Rapier physics is optional; a missing WASM bundle must not break Three.js rendering.
- let physicsWorld=null,physicsBody=null,falling=null;
+ // The physics world is shared by all editor GameObjects, not a separate demo cube.
+ let physicsWorld=null,RAP=null;const bodies=new Map();
  try{
-  const RAP=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0');
-  await RAP.init();
-  physicsWorld=new RAP.World({x:0,y:-9.81,z:0});
-  const floor=physicsWorld.createRigidBody(RAP.RigidBodyDesc.fixed().setTranslation(0,-.1,0));
-  physicsWorld.createCollider(RAP.ColliderDesc.cuboid(20,.1,20),floor);
-  physicsBody=physicsWorld.createRigidBody(RAP.RigidBodyDesc.dynamic().setTranslation(0,6,0));
-  physicsWorld.createCollider(RAP.ColliderDesc.cuboid(.45,.45,.45).setRestitution(.35),physicsBody);
-  falling=new THREE.Mesh(new THREE.BoxGeometry(.9,.9,.9),new THREE.MeshStandardMaterial({color:0xed7777,metalness:.18,roughness:.32}));
-  falling.castShadow=true;scene.add(falling);
-  status.textContent='Three.js + Rapier prêts · chute physique active';
- }catch(error){console.warn('Rapier 3D unavailable',error);status.textContent='Three.js prêt · Rapier indisponible : '+error.message}
+  RAP=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0');
+  await RAP.init();physicsWorld=new RAP.World({x:0,y:-9.81,z:0});
+  const groundBody=physicsWorld.createRigidBody(RAP.RigidBodyDesc.fixed().setTranslation(0,-.1,0));
+  physicsWorld.createCollider(RAP.ColliderDesc.cuboid(20,.1,20),groundBody);
+  status.textContent='Three.js + Rapier prêts';
+ }catch(error){console.warn('Rapier indisponible',error);status.textContent='Three.js actif ; physique indisponible : '+error.message}
+ const removeBody=id=>{const entry=bodies.get(id);if(entry&&physicsWorld)physicsWorld.removeRigidBody(entry.body);bodies.delete(id)};
  const editorMeshes=new Map();
  function syncEditorScene(data){
   if(data?.schema!=='warlike.scene.v2'||!Array.isArray(data.objects)||data.objects.length>1000)return;
@@ -49,15 +45,44 @@ try{
    mesh.position.fromArray(transform.position);
    mesh.rotation.set(...(Array.isArray(transform.rotation)&&transform.rotation.every(Number.isFinite)?transform.rotation:[0,0,0]));
    mesh.scale.fromArray(transform.scale);
+   const body=object.components.find(c=>c.type==='Rigidbody');
+   const collider=object.components.find(c=>c.type==='BoxCollider');
+   if(physicsWorld&&body&&collider){
+    const mode=['dynamic','fixed','kinematic'].includes(body.bodyType)?body.bodyType:'dynamic';
+    const size=Array.isArray(collider.size)&&collider.size.length===3&&collider.size.every(n=>Number.isFinite(n)&&n>0)?collider.size:[1,1,1];
+    const dims=size.map((n,i)=>Math.max(.01,n*Math.abs(transform.scale[i])));
+    const signature=JSON.stringify([mode,dims,collider.isTrigger===true,body.mass]);
+    const old=bodies.get(object.id);
+    if(!old||old.signature!==signature){
+     removeBody(object.id);
+     const descriptor=mode==='fixed'?RAP.RigidBodyDesc.fixed():mode==='kinematic'?RAP.RigidBodyDesc.kinematicPositionBased():RAP.RigidBodyDesc.dynamic();
+     descriptor.setTranslation(...transform.position);
+     const rigid=physicsWorld.createRigidBody(descriptor);
+     const colliderDesc=RAP.ColliderDesc.cuboid(...dims.map(v=>v/2)).setSensor(collider.isTrigger===true);
+     if(mode==='dynamic')colliderDesc.setMass(Math.max(.001,Number(body.mass)||1));
+     physicsWorld.createCollider(colliderDesc,rigid);
+     bodies.set(object.id,{body:rigid,signature});
+    }else if(mode!=='dynamic'){old.body.setTranslation({x:transform.position[0],y:transform.position[1],z:transform.position[2]},true)}
+   }else removeBody(object.id);
+
   }
-  for(const [id,mesh] of editorMeshes)if(!active.has(id)){scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();editorMeshes.delete(id)}
+  for(const [id,mesh] of editorMeshes)if(!active.has(id)){removeBody(id);scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();editorMeshes.delete(id)}
   status.textContent=active.size+' GameObject(s) WarLike V2 synchronisés en 3D';
  }
  window.addEventListener('message',event=>{if(event.origin!==location.origin||event.data?.type!=='warlike:v2:scene')return;syncEditorScene(event.data.scene)});
  if(window.parent!==window)window.parent.postMessage({type:'warlike:v2:ready'},location.origin);
  const resize=()=>{const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};
  new ResizeObserver(resize).observe(stage);resize();
- let running=true;function frame(){if(!running)return;if(physicsWorld){physicsWorld.step();const t=physicsBody.translation(),r=physicsBody.rotation();falling.position.set(t.x,t.y,t.z);falling.quaternion.set(r.x,r.y,r.z,r.w)}controls.update();renderer.render(scene,camera);requestAnimationFrame(frame)}frame();
+ let running=true,last=performance.now(),accumulator=0;
+ function frame(now=performance.now()){
+  if(!running)return;
+  accumulator+=Math.min(.05,(now-last)/1000);last=now;
+  if(physicsWorld){let steps=0;while(accumulator>=1/60&&steps++<4){physicsWorld.timestep=1/60;physicsWorld.step();accumulator-=1/60}
+   for(const [id,entry] of bodies){if(!entry.body.isDynamic())continue;const mesh=editorMeshes.get(id);if(!mesh)continue;
+    const t=entry.body.translation(),q=entry.body.rotation();mesh.position.set(t.x,t.y,t.z);mesh.quaternion.set(q.x,q.y,q.z,q.w)}
+  }
+  controls.update();renderer.render(scene,camera);requestAnimationFrame(frame);
+ }requestAnimationFrame(frame);
  window.addEventListener('pagehide',()=>{running=false;controls.dispose();renderer.dispose()},{once:true});
  status.textContent='Three.js 3D prêt · matériaux PBR, ombres, caméra orbitale';
 }catch(error){status.textContent='Échec de la 3D : '+error.message;console.error(error)}

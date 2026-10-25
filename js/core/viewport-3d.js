@@ -1,10 +1,12 @@
+import {updateOpenWorld} from './open-world-systems.js';
+import {sequenceRuntime} from './logic-sequences.js';
 import {updateHorror,updateHorrorPerception,horror} from './horror-survival.js';
 import {renderQuality} from './render-quality.js';
 import {stepPhysics3d} from './physics-3d.js';
 import {loadRapier3d,createRapierScene,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d} from './gameplay-components.js';
 import {getModelGeometry,model3dById} from '../assets/real-models-3d.js';
-import {updateSequences,sequenceRuntime} from './logic-sequences.js';
+import {updateSequences} from './logic-sequences.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {workspace,switchWorkspace} from './workspaces.js';
 import {sunAt,visibleLights,updateLighting} from './lighting.js';
@@ -239,6 +241,7 @@ export function init3d(canvas,host,buttons){
  const update3dPlay=dt=>{
   const p=playableActor(state.entities);
   updateStats(state.entities,dt);
+  updateOpenWorld(dt,p,state.entities,sequenceRuntime.globals);
   if(physicsSession){
    // Keep scene mutations and scripts synchronized with the native physics world.
    if(!synchronizeRapierScene(physicsSession,state.entities)){

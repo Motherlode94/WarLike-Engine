@@ -56,6 +56,27 @@ if(workspace.mode==='3d')component(root,'Physics 3D • Rigidbody',body=>{
  const info=document.createElement('p');info.textContent='Prototype physique 3D : gravité, rebond au sol et collisions AABB simples. Le joueur et les agents IA utilisent leur propre contrôleur.';body.append(info);
  const rm=document.createElement('button');rm.textContent='− Remove Rigidbody';rm.disabled=state.playing;rm.onclick=()=>{delete o.rigidbody3d;record('Remove Rigidbody');notify()};body.append(rm);
 });
+component(root,'Game Creator · Survival Horror',body=>{
+ const configs=[
+  ['Horror AI','horrorAiConfig',{enabled:true,visionRange:230,hearingRange:220,chaseSpeed:75,searchSpeed:33,memorySeconds:5},[['visionRange','Vision (distance)'],['hearingRange','Audition (distance)'],['chaseSpeed','Vitesse poursuite'],['searchSpeed','Vitesse recherche'],['memorySeconds','Durée recherche']]],
+  ['Cachette','horrorHideConfig',{enabled:true,radius:90},[['radius','Rayon cachette']]],
+  ['Zone de peur','horrorFearConfig',{enabled:true,radius:170,strength:12},[['radius','Rayon de peur'],['strength','Intensité']]],
+ ];
+ for(const [label,key,defaults,properties] of configs){
+  const sub=document.createElement('details');sub.className='inspector-component';
+  const heading=document.createElement('summary');heading.textContent=label;sub.append(heading);
+  if(!o[key]){const add=document.createElement('button');add.type='button';add.textContent='＋ Ajouter '+label;add.disabled=state.playing;add.onclick=()=>{o[key]={...defaults};record('Game Creator : '+label);notify()};sub.append(add)}
+  else{
+   const config=o[key];
+   const enabled=document.createElement('label');const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=config.enabled!==false;checkbox.disabled=state.playing;
+   checkbox.onchange=()=>{config.enabled=checkbox.checked;record('Game Creator : '+label);notify()};enabled.append(checkbox,document.createTextNode(' Actif'));sub.append(enabled);
+   for(const [property,title] of properties)field(sub,config,property,title);
+   const remove=document.createElement('button');remove.type='button';remove.textContent='Supprimer '+label;remove.disabled=state.playing;remove.onclick=()=>{delete o[key];record('Supprimer '+label);notify()};sub.append(remove);
+  }
+  body.append(sub);
+ }
+ const help=document.createElement('p');help.textContent='Ces composants sont enregistrés avec le GameObject et utilisés en mode Survival Horror 2D/3D.';body.append(help);
+});
 renderSequenceEditor(root,o);
 component(root,'Gameplay Components',body=>{
  const addComponent=(name,key,factory)=>{if(!o[key]){const b=document.createElement('button');b.textContent='＋ '+name;b.disabled=state.playing;b.onclick=()=>{o[key]=factory();record('Ajouter '+name);notify()};body.append(b);return false}return true};

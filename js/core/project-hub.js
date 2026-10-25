@@ -79,6 +79,7 @@ export function importLegacyProject(){
 export function initHub(){
  const modal=document.querySelector('#hubOverlay'),cards=document.querySelector('#hubProjects'),name=document.querySelector('#hubProjectName'),type=document.querySelector('#hubProjectType'),message=document.querySelector('#hubMessage');
  const title=document.querySelector('#studioProjectName');
+ const projectSearch=document.querySelector('#hubProjectSearch'),projectFilter=document.querySelector('#hubProjectFilter'),projectCount=document.querySelector('#hubProjectCount');
  const picker=document.querySelector('#hubAccentColor'),hex=document.querySelector('#hubAccentHex'),palette=document.querySelector('#hubThemePalette'),reset=document.querySelector('#hubThemeReset');
  const currentAccent=()=>hub.projectId?hub.accent:(()=>{try{return normalizeHubAccent(localStorage.getItem(THEME_KEY))||DEFAULT_ACCENT}catch{return DEFAULT_ACCENT}})();
  const commitAccent=value=>{
@@ -104,7 +105,10 @@ export function initHub(){
  const run=cb=>{try{cb();picker.value=hex.value=hub.accent;setHubAccent(hub.accent,{persist:false});hide()}catch(e){message.textContent=e.message}};
  function render(){
   cards.replaceChildren();
-  for(const p of listProjects()){
+  const projects=listProjects().filter(p=>(projectFilter.value==='all'||p.type===projectFilter.value)&&p.name.toLocaleLowerCase().includes(projectSearch.value.trim().toLocaleLowerCase()));
+  projectCount.textContent=projects.length+' projet'+(projects.length>1?'s':'');
+  if(!projects.length){const empty=document.createElement('p');empty.className='hub-empty-projects';empty.textContent=projectSearch.value||projectFilter.value!=='all'?'Aucun projet ne correspond à ta recherche.':'Aucun projet créé. Choisis WarLike 2D ou 3D pour commencer.';cards.append(empty)}
+  for(const p of projects){
    const item=document.createElement('div');item.className='hub-project-card';
    const info=document.createElement('div');const heading=document.createElement('strong');heading.textContent=p.name;
    const detail=document.createElement('small');detail.textContent=p.type.toUpperCase()+' · '+new Date(p.updated).toLocaleString();item.style.borderLeft='4px solid '+(normalizeHubAccent(p.accent)||DEFAULT_ACCENT);
@@ -133,6 +137,9 @@ export function initHub(){
    return;
   }
  });
+ projectSearch.addEventListener('input',render);
+ projectFilter.addEventListener('change',render);
+ modal.addEventListener('keydown',e=>{if(e.key==='Escape'&&!state.playing&&hub.projectId){e.preventDefault();hide()}});
  document.querySelector('#hubCreate').onclick=()=>run(()=>createProject(name.value,type.value));
  document.querySelector('#hubLegacy').onclick=()=>run(importLegacyProject);
  document.querySelector('#hubOpen').onclick=show;

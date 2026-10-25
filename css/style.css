@@ -371,3 +371,46 @@ body[data-workspace="2d"] #viewport>#canvas{display:block!important}
 .asset-content > .real-model-import input[type=file]{max-width:100%;min-width:0;font-size:11px}
 .asset-content > .real-model-import:not([open]){max-height:none}
 .asset-body > .real-model-import{display:none!important}
+
+
+/* WarLike Studio — Unity-like professional dock polish.
+   Works with the existing adjustable splitters and does not replace dock logic. */
+:root{--wl-editor-bg:#1b2027;--wl-dock:#252b34;--wl-panel-head:#303741;--wl-border:#414d5a;--wl-accent:#62c4b9}
+.workspace{background:var(--wl-editor-bg)}
+.workspace .panel,.workspace .project-panel{background:var(--wl-dock)}
+.workspace .panel-title,.workspace .dock-title{background:var(--wl-panel-head);border-color:var(--wl-border)}
+.scene-header,.scene-tools,.bottom-tabs{background:#282f39;border-color:var(--wl-border)}
+.scene-tabs .tab,.bottom-tab{transition:background .12s ease,border-color .12s ease}
+.scene-tabs .tab:hover,.bottom-tab:hover{background:#384653}
+.scene-tabs .tab.active,.bottom-tab.active{border-top-color:var(--wl-accent);background:#182831}
+#viewport{background:#121a24}
+#projectContent{min-width:0;overflow:hidden}
+.asset-body{min-width:0;overflow:hidden}
+.asset-folders{width:clamp(136px,18%,210px);min-width:136px;flex:0 0 auto;background:#202833}
+.asset-folders button{display:flex;align-items:center;gap:5px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.asset-folders button.active{background:#23505a;outline:1px solid #468f9c;color:#e0fffb}
+.asset-content{background:#212935;min-width:0}
+.asset-content > .real-model-import{padding:7px 12px;max-height:110px;background:#25313d}
+.asset-content > .real-model-import:not([open]){max-height:none}
+.asset-content > .real-model-import summary{display:list-item;line-height:1.4}
+.asset-content > .real-model-import label{justify-content:flex-start}
+.asset-content > .real-model-import input[type=file]{width:auto;flex:0 1 auto;max-width:100%}
+.asset-toolbar{flex:0 0 auto;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;background:#262f3a}
+.asset-toolbar input[type=search]{min-width:130px;flex:1 1 160px}
+.asset-toolbar select{flex:0 1 auto;max-width:100%}
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--asset-card-size,110px),1fr));gap:10px;padding:12px;align-content:start}
+.asset-grid .asset{width:100%;height:auto;min-height:136px;display:flex;justify-content:flex-start;padding:9px 6px;gap:6px;background:#2c3847;border:1px solid #405368;border-radius:6px;transition:background .12s,border-color .12s,transform .12s}
+.asset-grid .asset:hover{background:#35485b;border-color:#69adbd;transform:translateY(-1px)}
+.asset-grid .asset.selected{border-color:#6acbbd;background:#244a53}
+.asset-grid .asset img{width:100%;max-width:110px;height:88px;object-fit:contain;image-rendering:auto}
+.asset-grid .asset .asset-name{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.25;max-height:2.5em;overflow:hidden}
+.asset-grid.asset-list-mode{display:flex;flex-direction:column;gap:3px}
+.asset-grid.asset-list-mode .asset{width:100%;min-height:44px;flex-direction:row;justify-content:flex-start}
+.asset-grid.asset-list-mode .asset img{width:35px;height:35px;flex:none}
+.asset-grid.asset-list-mode .asset .asset-name{text-align:left;max-height:none}
+#properties{min-width:0;overflow-x:hidden}
+#properties input,#properties select{max-width:100%}
+.inspector-component{border-color:var(--wl-border);border-radius:5px}
+.inspector-component summary:hover{background:#40505e}
+@media(max-width:980px){.asset-folders{min-width:110px;width:120px}.asset-toolbar select{width:auto;min-width:100px}}
+@media(max-width:690px){.asset-folders{min-width:104px;width:104px}.asset-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));padding:7px;gap:6px}.asset-grid .asset{min-height:116px}.asset-grid .asset img{height:65px}}

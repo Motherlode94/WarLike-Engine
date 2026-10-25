@@ -37,6 +37,11 @@ function add3d(id,x,y){
 }
 
 const import3dPanel=document.createElement('div');import3dPanel.className='real-model-import';
+const rapierOption=document.createElement('label');rapierOption.className='rapier-toggle';
+const rapierCheckbox=document.createElement('input');rapierCheckbox.type='checkbox';rapierCheckbox.checked=localStorage.getItem('warlike.rapier3d')==='enabled';
+const rapierText=document.createElement('span');rapierText.textContent='⚙ Physique Rapier 3D (WASM) — expérimentale, appliquée au prochain Play';
+rapierCheckbox.onchange=()=>{localStorage.setItem('warlike.rapier3d',rapierCheckbox.checked?'enabled':'disabled');log('Physique 3D : '+(rapierCheckbox.checked?'Rapier demandé au prochain Play':'moteur interne'))};
+rapierOption.append(rapierCheckbox,rapierText);import3dPanel.append(rapierOption);
 const label3d=document.createElement('label');label3d.textContent='Importer un modèle GLB (personnage, arme, véhicule…)';
 const import3d=document.createElement('input');import3d.type='file';import3d.accept='.glb,model/gltf-binary';import3d.setAttribute('aria-label','Importer modèle 3D GLB');
 import3d.onchange=()=>{try{const file=import3d.files?.[0];if(!file)return;const model=registerLocalModel(file);const cat=prompt('Catégorie du modèle : Characters, Weapons, Vehicles ou Props','Weapons');if(['Characters','Weapons','Vehicles','Props'].includes(cat))model.category=cat;render();log('GLB importé dans la bibliothèque de cette session : '+model.name);document.dispatchEvent(new Event('warlike:workspace'))}catch(error){alert(error.message)}finally{import3d.value=''}};

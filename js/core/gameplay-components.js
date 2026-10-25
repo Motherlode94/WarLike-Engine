@@ -22,7 +22,20 @@ export function updateAi(entities,player,dt){
   const hp=e.stats?.health??e.hp??100;
   if(hp<=0){ai.state='dead';continue}
   const detection=Math.max(0,n(ai.detection,450)),attackRange=Math.max(5,n(ai.attackRange,65));
-  ai.state=dist<=attackRange?'attack':dist<=detection?'chase':'patrol';
+  // Sight checks account for walls/cover before entering pursuit.
+  const visible=dist<=detection&&!entities.some(o=>{
+   if(o===e||o===player||o.collision3d===false||!(o.solid3d===true||o.type==='object'||o.type==='mesh3d'))return false;
+   const x0=e.x+(e.w||0)*.5,y0=e.y+(e.h||0)*.5,x1=player.x+(player.w||0)*.5,y1=player.y+(player.h||0)*.5;
+   let near=0,far=1;
+   for(const [start,delta,min,max] of [[x0,x1-x0,o.x,o.x+(o.w||0)],[y0,y1-y0,o.y,o.y+(o.h||0)]]){
+    if(Math.abs(delta)<1e-8){if(start<min||start>max)return false;continue}
+    const a=(min-start)/delta,b=(max-start)/delta;
+    near=Math.max(near,Math.min(a,b));far=Math.min(far,Math.max(a,b));
+    if(near>far)return false;
+   }
+   return near<1&&far>0;
+  });
+  ai.state=visible?(dist<=attackRange?'attack':'chase'):'patrol';
   const step=Math.max(0,n(ai.speed,75))*dt;
   if(ai.state==='chase'||ai.state==='patrol'){
    let tx=ai.state==='chase'?player.x:ai.homeX+Math.sin((ai.clock??0)*.65+e.id)*Math.max(0,n(ai.patrolRadius,130));

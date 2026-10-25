@@ -79,7 +79,7 @@ remoteForm.onsubmit=async event=>{
 import3dPanel.append(remoteForm);import3dPanel.hidden=workspace.mode!=='3d';tree.parentNode?.querySelector('.asset-content')?.prepend(import3dPanel);
 let communityAttempted=false;
 const communityImport=document.createElement('div');communityImport.className='real-model-import';
-const communityButton=document.createElement('button');communityButton.textContent='＋ Ajouter 150 modèles 3D CC0 (Polygonal Mind)';
+const communityButton=document.createElement('button');communityButton.textContent='＋ Charger jusqu’à 500 modèles 3D CC0';
 const communityInfo=document.createElement('small');communityInfo.textContent='Catalogue externe réel : modèles GLB, chargés uniquement lorsque nécessaires. Connexion requise.';
 communityImport.append(communityButton,communityInfo);
 communityImport.hidden=workspace.mode!=='3d';
@@ -87,11 +87,12 @@ tree.parentNode?.querySelector('.asset-content')?.prepend(communityImport);
 communityButton.onclick=async()=>{
  communityButton.disabled=true;communityButton.textContent='Récupération du catalogue…';
  try{
-  const count=await addCommunityModels3d({limit:150});
+  const count=await addCommunityModels3d({limit:500});
   // Refresh categories and asset counts from current catalog data.
   document.dispatchEvent(new Event('warlike:workspace'));
   communityButton.textContent='✓ '+count+' modèles externes indexés';
-  communityInfo.textContent='Modèles GLB CC0 référencés ; téléchargement de chaque modèle à son utilisation.';
+  const breakdown=allAssets3d().filter(a=>a.collection==='Polygonal Mind CC0').reduce((map,a)=>(map[a.category]=(map[a.category]||0)+1,map),{});
+  communityInfo.textContent=Object.entries(breakdown).map(([k,v])=>k+' : '+v).join(' · ')+' · GLB téléchargés à l’utilisation.';
   log(count+' modèles CC0 ajoutés au navigateur 3D');
  }catch(error){
   communityButton.textContent='↻ Réessayer : ajouter 150 modèles 3D';

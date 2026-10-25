@@ -26,8 +26,20 @@ export function inspectGraph(graph){
  if(graph.nodes.filter(n=>n?.kind==='event').length!==1)errors.push('Un seul nœud Event est nécessaire');
  const outputs=new Set();
  for(const e of graph.links){if(!ids.has(e?.from)||!ids.has(e?.to)||e.from===e.to||outputs.has(e.from)){errors.push('Connexion invalide ou sortie déjà utilisée')}outputs.add(e.from)}
- const edges=new Map(graph.links.map(e=>[e.from,e.to]));
- for(const n of graph.nodes){const seen=new Set();let at=n?.id;while(at&&edges.has(at)){if(seen.has(at)){errors.push('Boucle de connexion détectée');break}seen.add(at);at=edges.get(at)}}
+ const eventId=graph.nodes.find(n=>n?.kind==='event')?.id;
+ const inbound=new Map();
+ for(const edge of graph.links)inbound.set(edge.to,(inbound.get(edge.to)||0)+1);
+ for(const node of graph.nodes){
+  if(node?.kind==='event'&&inbound.has(node.id))errors.push('Event ne peut pas recevoir de connexion');
+  if(node?.kind==='action'&&inbound.get(node.id)!==1)errors.push('Chaque action doit avoir exactement une entrée');
+ }
+  const edges=new Map(graph.links.map(e=>[e.from,e.to]));
+ if(eventId){
+  const reached=new Set();let at=eventId;
+  while(at&&!reached.has(at)){reached.add(at);at=edges.get(at)}
+  if(reached.size!==graph.nodes.length)errors.push('Graphe déconnecté : relie toutes les actions à Event');
+ }
+  for(const n of graph.nodes){const seen=new Set();let at=n?.id;while(at&&edges.has(at)){if(seen.has(at)){errors.push('Boucle de connexion détectée');break}seen.add(at);at=edges.get(at)}}
  return [...new Set(errors)];
 }
 export function compileGraph(graph){

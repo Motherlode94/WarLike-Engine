@@ -706,3 +706,7 @@ body:not(.hub-open) .workspace{height:calc(100dvh / var(--editor-ui-scale) - 94p
 .asset-grid{min-height:0;max-height:100%;overflow:auto}
 .inspector .property-row label{overflow-wrap:anywhere}
 .render-quality-menu[open]>summary,.editor-appearance[open]>summary{outline:1px solid var(--editor-accent,#48cba9)}
+
+/* FPS training scene: first-person targeting HUD. */
+#fpsCrosshair:not([hidden]){position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:25;pointer-events:none;color:#e9f7ee;text-shadow:0 1px 4px #000,0 0 8px #000;font:700 27px/1 Consolas,monospace}
+#fpsCrosshair[hidden]{display:none}

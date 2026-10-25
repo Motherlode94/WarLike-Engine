@@ -722,3 +722,15 @@ body:not(.hub-open) .workspace :is(h1,h2,h3,h4,label,summary,p,small,strong,span
 :root[data-warlike-font="compact"] body:not(.hub-open){font-family:Arial,Helvetica,sans-serif;letter-spacing:-.15px}
 :root[data-warlike-font="mono"] body:not(.hub-open){font-family:Consolas,"Courier New",monospace}
 .editor-appearance-menu select{width:100%;min-height:30px}
+
+/* Animation Studio — dockable-looking floating timeline, beta authoring workspace. */
+.warlike-animation-studio{position:fixed;z-index:2050;left:clamp(8px,20vw,280px);right:clamp(8px,4vw,70px);bottom:12px;padding:12px;background:#19212c;color:#e8eff7;border:1px solid #54647b;border-radius:9px;box-shadow:0 12px 36px #0009;max-height:45dvh;overflow:auto}
+.warlike-animation-studio[hidden]{display:none}
+.warlike-animation-studio header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.warlike-animation-studio .anim-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.warlike-animation-studio button,.warlike-animation-studio select{background:#29394d;color:#e8eff7;border:1px solid #526783;border-radius:5px;padding:5px 8px;cursor:pointer}
+.warlike-animation-studio label{display:block;color:#e8eff7}
+.warlike-animation-studio input[type=range]{display:block;width:100%;accent-color:var(--editor-accent,#48cba9)}
+.warlike-animation-studio #animKeys{font:12px/1.6 Consolas,monospace;overflow-wrap:anywhere;margin-top:8px}
+.warlike-animation-studio #animHint{font-size:12px;opacity:.8}
+@media(max-width:720px){.warlike-animation-studio{left:8px;right:8px;bottom:8px}}

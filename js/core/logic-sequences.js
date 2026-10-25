@@ -1,4 +1,5 @@
 import {coerceVariable} from './blueprint-graph.js';
+import {horror,triggerHorrorJumpscare} from './horror-survival.js';
 import {inventoryAdd,inventoryRemove,equipItem,damage,ensureStats} from './gameplay-components.js';
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
@@ -66,7 +67,7 @@ function execute(job,ctx,actionsLeft){
   case 'setBehavior':{const target=targetObject;const behavior=String(val||'none');if(['none','patrol','chase','guard','wander','flee','follow'].includes(behavior))target.behavior=behavior;break}
   case 'setColor':if(/^#[a-f0-9]{6}$/i.test(String(val))){entity.color=val;entity.colorCustomized=true}break;
   case 'enableObject':{const target=targetObject;target.sequenceEnabled=val!==false&&String(val)!=='false';break}
-  case 'emitSignal':emitSequenceSignal(val||key);break;
+  case 'emitSignal':if(horror.enabled&&String(val||key)==='horror:jumpscare')triggerHorrorJumpscare();emitSequenceSignal(val||key);break;
   case 'destroyObject':entity._sequenceDestroyed=true;break;
   case 'wait':job.wait=Math.min(120,Math.max(0,number(val,.5)));return count;
   }

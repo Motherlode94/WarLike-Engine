@@ -1,5 +1,5 @@
 import {createSpatialIndex3d} from './spatial-index-3d.js';
-import {integrateNativeGravity,overlapNative3d} from './native-3d.js';
+import {integrateNativeGravity,integrateNativeGravityBatch,overlapNative3d} from './native-3d.js';
 // WarLike 3D lightweight rigidbody simulation on the horizontal x/y plane plus elevation.
 // Intended for prototyping, not a substitute for an industrial physics engine.
 const finite=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
@@ -20,7 +20,16 @@ export function stepPhysics3d(entities,dt){
  const isDynamic=o=>o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!o.playable3d&&o.type!=='player'&&!o.ai?.enabled;
  const staticIndex=createSpatialIndex3d(entities,{filter:o=>!isDynamic(o)&&o.collision3d!==false});
  const dynamicBodies=entities.filter(isDynamic);
- for(let substep=0;substep<steps;substep++)for(const o of entities){
+ for(let substep=0;substep<steps;substep++){
+  const nativeInputs=dynamicBodies.map(o=>({
+   y:Math.max(0,finite(o.elevation3d)),
+   vy:finite(o.rigidbody3d.vy),
+   gravity:Math.max(0,finite(o.rigidbody3d.gravity,15)),
+   restitution:Math.min(1,Math.max(0,finite(o.rigidbody3d.restitution,.2)))
+  }));
+  const batch=integrateNativeGravityBatch(nativeInputs,t);
+  for(let bodyIndex=0;bodyIndex<dynamicBodies.length;bodyIndex++){
+   const o=dynamicBodies[bodyIndex];
   const rb=o.rigidbody3d;
   if(!rb?.enabled||rb.kinematic||o.playable3d||o.type==='player'||o.ai?.enabled)continue;
   const restitution=Math.min(1,Math.max(0,finite(rb.restitution,.2)));
@@ -36,7 +45,7 @@ export function stepPhysics3d(entities,dt){
   // Elevation is world Y. Test it after horizontal contact resolution.
   const initialHeight=Math.max(0,finite(o.elevation3d));
   const gravity=Math.max(0,finite(rb.gravity,15));
-  const integrated=integrateNativeGravity(initialHeight,rb.vy,gravity,restitution,t);
+  const integrated=batch?batch[bodyIndex]:integrateNativeGravity(initialHeight,rb.vy,gravity,restitution,t);
   let nextHeight=integrated?integrated.y:Math.max(0,initialHeight+(rb.vy-gravity*t)*t);
   let nextVy=integrated?integrated.vy:rb.vy-gravity*t;
   o.elevation3d=nextHeight;
@@ -53,6 +62,7 @@ export function stepPhysics3d(entities,dt){
    if(Math.abs(rb.vx)<.0001)rb.vx=0;
    if(Math.abs(rb.vz)<.0001)rb.vz=0;
   }
+ }
  }
 }
 export function applyImpulse3d(o,x,y,z){

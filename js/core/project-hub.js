@@ -135,7 +135,21 @@ export function initHub(){
   summary.textContent=latestDiagnostic.summary.entities+' objets · '+latestDiagnostic.summary.players+' joueurs · '+latestDiagnostic.summary.errors+' erreurs · '+latestDiagnostic.summary.warnings+' avertissements';
   diagnosticResult.append(summary);
   const list=document.createElement('ul');
-  for(const issue of latestDiagnostic.issues){const line=document.createElement('li');line.textContent=issue.severity.toUpperCase()+' · '+issue.message;line.dataset.severity=issue.severity;list.append(line)}
+  for(const issue of latestDiagnostic.issues){
+   const line=document.createElement('li');line.dataset.severity=issue.severity;
+   line.append(document.createTextNode(issue.severity.toUpperCase()+' · '+issue.message));
+   if(issue.entityId!==null&&state.entities.some(o=>o.id===issue.entityId)){
+    const locate=document.createElement('button');locate.type='button';locate.textContent='Sélectionner';
+    locate.title='Afficher l’objet concerné dans la hiérarchie et dans l’Inspector';
+    locate.onclick=()=>{
+     state.selected=[issue.entityId];hide();notify();
+     document.querySelector('#sceneTab')?.click();
+     document.dispatchEvent(new Event('warlike:change'));
+    };
+    line.append(' ',locate);
+   }
+   list.append(line);
+  }
   diagnosticResult.append(list);
  };
  modal.querySelector('#hubDiagnosticsClose').onclick=()=>{diagnosticPanel.hidden=true};

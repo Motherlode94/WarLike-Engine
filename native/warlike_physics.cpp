@@ -15,6 +15,18 @@ WL_API int wl_overlap_aabb3d(const float* a,const float* b) {
  return a[0]<b[0]+b[3]&&a[0]+a[3]>b[0]&&a[1]<b[1]+b[4]&&a[1]+a[4]>b[1]&&a[2]<b[2]+b[5]/64.f&&a[2]+a[5]/64.f>b[2];
 }
 
+// Batch integration reduces JS↔WASM transitions for large scenes.
+// Each body occupies [height, velocityY, gravity, restitution] (4 floats).
+WL_API int wl_integrate_gravity_batch(float* bodies,int count,float delta) {
+ if(!bodies||count<0||count>100000||!std::isfinite(delta))return 0;
+ for(int i=0;i<count;i++){
+  float* body=bodies+4*i;
+  if(!std::isfinite(body[0])||!std::isfinite(body[1])||!std::isfinite(body[2])||!std::isfinite(body[3]))continue;
+  wl_integrate_gravity(body,body[2],body[3],delta);
+ }
+ return count;
+}
+
 // Integrates vertical velocity and ground contact for one 3D rigidbody.
 // inOut[0]=height, [1]=vertical velocity; all measurements use WarLike units.
 WL_API void wl_integrate_gravity(float* inOut,float gravity,float restitution,float delta) {

@@ -4,7 +4,7 @@ const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const defaultStats=()=>({maxHealth:100,health:100,maxStamina:100,stamina:100,staminaRegen:14});
 export const defaultInventory=()=>({capacity:16,items:[],equipment:{weapon:null,armor:null}});
-export const defaultAi=()=>({enabled:true,state:'idle',detection:450,attackRange:65,attackDamage:8,attackCooldown:1.2,speed:75,homeX:null,homeY:null,patrolRadius:130,pathfinding:true,pathCellSize:48,repathInterval:.75});
+export const defaultAi=()=>({enabled:true,state:'idle',detection:450,attackRange:65,attackDamage:8,attackCooldown:1.2,speed:75,homeX:null,homeY:null,patrolRadius:130,pathfinding:true,requireLineOfSight:false,pathCellSize:48,repathInterval:.75});
 export const defaultController=()=>({walkSpeed:4.2,sprintSpeed:7,jumpForce:5.6,gravity:15,dodgeDistance:1.8,dodgeCooldown:.8,staminaCost:20});
 export function ensureStats(o){o.stats??=defaultStats();return o.stats}
 export function inventoryAdd(o,id,count=1){o.inventory??=defaultInventory();const inv=o.inventory;count=Math.floor(n(count));if(!id||count<=0)return false;const existing=inv.items.find(i=>i.id===id);if(!existing&&inv.items.length>=Math.max(1,n(inv.capacity,16)))return false;if(existing)existing.count+=count;else inv.items.push({id,count});return true}
@@ -35,7 +35,7 @@ export function updateAi(entities,player,dt){
    }
    return near<1&&far>0;
   });
-  ai.state=visible?(dist<=attackRange?'attack':'chase'):'patrol';
+  ai.state=(ai.requireLineOfSight===true&&!visible)?'patrol':dist<=attackRange?'attack':dist<=detection?'chase':'patrol';
   const step=Math.max(0,n(ai.speed,75))*dt;
   if(ai.state==='chase'||ai.state==='patrol'){
    let tx=ai.state==='chase'?player.x:ai.homeX+Math.sin((ai.clock??0)*.65+e.id)*Math.max(0,n(ai.patrolRadius,130));

@@ -1,3 +1,4 @@
+import {updateHorror} from './horror-survival.js';
 import {renderQuality} from './render-quality.js';
 import {stepPhysics3d} from './physics-3d.js';
 import {loadRapier3d,createRapierScene,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
@@ -247,6 +248,7 @@ export function init3d(canvas,host,buttons){
    while(physicsAccumulator>=fixed&&steps++<6){stepRapierScene(physicsSession,fixed);physicsAccumulator-=fixed}
   }else stepPhysics3d(state.entities,dt);
   if(!p)return;
+  updateHorror(dt,p,state.entities,state.keys);
   updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);

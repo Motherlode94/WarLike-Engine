@@ -1,3 +1,4 @@
+import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality} from './core/render-quality.js';
 import {initBlueprintWorkspace} from './ui/blueprint-workspace.js';
 import {initEditorAppearance} from './ui/editor-appearance.js';
 import {initializeNative3d,nativeStatus} from './core/native-3d.js';
@@ -26,6 +27,15 @@ import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
 // Make the project chooser visible before initializing optional editor systems.
+loadRenderQuality();
+for(const [id,key,scale] of [['render2dAmbient','ambient2d',100],['render2dRadius','lightRadius2d',1],['render3dExposure','exposure3d',100],['render3dFog','fog3d',1000]]){
+ const input=document.getElementById(id);if(!input)continue;
+ input.value=String(Math.round(renderQuality[key]*scale));
+ input.addEventListener('input',()=>setRenderQuality({[key]:Number(input.value)/scale}));
+ input.addEventListener('change',()=>saveRenderQuality());
+}
+const enableLight=document.getElementById('render2dLight');
+if(enableLight){enableLight.checked=renderQuality.lighting2d;enableLight.addEventListener('change',()=>{setRenderQuality({lighting2d:enableLight.checked});saveRenderQuality()})}
 initHub();
 initBlueprintWorkspace();
 initializeNative3d();

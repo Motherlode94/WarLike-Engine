@@ -27,6 +27,29 @@ try{
   falling.castShadow=true;scene.add(falling);
   status.textContent='Three.js + Rapier prêts · chute physique active';
  }catch(error){console.warn('Rapier 3D unavailable',error);status.textContent='Three.js prêt · Rapier indisponible : '+error.message}
+ const editorMeshes=new Map();
+ function syncEditorScene(data){
+  if(data?.schema!=='warlike.scene.v2'||!Array.isArray(data.objects)||data.objects.length>1000)return;
+  const active=new Set();
+  for(const object of data.objects){
+   const transform=object.components?.find(c=>c.type==='Transform');
+   if(typeof object.id!=='string'||!transform||!Array.isArray(transform.position)||!Array.isArray(transform.scale))continue;
+   if(![...transform.position,...transform.scale].every(Number.isFinite))continue;
+   active.add(object.id);
+   let mesh=editorMeshes.get(object.id);
+   if(!mesh){
+    mesh=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0x54d6bb,roughness:.45,metalness:.08}));
+    mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);editorMeshes.set(object.id,mesh);
+   }
+   mesh.position.fromArray(transform.position);
+   mesh.rotation.set(...(Array.isArray(transform.rotation)&&transform.rotation.every(Number.isFinite)?transform.rotation:[0,0,0]));
+   mesh.scale.fromArray(transform.scale);
+  }
+  for(const [id,mesh] of editorMeshes)if(!active.has(id)){scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();editorMeshes.delete(id)}
+  status.textContent=active.size+' GameObject(s) WarLike V2 synchronisés en 3D';
+ }
+ window.addEventListener('message',event=>{if(event.origin!==location.origin||event.data?.type!=='warlike:v2:scene')return;syncEditorScene(event.data.scene)});
+ if(window.parent!==window)window.parent.postMessage({type:'warlike:v2:ready'},location.origin);
  const resize=()=>{const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};
  new ResizeObserver(resize).observe(stage);resize();
  let running=true;function frame(){if(!running)return;if(physicsWorld){physicsWorld.step();const t=physicsBody.translation(),r=physicsBody.rotation();falling.position.set(t.x,t.y,t.z);falling.quaternion.set(r.x,r.y,r.z,r.w)}controls.update();renderer.render(scene,camera);requestAnimationFrame(frame)}frame();

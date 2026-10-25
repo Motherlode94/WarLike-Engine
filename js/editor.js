@@ -1,3 +1,4 @@
+import {createFpsScene} from './core/fps-scene.js';
 import {initUnityPackageImport} from './ui/unitypackage-import.js';
 import {horror} from './core/horror-survival.js';
 import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality,applyHorrorAtmosphere} from './core/render-quality.js';
@@ -28,6 +29,7 @@ import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
+document.getElementById('fpsScene')?.addEventListener('click',()=>{if(!window.confirm('Remplacer la scène 3D actuelle par le terrain d’entraînement FPS ? Sauvegarde d’abord ton projet.'))return;try{createFpsScene();document.getElementById('workspace3d')?.click();}catch(error){window.alert(error.message)}});
 // Make the project chooser visible before initializing optional editor systems.
 loadRenderQuality();
 for(const [id,key,scale] of [['render2dAmbient','ambient2d',100],['render2dRadius','lightRadius2d',1],['render3dExposure','exposure3d',100],['render3dFog','fog3d',1000]]){

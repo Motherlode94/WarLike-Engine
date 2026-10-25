@@ -507,3 +507,15 @@ body:not(.hub-open) .scene-tabs .tab.active{border-top-color:var(--editor-accent
 .editor-scale-actions{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:6px}
 #editorAppearanceReset{border-color:var(--editor-accent)}
 @media(max-width:750px){.editor-appearance-menu{right:12px;top:42px}}
+
+
+/* Unity-inspired workspace: independent dock widths, resizable panels and coherent accent. */
+.studio-layout-presets{display:flex;flex-direction:column;gap:3px;padding:8px;border-top:1px solid #3c4d5b}
+.studio-layout-presets span{font-size:10px;color:#a4bed0;padding:3px 8px}
+.studio-layout-presets button{text-align:left;width:100%}
+body:not(.hub-open) .studio-menubar,body:not(.hub-open) header.topbar{border-bottom-color:var(--editor-accent)}
+body:not(.hub-open) .panel-title{border-bottom-color:color-mix(in srgb,var(--editor-accent) 45%,#424b58)}
+body:not(.hub-open) #leftSplitter,body:not(.hub-open) #rightSplitter{background:color-mix(in srgb,var(--editor-accent) 25%,#27323c);cursor:col-resize}
+body:not(.hub-open) #leftSplitter:hover,body:not(.hub-open) #rightSplitter:hover{background:var(--editor-accent)}
+body:not(.hub-open) .studio-dropdown button:hover,body:not(.hub-open) .editor-appearance>summary:hover{border-color:var(--editor-accent)}
+body:not(.hub-open) :focus-visible{outline-color:var(--editor-accent)}

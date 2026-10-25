@@ -1,3 +1,4 @@
+import {renderBlueprintGraph} from './blueprint-graph-editor.js';
 import {newSequence,sequenceEvents,sequenceConditions,sequenceInstructions} from '../core/logic-sequences.js';
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
@@ -89,27 +90,6 @@ export function renderSequenceEditor(root,o){
   const fallback=document.createElement('details');fallback.open=true;const label=document.createElement('summary');label.textContent='ELSE • Si aucune condition';fallback.append(label);
   s.elseInstructions??=[];editInstructions(fallback,s.elseInstructions);body.append(fallback);
  }
- const graph=document.createElement('details');graph.open=true;graph.className='sequence-branch';
- const graphTitle=document.createElement('summary');graphTitle.textContent='⬡ WarLike Blueprint · graphe interactif';graph.append(graphTitle);
- const graphFlow=document.createElement('div');graphFlow.className='sequence-graph blueprint-node-flow';
- const graphNode=(label,kind,onClick)=>{
-  const box=document.createElement('button');box.type='button';box.className='blueprint-graph-node';box.dataset.kind=kind;
-  box.textContent=label;box.disabled=state.playing;if(onClick)box.onclick=onClick;else box.disabled=true;
-  graphFlow.append(box);
- };
- const wire=()=>{const line=document.createElement('div');line.className='blueprint-wire';line.setAttribute('aria-hidden','true');graphFlow.append(line)};
- const change=()=>save('Modifier graphe');
- graphNode('▶ EVENT · '+s.event,'trigger',()=>{s.event=sequenceEvents[(sequenceEvents.indexOf(s.event)+1)%sequenceEvents.length];change()});wire();
- for(const [i,c] of (s.conditions||[]).entries()){
-  graphNode('◇ CONDITION · '+c.type+' '+(c.key||''),'condition',()=>{c.type=sequenceConditions[(sequenceConditions.indexOf(c.type)+1)%sequenceConditions.length];change()});wire();
- }
- const actions=(list,scope)=>{for(const [i,action] of list.entries()){graphNode('▣ '+(action.type||'message')+' · '+String(action.value??action.key??'').slice(0,50),'action',()=>{action.type=sequenceInstructions[(sequenceInstructions.indexOf(action.type)+1)%sequenceInstructions.length];change()});wire()}
-  const add=document.createElement('button');add.type='button';add.className='blueprint-add-node';add.textContent='＋ Action '+scope;add.disabled=state.playing;add.onclick=()=>{list.push({type:'message',value:'Nouvelle action'});change()};graphFlow.append(add)};
- if(s.branches?.length){
-  s.branches.forEach((branch,i)=>{graphNode('◆ IF '+(i+1)+' · '+(branch.conditions||[]).length+' condition(s)','branch',()=>{branch.conditions??=[];branch.conditions.push({type:'always'});change()});wire();actions(branch.instructions??=[],String(i+1))});
-  graphNode('◇ ELSE','branch',null);wire();s.elseInstructions??=[];actions(s.elseInstructions,'ELSE');
- }else actions(s.instructions??=[],'principale');
- graphNode('■ END','end',null);graph.append(graphFlow);body.append(graph);
- const note=document.createElement('p');note.className='blueprint-graph-tip';note.textContent='Clique sur Event, Condition ou Action pour changer son type. Les boutons + ajoutent des actions reliées dans l’ordre. Les paramètres détaillés se règlent dans les sections au-dessus.';graph.append(note);
+ renderBlueprintGraph(body,s,save);
  const help=document.createElement('p');help.textContent='Pendant Play, les séquences exécutent les instructions dans l’ordre. Wait suspend l’exécution, Emit Signal déclenche d’autres objets.';body.append(help);
 }

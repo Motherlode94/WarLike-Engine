@@ -2,7 +2,7 @@
 export const lighting={hour:14,speed:0,dayNight:false,sunEnabled:true,sunIntensity:1.25,ambient:.24};
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 export const lightTypes=['point','spot'];
-export function updateLighting(dt,playing){if(playing&&lighting.dayNight&&lighting.speed>0)lighting.hour=(lighting.hour+dt*lighting.speed/60)%24}
+export function updateLighting(dt,playing){if(playing&&lighting.dayNight&&lighting.speed>0)lighting.hour=(lighting.hour+dt*lighting.speed/3600)%24}
 export function sunAt(hour=lighting.hour){
  const theta=((hour-6)/24)*Math.PI*2;
  const altitude=Math.sin(theta),sun=Math.max(0,altitude),twilight=Math.max(0,1-Math.abs(altitude)*4);

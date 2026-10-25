@@ -1,3 +1,4 @@
+import {initEditorAppearance} from './ui/editor-appearance.js';
 import {initializeNative3d,nativeStatus} from './core/native-3d.js';
 import {initHub,hub} from './core/project-hub.js';
 import {workspace} from './core/workspaces.js';
@@ -102,3 +103,4 @@ initDocking();
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});
 
 initStudioMenus();
+initEditorAppearance();

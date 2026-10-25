@@ -13,9 +13,23 @@ try{
  for(const [i,x,z,geometry,color,metalness] of [[0,-3,0,new THREE.BoxGeometry(2,2,2),0x50cbaa,.1],[1,1,1,new THREE.SphereGeometry(1,32,24),0xe7a96d,.45],[2,4,-2,new THREE.CylinderGeometry(.8,.8,2,32),0x9aa8df,.65]]){
   const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color,metalness,roughness:.35}));mesh.position.set(x,1,z);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);
  }
+ // Rapier physics is optional; a missing WASM bundle must not break Three.js rendering.
+ let physicsWorld=null,physicsBody=null,falling=null;
+ try{
+  const RAP=await import('https://esm.sh/@dimforge/rapier3d-compat@0.21.0');
+  await RAP.init();
+  physicsWorld=new RAP.World({x:0,y:-9.81,z:0});
+  const floor=physicsWorld.createRigidBody(RAP.RigidBodyDesc.fixed().setTranslation(0,-.1,0));
+  physicsWorld.createCollider(RAP.ColliderDesc.cuboid(20,.1,20),floor);
+  physicsBody=physicsWorld.createRigidBody(RAP.RigidBodyDesc.dynamic().setTranslation(0,6,0));
+  physicsWorld.createCollider(RAP.ColliderDesc.cuboid(.45,.45,.45).setRestitution(.35),physicsBody);
+  falling=new THREE.Mesh(new THREE.BoxGeometry(.9,.9,.9),new THREE.MeshStandardMaterial({color:0xed7777,metalness:.18,roughness:.32}));
+  falling.castShadow=true;scene.add(falling);
+  status.textContent='Three.js + Rapier prêts · chute physique active';
+ }catch(error){console.warn('Rapier 3D unavailable',error);status.textContent='Three.js prêt · Rapier indisponible : '+error.message}
  const resize=()=>{const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};
  new ResizeObserver(resize).observe(stage);resize();
- let running=true;function frame(){if(!running)return;controls.update();renderer.render(scene,camera);requestAnimationFrame(frame)}frame();
+ let running=true;function frame(){if(!running)return;if(physicsWorld){physicsWorld.step();const t=physicsBody.translation(),r=physicsBody.rotation();falling.position.set(t.x,t.y,t.z);falling.quaternion.set(r.x,r.y,r.z,r.w)}controls.update();renderer.render(scene,camera);requestAnimationFrame(frame)}frame();
  window.addEventListener('pagehide',()=>{running=false;controls.dispose();renderer.dispose()},{once:true});
  status.textContent='Three.js 3D prêt · matériaux PBR, ombres, caméra orbitale';
 }catch(error){status.textContent='Échec de la 3D : '+error.message;console.error(error)}

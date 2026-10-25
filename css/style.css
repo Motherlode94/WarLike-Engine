@@ -482,3 +482,28 @@ body[data-workspace="2d"] #viewport>#canvas{display:block!important}
 .hub-diagnostics li[data-severity=info]{color:#a3c6da}
 .hub-diagnostics button{border-radius:7px}
 @media(max-width:720px){.hub-diagnostics{margin:12px;padding:12px}}
+
+
+/* Adjustable editor density and color — Hub appearance remains independent. */
+:root{--editor-accent:#48cba9;--editor-ui-scale:1}
+body:not(.hub-open){zoom:var(--editor-ui-scale)}
+body:not(.hub-open) .workspace{height:calc(100dvh / var(--editor-ui-scale) - 94px)}
+body:not(.hub-open) .brand strong span,body:not(.hub-open) .brand small b{color:var(--editor-accent)}
+body:not(.hub-open) button.active,body:not(.hub-open) .tab.active{border-color:var(--editor-accent)}
+body:not(.hub-open) #objects button.selected,body:not(.hub-open) #history button.selected{border-color:var(--editor-accent)}
+body:not(.hub-open) .scene-tabs .tab.active{border-top-color:var(--editor-accent)}
+.editor-appearance{position:relative;flex:0 0 auto;z-index:110}
+.editor-appearance>summary{cursor:pointer;padding:7px 9px;color:#dbe8f1;border:1px solid #435364;border-radius:6px;white-space:nowrap}
+.editor-appearance-menu{position:fixed;top:38px;right:130px;width:250px;max-width:calc(100vw - 18px);background:#202d3a;border:1px solid #577083;box-shadow:0 18px 48px #000a;padding:14px;border-radius:10px;display:flex;flex-direction:column;gap:10px;z-index:500;color:#ecf3f9;white-space:normal}
+.editor-appearance:not([open]) .editor-appearance-menu{display:none}
+.editor-appearance-menu>strong{font-size:13px}
+.editor-appearance-menu label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
+.editor-appearance-menu input[type=range]{width:100%;accent-color:var(--editor-accent)}
+.editor-appearance-menu input[type=color]{width:54px;height:30px;padding:2px;background:#15222e}
+.editor-appearance-menu small{font-size:10px;color:#a7bdcc;line-height:1.5}
+.editor-swatches{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}
+.editor-swatches button{height:24px;min-width:0;padding:0;border:2px solid transparent;border-radius:5px}
+.editor-swatches button[aria-pressed=true]{outline:2px solid white;outline-offset:1px}
+.editor-scale-actions{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:6px}
+#editorAppearanceReset{border-color:var(--editor-accent)}
+@media(max-width:750px){.editor-appearance-menu{right:12px;top:42px}}

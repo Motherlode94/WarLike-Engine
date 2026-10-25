@@ -2,8 +2,8 @@
 // Index only actual .glb files reported by the repository tree; do not generate fake asset URLs.
 import {importedModels3d} from './real-models-3d.js';
 const source='ToxSam/cc0-models-Polygonal-Mind';
-const api='https://api.github.com/repos/'+source+'/git/trees/HEAD?recursive=1';
-const raw='https://raw.githubusercontent.com/'+source+'/HEAD/';
+const api='https://api.github.com/repos/'+source+'/git/trees/main?recursive=1';
+const raw='https://raw.githubusercontent.com/'+source+'/main/';
 const wanted=150;
 let catalogPromise=null;
 const classify=path=>{
@@ -33,7 +33,7 @@ export async function addCommunityModels3d({limit=wanted}={}){
    const name=label(path);
    importedModels3d.set(id,{id,name,category:classify(path),shape:'glb',
     license:'CC0 — Polygonal Mind (vérifier les sources)',url:raw+path.split('/').map(encodeURIComponent).join('/'),
-    sourceUrl:'https://github.com/'+source+'/blob/HEAD/'+path.split('/').map(encodeURIComponent).join('/'),
+    sourceUrl:'https://github.com/'+source+'/blob/main/'+path.split('/').map(encodeURIComponent).join('/'),
     collection:'Polygonal Mind CC0',modelPath:path});
    count++;
   }

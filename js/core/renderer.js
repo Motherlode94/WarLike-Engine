@@ -17,4 +17,4 @@ export function startRenderer(canvas,host){const ctx=canvas.getContext('2d');fun
  const r=rectFromPoints(selectionBox.start,selectionBox.end);
  ctx.save();ctx.fillStyle='#64dccc2c';ctx.strokeStyle='#67e0cf';ctx.lineWidth=1.7/c.zoom;ctx.setLineDash([7/c.zoom,4/c.zoom]);ctx.fillRect(r.x,r.y,r.w,r.h);ctx.strokeRect(r.x,r.y,r.w,r.h);ctx.restore();
 }
-ctx.restore();drawLighting2d(ctx,state.entities,c,w,h);drawGame(ctx,w,h);if(state.playing&&horror.enabled){const p=state.entities.find(o=>o.type==='player'||o.playable3d||o.type==='character');drawHorrorHud(ctx,w,h,p,c)}requestAnimationFrame(loop)}requestAnimationFrame(loop)}
+ctx.restore();drawLighting2d(ctx,state.entities,c,w,h);drawGame(ctx,w,h);if(state.playing&&horror.enabled){const p=state.entities.find(o=>o.type==='player'||o.playable3d||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');drawHorrorHud(ctx,w,h,p,c)}requestAnimationFrame(loop)}requestAnimationFrame(loop)}

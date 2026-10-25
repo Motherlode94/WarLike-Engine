@@ -1,4 +1,5 @@
 import {stepPhysics3d} from './physics-3d.js';
+import {loadRapier3d,createRapierScene,stepRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d} from './gameplay-components.js';
 import {getModelGeometry,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences,sequenceRuntime} from './logic-sequences.js';
@@ -217,7 +218,12 @@ export function init3d(canvas,host,buttons){
   const p=playableActor(state.entities);
   if(!p)return;
   updateStats(state.entities,dt);
-  stepPhysics3d(state.entities,dt);
+  if(physicsSession){
+   physicsAccumulator+=dt;
+   const fixed=1/60;
+   let steps=0;
+   while(physicsAccumulator>=fixed&&steps++<6){stepRapierScene(physicsSession,fixed);physicsAccumulator-=fixed}
+  }else stepPhysics3d(state.entities,dt);
   updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);
@@ -226,7 +232,18 @@ export function init3d(canvas,host,buttons){
  const camera=()=>sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
  const playerTarget=()=>{const p=playableActor(state.entities);return p?[(p.x+p.w/2)/64,.5,(p.y+p.h/2)/64]:null};
  let wasPlaying=false;
- const enterPlay=()=>{const pt=playerTarget();view3d.followPlayer=!!pt;if(pt){view3d.target=pt.slice();view3d.radius=12;view3d.pitch=.5}};
+ let physicsSession=null,physicsGeneration=0,physicsAccumulator=0;
+ const stopRapier=()=>{physicsGeneration++;disposeRapierScene(physicsSession);physicsSession=null;physicsAccumulator=0;};
+ const enterPlay=()=>{
+  const pt=playerTarget();view3d.followPlayer=!!pt;if(pt){view3d.target=pt.slice();view3d.radius=12;view3d.pitch=.5}
+  if(localStorage.getItem('warlike.rapier3d')!=='enabled')return;
+  const token=++physicsGeneration;
+  loadRapier3d().then(api=>{
+   if(!api||token!==physicsGeneration||!state.playing||workspace.mode!=='3d')return;
+   try{physicsSession=createRapierScene(api,state.entities)}
+   catch(error){console.warn('[WarLike] Rapier unavailable, using built-in physics',error);physicsSession=null}
+  });
+ };
 
  const rectPoint=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,w:r.width,h:r.height}};
  const pick=(point,cam)=>{
@@ -286,7 +303,7 @@ export function init3d(canvas,host,buttons){
   const dt=Math.min(.1,Math.max(0,(now-previousTime)/1000));previousTime=now;
   updateLighting(dt,state.playing&&workspace.mode==='3d');
   if(state.playing&&!wasPlaying)enterPlay();
-  if(!state.playing&&wasPlaying)view3d.followPlayer=false;
+  if(!state.playing&&wasPlaying){view3d.followPlayer=false;stopRapier();}
   wasPlaying=state.playing;
   if(state.playing&&workspace.mode==='3d'){update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,player:playableActor(state.entities)});}
   if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=Math.min(1,dt*9);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}

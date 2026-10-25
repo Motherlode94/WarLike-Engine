@@ -194,7 +194,13 @@ export function init3d(canvas,host,buttons){
   getModelGeometry(id).then(data=>{
    const parts=data.parts.map(part=>({mesh:makeBuffer(part.vertices),color:part.color,roughness:part.roughness,metallic:part.metallic}));
    realGlbBuffers.set(id,{status:'ready',parts,triangles:data.triangleCount});
-  }).catch(error=>{realGlbBuffers.set(id,{status:'error',message:String(error.message||error)});console.warn('[WarLike GLB]',id,error)});
+  }).catch(error=>{
+   const message=String(error.message||error);
+   realGlbBuffers.set(id,{status:'error',message});
+   console.warn('[WarLike GLB]',id,error);
+   const status=document.querySelector('#view3dStatus');
+   if(status&&workspace.mode==='3d'){status.textContent='GLB indisponible : '+id+' — '+message;status.title=message}
+  });
  };
 
  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);

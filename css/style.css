@@ -359,3 +359,15 @@ body[data-workspace="3d"] #viewport>#canvas3d{display:block!important}
 body[data-workspace="2d"] #viewport>#canvas3d{display:none!important}
 body[data-workspace="2d"] #viewport>#canvas{display:block!important}
 #webglFailure{pointer-events:auto}
+
+
+/* 3D asset sources and import belong to the asset-content column, never to the flex asset-body root. */
+.asset-content > .real-model-import{flex:0 0 auto;box-sizing:border-box;width:100%;min-width:0;max-height:38%;overflow-y:auto;border-bottom:1px solid #384c60;background:#25323f;padding:6px 12px;font-size:11px;color:#c4d7e6}
+.asset-content > .real-model-import[hidden]{display:none!important}
+.asset-content > .real-model-import summary{cursor:pointer;font-weight:650;color:#b8f4ed;white-space:normal}
+.asset-content > .real-model-import p{line-height:1.5;margin:6px 0}
+.asset-content > .real-model-import a{color:#88cfff}
+.asset-content > .real-model-import label{display:flex;flex-wrap:wrap;gap:8px;align-items:center;line-height:1.5}
+.asset-content > .real-model-import input[type=file]{max-width:100%;min-width:0;font-size:11px}
+.asset-content > .real-model-import:not([open]){max-height:none}
+.asset-body > .real-model-import{display:none!important}

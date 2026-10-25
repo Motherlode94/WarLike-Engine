@@ -448,3 +448,24 @@ body[data-workspace="2d"] #viewport>#canvas{display:block!important}
 .hub-suite-roadmap span:first-child{border:0;padding-left:0;color:#c4dae6}
 @media(max-width:830px){.hub-suite-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){.hub-suite{margin:10px;padding:12px}.hub-suite-grid{grid-template-columns:1fr 1fr}.hub-app-card{padding:9px;min-height:110px}}
+
+
+/* Creative Suite Hub polish: desktop launcher, adaptive content and project discovery */
+.hub-overlay{background:rgba(10,16,24,.86);backdrop-filter:blur(12px)}
+.hub-window{width:min(1120px,calc(100vw - 28px));max-height:calc(100dvh - 28px);overflow-y:auto;scrollbar-width:thin;border:1px solid #4a6277;border-radius:16px;box-shadow:0 28px 90px #060c15b8}
+.hub-heading{padding:22px 26px}
+.hub-heading h2{font-size:clamp(22px,3vw,32px);letter-spacing:-.03em}
+.hub-suite{margin:12px 24px 16px;padding:18px}
+.hub-suite-grid{gap:12px}
+.hub-app-card{min-height:128px;border-radius:12px;padding:16px;transition:transform .15s,background .15s,border-color .15s}
+.hub-app-card:hover{transform:translateY(-2px)}
+.hub-app-card:focus-visible,.hub-project-toolbar input:focus-visible,.hub-project-toolbar select:focus-visible{outline:2px solid var(--hub-accent,#48cba9);outline-offset:2px}
+.hub-app-card strong{font-size:14px}
+.hub-app-card small{font-size:11px}
+.hub-project-toolbar{display:flex;gap:8px;align-items:center;margin:0 0 12px}
+.hub-project-toolbar input,.hub-project-toolbar select{min-width:0;background:#172635;color:#edf5f9;border:1px solid #4b6070;border-radius:7px;padding:9px;font:inherit}
+.hub-project-toolbar input{flex:1}
+.hub-project-toolbar select{width:94px}
+.hub-empty-projects{padding:20px 12px;text-align:center;color:#9eafc2;border:1px dashed #4b6070;border-radius:9px;line-height:1.5}
+#hubProjectCount{font-weight:400;color:#96b2c4;font-size:11px}
+@media(max-width:720px){.hub-window{max-height:100dvh;width:100vw;border-radius:0}.hub-suite{margin:12px}.hub-suite-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hub-app-card{min-height:112px;padding:12px}}

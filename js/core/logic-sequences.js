@@ -8,7 +8,9 @@ export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,i
 export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[]};
 const number=(n,def=0)=>Number.isFinite(Number(n))?Number(n):def;
 const MAX_ACTIONS=256,MAX_SIGNALS=64,MAX_JOBS=100;
-const distance=(a,b)=>Math.hypot((a.x+a.w/2)-(b.x+b.w/2),(a.y+a.h/2)-(b.y+b.h/2));
+const distance=(a,b)=>Math.hypot((number(a.x)+number(a.w)/2)-(number(b.x)+number(b.w)/2),(number(a.y)+number(a.h)/2)-(number(b.y)+number(b.h)/2));
+const safeSteps=steps=>Array.isArray(steps)?steps.slice(0,MAX_ACTIONS):[];
+const safeConditions=conditions=>Array.isArray(conditions)?conditions.slice(0,MAX_ACTIONS):[];
 export function resetSequences(){sequenceRuntime.globals={};sequenceRuntime.messages=[];sequenceRuntime.time=0;sequenceRuntime.pressed.clear();sequenceRuntime.inside.clear();sequenceRuntime.fired.clear();sequenceRuntime.cooldowns.clear();sequenceRuntime.jobs=[];sequenceRuntime.signals=[]}
 export const emitSequenceSignal=name=>{if(sequenceRuntime.signals.length<MAX_SIGNALS)sequenceRuntime.signals.push(String(name||'').slice(0,60))};
 export function conditionPass(c,o,ctx){
@@ -31,9 +33,9 @@ export function conditionPass(c,o,ctx){
  return c.negate?!pass:pass;
 }
 export function chooseSequenceBranch(sequence,obj,ctx){
- if(!Array.isArray(sequence.branches)||!sequence.branches.length)return Array.isArray(sequence.instructions)?sequence.instructions:[];
- for(const branch of sequence.branches){if((branch.conditions||[]).every(c=>conditionPass(c,obj,ctx)))return branch.instructions||[]}
- return sequence.elseInstructions||[];
+ if(!Array.isArray(sequence.branches)||!sequence.branches.length)return safeSteps(sequence.instructions);
+ for(const branch of sequence.branches.slice(0,MAX_ACTIONS)){if(!branch||typeof branch!=='object')continue;if(safeConditions(branch.conditions).every(c=>c&&conditionPass(c,obj,ctx)))return safeSteps(branch.instructions)}
+ return safeSteps(sequence.elseInstructions);
 }
 function execute(job,ctx,actionsLeft){
  const rt=sequenceRuntime,entity=ctx.entities.find(o=>o.id===job.objectId);
@@ -73,20 +75,21 @@ function execute(job,ctx,actionsLeft){
 export function updateSequences(dt,ctx){
  if(!ctx?.playing)return;
  const rt=sequenceRuntime;dt=Math.min(.1,Math.max(0,number(dt)));rt.time+=dt;
- const keys=ctx.keys||new Set(),player=ctx.player||null,objects=ctx.entities||[];
+ const keys=ctx.keys instanceof Set?ctx.keys:new Set(),player=ctx.player||null,objects=Array.isArray(ctx.entities)?ctx.entities:[];
  const signals=rt.signals.splice(0,MAX_SIGNALS);let budget=MAX_ACTIONS;
  const start=(o,s)=>{
   if(rt.jobs.length>=MAX_JOBS||budget<=0)return;
   const id=o.id;if(s.once&&rt.fired.has(id))return;
-  const basePassed=(s.conditions||[]).every(c=>conditionPass(c,o,ctx));
+  const basePassed=safeConditions(s.conditions).every(c=>c&&conditionPass(c,o,ctx));
   if(!basePassed&&!Array.isArray(s.elseInstructions))return;
-  rt.fired.add(id);const steps=(basePassed?chooseSequenceBranch(s,o,ctx):s.elseInstructions).slice(0,MAX_ACTIONS);
+  rt.fired.add(id);const steps=safeSteps(basePassed?chooseSequenceBranch(s,o,ctx):s.elseInstructions);
   const job={objectId:id,steps,index:0,wait:0};
   budget-=execute(job,ctx,budget)||0;
   if(job.index<job.steps.length)rt.jobs.push(job);
  };
  for(const o of objects){
-  const s=o.sequence;if(!s||s.enabled===false||o.sequenceEnabled===false||o._sequenceDestroyed)continue;
+  if(!o||typeof o!=='object')continue;
+  const s=o.sequence;if(!s||typeof s!=='object'||s.enabled===false||o.sequenceEnabled===false||o._sequenceDestroyed)continue;
   const isInside=!!player&&distance(o,player)<=Math.max(0,number(s.radius,96));
   const wasInside=rt.inside.has(o.id);if(isInside)rt.inside.add(o.id);else rt.inside.delete(o.id);
   const k=String(s.key||'e').toLowerCase();const newKey=keys.has(k)&&!rt.pressed.has(k);

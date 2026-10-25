@@ -59,7 +59,7 @@ const program3d=gl=>{
  float cs=cos(uAngle),sn=sin(uAngle);
  q=vec3(q.x*cs-q.z*sn,q.y,q.x*sn+q.z*cs);
  vec3 rel=q+uPosition-uEye;
- vWorld=q+uPosition;vNormal=normalize(vec3(aNormal.x*cs-aNormal.z*sn,aNormal.y,aNormal.x*sn+aNormal.z*cs));
+ vWorld=q+uPosition;vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vNormal=normalize(vec3(scaledNormal.x*cs-scaledNormal.z*sn,scaledNormal.y,scaledNormal.x*sn+scaledNormal.z*cs));
  float d=max(0.01,dot(rel,uForward));
  float f=1.7320508;
  float clipZ=d*1.004-0.201;
@@ -78,7 +78,9 @@ const program3d=gl=>{
  varying vec3 vNormal,vWorld;
  void main(){
  vec3 normal=normalize(vNormal);
- vec3 irradiance=vec3(uAmbient);
+ if(!gl_FrontFacing)normal=-normal;
+ vec3 skyLight=vec3(.60,.73,.91),groundLight=vec3(.24,.27,.32);
+ vec3 irradiance=mix(groundLight,skyLight,clamp(normal.y*.5+.5,0.,1.))*uAmbient;
  irradiance+=uSunColor*uSunIntensity*max(0.,dot(normal,normalize(uSunDir)));
  for(int i=0;i<8;i++){
   if(i>=uLightCount)break;
@@ -97,9 +99,11 @@ const program3d=gl=>{
  vec3 reflected=reflect(-normalize(uSunDir),normal);
  float gloss=pow(max(0.,dot(reflected,viewDir)),mix(48.,5.,clamp(uRoughness,0.04,1.)));
  vec3 specular=mix(vec3(.18),uColor.rgb,clamp(uMetallic,0.,1.))*gloss*uSunIntensity*(1.-uRoughness*.75);
- vec3 lit=uColor.rgb*clamp(irradiance,0.,2.2)+specular;
- float fog=clamp((length(uEye-vWorld)-28.)/85.,0.,.78);
- gl_FragColor=vec4(mix(lit,vec3(.24,.34,.43),fog),uColor.a);
+ vec3 lit=uColor.rgb*clamp(irradiance,0.,3.0)+specular;
+ float fog=1.-exp(-pow(max(0.,length(uEye-vWorld)-22.)*.010,2.));
+ vec3 fogged=mix(lit,vec3(.24,.34,.43),clamp(fog,0.,.87));
+ vec3 mapped=fogged/(vec3(1.)+fogged);
+ gl_FragColor=vec4(pow(max(mapped,vec3(0.)),vec3(1./2.2)),uColor.a);
  }`;
  const p=gl.createProgram();gl.attachShader(p,shader(gl,gl.VERTEX_SHADER,vs));gl.attachShader(p,shader(gl,gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);
  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p)||'Erreur programme');
@@ -204,6 +208,8 @@ export function init3d(canvas,host,buttons){
  };
 
  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
+ // glTF models may include material surfaces wound in either orientation. Keep them visible in the editor.
+ gl.disable(gl.CULL_FACE);
  const bind=mesh=>{gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aNormal)};
  const model=(pos,scale,color,angle=0)=>{gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform1f(u.angle,angle);gl.uniform4fv(u.color,color)};
  view3d.enabled=workspace.mode==='3d';

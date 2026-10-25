@@ -59,6 +59,16 @@ function refresh(){
      input.onchange=()=>edit('BoxCollider size',next=>{const collider=next.objects.find(it=>it.id===o.id).components.find(c=>c.type==='BoxCollider');const dims=[...collider.size];dims[i]=Number(input.value);if(!Number.isFinite(dims[i])||dims[i]<=0)throw Error('Taille de collision invalide');collider.size=dims});line.append(input)});
     label.append(line);inspector.append(label);
    }
+   if(component.type==='MeshRenderer'){
+    for(const property of ['roughness','metalness']){
+     const label=document.createElement('label');label.textContent=property==='roughness'?'Rugosité':'Métallique';
+     const input=document.createElement('input');input.type='range';input.min='0';input.max='1';input.step='.01';input.value=String(component[property]??(property==='roughness'?.48:.08));
+     const value=document.createElement('small');value.textContent=Number(input.value).toFixed(2);
+     input.oninput=()=>{value.textContent=Number(input.value).toFixed(2)};
+     input.onchange=()=>edit('Matériau '+property,next=>setComponentProperty(next,o.id,'MeshRenderer',property,Number(input.value)));
+     label.append(input,value);inspector.append(label);
+    }
+   }
    if(component.type==='Rigidbody'){
     const label=document.createElement('label');label.textContent='Body Type';const input=document.createElement('select');
     for(const choice of ['dynamic','fixed','kinematic']){const option=document.createElement('option');option.value=choice;option.textContent=choice;input.append(option)}

@@ -546,3 +546,19 @@ body:not(.hub-open) .toolbar-group button:hover,body:not(.hub-open) header.topba
 body:not(.hub-open) #objects button:hover,body:not(.hub-open) #history button:hover{background:#393939}
 body:not(.hub-open) #objects button.selected,body:not(.hub-open) #history button.selected{background:#454545;border-color:#a0a0a0}
 body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector{border-color:#484848}
+
+/* WarLike Blueprint — integrated floating editor on the original workbench. */
+.blueprint-window[hidden]{display:none!important}
+.blueprint-window{position:fixed;z-index:9000;top:13vh;left:12vw;width:min(900px,76vw);height:min(720px,75vh);display:flex;flex-direction:column;background:#262626;border:1px solid #666;box-shadow:0 18px 70px #000b;border-radius:9px;overflow:hidden;color:#eee}
+.blueprint-heading{display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 12px;background:#333;border-bottom:1px solid #555}
+.blueprint-heading strong{color:#ddd;white-space:nowrap;font-size:12px;letter-spacing:.08em}
+#blueprintTarget{color:#bbb;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blueprint-content{flex:1;overflow:auto;padding:18px;scrollbar-width:thin;scrollbar-color:#777 #292929}
+.blueprint-content>.sequence-editor{max-width:none;background:#303030;border:1px solid #545454;border-radius:8px}
+.blueprint-content .sequence-graph{background:#252525!important;max-width:100%;overflow:auto}
+.blueprint-content .sequence-graph>div[data-kind]{background:#353535!important;border-color:#777!important;color:#eee!important}
+.blueprint-content .sequence-graph>div:not([data-kind]){color:#bbb!important}
+.blueprint-content .sequence-step,.blueprint-content .sequence-branch{border-color:#555;background:#292929}
+.blueprint-content input,.blueprint-content select{background:#202020;border-color:#606060;color:#eee}
+.blueprint-note{color:#bbb;margin:0 0 14px;line-height:1.5}
+@media(max-width:760px){.blueprint-window{left:3vw;top:9vh;width:94vw;height:83vh}.blueprint-heading{flex-wrap:wrap}}

@@ -77,6 +77,25 @@ component(root,'Game Creator · Survival Horror',body=>{
  }
  const help=document.createElement('p');help.textContent='Ces composants sont enregistrés avec le GameObject et utilisés en mode Survival Horror 2D/3D.';body.append(help);
 });
+component(root,'Game Creator · Monde ouvert / Western / Survie',body=>{
+ const configs=[
+ ['Police · Recherche','worldPoliceConfig',{enabled:true,range:450,speed:75},[['range','Distance de poursuite'],['speed','Vitesse patrouille']]],
+ ['Infecté · Horde','worldInfectedConfig',{enabled:true,range:300,speed:53},[['range','Distance de détection'],['speed','Vitesse infecté']]],
+ ];
+ for(const [label,key,defaults,properties] of configs){
+  const section=document.createElement('details');section.className='inspector-component';
+  const summary=document.createElement('summary');summary.textContent=label;section.append(summary);
+  const cfg=o[key];
+  if(!cfg){const add=document.createElement('button');add.type='button';add.textContent='＋ Ajouter '+label;add.disabled=state.playing;add.onclick=()=>{o[key]={...defaults};record('Ajouter '+label);notify()};section.append(add)}
+  else{
+   const enabled=document.createElement('label');const check=document.createElement('input');check.type='checkbox';check.disabled=state.playing;check.checked=cfg.enabled!==false;check.onchange=()=>{cfg.enabled=check.checked;record('Configurer '+label);notify()};enabled.append(check,document.createTextNode(' Actif'));section.append(enabled);
+   for(const [fieldName,title] of properties)field(section,cfg,fieldName,title);
+   const remove=document.createElement('button');remove.type='button';remove.textContent='Supprimer '+label;remove.disabled=state.playing;remove.onclick=()=>{delete o[key];record('Supprimer '+label);notify()};section.append(remove);
+  }
+  body.append(section);
+ }
+ const hint=document.createElement('small');hint.textContent='Police : suit le joueur si wantedLevel > 0. Infecté : suit le joueur à proximité. Les modèles Western, commerces, missions et campements se trouvent dans la bibliothèque Blueprint.';body.append(hint);
+});
 renderSequenceEditor(root,o);
 component(root,'Gameplay Components',body=>{
  const addComponent=(name,key,factory)=>{if(!o[key]){const b=document.createElement('button');b.textContent='＋ '+name;b.disabled=state.playing;b.onclick=()=>{o[key]=factory();record('Ajouter '+name);notify()};body.append(b);return false}return true};

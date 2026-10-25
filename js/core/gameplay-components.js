@@ -125,7 +125,11 @@ export function updateController3d(p,keys,dt,yaw,entities){
   const oldHeight=p.elevation3d;
   p._verticalVelocity-=gravity*t;
   const candidate=Math.max(0,oldHeight+p._verticalVelocity*t);
-  const floor=floorAt(p.x,p.y,oldHeight+.03);
+  const floor=entities.reduce((value,o)=>{
+   if(!solid(o)||!overlapsXZ(p.x,p.y,o))return value;
+   const level=top(o);
+   return level<=oldHeight+.035&&level>=candidate-.001?Math.max(value,level):value;
+  },0);
   if(p._verticalVelocity<=0&&candidate<=floor){p.elevation3d=floor;p._verticalVelocity=0}
   else if(p._verticalVelocity>0&&entities.some(o=>solid(o)&&overlapsXZ(p.x,p.y,o)&&oldHeight+height<=n(o.elevation3d)+.01&&candidate+height>n(o.elevation3d))){p._verticalVelocity=0}
   else p.elevation3d=candidate;

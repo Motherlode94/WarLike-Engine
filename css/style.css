@@ -647,3 +647,5 @@ body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector{border-color:#4848
 .bp-library-card small{color:#bfbfbf;line-height:1.35;font-size:11px}
 .bp-library-card:hover:not(:disabled){border-color:#b4c6bd;background:#484848}
 @media(max-width:650px){.bp-library-filters{grid-template-columns:1fr}}
+
+#horror3dHud:not([hidden]){position:absolute;z-index:25;top:12px;left:14px;padding:10px 14px;color:#eee0c9;background:#1b1019e8;border:1px solid #725b6c;border-radius:7px;font:600 12px system-ui;pointer-events:none;max-width:calc(100% - 30px)}

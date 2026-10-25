@@ -27,12 +27,28 @@ export function workspacePayload(){
 }
 export function restoreWorkspaces(data,retainCurrent=false){
  if(!data?.workspaces?.['2d']||!data.workspaces?.['3d'])return false;
- for(const key of ['2d','3d']){
-  const slot=data.workspaces[key];
-  if(!Array.isArray(slot.entities)||!Array.isArray(slot.selected))return false;
-  workspace.scenes[key]={entities:clone(slot.entities),selected:clone(slot.selected),nextId:slot.nextId||1,camera:clone(slot.camera||{x:0,y:0,zoom:1})};
- }
- workspace.mode=retainCurrent?workspace.mode:(data.workspaceMode==='3d'?'3d':'2d');
- const slot=workspace.scenes[workspace.mode];state.entities=clone(slot.entities);state.selected=clone(slot.selected);state.nextId=slot.nextId;state.camera=clone(slot.camera);
+ // Validate both scenes *before* changing live editor state.
+ const next={};
+ try{
+  for(const key of ['2d','3d']){
+   const slot=data.workspaces[key];
+   if(!Array.isArray(slot.entities)||!Array.isArray(slot.selected)||slot.entities.length>20000)return false;
+   const ids=new Set();
+   for(const entity of slot.entities){
+    if(!entity||typeof entity!=='object'||!Number.isSafeInteger(entity.id)||entity.id<0||ids.has(entity.id))return false;
+    ids.add(entity.id);
+   }
+   const selected=slot.selected.filter(id=>ids.has(id));
+   const nextId=Math.max(1,...slot.entities.map(e=>e.id+1));
+   const camera=slot.camera||{x:0,y:0,zoom:1};
+   if(!['x','y','zoom'].every(k=>Number.isFinite(camera[k]))||camera.zoom<=0)return false;
+   next[key]={entities:clone(slot.entities),selected:clone(selected),nextId:Math.max(nextId,Number.isSafeInteger(slot.nextId)?slot.nextId:1),camera:clone(camera)};
+  }
+ }catch{return false}
+ const mode=retainCurrent?workspace.mode:(data.workspaceMode==='3d'?'3d':'2d');
+ workspace.scenes=next;workspace.mode=mode;
+ const slot=next[mode];
+ state.entities=clone(slot.entities);state.selected=clone(slot.selected);
+ state.nextId=slot.nextId;state.camera=clone(slot.camera);
  notify();return true;
 }

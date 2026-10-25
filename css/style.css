@@ -695,3 +695,14 @@ body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector{border-color:#4848
 .inspector .sequence-branch,.inspector .inspector-component{margin-bottom:6px}
 @media(max-width:980px){.studio-logo span{display:none}.topbar{gap:5px}.topbar .brand small{display:none}.asset-toolbar select{flex-basis:90px}}
 @media(max-width:720px){.editor-appearance-menu{top:42px;right:8px}.render-quality-panel{right:8px;top:93px}.asset-grid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}}
+
+/* Match workspace height to the actual two editor header rows at every UI scale. */
+body:not(.hub-open) .workspace{height:calc(100dvh / var(--editor-ui-scale) - 94px);min-height:0}
+.workspace{grid-template-columns:minmax(150px,var(--left-pane-width,220px)) 6px minmax(0,1fr) 6px minmax(240px,var(--right-pane-width,305px))}
+@media(max-width:1150px){.workspace{grid-template-columns:minmax(125px,var(--left-pane-width,170px)) 6px minmax(0,1fr) 6px minmax(225px,var(--right-pane-width,255px))}}
+#projectPanel{overflow:hidden}
+#projectContent{height:100%;overflow:hidden}
+.asset-content{overflow:hidden}
+.asset-grid{min-height:0;max-height:100%;overflow:auto}
+.inspector .property-row label{overflow-wrap:anywhere}
+.render-quality-menu[open]>summary,.editor-appearance[open]>summary{outline:1px solid var(--editor-accent,#48cba9)}

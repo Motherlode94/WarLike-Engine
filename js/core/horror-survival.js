@@ -1,7 +1,7 @@
 // Shared optional survival-horror state for both original WarLike workspaces.
-export const horror={enabled:false,flashlight:true,battery:100,fear:0,threat:0,toggleHeld:false};
+export const horror={enabled:false,flashlight:true,battery:100,fear:0,threat:0,toggleHeld:false,noise:0,alerts:[],jumpscare:0};
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
-export function resetHorror(){Object.assign(horror,{enabled:false,flashlight:true,battery:100,fear:0,threat:0,toggleHeld:false})}
+export function resetHorror(){Object.assign(horror,{enabled:false,flashlight:true,battery:100,fear:0,threat:0,toggleHeld:false,noise:0,alerts:[],jumpscare:0})}
 export function updateHorror(dt,player,entities,keys=new Set()){
  if(!horror.enabled||!player)return horror;
  dt=clamp(Number.isFinite(dt)?dt:0,0,.1);
@@ -20,6 +20,33 @@ export function updateHorror(dt,player,entities,keys=new Set()){
  horror.fear=clamp(horror.fear+dt*(threat*16-(horror.flashlight?3:0)-(!threat?5:0)),0,100);
  return horror;
 }
+// Lightweight hearing/vision and search memory, shared between 2D and 3D.
+export function updateHorrorPerception(dt,player,entities,keys=new Set()){
+ if(!horror.enabled||!player)return;
+ dt=clamp(Number.isFinite(dt)?dt:0,0,.1);
+ const running=keys.has('shift'),crouched=keys.has('control')||keys.has('c');
+ horror.noise=crouched?.08:running?1:.38;
+ const px=Number(player.x||0),py=Number(player.y||0);
+ for(const enemy of entities||[]){
+  if(!enemy||enemy===player||!['chase','guard','patrol','search'].includes(enemy.behavior))continue;
+  const dx=px-Number(enemy.x||0),dy=py-Number(enemy.y||0),distance=Math.hypot(dx,dy);
+  const vision=crouched?125:230,hearing=70+220*horror.noise;
+  const spotted=distance<vision,heard=distance<hearing&&horror.noise>.25;
+  const ai=enemy.horrorAI??={awareness:0,searchTimer:0,lastKnown:null};
+  if(spotted||heard){ai.awareness=clamp(ai.awareness+dt*(spotted?1.1:.55),0,1);ai.lastKnown={x:px,y:py};ai.searchTimer=5}
+  else{ai.awareness=clamp(ai.awareness-dt*.18,0,1);ai.searchTimer=Math.max(0,ai.searchTimer-dt)}
+  ai.state=ai.awareness>.65?'chase':ai.searchTimer>0?'search':'patrol';
+  if(ai.state==='chase'||ai.state==='search'){
+   const target=ai.state==='chase'?{x:px,y:py}:ai.lastKnown;
+   if(target&&distance>25){const dx2=target.x-Number(enemy.x||0),dy2=target.y-Number(enemy.y||0),len=Math.hypot(dx2,dy2)||1,speed=ai.state==='chase'?75:33;
+    enemy.x+=dx2/len*speed*dt;enemy.y+=dy2/len*speed*dt;
+   }
+  }
+ }
+}
+export function triggerHorrorJumpscare(message='DANGER !'){
+ horror.jumpscare=1.1;horror.alerts.push(String(message).slice(0,100));if(horror.alerts.length>5)horror.alerts.shift();
+}
 export function drawHorrorHud(ctx,w,h,player,camera){
  if(!horror.enabled||!player)return;
  ctx.save();ctx.fillStyle='#100d18dc';ctx.fillRect(14,15,182,68);
@@ -36,5 +63,6 @@ export function drawHorrorHud(ctx,w,h,player,camera){
   light.addColorStop(0,'rgba(255,244,194,.19)');light.addColorStop(1,'rgba(255,244,194,0)');
   ctx.fillStyle=light;ctx.fillRect(0,0,w,h);
  }
+ if(horror.jumpscare>0){ctx.fillStyle='rgba(139,14,35,'+Math.min(.32,horror.jumpscare*.24)+')';ctx.fillRect(0,0,w,h)}
  ctx.restore();
 }

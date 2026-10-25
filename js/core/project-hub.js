@@ -1,3 +1,5 @@
+import {inspectProject,downloadDiagnostic} from './project-diagnostics.js';
+import {get3dAsset} from '../assets/catalog-3d.js';
 import {prefab3d} from '../assets/catalog-3d.js';
 import {resetHistory} from './history.js';
 // WarLike Hub — local named projects, independent 2D/3D templates.
@@ -120,6 +122,24 @@ export function initHub(){
   }
   document.querySelector('#hubLegacy').hidden=!safeRead('warlike.scene.v1',null)?.entities;
  }
+ const diagnosticPanel=modal.querySelector('#hubDiagnostics');
+ const diagnosticResult=modal.querySelector('#hubDiagnosticsResult');
+ let latestDiagnostic=null;
+ const showDiagnostics=()=>{
+  diagnosticPanel.hidden=false;
+  if(!hub.projectId){diagnosticResult.textContent='Ouvre ou crée un projet pour analyser sa scène.';modal.querySelector('#hubDiagnosticsDownload').disabled=true;return}
+  latestDiagnostic=inspectProject({entities:state.entities,name:hub.projectName,type:workspace.mode,assetLookup:get3dAsset});
+  modal.querySelector('#hubDiagnosticsDownload').disabled=false;
+  diagnosticResult.replaceChildren();
+  const summary=document.createElement('p');
+  summary.textContent=latestDiagnostic.summary.entities+' objets · '+latestDiagnostic.summary.players+' joueurs · '+latestDiagnostic.summary.errors+' erreurs · '+latestDiagnostic.summary.warnings+' avertissements';
+  diagnosticResult.append(summary);
+  const list=document.createElement('ul');
+  for(const issue of latestDiagnostic.issues){const line=document.createElement('li');line.textContent=issue.severity.toUpperCase()+' · '+issue.message;line.dataset.severity=issue.severity;list.append(line)}
+  diagnosticResult.append(list);
+ };
+ modal.querySelector('#hubDiagnosticsClose').onclick=()=>{diagnosticPanel.hidden=true};
+ modal.querySelector('#hubDiagnosticsDownload').onclick=()=>{if(latestDiagnostic)downloadDiagnostic(latestDiagnostic)};
  const launch=mode=>{
   if(hub.projectId&&hub.type===mode){hide();return}
   type.value=mode;
@@ -130,6 +150,7 @@ export function initHub(){
  modal.querySelectorAll('[data-hub-app]').forEach(button=>button.onclick=()=>{
   const app=button.dataset.hubApp;
   if(app==='2d'||app==='3d'){launch(app);return}
+  if(app==='diagnostics'){showDiagnostics();return}
   if(app==='assets'){
    if(!hub.projectId){message.textContent='Ouvre ou crée un projet avant de consulter sa bibliothèque.';return}
    hide();

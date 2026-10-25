@@ -4,7 +4,7 @@ import {updateHorror,updateHorrorPerception,horror} from './horror-survival.js';
 import {renderQuality} from './render-quality.js';
 import {stepPhysics3d} from './physics-3d.js';
 import {loadRapier3d,createRapierScene,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
-import {updateController3d,updateAi,updateStats,attack3d} from './gameplay-components.js';
+import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
 import {getModelGeometry,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences} from './logic-sequences.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
@@ -262,15 +262,38 @@ export function init3d(canvas,host,buttons){
   updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);
-  if(state.keys.has('f')&&p._attackCooldown===0){const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit)p.animation='attack';}
+  if(state.keys.has('f')&&p._attackCooldown===0){if(p.fpsController){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit)p.animation='attack';}
  };
- const camera=()=>sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
+ const isFps=()=>state.playing&&workspace.mode==='3d'&&!!playableActor(state.entities)?.fpsController;
+ const camera=()=>{
+  if(!isFps())return sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
+  const p=playableActor(state.entities),b=objectBounds3d(p),eye=[b.x,b.y+b.h*.25,b.z];
+  const forward=V.norm([-Math.sin(view3d.yaw)*Math.cos(view3d.pitch),-Math.sin(view3d.pitch),-Math.cos(view3d.yaw)*Math.cos(view3d.pitch)]);
+  const right=V.norm(V.cross(forward,[0,1,0])),up=V.norm(V.cross(right,forward));
+  return {eye,forward,right,up};
+ };
+ const shootFps=()=>{
+  if(!isFps())return false;
+  const player=playableActor(state.entities),cam=camera();if((player._attackCooldown||0)>0)return false;
+  player._attackCooldown=.23;
+  const candidates=state.entities.filter(o=>o!==player&&(o.hp??o.stats?.health??100)>0&&(o.assetId?.includes('character-')||o.ai?.enabled));
+  let best=null,along=Infinity;
+  for(const o of candidates){
+   const b=objectBounds3d(o),delta=V.sub([b.x,b.y,b.z],cam.eye),distance=V.dot(delta,cam.forward);
+   if(distance<=0||distance>45)continue;
+   const offset=V.sub(delta,V.mul(cam.forward,distance)),radius=Math.max(.36,b.w*.53,b.h*.53);
+   if(Math.hypot(...offset)>radius||distance>=along)continue;
+   best=o;along=distance;
+  }
+  if(best){damage(best,25);best.animation='hurt';}
+  return !!best;
+ };
  const playerTarget=()=>{const p=playableActor(state.entities);return p?[(p.x+p.w/2)/64,.5,(p.y+p.h/2)/64]:null};
  let wasPlaying=false;
  let physicsSession=null,physicsGeneration=0,physicsAccumulator=0;
  const stopRapier=()=>{physicsGeneration++;disposeRapierScene(physicsSession);physicsSession=null;physicsAccumulator=0;};
  const enterPlay=()=>{
-  const pt=playerTarget();view3d.followPlayer=!!pt;if(pt){view3d.target=pt.slice();view3d.radius=12;view3d.pitch=.5}
+  const pt=playerTarget();view3d.followPlayer=!!pt;if(pt){view3d.target=pt.slice();view3d.radius=12;view3d.pitch=playableActor(state.entities)?.fpsController?0:.5}
   if(localStorage.getItem('warlike.rapier3d')!=='enabled')return;
   const token=++physicsGeneration;
   loadRapier3d().then(api=>{
@@ -294,6 +317,7 @@ export function init3d(canvas,host,buttons){
   if(!view3d.enabled)return;
   const p=rectPoint(e),cam=camera();
   if(state.playing){
+   if(isFps()){if(e.button===0){shootFps();canvas.requestPointerLock?.()}return}
    if(e.button===2){view3d.drag={button:2,x:p.x,y:p.y,yaw:view3d.yaw,pitch:view3d.pitch,pointer:e.pointerId,selected:null,moved:false};canvas.setPointerCapture(e.pointerId)}
    return;
   }
@@ -306,6 +330,7 @@ export function init3d(canvas,host,buttons){
   view3d.drag={button:e.button,x:p.x,y:p.y,target:[...view3d.target],yaw:view3d.yaw,pitch:view3d.pitch,start:point,selected:selected&&e.button===0?state.entities.filter(o=>state.selected.includes(o.id)).map(o=>({id:o.id,x:o.x,y:o.y,z:o.z||0})):null,moved:false,pointer:e.pointerId};
   canvas.setPointerCapture(e.pointerId);
  });
+ document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&isFps()){view3d.yaw-=e.movementX*.0026;view3d.pitch=clamp(view3d.pitch+e.movementY*.0026,-1.25,1.25)}});
  canvas.addEventListener('pointermove',e=>{
   if(!view3d.enabled)return;const p=rectPoint(e),cam=camera();
   if(state.playing){
@@ -343,6 +368,7 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&workspace.mode==='3d'){update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,player:playableActor(state.entities)});}
   if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=Math.min(1,dt*9);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}
   if(!view3d.enabled)return;
+  const crosshair=document.getElementById('fpsCrosshair');if(crosshair)crosshair.hidden=!isFps();
   const horrorHud=document.getElementById('horror3dHud');
   if(horrorHud){
    horrorHud.hidden=!(state.playing&&horror.enabled);
@@ -370,7 +396,7 @@ export function init3d(canvas,host,buttons){
   gl.uniform1fv(u.lightSpot,new Float32Array(lamps.map(l=>l.spot?1:0).concat(Array(8-lamps.length).fill(0))));
   gl.disable(gl.CULL_FACE);
   bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count);
-  const objects=[...state.entities].filter(o=>!state.playing||!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated);
+  const objects=[...state.entities].filter(o=>(!state.playing||!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
   // Depth buffering resolves overlapping faces, including the composite mesh parts.
   bind(cubes);
   for(const o of objects){

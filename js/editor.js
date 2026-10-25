@@ -1,3 +1,4 @@
+import {horror} from './core/horror-survival.js';
 import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality,applyHorrorAtmosphere} from './core/render-quality.js';
 import {initBlueprintWorkspace} from './ui/blueprint-workspace.js';
 import {initEditorAppearance} from './ui/editor-appearance.js';
@@ -40,6 +41,8 @@ document.getElementById('renderHorrorProfile')?.addEventListener('click',()=>{
   const control=document.getElementById(id);if(control)control.value=String(Math.round(renderQuality[key]*scale));
  }
 });
+const horrorToggle=document.getElementById('horrorSurvivalToggle');
+if(horrorToggle){horrorToggle.checked=horror.enabled;horrorToggle.addEventListener('change',()=>{horror.enabled=horrorToggle.checked})}
 const enableLight=document.getElementById('render2dLight');
 if(enableLight){enableLight.checked=renderQuality.lighting2d;enableLight.addEventListener('change',()=>{setRenderQuality({lighting2d:enableLight.checked});saveRenderQuality()})}
 initHub();

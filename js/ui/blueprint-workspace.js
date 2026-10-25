@@ -48,18 +48,31 @@ export function initBlueprintWorkspace(){
   };
   importButton.onclick=()=>file.click();library.append(exportButton,importButton,file);content.append(library);
   const presets=document.createElement('section');presets.className='blueprint-preset-bar';
-  const caption=document.createElement('strong');caption.textContent='Modèles Blueprint '+workspace.mode.toUpperCase();presets.append(caption);
-  const actions=document.createElement('div');actions.className='blueprint-preset-actions';
-  for(const preset of presetsForWorkspace(workspace.mode)){
-   const button=document.createElement('button');button.type='button';button.textContent=preset.label;button.title=preset.description;
-   button.disabled=state.playing;
-   button.onclick=()=>{
-    if(state.playing||!window.confirm('Remplacer le Blueprint de cet objet par « '+preset.label+' » ?'))return;
-    o.sequence=createBlueprintPreset(preset.id,workspace.mode);
-    record('Blueprint '+workspace.mode.toUpperCase()+' : '+preset.label);notify();
-   };
-   actions.append(button);
-  }
+  const caption=document.createElement('strong');caption.textContent='Bibliothèque Blueprint · '+workspace.mode.toUpperCase();presets.append(caption);
+  const search=document.createElement('input');search.type='search';search.placeholder='Rechercher : soin, porte, patrouille, signal…';search.className='bp-library-search';search.setAttribute('aria-label','Rechercher dans la bibliothèque Blueprint');
+  const categories=document.createElement('select');categories.className='bp-library-category';categories.setAttribute('aria-label','Catégorie Blueprint');
+  const available=presetsForWorkspace(workspace.mode);
+  for(const category of ['Toutes',...new Set(available.map(p=>p.category))]){const option=document.createElement('option');option.value=category;option.textContent=category;categories.append(option)}
+  const filters=document.createElement('div');filters.className='bp-library-filters';filters.append(search,categories);presets.append(filters);
+  const actions=document.createElement('div');actions.className='blueprint-preset-actions bp-library-grid';
+  const draw=()=>{
+   actions.replaceChildren();const keyword=search.value.toLocaleLowerCase().trim(),category=categories.value;
+   const results=available.filter(p=>(category==='Toutes'||p.category===category)&&[p.label,p.description,p.category].join(' ').toLocaleLowerCase().includes(keyword));
+   if(!results.length){const empty=document.createElement('p');empty.textContent='Aucun Blueprint pour ces filtres.';actions.append(empty)}
+   for(const preset of results){
+    const button=document.createElement('button');button.type='button';button.className='bp-library-card';button.disabled=state.playing;
+    const name=document.createElement('strong');name.textContent=preset.label;
+    const detail=document.createElement('small');detail.textContent=preset.category+' · '+preset.description;
+    button.append(name,detail);
+    button.onclick=()=>{
+     if(state.playing||!window.confirm('Remplacer le Blueprint de cet objet par « '+preset.label+' » ?'))return;
+     o.sequence=createBlueprintPreset(preset.id,workspace.mode);
+     record('Blueprint '+workspace.mode.toUpperCase()+' : '+preset.label);notify();
+    };
+    actions.append(button);
+   }
+  };
+  search.addEventListener('input',draw);categories.addEventListener('change',draw);draw();
   presets.append(actions);content.append(presets);
   renderSequenceEditor(content,o);
  };

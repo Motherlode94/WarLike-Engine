@@ -422,3 +422,10 @@ body[data-workspace="2d"] #viewport>#canvas{display:block!important}
 .external-glb-form select{flex:0 1 130px;max-width:100%;background:#162534;color:#e6f2fa;border:1px solid #526a7c;border-radius:4px;padding:7px}
 .external-glb-form button{flex:0 0 auto;background:#27635d;border-color:#3f9687}
 .external-glb-form small{flex:1 0 100%;color:#a9bdc8;line-height:1.3}
+
+
+/* The 3D browser distinguishes genuine geometry from procedural stand-ins. */
+.genuine-model-filter{display:flex;align-items:center;gap:6px;white-space:normal;color:#c5e4e0;font-size:11px;cursor:pointer;flex:1 1 190px}
+.genuine-model-filter[hidden]{display:none!important}
+.genuine-model-filter input{accent-color:#61c8b9;flex:0 0 auto}
+.asset-grid .asset small{font-size:10px;color:#b1cbda}

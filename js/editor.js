@@ -1,4 +1,4 @@
-import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality} from './core/render-quality.js';
+import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality,applyHorrorAtmosphere} from './core/render-quality.js';
 import {initBlueprintWorkspace} from './ui/blueprint-workspace.js';
 import {initEditorAppearance} from './ui/editor-appearance.js';
 import {initializeNative3d,nativeStatus} from './core/native-3d.js';
@@ -34,6 +34,12 @@ for(const [id,key,scale] of [['render2dAmbient','ambient2d',100],['render2dRadiu
  input.addEventListener('input',()=>setRenderQuality({[key]:Number(input.value)/scale}));
  input.addEventListener('change',()=>saveRenderQuality());
 }
+document.getElementById('renderHorrorProfile')?.addEventListener('click',()=>{
+ applyHorrorAtmosphere();saveRenderQuality();
+ for(const [id,key,scale] of [['render2dAmbient','ambient2d',100],['render2dRadius','lightRadius2d',1],['render3dExposure','exposure3d',100],['render3dFog','fog3d',1000]]){
+  const control=document.getElementById(id);if(control)control.value=String(Math.round(renderQuality[key]*scale));
+ }
+});
 const enableLight=document.getElementById('render2dLight');
 if(enableLight){enableLight.checked=renderQuality.lighting2d;enableLight.addEventListener('change',()=>{setRenderQuality({lighting2d:enableLight.checked});saveRenderQuality()})}
 initHub();

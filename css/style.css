@@ -429,3 +429,22 @@ body[data-workspace="2d"] #viewport>#canvas{display:block!important}
 .genuine-model-filter[hidden]{display:none!important}
 .genuine-model-filter input{accent-color:#61c8b9;flex:0 0 auto}
 .asset-grid .asset small{font-size:10px;color:#b1cbda}
+
+
+/* WarLike Creative Suite launcher — unified project hub */
+.hub-suite{margin:15px 21px 8px;padding:16px;border:1px solid #415262;background:linear-gradient(145deg,#253441,#1c2833);border-radius:12px}
+.hub-suite-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.hub-suite-heading h3{margin:0 0 4px;color:#e3f4f8;font-size:15px}
+.hub-suite-heading p{margin:0;font-size:11px;color:#aec2d2}
+.hub-suite-version{font-size:10px;color:#c4e5db;white-space:nowrap}
+.hub-suite-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.hub-app-card{min-width:0;min-height:106px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px;padding:12px;border:1px solid #41556b;border-radius:9px;background:#253545;color:#e6f0f8;text-align:left;text-decoration:none;white-space:normal}
+.hub-app-card:hover{background:#30485c;border-color:var(--hub-accent,#48cba9)}
+.hub-app-card strong{font-size:12px}
+.hub-app-card small{font-size:10px;line-height:1.4;color:#b7c8d6}
+.hub-app-card span{font-size:10px;color:var(--hub-accent,#48cba9)}
+.hub-suite-roadmap{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px}
+.hub-suite-roadmap span{font-size:10px;border:1px solid #455565;border-radius:999px;padding:4px 8px;color:#9cabbc}
+.hub-suite-roadmap span:first-child{border:0;padding-left:0;color:#c4dae6}
+@media(max-width:830px){.hub-suite-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.hub-suite{margin:10px;padding:12px}.hub-suite-grid{grid-template-columns:1fr 1fr}.hub-app-card{padding:9px;min-height:110px}}

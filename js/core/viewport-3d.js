@@ -1,5 +1,5 @@
 import {stepPhysics3d} from './physics-3d.js';
-import {loadRapier3d,createRapierScene,stepRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
+import {loadRapier3d,createRapierScene,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d} from './gameplay-components.js';
 import {getModelGeometry,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences,sequenceRuntime} from './logic-sequences.js';
@@ -218,6 +218,15 @@ export function init3d(canvas,host,buttons){
   const p=playableActor(state.entities);
   if(!p)return;
   updateStats(state.entities,dt);
+  if(physicsSession){
+   // Keep scene mutations and scripts synchronized with the native physics world.
+   if(!synchronizeRapierScene(physicsSession,state.entities)){
+    const api=physicsSession.api;
+    disposeRapierScene(physicsSession);
+    try{physicsSession=createRapierScene(api,state.entities);physicsAccumulator=0}
+    catch(error){console.warn('[WarLike] Rapier scene rebuild failed',error);physicsSession=null}
+   }
+  }
   if(physicsSession){
    physicsAccumulator+=dt;
    const fixed=1/60;

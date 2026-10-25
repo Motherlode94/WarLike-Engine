@@ -107,7 +107,12 @@ export function initHub(){
  const run=cb=>{try{cb();picker.value=hex.value=hub.accent;setHubAccent(hub.accent,{persist:false});hide()}catch(e){message.textContent=e.message}};
  function render(){
   cards.replaceChildren();
-  const projects=listProjects().filter(p=>(projectFilter.value==='all'||p.type===projectFilter.value)&&p.name.toLocaleLowerCase().includes(projectSearch.value.trim().toLocaleLowerCase()));
+  const allProjects=listProjects();
+  document.querySelector('#hubTotalProjects').textContent=String(allProjects.length);
+  document.querySelector('#hub2dProjects').textContent=String(allProjects.filter(p=>p.type==='2d').length);
+  document.querySelector('#hub3dProjects').textContent=String(allProjects.filter(p=>p.type==='3d').length);
+  document.querySelector('#hubLastProject').textContent=allProjects.length&&Number.isFinite(allProjects[0].updated)?new Date(allProjects[0].updated).toLocaleDateString('fr-FR'):'—';
+  const projects=allProjects.filter(p=>(projectFilter.value==='all'||p.type===projectFilter.value)&&p.name.toLocaleLowerCase().includes(projectSearch.value.trim().toLocaleLowerCase()));
   projectCount.textContent=projects.length+' projet'+(projects.length>1?'s':'');
   if(!projects.length){const empty=document.createElement('p');empty.className='hub-empty-projects';empty.textContent=projectSearch.value||projectFilter.value!=='all'?'Aucun projet ne correspond à ta recherche.':'Aucun projet créé. Choisis WarLike 2D ou 3D pour commencer.';cards.append(empty)}
   for(const p of projects){
@@ -115,6 +120,7 @@ export function initHub(){
    const info=document.createElement('div');const heading=document.createElement('strong');heading.textContent=p.name;
    const detail=document.createElement('small');detail.textContent=p.type.toUpperCase()+' · '+new Date(p.updated).toLocaleString();item.style.borderLeft='4px solid '+(normalizeHubAccent(p.accent)||DEFAULT_ACCENT);
    info.append(heading,detail);
+   if(p.id===hub.projectId){const current=document.createElement('span');current.className='hub-current-pill';current.textContent='Actif';info.append(current)}
    const open=document.createElement('button');open.textContent='Ouvrir';open.onclick=()=>run(()=>openProject(p.id));
    const edit=document.createElement('button');edit.textContent='Renommer';edit.title='Renommer ce projet';edit.onclick=()=>{const next=prompt('Nouveau nom du projet',p.name);if(next!==null){try{renameProject(p.id,next);render()}catch(e){message.textContent=e.message}}};
    const del=document.createElement('button');del.textContent='×';del.title='Supprimer ce projet local';del.onclick=()=>{if(confirm('Supprimer définitivement le projet « '+p.name+' » ?')){deleteProject(p.id);render()}};
@@ -171,6 +177,21 @@ export function initHub(){
    document.querySelector('#projectTab')?.click();
    return;
   }
+ });
+ const backupAll=modal.querySelector('#hubBackupAll');
+ backupAll.addEventListener('click',()=>{
+  try{
+   if(hub.projectId&&!state.playing&&!saveProject())throw Error('Sauvegarde du projet actif impossible.');
+   const projects=listProjects();
+   if(!projects.length){message.textContent='Aucun projet à sauvegarder.';return}
+   const archive={format:'warlike.hub.backup.v1',exportedAt:new Date().toISOString(),projects:projects.map(meta=>({meta,scene:safeRead(PREFIX+meta.id,null)}))};
+   if(archive.projects.some(entry=>!entry.scene))throw Error('Un projet est introuvable : archive interrompue.');
+   const blob=new Blob([JSON.stringify(archive,null,2)],{type:'application/json'});
+   const url=URL.createObjectURL(blob);const link=document.createElement('a');
+   link.href=url;link.download='warlike-projets-'+new Date().toISOString().slice(0,10)+'.json';
+   link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   message.textContent=projects.length+' projet(s) exporté(s) en archive JSON. Conserve ce fichier en sécurité.';
+  }catch(error){message.textContent='Export impossible : '+error.message}
  });
  projectSearch.addEventListener('input',render);
  projectFilter.addEventListener('change',render);

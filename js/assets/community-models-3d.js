@@ -9,8 +9,8 @@ let catalogPromise=null;
 const classify=path=>{
  const s=path.split('/').pop().toLowerCase();
  if(/character|avatar|human|person|npc|creature|animal/.test(s))return 'Characters';
- if(/vehicle|car|truck|bike|motor|boat|spaceship/.test(s))return 'Vehicles';
- if(/weapon|sword|shield|gun|rifle|axe/.test(s))return 'Weapons';
+ if(/vehicle|automobile|car|truck|bike|motor|boat|spaceship|bus|van|taxi|train|wagon|helicopter|aircraft|airplane|ship|wheel|scooter|transport/.test(s))return 'Vehicles';
+ if(/weapon|sword|shield|gun|rifle|axe|hammer|bow|arrow|dagger|blade|pistol|spear|katana|mace|cannon|bomb|crossbow/.test(s))return 'Weapons';
  if(/building|house|temple|tower|pyramid|pagoda|castle|structure/.test(s))return 'Buildings';
  if(/bush|tree|plant|grass|rock|flower|nature|garden|mushroom|foliage|branch|leaf/.test(s))return 'Nature';
  if(/button|icon|ui|logo|interface|panel|cursor/.test(s))return 'Props';
@@ -26,7 +26,21 @@ export async function addCommunityModels3d({limit=wanted}={}){
   if(data.truncated)throw Error('Index GitHub incomplet : aucun catalogue partiel ajouté');
   const paths=(data.tree||[]).filter(f=>f.type==='blob'&&/\.glb$/i.test(f.path)&&Number(f.size)>0&&Number(f.size)<=25*1024*1024)
    .map(f=>f.path).sort((a,b)=>a.localeCompare(b));
-  const unique=[...new Set(paths)].slice(0,Math.min(Math.max(1,limit),500));
+  // Balance categories BEFORE truncation: alphabetical order was selecting mostly one asset pack.
+  const priority=['Weapons','Vehicles','Characters','Buildings','Nature','Props'];
+  const groups=new Map(priority.map(category=>[category,[]]));
+  for(const path of new Set(paths))groups.get(classify(path)).push(path);
+  const unique=[],maximum=Math.min(Math.max(1,limit),1000);
+  while(unique.length<maximum){
+   let added=false;
+   for(const category of priority){
+    const remaining=groups.get(category);
+    if(!remaining.length)continue;
+    unique.push(remaining.shift());added=true;
+    if(unique.length===maximum)break;
+   }
+   if(!added)break;
+  }
   if(unique.length<limit)throw Error('Seulement '+unique.length+' fichiers GLB admissibles trouvés pour '+limit+' demandés');
   let count=0;
   for(const path of unique){

@@ -9,7 +9,7 @@ const open=()=>new Promise((resolve,reject)=>{
 });
 const transaction=(db,mode,action)=>new Promise((resolve,reject)=>{
  const tx=db.transaction(STORE,mode),store=tx.objectStore(STORE);
- const req=action(store);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+ const req=action(store);let result;req.onsuccess=()=>{result=req.result};req.onerror=()=>reject(req.error);tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error||Error('Transaction IndexedDB échouée'));tx.onabort=()=>reject(tx.error||Error('Transaction IndexedDB annulée'));
 });
 export async function persistLocalModel(asset){
  if(!asset?.file||!asset.id)throw Error('Modèle GLB local invalide');

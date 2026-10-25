@@ -1,4 +1,6 @@
 import {decodeUnityPackage} from '../core/unitypackage.js';
+import {registerLocalModel} from '../assets/real-models-3d.js';
+import {persistLocalModel} from '../core/local-asset-library.js';
 // Browser import shelf: resource inspection and extraction; no Unity C#/scene execution.
 export function initUnityPackageImport(){
  const button=document.getElementById('unityPackageImport'),file=document.getElementById('unityPackageFile'),panel=document.getElementById('unityPackageResults');
@@ -26,6 +28,19 @@ export function initUnityPackageImport(){
     if(asset.kind==='image'){const img=document.createElement('img');img.src=url;img.alt='Aperçu '+asset.path;img.loading='lazy';row.append(img)}
     if(asset.kind==='audio'){const audio=document.createElement('audio');audio.controls=true;audio.preload='none';audio.src=url;row.append(audio)}
     const save=document.createElement('a');save.href=url;save.download=asset.path.split('/').pop()||'asset';save.textContent='↓ Extraire';row.append(save);
+    if(asset.kind==='model'&&ext==='glb'){
+     const add=document.createElement('button');add.type='button';add.textContent='＋ Ajouter à la bibliothèque 3D';
+     add.onclick=async()=>{
+      add.disabled=true;add.textContent='Import en cours…';
+      try{
+       const file3d=new File([asset.data],asset.path.split('/').pop(),{type:'model/gltf-binary'});
+       const model=registerLocalModel(file3d);
+       await persistLocalModel(model);
+       add.textContent='✓ GLB enregistré — actualiser la bibliothèque';
+       document.dispatchEvent(new Event('warlike:assetschanged'));
+      }catch(error){add.disabled=false;add.textContent='Réessayer : '+String(error.message||error)}
+     };row.append(add);
+    }
     list.append(row);
    }
    panel.append(list);

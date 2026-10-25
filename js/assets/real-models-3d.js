@@ -143,7 +143,31 @@ export function parseGlb(buffer){
 export async function getModelGeometry(id){
  if(modelCache.has(id))return modelCache.get(id);
  const item=model3dById(id);if(!item)throw Error('Modèle introuvable');
- const task=(async()=>{const buffer=item.file?await item.file.arrayBuffer():await (async()=>{const result=await fetch(item.url);if(!result.ok)throw Error('Téléchargement du modèle : HTTP '+result.status);return result.arrayBuffer()})();return parseGlb(buffer)})();
+ const task=(async()=>{
+  let buffer;
+  if(item.file)buffer=await item.file.arrayBuffer();
+  else{
+   let result;
+   try{result=await fetch(item.url,{mode:'cors',credentials:'omit'})}
+   catch(error){throw Error('Accès réseau/CORS au GLB impossible : '+String(error?.message||error))}
+   if(!result.ok)throw Error('Téléchargement du GLB : HTTP '+result.status);
+   const declared=Number(result.headers.get('content-length')||0);
+   if(declared>maxBytes)throw Error('GLB de plus de 25 Mo — import refusé');
+   if(result.body){
+    const reader=result.body.getReader(),chunks=[];let length=0;
+    try{while(true){const {done,value}=await reader.read();if(done)break;length+=value.byteLength;
+     if(length>maxBytes){await reader.cancel();throw Error('GLB de plus de 25 Mo — import refusé')}
+     chunks.push(value)
+    }}finally{reader.releaseLock()}
+    const bytes=new Uint8Array(length);let offset=0;
+    for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length}
+    buffer=bytes.buffer;
+   }else{
+    buffer=await result.arrayBuffer();
+   }
+  }
+  return parseGlb(buffer);
+ })();
  modelCache.set(id,task);
  try{return await task}catch(e){modelCache.delete(id);throw e}
 }

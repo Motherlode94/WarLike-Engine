@@ -637,3 +637,13 @@ body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector{border-color:#4848
 .render-quality-panel label:first-of-type{display:flex;align-items:center}
 .render-quality-panel input[type=range]{width:100%;accent-color:#a9bdb4}
 .render-quality-panel small{white-space:normal;color:#aaa;line-height:1.45}
+
+/* Searchable Blueprint library for existing 2D/3D workspace */
+.bp-library-filters{display:grid;grid-template-columns:minmax(0,1fr) 155px;gap:8px}
+.bp-library-search,.bp-library-category{background:#202020;color:#eee;border:1px solid #606060;border-radius:6px;padding:10px;min-width:0}
+.bp-library-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:9px}
+.bp-library-grid .bp-library-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:7px;padding:12px;border:1px solid #646464;background:#393939;border-radius:8px;min-height:88px}
+.bp-library-card strong{color:#f1f1f1;font-size:12px}
+.bp-library-card small{color:#bfbfbf;line-height:1.35;font-size:11px}
+.bp-library-card:hover:not(:disabled){border-color:#b4c6bd;background:#484848}
+@media(max-width:650px){.bp-library-filters{grid-template-columns:1fr}}

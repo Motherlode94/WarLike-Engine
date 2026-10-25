@@ -1,4 +1,4 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WarLike V2 — Three.js 3D</title><style>body{margin:0;background:#202020;color:#e7e7e7;font:14px system-ui}header{display:flex;align-items:center;gap:16px;padding:12px 18px;background:#303030}a{color:#d5d5d5}#stage{height:calc(100dvh - 90px)}#status{margin-left:auto;color:#d0d0d0}footer{padding:8px 18px}</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}</script></head><body><header><strong>WARLIKE V2 · THREE.JS 3D</strong><a href="./v2.html">← Éditeur V2</a><a href="./v2-phaser.html">Phaser 2D</a><span id="status" role="status">Chargement Three.js…</span></header><div id="stage"></div><footer>Souris : orbitation • Molette : zoom • Démo WebGL indépendante de la V1</footer><script type="module">
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WarLike Engine — Three.js 3D</title><style>body{margin:0;background:#202020;color:#e7e7e7;font:14px system-ui}header{display:flex;align-items:center;gap:16px;padding:12px 18px;background:#303030}a{color:#d5d5d5}#stage{height:calc(100dvh - 90px)}#status{margin-left:auto;color:#d0d0d0}footer{padding:8px 18px}</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}</script></head><body><header><strong>WARLIKE ENGINE · THREE.JS 3D</strong><a href="./">← Éditeur</a><a href="./v2-phaser.html">Phaser 2D</a><span id="status" role="status">Chargement Three.js…</span></header><div id="stage"></div><footer>Souris : orbitation • Molette : zoom • Démo WebGL indépendante de la V1</footer><script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 const stage=document.getElementById('stage'),status=document.getElementById('status');
@@ -73,7 +73,7 @@ try{
 
   }
   for(const [id,mesh] of editorMeshes)if(!active.has(id)){removeBody(id);scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();editorMeshes.delete(id)}
-  status.textContent=active.size+' GameObject(s) WarLike V2 synchronisés en 3D';
+  status.textContent=active.size+' GameObject(s) WarLike Engine synchronisés en 3D';
  }
  window.addEventListener('message',event=>{if(event.origin!==location.origin||event.data?.type!=='warlike:v2:scene')return;syncEditorScene(event.data.scene)});
  if(window.parent!==window)window.parent.postMessage({type:'warlike:v2:ready'},location.origin);

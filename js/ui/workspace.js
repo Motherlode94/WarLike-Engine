@@ -61,6 +61,45 @@ const label3d=document.createElement('label');label3d.textContent='Importer un m
 const import3d=document.createElement('input');import3d.type='file';import3d.accept='.glb,model/gltf-binary';import3d.setAttribute('aria-label','Importer modèle 3D GLB');
 import3d.onchange=()=>{try{const file=import3d.files?.[0];if(!file)return;const model=registerLocalModel(file);const cat=prompt('Catégorie du modèle : Characters, Weapons, Vehicles ou Props','Weapons');if(['Characters','Weapons','Vehicles','Props'].includes(cat))model.category=cat;render();log('GLB importé dans la bibliothèque de cette session : '+model.name);document.dispatchEvent(new Event('warlike:workspace'))}catch(error){alert(error.message)}finally{import3d.value=''}};
 label3d.append(import3d);import3dPanel.append(label3d);
+// Import a local folder of existing GLB models; browsers cannot read arbitrary disk paths.
+const folderPanel=document.createElement('div');folderPanel.className='asset-folder-import';
+const folderInput=document.createElement('input');folderInput.type='file';folderInput.multiple=true;folderInput.setAttribute('webkitdirectory','');folderInput.setAttribute('directory','');folderInput.accept='.glb,.fbx,.gltf';
+folderInput.setAttribute('aria-label','Choisir le dossier de mes assets 3D');
+const folderTitle=document.createElement('strong');folderTitle.textContent='📁 Mes assets 3D — importer un dossier';
+const folderStatus=document.createElement('small');folderStatus.textContent='Choisis un dossier sur ton PC. GLB pris en charge ; FBX à convertir en GLB.';
+const classifyLocal=(path)=>{
+ const value=path.toLowerCase();
+ if(/weapon|armes?|rifle|pistol|shotgun|sword|knife|gun|fusil|katana|bow/.test(value))return 'Weapons';
+ if(/vehicle|vehicule|voiture|truck|car|tank|helicopter|bus|motor|bike/.test(value))return 'Vehicles';
+ if(/character|personnage|soldier|human|zombie|enemy|npc|robot/.test(value))return 'Characters';
+ if(/building|batiment|house|garage|hangar|architecture/.test(value))return 'Buildings';
+ if(/nature|tree|rock|plant|grass/.test(value))return 'Nature';
+ return 'Imported 3D';
+};
+folderInput.onchange=async()=>{
+ const files=Array.from(folderInput.files||[]),glbs=files.filter(file=>/\.glb$/i.test(file.name));
+ const fbxs=files.filter(file=>/\.fbx$/i.test(file.name)),gltfs=files.filter(file=>/\.gltf$/i.test(file.name));
+ let imported=0,rejected=0;
+ folderInput.disabled=true;folderStatus.textContent='Import des modèles GLB en cours…';
+ try{
+  for(const file of glbs){
+   try{
+    if(file.size>25*1024*1024)throw Error('trop volumineux');
+    const header=new DataView(await file.slice(0,12).arrayBuffer());
+    if(header.byteLength<12||header.getUint32(0,true)!==0x46546c67||header.getUint32(4,true)!==2)throw Error('GLB 2.0 invalide');
+    const asset=registerLocalModel(file);
+    asset.category=classifyLocal(file.webkitRelativePath||file.name);
+    asset.sourcePath=file.webkitRelativePath||file.name;
+    imported++;
+   }catch(error){rejected++;log('Asset ignoré '+file.name+' : '+String(error?.message||error),'warn')}
+  }
+  document.dispatchEvent(new Event('warlike:workspace'));
+  folderStatus.textContent=imported+' GLB importés · '+rejected+' refusés · '+fbxs.length+' FBX et '+gltfs.length+' glTF texte à convertir.';
+  log('Dossier local : '+folderStatus.textContent);
+ }finally{folderInput.disabled=false;folderInput.value=''}
+};
+folderPanel.append(folderTitle,folderInput,folderStatus);
+import3dPanel.append(folderPanel);
 const remoteForm=document.createElement('form');remoteForm.className='external-glb-form';
 const remoteInput=document.createElement('input');remoteInput.type='url';remoteInput.placeholder='https://exemple.org/personnage.glb';remoteInput.required=true;remoteInput.setAttribute('aria-label','URL HTTPS directe du modèle GLB');
 const categoryInput=document.createElement('select');categoryInput.setAttribute('aria-label','Catégorie de modèle externe');

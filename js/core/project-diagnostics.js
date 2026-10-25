@@ -1,5 +1,5 @@
 // WarLike project diagnostics — truthful export readiness check, independent of renderer.
-const isFiniteNum=n=>Number.isFinite(Number(n));
+const isFiniteNum=n=>typeof n==='number'&&Number.isFinite(n);
 export function inspectProject({entities=[],name='Projet',type='2d',assetLookup=()=>null}={}){
  const issues=[],ids=new Set(),categories={};
  const add=(severity,code,message,entityId=null)=>issues.push({severity,code,message,entityId});
@@ -11,13 +11,14 @@ export function inspectProject({entities=[],name='Projet',type='2d',assetLookup=
   else if(ids.has(o.id))add('error','ID_DUPLICATE','Identifiant en double : '+o.id,o.id);
   else ids.add(o.id);
   if(!isFiniteNum(o.x)||!isFiniteNum(o.y))add('error','POSITION_INVALID','Position incorrecte : '+String(o.name||o.id),o.id);
-  if(!isFiniteNum(o.w)||Number(o.w)<=0||!isFiniteNum(o.h)||Number(o.h)<=0)add('warning','DIMENSIONS_INVALID','Dimensions incorrectes : '+String(o.name||o.id),o.id);
-  if(o.type==='player'||o.playable3d===true)players++;
+  if(!isFiniteNum(o.w)||o.w<=0||!isFiniteNum(o.h)||o.h<=0)add('error','DIMENSIONS_INVALID','Dimensions incorrectes : '+String(o.name||o.id),o.id);
+  if(type==='3d'&&o.elevation3d!==undefined&&!isFiniteNum(o.elevation3d))add('error','ELEVATION_INVALID','Hauteur 3D incorrecte : '+String(o.name||o.id),o.id);
+  if(o.type==='player'||o.playable3d===true||(type==='3d'&&o.type==='character'))players++;
   categories[o.type||'unknown']=(categories[o.type||'unknown']||0)+1;
-  const assetId=o.asset3d||o.model3d||o.modelId||o.prefab3d;
+  const assetId=type==='3d'?(o.model3dId||o.assetId||o.asset3d||o.model3d||o.modelId||o.prefab3d):null;
   if(assetId){
    const asset=assetLookup(assetId);
-   if(!asset)add('warning','ASSET_MISSING','Ressource 3D inconnue : '+assetId,o.id);
+   if(!asset)add('error','ASSET_MISSING','Ressource 3D inconnue : '+assetId,o.id);
    else if(asset.url&&!asset.file){remote++;add('info','ASSET_REMOTE','Modèle téléchargé à la demande : '+asset.name,o.id)}
   }
  }

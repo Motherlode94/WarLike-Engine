@@ -41,6 +41,11 @@ try{
     mesh=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0x54d6bb,roughness:.45,metalness:.08}));
     mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);editorMeshes.set(object.id,mesh);
    }
+   const rendererComp=object.components.find(c=>c.type==='MeshRenderer');
+   const shape=['box','sphere','cylinder'].includes(rendererComp?.shape)?rendererComp.shape:'box';
+   if(mesh.userData.shape!==shape){mesh.geometry.dispose();mesh.geometry=shape==='sphere'?new THREE.SphereGeometry(.5,24,16):shape==='cylinder'?new THREE.CylinderGeometry(.5,.5,1,24):new THREE.BoxGeometry(1,1,1);mesh.userData.shape=shape}
+   mesh.material.color.set(/^#[0-9a-f]{6}$/i.test(rendererComp?.color||'')?rendererComp.color:'#54d6bb');
+   mesh.visible=rendererComp?.visible!==false;
    mesh.position.fromArray(transform.position);
    mesh.rotation.set(...(Array.isArray(transform.rotation)&&transform.rotation.every(Number.isFinite)?transform.rotation:[0,0,0]));
    mesh.scale.fromArray(transform.scale);

@@ -627,3 +627,13 @@ body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector{border-color:#4848
 .bp-variables{display:grid;gap:7px;padding:12px}.bp-variable{display:grid;grid-template-columns:1fr 100px 1fr;gap:7px}
 .bp-variable input,.bp-variable select{min-width:0;padding:7px}
 @media(max-width:650px){.bp-variable{grid-template-columns:1fr}}
+
+/* Rendering-quality controls in the original engine toolbar. */
+.render-quality-menu{position:relative;align-self:center;z-index:50}
+.render-quality-menu>summary{cursor:pointer;list-style:none;border:1px solid #626262;background:#353535;color:#eee;border-radius:5px;padding:8px 12px;font-size:12px;white-space:nowrap}
+.render-quality-menu>summary:hover{background:#444}
+.render-quality-panel{position:absolute;top:calc(100% + 9px);right:0;min-width:268px;display:grid;gap:12px;padding:15px;border:1px solid #666;border-radius:9px;background:#282828;color:#eee;box-shadow:0 16px 44px #000a}
+.render-quality-panel label{display:grid;gap:5px;color:#ddd;font-size:12px}
+.render-quality-panel label:first-of-type{display:flex;align-items:center}
+.render-quality-panel input[type=range]{width:100%;accent-color:#a9bdb4}
+.render-quality-panel small{white-space:normal;color:#aaa;line-height:1.45}

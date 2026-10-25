@@ -610,3 +610,20 @@ body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector{border-color:#4848
 .blueprint-wire::after{content:"";position:absolute;bottom:0;left:-4px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #838b92}
 .blueprint-add-node{margin:5px 0 10px;background:#393939;border:1px dashed #888;color:#eee}
 .blueprint-graph-tip{font-size:11px;color:#bbb;line-height:1.5;margin:10px 3px}
+
+/* WarLike Blueprint graph canvas: draggable nodes and explicit executable wiring. */
+.bp-toolbar{display:flex;gap:7px;flex-wrap:wrap;padding:10px}
+.bp-validation{padding:4px 12px;color:#afcbbb;font-size:12px}
+.bp-board{height:420px;max-width:100%;overflow:auto;position:relative;background-color:#202124;background-image:radial-gradient(#484848 1px,transparent 1px);background-size:18px 18px;border:1px solid #535353;border-radius:8px}
+.bp-board::before{content:'';display:block;width:1600px;height:900px;pointer-events:none}
+.bp-wires{position:absolute;left:0;top:0;pointer-events:none}
+.bp-node{position:absolute;width:176px;min-height:100px;z-index:1;background:#35383e;border:1px solid #707985;border-radius:7px;padding:0 10px 10px;box-shadow:0 4px 13px #0008}
+.bp-node[data-kind=event]{border-color:#ae7a53}.bp-node[data-kind=action]{border-color:#659f8b}
+.bp-node-title{margin:0 -10px 9px;padding:10px;border-radius:6px 6px 0 0;background:#454a51;color:white;cursor:grab;touch-action:none;user-select:none;font-size:11px;font-weight:bold}
+.bp-node input,.bp-node select{display:block;width:100%;margin-top:5px;padding:5px;background:#22272d;border:1px solid #59616c;color:#eee}
+.bp-port{position:absolute;top:40px;border:0!important;padding:0!important;background:none!important;color:#9ee6c5!important;font-size:20px;line-height:1}
+.bp-in{left:-10px}.bp-out{right:-10px}.bp-port:disabled{opacity:.3}
+.bp-remove{position:absolute;right:4px;top:3px;padding:0 4px!important;font-size:15px;color:#f3aaaa}
+.bp-variables{display:grid;gap:7px;padding:12px}.bp-variable{display:grid;grid-template-columns:1fr 100px 1fr;gap:7px}
+.bp-variable input,.bp-variable select{min-width:0;padding:7px}
+@media(max-width:650px){.bp-variable{grid-template-columns:1fr}}

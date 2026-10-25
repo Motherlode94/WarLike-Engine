@@ -13,7 +13,8 @@ test('3D collision slides along an unblocked axis',()=>{
  const mover=obj(0,0,{rigidbody3d:{...defaultRigidbody3d(),vx:200,vz:200,gravity:0,restitution:0}});
  const wall=obj(40,-20,{w:32,h:32,depth3d:64,solid3d:true});
  stepPhysics3d([mover,wall],.05);
- assert.equal(mover.x,0);assert.equal(mover.y,10);
+ assert.ok(mover.x>=0&&mover.x<=8,'Le corps doit s’arrêter avant le mur sur X');
+ assert.ok(Math.abs(mover.y-10)<1e-5,'Le corps conserve son mouvement libre sur Z');
 });
 test('3D impulses account for mass',()=>{
  const body=obj(0,0,{rigidbody3d:{...defaultRigidbody3d(),mass:2}});

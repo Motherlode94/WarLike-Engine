@@ -569,3 +569,30 @@ body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector{border-color:#4848
 .blueprint-preset-actions{display:flex;gap:7px;flex-wrap:wrap}
 .blueprint-preset-actions button{font-size:12px;background:#414141;border:1px solid #626262;color:#ededed}
 .blueprint-preset-actions button:hover:not(:disabled){background:#565656;border-color:#a0a0a0}
+
+/* WarLike Hub — graphite dashboard for the original single-engine launcher. */
+.hub-overlay{background:#0b0b0be8}
+.hub-window{width:min(1120px,97vw);max-height:94dvh;background:#252525;color:#e6e6e6;border:1px solid #595959;border-radius:12px}
+.hub-heading{background:linear-gradient(125deg,#373737,#282828);padding:25px 32px}
+.hub-heading h2{color:#f2f2f2}
+.hub-heading p,.hub-create small{color:#bdbdbd}
+.hub-suite{background:#282828}
+.hub-suite-heading,.hub-suite-roadmap{color:#c8c8c8}
+.hub-app-card{background:#343434;color:#eee;border-color:#525252}
+.hub-app-card:hover{background:#414141;border-color:var(--hub-accent)}
+.hub-layout{gap:22px}
+.hub-create h3,.hub-list h3{color:#eee}
+.hub-create label{color:#cfcfcf}
+.hub-create input,.hub-create select,.hub-project-toolbar input,.hub-project-toolbar select{background:#202020;color:#f0f0f0;border-color:#606060}
+.hub-project-card{background:#303030;border-color:#525252}
+.hub-project-card small{color:#b9b9b9}
+.hub-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:18px 30px 0}
+.hub-stats>div{display:flex;flex-direction:column;gap:6px;padding:15px;background:#303030;border:1px solid #505050;border-radius:9px}
+.hub-stats strong{font-size:23px;line-height:1.2;color:#f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hub-stats span{font-size:11px;color:#b8b8b8}
+.hub-project-list-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}
+.hub-project-list-title h3{margin:0}
+#hubBackupAll{font-size:11px;padding:8px 10px;background:#3b3b3b;border:1px solid #666}
+#hubBackupAll:hover{background:#4a4a4a}
+.hub-current-pill{font-size:10px;color:#eee;border:1px solid #777;background:#444;border-radius:99px;padding:2px 7px;align-self:flex-start}
+@media(max-width:700px){.hub-stats{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px 14px 0}.hub-project-list-title{flex-wrap:wrap}.hub-heading{padding:18px}.hub-layout{padding:18px}}

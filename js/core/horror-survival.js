@@ -16,6 +16,7 @@ export function updateHorror(dt,player,entities,keys=new Set()){
   const dist=Math.hypot(Number(o.x||0)+Number(o.w||0)/2-cx,Number(o.y||0)+Number(o.h||0)/2-cy);
   threat=Math.max(threat,clamp(1-dist/330,0,1));
  }
+ for(const zone of entities||[]){if(zone?.horrorFearConfig?.enabled!==false&&zone?.horrorFearConfig){const dist=Math.hypot(Number(zone.x||0)-cx,Number(zone.y||0)-cy);if(dist<Number(zone.horrorFearConfig.radius||170))threat=Math.max(threat,clamp(Number(zone.horrorFearConfig.strength||12)/30,0,1))}}
  horror.threat=threat;
  horror.fear=clamp(horror.fear+dt*(threat*16-(horror.flashlight?3:0)-(!threat?5:0)),0,100);
  return horror;
@@ -25,15 +26,19 @@ export function updateHorrorPerception(dt,player,entities,keys=new Set()){
  if(!horror.enabled||!player)return;
  dt=clamp(Number.isFinite(dt)?dt:0,0,.1);
  const running=keys.has('shift'),crouched=keys.has('control')||keys.has('c');
- horror.noise=crouched?.08:running?1:.38;
+ const hidden=(entities||[]).some(o=>o?.horrorHideConfig?.enabled!==false&&o?.horrorHideConfig&&Math.hypot(Number(o.x||0)-Number(player.x||0),Number(o.y||0)-Number(player.y||0))<=Number(o.horrorHideConfig.radius||90)&&crouched);
+ horror.noise=hidden?.01:crouched?.08:running?1:.38;
  const px=Number(player.x||0),py=Number(player.y||0);
  for(const enemy of entities||[]){
-  if(!enemy||enemy===player||!['chase','guard','patrol','search'].includes(enemy.behavior))continue;
+  if(!enemy||enemy===player)continue;
+  const cfg=enemy.horrorAiConfig;if(cfg?.enabled===false)continue;
+  if(!cfg&&!['chase','guard','patrol','search'].includes(enemy.behavior))continue;
   const dx=px-Number(enemy.x||0),dy=py-Number(enemy.y||0),distance=Math.hypot(dx,dy);
-  const vision=crouched?125:230,hearing=70+220*horror.noise;
-  const spotted=distance<vision,heard=distance<hearing&&horror.noise>.25;
+  const vision=(crouched?.55:1)*clamp(Number(cfg?.visionRange??230),10,1000);
+  const hearing=70+clamp(Number(cfg?.hearingRange??220),0,1000)*horror.noise;
+  const spotted=!hidden&&distance<vision,heard=!hidden&&distance<hearing&&horror.noise>.25;
   const ai=enemy.horrorAI??={awareness:0,searchTimer:0,lastKnown:null};
-  if(spotted||heard){ai.awareness=clamp(ai.awareness+dt*(spotted?1.1:.55),0,1);ai.lastKnown={x:px,y:py};ai.searchTimer=5}
+  if(spotted||heard){ai.awareness=clamp(ai.awareness+dt*(spotted?1.1:.55),0,1);ai.lastKnown={x:px,y:py};ai.searchTimer=clamp(Number(cfg?.memorySeconds??5),.1,60)}
   else{ai.awareness=clamp(ai.awareness-dt*.18,0,1);ai.searchTimer=Math.max(0,ai.searchTimer-dt)}
   ai.state=ai.awareness>.65?'chase':ai.searchTimer>0?'search':'patrol';
   if(ai.state==='chase'||ai.state==='search'){

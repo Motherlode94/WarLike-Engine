@@ -104,7 +104,30 @@ function bindFloating(kind){
   }).observe(panel)
  }
 }
+const layoutPresets={
+ default:{leftWidth:220,rightWidth:275,projectHeight:320},
+ scene:{leftWidth:175,rightWidth:210,projectHeight:180},
+ inspector:{leftWidth:165,rightWidth:420,projectHeight:235},
+ assets:{leftWidth:175,rightWidth:230,projectHeight:460}
+};
+export function applyLayoutPreset(name){
+ const preset=layoutPresets[name];
+ if(!preset)return false;
+ layout={leftWidth:preset.leftWidth,rightWidth:preset.rightWidth,float:{}};
+ const center=document.querySelector('.center-stack');
+ if(center)center.style.setProperty('--project-height',preset.projectHeight+'px');
+ try{localStorage.setItem('warlike.projectHeight',String(preset.projectHeight))}catch{}
+ applyLayout();save();
+ window.dispatchEvent(new Event('resize'));
+ return true;
+}
 export function initDocking(){
+ document.querySelectorAll('[data-warlike-layout]').forEach(button=>{
+  button.addEventListener('click',()=>{
+   applyLayoutPreset(button.dataset.warlikeLayout);
+   button.closest('details')?.removeAttribute('open');
+  });
+ });
  bindColumnSplitter('leftSplitter','left');bindColumnSplitter('rightSplitter','right');
  for(const kind of Object.keys(panelMap))bindFloating(kind);
  applyLayout();window.addEventListener('resize',()=>applyLayout());

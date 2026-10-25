@@ -4,18 +4,18 @@ import {isBuildingSolid} from './building-system.js';
 import {sanitizeVehicle,collisionCircleRect} from '../typed/systems.js';
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
-export const driving={vehicleId:null,speed:0,steer:0,enterHeld:false,collisionFlash:0,transition:null};
+export const driving={vehicleId:null,speed:0,steer:0,grip:1,enterHeld:false,collisionFlash:0,transition:null};
 const vehicle=o=>o?.type==='prefab'&&getAsset(o.assetId)?.category==='Vehicles';
 const center=o=>({x:o.x+o.w/2,y:o.y+o.h/2});
 export function vehicleDefaults(o){return sanitizeVehicle({maxSpeed:o.maxSpeed,acceleration:o.acceleration,brakeForce:o.brakeForce,turnRate:o.turnRate,drag:o.drag,collisionRadius:o.collisionRadius})}
-export function resetDriving(){Object.assign(driving,{vehicleId:null,speed:0,steer:0,enterHeld:false,collisionFlash:0,transition:null})}
+export function resetDriving(){Object.assign(driving,{vehicleId:null,speed:0,steer:0,grip:1,enterHeld:false,collisionFlash:0,transition:null})}
 export function currentVehicle(){return state.entities.find(o=>o.id===driving.vehicleId&&vehicle(o))||null}
 const solid=o=>isBuildingSolid(o)||o.type==='object'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock','stone-wall','wooden-palisade','traffic-barrier'].includes(o.assetId);
 const overlapCircleRect=collisionCircleRect;
 export function updateVehicles(dt,player){
  driving.collisionFlash=Math.max(0,driving.collisionFlash-dt);
  const k=state.keys,pressed=k.has('e')&&!housingActive()&&housing.transition===0;
- if(driving.transition){const action=driving.transition;action.remaining-=dt;if(action.remaining<=0){if(action.type==='enter'){playSound('vehicle');driving.vehicleId=action.carId;driving.speed=0;player._hiddenInVehicle=true;player.animation='drive';}else{playSound('door');player.x=action.x;player.y=action.y;player._hiddenInVehicle=false;driving.vehicleId=null;driving.speed=0;player.animation='exit_vehicle';player._actionAnimationUntil=performance.now()/1000+.45}driving.transition=null;player._vehicleTransition=false}else{player._vehicleTransition=true;player.animation=action.type==='enter'?'enter_vehicle':'exit_vehicle';driving.enterHeld=pressed;return}}
+ if(driving.transition){const action=driving.transition;action.remaining-=dt;if(action.remaining<=0){if(action.type==='enter'){playSound('vehicle');driving.vehicleId=action.carId;driving.speed=0;driving.steer=0;player._hiddenInVehicle=true;player.animation='drive';}else{playSound('door');player.x=action.x;player.y=action.y;player._hiddenInVehicle=false;driving.vehicleId=null;driving.speed=0;driving.steer=0;player.animation='exit_vehicle';player._actionAnimationUntil=performance.now()/1000+.45}driving.transition=null;player._vehicleTransition=false}else{player._vehicleTransition=true;player.animation=action.type==='enter'?'enter_vehicle':'exit_vehicle';driving.enterHeld=pressed;return}}
 
  if(pressed&&!driving.enterHeld&&player){
   if(currentVehicle()){
@@ -35,7 +35,14 @@ export function updateVehicles(dt,player){
  else{const decel=Math.min(Math.abs(driving.speed),Math.max(8,Math.abs(driving.speed)*conf.drag)*dt);driving.speed-=Math.sign(driving.speed)*decel}
  if(handbrake)driving.speed*=Math.max(0,1-5*dt);
  driving.speed=Math.max(-conf.maxSpeed*.48,Math.min(conf.maxSpeed,driving.speed));
- const steerScale=Math.min(1,Math.abs(driving.speed)/75);car.rotation=(car.rotation||0)+turn*conf.turnRate*steerScale*Math.sign(driving.speed||1)*dt*(handbrake?1.35:1);
+ // GTA-inspired arcade feel: smooth steering, speed-sensitive turning and handbrake drift.
+ const steerResponse=handbrake?9:6;
+ driving.steer+=(turn-driving.steer)*Math.min(1,steerResponse*dt);
+ const speedRatio=Math.min(1,Math.abs(driving.speed)/Math.max(1,conf.maxSpeed));
+ const steerScale=Math.min(1,Math.abs(driving.speed)/60)*(1-.36*speedRatio);
+ const driftBoost=handbrake?1.75:1;
+ car.rotation=(car.rotation||0)+driving.steer*conf.turnRate*steerScale*Math.sign(driving.speed||1)*dt*driftBoost;
+ driving.grip+=( (handbrake?.4:1)-driving.grip)*Math.min(1,(handbrake?7:4)*dt);
  const angle=(car.rotation||0)*Math.PI/180;
  const beforeX=car.x,beforeY=car.y;car.x+=Math.sin(angle)*driving.speed*dt;car.y-=Math.cos(angle)*driving.speed*dt;
  const centerPoint=center(car),r=conf.collisionRadius;

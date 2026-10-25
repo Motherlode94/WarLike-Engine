@@ -78,8 +78,9 @@ export function updateSequences(dt,ctx){
  const start=(o,s)=>{
   if(rt.jobs.length>=MAX_JOBS||budget<=0)return;
   const id=o.id;if(s.once&&rt.fired.has(id))return;
-  if(!Array.isArray(s.branches)&&!(s.conditions||[]).every(c=>conditionPass(c,o,ctx)))return;
-  rt.fired.add(id);const steps=chooseSequenceBranch(s,o,ctx).slice(0,MAX_ACTIONS);
+  const basePassed=(s.conditions||[]).every(c=>conditionPass(c,o,ctx));
+  if(!basePassed&&!Array.isArray(s.elseInstructions))return;
+  rt.fired.add(id);const steps=(basePassed?chooseSequenceBranch(s,o,ctx):s.elseInstructions).slice(0,MAX_ACTIONS);
   const job={objectId:id,steps,index:0,wait:0};
   budget-=execute(job,ctx,budget)||0;
   if(job.index<job.steps.length)rt.jobs.push(job);

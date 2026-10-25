@@ -533,3 +533,16 @@ body.scene-maximized .center-stack{grid-column:3}
 .asset-folder-import strong{font-size:12px;color:#c7f5e6}
 .asset-folder-import input[type=file]{width:100%;max-width:100%;font-size:11px}
 .asset-folder-import small{font-size:11px;color:#bdcbd7;line-height:1.5}
+
+/* WarLike unified classic editor: neutral graphite workbench. */
+body:not(.hub-open){background:#202020;color:#e2e2e2}
+body:not(.hub-open) header.topbar,body:not(.hub-open) .studio-menubar{background:#292929}
+body:not(.hub-open) .panel{background:#272727}
+body:not(.hub-open) .panel-title,body:not(.hub-open) .scene-header,body:not(.hub-open) .scene-tabs{background:#303030;color:#e0e0e0}
+body:not(.hub-open) .scene-tabs .tab{color:#c9c9c9}
+body:not(.hub-open) .scene-tabs .tab.active{background:#454545;color:#fff;border-bottom:2px solid #bcbcbc}
+body:not(.hub-open) .toolbar-group button:not(.active),body:not(.hub-open) header.topbar button:not(.active){background:#353535;border-color:#555;color:#dedede}
+body:not(.hub-open) .toolbar-group button:hover,body:not(.hub-open) header.topbar button:hover{background:#4b4b4b}
+body:not(.hub-open) #objects button:hover,body:not(.hub-open) #history button:hover{background:#393939}
+body:not(.hub-open) #objects button.selected,body:not(.hub-open) #history button.selected{background:#454545;border-color:#a0a0a0}
+body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector{border-color:#484848}

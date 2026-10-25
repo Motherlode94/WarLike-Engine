@@ -3,6 +3,8 @@ const KEY='warlike.render.quality.v1';
 const defaults={lighting2d:true,ambient2d:.72,lightRadius2d:210,shadows2d:true,exposure3d:1.15,fog3d:.01};
 const clamp=(v,a,b,d)=>Number.isFinite(Number(v))?Math.min(b,Math.max(a,Number(v))):d;
 export const renderQuality={...defaults};
+export const horrorProfile={ambient2d:.24,lightRadius2d:125,exposure3d:.68,fog3d:.035};
+export function applyHorrorAtmosphere(){return setRenderQuality(horrorProfile)}
 export function setRenderQuality(next){
  if('lighting2d'in next)renderQuality.lighting2d=!!next.lighting2d;
  if('shadows2d'in next)renderQuality.shadows2d=!!next.shadows2d;

@@ -1,3 +1,4 @@
+import {createSpatialIndex3d} from './spatial-index-3d.js';
 import {integrateNativeGravity,overlapNative3d} from './native-3d.js';
 // WarLike 3D lightweight rigidbody simulation on the horizontal x/y plane plus elevation.
 // Intended for prototyping, not a substitute for an industrial physics engine.
@@ -16,6 +17,9 @@ export function stepPhysics3d(entities,dt){
  const steps=Math.max(1,Math.ceil(frame/(1/120)));
  const t=frame/steps;
  const solid=(subject,other)=>other!==subject&&other.collision3d!==false&&(other.solid3d===true||other.type==='object'||other.type==='mesh3d');
+ const isDynamic=o=>o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!o.playable3d&&o.type!=='player'&&!o.ai?.enabled;
+ const staticIndex=createSpatialIndex3d(entities,{filter:o=>!isDynamic(o)&&o.collision3d!==false});
+ const dynamicBodies=entities.filter(isDynamic);
  for(let substep=0;substep<steps;substep++)for(const o of entities){
   const rb=o.rigidbody3d;
   if(!rb?.enabled||rb.kinematic||o.playable3d||o.type==='player'||o.ai?.enabled)continue;
@@ -23,7 +27,7 @@ export function stepPhysics3d(entities,dt){
   const friction=Math.min(1,Math.max(0,finite(rb.friction,.82)));
   rb.vx=finite(rb.vx);rb.vz=finite(rb.vz);rb.vy=finite(rb.vy);
   const position=axis=>finite(o[axis]);
-  const collision=()=>entities.some(other=>solid(o,other)&&overlap3d(o,other));
+  const collision=()=>[...staticIndex.query(o),...dynamicBodies].some(other=>solid(o,other)&&overlap3d(o,other));
   for(const [axis,velocity] of [['x','vx'],['y','vz']]){
    const initial=position(axis);
    o[axis]=initial+rb[velocity]*t;

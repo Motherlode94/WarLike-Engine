@@ -7,12 +7,13 @@ const raw='https://raw.githubusercontent.com/'+source+'/main/';
 const wanted=150;
 let catalogPromise=null;
 const classify=path=>{
- const s=path.toLowerCase();
+ const s=path.split('/').pop().toLowerCase();
  if(/character|avatar|human|person|npc|creature|animal/.test(s))return 'Characters';
  if(/vehicle|car|truck|bike|motor|boat|spaceship/.test(s))return 'Vehicles';
  if(/weapon|sword|shield|gun|rifle|axe/.test(s))return 'Weapons';
  if(/building|house|temple|tower|pyramid|pagoda|castle|structure/.test(s))return 'Buildings';
- if(/tree|plant|grass|rock|flower|nature|garden/.test(s))return 'Nature';
+ if(/bush|tree|plant|grass|rock|flower|nature|garden|mushroom|foliage|branch|leaf/.test(s))return 'Nature';
+ if(/button|icon|ui|logo|interface|panel|cursor/.test(s))return 'Props';
  return 'Props';
 };
 const label=path=>path.split('/').pop().replace(/\.glb$/i,'').replace(/[_-]+/g,' ').replace(/([a-z])([A-Z])/g,'$1 $2').trim();

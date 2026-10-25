@@ -87,6 +87,13 @@ document.addEventListener('warlike:workspace',()=>{
  const saved=select.value;
  select.replaceChildren(...list.map(cat=>{const o=document.createElement('option');o.value=cat;o.textContent=cat;return o}));
  select.value=list.includes(saved)?saved:'All';selectedAsset=null;
+ for(const category of list){
+  if(tree.querySelectorAll('[data-folder]').length&&Array.from(tree.querySelectorAll('[data-folder]')).some(node=>node.dataset.folder===category))continue;
+  const btn=document.createElement('button');btn.className='folder-item';btn.dataset.folder=category;
+  const icon=document.createElement('span');icon.className='folder-icon';icon.textContent='📁';
+  const label=document.createElement('span');label.textContent=category;const counter=document.createElement('small');
+  btn.append(icon,label,counter);btn.onclick=()=>selectFolder(category);tree.append(btn);
+ }
  for(const b of tree.querySelectorAll('[data-folder]')){const n=b.dataset.folder,catAssets=workspace.mode==='3d'?allAssets3d():catalog;b.hidden=!list.includes(n);b.querySelector('small').textContent=n==='All'?catAssets.length:catAssets.filter(a=>a.category===n).length}
  render();
 });

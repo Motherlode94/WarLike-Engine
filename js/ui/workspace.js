@@ -1,6 +1,6 @@
 import {free3dLibraries} from '../assets/free-3d-libraries.js';
 import {assignModelThumbnail} from './real-model-thumbnail.js';
-import {registerLocalModel,realModels3d} from '../assets/real-models-3d.js';
+import {registerLocalModel,registerRemoteModel,realModels3d} from '../assets/real-models-3d.js';
 import {view3d,sceneCamera3d,groundHit3d} from '../core/viewport-3d.js';
 import {workspace} from '../core/workspaces.js';
 import {assets3d,allAssets3d,categories3d,url3d,get3dAsset,prefab3d} from '../assets/catalog-3d.js';
@@ -40,7 +40,23 @@ const import3dPanel=document.createElement('div');import3dPanel.className='real-
 const label3d=document.createElement('label');label3d.textContent='Importer un modèle GLB (personnage, arme, véhicule…)';
 const import3d=document.createElement('input');import3d.type='file';import3d.accept='.glb,model/gltf-binary';import3d.setAttribute('aria-label','Importer modèle 3D GLB');
 import3d.onchange=()=>{try{const file=import3d.files?.[0];if(!file)return;const model=registerLocalModel(file);const cat=prompt('Catégorie du modèle : Characters, Weapons, Vehicles ou Props','Weapons');if(['Characters','Weapons','Vehicles','Props'].includes(cat))model.category=cat;render();log('GLB importé dans la bibliothèque de cette session : '+model.name);document.dispatchEvent(new Event('warlike:workspace'))}catch(error){alert(error.message)}finally{import3d.value=''}};
-label3d.append(import3d);import3dPanel.append(label3d);import3dPanel.hidden=workspace.mode!=='3d';tree.parentNode?.querySelector('.asset-content')?.prepend(import3dPanel);
+label3d.append(import3d);import3dPanel.append(label3d);
+const remoteForm=document.createElement('form');remoteForm.className='external-glb-form';
+const remoteInput=document.createElement('input');remoteInput.type='url';remoteInput.placeholder='https://exemple.org/personnage.glb';remoteInput.required=true;remoteInput.setAttribute('aria-label','URL HTTPS directe du modèle GLB');
+const categoryInput=document.createElement('select');categoryInput.setAttribute('aria-label','Catégorie de modèle externe');
+for(const name of ['Characters','Monsters','Vehicles','Weapons','Props','Buildings','Imported 3D']){const option=document.createElement('option');option.value=name;option.textContent=name;categoryInput.append(option)}
+const remoteSubmit=document.createElement('button');remoteSubmit.type='submit';remoteSubmit.textContent='↓ Importer URL GLB';
+const remoteHelp=document.createElement('small');remoteHelp.textContent='Lien direct .glb en HTTPS • 25 Mo max • CORS autorisé • licence à vérifier';
+remoteForm.append(remoteInput,categoryInput,remoteSubmit,remoteHelp);
+remoteForm.onsubmit=async event=>{
+ event.preventDefault();remoteSubmit.disabled=true;remoteSubmit.textContent='Téléchargement…';
+ try{
+  const asset=await registerRemoteModel(remoteInput.value,{category:categoryInput.value});
+  remoteInput.value='';render();log('Modèle externe importé : '+asset.name);document.dispatchEvent(new Event('warlike:workspace'));
+ }catch(error){log('Import externe : '+(error.message||error),'error');alert('Échec de l’import : '+(error.message||error)+'\\nLe serveur doit autoriser CORS et fournir un fichier GLB valide.')}
+ finally{remoteSubmit.disabled=false;remoteSubmit.textContent='↓ Importer URL GLB'}
+};
+import3dPanel.append(remoteForm);import3dPanel.hidden=workspace.mode!=='3d';tree.parentNode?.querySelector('.asset-content')?.prepend(import3dPanel);
 const externalLibrary=document.createElement('details');externalLibrary.className='real-model-import';
 const externalTitle=document.createElement('summary');externalTitle.textContent='🌐 Bibliothèques 3D gratuites (sites officiels)';
 externalLibrary.append(externalTitle);

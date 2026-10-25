@@ -710,3 +710,15 @@ body:not(.hub-open) .workspace{height:calc(100dvh / var(--editor-ui-scale) - 94p
 /* FPS training scene: first-person targeting HUD. */
 #fpsCrosshair:not([hidden]){position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:25;pointer-events:none;color:#e9f7ee;text-shadow:0 1px 4px #000,0 0 8px #000;font:700 27px/1 Consolas,monospace}
 #fpsCrosshair[hidden]{display:none}
+
+/* Optional editor appearance overrides, independent of the Hub theme. */
+body:not(.hub-open) .workspace,
+body:not(.hub-open) .hierarchy,
+body:not(.hub-open) .inspector,
+body:not(.hub-open) .center-stack,
+body:not(.hub-open) .studio-menubar,
+body:not(.hub-open) .topbar{background-color:var(--warlike-custom-surface,#151b23);color:var(--warlike-custom-text,#e5eaf1)}
+body:not(.hub-open) .workspace :is(h1,h2,h3,h4,label,summary,p,small,strong,span){color:var(--warlike-custom-text,#e5eaf1)}
+:root[data-warlike-font="compact"] body:not(.hub-open){font-family:Arial,Helvetica,sans-serif;letter-spacing:-.15px}
+:root[data-warlike-font="mono"] body:not(.hub-open){font-family:Consolas,"Courier New",monospace}
+.editor-appearance-menu select{width:100%;min-height:30px}

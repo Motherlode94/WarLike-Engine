@@ -56,7 +56,7 @@ export function stepPhysics3d(entities,dt){
    nextVy=Math.abs(nextVy)>1?-nextVy*restitution:0;
   }
   rb.vy=nextVy;
-  if(o.elevation3d===0){
+  if(o.elevation3d===0&&gravity>0){
    const drag=Math.pow(friction,t*60);
    rb.vx*=drag;rb.vz*=drag;
    if(Math.abs(rb.vx)<.0001)rb.vx=0;

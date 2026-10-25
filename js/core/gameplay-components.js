@@ -67,30 +67,70 @@ export function attack3d(attacker,entities,{range=120,damageAmount=20,arc=1.2}={
  damage(target,Math.max(0,n(damageAmount,20)));target.animation='hurt';return target;
 }
 export function updateController3d(p,keys,dt,yaw,entities){
- const cfg=p.controller3d||defaultController(),s=ensureStats(p);
- const axisX=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
- const axisY=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
- const len=Math.hypot(axisX,axisY);
- const sprint=keys.has('shift')&&s.stamina>0;
- p._dodgeTimer=Math.max(0,n(p._dodgeTimer)-dt);
- const dodgeDown=keys.has('control');
- const dodgeReady=dodgeDown&&!p._dodgeHeld&&p._dodgeTimer===0&&len>0&&s.stamina>=Math.max(0,n(cfg.staminaCost,20));
- p._dodgeHeld=dodgeDown;
- if(dodgeReady){p._dodgeTimer=Math.max(.1,n(cfg.dodgeCooldown,.8));p._dodgeBoost=Math.max(0,n(cfg.dodgeDistance,1.8))*64/.18;s.stamina=Math.max(0,s.stamina-Math.max(0,n(cfg.staminaCost,20)))}
- const dodgeBoost=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0;
- const speed=(Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64+dodgeBoost)*dt/(len||1);
- const vx=(axisX*Math.cos(yaw)+axisY*Math.sin(yaw))*speed;
- const vy=(-axisX*Math.sin(yaw)+axisY*Math.cos(yaw))*speed;
- if(len&&sprint)s.stamina=clamp(s.stamina-18*dt,0,n(s.maxStamina,100));
- const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
- const solid=o=>o!==p&&!o.lightType&&!o.audioEnabled&&(o.solid3d===true||o.type==='object'||o.type==='mesh3d'&&o.collision3d!==false);
- const oldX=p.x;p.x+=vx;if(entities.some(o=>solid(o)&&overlaps(p,o)))p.x=oldX;
- const oldY=p.y;p.y+=vy;if(entities.some(o=>solid(o)&&overlaps(p,o)))p.y=oldY;
+ const cfg=p.controller3d||defaultController(),stats=ensureStats(p);
+ const frame=Math.max(0,Math.min(.1,n(dt)));
+ if(!frame)return;
+ const ax=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
+ const az=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
+ const len=Math.hypot(ax,az),sprint=keys.has('shift')&&stats.stamina>0;
+ const jump=keys.has(' ')||keys.has('space');
+ const solid=o=>o!==p&&o.collision3d!==false&&!o.lightType&&!o.audioEnabled&&(o.solid3d===true||o.type==='object'||o.type==='mesh3d');
+ const radiusX=Math.max(1,n(p.w,32)),radiusZ=Math.max(1,n(p.depth3d,p.h||32)),height=Math.max(.1,n(p.h,100)/64);
+ const top=o=>n(o.elevation3d)+Math.max(.1,n(o.h,32)/64);
+ const overlapsXZ=(x,z,o)=>x<n(o.x)+n(o.w,32)&&x+radiusX>n(o.x)&&z<n(o.y)+n(o.depth3d,o.h||32)&&z+radiusZ>n(o.y);
+ const horizontalBlocked=(x,z,elevation)=>entities.some(o=>solid(o)&&overlapsXZ(x,z,o)&&elevation<top(o)-.0001&&elevation+height>n(o.elevation3d)+.0001);
+ const floorAt=(x,z,current)=>entities.reduce((floor,o)=>{
+  if(!solid(o)||!overlapsXZ(x,z,o))return floor;
+  const candidate=top(o);
+  return candidate<=current+.03&&candidate>floor?candidate:floor;
+ },0);
+ p.elevation3d=Math.max(0,n(p.elevation3d));
  p._verticalVelocity=n(p._verticalVelocity);
- const ground=0;
- if(keys.has(' ')&&n(p.elevation3d)<=ground+.01&&p._verticalVelocity<=0)p._verticalVelocity=Math.max(0,n(cfg.jumpForce,5.6));
- p._verticalVelocity-=Math.max(0,n(cfg.gravity,15))*dt;
- p.elevation3d=Math.max(ground,n(p.elevation3d)+p._verticalVelocity*dt);
- if(p.elevation3d===ground)p._verticalVelocity=0;
- p.animation=len?(sprint?'run':'walk'):'idle';
+ p._dodgeTimer=Math.max(0,n(p._dodgeTimer)-frame);
+ const dodgeDown=keys.has('control');
+ if(dodgeDown&&!p._dodgeHeld&&p._dodgeTimer<=0&&len&&stats.stamina>=n(cfg.staminaCost,20)){
+  p._dodgeTimer=Math.max(.1,n(cfg.dodgeCooldown,.8));
+  p._dodgeBoost=Math.max(0,n(cfg.dodgeDistance,1.8))*64/.18;
+  stats.stamina=Math.max(0,stats.stamina-n(cfg.staminaCost,20));
+ }
+ p._dodgeHeld=dodgeDown;
+ const dodge=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0;
+ const velocity=(Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64+dodge)/(len||1);
+ const vx=(ax*Math.cos(yaw)+az*Math.sin(yaw))*velocity;
+ const vz=(-ax*Math.sin(yaw)+az*Math.cos(yaw))*velocity;
+ if(len&&sprint)stats.stamina=clamp(stats.stamina-18*frame,0,n(stats.maxStamina,100));
+ const grounded=p.elevation3d<=floorAt(p.x,p.y,p.elevation3d)+.035&&p._verticalVelocity<=0;
+ if(jump&&!p._jumpHeld&&grounded){p._verticalVelocity=Math.max(0,n(cfg.jumpForce,5.6));p.grounded3d=false}
+ p._jumpHeld=jump;
+ const steps=Math.max(1,Math.ceil(Math.max(Math.abs(vx),Math.abs(vz))*frame/Math.max(4,Math.min(radiusX,radiusZ)*.3)),Math.ceil(frame/(1/90)));
+ const t=frame/steps,stepHeight=Math.max(0,Math.min(.6,n(cfg.stepHeight,.28))),gravity=Math.max(0,n(cfg.gravity,15));
+ for(let step=0;step<steps;step++){
+  const oldFloor=floorAt(p.x,p.y,p.elevation3d);
+  const wasGrounded=p.elevation3d<=oldFloor+.035&&p._verticalVelocity<=0;
+  for(const [axis,delta] of [['x',vx*t],['y',vz*t]]){
+   if(!delta)continue;
+   const candidate=p[axis]+delta;
+   const x=axis==='x'?candidate:p.x,z=axis==='y'?candidate:p.y;
+   if(!horizontalBlocked(x,z,p.elevation3d)){p[axis]=candidate;continue}
+   // Grounded characters can step onto low obstacles, but cannot phase through walls.
+   if(wasGrounded&&p._verticalVelocity<=0){
+    const raised=p.elevation3d+stepHeight;
+    if(!horizontalBlocked(x,z,raised)){
+     p[axis]=candidate;
+     const support=floorAt(x,z,raised);
+     p.elevation3d=Math.max(p.elevation3d,support);
+    }
+   }
+  }
+  const oldHeight=p.elevation3d;
+  p._verticalVelocity-=gravity*t;
+  const candidate=Math.max(0,oldHeight+p._verticalVelocity*t);
+  const floor=floorAt(p.x,p.y,oldHeight+.03);
+  if(p._verticalVelocity<=0&&candidate<=floor){p.elevation3d=floor;p._verticalVelocity=0}
+  else if(p._verticalVelocity>0&&entities.some(o=>solid(o)&&overlapsXZ(p.x,p.y,o)&&oldHeight+height<=n(o.elevation3d)+.01&&candidate+height>n(o.elevation3d))){p._verticalVelocity=0}
+  else p.elevation3d=candidate;
+ }
+ const support=floorAt(p.x,p.y,p.elevation3d+.04);
+ p.grounded3d=p.elevation3d<=support+.035&&p._verticalVelocity<=0;
+ p.animation=p.grounded3d?(len?(sprint?'run':'walk'):'idle'):(p._verticalVelocity>0?'jump':'fall');
 }

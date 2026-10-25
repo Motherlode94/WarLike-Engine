@@ -1,3 +1,4 @@
+import {createComponent} from '../core/components-v2.js';
 import {createScene,createGameObject,addGameObject,duplicateGameObject,removeGameObject,deserializeScene,serializeScene} from '../core/scene-graph-v2.js';
 import {createSceneHistory,setComponentProperty,renameGameObject} from '../core/scene-commands-v2.js';
 const $=id=>document.getElementById(id),canvas=$('viewport'),ctx=canvas.getContext('2d');
@@ -34,8 +35,28 @@ function refresh(){
  const inspector=$('inspector');inspector.replaceChildren();const o=selectedObject();
  if(o){
   const name=document.createElement('label');name.textContent='Nom';const field=document.createElement('input');field.value=o.name;field.onchange=()=>edit('Renommer',s=>renameGameObject(s,o.id,field.value));name.append(field);inspector.append(name);
+  const addSelect=document.createElement('select');
+  for(const type of ['MeshRenderer','BoxCollider','Rigidbody']){const option=document.createElement('option');option.value=type;option.textContent=type;addSelect.append(option)}
+  const addButton=document.createElement('button');addButton.textContent='＋ Ajouter composant';
+  addButton.onclick=()=>edit('Ajouter composant',next=>{const obj=next.objects.find(item=>item.id===o.id);if(!obj.components.some(c=>c.type===addSelect.value))obj.components.push(createComponent(addSelect.value))});
+  inspector.append(addSelect,addButton);
   for(const component of o.components){
    const title=document.createElement('h2');title.textContent=component.type;inspector.append(title);
+   if(component.type==='MeshRenderer'){
+    for(const property of ['shape','color']){
+     const label=document.createElement('label');label.textContent=property;
+     const input=document.createElement(property==='shape'?'select':'input');
+     if(property==='shape')for(const choice of ['box','sphere','cylinder']){const opt=document.createElement('option');opt.value=choice;opt.textContent=choice;input.append(opt)}
+     else input.type='color';
+     input.value=component[property];input.onchange=()=>edit('MeshRenderer '+property,s=>setComponentProperty(s,o.id,'MeshRenderer',property,input.value));
+     label.append(input);inspector.append(label)
+    }
+   }
+   if(component.type==='Rigidbody'){
+    const label=document.createElement('label');label.textContent='Body Type';const input=document.createElement('select');
+    for(const choice of ['dynamic','fixed','kinematic']){const option=document.createElement('option');option.value=choice;option.textContent=choice;input.append(option)}
+    input.value=component.bodyType;input.onchange=()=>edit('Rigidbody type',s=>setComponentProperty(s,o.id,'Rigidbody','bodyType',input.value));label.append(input);inspector.append(label);
+   }
    if(component.type==='Transform')for(const key of ['position','rotation','scale']){
     const label=document.createElement('label');label.textContent=key.toUpperCase();
     const line=document.createElement('div');line.className='triplet';

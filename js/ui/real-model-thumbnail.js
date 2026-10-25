@@ -87,5 +87,15 @@ export function assignModelThumbnail(image,id){
   };
   image.src=url;
  };
- tryScreenshot();
+ if(entry?.thumbnailUrl){
+  image.onload=()=>{
+   if(!current())return;
+   image.onload=null;image.onerror=null;
+   image.dataset.modelStatus='reference';
+   image.alt='Vignette officielle du modèle '+(entry.name||id);
+   image.title='Vignette du modèle réel — source Polygonal Mind';
+  };
+  image.onerror=()=>{image.onload=null;renderGeometry()};
+  image.src=entry.thumbnailUrl;
+ }else tryScreenshot();
 }

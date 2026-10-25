@@ -29,16 +29,6 @@ export function registerElimination(victim,attacker,game){
  if(attacker&&attacker!==victim){runtime.leaderboard[attacker.id]=(runtime.leaderboard[attacker.id]||0)+1}
  if(local){runtime.kills++}if(attacker&&m.kind==='teamDeathmatch')runtime.teamScores[team]=(runtime.teamScores[team]||0)+1;
  if(victim===p){runtime.deaths++;runtime.playerOut=true;if(m.kind==='battleRoyale')end('Éliminé — Battle Royale');else runtime.playerRespawn=Math.max(1,Number(m.respawnSeconds)||4)}
- if(m.kind==='frontline'){
-   const radius=Math.max(1,Number(m.captureRadius)||115),point={x:Number(m.captureX)||700,y:Number(m.captureY)||340};
-   const near=state.entities.filter(e=>participant(e)&&!e._modeEliminated&&Math.hypot(center(e).x-point.x,center(e).y-point.y)<=radius);
-   const teams=new Set(near.map(e=>Number(e.team)||1));
-   if(teams.size===1){const team=[...teams][0];
-    if(runtime.captureOwner!==team){runtime.capture+=dt;if(runtime.capture>=Math.max(.1,Number(m.captureSeconds)||12)){runtime.captureOwner=team;runtime.capture=0;runtime.captureScoring=0;push('Zone capturée par équipe '+team)}}
-    else{runtime.captureScoring+=dt;const interval=Math.max(1,Number(m.captureSeconds)||12);while(runtime.captureScoring>=interval){runtime.captureScoring-=interval;runtime.teamScores[team]=(runtime.teamScores[team]||0)+Math.max(1,Number(m.scorePerCapture)||2)}}
-   }else if(teams.size>1){runtime.capture=0}
-   if(Object.values(runtime.teamScores).some(score=>score>=Math.max(1,Number(m.scoreLimit)||10)))end('Victoire Frontline équipe '+(runtime.teamScores[1]>=runtime.teamScores[2]?1:2));
- }
  if(m.kind==='battleRoyale'){
    const remaining=state.entities.filter(e=>participant(e)&&!e._modeEliminated).length;
    runtime.alive=remaining;if(remaining<=1){const survivor=state.entities.find(e=>participant(e)&&!e._modeEliminated);end(survivor===p?'Victoire Royale !':'Victoire : '+(survivor?.name||'aucun survivant'))}
@@ -63,6 +53,16 @@ export function updateGameMode(dt,game){
  if(m.kind==='roleplay'){
    runtime.payTimer+=dt;
    if(runtime.payTimer>=Math.max(3,Number(m.rolePayInterval)||25)){runtime.payTimer=0;runtime.money+=Math.max(0,Number(m.roleSalary)||0);push('Salaire +'+m.roleSalary+'$')}
+ }
+ if(m.kind==='frontline'){
+   const radius=Math.max(1,Number(m.captureRadius)||115),point={x:Number(m.captureX)||700,y:Number(m.captureY)||340};
+   const near=state.entities.filter(e=>participant(e)&&!e._modeEliminated&&Math.hypot(center(e).x-point.x,center(e).y-point.y)<=radius);
+   const teams=new Set(near.map(e=>Number(e.team)||1));
+   if(teams.size===1){const team=[...teams][0];
+    if(runtime.captureOwner!==team){runtime.capture+=dt;if(runtime.capture>=Math.max(.1,Number(m.captureSeconds)||12)){runtime.captureOwner=team;runtime.capture=0;runtime.captureScoring=0;push('Zone capturée par équipe '+team)}}
+    else{runtime.captureScoring+=dt;const interval=Math.max(1,Number(m.captureSeconds)||12);while(runtime.captureScoring>=interval){runtime.captureScoring-=interval;runtime.teamScores[team]=(runtime.teamScores[team]||0)+Math.max(1,Number(m.scorePerCapture)||2)}}
+   }else if(teams.size>1){runtime.capture=0}
+   if(Object.values(runtime.teamScores).some(score=>score>=Math.max(1,Number(m.scoreLimit)||10)))end('Victoire Frontline équipe '+(runtime.teamScores[1]>=runtime.teamScores[2]?1:2));
  }
  if(m.kind==='battleRoyale'){
    const duration=Math.max(15,Number(m.zoneShrinkSeconds)||180),pct=Math.min(1,runtime.elapsed/duration);

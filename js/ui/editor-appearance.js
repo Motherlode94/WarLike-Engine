@@ -39,6 +39,15 @@ export function initEditorAppearance(){
  document.querySelector('#editorScaleUp').onclick=()=>setScale(Number(range.value)+5);
  document.querySelector('#editorScaleReset').onclick=()=>setScale(100);
  document.querySelector('#editorAppearanceReset').onclick=()=>{setColor(editorColors[0]);setScale(100)};
- setColor(safeGet(COLOR_KEY,editorColors[0]),false);
+ const appearance=document.querySelector('.editor-appearance');
+ if(appearance){
+  document.addEventListener('pointerdown',event=>{
+   if(appearance.open&&!appearance.contains(event.target))appearance.open=false;
+  });
+  document.addEventListener('keydown',event=>{
+   if(event.key==='Escape'&&appearance.open){appearance.open=false;appearance.querySelector('summary')?.focus()}
+  });
+ }
+  setColor(safeGet(COLOR_KEY,editorColors[0]),false);
  setScale(safeGet(SCALE_KEY,'100'),false);
 }

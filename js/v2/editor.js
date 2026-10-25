@@ -52,6 +52,13 @@ function refresh(){
      label.append(input);inspector.append(label)
     }
    }
+   if(component.type==='BoxCollider'){
+    const label=document.createElement('label');label.textContent='Collision Box — X / Y / Z';
+    const line=document.createElement('div');line.className='triplet';
+    component.size.forEach((value,i)=>{const input=document.createElement('input');input.type='number';input.min='.01';input.step='.1';input.value=String(value);
+     input.onchange=()=>edit('BoxCollider size',next=>{const collider=next.objects.find(it=>it.id===o.id).components.find(c=>c.type==='BoxCollider');const dims=[...collider.size];dims[i]=Number(input.value);if(!Number.isFinite(dims[i])||dims[i]<=0)throw Error('Taille de collision invalide');collider.size=dims});line.append(input)});
+    label.append(line);inspector.append(label);
+   }
    if(component.type==='Rigidbody'){
     const label=document.createElement('label');label.textContent='Body Type';const input=document.createElement('select');
     for(const choice of ['dynamic','fixed','kinematic']){const option=document.createElement('option');option.value=choice;option.textContent=choice;input.append(option)}

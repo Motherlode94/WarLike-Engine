@@ -2,6 +2,9 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 const stage=document.getElementById('stage'),status=document.getElementById('status');
+window.addEventListener('message',event=>{if(event.origin!==location.origin||event.data?.type!=='warlike:v2:free-mouse')return;if(document.pointerLockElement)document.exitPointerLock()});
+window.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.pointerLockElement)document.exitPointerLock()});
+
 try{
  const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;stage.append(renderer.domElement);
  const scene=new THREE.Scene();scene.background=new THREE.Color('#34373b');scene.fog=new THREE.FogExp2('#34373b',.011);

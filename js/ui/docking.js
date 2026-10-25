@@ -121,7 +121,35 @@ export function applyLayoutPreset(name){
  window.dispatchEvent(new Event('resize'));
  return true;
 }
+const customLayoutKey='warlike.workspace.layout.custom.v1';
+export function saveCustomLayout(){
+ const center=document.querySelector('.center-stack');
+ const height=parseInt(getComputedStyle(center).getPropertyValue('--project-height'),10)||320;
+ const snapshot={leftWidth:layout.leftWidth,rightWidth:layout.rightWidth,float:structuredClone(layout.float),projectHeight:height};
+ try{localStorage.setItem(customLayoutKey,JSON.stringify(snapshot));return true}catch{return false}
+}
+export function loadCustomLayout(){
+ let saved;
+ try{saved=JSON.parse(localStorage.getItem(customLayoutKey)||'null')}catch{return false}
+ if(!saved||!Number.isFinite(saved.leftWidth)||!Number.isFinite(saved.rightWidth))return false;
+ layout={leftWidth:clamp(saved.leftWidth,160,440),rightWidth:clamp(saved.rightWidth,190,480),float:saved.float&&typeof saved.float==='object'?saved.float:{}};
+ const center=document.querySelector('.center-stack');
+ if(center&&Number.isFinite(saved.projectHeight))center.style.setProperty('--project-height',clamp(saved.projectHeight,120,650)+'px');
+ applyLayout();save();window.dispatchEvent(new Event('resize'));return true;
+}
+let maximizedScene=false;
+export function toggleMaximizeScene(force){
+ maximizedScene=typeof force==='boolean'?force:!maximizedScene;
+ document.body.classList.toggle('scene-maximized',maximizedScene);
+ window.dispatchEvent(new Event('resize'));
+ return maximizedScene;
+}
 export function initDocking(){
+ const saveButton=document.querySelector('#layoutSaveCustom'),loadButton=document.querySelector('#layoutLoadCustom'),maxButton=document.querySelector('#layoutMaximizeScene');
+ if(saveButton)saveButton.onclick=()=>{saveButton.textContent=saveCustomLayout()?'✓ Disposition enregistrée':'Enregistrement impossible'};
+ if(loadButton)loadButton.onclick=()=>{loadButton.textContent=loadCustomLayout()?'✓ Disposition restaurée':'Aucune disposition enregistrée'};
+ if(maxButton)maxButton.onclick=()=>{maxButton.textContent=toggleMaximizeScene()?'Restaurer la scène':'Maximiser la scène'};
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&maximizedScene)toggleMaximizeScene(false)});
  document.querySelectorAll('[data-warlike-layout]').forEach(button=>{
   button.addEventListener('click',()=>{
    applyLayoutPreset(button.dataset.warlikeLayout);

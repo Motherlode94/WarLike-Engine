@@ -27,6 +27,26 @@ export function initBlueprintWorkspace(){
   const note=document.createElement('p');note.className='blueprint-note';
   note.textContent='WarLike Blueprint utilise le moteur de séquences du projet. Les modifications sont enregistrées dans la scène et exécutées pendant Play.';
   content.append(note);
+  const library=document.createElement('div');library.className='blueprint-preset-bar';
+  const exportButton=document.createElement('button');exportButton.type='button';exportButton.textContent='↓ Exporter ce Blueprint';exportButton.disabled=!o.sequence;
+  exportButton.onclick=()=>{
+   if(!o.sequence)return;
+   const blob=new Blob([JSON.stringify({format:'warlike.blueprint.v1',sequence:o.sequence},null,2)],{type:'application/json'});
+   const url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download='warlike-blueprint-'+o.id+'.json';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+  const importButton=document.createElement('button');importButton.type='button';importButton.textContent='↑ Importer un Blueprint';importButton.disabled=state.playing;
+  const file=document.createElement('input');file.type='file';file.accept='.json,application/json';file.hidden=true;file.onchange=async()=>{
+   try{
+    const uploaded=file.files?.[0];if(!uploaded)return;
+    if(uploaded.size>1024*512)throw Error('Fichier trop volumineux (512 Ko maximum).');
+    const data=JSON.parse(await uploaded.text());
+    if(data?.format!=='warlike.blueprint.v1'||!data.sequence||typeof data.sequence!=='object'||Array.isArray(data.sequence))throw Error('Format Blueprint non reconnu.');
+    if(data.sequence.graph){const {inspectGraph,applyGraph}=await import('../core/blueprint-graph.js');const issues=inspectGraph(data.sequence.graph);if(issues.length)throw Error(issues.join(' · '));applyGraph(data.sequence)}
+    if(!window.confirm('Importer le Blueprint et remplacer la logique de cet objet ?'))return;
+    o.sequence=structuredClone(data.sequence);record('Importer Blueprint');notify();
+   }catch(error){window.alert('Import Blueprint : '+error.message)}finally{file.value=''}
+  };
+  importButton.onclick=()=>file.click();library.append(exportButton,importButton,file);content.append(library);
   const presets=document.createElement('section');presets.className='blueprint-preset-bar';
   const caption=document.createElement('strong');caption.textContent='Modèles Blueprint '+workspace.mode.toUpperCase();presets.append(caption);
   const actions=document.createElement('div');actions.className='blueprint-preset-actions';

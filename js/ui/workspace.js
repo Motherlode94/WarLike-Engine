@@ -40,7 +40,7 @@ const import3dPanel=document.createElement('div');import3dPanel.className='real-
 const label3d=document.createElement('label');label3d.textContent='Importer un modèle GLB (personnage, arme, véhicule…)';
 const import3d=document.createElement('input');import3d.type='file';import3d.accept='.glb,model/gltf-binary';import3d.setAttribute('aria-label','Importer modèle 3D GLB');
 import3d.onchange=()=>{try{const file=import3d.files?.[0];if(!file)return;const model=registerLocalModel(file);const cat=prompt('Catégorie du modèle : Characters, Weapons, Vehicles ou Props','Weapons');if(['Characters','Weapons','Vehicles','Props'].includes(cat))model.category=cat;render();log('GLB importé dans la bibliothèque de cette session : '+model.name);document.dispatchEvent(new Event('warlike:workspace'))}catch(error){alert(error.message)}finally{import3d.value=''}};
-label3d.append(import3d);import3dPanel.append(label3d);import3dPanel.hidden=workspace.mode!=='3d';tree.parentNode?.prepend(import3dPanel);
+label3d.append(import3d);import3dPanel.append(label3d);import3dPanel.hidden=workspace.mode!=='3d';tree.parentNode?.querySelector('.asset-content')?.prepend(import3dPanel);
 const externalLibrary=document.createElement('details');externalLibrary.className='real-model-import';
 const externalTitle=document.createElement('summary');externalTitle.textContent='🌐 Bibliothèques 3D gratuites (sites officiels)';
 externalLibrary.append(externalTitle);
@@ -51,7 +51,7 @@ for(const site of free3dLibraries){
  const detail=document.createElement('small');detail.style.cssText='display:block;line-height:1.45';detail.textContent=site.focus+' • '+site.license+' • '+site.format;
  entry.append(anchor,detail);externalLibrary.append(entry);
 }
-externalLibrary.hidden=workspace.mode!=='3d';tree.parentNode?.prepend(externalLibrary);
+externalLibrary.hidden=workspace.mode!=='3d';tree.parentNode?.querySelector('.asset-content')?.prepend(externalLibrary);
 document.addEventListener('warlike:workspace',()=>{externalLibrary.hidden=workspace.mode!=='3d';import3dPanel.hidden=workspace.mode!=='3d'});
 
 for(const category of [...new Set([...categories,...categories3d])]){const initial=allAssets3d();const count=category==='All'?catalog.length:catalog.filter(a=>a.category===category).length;const btn=document.createElement('button');btn.dataset.folder=category;btn.className='folder-item';const icon=document.createElement('span');icon.className='folder-icon';icon.textContent=category==='All'?'▣':'📁';const title=document.createElement('span');title.textContent=category==='All'?'Assets':category;const counter=document.createElement('small');counter.textContent=count;btn.append(icon,title,counter);btn.onclick=()=>selectFolder(category);tree.append(btn)}

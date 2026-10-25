@@ -1,15 +1,16 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WarLike V2 — Three.js 3D</title><style>body{margin:0;background:#111b27;color:#e5f5fa;font:14px system-ui}header{display:flex;align-items:center;gap:16px;padding:12px 18px;background:#1c3041}a{color:#8de8cf}#stage{height:calc(100dvh - 90px)}#status{margin-left:auto;color:#a7d9c8}footer{padding:8px 18px}</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}</script></head><body><header><strong>WARLIKE V2 · THREE.JS 3D</strong><a href="./v2.html">← Éditeur V2</a><a href="./v2-phaser.html">Phaser 2D</a><span id="status" role="status">Chargement Three.js…</span></header><div id="stage"></div><footer>Souris : orbitation • Molette : zoom • Démo WebGL indépendante de la V1</footer><script type="module">
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WarLike V2 — Three.js 3D</title><style>body{margin:0;background:#202020;color:#e7e7e7;font:14px system-ui}header{display:flex;align-items:center;gap:16px;padding:12px 18px;background:#303030}a{color:#d5d5d5}#stage{height:calc(100dvh - 90px)}#status{margin-left:auto;color:#d0d0d0}footer{padding:8px 18px}</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}</script></head><body><header><strong>WARLIKE V2 · THREE.JS 3D</strong><a href="./v2.html">← Éditeur V2</a><a href="./v2-phaser.html">Phaser 2D</a><span id="status" role="status">Chargement Three.js…</span></header><div id="stage"></div><footer>Souris : orbitation • Molette : zoom • Démo WebGL indépendante de la V1</footer><script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 const stage=document.getElementById('stage'),status=document.getElementById('status');
 try{
- const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;stage.append(renderer.domElement);
- const scene=new THREE.Scene();scene.background=new THREE.Color('#17283b');scene.fog=new THREE.Fog('#17283b',35,90);
- const camera=new THREE.PerspectiveCamera(60,1,.1,160);camera.position.set(10,8,11);
+ const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;stage.append(renderer.domElement);
+ const scene=new THREE.Scene();scene.background=new THREE.Color('#34373b');scene.fog=new THREE.FogExp2('#34373b',.011);
+ const camera=new THREE.PerspectiveCamera(60,1,.1,160);camera.position.set(10,7,12);
  const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,1,0);
- scene.add(new THREE.HemisphereLight(0xddeeff,0x6b6357,2));
- const sun=new THREE.DirectionalLight(0xffeed3,3);sun.position.set(7,12,4);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-16;sun.shadow.camera.right=16;sun.shadow.camera.top=16;sun.shadow.camera.bottom=-16;scene.add(sun);
- const ground=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshStandardMaterial({color:0x354d49,roughness:.9}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);scene.add(new THREE.GridHelper(40,40,0x4f837d,0x37514e));
+ scene.add(new THREE.HemisphereLight(0xe7efff,0x494440,1.35));
+ const fill=new THREE.DirectionalLight(0xc2d8ff,.75);fill.position.set(-7,5,-4);scene.add(fill);
+ const sun=new THREE.DirectionalLight(0xffe9ce,2.9);sun.position.set(7,12,4);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.00015;sun.shadow.normalBias=.025;sun.shadow.radius=2;sun.shadow.camera.left=-16;sun.shadow.camera.right=16;sun.shadow.camera.top=16;sun.shadow.camera.bottom=-16;scene.add(sun);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshStandardMaterial({color:0x656461,roughness:.94,metalness:0}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);const grid=new THREE.GridHelper(40,40,0x737373,0x777777);grid.position.y=.008;grid.material.transparent=true;grid.material.opacity=.26;grid.material.depthWrite=false;scene.add(grid);
  for(const [i,x,z,geometry,color,metalness] of [[0,-3,0,new THREE.BoxGeometry(2,2,2),0x50cbaa,.1],[1,1,1,new THREE.SphereGeometry(1,32,24),0xe7a96d,.45],[2,4,-2,new THREE.CylinderGeometry(.8,.8,2,32),0x9aa8df,.65]]){
   const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color,metalness,roughness:.35}));mesh.position.set(x,1,z);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);
  }
@@ -34,14 +35,16 @@ try{
    active.add(object.id);
    let mesh=editorMeshes.get(object.id);
    if(!mesh){
-    mesh=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0x54d6bb,roughness:.45,metalness:.08}));
+    mesh=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0xbcbcbc,roughness:.48,metalness:.08}));
     mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);editorMeshes.set(object.id,mesh);
    }
    const rendererComp=object.components.find(c=>c.type==='MeshRenderer');
    const shape=['box','sphere','cylinder'].includes(rendererComp?.shape)?rendererComp.shape:'box';
    if(mesh.userData.shape!==shape){mesh.geometry.dispose();mesh.geometry=shape==='sphere'?new THREE.SphereGeometry(.5,24,16):shape==='cylinder'?new THREE.CylinderGeometry(.5,.5,1,24):new THREE.BoxGeometry(1,1,1);mesh.userData.shape=shape}
-   mesh.material.color.set(/^#[0-9a-f]{6}$/i.test(rendererComp?.color||'')?rendererComp.color:'#54d6bb');
+   mesh.material.color.set(/^#[0-9a-f]{6}$/i.test(rendererComp?.color||'')?rendererComp.color:'#bcbcbc');
    mesh.visible=rendererComp?.visible!==false;
+   mesh.material.roughness=Number.isFinite(rendererComp?.roughness)?THREE.MathUtils.clamp(rendererComp.roughness,.04,1):.48;
+   mesh.material.metalness=Number.isFinite(rendererComp?.metalness)?THREE.MathUtils.clamp(rendererComp.metalness,0,1):.08;
    mesh.position.fromArray(transform.position);
    mesh.rotation.set(...(Array.isArray(transform.rotation)&&transform.rotation.every(Number.isFinite)?transform.rotation:[0,0,0]));
    mesh.scale.fromArray(transform.scale);

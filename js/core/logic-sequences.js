@@ -1,3 +1,4 @@
+import {coerceVariable} from './blueprint-graph.js';
 import {inventoryAdd,inventoryRemove,equipItem,damage,ensureStats} from './gameplay-components.js';
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
@@ -80,6 +81,7 @@ export function updateSequences(dt,ctx){
  const start=(o,s)=>{
   if(rt.jobs.length>=MAX_JOBS||budget<=0)return;
   const id=o.id;if(s.once&&rt.fired.has(id))return;
+  if(Array.isArray(s.graph?.variables))for(const v of s.graph.variables.slice(0,128)){if(v&&typeof v.name==='string'&&v.name&&!(v.name in rt.globals))rt.globals[v.name]=coerceVariable(v.type,v.value)}
   const basePassed=safeConditions(s.conditions).every(c=>c&&conditionPass(c,o,ctx));
   if(!basePassed&&!Array.isArray(s.elseInstructions))return;
   rt.fired.add(id);const steps=safeSteps(basePassed?chooseSequenceBranch(s,o,ctx):s.elseInstructions);

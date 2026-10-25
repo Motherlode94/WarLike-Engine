@@ -116,6 +116,23 @@ export function initHub(){
   }
   document.querySelector('#hubLegacy').hidden=!safeRead('warlike.scene.v1',null)?.entities;
  }
+ const launch=mode=>{
+  if(hub.projectId&&hub.type===mode){hide();return}
+  type.value=mode;
+  name.value=mode==='3d'?'Mon jeu 3D':'Mon jeu 2D';
+  message.textContent='Module '+mode.toUpperCase()+' sélectionné : crée un projet ou ouvre un projet récent de ce type.';
+  name.focus();
+ };
+ modal.querySelectorAll('[data-hub-app]').forEach(button=>button.onclick=()=>{
+  const app=button.dataset.hubApp;
+  if(app==='2d'||app==='3d'){launch(app);return}
+  if(app==='assets'){
+   if(!hub.projectId){message.textContent='Ouvre ou crée un projet avant de consulter sa bibliothèque.';return}
+   hide();
+   document.querySelector('#projectTab')?.click();
+   return;
+  }
+ });
  document.querySelector('#hubCreate').onclick=()=>run(()=>createProject(name.value,type.value));
  document.querySelector('#hubLegacy').onclick=()=>run(importLegacyProject);
  document.querySelector('#hubOpen').onclick=show;

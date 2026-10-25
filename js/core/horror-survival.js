@@ -44,8 +44,20 @@ export function updateHorrorPerception(dt,player,entities,keys=new Set()){
   }
  }
 }
+export function playHorrorSting(){
+ try{
+  const AudioContextClass=globalThis.AudioContext||globalThis.webkitAudioContext;
+  if(!AudioContextClass)return false;
+  const audio=new AudioContextClass(),osc=audio.createOscillator(),gain=audio.createGain(),now=audio.currentTime;
+  osc.type='sawtooth';osc.frequency.setValueAtTime(130,now);osc.frequency.exponentialRampToValueAtTime(45,now+.4);
+  gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.1,now+.025);gain.gain.exponentialRampToValueAtTime(.0001,now+.45);
+  osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+.46);
+  osc.onended=()=>audio.close();
+  return true;
+ }catch{return false}
+}
 export function triggerHorrorJumpscare(message='DANGER !'){
- horror.jumpscare=1.1;horror.alerts.push(String(message).slice(0,100));if(horror.alerts.length>5)horror.alerts.shift();
+ horror.jumpscare=1.1;playHorrorSting();horror.alerts.push(String(message).slice(0,100));if(horror.alerts.length>5)horror.alerts.shift();
 }
 export function drawHorrorHud(ctx,w,h,player,camera){
  if(!horror.enabled||!player)return;

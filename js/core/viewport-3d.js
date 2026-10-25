@@ -361,6 +361,7 @@ export function init3d(canvas,host,buttons){
  function draw(now=performance.now()){
   requestAnimationFrame(draw);
   const dt=Math.min(.1,Math.max(0,(now-previousTime)/1000));previousTime=now;
+  if(document.hidden)return;
   updateLighting(dt,state.playing&&workspace.mode==='3d');
   if(state.playing&&!wasPlaying)enterPlay();
   if(!state.playing&&wasPlaying){view3d.followPlayer=false;stopRapier();}

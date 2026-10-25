@@ -42,6 +42,33 @@ export function registerLocalModel(file){
  const item={id,name:file.name.replace(/\.glb$/i,''),category:'Imported 3D',shape:'glb',license:'Fichier local, licence à vérifier',file};
  importedModels3d.set(id,item);return item;
 }
+/** Import an external GLB into the current project session. Remote hosts must permit CORS. */
+export async function registerRemoteModel(address,{category='Imported 3D',license='Licence à vérifier'}={}){
+ let url;
+ try{url=new URL(String(address).trim())}catch{throw Error('URL de modèle invalide')}
+ if(url.protocol!=='https:'||!url.pathname.toLowerCase().endsWith('.glb')||url.username||url.password)throw Error('Lien HTTPS direct vers un fichier .glb requis');
+ const response=await fetch(url.href,{mode:'cors',credentials:'omit',redirect:'follow'});
+ if(!response.ok)throw Error('Téléchargement GLB : HTTP '+response.status);
+ const declared=Number(response.headers.get('content-length')||0);
+ if(declared>maxBytes)throw Error('Modèle trop volumineux (25 Mo maximum)');
+ const chunks=[];let loaded=0;
+ if(response.body){
+  const reader=response.body.getReader();
+  try{while(true){const {done,value}=await reader.read();if(done)break;loaded+=value.byteLength;if(loaded>maxBytes){await reader.cancel();throw Error('Modèle trop volumineux (25 Mo maximum)')}chunks.push(value)}}
+  finally{reader.releaseLock()}
+ }else{
+  const data=new Uint8Array(await response.arrayBuffer());loaded=data.byteLength;if(loaded>maxBytes)throw Error('Modèle trop volumineux (25 Mo maximum)');chunks.push(data);
+ }
+ const bytes=new Uint8Array(loaded);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength}
+ parseGlb(bytes.buffer); // Verify GLB structure and meshes before registering it.
+ const name=decodeURIComponent(url.pathname.split('/').pop()||'external.glb');
+ const file=new File([bytes],name,{type:'model/gltf-binary'});
+ const model=registerLocalModel(file);
+ model.category=['Characters','Monsters','Vehicles','Weapons','Props','Buildings','Imported 3D'].includes(category)?category:'Imported 3D';
+ model.license=license;
+ model.sourceUrl=url.href;
+ return model;
+}
 export const model3dById=id=>realModels3d.find(a=>a.id===id)||importedModels3d.get(id)||null;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 const mul=(a,b)=>{const o=new Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)o[c*4+r]+=a[k*4+r]*b[c*4+k];return o};

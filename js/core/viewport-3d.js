@@ -343,7 +343,7 @@ export function init3d(canvas,host,buttons){
   const horrorHud=document.getElementById('horror3dHud');
   if(horrorHud){
    horrorHud.hidden=!(state.playing&&horror.enabled);
-   if(!horrorHud.hidden)horrorHud.textContent='☾ SURVIVAL HORROR  |  L : lampe '+(horror.flashlight?'ON':'OFF')+'  |  Batterie '+Math.round(horror.battery)+'%  |  Peur '+Math.round(horror.fear)+'%';
+   if(!horrorHud.hidden)horrorHud.textContent=(horror.jumpscare>0?'⚠ DANGER !  |  ':'☾ SURVIVAL HORROR  |  ')+'L : lampe '+(horror.flashlight?'ON':'OFF')+'  |  Batterie '+Math.round(horror.battery)+'%  |  Peur '+Math.round(horror.fear)+'%';
   }
   if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent='3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='PROJET 3D • Clic pour sélectionner • Clic droit orbite • Molette zoom'}
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;

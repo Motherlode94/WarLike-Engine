@@ -35,7 +35,7 @@ export async function addCommunityModels3d({limit=wanted}={}){
    importedModels3d.set(id,{id,name,category:classify(path),shape:'glb',
     license:'CC0 — Polygonal Mind (vérifier les sources)',url:raw+path.split('/').map(encodeURIComponent).join('/'),
     sourceUrl:'https://github.com/'+source+'/blob/main/'+path.split('/').map(encodeURIComponent).join('/'),
-    collection:'Polygonal Mind CC0',modelPath:path});
+    collection:'Polygonal Mind CC0',modelPath:path,thumbnailUrl:raw+path.replace(/\.glb$/i,'_thumbnail.png').split('/').map(encodeURIComponent).join('/')});
    count++;
   }
   return count;

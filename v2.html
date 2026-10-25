@@ -7,8 +7,15 @@
 <script type="module">
 const panel=document.getElementById('runtimePanel'),frame=document.getElementById('runtimeFrame'),canvas=document.getElementById('viewport');
 const modes={modeScene:null,mode2d:'./v2-phaser.html',mode3d:'./v2-three.html'};let current='modeScene';
+let currentScene=null;
+const sendScene=()=>{if(currentScene&&frame.contentWindow&&current!=='modeScene')frame.contentWindow.postMessage({type:'warlike:v2:scene',scene:currentScene},location.origin)};
+window.addEventListener('warlike:v2-scene',event=>{currentScene=event.detail;sendScene()});
+frame.addEventListener('load',sendScene);
+window.addEventListener('message',event=>{if(event.origin===location.origin&&event.source===frame.contentWindow&&event.data?.type==='warlike:v2:ready')sendScene()});
+
 function switchMode(mode){current=mode;const url=modes[mode];panel.hidden=!url;canvas.hidden=!!url;
  if(url&&frame.getAttribute('src')!==url)frame.src=url;
+ if(url)window.dispatchEvent(new Event('warlike:v2-request-scene'));
  for(const key of Object.keys(modes))document.getElementById(key).classList.toggle('mode-active',key===mode);
  document.getElementById('runtimeLabel').textContent=mode==='mode2d'?'Phaser · 2D':'Three.js + Rapier · 3D';
  if(!url){frame.removeAttribute('src');window.dispatchEvent(new Event('resize'))}

@@ -7,6 +7,8 @@
 #define WL_API
 #endif
 extern "C" {
+// Forward declaration required by the batched integrator below.
+WL_API void wl_integrate_gravity(float* inOut,float gravity,float restitution,float delta);
 // Packed boxes: x, z, elevation, width, depth, height (height uses scene pixel units).
 WL_API int wl_overlap_aabb3d(const float* a,const float* b) {
  if(!a||!b)return 0;

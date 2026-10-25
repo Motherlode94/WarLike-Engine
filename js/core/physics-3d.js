@@ -17,7 +17,7 @@ export function stepPhysics3d(entities,dt){
  const steps=Math.max(1,Math.ceil(frame/(1/120)));
  const t=frame/steps;
  const solid=(subject,other)=>other!==subject&&other.collision3d!==false&&(other.solid3d===true||other.type==='object'||other.type==='mesh3d');
- const isDynamic=o=>o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!o.playable3d&&o.type!=='player'&&!o.ai?.enabled;
+ const isDynamic=o=>o?.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!o.playable3d&&o.type!=='player'&&!o.ai?.enabled;
  const staticIndex=createSpatialIndex3d(entities,{filter:o=>!isDynamic(o)&&o.collision3d!==false});
  const dynamicBodies=entities.filter(isDynamic);
  for(let substep=0;substep<steps;substep++){
@@ -36,11 +36,11 @@ export function stepPhysics3d(entities,dt){
   const friction=Math.min(1,Math.max(0,finite(rb.friction,.82)));
   rb.vx=finite(rb.vx);rb.vz=finite(rb.vz);rb.vy=finite(rb.vy);
   const position=axis=>finite(o[axis]);
-  const collision=()=>[...staticIndex.query(o),...dynamicBodies].some(other=>solid(o,other)&&overlap3d(o,other));
+  const collision=()=>staticIndex.query(o).some(other=>solid(o,other)&&overlap3d(o,other))||dynamicBodies.some(other=>other!==o&&solid(o,other)&&overlap3d(o,other));
   for(const [axis,velocity] of [['x','vx'],['y','vz']]){
    const initial=position(axis);
    o[axis]=initial+rb[velocity]*t;
-   if(collision()){o[axis]=initial;rb[velocity]*=-restitution;}
+   if(collision()){o[axis]=initial;rb[velocity]*=-restitution;if(Math.abs(rb[velocity])<.01)rb[velocity]=0;}
   }
   // Elevation is world Y. Test it after horizontal contact resolution.
   const initialHeight=Math.max(0,finite(o.elevation3d));
@@ -51,7 +51,7 @@ export function stepPhysics3d(entities,dt){
   o.elevation3d=nextHeight;
   if(collision()){
    o.elevation3d=initialHeight;
-   nextVy=nextVy>0?Math.min(0,-nextVy*restitution):Math.max(0,-nextVy*restitution);
+   nextVy=Math.abs(nextVy)<.1?0:-nextVy*restitution;
   }else if(nextHeight===0&&!integrated){
    nextVy=Math.abs(nextVy)>1?-nextVy*restitution:0;
   }

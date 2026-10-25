@@ -1,3 +1,4 @@
+import {drawLighting2d} from './render-quality.js';
 import {workspace} from './workspaces.js';
 import {selectionBox,rectFromPoints} from './input.js';
 import {drawElementStates} from './game-elements.js';
@@ -15,4 +16,4 @@ export function startRenderer(canvas,host){const ctx=canvas.getContext('2d');fun
  const r=rectFromPoints(selectionBox.start,selectionBox.end);
  ctx.save();ctx.fillStyle='#64dccc2c';ctx.strokeStyle='#67e0cf';ctx.lineWidth=1.7/c.zoom;ctx.setLineDash([7/c.zoom,4/c.zoom]);ctx.fillRect(r.x,r.y,r.w,r.h);ctx.strokeRect(r.x,r.y,r.w,r.h);ctx.restore();
 }
-ctx.restore();drawGame(ctx,w,h);requestAnimationFrame(loop)}requestAnimationFrame(loop)}
+ctx.restore();drawLighting2d(ctx,state.entities,c,w,h);drawGame(ctx,w,h);requestAnimationFrame(loop)}requestAnimationFrame(loop)}

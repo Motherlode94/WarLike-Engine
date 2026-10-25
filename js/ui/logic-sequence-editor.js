@@ -89,16 +89,27 @@ export function renderSequenceEditor(root,o){
   const fallback=document.createElement('details');fallback.open=true;const label=document.createElement('summary');label.textContent='ELSE • Si aucune condition';fallback.append(label);
   s.elseInstructions??=[];editInstructions(fallback,s.elseInstructions);body.append(fallback);
  }
- const graph=document.createElement('details');graph.open=false;graph.className='sequence-branch';const graphTitle=document.createElement('summary');graphTitle.textContent='◇ Graphique des comportements';graph.append(graphTitle);
- const graphFlow=document.createElement('div');graphFlow.className='sequence-graph';graphFlow.style.cssText='display:flex;flex-direction:column;gap:5px;padding:12px;border-radius:9px;background:rgba(64,120,150,.10)';
- const node=(label,kind)=>{const box=document.createElement('div');box.textContent=label;box.style.cssText='padding:9px 12px;border:1px solid rgba(120,170,190,.55);border-radius:7px;background:rgba(23,39,52,.9);color:#e8f6ff;font:12px system-ui';box.dataset.kind=kind;graphFlow.append(box)};
- const arrow=()=>{const a=document.createElement('div');a.textContent='↓';a.style.cssText='text-align:center;color:#80d6c7';graphFlow.append(a)};
- node('TRIGGER • '+s.event,'trigger');arrow();
- for(const cond of s.conditions||[]){node('AND • '+cond.type+' '+(cond.key||'')+' '+(cond.value??''),'condition');arrow()}
+ const graph=document.createElement('details');graph.open=true;graph.className='sequence-branch';
+ const graphTitle=document.createElement('summary');graphTitle.textContent='⬡ WarLike Blueprint · graphe interactif';graph.append(graphTitle);
+ const graphFlow=document.createElement('div');graphFlow.className='sequence-graph blueprint-node-flow';
+ const graphNode=(label,kind,onClick)=>{
+  const box=document.createElement('button');box.type='button';box.className='blueprint-graph-node';box.dataset.kind=kind;
+  box.textContent=label;box.disabled=state.playing;if(onClick)box.onclick=onClick;else box.disabled=true;
+  graphFlow.append(box);
+ };
+ const wire=()=>{const line=document.createElement('div');line.className='blueprint-wire';line.setAttribute('aria-hidden','true');graphFlow.append(line)};
+ const change=()=>save('Modifier graphe');
+ graphNode('▶ EVENT · '+s.event,'trigger',()=>{s.event=sequenceEvents[(sequenceEvents.indexOf(s.event)+1)%sequenceEvents.length];change()});wire();
+ for(const [i,c] of (s.conditions||[]).entries()){
+  graphNode('◇ CONDITION · '+c.type+' '+(c.key||''),'condition',()=>{c.type=sequenceConditions[(sequenceConditions.indexOf(c.type)+1)%sequenceConditions.length];change()});wire();
+ }
+ const actions=(list,scope)=>{for(const [i,action] of list.entries()){graphNode('▣ '+(action.type||'message')+' · '+String(action.value??action.key??'').slice(0,50),'action',()=>{action.type=sequenceInstructions[(sequenceInstructions.indexOf(action.type)+1)%sequenceInstructions.length];change()});wire()}
+  const add=document.createElement('button');add.type='button';add.className='blueprint-add-node';add.textContent='＋ Action '+scope;add.disabled=state.playing;add.onclick=()=>{list.push({type:'message',value:'Nouvelle action'});change()};graphFlow.append(add)};
  if(s.branches?.length){
-  s.branches.forEach((branch,i)=>{node('IF '+(i+1)+' • '+(branch.conditions||[]).map(c=>c.type+' '+(c.key||'')).join(' && '),'branch');arrow();for(const action of branch.instructions||[]){node(action.type+' • '+(action.value??action.key??''),'action');arrow()}});
-  if(s.elseInstructions?.length){node('ELSE','branch');arrow();for(const action of s.elseInstructions){node(action.type+' • '+(action.value??''),'action');arrow()}}
- }else{for(const action of s.instructions||[]){node(action.type+' • '+(action.value??action.key??''),'action');arrow()}}
- node('END','end');graph.append(graphFlow);body.append(graph);
+  s.branches.forEach((branch,i)=>{graphNode('◆ IF '+(i+1)+' · '+(branch.conditions||[]).length+' condition(s)','branch',()=>{branch.conditions??=[];branch.conditions.push({type:'always'});change()});wire();actions(branch.instructions??=[],String(i+1))});
+  graphNode('◇ ELSE','branch',null);wire();s.elseInstructions??=[];actions(s.elseInstructions,'ELSE');
+ }else actions(s.instructions??=[],'principale');
+ graphNode('■ END','end',null);graph.append(graphFlow);body.append(graph);
+ const note=document.createElement('p');note.className='blueprint-graph-tip';note.textContent='Clique sur Event, Condition ou Action pour changer son type. Les boutons + ajoutent des actions reliées dans l’ordre. Les paramètres détaillés se règlent dans les sections au-dessus.';graph.append(note);
  const help=document.createElement('p');help.textContent='Pendant Play, les séquences exécutent les instructions dans l’ordre. Wait suspend l’exécution, Emit Signal déclenche d’autres objets.';body.append(help);
 }

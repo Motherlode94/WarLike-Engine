@@ -519,3 +519,12 @@ body:not(.hub-open) #leftSplitter,body:not(.hub-open) #rightSplitter{background:
 body:not(.hub-open) #leftSplitter:hover,body:not(.hub-open) #rightSplitter:hover{background:var(--editor-accent)}
 body:not(.hub-open) .studio-dropdown button:hover,body:not(.hub-open) .editor-appearance>summary:hover{border-color:var(--editor-accent)}
 body:not(.hub-open) :focus-visible{outline-color:var(--editor-accent)}
+
+
+/* Maximized Scene workspace (Unity-inspired Shift+Space alternative via View menu). */
+body.scene-maximized .workspace{grid-template-columns:0 0 minmax(0,1fr) 0 0!important}
+body.scene-maximized #hierarchyPanel,body.scene-maximized #inspectorPanel,body.scene-maximized #leftSplitter,body.scene-maximized #rightSplitter{display:none!important}
+body.scene-maximized #projectPanel{display:none!important}
+body.scene-maximized .center-stack{grid-template-rows:39px 38px minmax(0,1fr) 0 0!important}
+body.scene-maximized .center-stack #projectSplitter{display:none!important}
+body.scene-maximized .center-stack{grid-column:3}

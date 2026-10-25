@@ -11,7 +11,7 @@ export async function initializeNative3d(){
   const module=await import('../../native/dist/warlike_pathfinding.mjs');
   const create=module.default;
   native=await create({locateFile:name=>new URL('../../native/dist/'+name,import.meta.url).href});
-  if(typeof native._wl_find_path!=='function'||typeof native._malloc!=='function'||!native.HEAPF32)throw Error('Incomplete native module');
+  if(typeof native._wl_find_path!=='function'||typeof native._wl_integrate_gravity!=='function'||typeof native._wl_overlap_aabb3d!=='function'||typeof native._malloc!=='function'||typeof native._free!=='function'||!native.HEAPF32)throw Error('Incomplete native module');
   loadState='ready';
  }catch(error){native=null;loadState='fallback';console.info('[WarLike Native] JS navigation fallback:',error?.message||error)}
 }

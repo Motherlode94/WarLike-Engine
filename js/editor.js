@@ -197,3 +197,28 @@ initStudioMenus();
 initEditorAppearance();
 initEditorPalette();
 initCursorSettings();
+
+// Focus layout: frequent actions live on the first row, advanced toolbar opens on demand.
+const primaryActions=document.getElementById('studioPrimaryActions');
+const secondaryToolbar=document.getElementById('studioSecondaryToolbar');
+const toolbarToggle=document.getElementById('studioToolbarToggle');
+if(primaryActions&&secondaryToolbar&&toolbarToggle){
+ for(const id of ['warlikeToolLibrary','studioQuickCreate','openBlueprint','undo','redo','play']){
+  const element=document.getElementById(id);
+  if(element){
+   if(element.parentElement?.classList.contains('toolbar-group')&&element.parentElement.children.length===1)element.parentElement.remove();
+   primaryActions.append(element);
+  }
+ }
+ const setExpanded=expanded=>{
+  document.body.classList.toggle('warlike-toolbar-expanded',expanded);
+  toolbarToggle.setAttribute('aria-expanded',String(expanded));
+  toolbarToggle.textContent=expanded?'▴ Moins':'☷ Plus';
+  try{localStorage.setItem('warlike.toolbar.expanded.v1',String(expanded))}catch{}
+  window.dispatchEvent(new Event('resize'));
+ };
+ let expanded=false;
+ try{expanded=localStorage.getItem('warlike.toolbar.expanded.v1')==='true'}catch{}
+ setExpanded(expanded);
+ toolbarToggle.addEventListener('click',()=>setExpanded(!document.body.classList.contains('warlike-toolbar-expanded')));
+}

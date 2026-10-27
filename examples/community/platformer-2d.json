@@ -1,0 +1,95 @@
+{
+  "apiVersion": "1.0",
+  "id": "platformer-2d",
+  "version": "1.0.0",
+  "name": "Platformer Essentials 2D",
+  "author": "WarLike Community",
+  "modes": [
+    "2d"
+  ],
+  "description": "Recettes de plateforme 2D : checkpoint, pièce et porte de sortie.",
+  "recipes": [
+    {
+      "id": "checkpoint-2d",
+      "name": "Checkpoint 2D",
+      "description": "Active une balise de réapparition logique",
+      "sequence": {
+        "event": "enter",
+        "radius": 80,
+        "once": false,
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "checkpoint2d",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Checkpoint activé !"
+          }
+        ]
+      }
+    },
+    {
+      "id": "coin-2d",
+      "name": "Pièce collectible",
+      "description": "Ajoute une pièce à la monnaie du jeu",
+      "sequence": {
+        "event": "enter",
+        "radius": 70,
+        "once": true,
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "coins2d",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "+1 pièce"
+          }
+        ]
+      }
+    },
+    {
+      "id": "exit-2d",
+      "name": "Porte de fin de niveau",
+      "description": "Condition vérifiant le checkpoint",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 100,
+        "once": false,
+        "branches": [
+          {
+            "conditions": [
+              {
+                "type": "variable",
+                "key": "checkpoint2d",
+                "operator": ">=",
+                "value": 1
+              }
+            ],
+            "instructions": [
+              {
+                "type": "setVariable",
+                "key": "levelComplete2d",
+                "value": 1
+              },
+              {
+                "type": "message",
+                "value": "Niveau terminé !"
+              }
+            ]
+          }
+        ],
+        "elseInstructions": [
+          {
+            "type": "message",
+            "value": "Checkpoint nécessaire."
+          }
+        ]
+      }
+    }
+  ]
+}

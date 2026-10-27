@@ -191,9 +191,17 @@ export function initHub(){
   if(app==='2d'||app==='3d'){launch(app);return}
   if(app==='diagnostics'){showDiagnostics();return}
   if(app==='assets'){
-   if(!hub.projectId){message.textContent='Ouvre ou crée un projet avant de consulter sa bibliothèque.';return}
-   hide();
-   document.querySelector('#projectTab')?.click();
+   if(!hub.projectId){
+    type.value='3d';assetPackSelect.disabled=false;
+    assetPackSelect.focus();assetPackSelect.scrollIntoView({block:'center',behavior:'smooth'});
+    message.textContent='Choisis un pack puis crée un projet 3D.';
+    return;
+   }
+   render();
+   const current=Array.from(cards.querySelectorAll('.hub-project-card')).find(card=>card.querySelector('.hub-current-pill'));
+   const chooser=current?.querySelector('.hub-project-pack');
+   if(chooser&&!chooser.disabled){chooser.focus();chooser.scrollIntoView({block:'center',behavior:'smooth'});message.textContent='Choisis le pack de ton projet puis ouvre-le dans Studio.'}
+   else{type.value='3d';assetPackSelect.disabled=false;assetPackSelect.focus();message.textContent='Crée un projet 3D pour sélectionner des packs 3D.'}
    return;
   }
  });

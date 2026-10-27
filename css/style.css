@@ -1285,6 +1285,6 @@ body:not(.hub-open) .editor-appearance-menu #editorThemeDefault{
   border:1px solid var(--wl-theme-border)!important;
   background:var(--wl-theme-button)!important;color:var(--wl-theme-fg)!important;
 }
-html[data-warlike-theme="light"] body:not(.hub-open) :is(.studio-dropdown,.blueprint-window,.render-quality-panel,.warlike-animation-studio,.editor-appearance-menu,.asset-grid,.hierarchy,.inspector,.project-panel){
+html[data-warlike-contrast="light"] body:not(.hub-open) :is(.studio-dropdown,.blueprint-window,.render-quality-panel,.warlike-animation-studio,.editor-appearance-menu,.asset-grid,.hierarchy,.inspector,.project-panel){
   color-scheme:light;
 }

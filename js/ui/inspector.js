@@ -39,6 +39,19 @@ export function renderHierarchy(){const root=document.querySelector('#objects'),
 export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
 const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent='GameObject #'+o.id+' • '+o.type;header.append(name,meta);root.append(header);
 component(root,'Transform',body=>{field(body,o,'x','Position X');field(body,o,'y',workspace.mode==='3d'?'Position Z':'Position Y');if(workspace.mode==='3d')field(body,o,'elevation3d','Position Y (3D height)');field(body,o,'rotation','Rotation');field(body,o,'w','Size X');field(body,o,'h',workspace.mode==='3d'?'Height':'Size Y')});
+component(root,'C# Components • .NET Runtime',body=>{
+ const note=document.createElement('p');note.textContent='Configuration des composants C# pour le runtime .NET autonome. Non exécutés par Play Web.';body.append(note);
+ const definitions=Array.isArray(o.csharpComponents)?o.csharpComponents:[];
+ const supported={AutoRotate:[['speed','Vitesse (°/s)']],Health:[['regen','Régénération /s']],LinearMotion:[['vx','Vitesse X'],['vy','Vitesse Y'],['vz','Vitesse Z']],Rigidbody:[['gravity','Gravité'],['restitution','Rebond'],['friction','Friction']],FollowActor:[['targetId','ID cible'],['speed','Vitesse'],['stopDistance','Distance arrêt']]};
+ const refresh=()=>{const existing=body.querySelector('.csharp-component-list');existing?.remove();const list=document.createElement('div');list.className='csharp-component-list';
+ definitions.forEach((definition,index)=>{const box=document.createElement('fieldset');const legend=document.createElement('legend');legend.textContent=definition.kind;box.append(legend);
+ for(const [key,label] of supported[definition.kind]||[]){const row=document.createElement('label');row.textContent=label+' ';const input=document.createElement('input');input.type='number';input.step='any';input.value=String(definition[key]??0);input.disabled=state.playing;input.onchange=()=>{if(!Number.isFinite(Number(input.value)))return;definition[key]=Number(input.value);record('C# '+definition.kind+' : '+key);notify()};row.append(input);box.append(row)}
+ const remove=document.createElement('button');remove.type='button';remove.textContent='Supprimer';remove.disabled=state.playing;remove.onclick=()=>{definitions.splice(index,1);o.csharpComponents=definitions;record('Supprimer composant C#');notify()};box.append(remove);list.append(box)});
+ body.append(list)};
+ const picker=document.createElement('select');for(const kind of Object.keys(supported)){const option=document.createElement('option');option.value=kind;option.textContent=kind;picker.append(option)}
+ const add=document.createElement('button');add.type='button';add.textContent='＋ Ajouter composant C#';add.disabled=state.playing;add.onclick=()=>{o.csharpComponents??=[];o.csharpComponents.push({kind:picker.value});record('Ajouter composant C# '+picker.value);notify()};
+ body.append(picker,add);refresh();
+});
 component(root,'Quick Start • Gameplay Recipes',body=>{
  const intro=document.createElement('p');intro.textContent='Appliquer un comportement réutilisable à cet objet. Les composants existants concernés peuvent être remplacés.';body.append(intro);
  const picker=document.createElement('select');picker.disabled=state.playing;

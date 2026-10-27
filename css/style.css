@@ -781,3 +781,20 @@ body:not(.hub-open) .inspector{background:var(--warlike-custom-surface,#20252d);
 
 /* Inspector deployment diagnostic: visible only on the current editor build */
 .warlike-inspector-edition{margin:4px 0 8px;padding:9px 10px;border:1px solid var(--editor-accent,#48cba9);border-radius:7px;color:var(--warlike-custom-text,#e7eaf0);background:color-mix(in srgb,var(--editor-accent,#48cba9) 16%,transparent);font-size:10px;font-weight:800;letter-spacing:.5px;text-align:center}
+
+/* Inspector v2: Unity-style component editing */
+#properties .warlike-component-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0}
+#properties .warlike-component-toolbar strong{font-size:12px}
+#properties .warlike-component-toolbar button{width:auto;padding:7px 10px}
+#properties .warlike-component-hint{font-size:11px;line-height:1.45;opacity:.72}
+#properties .csharp-component-list{display:flex;flex-direction:column;gap:8px}
+#properties .warlike-component-card{border:1px solid color-mix(in srgb,var(--warlike-custom-text,#eee) 22%,transparent);border-radius:7px;overflow:hidden;background:color-mix(in srgb,var(--warlike-custom-surface,#20252d) 82%,#000 18%)}
+#properties .warlike-component-card>summary{cursor:pointer;list-style:revert;padding:10px 12px;font-size:12px;font-weight:750;background:color-mix(in srgb,var(--warlike-custom-text,#eee) 8%,transparent)}
+#properties .warlike-component-fields{display:flex;flex-direction:column;gap:8px;padding:12px 10px}
+#properties .warlike-component-field{display:grid;grid-template-columns:minmax(75px,44%) minmax(0,1fr);align-items:center;gap:9px;font-size:11px}
+#properties .warlike-component-field input:not([type=checkbox]){min-width:0;width:100%;box-sizing:border-box}
+#properties .warlike-component-field input[type=checkbox]{justify-self:start;width:17px;height:17px;accent-color:#48cba9}
+#properties .warlike-component-actions{display:flex;gap:5px;padding:8px 10px;border-top:1px solid color-mix(in srgb,var(--warlike-custom-text,#eee) 15%,transparent)}
+#properties .warlike-component-actions button{flex:1;min-width:0;font-size:10px;padding:6px 3px}
+#properties .warlike-add-component{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding:12px;border:1px dashed color-mix(in srgb,var(--warlike-custom-text,#eee) 32%,transparent);border-radius:8px}
+#properties .warlike-add-component input,#properties .warlike-add-component select,#properties .warlike-add-component button{width:100%;min-width:0;box-sizing:border-box}

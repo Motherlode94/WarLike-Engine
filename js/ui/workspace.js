@@ -1,6 +1,8 @@
 import {readPrefabs,savePrefab,instantiatePrefab,applyPrefabChanges,updatePrefab} from '../core/prefab-library.js';
 import {persistLocalModel,restoreLocalModels,clearLocalModels} from '../core/local-asset-library.js';
 import {addCommunityModels3d} from '../assets/community-models-3d.js';
+import {loadKenneyUnityAssets} from '../assets/kenney-unity-library.js';
+import {exportModelForUnity} from '../assets/unity-obj-export.js';
 import {free3dLibraries} from '../assets/free-3d-libraries.js';
 import {assignModelThumbnail} from './real-model-thumbnail.js';
 import {registerLocalModel,registerRemoteModel,realModels3d} from '../assets/real-models-3d.js';
@@ -161,6 +163,29 @@ communityButton.onclick=async()=>{
   log('Catalogue CC0 : '+error,'error');
  }finally{communityButton.disabled=false}
 };
+// Kenney models: original CC0 GLB for WarLike and static Unity-ready OBJ export.
+const kenneyTools=document.createElement('details');kenneyTools.className='real-model-import unity-asset-library';
+const kenneyHeading=document.createElement('summary');kenneyHeading.textContent='▧ Assets compatibles Unity · Kenney CC0';
+const kenneyDescription=document.createElement('p');kenneyDescription.textContent='Personnages, véhicules, armes, bâtiments et décors. Modèles Kenney réels sous licence CC0. GLB pour WarLike ; export OBJ (mesh statique) pour Unity.';
+const kenneyButton=document.createElement('button');kenneyButton.type='button';kenneyButton.textContent='＋ Ajouter 500 assets 3D Kenney';
+const kenneyStatus=document.createElement('small');kenneyStatus.textContent='Les modèles sont référencés à la demande ; connexion requise. Après chargement, choisis un asset et « Exporter OBJ pour Unity ».';
+kenneyButton.onclick=async()=>{
+ kenneyButton.disabled=true;kenneyButton.textContent='Chargement du catalogue Kenney…';
+ try{
+  const count=await loadKenneyUnityAssets({limit:500});
+  document.dispatchEvent(new Event('warlike:workspace'));
+  kenneyStatus.textContent=count+' modèles Kenney référencés · licence CC0 · sélectionne un modèle puis exporte son OBJ.';
+  kenneyButton.textContent='✓ '+count+' assets Kenney disponibles';
+  log(count+' assets Kenney CC0 disponibles pour Unity');
+ }catch(error){
+  kenneyButton.disabled=false;kenneyButton.textContent='↻ Réessayer de charger Kenney';
+  kenneyStatus.textContent='Catalogue distant indisponible : '+String(error.message||error);
+  log('Kenney : '+error,'warn');
+ }
+};
+kenneyTools.append(kenneyHeading,kenneyDescription,kenneyButton,kenneyStatus);
+kenneyTools.hidden=workspace.mode!=='3d';
+tree.parentNode?.querySelector('.asset-content')?.prepend(kenneyTools);
 const externalLibrary=document.createElement('details');externalLibrary.className='real-model-import';
 const externalTitle=document.createElement('summary');externalTitle.textContent='🌐 Bibliothèques 3D gratuites (sites officiels)';
 externalLibrary.append(externalTitle);
@@ -172,18 +197,28 @@ for(const site of free3dLibraries){
  entry.append(anchor,detail);externalLibrary.append(entry);
 }
 externalLibrary.hidden=workspace.mode!=='3d';tree.parentNode?.querySelector('.asset-content')?.prepend(externalLibrary);
-document.addEventListener('warlike:workspace',()=>{externalLibrary.hidden=workspace.mode!=='3d';communityImport.hidden=workspace.mode!=='3d';import3dPanel.hidden=workspace.mode!=='3d'});
+document.addEventListener('warlike:workspace',()=>{kenneyTools.hidden=workspace.mode!=='3d';externalLibrary.hidden=workspace.mode!=='3d';communityImport.hidden=workspace.mode!=='3d';import3dPanel.hidden=workspace.mode!=='3d'});
 
 for(const category of [...new Set([...categories,...categories3d])]){const library=workspace.mode==='3d'?allAssets3d():catalog;const count=category==='All'?library.length:library.filter(a=>a.category===category).length;const btn=document.createElement('button');btn.dataset.folder=category;btn.className='folder-item';const icon=document.createElement('span');icon.className='folder-icon';icon.textContent=category==='All'?'▣':'📁';const title=document.createElement('span');title.textContent=category==='All'?'Assets':category;const counter=document.createElement('small');counter.textContent=count;btn.append(icon,title,counter);btn.onclick=()=>selectFolder(category);tree.append(btn)}
 function showPreview(){preview.replaceChildren();if(!selectedAsset){preview.hidden=true;return}const asset=workspace.mode==='3d'?get3dAsset(selectedAsset):catalog.find(a=>a.id===selectedAsset);if(!asset){preview.hidden=true;return}preview.hidden=false;const picture=document.createElement('img');if(workspace.mode==='3d'&&asset.shape==='glb')assignModelThumbnail(picture,asset.id);else picture.src=workspace.mode==='3d'?url3d(asset.id):urlFor(asset.id);picture.alt=asset.name;const info=document.createElement('div');const title=document.createElement('strong');title.textContent=asset.name;const meta=document.createElement('small');meta.textContent=workspace.mode==='3d'?'3D / '+asset.category+' / '+asset.id+' • Mesh '+asset.shape:'2D / '+asset.category+' / '+asset.id+' • '+asset.width+'×'+asset.height+(genreKeywords(asset.id)?' • Genre : '+genreKeywords(asset.id).split(' ').slice(0,2).join(', '):'');const desc=document.createElement('span');desc.textContent=workspace.mode==='3d'?(asset.shape==='glb'?'Véritable mesh GLB • Double-clic pour instancier':'Prototype procédural, pas un mesh réaliste • Double-clic pour instancier'):'Prefab 2D • Double-clic pour instancier';info.append(title,meta,desc);const add=document.createElement('button');add.textContent='＋ Ajouter à la scène';add.disabled=state.playing;add.onclick=()=>{if(workspace.mode==='3d')add3d(asset.id);else addPrefab(asset.id);log('Prefab ajouté : '+asset.name)};const close=document.createElement('button');close.textContent='×';close.title='Fermer aperçu';close.onclick=()=>{selectedAsset=null;render()};if(workspace.mode==='3d'&&asset.shape==='glb'){
- const source=realModels3d.find(m=>m.id===asset.id);
+ const exportUnity=document.createElement('button');exportUnity.type='button';
+ exportUnity.textContent='↓ Exporter OBJ pour Unity';
+ exportUnity.title='OBJ statique compatible Unity : géométrie et normales uniquement, sans matériaux, textures ni animations';
+ exportUnity.onclick=async()=>{
+  exportUnity.disabled=true;exportUnity.textContent='Préparation du mesh OBJ…';
+  try{const result=await exportModelForUnity(asset.id);exportUnity.textContent='✓ '+result.filename+' ('+result.triangles+' triangles)'}
+  catch(error){exportUnity.textContent='Export impossible : '+String(error.message||error)}
+  finally{exportUnity.disabled=false}
+ };
+ info.append(exportUnity);
+ const source=realModels3d.find(m=>m.id===asset.id)||get3dAsset(asset.id);
  if(source?.url){
   const download=document.createElement('a');download.href=source.url;download.target='_blank';download.rel='noopener noreferrer';download.textContent='↓ Fichier GLB original';download.title='Ouvrir le téléchargement du véritable modèle GLB';info.append(download);
   const license=document.createElement('small');license.textContent='Licence : '+source.license;info.append(license);
  }
 }
 preview.append(picture,info,add,close)}
-function render(){const query=search.value.trim().toLowerCase(),category=select.value;const library=workspace.mode==='3d'?(genuineToggle.checked?allAssets3d().filter(a=>a.shape==='glb'):allAssets3d()):catalog;genuineFilter.hidden=workspace.mode!=='3d';let found=library.filter(a=>(category==='All'||a.category===category)&&(!query||a.name.toLowerCase().includes(query)||a.id.includes(query)||(workspace.mode==='2d'&&genreKeywords(a.id).includes(query))));if(sort.value==='name')found=found.slice().sort((a,b)=>a.name.localeCompare(b.name));if(sort.value==='category')found=found.slice().sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name));grid.replaceChildren();grid.classList.toggle('asset-list-mode',view==='list');grid.style.setProperty('--asset-card-size',size.value+'px');$('#assetGridMode').classList.toggle('active',view==='grid');$('#assetListMode').classList.toggle('active',view==='list');for(const a of found){const button=document.createElement('button');button.className='asset';button.classList.toggle('selected',selectedAsset===a.id);button.title=a.category+' / '+a.name+' — double clic : ajouter';button.draggable=true;button.dataset.assetId=a.id;const img=document.createElement('img');if(workspace.mode==='3d'&&a.shape==='glb'&&a.collection==='Polygonal Mind CC0'){img.dataset.glbId=a.id;img.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" rx="10" fill="#20394a"/><text x="60" y="60" font-size="13" fill="#a3ebd6" text-anchor="middle">Aperçu 3D…</text></svg>');if(lazyGlbObserver)lazyGlbObserver.observe(img);else assignModelThumbnail(img,a.id);}else if(workspace.mode==='3d'&&a.shape==='glb')assignModelThumbnail(img,a.id);else img.src=workspace.mode==='3d'?url3d(a.id):urlFor(a.id);img.alt='';img.loading='lazy';const label=document.createElement('span');label.className='asset-name';label.textContent=a.name;const secondary=document.createElement('small');secondary.textContent=workspace.mode==='3d'?(a.shape==='glb'?'● GLB réel · ':'◇ Prototype · ')+a.category:a.category;button.append(img,label,secondary);button.onclick=()=>{selectedAsset=a.id;grid.querySelectorAll('.asset').forEach(el=>el.classList.toggle('selected',el.dataset.assetId===a.id));showPreview()};button.ondblclick=()=>{if(state.playing)return;if(workspace.mode==='3d')add3d(a.id);else addPrefab(a.id);log('Prefab ajouté : '+a.name)};button.ondragstart=e=>{e.dataTransfer.setData('application/x-warlike-asset',a.id);e.dataTransfer.effectAllowed='copy'};grid.append(button)}$('#assetCount').textContent=found.length+' / '+library.length+' assets';$('#assetBreadcrumb').textContent='Assets  ›  '+(category==='All'?'All Assets':category);$('#assetFooterText').textContent=found.length+' assets affichés • Glisser vers Scene • Double clic pour instancier';tree.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.folder===category));showPreview()}
+function render(){const query=search.value.trim().toLowerCase(),category=select.value;const library=workspace.mode==='3d'?(genuineToggle.checked?allAssets3d().filter(a=>a.shape==='glb'):allAssets3d()):catalog;genuineFilter.hidden=workspace.mode!=='3d';let found=library.filter(a=>(category==='All'||a.category===category)&&(!query||a.name.toLowerCase().includes(query)||a.id.includes(query)||(workspace.mode==='2d'&&genreKeywords(a.id).includes(query))));if(sort.value==='name')found=found.slice().sort((a,b)=>a.name.localeCompare(b.name));if(sort.value==='category')found=found.slice().sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name));grid.replaceChildren();grid.classList.toggle('asset-list-mode',view==='list');grid.style.setProperty('--asset-card-size',size.value+'px');$('#assetGridMode').classList.toggle('active',view==='grid');$('#assetListMode').classList.toggle('active',view==='list');for(const a of found){const button=document.createElement('button');button.className='asset';button.classList.toggle('selected',selectedAsset===a.id);button.title=a.category+' / '+a.name+' — double clic : ajouter';button.draggable=true;button.dataset.assetId=a.id;const img=document.createElement('img');if(workspace.mode==='3d'&&a.shape==='glb'&&(a.collection==='Polygonal Mind CC0'||a.collection==='Kenney CC0 • Unity export')){img.dataset.glbId=a.id;img.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" rx="10" fill="#20394a"/><text x="60" y="60" font-size="13" fill="#a3ebd6" text-anchor="middle">Aperçu 3D…</text></svg>');if(lazyGlbObserver)lazyGlbObserver.observe(img);else assignModelThumbnail(img,a.id);}else if(workspace.mode==='3d'&&a.shape==='glb')assignModelThumbnail(img,a.id);else img.src=workspace.mode==='3d'?url3d(a.id):urlFor(a.id);img.alt='';img.loading='lazy';const label=document.createElement('span');label.className='asset-name';label.textContent=a.name;const secondary=document.createElement('small');secondary.textContent=workspace.mode==='3d'?(a.shape==='glb'?'● GLB réel · ':'◇ Prototype · ')+a.category:a.category;button.append(img,label,secondary);button.onclick=()=>{selectedAsset=a.id;grid.querySelectorAll('.asset').forEach(el=>el.classList.toggle('selected',el.dataset.assetId===a.id));showPreview()};button.ondblclick=()=>{if(state.playing)return;if(workspace.mode==='3d')add3d(a.id);else addPrefab(a.id);log('Prefab ajouté : '+a.name)};button.ondragstart=e=>{e.dataTransfer.setData('application/x-warlike-asset',a.id);e.dataTransfer.effectAllowed='copy'};grid.append(button)}$('#assetCount').textContent=found.length+' / '+library.length+' assets';$('#assetBreadcrumb').textContent='Assets  ›  '+(category==='All'?'All Assets':category);$('#assetFooterText').textContent=found.length+' assets affichés • Glisser vers Scene • Double clic pour instancier';tree.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.folder===category));showPreview()}
 document.addEventListener('warlike:workspace',()=>{
  import3dPanel.hidden=workspace.mode!=='3d';
  externalLibrary.hidden=workspace.mode!=='3d';

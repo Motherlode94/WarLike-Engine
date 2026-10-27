@@ -5,7 +5,9 @@ import {sequenceEvents,sequenceConditions,sequenceInstructions} from './logic-se
 export const communityApiVersion='1.0';
 const KEY='warlike.community.packs.v1',MAX_PACKS=30,MAX_RECIPES=20,MAX_BYTES=131072;
 const safeText=(v,max=80)=>typeof v==='string'?v.trim().slice(0,max):'';
-const slug=v=>/^[a-z][a-z0-9-]{2,63}$/.test(v);
+const slug=v=>typeof v==='string'&&/^[a-z][a-z0-9-]{2,63}$/.test(v);
+const reserved=new Set(['__proto__','constructor','prototype']);
+const safeKey=v=>typeof v==='string'&&/^[a-zA-Z][a-zA-Z0-9_:-]{0,59}$/.test(v)&&!reserved.has(v);
 const allowedActions=new Set(sequenceInstructions.filter(x=>!['destroyObject','teleportObject','moveObject','damageObject','setHealth','addHealth'].includes(x)));
 const allowedConditions=new Set(sequenceConditions.filter(x=>x!=='randomChance'));
 const keys=new Set(['enabled','event','key','radius','once','interval','signal','conditions','instructions','branches','elseInstructions']);
@@ -19,7 +21,7 @@ const allowedSteps=steps=>{
   for(const k of ['key','value','targetRole','slot','x','y']){
    if(!own(s,k))continue;
    if(k==='targetRole'&&s[k]!=='player')throw Error('Seule la cible player est autorisée.');
-   if(k==='key'||k==='slot'){const value=safeText(s[k],60);if(!value)throw Error('Clé manquante.');result[k]=value;continue}
+   if(k==='key'||k==='slot'){const value=safeText(s[k],60);if(!safeKey(value))throw Error('Clé non autorisée.');result[k]=value;continue}
    const value=scalar(s[k]);if(value===null)throw Error('Paramètre non scalaire.');result[k]=value;
   }
   return result;
@@ -29,7 +31,10 @@ const conditions=value=>{
  if(!Array.isArray(value)||value.length>8)throw Error('Trop de conditions.');
  return value.map(c=>{
   if(!c||typeof c!=='object'||!allowedConditions.has(c.type))throw Error('Condition non autorisée.');
-  return {type:c.type,key:safeText(c.key,60),value:scalar(c.value)??0,operator:['==','!=','>','<','>=','<='].includes(c.operator)?c.operator:'=='};
+  const key=safeText(c.key,60);
+  if((c.type==='variable'||c.type==='localVariable')&&!safeKey(key))throw Error('Clé de condition non autorisée.');
+  if(c.value!==undefined&&scalar(c.value)===null)throw Error('Valeur de condition non scalaire.');
+  return {type:c.type,key,value:scalar(c.value)??0,operator:['==','!=','>','<','>=','<='].includes(c.operator)?c.operator:'=='};
  });
 };
 function sequence(value){
@@ -67,6 +72,24 @@ export function validateCommunityPack(input){
   name:safeText(input.name,80)||input.id,author:safeText(input.author,80)||'Communauté',
   description:safeText(input.description,300),recipes};
 }
+export function compareCommunityVersions(a,b){
+ const semver=/^\\d+\\.\\d+\\.\\d+$/;
+ if(!semver.test(a)||!semver.test(b))throw Error('Version SemVer invalide.');
+ const aa=a.split('.').map(Number),bb=b.split('.').map(Number);
+ if([...aa,...bb].some(n=>!Number.isSafeInteger(n)))throw Error('Numéro de version trop élevé.');
+ for(let i=0;i<3;i++)if(aa[i]!==bb[i])return aa[i]>bb[i]?1:-1;
+ return 0;
+}
+export function previewCommunityPack(input){
+ const pack=validateCommunityPack(input);
+ const installed=packs.find(p=>p.id===pack.id);
+ const relation=installed?compareCommunityVersions(pack.version,installed.version):null;
+ return {pack,installedVersion:installed?.version||null,
+  action:!installed?'install':relation>0?'upgrade':relation===0?'same-version':'downgrade',
+  compatible:pack.apiVersion===communityApiVersion,
+  permissions:['Écrire des variables Blueprint','Déclencher les actions Blueprint autorisées'],
+  recipes:pack.recipes.map(r=>({id:r.id,name:r.name,event:r.sequence.event,actions:r.sequence.instructions.map(x=>x.type) }))};
+}
 let packs=[];
 export function installedCommunityPacks(){return packs.map(p=>structuredClone(p))}
 export function loadCommunityPacks(storage=globalThis.localStorage){
@@ -77,6 +100,8 @@ export function loadCommunityPacks(storage=globalThis.localStorage){
 }
 export function installCommunityPack(input,storage=globalThis.localStorage){
  const pack=validateCommunityPack(input);
+ const existing=packs.find(p=>p.id===pack.id);
+ if(existing&&compareCommunityVersions(pack.version,existing.version)<=0)throw Error('Cette version est déjà installée ou plus ancienne.');
  const next=[...packs.filter(p=>p.id!==pack.id),pack];
  if(next.length>MAX_PACKS)throw Error('Limite de 30 packs atteinte.');
  try{storage?.setItem(KEY,JSON.stringify(next))}catch{throw Error('Stockage local indisponible : pack non installé.')}

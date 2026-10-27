@@ -29,7 +29,7 @@ export function updateDriving3d(entities,player,keys,dt){
    if(free){player.x=free.x;player.y=free.y;player.elevation3d=car.elevation3d||0;player._hiddenInVehicle=false;player.animation='idle';resetDriving3d()}
   }else if(player){
    const p=center(player);
-   const candidates=entities.filter(isDriveable3d).map(o=>({o,d:Math.hypot(center(o).x-p.x,center(o).y-p.y)})).sort((a,b)=>a.d-b.d);
+   const candidates=entities.filter(o=>o!==player&&isDriveable3d(o)).map(o=>({o,d:Math.hypot(center(o).x-p.x,center(o).y-p.y)})).sort((a,b)=>a.d-b.d);
    const nearest=candidates[0];
    if(nearest&&nearest.d<Math.max(150,(nearest.o.w||64)*.85)){
     driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;player._hiddenInVehicle=true;player.animation='drive';

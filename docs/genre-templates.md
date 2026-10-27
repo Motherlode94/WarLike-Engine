@@ -25,3 +25,12 @@ Le preset Racing 3D utilise le contrôleur automobile arcade déjà disponible. 
 Les scènes contiennent **des exemples fonctionnels de logique**, pas des jeux complets. Le RP n'a pas encore de synchronisation multijoueur ni de système persistant de métiers. La simulation n'a pas encore de chaînes de production approfondies. Le RPG n'a pas encore d'arbre de talents complet ou d'un système de quête journalisé. Le 4X n'a pas encore de diplomatie, brouillard de guerre, terrain hexagonal ou adversaires stratégiques autonomes. Les séquences utilisées ici sont exécutées par le runtime JavaScript du navigateur; le runtime C# .NET local est séparé.
 
 Le type de projet 2D/3D reste indépendant du genre et le thème de l'éditeur reste indépendant des données du projet.
+
+
+## Composants C# natifs (runtime .NET 8 local)
+
+Chaque template fournit aussi un composant préconfiguré dans `csharpComponents`, lisible par `GameWorld.FromWarLikeJson`. Les composants sont **Roleplay**, **RacingRules**, **SimulationEconomy**, **RpgProgression** et **FourXEmpire**.
+
+Pour tester un composant natif : démarrer le pont avec `start-warlike-csharp.cmd`, ouvrir **Window → C# Runtime**, se connecter, envoyer la scène, sélectionner le GameObject qui porte le composant, puis utiliser **Genres C# → Exécuter action C#**. Le résultat du composant (économie, progression, temps de course ou ressources de l'empire) s'affiche dans le panneau. `POST /genre/action` n'accepte que les actions prédéfinies.
+
+**Important :** les états natifs sont distincts des variables Blueprint du Play Web. Les commandes C# restent des appels au processus .NET local, sans synchronisation automatique du RPG, RP, 4X ou économie avec le Play navigateur. Les composants sont une base pour leur future unification.

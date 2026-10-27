@@ -1054,3 +1054,13 @@ body:not(.hub-active) header.topbar .status{margin-left:auto}
  body:not(.hub-active) header.topbar .studio-compact-toggle::first-letter{font-size:15px}
  body:not(.hub-active) header.topbar .warlike-tool-library>summary{font-size:10px}
 }
+
+/* Primary action: quick-create objects, not a duplicate tool visibility switch */
+body:not(.hub-active) .studio-quick-create{position:relative;flex:none;z-index:90}
+body:not(.hub-active) .studio-quick-create>summary{list-style:none;display:flex;align-items:center;justify-content:center;min-height:29px;padding:5px 12px;border:1px solid var(--editor-accent,#48cba9);border-radius:5px;background:color-mix(in srgb,var(--editor-accent,#48cba9) 18%,#273541);color:#e9fff8;font-size:12px;font-weight:750;cursor:pointer;white-space:nowrap}
+body:not(.hub-active) .studio-quick-create>summary::-webkit-details-marker{display:none}
+body:not(.hub-active) .studio-quick-create[open]>summary{background:color-mix(in srgb,var(--editor-accent,#48cba9) 32%,#273541)}
+body:not(.hub-active) .studio-quick-create-menu{position:absolute;left:0;top:calc(100% + 7px);z-index:900;display:flex;flex-direction:column;gap:5px;width:205px;padding:11px;border:1px solid var(--warlike-palette-border,#455363);border-radius:7px;background:var(--warlike-palette-panel,#252b34);box-shadow:0 12px 28px #0009}
+body:not(.hub-active) .studio-quick-create-menu strong{padding:2px 5px 6px;font-size:11px;color:var(--editor-accent,#48cba9)}
+body:not(.hub-active) .studio-quick-create-menu button{width:100%;text-align:left;min-height:33px;padding:7px 9px;border:1px solid transparent;border-radius:4px;color:var(--warlike-custom-text,#e7eaf0);background:var(--warlike-palette-button,#354251);cursor:pointer}
+body:not(.hub-active) .studio-quick-create-menu button:hover{border-color:var(--editor-accent,#48cba9);filter:brightness(1.14)}

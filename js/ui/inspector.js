@@ -128,7 +128,14 @@ advancedTools.append(advancedSummary,advancedContent);
 component(advancedContent,'Quick Start • Gameplay Recipes',body=>{
  const intro=document.createElement('p');intro.textContent='Appliquer un comportement réutilisable à cet objet. Les composants existants concernés peuvent être remplacés.';body.append(intro);
  const picker=document.createElement('select');picker.disabled=state.playing;
- for(const recipe of recipes){const opt=document.createElement('option');opt.value=recipe.id;opt.textContent=recipe.name+' — '+recipe.description;picker.append(opt)}
+ const recipeGroups=new Map();
+ for(const recipe of recipes){
+  const id=recipe.id;
+  const category=id.startsWith('fps')||id.startsWith('tps')?'FPS / TPS':id.startsWith('rts')?'RTS':id.startsWith('race')?'Course automobile':id.startsWith('action')||id.startsWith('adventure')?'Action / Aventure':'Gameplay général';
+  if(!recipeGroups.has(category)){const group=document.createElement('optgroup');group.label=category;recipeGroups.set(category,group);picker.append(group)}
+  const option=document.createElement('option');option.value=id;option.textContent=recipe.name;option.title=recipe.description;
+  recipeGroups.get(category).append(option);
+ }
  body.append(picker);
  const apply=document.createElement('button');apply.textContent='＋ Appliquer le modèle';apply.disabled=state.playing;apply.onclick=()=>{if(!confirm('Appliquer ce modèle à '+o.name+' ? Les composants concernés seront remplacés.'))return;if(applyRecipe(o,picker.value)){record('Gameplay Recipe : '+picker.value);notify()}};body.append(apply);
 });

@@ -4,6 +4,7 @@ import {horror} from './core/horror-survival.js';
 import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality,applyHorrorAtmosphere} from './core/render-quality.js';
 import {initBlueprintWorkspace} from './ui/blueprint-workspace.js';
 import {initEditorAppearance} from './ui/editor-appearance.js';
+import {initCursorSettings} from './ui/cursor-settings.js';
 import {initializeNative3d,nativeStatus} from './core/native-3d.js';
 import {initHub,hub} from './core/project-hub.js';
 import {workspace} from './core/workspaces.js';
@@ -181,3 +182,4 @@ document.getElementById('menuAddComponent')?.addEventListener('click',()=>{
 });
 initStudioMenus();
 initEditorAppearance();
+initCursorSettings();

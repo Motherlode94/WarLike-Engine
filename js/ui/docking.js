@@ -11,8 +11,10 @@ try{if(!localStorage.getItem('warlike.layout.v3.2.migrated')){if(!Object.keys(la
 const $=id=>document.getElementById(id);
 const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify(layout))}catch{}};
 function applyWidths(){
- const left=layout.float.hierarchy?0:clamp(layout.leftWidth,160,440);
- const right=layout.float.inspector?0:clamp(layout.rightWidth,190,480);
+ const available=Math.max(420,window.innerWidth-220);
+ const maxSide=Math.max(170,Math.floor(available*0.36));
+ const left=layout.float.hierarchy?0:clamp(layout.leftWidth,160,Math.min(440,maxSide));
+ const right=layout.float.inspector?0:clamp(layout.rightWidth,170,Math.min(480,maxSide));
  document.documentElement.style.setProperty('--left-pane-width',left+'px');
  document.documentElement.style.setProperty('--right-pane-width',right+'px');
  document.body.classList.toggle('hierarchy-floating',!!layout.float.hierarchy);
@@ -21,7 +23,7 @@ function applyWidths(){
 }
 function floatPanel(kind){
  const element=$(panelMap[kind]),rect=element.getBoundingClientRect();
- layout.float[kind]={x:clamp(Math.round(rect.x+18),0,innerWidth-220),y:clamp(Math.round(rect.y+16),35,innerHeight-140),width:clamp(Math.round(rect.width),265,Math.max(265,innerWidth-24)),height:clamp(Math.round(rect.height),210,Math.max(210,innerHeight-45))};
+ layout.float[kind]={x:clamp(Math.round(rect.x+18),0,Math.max(0,innerWidth-220)),y:clamp(Math.round(rect.y+16),35,Math.max(35,innerHeight-140)),width:clamp(Math.round(rect.width),265,Math.max(265,innerWidth-24)),height:clamp(Math.round(rect.height),210,Math.max(210,innerHeight-90))};
  applyLayout();save();
 }
 function dockPanel(kind){delete layout.float[kind];applyLayout();save()}
@@ -30,7 +32,7 @@ function applyLayout(){
  for(const [kind,id] of Object.entries(panelMap)){
   const el=$(id),f=layout.float[kind],button=document.querySelector('[data-dock-toggle="'+kind+'"]');
   el.classList.toggle('floating-panel',!!f);
-  if(f){el.style.left=clamp(f.x,0,Math.max(0,innerWidth-150))+'px';el.style.top=clamp(f.y,35,Math.max(35,innerHeight-65))+'px';el.style.width=clamp(f.width,260,Math.max(260,innerWidth))+'px';el.style.height=clamp(f.height,210,Math.max(210,innerHeight-35))+'px'}
+  if(f){el.style.left=clamp(f.x,0,Math.max(0,innerWidth-150))+'px';el.style.top=clamp(f.y,35,Math.max(35,innerHeight-110))+'px';el.style.width=clamp(f.width,260,Math.max(260,innerWidth))+'px';el.style.height=clamp(f.height,210,Math.max(210,innerHeight-35))+'px'}
   else{el.style.removeProperty('left');el.style.removeProperty('top');el.style.removeProperty('width');el.style.removeProperty('height')}
   if(button){button.textContent=f?'↧':'▣';button.title=f?'Ancrer '+kind:'Détacher '+kind}
  }

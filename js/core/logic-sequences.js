@@ -4,7 +4,7 @@ import {inventoryAdd,inventoryRemove,equipItem,damage,ensureStats} from './gamep
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
 export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal'];
-export const sequenceConditions=['always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','randomChance'];
+export const sequenceConditions=['always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance'];
 export const sequenceInstructions=['message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
 export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[]};
@@ -28,6 +28,8 @@ export function conditionPass(c,o,ctx){
  case 'healthBelow':pass=number(o.hp,100)<number(c.value,50);break;
  case 'healthAbove':pass=number(o.hp,100)>number(c.value,50);break;
  case 'hasTag':pass=Array.isArray(o.tags)&&o.tags.includes(String(c.value??''));break;
+ case 'playerInVehicle':pass=!!ctx.player?._hiddenInVehicle;break;
+ case 'playerOnFoot':pass=!!ctx.player&&!ctx.player._hiddenInVehicle;break;
  case 'randomChance':pass=Math.random()<Math.max(0,Math.min(1,number(c.value,.5)));break;
  case 'objectEnabled':pass=o.sequenceEnabled!==false;break;
  default:pass=false;

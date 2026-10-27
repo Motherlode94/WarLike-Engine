@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {communityApiVersion,validateCommunityPack,loadCommunityPacks,installCommunityPack,uninstallCommunityPack,communityRecipes,applyCommunityRecipe} from '../js/core/community-plugins.js';
+import {communityApiVersion,validateCommunityPack,loadCommunityPacks,installCommunityPack,uninstallCommunityPack,communityRecipes,applyCommunityRecipe,previewCommunityPack,compareCommunityVersions} from '../js/core/community-plugins.js';
 const example=JSON.parse(readFileSync(new URL('../examples/community/field-tools.json',import.meta.url),'utf8'));
 const store=()=>{
  const data=new Map();
@@ -55,4 +55,43 @@ test('community extension appears in Inspector without loading arbitrary scripts
  assert.match(inspector,/applyCommunityRecipe/);
  assert.match(editor,/initCommunityManager\(\)/);
  assert.match(html,/id="warlikeOpenCommunity"/);
+});
+
+test('update preview blocks version downgrades and repeat installation',()=>{
+ const storage=store();loadCommunityPacks(storage);
+ const first=previewCommunityPack(example);
+ assert.equal(first.action,'install');
+ assert.equal(first.compatible,true);
+ installCommunityPack(example,storage);
+ assert.equal(previewCommunityPack(example).action,'same-version');
+ assert.throws(()=>installCommunityPack(example,storage),/version/);
+ const newer={...example,version:'1.1.0'};
+ assert.equal(previewCommunityPack(newer).action,'upgrade');
+ installCommunityPack(newer,storage);
+ assert.equal(previewCommunityPack(example).action,'downgrade');
+ assert.throws(()=>installCommunityPack(example,storage),/ancienne/);
+ assert.equal(compareCommunityVersions('2.0.0','1.99.99'),1);
+ assert.equal(compareCommunityVersions('1.0.0','1.0.0'),0);
+});
+test('manifest cannot modify prototype keys in global Blueprint storage',()=>{
+ const bad={...example,recipes:[{id:'polluting',sequence:{event:'interact',instructions:[{type:'setVariable',key:'__proto__',value:1}]}}]};
+ assert.throws(()=>validateCommunityPack(bad),/Clé/);
+ const badCondition={...example,recipes:[{id:'polluting',sequence:{event:'interact',conditions:[{type:'variable',key:'constructor',value:1}],instructions:[]}}]};
+ assert.throws(()=>validateCommunityPack(badCondition),/Clé/);
+});
+test('catalog only loads curated same-origin manifests',async()=>{
+ const {communityCatalog,loadCatalogEntry}=await import('../js/core/community-catalog.js');
+ assert.equal(communityCatalog.length,2);
+ const result=await loadCatalogEntry('field-tools',{fetcher:async url=>({
+  ok:true,headers:{get:()=>null},text:async()=>readFileSync(new URL('../'+url.replace(/^\.\//,''),import.meta.url),'utf8')
+ })});
+ assert.equal(result.id,'field-tools');
+ await assert.rejects(()=>loadCatalogEntry('https://evil.example/code'),/inconnu/);
+});
+test('manager requires explicit confirmation before installation and provides search',()=>{
+ const ui=readFileSync(new URL('../js/ui/community-manager.js',import.meta.url),'utf8');
+ assert.match(ui,/previewCommunityPack\(input\)/);
+ assert.match(ui,/confirm\.onclick/);
+ assert.match(ui,/search\.addEventListener\('input',render\)/);
+ assert.match(ui,/loadCatalogEntry\(item\.id\)/);
 });

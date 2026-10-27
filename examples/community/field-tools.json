@@ -1,0 +1,57 @@
+{
+  "apiVersion": "1.0",
+  "id": "field-tools",
+  "version": "1.0.0",
+  "name": "Field Tools",
+  "author": "WarLike Community",
+  "description": "Deux interactions communautaires pour les prototypes RP et aventure.",
+  "recipes": [
+    {
+      "id": "welcome-npc",
+      "name": "PNJ accueillant",
+      "description": "Un dialogue et une variable de réputation",
+      "sequence": {
+        "event": "interact",
+        "radius": 125,
+        "key": "e",
+        "once": false,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "reputation",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Bienvenue, voyageur ! Réputation +1."
+          }
+        ]
+      }
+    },
+    {
+      "id": "supply-cache",
+      "name": "Réserve de provisions",
+      "description": "Donne une provision une seule fois",
+      "sequence": {
+        "event": "interact",
+        "radius": 100,
+        "key": "e",
+        "once": true,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "supplies",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Provisions récupérées."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -108,6 +108,21 @@ public sealed class GameWorld {
                 foreach (var definition in components.EnumerateArray()) {
                     if (definition.ValueKind != JsonValueKind.Object || !definition.TryGetProperty("kind", out var type)) continue;
                     switch (type.GetString()) {
+                        case "Team":
+                            world.AddComponent(actor, new TeamComponent { TeamId = (int)Number(definition,"teamId"), FriendlyFire = definition.TryGetProperty("friendlyFire",out var ff) && ff.ValueKind == JsonValueKind.True });
+                            break;
+                        case "Damageable":
+                            world.AddComponent(actor, new DamageableComponent { Armor = Math.Max(0,Number(definition,"armor")), Invulnerable = definition.TryGetProperty("invulnerable",out var inv) && inv.ValueKind == JsonValueKind.True });
+                            break;
+                        case "Score":
+                            world.AddComponent(actor, new ScoreComponent());
+                            break;
+                        case "Weapon":
+                            world.AddComponent(actor, new WeaponComponent { Damage = Math.Max(0,Number(definition,"damage")), FireRate = Math.Max(0,Number(definition,"fireRate")), MagazineSize = Math.Max(0,(int)Number(definition,"magazineSize")) });
+                            break;
+                        case "Respawn":
+                            world.AddComponent(actor, new RespawnComponent { Delay = Math.Max(0,Number(definition,"delay")) });
+                            break;
                         case "AutoRotate":
                             actor.SpinSpeed = Number(definition,"speed");
                             world.AddComponent(actor, new AutoRotateBehaviour());

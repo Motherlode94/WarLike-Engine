@@ -31,3 +31,12 @@ test('editor shell reserves the same footer height across the whole viewport',()
  assert.match(css,/--warlike-menubar-height\) - var\(--warlike-toolbar-height\) - var\(--warlike-footer-height\)/);
  assert.match(css,/\.warlike-status-footer\{box-sizing:border-box;position:fixed!important/);
 });
+
+test('audio volume stays with its accessible label in tool library',()=>{
+ assert.match(editor,/volumeInput\.closest\('label'\)/);
+ assert.match(editor,/target\.append\(volumeLabel\)/);
+});
+test('Component commands close their dropdown when invoked',()=>{
+ assert.match(editor,/menuOpenBlueprint[\s\S]*?closest\('details'\)\?\.removeAttribute\('open'\)/);
+ assert.match(editor,/menuAddComponent[\s\S]*?closest\('details'\)\?\.removeAttribute\('open'\)/);
+});

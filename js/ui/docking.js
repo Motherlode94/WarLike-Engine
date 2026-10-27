@@ -6,6 +6,8 @@ const defaults={leftWidth:245,rightWidth:350,float:{}};
 let layout;
 try{layout={...defaults,...JSON.parse(localStorage.getItem(storageKey)||'{}')}}catch{layout={...defaults,float:{}}}
 layout.float=layout.float&&typeof layout.float==='object'?layout.float:{};
+// Preserve user-customized layouts. Upgrade only untouched legacy defaults once.
+try{if(!localStorage.getItem('warlike.layout.v3.2.migrated')){if(!Object.keys(layout.float).length&&[220,245].includes(layout.leftWidth)&&[275,350].includes(layout.rightWidth)){layout.leftWidth=245;layout.rightWidth=350;}localStorage.setItem('warlike.layout.v3.2.migrated','1')}}catch{}
 const $=id=>document.getElementById(id);
 const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify(layout))}catch{}};
 function applyWidths(){

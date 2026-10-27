@@ -140,6 +140,7 @@ remoteForm.onsubmit=async event=>{
  finally{remoteSubmit.disabled=false;remoteSubmit.textContent='↓ Importer URL GLB'}
 };
 import3dPanel.append(remoteForm);import3dPanel.hidden=workspace.mode!=='3d';tree.parentNode?.querySelector('.asset-content')?.prepend(import3dPanel);
+let kenneyAttempted=false;
 let communityAttempted=false;
 const communityImport=document.createElement('div');communityImport.className='real-model-import';
 const communityButton=document.createElement('button');communityButton.textContent='＋ Charger jusqu’à 500 modèles 3D CC0';
@@ -237,6 +238,7 @@ document.addEventListener('warlike:workspace',()=>{
  for(const b of tree.querySelectorAll('[data-folder]')){const n=b.dataset.folder,catAssets=workspace.mode==='3d'?allAssets3d():catalog;b.hidden=!list.includes(n);b.querySelector('small').textContent=n==='All'?catAssets.length:catAssets.filter(a=>a.category===n).length}
  render();
  if(workspace.mode==='3d'&&!communityAttempted){communityAttempted=true;communityButton.click()}
+ if(workspace.mode==='3d'&&!kenneyAttempted){kenneyAttempted=true;kenneyButton.click()}
 });
 // Apply the correct library immediately on initial load as well as on workspace changes.
 document.dispatchEvent(new Event('warlike:workspace'));

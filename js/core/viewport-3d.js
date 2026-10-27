@@ -181,6 +181,11 @@ const assetColor=o=>{
  c==='Weapons'?[.9,.72,.42,1]:c==='VFX'?[.58,.43,.95,1]:rgba(o.color);
 };
 export function init3d(canvas,host,buttons){
+ const drivingHud=document.createElement('div');
+ drivingHud.id='warlikeVehicle3dHud';drivingHud.hidden=true;
+ drivingHud.setAttribute('aria-live','off');
+ host.append(drivingHud);
+
  let gl=null;try{gl=canvas.getContext('webgl',{antialias:true,alpha:false})}catch(err){view3d.error=String(err.message||err)}
  const renderFailure=message=>{
   view3d.error=message;

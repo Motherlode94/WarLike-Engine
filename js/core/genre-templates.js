@@ -82,7 +82,7 @@ export function createGenreScene(genre,mode='3d'){
    object('environment-road','Piste Field Lab',505,535,{collision3d:false,solid3d:false,w:1000,depth3d:150});
    object('building-garage','Hangar de tests',1080,320,{collision3d:true,solid3d:true});
   }
- } elseif(chosen==='rp'){
+ } else if(chosen==='rp'){
   player.csharpComponents=[{kind:'Roleplay',money:50,reputation:0}];
   object('building-house','Quartier RP',330,165);
   object('character-civilian','Citoyen',270,315,{playable3d:false,sequence:interact([inc('reputation',1),msg('Bienvenue au quartier ! Réputation +1')])});

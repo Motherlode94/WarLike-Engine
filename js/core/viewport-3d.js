@@ -17,6 +17,7 @@ import {record} from './history.js';
 import {getAsset} from '../assets/catalog.js';
 import {game} from './gameplay.js';
 import {initSceneGizmo3d} from './gizmos-3d.js';
+import {orderRtsMove,updateRtsOrders} from './rts-orders.js';
 
 export const view3d={enabled:false,yaw:-.68,pitch:.62,radius:25,target:[9,0,6],drag:null,gl:null,error:null,followPlayer:true};
 export const playableActor=entities=>entities.find(o=>o.playable3d===true||o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters')||null;
@@ -319,6 +320,7 @@ export function init3d(canvas,host,buttons){
   if(!view3d.enabled)return;
   const p=rectPoint(e),cam=camera();
   if(state.playing){
+   if(e.button===2){const hit=groundHit3d(p.x,p.y,cam,p.w,p.h);if(hit&&orderRtsMove(state.entities,state.selected,{x:hit[0]*64,y:hit[2]*64})){e.preventDefault();return}}
    if(isFps()){if(e.button===0){shootFps();canvas.requestPointerLock?.()}return}
    if(e.button===2){view3d.drag={button:2,x:p.x,y:p.y,yaw:view3d.yaw,pitch:view3d.pitch,pointer:e.pointerId,selected:null,moved:false};canvas.setPointerCapture(e.pointerId)}
    return;
@@ -368,7 +370,7 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&!wasPlaying)enterPlay();
   if(!state.playing&&wasPlaying){view3d.followPlayer=false;stopRapier();}
   wasPlaying=state.playing;
-  if(state.playing&&workspace.mode==='3d'){update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,player:playableActor(state.entities)});}
+  if(state.playing&&workspace.mode==='3d'){updateRtsOrders(state.entities,dt,true);update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,player:playableActor(state.entities)});}
   if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=Math.min(1,dt*9);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}
   if(!view3d.enabled){updateGizmos();return}
   updateGizmos();

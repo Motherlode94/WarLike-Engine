@@ -42,6 +42,7 @@ export function createGenreScene(genre,mode='3d'){
   {type:threeD?'mesh3d':'object',w:threeD?55:60,h:threeD?80:60,depth3d:55,color,collision3d:false,solid3d:false,sequence});
  const player=actor();
  if(chosen==='rp'){
+  player.csharpComponents=[{kind:'Roleplay',money:50,reputation:0}];
   object('building-house','Quartier RP',330,165);
   object('character-civilian','Citoyen',270,315,{playable3d:false,sequence:interact([inc('reputation',1),msg('Bienvenue au quartier ! Réputation +1')])});
   marker('Boutique',505,300,interact([inc('money',-10),item('supplies'),msg('Achat : provisions, -10 crédits')]),'#73bda2');
@@ -50,18 +51,21 @@ export function createGenreScene(genre,mode='3d'){
  } else if(chosen==='racing'){
   const car=object('vehicle-sports','Voiture de course',245,160,{tags:['race-vehicle'],maxSpeed:310,acceleration:225,brakeForce:310,turnRate:145,drag:1.15,reverseRatio:.45,rotation:0,
    ...(threeD?{collision3d:true}:{type:'prefab',assetId:'vehicle-jeep'})});
+  car.csharpComponents=[{kind:'RacingRules'}];
   if(!threeD){car.type='prefab';car.assetId='jeep';car.w=115;car.h=72;}
   marker('Départ',180,360,interact([variable('raceStarted',1),variable('raceFinished',0),variable('raceElapsed',0),variable('raceCheckpoint',0),signal('race:start'),msg('Course lancée !')]));
   marker('Checkpoint 1',500,340,enter([inc('raceCheckpoint',1),signal('race:checkpoint'),msg('Checkpoint 1')],{once:true,radius:105}));
   marker('Arrivée',640,155,{...enter([],{once:false,radius:110}),branches:[{conditions:[{type:'variable',key:'raceCheckpoint',operator:'>=',value:1}],instructions:[variable('raceFinished',1),signal('race:finish'),msg('Arrivée !')]}],elseInstructions:[msg('Passe le checkpoint avant l’arrivée.')]});
   if(threeD)object('environment-road','Circuit',350,450,{collision3d:false,solid3d:false});
  } else if(chosen==='simulation'){
+  player.csharpComponents=[{kind:'SimulationEconomy',money:100,materials:5}];
   object('building-garage','Atelier',340,135);
   marker('Machine de production',420,340,interact([inc('materials',2),msg('Production : +2 matériaux')]),'#7cbaaa');
   marker('Commande client',170,395,interact([inc('money',25),inc('materials',-1),msg('Commande livrée : +25 crédits')]),'#e9ba75');
   marker('Maintenance',590,200,interact([inc('maintenance',1),msg('Machine entretenue')]),'#a5bcdc');
   player.sequence={...interact([variable('materials',5),variable('money',100),variable('maintenance',0),msg('Simulation : ressources, fabrication et commandes')]),event:'start',once:true};
  } else if(chosen==='rpg'){
+  player.csharpComponents=[{kind:'RpgProgression',gold:100}];
   const npc=object('character-civilian','Donneur de quête',315,220,{playable3d:false});
   npc.sequence=interact([variable('questActive',1),signal('rpg:quest'),msg('Quête : rejoindre les ruines')]);
   marker('Ruines',590,370,enter([variable('questCompleted',1),inc('experience',50),signal('rpg:quest-complete'),msg('Quête terminée : +50 XP')]));
@@ -70,7 +74,7 @@ export function createGenreScene(genre,mode='3d'){
   player.sequence={...interact([variable('gold',100),variable('experience',0),msg('RPG : dialogue, quête, objets et progression')]),event:'start',once:true};
  } else if(chosen==='fourx'){
   player.tags=[...new Set([...(player.tags||[]),'commander'])];
-  const first=object('building-tower','Capitale',320,215,{team:1,tags:['4x-city'],playable3d:false});
+  const first=object('building-tower','Capitale',320,215,{team:1,tags:['4x-city'],playable3d:false,csharpComponents:[{kind:'FourXEmpire'}]});
   first.sequence={...interact([variable('turn',1),variable('food',12),variable('industry',8),variable('science',3),variable('territory',1),variable('army',2),msg('4X : explorer, étendre, exploiter, exterminer')]),event:'start',once:true};
   marker('Explorer',525,145,interact([inc('science',2),signal('4x:explore'),msg('Région explorée : +2 science')]),'#84afd6');
   marker('Coloniser',550,385,interact([inc('territory',1),inc('food',-2),signal('4x:expand'),msg('Territoire colonisé : -2 nourriture')]),'#93c599');

@@ -32,3 +32,13 @@ Chaque `sequence` utilise les déclencheurs Blueprint pris en charge (`start`, `
 ## Contributions officielles
 
 Utiliser des pull requests GitHub avec description, exemple de scène et tests. Une modification au noyau du moteur n'est pas chargée automatiquement depuis le Marketplace : elle exige toujours une revue et la réussite des vérifications GitHub Actions.
+
+## Packs spécialisés 2D et 3D
+
+Le catalogue intégré propose maintenant **Platformer Essentials 2D** (checkpoint, pièce, porte de fin de niveau) et **Adventure Essentials 3D** (terminal, caisse de matériel, objectif), en complément des exemples polyvalents.
+
+La propriété facultative `modes` au niveau du manifest accepte `["2d"]`, `["3d"]` ou `["2d","3d"]`. Une recette peut aussi déclarer ses propres `modes`, à condition qu'ils soient inclus dans les modes de son pack. En l'absence de cette propriété, le pack reste compatible avec les deux modes, pour préserver les anciens manifests. L'Inspector affiche uniquement les recettes compatibles avec l'espace 2D/3D actif.
+
+Le gestionnaire **Assets → Communauté · Plugins** permet de rechercher les exemples, prévisualiser les actions et permissions, puis confirmer l'installation. Une nouvelle version d'un pack doit être strictement supérieure à la version déjà installée (`x.y.z`) ; une version antérieure ou identique est refusée.
+
+Ces packs sont des **comportements Blueprint**. Ils ne contiennent pas encore de textures, de modèles 3D, de sons ni d'exécutables tiers. L'import des assets communautaires nécessitera un format de paquet et des contrôles de licences, taille et contenu distincts.

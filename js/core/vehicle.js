@@ -1,3 +1,4 @@
+import {stepArcadeVehicle,moveVehicleWithCollision} from './arcade-driving.js';
 import {playSound} from './audio.js';
 import {housingActive,housing} from './housing.js';
 import {isBuildingSolid} from './building-system.js';
@@ -30,25 +31,16 @@ export function updateVehicles(dt,player){
  driving.enterHeld=pressed;
  const car=currentVehicle();if(!car||!player)return;
  const conf=vehicleDefaults(car),throttle=Number(k.has('w')||k.has('z')||k.has('arrowup'))-Number(k.has('s')||k.has('arrowdown')),turn=Number(k.has('d')||k.has('arrowright'))-Number(k.has('q')||k.has('a')||k.has('arrowleft')),handbrake=k.has(' ');
- const oldSpeed=driving.speed;
- if(throttle!==0){const same=Math.sign(throttle)===Math.sign(driving.speed)||Math.abs(driving.speed)<1;driving.speed+=throttle*(same?conf.acceleration:conf.brakeForce)*dt}
- else{const decel=Math.min(Math.abs(driving.speed),Math.max(8,Math.abs(driving.speed)*conf.drag)*dt);driving.speed-=Math.sign(driving.speed)*decel}
- if(handbrake)driving.speed*=Math.max(0,1-5*dt);
- driving.speed=Math.max(-conf.maxSpeed*.48,Math.min(conf.maxSpeed,driving.speed));
- // GTA-inspired arcade feel: smooth steering, speed-sensitive turning and handbrake drift.
- const steerResponse=handbrake?9:6;
- driving.steer+=(turn-driving.steer)*Math.min(1,steerResponse*dt);
- const speedRatio=Math.min(1,Math.abs(driving.speed)/Math.max(1,conf.maxSpeed));
- const steerScale=Math.min(1,Math.abs(driving.speed)/60)*(1-.36*speedRatio);
- const driftBoost=handbrake?1.75:1;
- car.rotation=(car.rotation||0)+driving.steer*conf.turnRate*steerScale*Math.sign(driving.speed||1)*dt*driftBoost;
+ const result=stepArcadeVehicle(
+  {speed:driving.speed,steer:driving.steer,rotation:car.rotation||0},
+  {throttle,steer:turn,handbrake},dt,conf);
+ driving.speed=result.speed;driving.steer=result.steer;car.rotation=result.rotation;
  driving.grip+=( (handbrake?.4:1)-driving.grip)*Math.min(1,(handbrake?7:4)*dt);
- const angle=(car.rotation||0)*Math.PI/180;
- const beforeX=car.x,beforeY=car.y;car.x+=Math.sin(angle)*driving.speed*dt;car.y-=Math.cos(angle)*driving.speed*dt;
- const centerPoint=center(car),r=conf.collisionRadius;
- if(state.entities.some(o=>o!==car&&o!==player&&solid(o)&&overlapCircleRect(centerPoint.x,centerPoint.y,r,o))){
-  car.x=beforeX;car.y=beforeY;driving.speed=-oldSpeed*.12;driving.collisionFlash=.2;
- }
+ const collision=moveVehicleWithCollision(car,result,(x,y)=>{
+  const radius=conf.collisionRadius;
+  return state.entities.some(o=>o!==car&&o!==player&&solid(o)&&overlapCircleRect(x+car.w/2,y+car.h/2,radius,o));
+ },{maxStep:Math.max(4,conf.collisionRadius*.35)});
+ if(collision.collision){driving.speed=-driving.speed*.12;driving.collisionFlash=.24;playSound('impact',{cooldown:.22,gain:.38})}
  car.animation=handbrake&&Math.abs(driving.speed)>8?'brake':Math.abs(driving.speed)<3?'idle':turn>0?'turn_right':turn<0?'turn_left':driving.speed<0?'reverse':'drive';
  car.animationSpeed=Math.max(.6,Math.min(2.5,Math.abs(driving.speed)/140));
  player.x=car.x+(car.w-player.w)/2;player.y=car.y+(car.h-player.h)/2;player._hiddenInVehicle=true;player.animation='drive';

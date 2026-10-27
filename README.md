@@ -4,6 +4,12 @@
 
 **[Lire la documentation complète en français](./docs/index.html)** · [Démonstration en ligne](https://warlike-engine.pages.dev/) · [Guide des vrais prefabs 3D](./REAL-3D-PREFABS-BETA72.md) · [Logic Sequences](./LOGIC-SEQUENCES-BETA7.md)
 
+## Communauté — WarLike Open Ecosystem
+
+Le moteur accepte désormais des **packs communautaires JSON déclaratifs** via **Assets → Communauté · Plugins**. Les recettes Blueprint importées apparaissent dans l'Inspector, sans exécuter de JavaScript tiers. Cette première version du SDK est locale et limitée ; elle ne constitue pas encore une Marketplace hébergée.
+
+**[Guide du SDK communautaire](./docs/community-sdk.md)** · [Exemple de pack](./examples/community/field-tools.json)
+
 ## Démarrer
 
 1. Ouvrir `index.html` depuis un serveur statique ou utiliser la version Cloudflare Pages.

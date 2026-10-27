@@ -75,8 +75,10 @@ component(root,'C# Components • .NET Runtime',body=>{
  const remove=document.createElement('button');remove.type='button';remove.textContent='Supprimer';remove.disabled=state.playing;remove.onclick=()=>{definitions.splice(index,1);o.csharpComponents=definitions;record('Supprimer composant C#');notify()};box.append(remove);list.append(box)});
  body.append(list)};
  const picker=document.createElement('select');for(const kind of Object.keys(supported)){const option=document.createElement('option');option.value=kind;option.textContent=kind;picker.append(option)}
- const add=document.createElement('button');add.type='button';add.textContent='＋ Ajouter composant C#';add.disabled=state.playing;add.onclick=()=>{o.csharpComponents??=[];o.csharpComponents.push({kind:picker.value});record('Ajouter composant C# '+picker.value);notify()};
- body.append(picker,add);refresh();
+ const search=document.createElement('input');search.type='search';search.placeholder='Rechercher un composant…';search.setAttribute('aria-label','Rechercher un composant C#');
+ search.oninput=()=>{const q=search.value.trim().toLowerCase();for(const option of picker.options)option.hidden=!option.value.toLowerCase().includes(q);const first=[...picker.options].find(option=>!option.hidden);if(first)picker.value=first.value};
+ const add=document.createElement('button');add.type='button';add.textContent='＋ Add Component';add.disabled=state.playing;add.onclick=()=>{const kind=picker.value;if(!kind||picker.selectedOptions[0]?.hidden)return;o.csharpComponents??=[];o.csharpComponents.push({kind});record('Ajouter composant C# '+kind);notify()};
+ body.append(search,picker,add);refresh();
 });
 component(root,'Quick Start • Gameplay Recipes',body=>{
  const intro=document.createElement('p');intro.textContent='Appliquer un comportement réutilisable à cet objet. Les composants existants concernés peuvent être remplacés.';body.append(intro);

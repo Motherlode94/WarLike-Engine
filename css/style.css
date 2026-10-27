@@ -968,3 +968,18 @@ body .warlike-status-footer{position:fixed!important;inset:auto 0 0 0!important;
 body .warlike-status-footer .warlike-studio-signature.brand{position:static!important;inset:auto!important;transform:none!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;width:auto!important;height:auto!important;margin:0!important;padding:2px 10px!important;background:transparent!important;box-shadow:none!important;border:0!important;border-left:2px solid #5fdfc0!important;border-radius:0!important}
 body:not(.hub-active) .workspace{height:calc(100dvh - 122px)!important;max-height:calc(100dvh - 122px)!important;min-height:0!important}
 body:has(#hubOverlay:not([hidden])) .warlike-status-footer{display:none!important}
+
+/* Application shell v3.3: a true bottom status row shared by 2D and 3D */
+:root{--warlike-menubar-height:36px;--warlike-toolbar-height:42px;--warlike-footer-height:44px}
+body{min-height:100dvh}
+body:not(.hub-active) .studio-menubar{height:var(--warlike-menubar-height);min-height:var(--warlike-menubar-height)}
+body:not(.hub-active) header.topbar{height:var(--warlike-toolbar-height);min-height:var(--warlike-toolbar-height)}
+body:not(.hub-active) .workspace{height:calc(100dvh - var(--warlike-menubar-height) - var(--warlike-toolbar-height) - var(--warlike-footer-height))!important;max-height:calc(100dvh - var(--warlike-menubar-height) - var(--warlike-toolbar-height) - var(--warlike-footer-height))!important;min-height:0!important;overflow:hidden}
+body:not(.hub-active) .center-stack{min-height:0;overflow:hidden;grid-template-rows:36px 37px minmax(0,1fr) 5px minmax(0,var(--project-height,260px))}
+body:not(.hub-active) .center-stack #viewport{min-height:0;overflow:hidden}
+body:not(.hub-active) .project-panel{min-height:0;overflow:hidden}
+body:not(.hub-active) .project-panel #projectContent{min-height:0;overflow:auto}
+body .warlike-status-footer{box-sizing:border-box;position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;width:100%!important;height:var(--warlike-footer-height)!important;max-height:var(--warlike-footer-height)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;z-index:500!important;padding:0 14px!important;background:#171d25!important;border-top:1px solid #405160!important;overflow:hidden!important}
+body .warlike-status-footer .warlike-studio-signature.brand{position:static!important;display:flex!important;flex-direction:column!important;flex:none!important;align-items:flex-start!important;gap:2px!important;inset:auto!important;transform:none!important;margin:0!important;padding:3px 10px!important;background:none!important;border:0!important;border-left:2px solid #5fdfc0!important;box-shadow:none!important;border-radius:0!important}
+body:has(#hubOverlay:not([hidden])) .warlike-status-footer{display:none!important}
+@media(max-height:600px){:root{--warlike-footer-height:36px}body .warlike-status-footer .warlike-studio-signature.brand small{display:none}body:not(.hub-active) .center-stack{grid-template-rows:32px 33px minmax(0,1fr) 5px minmax(0,var(--project-height,180px))}}

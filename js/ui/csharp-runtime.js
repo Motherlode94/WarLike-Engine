@@ -19,10 +19,11 @@ export function initCSharpBridge(){
  const dialog=document.getElementById('csharpRuntimePanel'),button=document.getElementById('openCsharpRuntime');
  const close=document.getElementById('csharpRuntimeClose'),status=document.getElementById('csharpRuntimeStatus');
  const connect=document.getElementById('csharpRuntimeConnect'),sync=document.getElementById('csharpRuntimeSync');
- const tick=document.getElementById('csharpRuntimeTick'),template=document.getElementById('csharpRuntimeTemplate');
- if(!dialog||!button||!close||!status||!connect||!sync||!tick||!template)return;
+ const tick=document.getElementById('csharpRuntimeTick'),second=document.getElementById('csharpRuntimeSecond'),template=document.getElementById('csharpRuntimeTemplate');
+ if(!dialog||!button||!close||!status||!connect||!sync||!tick||!second||!template)return;
  const announce=(message,ok=false)=>{status.textContent=message;status.dataset.ok=String(ok)};
- const buttons=()=>{sync.disabled=!ui.connected||state.playing;tick.disabled=!ui.connected||!ui.ready||state.playing};
+ let busy=false;
+ const buttons=()=>{connect.disabled=busy;sync.disabled=busy||!ui.connected||state.playing;tick.disabled=busy||!ui.connected||!ui.ready||state.playing;second.disabled=tick.disabled};
  const show=()=>{button.closest('details')?.removeAttribute('open');dialog.hidden=false;buttons()};
  button.addEventListener('click',show);
  close.addEventListener('click',()=>{dialog.hidden=true;button.focus()});
@@ -42,13 +43,15 @@ export function initCSharpBridge(){
   }catch(error){ui.ready=false;announce('Import C# : '+error.message)}
   buttons();
  });
- tick.addEventListener('click',async()=>{
-  if(state.playing||!ui.ready)return;
-  announce('Simulation d’une étape C#…');
+ const simulate=async(duration)=>{
+  if(busy||state.playing||!ui.ready)return;
+  busy=true;buttons();announce('Simulation C# : '+duration+' seconde(s)…');
   try{
-   const result=await request('/tick','POST',{dt:1/60});
-   if(!result.ok||!Array.isArray(result.actors))throw Error('Réponse invalide du runtime');
-   if(state.playing)throw Error('Play activé entre-temps. Arrête Play pour appliquer le résultat C#.');
+   let result;
+   const count=duration===1?4:1,dt=duration===1?.25:1/60;
+   for(let i=0;i<count;i++)result=await request('/tick','POST',{dt});
+   if(!result?.ok||!Array.isArray(result.actors))throw Error('Réponse invalide du runtime');
+   if(state.playing)throw Error('Play activé entre-temps. Arrête Play pour appliquer les résultats C#.');
    let applied=0;
    for(const a of result.actors){
     const target=state.entities.find(o=>o.id===a.id);
@@ -57,10 +60,13 @@ export function initCSharpBridge(){
     if(Number.isFinite(a.hp)){target.hp=a.hp;if(target.stats)target.stats.health=a.hp}
     applied++;
    }
-   if(applied)record('C# Runtime : étape 1/60 s');
-   notify();announce('Étape C# exécutée : '+applied+' acteurs mis à jour.',true);
+   if(applied)record('C# Runtime : '+duration+' s');
+   notify();announce('C# .NET : '+applied+' acteurs mis à jour après '+duration+' s.',true);
   }catch(error){announce('Erreur C# : '+error.message)}
- });
+  finally{busy=false;buttons()}
+ };
+ tick.addEventListener('click',()=>simulate(1/60));
+ second.addEventListener('click',()=>simulate(1));
  template.addEventListener('click',()=>{
   const text=`using WarLike.Runtime;
 using System.Numerics;

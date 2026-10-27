@@ -2,12 +2,14 @@
 export const isRtsUnit=o=>Array.isArray(o?.tags)&&o.tags.includes('rts-unit');
 export function orderRtsMove(entities,ids,target){
  if(!target||![target.x,target.y].every(Number.isFinite))return 0;
- let count=0;
- for(const o of entities){
-  if(!ids.includes(o.id)||!isRtsUnit(o))continue;
-  o.rtsOrder={type:'move',x:target.x,y:target.y};count++;
- }
- return count;
+ const selected=entities.filter(o=>ids.includes(o.id)&&isRtsUnit(o));
+ const columns=Math.ceil(Math.sqrt(selected.length));
+ selected.forEach((o,i)=>{
+  const offsetX=(i%columns-(columns-1)/2)*Math.max(42,o.w*1.3);
+  const offsetY=(Math.floor(i/columns)-(Math.ceil(selected.length/columns)-1)/2)*Math.max(42,o.h*1.3);
+  o.rtsOrder={type:'move',x:target.x+offsetX,y:target.y+offsetY};
+ });
+ return selected.length;
 }
 export function updateRtsOrders(entities,dt,playing){
  if(!playing||!Number.isFinite(dt)||dt<=0)return;

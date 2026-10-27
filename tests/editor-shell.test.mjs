@@ -74,3 +74,11 @@ test('primary toolbar exposes actual quick creation actions',()=>{
  assert.match(editor,/actions\[button\.dataset\.quickCreate\]\?\.\(\)/);
  assert.doesNotMatch(html,/id="studioCompactToggle"/);
 });
+
+test('focus mode moves main actions into the top menu and reclaims scene height',()=>{
+ assert.match(html,/id="studioPrimaryActions"/);
+ assert.match(html,/id="studioToolbarToggle"/);
+ assert.match(editor,/for\(const id of \['warlikeToolLibrary','studioQuickCreate','openBlueprint','undo','redo','play'\]\)/);
+ assert.match(css,/--warlike-toolbar-height:0px/);
+ assert.match(css,/warlike-toolbar-expanded\{--warlike-toolbar-height:42px\}/);
+});

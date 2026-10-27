@@ -6,6 +6,7 @@ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../css/style.css',import.meta.url),'utf8');
 const editor=readFileSync(new URL('../js/editor.js',import.meta.url),'utf8');
 const workspace=readFileSync(new URL('../js/ui/workspace.js',import.meta.url),'utf8');
+const docking=readFileSync(new URL('../js/ui/docking.js',import.meta.url),'utf8');
 
 test('one full-width status footer exists outside workspace and Inspector',()=>{
  assert.equal((html.match(/class="warlike-status-footer"/g)||[]).length,1);
@@ -39,4 +40,10 @@ test('audio volume stays with its accessible label in tool library',()=>{
 test('Component commands close their dropdown when invoked',()=>{
  assert.match(editor,/menuOpenBlueprint[\s\S]*?closest\('details'\)\?\.removeAttribute\('open'\)/);
  assert.match(editor,/menuAddComponent[\s\S]*?closest\('details'\)\?\.removeAttribute\('open'\)/);
+});
+
+test('corrupt floating panel layouts are discarded before rendering',()=>{
+ assert.match(docking,/Number\.isFinite\(f\[key\]\)/);
+ assert.match(docking,/Number\.isFinite\(panel\[key\]\)/);
+ assert.match(docking,/if\(!el\)continue/);
 });

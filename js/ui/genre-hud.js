@@ -22,7 +22,7 @@ export function updateGenreHud(state){
  if(genre==='rp')pieces.push('RP · '+stat('money')+' crédits · réputation '+stat('reputation')+' · E interagir');
  if(genre==='simulation')pieces.push('SIM · '+stat('money')+' crédits · '+stat('materials')+' matériaux · maintenance '+stat('maintenance'));
  if(genre==='rpg')pieces.push('RPG · '+stat('gold')+' or · '+stat('experience')+' XP · quête '+(stat('questCompleted')?'terminée':stat('questActive')?'active':'à découvrir'));
- if(genre==='fourx')pieces.push('4X · tour '+stat('turn',1)+' · nourriture '+stat('food')+' · industrie '+stat('industry')+' · science '+stat('science')+' · territoires '+stat('territory'));
+ if(genre==='fourx')pieces.push('4X · tour '+stat('turn',1)+' · nourriture '+stat('food')+' · industrie '+stat('industry')+' · science '+stat('science')+' · territoires '+stat('territory')+' · armées '+stat('army'));
  hud.textContent=pieces.join('     |     ');
  hud.hidden=false;
 }

@@ -798,3 +798,22 @@ body:not(.hub-open) .inspector{background:var(--warlike-custom-surface,#20252d);
 #properties .warlike-component-actions button{flex:1;min-width:0;font-size:10px;padding:6px 3px}
 #properties .warlike-add-component{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding:12px;border:1px dashed color-mix(in srgb,var(--warlike-custom-text,#eee) 32%,transparent);border-radius:8px}
 #properties .warlike-add-component input,#properties .warlike-add-component select,#properties .warlike-add-component button{width:100%;min-width:0;box-sizing:border-box}
+
+/* WarLike 3.1 — Unity-inspired docked editor workspace */
+:root{--left-pane-width:245px;--right-pane-width:350px}
+body:not(.hub-active) .studio-menubar{background:#292d33;border-bottom:1px solid #41464e}
+body:not(.hub-active) header.topbar{height:46px;min-height:46px;background:#25292f;border-bottom:1px solid #41464e}
+body:not(.hub-active) .brand{min-width:105px}
+body:not(.hub-active) .brand small{letter-spacing:.025em}
+body:not(.hub-active) .panel-title{background:#30343a;border-bottom:1px solid #42474e;font-weight:650}
+body:not(.hub-active) .panel{background:#24282e}
+body:not(.hub-active) .scene-header,body:not(.hub-active) .scene-tools{background:#292d33;border-color:#42474e}
+body:not(.hub-active) .tab.active{background:#363c44;border-bottom:2px solid #6ca9dc}
+body:not(.hub-active) .panel-search{border-radius:3px}
+.warlike-create-bar{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px 8px 4px}
+.warlike-create-bar button{font-size:11px;padding:7px 3px;white-space:nowrap;background:#353b43;border:1px solid #505963}
+.warlike-create-bar button:hover{background:#42556a;border-color:#76a3cf}
+#properties .warlike-component-card>summary{background:#373d45;border-bottom:1px solid #515963}
+#properties .warlike-add-component>button{background:#355f84;border-color:#4e86b1;color:#f3f8ff;font-weight:700}
+#properties .warlike-add-component>button:hover{background:#477ba6}
+@media(max-width:1100px){.warlike-create-bar{grid-template-columns:1fr}.warlike-create-bar button{padding:5px}}

@@ -6,6 +6,7 @@ import {initBlueprintWorkspace} from './ui/blueprint-workspace.js';
 import {initEditorAppearance} from './ui/editor-appearance.js';
 import {initEditorPalette} from './ui/editor-palette.js';
 import {initCursorSettings} from './ui/cursor-settings.js';
+import {initCSharpBridge} from './ui/csharp-runtime.js';
 import {initializeNative3d,nativeStatus} from './core/native-3d.js';
 import {initHub,hub} from './core/project-hub.js';
 import {workspace} from './core/workspaces.js';
@@ -222,3 +223,5 @@ if(primaryActions&&secondaryToolbar&&toolbarToggle){
  setExpanded(expanded);
  toolbarToggle.addEventListener('click',()=>setExpanded(!document.body.classList.contains('warlike-toolbar-expanded')));
 }
+
+initCSharpBridge();

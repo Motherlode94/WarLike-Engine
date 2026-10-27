@@ -65,11 +65,13 @@ export function validateCommunityPack(input){
  const recipes=input.recipes.map(recipe=>{
   if(!recipe||!slug(recipe.id)||seen.has(recipe.id))throw Error('Identifiant de recette invalide ou dupliqué.');
   seen.add(recipe.id);
-  return {id:recipe.id,name:safeText(recipe.name,80)||recipe.id,
+  const modes=recipe.modes===undefined?packModes:recipe.modes;
+  if(!Array.isArray(modes)||!modes.length||modes.some(m=>!packModes.includes(m))||new Set(modes).size!==modes.length)throw Error('Modes de recette incompatibles.');
+  return {id:recipe.id,modes:[...modes],name:safeText(recipe.name,80)||recipe.id,
    description:safeText(recipe.description,200),sequence:sequence(recipe.sequence)};
  });
  return {apiVersion:communityApiVersion,id:input.id,version:input.version,
-  name:safeText(input.name,80)||input.id,author:safeText(input.author,80)||'Communauté',
+  name:safeText(input.name,80)||input.id,modes:[...packModes],author:safeText(input.author,80)||'Communauté',
   description:safeText(input.description,300),recipes};
 }
 export function compareCommunityVersions(a,b){
@@ -88,7 +90,7 @@ export function previewCommunityPack(input){
   action:!installed?'install':relation>0?'upgrade':relation===0?'same-version':'downgrade',
   compatible:pack.apiVersion===communityApiVersion,
   permissions:['Écrire des variables Blueprint','Déclencher les actions Blueprint autorisées'],
-  recipes:pack.recipes.map(r=>({id:r.id,name:r.name,event:r.sequence.event,actions:r.sequence.instructions.map(x=>x.type) }))};
+  recipes:pack.recipes.map(r=>({id:r.id,name:r.name,modes:r.modes,event:r.sequence.event,actions:r.sequence.instructions.map(x=>x.type) }))};
 }
 let packs=[];
 export function installedCommunityPacks(){return packs.map(p=>structuredClone(p))}
@@ -113,17 +115,17 @@ export function uninstallCommunityPack(id,storage=globalThis.localStorage){
  try{storage?.setItem(KEY,JSON.stringify(next))}catch{throw Error('Impossible de sauvegarder la suppression.')}
  packs=next;return true;
 }
-export function communityRecipes(){
- return packs.flatMap(pack=>pack.recipes.map(recipe=>({
+export function communityRecipes(mode=null){
+ return packs.flatMap(pack=>pack.recipes.filter(recipe=>!mode||recipe.modes.includes(mode)).map(recipe=>({
   id:'community:'+pack.id+':'+recipe.id,name:recipe.name,
   description:pack.name+' · '+recipe.description,category:'Communauté',
-  author:pack.author
+  author:pack.author,modes:[...recipe.modes]
  })));
 }
-export function applyCommunityRecipe(entity,id){
+export function applyCommunityRecipe(entity,id,mode=null){
  if(!entity||typeof entity!=='object'||typeof id!=='string'||!id.startsWith('community:'))return false;
  for(const pack of packs)for(const recipe of pack.recipes){
-  if(id==='community:'+pack.id+':'+recipe.id){
+  if(id==='community:'+pack.id+':'+recipe.id&&(!mode||recipe.modes.includes(mode))){
    entity.sequence=structuredClone(recipe.sequence);
    return true;
   }

@@ -1,3 +1,4 @@
+import {updateGenreHud} from '../ui/genre-hud.js';
 import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
 import {updateHorror,updateHorrorPerception,horror} from './horror-survival.js';
@@ -373,7 +374,7 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&workspace.mode==='3d'){updateRtsOrders(state.entities,dt,true);update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,player:playableActor(state.entities)});}
   if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=Math.min(1,dt*9);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}
   if(!view3d.enabled){updateGizmos();return}
-  updateGizmos();
+  updateGenreHud(state);updateGizmos();
   const crosshair=document.getElementById('fpsCrosshair');if(crosshair)crosshair.hidden=!isFps();
   const horrorHud=document.getElementById('horror3dHud');
   if(horrorHud){

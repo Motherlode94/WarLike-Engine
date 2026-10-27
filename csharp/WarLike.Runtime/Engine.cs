@@ -108,6 +108,27 @@ public sealed class GameWorld {
                 foreach (var definition in components.EnumerateArray()) {
                     if (definition.ValueKind != JsonValueKind.Object || !definition.TryGetProperty("kind", out var type)) continue;
                     switch (type.GetString()) {
+                        case "DeathmatchRules":
+                            world.AddComponent(actor, new DeathmatchRulesComponent { MatchDuration = Math.Max(0,Number(definition,"matchDuration")), ScoreLimit = Math.Max(0,(int)Number(definition,"scoreLimit")), Countdown = Math.Max(0,Number(definition,"countdown")) });
+                            break;
+                        case "SpawnPoint":
+                            world.AddComponent(actor, new SpawnPointComponent { TeamId = definition.TryGetProperty("teamId",out _) ? (int)Number(definition,"teamId") : -1, Radius = Math.Max(0,Number(definition,"radius")) });
+                            break;
+                        case "AmmoPickup":
+                            world.AddComponent(actor, new AmmoPickupComponent { Amount = Math.Max(0,(int)Number(definition,"amount")) });
+                            break;
+                        case "HealthPickup":
+                            world.AddComponent(actor, new HealthPickupComponent { HealAmount = Math.Max(0,Number(definition,"healAmount")) });
+                            break;
+                        case "KillZone":
+                            world.AddComponent(actor, new KillZoneComponent { Damage = Math.Max(0,Number(definition,"damage")) });
+                            break;
+                        case "ObjectiveZone":
+                            world.AddComponent(actor, new ObjectiveZoneComponent { TeamId = definition.TryGetProperty("teamId",out _) ? (int)Number(definition,"teamId") : -1, CaptureTime = Math.Max(0.01f,Number(definition,"captureTime")) });
+                            break;
+                        case "Projectile":
+                            world.AddComponent(actor, new ProjectileComponent { Speed = Math.Max(0,Number(definition,"speed")), Damage = Math.Max(0,Number(definition,"damage")), Lifetime = Math.Max(0,Number(definition,"lifetime")) });
+                            break;
                         case "Team":
                             world.AddComponent(actor, new TeamComponent { TeamId = (int)Number(definition,"teamId"), FriendlyFire = definition.TryGetProperty("friendlyFire",out var ff) && ff.ValueKind == JsonValueKind.True });
                             break;

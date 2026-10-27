@@ -1090,3 +1090,20 @@ body:not(.hub-active) .studio-primary-actions .studio-quick-create-menu{top:calc
 #properties .inspector-advanced-content{padding:8px}
 #properties .inspector-advanced-content>.inspector-component{margin:5px 0}
 #properties .inspector-advanced-content>.inspector-component:not([open]) .component-content{display:none}
+
+/* Unity-inspired Inspector: flat component headers, restrained density, one Add Component */
+body:not(.hub-active) .inspector #properties{gap:3px!important;padding:6px!important;background:var(--warlike-palette-panel,#252b34)}
+body:not(.hub-active) .inspector #properties>.inspector-object{padding:8px 9px!important;margin:0 0 8px!important;gap:3px!important;border:0!important;border-bottom:1px solid var(--warlike-palette-border,#455363)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+body:not(.hub-active) .inspector #properties>.inspector-object input{font-size:13px!important;font-weight:600!important;min-height:28px!important;border-radius:3px!important}
+body:not(.hub-active) .inspector #properties>.inspector-object small{font-size:10px!important;opacity:.65}
+body:not(.hub-active) .inspector #properties>.inspector-component{margin:0!important;border:1px solid var(--warlike-palette-border,#455363)!important;border-radius:2px!important;background:var(--warlike-palette-panel,#252b34)!important;box-shadow:none!important}
+body:not(.hub-active) .inspector #properties>.inspector-component>summary{min-height:28px!important;padding:5px 9px!important;border-radius:0!important;background:var(--warlike-palette-header,#303944)!important;font-size:11px!important;font-weight:600!important;line-height:1.25!important}
+body:not(.hub-active) .inspector #properties>.inspector-component>summary::before{content:'▸'!important;color:#a6b2bd!important;font-size:11px!important}
+body:not(.hub-active) .inspector #properties>.inspector-component[open]>summary::before{transform:rotate(90deg)}
+body:not(.hub-active) .inspector #properties>.inspector-component>.component-content{padding:8px!important;gap:5px!important;background:transparent!important}
+body:not(.hub-active) .inspector #properties>.inspector-component .property-row{min-height:26px!important;gap:7px!important}
+body:not(.hub-active) .inspector #properties>.inspector-component .property-row input{min-height:24px!important}
+body:not(.hub-active) .inspector #properties>.inspector-advanced-tools{margin:12px 4px 6px!important;border:0!important;background:transparent!important;overflow:visible!important}
+body:not(.hub-active) .inspector #properties>.inspector-advanced-tools>summary{min-height:31px!important;border:1px solid var(--warlike-palette-border,#455363)!important;border-radius:4px!important;background:var(--warlike-palette-button,#354251)!important;font-size:12px!important;font-weight:600!important}
+body:not(.hub-active) .inspector #properties>.inspector-advanced-tools>.inspector-advanced-content{margin-top:7px;padding:4px!important;border:1px solid var(--warlike-palette-border,#455363);border-radius:3px}
+body:not(.hub-active) .inspector #properties>.delete-object{margin:10px 4px 6px!important;opacity:.8}

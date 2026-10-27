@@ -5,6 +5,7 @@ import {defaultController,defaultInventory,defaultStats} from './gameplay-compon
 
 export const genreTemplates={
  sandbox:{label:'Projet vierge',description:'Scène minimale et bibliothèque libre',modes:['2d','3d']},
+ fieldlab:{label:'WarLike Field Lab',description:'Circuit de diagnostic : marche, interactions, véhicule et obstacles',modes:['2d','3d']},
  rp:{label:'Roleplay (RP)',description:'Ville, PNJ, dialogue, boutique, réputation',modes:['2d','3d']},
  racing:{label:'Racing',description:'Véhicule pilotable, départ, checkpoints, arrivée',modes:['2d','3d']},
  simulation:{label:'Simulation',description:'Atelier, machines, production et ressources',modes:['2d','3d']},
@@ -41,7 +42,47 @@ export function createGenreScene(genre,mode='3d'){
  const marker=(name,x,y,sequence,color='#e4c16e')=>object(threeD?'prop-cone':'primitive-cube',name,x,y,
   {type:threeD?'mesh3d':'object',w:threeD?55:60,h:threeD?80:60,depth3d:55,color,collision3d:false,solid3d:false,sequence});
  const player=actor();
- if(chosen==='rp'){
+ if(chosen==='fieldlab'){
+  // Self-contained smoke-test course; no remote assets or external services required.
+  // Interactions validate real player state; walking checkpoints require on-foot,
+  // the driving checkpoint requires a mounted character.
+  player.name='Field Lab · Pilote';
+  player.sequence={...interact([
+   variable('labWalk',0),variable('labInteract',0),variable('labDrive',0),
+   msg('FIELD LAB : avance au point bleu, interagis avec la console, conduis au point rouge.')
+  ]),event:'start',once:true};
+  marker('01 · Test marche',350,155,{
+   ...enter([variable('labWalk',1),signal('lab:walk'),msg('✓ Marche validée')],{once:true,radius:90}),
+   conditions:[{type:'playerOnFoot'}]
+  },'#63b4d5');
+  marker('02 · Console interactive',320,365,
+   interact([variable('labInteract',1),signal('lab:interact'),msg('✓ Interaction validée')],{radius:115,once:true}),'#e5be6e');
+  const car=object('vehicle-jeep','03 · Véhicule test',520,170,{
+   tags:['race-vehicle','fieldlab-vehicle'],maxSpeed:240,acceleration:190,brakeForce:300,
+   turnRate:140,drag:1.35,reverseRatio:.45,rotation:0,
+   ...(threeD?{collision3d:true}:{type:'prefab',assetId:'jeep',w:115,h:70})
+  });
+  if(threeD)car.csharpComponents=[{kind:'VehicleController',maxSpeed:240,acceleration:190,brakeForce:300,turnRate:140,drag:1.35,reverseRatio:.45}];
+  marker('04 · Test conduite',815,180,{
+   ...enter([variable('labDrive',1),signal('lab:drive'),msg('✓ Conduite validée')],{once:false,radius:115}),
+   conditions:[{type:'playerInVehicle'}]
+  },'#e3847b');
+  object('building-wall','Obstacle collision A',690,305,{w:130,h:threeD?115:42,depth3d:35,collision3d:true,solid3d:true});
+  object('building-wall','Obstacle collision B',815,385,{w:130,h:threeD?115:42,depth3d:35,collision3d:true,solid3d:true});
+  marker('05 · Diagnostic final',1020,185,{
+   ...interact([],{once:false,radius:135}),
+   branches:[{conditions:[
+    {type:'variable',key:'labWalk',operator:'==',value:1},
+    {type:'variable',key:'labInteract',operator:'==',value:1},
+    {type:'variable',key:'labDrive',operator:'==',value:1}
+   ],instructions:[variable('labCompleted',1),signal('lab:complete'),msg('FIELD LAB : 3 / 3 vérifications réussies !')]}],
+   elseInstructions:[msg('Diagnostic incomplet : valide marche, interaction et conduite.')]
+  },'#83d3a9');
+  if(threeD){
+   object('environment-road','Piste Field Lab',505,535,{collision3d:false,solid3d:false,w:1000,depth3d:150});
+   object('building-garage','Hangar de tests',1080,320,{collision3d:true,solid3d:true});
+  }
+ } elseif(chosen==='rp'){
   player.csharpComponents=[{kind:'Roleplay',money:50,reputation:0}];
   object('building-house','Quartier RP',330,165);
   object('character-civilian','Citoyen',270,315,{playable3d:false,sequence:interact([inc('reputation',1),msg('Bienvenue au quartier ! Réputation +1')])});

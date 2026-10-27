@@ -1,4 +1,4 @@
-import {updateDriving3d,currentVehicle3d,driving3d,resetDriving3d} from './vehicle-3d.js';
+import {updateDriving3d,currentVehicle3d,isDriveable3d,driving3d,resetDriving3d} from './vehicle-3d.js';
 import {updateGenreHud} from '../ui/genre-hud.js';
 import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
@@ -397,8 +397,11 @@ export function init3d(canvas,host,buttons){
   const vehicleHud=document.getElementById('warlikeVehicle3dHud');
   if(vehicleHud){
    const car=currentVehicle3d(state.entities);
-   vehicleHud.hidden=!state.playing||!car;
+   const player=playableActor(state.entities);
+   const nearby=!car&&player?state.entities.filter(isDriveable3d).map(o=>({o,d:Math.hypot((o.x+(o.w||32)/2)-(player.x+(player.w||32)/2),(o.y+(o.depth3d||o.h||32)/2)-(player.y+(player.depth3d||player.h||32)/2))})).sort((a,b)=>a.d-b.d)[0]:null;
+   vehicleHud.hidden=!state.playing||(!car&&!(nearby&&nearby.d<Math.max(150,(nearby.o.w||64)*.85)));
    if(car)vehicleHud.textContent=car.name+' · '+Math.round(Math.abs(driving3d.speed)*.36)+' km/h · ZQSD conduire · E sortir · Espace frein à main';
+   else if(nearby)vehicleHud.textContent='E — Entrer dans '+nearby.o.name;
   }
   const crosshair=document.getElementById('fpsCrosshair');if(crosshair)crosshair.hidden=!isFps();
   const horrorHud=document.getElementById('horror3dHud');

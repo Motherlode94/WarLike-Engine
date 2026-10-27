@@ -1016,3 +1016,21 @@ body.warlike-custom-cursor input[type=text],body.warlike-custom-cursor input[typ
 body.warlike-cursor-trail .warlike-cursor-halo.visible{opacity:.42}
 body.playing .warlike-cursor-halo{display:none}
 @media(prefers-reduced-motion:reduce){.warlike-cursor-halo{transition:none}}
+
+/* Editor-wide palette overrides: scoped to workbench, never the project Hub */
+.editor-global-palette,.editor-font-settings{display:flex;flex-direction:column;gap:9px;margin:12px 0;padding:12px;border:1px solid var(--warlike-palette-border,#455363);border-radius:7px;min-width:0}
+.editor-global-palette legend,.editor-font-settings legend{font-weight:700;font-size:12px;padding:0 6px;color:var(--editor-accent,#48cba9)}
+.editor-global-palette>label,.editor-font-settings>label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}
+.editor-global-palette input[type=color]{width:44px;min-width:44px;height:27px}
+.editor-font-settings input[type=range]{width:100%}
+body:not(.hub-active) :is(.studio-menubar,.studio-menus,.studio-project-name){background-color:var(--warlike-palette-menu,#222832)!important}
+body:not(.hub-active) header.topbar{background-color:var(--warlike-palette-toolbar,#252d38)!important}
+body:not(.hub-active) :is(.hierarchy,.inspector,.project-panel,.panel,.asset-content,.asset-folders,#properties){background-color:var(--warlike-palette-panel,#252b34)!important}
+body:not(.hub-active) :is(.panel-title,.dock-title,.bottom-tabs,.scene-tools,.asset-toolbar){background-color:var(--warlike-palette-header,#303944)!important}
+body:not(.hub-active) :is(.studio-menubar,.topbar,.panel,.dock-title,.asset-toolbar,.editor-appearance-menu){border-color:var(--warlike-palette-border,#455363)!important}
+body:not(.hub-active) :is(.studio-menubar,.topbar,.panel,.editor-appearance-menu) :is(button,select):not(.editor-swatches button){border-color:var(--warlike-palette-border,#455363)}
+body:not(.hub-active) :is(.studio-menubar,.topbar,.panel,.editor-appearance-menu) button:not(.bottom-tab,.active,.dock-toggle){background-color:var(--warlike-palette-button,#354251)}
+body:not(.hub-active) :is(.panel,.topbar,.studio-menubar) :is(small,.muted,.hint){color:var(--warlike-palette-muted,#a8b8c8)}
+body:not(.hub-active) :is(.workspace,.studio-menubar,header.topbar,.warlike-status-footer){font-size:var(--warlike-palette-fontSize,12px);font-weight:var(--warlike-palette-fontWeight,500)}
+body:not(.hub-active) .warlike-status-footer{background-color:var(--warlike-palette-footer,#171d25)!important;border-top-color:var(--warlike-palette-border,#455363)!important}
+body:not(.hub-active) :is(#canvas,.canvas-wrap,.scene-viewport){background-color:var(--warlike-palette-scene,#121923)}

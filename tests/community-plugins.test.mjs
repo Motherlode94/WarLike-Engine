@@ -51,7 +51,7 @@ test('community extension appears in Inspector without loading arbitrary scripts
  const inspector=readFileSync(new URL('../js/ui/inspector.js',import.meta.url),'utf8');
  const editor=readFileSync(new URL('../js/editor.js',import.meta.url),'utf8');
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
- assert.match(inspector,/communityRecipes\(\)/);
+ assert.match(inspector,/communityRecipes\(workspace\.mode\)/);
  assert.match(inspector,/applyCommunityRecipe/);
  assert.match(editor,/initCommunityManager\(\)/);
  assert.match(html,/id="warlikeOpenCommunity"/);

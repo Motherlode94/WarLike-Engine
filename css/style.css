@@ -1137,3 +1137,8 @@ body:not(.hub-active) .project-panel #assetGrid>*{border-radius:3px!important;bo
 body:not(.hub-active) .project-panel #assetGrid>*:hover{border-color:var(--editor-accent,#48cba9)!important}
 body:not(.hub-active) .project-panel .project-footer{background:var(--warlike-palette-header,#303944)!important;border-top:1px solid var(--warlike-palette-border,#455363)!important;font-size:10px!important}
 body:not(.hub-active) .workspace :is(.side-splitter,.project-splitter){background:var(--warlike-palette-border,#455363)!important}
+
+/* Compact race + RTS runtime HUD; pointer events pass through to gameplay */
+#viewport>.warlike-genre-hud{position:absolute;z-index:21;top:12px;left:50%;transform:translateX(-50%);max-width:calc(100% - 28px);padding:7px 12px;border:1px solid #607783;border-radius:5px;background:#12202de8;color:#f2f5fc;font:600 12px/1.4 system-ui,sans-serif;box-shadow:0 4px 12px #0007;white-space:nowrap;text-align:center;pointer-events:none}
+#viewport>.warlike-genre-hud[hidden]{display:none!important}
+@media(max-width:660px){#viewport>.warlike-genre-hud{font-size:10px;white-space:normal;min-width:0}}

@@ -61,6 +61,9 @@ export function validateCommunityPack(input){
  if(!slug(input.id))throw Error('Identifiant requis : minuscules, chiffres et tirets.');
  if(!/^\d+\.\d+\.\d+$/.test(input.version||''))throw Error('Version SemVer x.y.z requise.');
  if(!Array.isArray(input.recipes)||input.recipes.length<1||input.recipes.length>MAX_RECIPES)throw Error('Entre 1 et 20 recettes requises.');
+ const supportedModes=['2d','3d'];
+ const packModes=input.modes===undefined?supportedModes:input.modes;
+ if(!Array.isArray(packModes)||!packModes.length||packModes.some(m=>!supportedModes.includes(m))||new Set(packModes).size!==packModes.length)throw Error('Modes 2D/3D invalides.');
  const seen=new Set();
  const recipes=input.recipes.map(recipe=>{
   if(!recipe||!slug(recipe.id)||seen.has(recipe.id))throw Error('Identifiant de recette invalide ou dupliqué.');

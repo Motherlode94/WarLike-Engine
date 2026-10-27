@@ -1342,3 +1342,23 @@ html[data-warlike-contrast="light"] body:not(.hub-open) :is(.studio-dropdown,.bl
 .warlike-threat-relation[data-relation="hostile"]{color:#ff8e87}
 .warlike-threat-relation[data-relation="suspicious"]{color:#f0c87d}
 .warlike-threat-relation[data-relation="friendly"]{color:#7de8bd}
+
+/* WarLike Open Ecosystem — local, data-only community packs */
+#warlikeCommunityManager{border:1px solid var(--warlike-palette-border,#535a62);border-radius:10px;
+ background:var(--warlike-palette-panel,#262a31);color:var(--warlike-palette-text,#f2f4f5);
+ width:min(740px,calc(100% - 24px));max-height:min(85vh,800px);padding:0;box-shadow:0 24px 70px #000a}
+#warlikeCommunityManager::backdrop{background:#070a10cc}
+.warlike-community-shell{padding:18px;display:grid;gap:12px;font:13px/1.5 system-ui,sans-serif}
+.warlike-community-shell header{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.warlike-community-shell h2{font-size:19px;margin:0}
+.warlike-community-shell p{margin:0;line-height:1.5}
+.warlike-community-shell button{background:var(--warlike-palette-button,#454950);
+ color:var(--warlike-palette-text,#f2f4f5);border:1px solid var(--warlike-palette-border,#535a62);
+ border-radius:5px;padding:7px 11px;cursor:pointer}
+.warlike-community-actions label{display:grid;gap:5px}
+.warlike-community-actions input{width:100%;max-width:100%;font-size:12px}
+.warlike-community-list{display:grid;gap:10px}
+.warlike-community-pack{display:grid;gap:6px;padding:12px;border-radius:7px;
+ border:1px solid var(--warlike-palette-border,#535a62);background:var(--warlike-palette-surface,#22272c)}
+.warlike-community-pack button{justify-self:start}
+.warlike-community-pack small{opacity:.85}

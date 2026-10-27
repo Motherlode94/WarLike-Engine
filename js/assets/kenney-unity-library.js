@@ -1,8 +1,8 @@
 // Kenney CC0 assets, loaded from a real public manifest on demand.
 // These GLB models work in WarLike; use the OBJ exporter for Unity's native import.
 import {importedModels3d} from './real-models-3d.js';
-export const kenneyCatalogUrl='https://hidencod.github.io/tge-assets/catalog.json';
-const base='https://hidencod.github.io/tge-assets/';
+export const kenneyCatalogUrl='https://raw.githubusercontent.com/Hidencod/tge-assets/main/catalog.json';
+const base='https://raw.githubusercontent.com/Hidencod/tge-assets/main/';
 export const categoryForKenney=(packId,name='')=>{
  const p=String(packId).toLowerCase(),n=String(name).toLowerCase();
  if(/character|pet|animal/.test(p)||/^(animal|character|person|human)[ -]/.test(n))return 'Characters';

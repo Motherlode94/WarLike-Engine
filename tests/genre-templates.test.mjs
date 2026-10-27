@@ -61,3 +61,25 @@ test('Hub stores genre in each project and exposes selector',()=>{
  assert.match(hub,/createGenreScene\(chosenGenre,'3d'\)/);
  assert.match(hub,/genreSelect\.value/);
 });
+
+test('five starter genres attach supported .NET C# components to scene objects',()=>{
+ const mapping={rp:'Roleplay',racing:'RacingRules',simulation:'SimulationEconomy',rpg:'RpgProgression',fourx:'FourXEmpire'};
+ const engine=read('csharp/WarLike.Runtime/Engine.cs');
+ for(const [genre,kind] of Object.entries(mapping)){
+  const scene=createGenreScene(genre,'3d');
+  assert.ok(scene.entities.some(o=>o.csharpComponents?.some(c=>c.kind===kind)),'missing '+kind);
+  assert.ok(engine.includes('case "'+kind+'":'),'native loader missing '+kind);
+ }
+});
+test('native genre actions are wired from C# runtime panel to local bridge',()=>{
+ const bridge=read('csharp/WarLike.Bridge/Program.cs'),ui=read('js/ui/csharp-runtime.js'),html=read('index.html');
+ const kinds=read('csharp/WarLike.Runtime/GenreComponents.cs');
+ for(const action of ['rp-work','race-start','sim-produce','rpg-complete','4x-next-turn']){
+  assert.ok(bridge.includes('case "'+action+'"'),'bridge action '+action);
+  assert.ok(ui.includes("'"+action+"'"),'ui action '+action);
+  assert.ok(html.includes('value="'+action+'"'),'select action '+action);
+ }
+ for(const name of ['RoleplayComponent','RacingRulesComponent','SimulationEconomyComponent','RpgProgressionComponent','FourXEmpireComponent'])
+  assert.ok(kinds.includes('class '+name),'C# behaviour '+name);
+ assert.ok(html.includes('id="csharpGenreExecute"'));
+});

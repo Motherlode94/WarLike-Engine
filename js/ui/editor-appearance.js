@@ -25,6 +25,14 @@ export function initEditorAppearance(){
   if(persist)safeSet(SCALE_KEY,String(next));
   window.dispatchEvent(new Event('resize'));
  };
+ // Theme presets own the accent. Reflect preset changes in this control without
+ // rewriting the saved manual-accent preference or turning the theme custom.
+ document.addEventListener('warlike:editor-theme-applied',event=>{
+  const accent=event.detail?.accent;
+  if(!validColor(accent))return;
+  picker.value=accent.toLowerCase();
+  document.querySelectorAll('#editorSwatches button').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.color===accent.toLowerCase())));
+ });
  const container=document.querySelector('#editorSwatches');
  for(const color of editorColors){
   const btn=document.createElement('button');

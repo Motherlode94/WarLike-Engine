@@ -107,6 +107,9 @@ export function attachInput(canvas,host){
  window.addEventListener('keydown',e=>{
   if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
   const key=e.key.toLowerCase();
+  // During Play, prevent Space / arrows from activating focused editor controls
+  // or scrolling the page while they are used for walking, sprint and jump.
+  if(state.playing&&[' ','arrowup','arrowdown','arrowleft','arrowright'].includes(key)&&!e.ctrlKey&&!e.metaKey)e.preventDefault();
   if((e.ctrlKey||e.metaKey)&&key==='a'&&!state.playing){
    e.preventDefault();state.selected=state.entities.map(o=>o.id);notify();return;
   }

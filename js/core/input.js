@@ -1,5 +1,6 @@
 import {toolsState} from '../ui/workspace.js';
 import {hitGizmo2d,gizmoCenter} from './gizmos-2d.js';
+import {orderRtsMove} from './rts-orders.js';
 import {state,notify} from './state.js';
 import {toWorld,zoomAt} from './camera.js';
 import {record,undo,redo} from './history.js';
@@ -19,7 +20,10 @@ export function attachInput(canvas,host){
  const clearBox=()=>{selectionBox.active=false;selectionBox.start=null;selectionBox.end=null};
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerdown',e=>{
-  if(state.playing)return;
+  if(state.playing){
+   if(e.button===2){const count=orderRtsMove(state.entities,state.selected,toWorld(screen(e)));if(count)e.preventDefault()}
+   return;
+  }
   if(e.button!==0&&e.button!==1&&e.button!==2)return;
   const p=screen(e);
   if(e.button===1||e.button===2||space||toolsState.tool==='hand'){

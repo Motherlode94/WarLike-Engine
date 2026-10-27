@@ -142,7 +142,7 @@ component(advancedContent,'Quick Start • Gameplay Recipes',body=>{
  const intro=document.createElement('p');intro.textContent='Appliquer un comportement réutilisable à cet objet. Les composants existants concernés peuvent être remplacés.';body.append(intro);
  const picker=document.createElement('select');picker.disabled=state.playing;
  const recipeGroups=new Map();
- for(const recipe of [...recipes,...communityRecipes()]){
+ for(const recipe of [...recipes,...communityRecipes(workspace.mode)]){
   const id=recipe.id;
   const category=recipe.category|| (id.startsWith('fps')||id.startsWith('tps')?'FPS / TPS':id.startsWith('rts')?'RTS':id.startsWith('race')?'Course automobile':id.startsWith('action')||id.startsWith('adventure')?'Action / Aventure':'Gameplay général');
   if(!recipeGroups.has(category)){const group=document.createElement('optgroup');group.label=category;recipeGroups.set(category,group);picker.append(group)}
@@ -150,7 +150,7 @@ component(advancedContent,'Quick Start • Gameplay Recipes',body=>{
   recipeGroups.get(category).append(option);
  }
  body.append(picker);
- const apply=document.createElement('button');apply.textContent='＋ Appliquer le modèle';apply.disabled=state.playing;apply.onclick=()=>{if(!confirm('Appliquer ce modèle à '+o.name+' ? Les composants concernés seront remplacés.'))return;if((picker.value.startsWith('community:')?applyCommunityRecipe(o,picker.value):applyRecipe(o,picker.value))){record('Gameplay Recipe : '+picker.value);notify()}};body.append(apply);
+ const apply=document.createElement('button');apply.textContent='＋ Appliquer le modèle';apply.disabled=state.playing;apply.onclick=()=>{if(!confirm('Appliquer ce modèle à '+o.name+' ? Les composants concernés seront remplacés.'))return;if((picker.value.startsWith('community:')?applyCommunityRecipe(o,picker.value,workspace.mode):applyRecipe(o,picker.value))){record('Gameplay Recipe : '+picker.value);notify()}};body.append(apply);
 });
 if(workspace.mode==='3d')component(root,'Physics 3D • Rigidbody',body=>{
  if(!o.rigidbody3d){const add=document.createElement('button');add.textContent='＋ Add Rigidbody 3D';add.disabled=state.playing;add.onclick=()=>{o.rigidbody3d=defaultRigidbody3d();record('Add Rigidbody 3D');notify()};body.append(add);return}

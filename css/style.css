@@ -778,3 +778,6 @@ body:not(.hub-open) .inspector{background:var(--warlike-custom-surface,#20252d);
 .inspector .warlike-script-component input[type=checkbox]{width:16px;height:16px;accent-color:var(--editor-accent,#48cba9)}
 .inspector .warlike-component-actions{display:flex;flex-wrap:wrap;gap:5px;border-top:1px solid color-mix(in srgb,var(--warlike-custom-text,#eee) 15%,transparent);padding-top:9px}
 .inspector .warlike-component-actions button{flex:1 1 auto;font-size:11px}
+
+/* Inspector deployment diagnostic: visible only on the current editor build */
+.warlike-inspector-edition{margin:4px 0 8px;padding:9px 10px;border:1px solid var(--editor-accent,#48cba9);border-radius:7px;color:var(--warlike-custom-text,#e7eaf0);background:color-mix(in srgb,var(--editor-accent,#48cba9) 16%,transparent);font-size:10px;font-weight:800;letter-spacing:.5px;text-align:center}

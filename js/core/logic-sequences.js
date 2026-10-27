@@ -77,6 +77,8 @@ function execute(job,ctx,actionsLeft){
 export function updateSequences(dt,ctx){
  if(!ctx?.playing)return;
  const rt=sequenceRuntime;dt=Math.min(.1,Math.max(0,number(dt)));rt.time+=dt;
+ // Shared race clock for racing Blueprints; advances only while a race is active.
+ if(number(rt.globals.raceStarted)===1&&number(rt.globals.raceFinished)!==1)rt.globals.raceElapsed=Math.round((number(rt.globals.raceElapsed)+dt)*1000)/1000;
  const keys=ctx.keys instanceof Set?ctx.keys:new Set(),player=ctx.player||null,objects=Array.isArray(ctx.entities)?ctx.entities:[];
  const signals=rt.signals.splice(0,MAX_SIGNALS);let budget=MAX_ACTIONS;
  const start=(o,s)=>{

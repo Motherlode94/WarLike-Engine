@@ -85,6 +85,30 @@ public sealed class MyMovement : WarLikeBehaviour
   const a=document.createElement('a');a.href=url;a.download='MyMovement.cs';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
+ // Controlled native driving tests: explicit commands are sent to the local .NET bridge.
+ // Browser Play mode remains JS-driven; this is not a hidden background loop.
+ const vehicleInputs={
+  csharpVehicleForward:{throttle:1,steer:0,handbrake:false},
+  csharpVehicleBrake:{throttle:-1,steer:0,handbrake:false},
+  csharpVehicleLeft:{throttle:1,steer:-1,handbrake:false},
+  csharpVehicleRight:{throttle:1,steer:1,handbrake:false},
+  csharpVehicleHandbrake:{throttle:0,steer:0,handbrake:true},
+  csharpVehicleNeutral:{throttle:0,steer:0,handbrake:false}
+ };
+ for(const [id,controls] of Object.entries(vehicleInputs)){
+  const control=document.getElementById(id);
+  control?.addEventListener('click',async()=>{
+   if(busy||state.playing||!ui.ready){announce('Connecte et synchronise le runtime .NET avant de commander un véhicule.');return}
+   const vehicle=state.entities.find(o=>o.id===state.selected.at(-1));
+   if(!vehicle){announce('Sélectionne le véhicule dans la Hierarchy.');return}
+   busy=true;buttons();
+   try{
+    await request('/vehicle/input','POST',{id:vehicle.id,...controls});
+    announce('Commande C# appliquée à '+vehicle.name+' : '+control.textContent+'. Exécute une étape pour déplacer le véhicule.',true);
+   }catch(error){announce('Commande C# : '+error.message)}
+   finally{busy=false;buttons()}
+  });
+ }
  const scriptName=document.getElementById('csharpScriptName');
  const scriptSource=document.getElementById('csharpScriptSource');
  const scriptLoad=document.getElementById('csharpScriptLoad');

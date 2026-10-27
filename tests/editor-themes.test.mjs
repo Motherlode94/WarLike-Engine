@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {editorThemePresets,sanitizePalette,defaultPalette} from '../js/ui/editor-palette.js';
+import {editorThemePresets,sanitizePalette,defaultPalette,isLightPalette} from '../js/ui/editor-palette.js';
 
 const source=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const ids=['graphite','obsidian','midnight','violet','light','tactical','racing','crimson'];
@@ -69,4 +69,24 @@ test('all major editors use the same palette tokens',()=>{
  assert.match(palette,/warlike:editor-theme-applied/);
  assert.match(appearance,/warlike:editor-theme-applied/);
  assert.match(palette,/root\.style\.colorScheme=/);
+});
+
+test('Light preset and custom bright palettes use light controls',()=>{
+ assert.equal(isLightPalette(editorThemePresets.light.panel),true);
+ assert.equal(isLightPalette(editorThemePresets.graphite.panel),false);
+ assert.equal(isLightPalette('#ffffff'),true);
+ assert.equal(isLightPalette('#101316'),false);
+ assert.equal(isLightPalette('not-a-color'),false);
+ const engine=source('js/ui/editor-palette.js');
+ const css=source('css/style.css');
+ assert.match(engine,/dataset\.warlikeContrast=isLightPalette\(palette\.panel\)/);
+ assert.match(css,/data-warlike-contrast="light"/);
+});
+test('nested editor dialogs and popovers follow tokens including selected states',()=>{
+ const css=source('css/style.css');
+ for(const name of ['.studio-dropdown','.studio-quick-create-menu','.asset-grid','.blueprint-window','.warlike-animation-studio','.render-quality-panel','.editor-appearance-menu']){
+  assert.ok(css.includes(name),'theme missed '+name);
+ }
+ assert.match(css,/--wl-theme-fg/);
+ assert.match(css,/color-mix\(in srgb,var\(--editor-accent\)/);
 });

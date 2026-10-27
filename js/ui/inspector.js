@@ -1,3 +1,4 @@
+import {threatFactions,threatRelations,threatProfile} from '../core/threat-intelligence.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {defaultRigidbody3d,applyImpulse3d} from '../core/physics-3d.js';
 import {recipes,applyRecipe} from '../core/gameplay-recipes.js';
@@ -214,6 +215,23 @@ component(root,'Gameplay Components',body=>{
    for(const [slot,title] of [['weapon','Arme'],['armor','Armure']]){const btn=document.createElement('button');btn.textContent=title;btn.disabled=state.playing;btn.onclick=()=>{if(equipItem(o,entry.id,slot)){record('Équiper '+slot);notify()}};line.append(btn)}
    const remove=document.createElement('button');remove.textContent='−';remove.disabled=state.playing;remove.onclick=()=>{inventoryRemove(o,entry.id,1);record('Inventaire : retirer');notify()};line.append(remove);body.append(line)}
   const equipped=document.createElement('small');equipped.textContent='Équipé : '+JSON.stringify(inv.equipment||{});body.append(equipped);
+ }
+ if(o.ai&&o.ai.enabled!==false){
+  component(root,'Enemy Intelligence · identité / factions',body=>{
+   o.threatIntel??={faction:'bandit',relation:'hostile',className:'Ennemi',level:1,weakness:'Non identifiée'};
+   const intel=o.threatIntel;
+   const editable=(key,label,kind='text')=>field(body,intel,key,label,kind);
+   editable('className','Classe','text');
+   selectField(body,intel,'faction','Faction',threatFactions);
+   selectField(body,intel,'relation','Relation',threatRelations);
+   editable('level','Niveau de danger');
+   editable('weakness','Point faible','text');
+   const p=state.entities.find(e=>e!==o&&(e.type==='player'||e.playable3d===true));
+   const profile=threatProfile(o,p);
+   const live=document.createElement('small');
+   live.textContent=profile?'État IA : '+profile.state+' · vision : '+(profile.visible?'visible':'non confirmé')+' · détection : '+(profile.detected?'oui':'non')+' · danger : '+profile.severity+'/100':'Fiche NPC enregistrée dans la scène';
+   body.append(live);
+  });
  }
  if(addComponent('AI State Machine','ai',defaultAi)){
   const ai=o.ai;selectField(body,ai,'state','État initial',['idle','patrol','chase','attack','dead']);

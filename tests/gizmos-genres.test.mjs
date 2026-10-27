@@ -32,3 +32,12 @@ test('3D gizmos are wired into the scene viewport',()=>{
  assert.match(src,/updateGizmos\(\)/);
  assert.match(src,/updateRtsOrders\(/);
 });
+
+test('race clock and RTS unit HUD are connected to both render paths',()=>{
+ for(const path of ['renderer.js','viewport-3d.js']){
+  const source=readFileSync(new URL('../js/core/'+path,import.meta.url),'utf8');
+  assert.match(source,/updateGenreHud\(state\)/);
+ }
+ const source=readFileSync(new URL('../js/core/logic-sequences.js',import.meta.url),'utf8');
+ assert.match(source,/globals\.raceElapsed/);
+});

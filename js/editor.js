@@ -11,7 +11,7 @@ import {initializeNative3d,nativeStatus} from './core/native-3d.js';
 import {initHub,hub} from './core/project-hub.js';
 import {workspace} from './core/workspaces.js';
 import {lighting} from './core/lighting.js';
-import {view3d} from './core/viewport-3d.js?v=default-play-fix-20261027';
+import {view3d} from './core/viewport-3d.js';
 import {updateAudioSources,stopSources} from './core/audio-sources.js';
 import {bindAudioControls} from './core/audio.js';
 import {init3d} from './core/viewport-3d.js';

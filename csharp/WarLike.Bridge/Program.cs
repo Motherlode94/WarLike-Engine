@@ -35,6 +35,27 @@ async Task Handle(HttpListenerContext ctx) {
             var incoming=GameWorld.FromWarLikeJson(json);
             await gate.WaitAsync();try{world=incoming;await Reply(new {ok=true,count=world.Actors.Count});}finally{gate.Release();}return;
         }
+        if (req.Url?.AbsolutePath=="/vehicle/input"&&req.HttpMethod=="POST"){
+            using var doc=await JsonDocument.ParseAsync(req.InputStream);
+            var input=doc.RootElement;
+            if(!input.TryGetProperty("id",out var id) || !id.TryGetInt32(out int actorId) ||
+               !input.TryGetProperty("throttle",out var throttleJson) ||
+               !input.TryGetProperty("steer",out var steerJson) ||
+               !throttleJson.TryGetSingle(out float throttle) ||
+               !steerJson.TryGetSingle(out float steer) ||
+               !float.IsFinite(throttle) || !float.IsFinite(steer) ||
+               Math.Abs(throttle)>1 || Math.Abs(steer)>1){
+                res.StatusCode=400;await Reply(new {error="Invalid vehicle input"});return;
+            }
+            bool handbrake=input.TryGetProperty("handbrake",out var brake) && brake.ValueKind==JsonValueKind.True;
+            await gate.WaitAsync();try{
+                var actor=world.Actors.FirstOrDefault(a=>a.Id==actorId);
+                var component=actor?.GetComponent<VehicleControllerComponent>();
+                if(component is null){res.StatusCode=404;await Reply(new {error="VehicleController not found"});return;}
+                component.SetInput(throttle,steer,handbrake);
+                await Reply(new {ok=true,id=actorId,throttle,steer,handbrake});
+            }finally{gate.Release();}return;
+        }
         if (req.Url?.AbsolutePath=="/tick"&&req.HttpMethod=="POST"){
             using var doc=await JsonDocument.ParseAsync(req.InputStream);
             var root=doc.RootElement;

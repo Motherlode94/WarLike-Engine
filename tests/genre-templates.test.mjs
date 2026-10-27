@@ -83,3 +83,25 @@ test('native genre actions are wired from C# runtime panel to local bridge',()=>
   assert.ok(kinds.includes('class '+name),'C# behaviour '+name);
  assert.ok(html.includes('id="csharpGenreExecute"'));
 });
+
+test('Field Lab is a reversible diagnostics course in both workspaces',()=>{
+ for(const mode of ['2d','3d']){
+  const scene=createGenreScene('fieldlab',mode);
+  const names=scene.entities.map(o=>o.name);
+  for(const name of ['01 · Test marche','02 · Console interactive','03 · Véhicule test','04 · Test conduite','05 · Diagnostic final','Obstacle collision A','Obstacle collision B'])assert.ok(names.includes(name),name+' in '+mode);
+  const car=scene.entities.find(o=>o.tags?.includes('fieldlab-vehicle'));
+  assert.equal(car.type,mode==='3d'?'mesh3d':'prefab');
+  assert.ok(scene.entities.some(o=>o.sequence?.conditions?.some(c=>c.type==='playerOnFoot')));
+  assert.ok(scene.entities.some(o=>o.sequence?.conditions?.some(c=>c.type==='playerInVehicle')));
+  assert.ok(scene.entities.some(o=>o.sequence?.branches?.some(b=>b.conditions?.some(c=>c.key==='labDrive'))));
+  assert.deepEqual(scene.selected,[1]);
+  assert.ok(scene.entities.every((o,i)=>o.id===i+1));
+ }
+ const logic=read('js/core/logic-sequences.js');
+ assert.match(logic,/case 'playerInVehicle'/);
+ assert.match(logic,/case 'playerOnFoot'/);
+ const hud=read('js/ui/genre-hud.js');
+ assert.match(hud,/genre==='fieldlab'/);
+ const html=read('index.html');
+ assert.match(html,/value="fieldlab"/);
+});

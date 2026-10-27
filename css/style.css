@@ -1288,3 +1288,11 @@ body:not(.hub-open) .editor-appearance-menu #editorThemeDefault{
 html[data-warlike-contrast="light"] body:not(.hub-open) :is(.studio-dropdown,.blueprint-window,.render-quality-panel,.warlike-animation-studio,.editor-appearance-menu,.asset-grid,.hierarchy,.inspector,.project-panel){
   color-scheme:light;
 }
+
+/* 3D vehicle driving overlay stays outside of the editing UI and doesn't capture controls */
+#warlikeVehicle3dHud:not([hidden]){position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:26;pointer-events:none;
+ max-width:calc(100% - 30px);padding:10px 16px;border-radius:6px;border:1px solid var(--warlike-palette-border,#667681);
+ color:var(--warlike-palette-text,#eff5fa);background:color-mix(in srgb,var(--warlike-palette-panel,#172430) 91%,transparent);
+ font:600 12px/1.5 system-ui,sans-serif;text-align:center;box-shadow:0 5px 16px #0006}
+#warlikeVehicle3dHud[hidden]{display:none!important}
+@media(max-width:680px){#warlikeVehicle3dHud:not([hidden]){font-size:11px;bottom:8px;padding:8px;white-space:normal}}

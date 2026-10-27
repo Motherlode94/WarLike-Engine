@@ -85,5 +85,55 @@ public sealed class MyMovement : WarLikeBehaviour
   const a=document.createElement('a');a.href=url;a.download='MyMovement.cs';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
+ const scriptName=document.getElementById('csharpScriptName');
+ const scriptSource=document.getElementById('csharpScriptSource');
+ const scriptLoad=document.getElementById('csharpScriptLoad');
+ const scriptSave=document.getElementById('csharpScriptSave');
+ const scriptExport=document.getElementById('csharpScriptExport');
+ const selectedObject=()=>state.entities.find(o=>o.id===state.selected.at(-1));
+ const defaultScript=name=>`using WarLike.Runtime;
+using System.Numerics;
+
+public sealed class ${name} : WarLikeBehaviour
+{
+    public float Speed { get; set; } = 2.5f;
+
+    public override void Update(float deltaTime)
+    {
+        // World units are meters; X and Z are the ground plane.
+        Actor.Position += new Vector3(Speed * deltaTime, 0, 0);
+    }
+}
+`;
+ const safeName=value=>{
+  const trimmed=String(value||'MyBehaviour').replace(/[^a-zA-Z0-9_]/g,'').slice(0,64);
+  return /^[a-zA-Z_]/.test(trimmed)?trimmed:'MyBehaviour';
+ };
+ const loadScript=()=>{
+  const object=selectedObject();
+  if(!object){announce('Sélectionne d’abord un GameObject.');return}
+  const name=safeName(object.csharpScript?.name||object.name+'Behaviour');
+  scriptName.value=name;
+  scriptSource.value=object.csharpScript?.source||defaultScript(name);
+  announce('Script prêt pour '+object.name+'.',true);
+ };
+ scriptLoad?.addEventListener('click',loadScript);
+ scriptSave?.addEventListener('click',()=>{
+  const object=selectedObject();
+  if(!object||state.playing){announce('Sélectionne un objet et arrête Play avant de modifier un script.');return}
+  if(scriptSource.value.length>30000){announce('Script limité à 30 000 caractères.');return}
+  object.csharpScript={name:safeName(scriptName.value),source:scriptSource.value};
+  record('C# : enregistrer script '+object.csharpScript.name);notify();
+  ui.ready=false;buttons();
+  announce('Code C# enregistré dans '+object.name+'. Le runtime doit être recompilé pour l’exécuter.',true);
+ });
+ scriptExport?.addEventListener('click',()=>{
+  const source=scriptSource.value;
+  if(!source.trim()){announce('Aucun code C# à exporter.');return}
+  const url=URL.createObjectURL(new Blob([source],{type:'text/plain;charset=utf-8'}));
+  const anchor=document.createElement('a');anchor.href=url;anchor.download=safeName(scriptName.value)+'.cs';anchor.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
+ document.addEventListener('warlike:change',()=>{if(dialog.hidden)return;const exists=!!selectedObject();if(scriptSave)scriptSave.disabled=!exists||state.playing});
  buttons();
 }

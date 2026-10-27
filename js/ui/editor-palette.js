@@ -18,6 +18,12 @@ export const editorThemePresets={
  crimson:P('Crimson Developer','#d15d6a','#171719','#171719','#262528','#262528','#403137','#403137','#63525a','#c5afb5','#110f12','#171719','#f1e7e9')
 };
 export const defaultPalette={...editorThemePresets.graphite};
+export function isLightPalette(surface){
+ if(typeof surface!=='string'||!COLOR.test(surface))return false;
+ const components=[1,3,5].map(i=>parseInt(surface.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+ return components[0]*.2126+components[1]*.7152+components[2]*.0722>.4;
+}
+
 const fields={
  menu:'editorMenuColor',toolbar:'editorToolbarColor',panel:'editorPanelColor',
  header:'editorHeaderColor',button:'editorButtonColor',border:'editorBorderColor',
@@ -71,7 +77,8 @@ export function initEditorPalette(){
   root.style.setProperty('--editor-accent',palette.accent);
   root.dataset.warlikeFont=palette.font;
   root.dataset.warlikeTheme=theme;
-  root.style.colorScheme=theme==='light'?'light':'dark';
+  root.style.colorScheme=isLightPalette(palette.panel)?'light':'dark';
+  root.dataset.warlikeContrast=isLightPalette(palette.panel)?'light':'dark';
   select.value=theme;
   document.dispatchEvent(new CustomEvent('warlike:editor-theme-applied',{detail:{theme,accent:palette.accent}}));
   const out=document.getElementById('editorFontSizeValue');if(out)out.textContent=palette.fontSize+' px';

@@ -124,6 +124,22 @@ setWorkspaceUi();
 document.addEventListener('warlike:project',setWorkspaceUi);
 document.addEventListener('warlike:change',()=>{if(viewport3d&&view3d.enabled!==(workspace.mode==='3d')){viewport3d.syncToWorkspace();setWorkspaceUi()}});
 $('#duplicate').onclick=duplicateSelected;
+// Move existing controls into a single categorized library; preserve original IDs and handlers.
+const relocateTools=(targetId,ids)=>{
+ const target=document.getElementById(targetId);
+ if(!target)return;
+ for(const id of ids){const control=document.getElementById(id);if(control)target.append(control)}
+};
+relocateTools('warlikeDemoTools',['rpgDemo','logicDemo','driveDemo','loadDemo']);
+relocateTools('warlikeCreationTools',['newPointLight','newSpotLight','newAudioSource']);
+relocateTools('warlikeRenderingTools',['audioToggle','audioVolume']);
+const library=document.getElementById('warlikeToolLibrary');
+library?.addEventListener('click',event=>{
+ if(event.target.closest('button')&&!event.target.closest('summary'))library.open=false;
+});
+document.addEventListener('pointerdown',event=>{
+ if(library?.open&&!library.contains(event.target))library.open=false;
+});
 initDocking();
 const compactToggle=document.getElementById('studioCompactToggle');
 if(compactToggle){

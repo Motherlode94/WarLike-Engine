@@ -5,7 +5,13 @@ const panelMap={hierarchy:'hierarchyPanel',inspector:'inspectorPanel',project:'p
 const defaults={leftWidth:245,rightWidth:350,float:{}};
 let layout;
 try{layout={...defaults,...JSON.parse(localStorage.getItem(storageKey)||'{}')}}catch{layout={...defaults,float:{}}}
-layout.float=layout.float&&typeof layout.float==='object'?layout.float:{};
+layout.float=layout.float&&typeof layout.float==='object'&&!Array.isArray(layout.float)?layout.float:{};
+for(const kind of Object.keys(layout.float)){
+ const f=layout.float[kind];
+ if(!panelMap[kind]||!f||!['x','y','width','height'].every(key=>Number.isFinite(f[key])))delete layout.float[kind];
+}
+if(!Number.isFinite(layout.leftWidth))layout.leftWidth=defaults.leftWidth;
+if(!Number.isFinite(layout.rightWidth))layout.rightWidth=defaults.rightWidth;
 // Preserve user-customized layouts. Upgrade only untouched legacy defaults once.
 try{if(!localStorage.getItem('warlike.layout.v3.2.migrated')){if(!Object.keys(layout.float).length&&[220,245].includes(layout.leftWidth)&&[275,350].includes(layout.rightWidth)){layout.leftWidth=245;layout.rightWidth=350;}localStorage.setItem('warlike.layout.v3.2.migrated','1')}}catch{}
 const $=id=>document.getElementById(id);
@@ -31,6 +37,7 @@ function applyLayout(){
  applyWidths();
  for(const [kind,id] of Object.entries(panelMap)){
   const el=$(id),f=layout.float[kind],button=document.querySelector('[data-dock-toggle="'+kind+'"]');
+  if(!el)continue;
   el.classList.toggle('floating-panel',!!f);
   if(f){el.style.left=clamp(f.x,0,Math.max(0,innerWidth-150))+'px';el.style.top=clamp(f.y,35,Math.max(35,innerHeight-110))+'px';el.style.width=clamp(f.width,260,Math.max(260,innerWidth))+'px';el.style.height=clamp(f.height,210,Math.max(210,innerHeight-35))+'px'}
   else{el.style.removeProperty('left');el.style.removeProperty('top');el.style.removeProperty('width');el.style.removeProperty('height')}

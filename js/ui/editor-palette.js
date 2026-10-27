@@ -71,7 +71,9 @@ export function initEditorPalette(){
   root.style.setProperty('--editor-accent',palette.accent);
   root.dataset.warlikeFont=palette.font;
   root.dataset.warlikeTheme=theme;
+  root.style.colorScheme=theme==='light'?'light':'dark';
   select.value=theme;
+  document.dispatchEvent(new CustomEvent('warlike:editor-theme-applied',{detail:{theme,accent:palette.accent}}));
   const out=document.getElementById('editorFontSizeValue');if(out)out.textContent=palette.fontSize+' px';
   if(preview){
    preview.replaceChildren();

@@ -42,8 +42,8 @@ public sealed class EditorCommandDispatcher {
     public EditorCommandResult Execute(EditorCommand command) {
         if (command is null) throw new ArgumentNullException(nameof(command));
         if (command.Kind == EditorCommandKind.CreateActor) {
-            var actor = _create(string.IsNullOrWhiteSpace(command.Name) ? "GameObject" : command.Name.Trim());
-            return new(true, "Actor created", actor.Id);
+            var createdActor = _create(string.IsNullOrWhiteSpace(command.Name) ? "GameObject" : command.Name.Trim());
+            return new(true, "Actor created", createdActor.Id);
         }
         Actor? actor = null;
         if (command.Kind is EditorCommandKind.DeleteActor or EditorCommandKind.RenameActor or EditorCommandKind.SetPosition) {

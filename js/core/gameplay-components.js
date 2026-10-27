@@ -20,7 +20,7 @@ export function updateAi(entities,player,dt){
   ai.homeX??=e.x;ai.homeY??=e.y;
   const dx=player.x-e.x,dy=player.y-e.y,dist=Math.hypot(dx,dy)||.001;
   const hp=e.stats?.health??e.hp??100;
-  if(hp<=0){ai.state='dead';continue}
+  if(hp<=0){ai.state='dead';ai.visible=false;ai.detected=false;continue}
   const detection=Math.max(0,n(ai.detection,450)),attackRange=Math.max(5,n(ai.attackRange,65));
   // Sight checks account for walls/cover before entering pursuit.
   const visible=dist<=detection&&!entities.some(o=>{
@@ -35,6 +35,10 @@ export function updateAi(entities,player,dt){
    }
    return near<1&&far>0;
   });
+  // Expose genuine perception to the enemy scanner; never reveal a fabricated target.
+  ai.visible=visible;
+  ai.detected=dist<=detection&&(ai.requireLineOfSight!==true||visible);
+  if(ai.detected){ai.lastKnownX=player.x;ai.lastKnownY=player.y;}
   ai.state=(ai.requireLineOfSight===true&&!visible)?'patrol':dist<=attackRange?'attack':dist<=detection?'chase':'patrol';
   const step=Math.max(0,n(ai.speed,75))*dt;
   if(ai.state==='chase'||ai.state==='patrol'){

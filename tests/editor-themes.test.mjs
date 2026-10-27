@@ -44,3 +44,11 @@ test('theme tokens style panel chrome and the customization menu',()=>{
  assert.match(css,/editor-theme-preview/);
  for(const token of ['menu','toolbar','panel','header','button','border','muted','scene','footer','text'])assert.ok(css.includes('--warlike-palette-'+token),token);
 });
+
+test('Unity Graphite is the default and can be restored explicitly',()=>{
+ const html=source('index.html'),js=source('js/ui/editor-palette.js');
+ assert.equal(defaultPalette.name,'Unity Graphite');
+ assert.match(html,/id="editorThemeDefault"/);
+ assert.match(js,/getElementById\('editorThemeDefault'\)/);
+ assert.match(js,/theme='graphite';\s*palette=sanitizePalette\(editorThemePresets\.graphite\);\s*save\(\)/);
+});

@@ -6,7 +6,7 @@ test('Hub lets users choose assets when creating 3D projects',()=>{
  const html=read('index.html'),hub=read('js/core/project-hub.js');
  assert.match(html,/id="hubAssetPack"/);
  for(const pack of ['starter','kenney','community','both'])assert.ok(html.includes('option value="'+pack+'"'));
- assert.match(hub,/createProject\(name\.value,type\.value,assetPackSelect\.value\)/);
+ assert.match(hub,/createProject\(name\.value,type\.value,assetPackSelect\.value,genreSelect\.value\)/);
 });
 test('Hub stores pack per project, allows changing existing packs and restores it',()=>{
  const hub=read('js/core/project-hub.js');

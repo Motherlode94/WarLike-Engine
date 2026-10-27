@@ -28,7 +28,7 @@ function applyWidths(){
  document.body.classList.toggle('project-floating',!!layout.float.project);
 }
 function floatPanel(kind){
- const element=$(panelMap[kind]),rect=element.getBoundingClientRect();
+ const element=$(panelMap[kind]);if(!element)return;const rect=element.getBoundingClientRect();
  layout.float[kind]={x:clamp(Math.round(rect.x+18),0,Math.max(0,innerWidth-220)),y:clamp(Math.round(rect.y+16),35,Math.max(35,innerHeight-140)),width:clamp(Math.round(rect.width),265,Math.max(265,innerWidth-24)),height:clamp(Math.round(rect.height),210,Math.max(210,innerHeight-90))};
  applyLayout();save();
 }
@@ -45,7 +45,7 @@ function applyLayout(){
  }
 }
 function bindColumnSplitter(splitterId,side){
- const handle=$(splitterId);let dragging=null;
+ const handle=$(splitterId);if(!handle)return;let dragging=null;
  function setWidth(v){layout[side==='left'?'leftWidth':'rightWidth']=clamp(Math.round(v),side==='left'?160:190,side==='left'?440:480);applyWidths();save()}
  handle.addEventListener('pointerdown',e=>{if(e.button!==0)return;dragging={start:e.clientX,value:layout[side==='left'?'leftWidth':'rightWidth']};handle.setPointerCapture(e.pointerId);document.body.classList.add('resizing-panels');e.preventDefault()});
  handle.addEventListener('pointermove',e=>{if(!dragging)return;setWidth(dragging.value+(e.clientX-dragging.start)*(side==='left'?1:-1))});
@@ -136,7 +136,7 @@ const customLayoutKey='warlike.workspace.layout.custom.v1';
 export function saveCustomLayout(){
  const center=document.querySelector('.center-stack');
  const height=parseInt(getComputedStyle(center).getPropertyValue('--project-height'),10)||320;
- const snapshot={leftWidth:layout.leftWidth,rightWidth:layout.rightWidth,float:structuredClone(layout.float),projectHeight:height};
+ const snapshot={leftWidth:layout.leftWidth,rightWidth:layout.rightWidth,float:JSON.parse(JSON.stringify(layout.float)),projectHeight:height};
  try{localStorage.setItem(customLayoutKey,JSON.stringify(snapshot));return true}catch{return false}
 }
 export function loadCustomLayout(){

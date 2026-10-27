@@ -34,7 +34,16 @@ function colorPalette(parent,o,key,label='Couleur'){
  root.append(palette);parent.append(root);
 }
 function selectField(parent,o,key,label,opts){const line=document.createElement('div');line.className='property-row';const title=document.createElement('label');title.textContent=label;const select=document.createElement('select');select.disabled=state.playing;for(const value of opts){const option=document.createElement('option');option.value=value;option.textContent=value;select.append(option)}select.value=o[key]||opts[0];select.onchange=()=>{o[key]=select.value;record('Inspector : '+label);notify()};line.append(title,select);parent.append(line)}
-function component(parent,title,build){const details=document.createElement('details');details.className='inspector-component';details.open=true;const summary=document.createElement('summary');summary.textContent='▣ '+title;const body=document.createElement('div');body.className='component-content';details.append(summary,body);build(body);parent.append(details)}
+const INSPECTOR_FOLDS_KEY='warlike.inspector.folds.v1';
+function readFolds(){try{return JSON.parse(localStorage.getItem(INSPECTOR_FOLDS_KEY)||'{}')||{}}catch{return {}}}
+function component(parent,title,build){
+ const details=document.createElement('details');details.className='inspector-component';
+ const folds=readFolds();details.open=folds[title]!==false;
+ const summary=document.createElement('summary');summary.textContent=title;
+ const body=document.createElement('div');body.className='component-content';
+ details.append(summary,body);build(body);parent.append(details);
+ details.addEventListener('toggle',()=>{const saved=readFolds();saved[title]=details.open;try{localStorage.setItem(INSPECTOR_FOLDS_KEY,JSON.stringify(saved))}catch{}});
+}
 export function renderHierarchy(){const root=document.querySelector('#objects'),filter=(document.querySelector('#hierarchySearch')?.value||'').toLowerCase();root.replaceChildren();for(const o of state.entities.filter(o=>o.name.toLowerCase().includes(filter))){const b=document.createElement('button');b.textContent=(o.type==='prefab'?'◈ ':o.type==='character'?'♟ ':'▣ ')+o.name;b.classList.toggle('selected',state.selected.includes(o.id));b.onclick=e=>{if(state.playing)return;state.selected=e.shiftKey?(state.selected.includes(o.id)?state.selected.filter(id=>id!==o.id):[...state.selected,o.id]):[o.id];notify()};root.append(b)}}
 export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
 const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent='GameObject #'+o.id+' • '+o.type;header.append(name,meta);root.append(header);

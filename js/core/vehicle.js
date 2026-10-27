@@ -1,3 +1,4 @@
+import {recordEngineEvent} from './engine-diagnostics.js';
 import {stepArcadeVehicle,moveVehicleWithCollision} from './arcade-driving.js';
 import {playSound} from './audio.js';
 import {housingActive,housing} from './housing.js';
@@ -16,16 +17,16 @@ const overlapCircleRect=collisionCircleRect;
 export function updateVehicles(dt,player){
  driving.collisionFlash=Math.max(0,driving.collisionFlash-dt);
  const k=state.keys,pressed=k.has('e')&&!housingActive()&&housing.transition===0;
- if(driving.transition){const action=driving.transition;action.remaining-=dt;if(action.remaining<=0){if(action.type==='enter'){playSound('vehicle');driving.vehicleId=action.carId;driving.speed=0;driving.steer=0;player._hiddenInVehicle=true;player.animation='drive';}else{playSound('door');player.x=action.x;player.y=action.y;player._hiddenInVehicle=false;driving.vehicleId=null;driving.speed=0;driving.steer=0;player.animation='exit_vehicle';player._actionAnimationUntil=performance.now()/1000+.45}driving.transition=null;player._vehicleTransition=false}else{player._vehicleTransition=true;player.animation=action.type==='enter'?'enter_vehicle':'exit_vehicle';driving.enterHeld=pressed;return}}
+ if(driving.transition){const action=driving.transition;action.remaining-=dt;if(action.remaining<=0){if(action.type==='enter'){playSound('vehicle');recordEngineEvent('vehicle-enter',String(action.carId));driving.vehicleId=action.carId;driving.speed=0;driving.steer=0;player._hiddenInVehicle=true;player.animation='drive';}else{playSound('door');player.x=action.x;player.y=action.y;recordEngineEvent('vehicle-exit',String(driving.vehicleId));player._hiddenInVehicle=false;driving.vehicleId=null;driving.speed=0;driving.steer=0;player.animation='exit_vehicle';player._actionAnimationUntil=performance.now()/1000+.45}driving.transition=null;player._vehicleTransition=false}else{player._vehicleTransition=true;player.animation=action.type==='enter'?'enter_vehicle':'exit_vehicle';driving.enterHeld=pressed;return}}
 
  if(pressed&&!driving.enterHeld&&player){
   if(currentVehicle()){
    const car=currentVehicle(),c=center(car),a=(car.rotation||0)*Math.PI/180;const candidate=[{x:c.x-Math.sin(a)*((car.w+player.w)*.55),y:c.y+Math.cos(a)*((car.h+player.h)*.55)},{x:c.x+Math.sin(a)*((car.w+player.w)*.55),y:c.y-Math.cos(a)*((car.h+player.h)*.55)}];
    const exit=candidate.find(p=>!state.entities.some(o=>o!==player&&o!==car&&solid(o)&&overlapCircleRect(p.x,p.y,player.w*.4,o)));
-   if(exit){playSound('door');driving.transition={type:'exit',x:exit.x-player.w/2,y:exit.y-player.h/2,remaining:.38};player.animation='exit_vehicle';player._vehicleTransition=true;driving.enterHeld=pressed;return}
+   if(exit){playSound('door');player._vehicleInputConsumed=true;driving.transition={type:'exit',x:exit.x-player.w/2,y:exit.y-player.h/2,remaining:.38};player.animation='exit_vehicle';player._vehicleTransition=true;driving.enterHeld=pressed;return}
   }else{
    const pc=center(player);const nearest=state.entities.filter(vehicle).map(o=>({o,d:Math.hypot(center(o).x-pc.x,center(o).y-pc.y)})).sort((a,b)=>a.d-b.d)[0];
-   if(nearest&&nearest.d<Math.max(115,(nearest.o.w+player.w)*.7)){playSound('door');driving.transition={type:'enter',carId:nearest.o.id,remaining:.42};player.animation='enter_vehicle';player._vehicleTransition=true;driving.enterHeld=pressed;return}
+   if(nearest&&nearest.d<Math.max(115,(nearest.o.w+player.w)*.7)){playSound('door');player._vehicleInputConsumed=true;driving.transition={type:'enter',carId:nearest.o.id,remaining:.42};player.animation='enter_vehicle';player._vehicleTransition=true;driving.enterHeld=pressed;return}
   }
  }
  driving.enterHeld=pressed;
@@ -40,7 +41,7 @@ export function updateVehicles(dt,player){
   const radius=conf.collisionRadius;
   return state.entities.some(o=>o!==car&&o!==player&&solid(o)&&overlapCircleRect(x+car.w/2,y+car.h/2,radius,o));
  },{maxStep:Math.max(4,conf.collisionRadius*.35)});
- if(collision.collision){driving.speed=-driving.speed*.12;driving.collisionFlash=.24;playSound('impact',{cooldown:.22,gain:.38})}
+ if(collision.collision){recordEngineEvent('collision',car.name);driving.speed=-driving.speed*.12;driving.collisionFlash=.24;playSound('impact',{cooldown:.22,gain:.38})}
  car.animation=handbrake&&Math.abs(driving.speed)>8?'brake':Math.abs(driving.speed)<3?'idle':turn>0?'turn_right':turn<0?'turn_left':driving.speed<0?'reverse':'drive';
  car.animationSpeed=Math.max(.6,Math.min(2.5,Math.abs(driving.speed)/140));
  player.x=car.x+(car.w-player.w)/2;player.y=car.y+(car.h-player.h)/2;player._hiddenInVehicle=true;player.animation='drive';

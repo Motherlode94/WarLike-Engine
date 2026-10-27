@@ -1157,3 +1157,14 @@ body:not(.hub-active) .workspace :is(.side-splitter,.project-splitter){backgroun
 #csharpRuntimeStatus{padding:9px;border-left:3px solid #a7adba;background:#111b2633}
 #csharpRuntimeStatus[data-ok="true"]{border-left-color:#48cba9}
 .csharp-runtime-content small{opacity:.75}
+
+/* C# source authoring per GameObject, retained in project scene JSON */
+.csharp-runtime-panel .csharp-script-editor{border:1px solid var(--warlike-palette-border,#455363);border-radius:5px;overflow:hidden}
+.csharp-runtime-panel .csharp-script-editor>summary{padding:10px 11px;cursor:pointer;background:var(--warlike-palette-header,#303944);font-weight:650}
+.csharp-runtime-panel .csharp-script-editor[open]{max-height:min(60dvh,650px);overflow:auto}
+.csharp-runtime-panel .csharp-script-editor>label{display:flex;flex-direction:column;gap:5px;padding:8px 10px}
+.csharp-runtime-panel .csharp-script-editor input,.csharp-runtime-panel .csharp-script-editor textarea{box-sizing:border-box;width:100%;border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;background:#141d26;color:#e4eff8;padding:8px}
+.csharp-runtime-panel .csharp-script-editor textarea{min-height:150px;resize:vertical;font:12px/1.5 Consolas,monospace;tab-size:4}
+.csharp-runtime-panel .csharp-script-actions{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px}
+.csharp-runtime-panel .csharp-script-actions button{min-height:31px;padding:6px 8px;border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;background:var(--warlike-palette-button,#354251);color:inherit;cursor:pointer}
+.csharp-runtime-panel .csharp-script-editor small{display:block;padding:5px 10px 12px}

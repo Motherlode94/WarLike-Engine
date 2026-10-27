@@ -2,7 +2,7 @@
 const storageKey='warlike.workspace.layout.v1';
 const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
 const panelMap={hierarchy:'hierarchyPanel',inspector:'inspectorPanel',project:'projectPanel'};
-const defaults={leftWidth:220,rightWidth:275,float:{}};
+const defaults={leftWidth:245,rightWidth:350,float:{}};
 let layout;
 try{layout={...defaults,...JSON.parse(localStorage.getItem(storageKey)||'{}')}}catch{layout={...defaults,float:{}}}
 layout.float=layout.float&&typeof layout.float==='object'?layout.float:{};
@@ -105,7 +105,7 @@ function bindFloating(kind){
  }
 }
 const layoutPresets={
- default:{leftWidth:220,rightWidth:275,projectHeight:320},
+ default:{leftWidth:245,rightWidth:350,projectHeight:280},
  scene:{leftWidth:175,rightWidth:210,projectHeight:180},
  inspector:{leftWidth:165,rightWidth:420,projectHeight:235},
  assets:{leftWidth:175,rightWidth:230,projectHeight:460}
@@ -160,4 +160,4 @@ export function initDocking(){
  for(const kind of Object.keys(panelMap))bindFloating(kind);
  applyLayout();window.addEventListener('resize',()=>applyLayout());
 }
-export function resetLayout(){layout={leftWidth:220,rightWidth:275,float:{}};applyLayout();save();const center=document.querySelector('.center-stack');center.style.removeProperty('--project-height');localStorage.removeItem('warlike.projectHeight')}
+export function resetLayout(){layout={leftWidth:245,rightWidth:350,float:{}};applyLayout();save();const center=document.querySelector('.center-stack');center.style.removeProperty('--project-height');localStorage.removeItem('warlike.projectHeight')}

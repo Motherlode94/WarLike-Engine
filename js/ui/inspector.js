@@ -78,7 +78,15 @@ component(root,'Components • Gameplay & Scripts',body=>{
  const title=document.createElement('div');title.className='warlike-component-toolbar';
  const count=document.createElement('strong');count.textContent=definitions.length+' composant(s)';
  const openBlueprint=document.createElement('button');openBlueprint.type='button';openBlueprint.textContent='⬡ Blueprint';openBlueprint.onclick=()=>document.getElementById('openBlueprint')?.click();
- title.append(count,openBlueprint);body.append(title);
+ const openCSharp=document.createElement('button');openCSharp.type='button';openCSharp.textContent='C# Script';
+ openCSharp.title='Éditer le script C# de ce GameObject';
+ openCSharp.onclick=()=>{
+  document.getElementById('openCsharpRuntime')?.click();
+  const editor=document.querySelector('#csharpRuntimePanel .csharp-script-editor');
+  if(editor)editor.open=true;
+  document.getElementById('csharpScriptLoad')?.click();
+ };
+ title.append(count,openBlueprint,openCSharp);body.append(title);
  const note=document.createElement('p');note.className='warlike-component-hint';note.textContent='Propriétés enregistrées dans la scène. Certains composants sont utilisables par le runtime Web ; les autres nécessitent encore une intégration Play.';body.append(note);
  const list=document.createElement('div');list.className='csharp-component-list';
  definitions.forEach((definition,index)=>{

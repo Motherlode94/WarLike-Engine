@@ -948,3 +948,16 @@ body .warlike-studio-signature.brand strong span{color:#5fdfc0}
 body .warlike-studio-signature.brand small{font-size:9px;color:#9aaabf;letter-spacing:.06em;white-space:nowrap}
 body .warlike-studio-signature.brand small b{color:#80dbc5}
 body:has(#hubOverlay:not([hidden])) .warlike-studio-signature.brand{display:none!important}
+
+/* Permanent application footer: own space, never overlaps Project/Inspector */
+:root{--warlike-footer-height:44px}
+body .warlike-status-footer{position:fixed;left:0;right:0;bottom:0;height:var(--warlike-footer-height);z-index:120;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 14px;background:#171d25;border-top:1px solid #405160;box-shadow:0 -3px 12px #0005;color:#b7c4d0;font-size:11px}
+body .warlike-footer-status{display:flex;align-items:center;gap:10px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body .warlike-status-dot{width:7px;height:7px;flex:none;border-radius:50%;background:#5fdfc0;box-shadow:0 0 7px #5fdfc066}
+body .warlike-footer-divider{height:13px;width:1px;background:#52606b;flex:none}
+body .warlike-status-footer .warlike-studio-signature.brand{position:static!important;right:auto!important;bottom:auto!important;z-index:auto!important;visibility:visible!important;opacity:1!important;pointer-events:none;flex:none;padding:3px 10px;border:0;border-left:2px solid #5fdfc0;border-radius:0;background:transparent;box-shadow:none}
+body .warlike-status-footer .warlike-studio-signature.brand strong{font-size:12px;line-height:1.2}
+body .warlike-status-footer .warlike-studio-signature.brand small{font-size:8px}
+body:not(.hub-active) .workspace{height:calc(100dvh - 78px - var(--warlike-footer-height));max-height:calc(100dvh - 78px - var(--warlike-footer-height))}
+body:has(#hubOverlay:not([hidden])) .warlike-status-footer{display:none!important}
+@media(max-width:600px){body .warlike-footer-status span:last-child,body .warlike-footer-divider{display:none}body .warlike-status-footer{padding:0 8px;gap:5px}body .warlike-status-footer .warlike-studio-signature.brand{padding:3px 6px}}

@@ -4,7 +4,7 @@ import {horror} from './core/horror-survival.js';
 import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality,applyHorrorAtmosphere} from './core/render-quality.js';
 import {initBlueprintWorkspace} from './ui/blueprint-workspace.js';
 import {initEditorAppearance} from './ui/editor-appearance.js?v=theme-sync-20261027';
-import {initEditorPalette} from './ui/editor-palette.js?v=theme-sync-20261027';
+import {initEditorPalette} from './ui/editor-palette.js?v=theme-consistency-2-20261027';
 import {initCursorSettings} from './ui/cursor-settings.js';
 import {initCSharpBridge} from './ui/csharp-runtime.js';
 import {initializeNative3d,nativeStatus} from './core/native-3d.js';

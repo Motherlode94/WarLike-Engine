@@ -46,8 +46,8 @@ function add3d(id,x,y){
  state.entities.push(obj);state.selected=[obj.id];record('Ajouter mesh 3D '+obj.name);notify();
 }
 
-const prefabTools=document.createElement('div');prefabTools.className='asset-folder-import';
-const prefabTitle=document.createElement('strong');prefabTitle.textContent='◇ Mes prefabs réutilisables';
+const prefabTools=document.createElement('details');prefabTools.className='asset-folder-import prefab-tools-collapsible';
+const prefabTitle=document.createElement('summary');prefabTitle.textContent='◇ Mes prefabs réutilisables';
 const prefabSelect=document.createElement('select');prefabSelect.setAttribute('aria-label','Prefabs enregistrés');
 const prefabSave=document.createElement('button');prefabSave.type='button';prefabSave.textContent='Créer depuis la sélection';
 const prefabAdd=document.createElement('button');prefabAdd.type='button';prefabAdd.textContent='Instancier dans la scène';

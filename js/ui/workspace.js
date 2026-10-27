@@ -210,8 +210,24 @@ $('#assetGridMode').onclick=()=>{view='grid';localStorage.setItem('warlike.asset
 $('#assetListMode').onclick=()=>{view='list';localStorage.setItem('warlike.assetView',view);render()};
 size.oninput=()=>{localStorage.setItem('warlike.assetSize',size.value);grid.style.setProperty('--asset-card-size',size.value+'px')};
 const center=document.querySelector('.center-stack'),splitter=$('#projectSplitter');
-let dragHeight=null;const applyHeight=h=>{const max=Math.max(190,Math.floor(center.clientHeight*0.5));const value=Math.min(max,Math.max(190,h));center.style.setProperty('--project-height',value+'px');localStorage.setItem('warlike.projectHeight',String(value))};
-const storedHeight=Number(localStorage.getItem('warlike.projectHeight'));if(storedHeight>0)applyHeight(storedHeight);
+let dragHeight=null;
+const clampProjectHeight=(height,persist=true)=>{
+ const available=Math.max(0,center.clientHeight-73);
+ const min=Math.min(150,Math.floor(available*0.4));
+ const max=Math.max(min,Math.floor(available*0.5));
+ const value=Math.round(Math.min(max,Math.max(min,Number.isFinite(height)?height:260)));
+ center.style.setProperty('--project-height',value+'px');
+ if(persist)try{localStorage.setItem('warlike.projectHeight',String(value))}catch{}
+ return value;
+};
+const applyHeight=h=>clampProjectHeight(h);
+let storedHeight=0;
+try{storedHeight=Number(localStorage.getItem('warlike.projectHeight'))}catch{}
+clampProjectHeight(storedHeight>0?storedHeight:260,false);
+if(typeof ResizeObserver!=='undefined'){
+ new ResizeObserver(()=>{if(!dragHeight)clampProjectHeight(parseFloat(getComputedStyle(center).getPropertyValue('--project-height')),false)}).observe(center);
+}
+
 splitter.addEventListener('pointerdown',e=>{if(e.button!==0)return;dragHeight={y:e.clientY,h:document.querySelector('.project-panel').getBoundingClientRect().height};splitter.setPointerCapture(e.pointerId);e.preventDefault()});
 splitter.addEventListener('pointermove',e=>{if(dragHeight)applyHeight(dragHeight.h+dragHeight.y-e.clientY)});
 splitter.addEventListener('pointerup',()=>dragHeight=null);splitter.addEventListener('pointercancel',()=>dragHeight=null);

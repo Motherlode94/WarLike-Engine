@@ -161,6 +161,24 @@ public sealed class GameWorld {
                                 HorizontalDamping = definition.TryGetProperty("friction", out _) ? Math.Clamp(Number(definition,"friction"), 0, 1) : .985f
                             });
                             break;
+                        case "Roleplay":
+                            world.AddComponent(actor, new RoleplayComponent {
+                                Money = definition.TryGetProperty("money",out _) ? (int)Number(definition,"money") : 50,
+                                Reputation = (int)Number(definition,"reputation")
+                            });break;
+                        case "RacingRules":
+                            world.AddComponent(actor, new RacingRulesComponent());break;
+                        case "SimulationEconomy":
+                            world.AddComponent(actor, new SimulationEconomyComponent {
+                                Money = definition.TryGetProperty("money",out _) ? (int)Number(definition,"money") : 100,
+                                Materials = definition.TryGetProperty("materials",out _) ? (int)Number(definition,"materials") : 5
+                            });break;
+                        case "RpgProgression":
+                            world.AddComponent(actor, new RpgProgressionComponent {
+                                Gold = definition.TryGetProperty("gold",out _) ? (int)Number(definition,"gold") : 100
+                            });break;
+                        case "FourXEmpire":
+                            world.AddComponent(actor, new FourXEmpireComponent());break;
                         case "VehicleController":
                             world.AddComponent(actor, new VehicleControllerComponent {
                                 MaxSpeed = definition.TryGetProperty("maxSpeed",out _) ? Number(definition,"maxSpeed") : 300f,

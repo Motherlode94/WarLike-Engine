@@ -54,3 +54,9 @@ test('advanced UI stays available but collapses by default',()=>{
  assert.match(workspace,/createElement\('details'\);prefabTools\.className='asset-folder-import prefab-tools-collapsible'/);
  assert.match(css,/\.prefab-tools-collapsible:not\(\[open\]\)>:not\(summary\)/);
 });
+
+test('cursor editor exposes shape, color, size, halo and reset controls',()=>{
+ for(const id of ['editorCursorShape','editorCursorColor','editorCursorSize','editorCursorTrail','editorCursorReset'])assert.ok(html.includes('id="'+id+'"'));
+ assert.match(editor,/initCursorSettings\(\)/);
+ assert.match(css,/body\.warlike-custom-cursor/);
+});

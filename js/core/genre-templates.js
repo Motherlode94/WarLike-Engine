@@ -71,10 +71,11 @@ export function createGenreScene(genre,mode='3d'){
  } else if(chosen==='fourx'){
   player.tags=[...new Set([...(player.tags||[]),'commander'])];
   const first=object('building-tower','Capitale',320,215,{team:1,tags:['4x-city'],playable3d:false});
-  first.sequence={...interact([variable('turn',1),variable('food',12),variable('industry',8),variable('science',3),variable('territory',1),msg('4X : explorer, étendre, exploiter, exterminer')]),event:'start',once:true};
+  first.sequence={...interact([variable('turn',1),variable('food',12),variable('industry',8),variable('science',3),variable('territory',1),variable('army',2),msg('4X : explorer, étendre, exploiter, exterminer')]),event:'start',once:true};
   marker('Explorer',525,145,interact([inc('science',2),signal('4x:explore'),msg('Région explorée : +2 science')]),'#84afd6');
   marker('Coloniser',550,385,interact([inc('territory',1),inc('food',-2),signal('4x:expand'),msg('Territoire colonisé : -2 nourriture')]),'#93c599');
   marker('Mines',240,415,interact([inc('industry',3),msg('Ressources exploitées : +3 industrie')]),'#dbb47c');
+  marker('Camp ennemi',705,345,{...interact([],{once:true}),branches:[{conditions:[{type:'variable',key:'army',operator:'>=',value:1}],instructions:[inc('army',-1),inc('territory',1),signal('4x:conquer'),msg('Victoire ! Camp ennemi conquis')]}],elseInstructions:[msg('Il faut au moins une armée pour conquérir ce camp.')]},'#d68080');
   marker('Fin du tour',80,350,interact([inc('turn',1),inc('food',3),inc('industry',2),inc('science',1),signal('4x:turn'),msg('Nouveau tour : ressources produites')]),'#be9ecb');
   if(threeD)object('character-soldier','Unité terrestre',690,260,{playable3d:false,team:1,tags:['rts-unit','4x-army'],ai:{enabled:false}});
  }

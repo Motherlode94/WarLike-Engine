@@ -161,11 +161,36 @@ public sealed class GameWorld {
                                 HorizontalDamping = definition.TryGetProperty("friction", out _) ? Math.Clamp(Number(definition,"friction"), 0, 1) : .985f
                             });
                             break;
+                        case "VehicleController":
+                            world.AddComponent(actor, new VehicleControllerComponent {
+                                MaxSpeed = definition.TryGetProperty("maxSpeed",out _) ? Number(definition,"maxSpeed") : 300f,
+                                Acceleration = definition.TryGetProperty("acceleration",out _) ? Number(definition,"acceleration") : 190f,
+                                BrakeForce = definition.TryGetProperty("brakeForce",out _) ? Number(definition,"brakeForce") : 330f,
+                                TurnRate = definition.TryGetProperty("turnRate",out _) ? Number(definition,"turnRate") : 135f,
+                                Drag = definition.TryGetProperty("drag",out _) ? Number(definition,"drag") : 1.35f,
+                                ReverseRatio = definition.TryGetProperty("reverseRatio",out _) ? Number(definition,"reverseRatio") : .45f
+                            });
+                            break;
                         case "FollowActor":
                             world.AddComponent(actor, new FollowActorComponent { TargetId = (int)Number(definition,"targetId"), Speed = Math.Max(0,Number(definition,"speed")), StopDistance = Math.Max(0,Number(definition,"stopDistance")) });
                             break;
                     }
                 }
+            }
+            // Browser-authored driving presets store flat fields, and may not have
+            // a csharpComponents array yet. Install native driving automatically.
+            bool racing = obj.TryGetProperty("tags",out var tags) && tags.ValueKind == JsonValueKind.Array &&
+                tags.EnumerateArray().Any(tag => tag.ValueKind == JsonValueKind.String && tag.GetString() == "race-vehicle");
+            bool hasController = world.GetComponent<VehicleControllerComponent>(actor) is not null;
+            if (racing && !hasController) {
+                world.AddComponent(actor, new VehicleControllerComponent {
+                    MaxSpeed = obj.TryGetProperty("maxSpeed",out _) ? Number(obj,"maxSpeed") : 310f,
+                    Acceleration = obj.TryGetProperty("acceleration",out _) ? Number(obj,"acceleration") : 225f,
+                    BrakeForce = obj.TryGetProperty("brakeForce",out _) ? Number(obj,"brakeForce") : 310f,
+                    TurnRate = obj.TryGetProperty("turnRate",out _) ? Number(obj,"turnRate") : 145f,
+                    Drag = obj.TryGetProperty("drag",out _) ? Number(obj,"drag") : 1.15f,
+                    ReverseRatio = obj.TryGetProperty("reverseRatio",out _) ? Number(obj,"reverseRatio") : .45f
+                });
             }
             if (obj.TryGetProperty("hp", out var hp) && hp.TryGetSingle(out float health)) actor.Health = health;
             if (obj.TryGetProperty("stats", out var stats) && stats.ValueKind == JsonValueKind.Object) {

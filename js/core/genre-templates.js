@@ -78,6 +78,19 @@ export function createGenreScene(genre,mode='3d'){
    ],instructions:[variable('labCompleted',1),signal('lab:complete'),msg('FIELD LAB : 3 / 3 vérifications réussies !')]}],
    elseInstructions:[msg('Diagnostic incomplet : valide marche, interaction et conduite.')]
   },'#83d3a9');
+  const threat=object('character-zombie','Sentinelle hostile · test IA',1175,520,{
+   ai:{enabled:true,state:'idle',detection:310,attackRange:75,attackDamage:5,attackCooldown:1.5,
+     speed:35,homeX:null,homeY:null,patrolRadius:55,pathfinding:false,requireLineOfSight:true},
+   stats:defaultStats(),threatIntel:{faction:'undead',relation:'hostile',className:'Sentinelle',level:4,weakness:'Corps à corps'},
+   playable3d:false,tags:['fieldlab-enemy'],color:'#bb6873'
+  });
+  const neutral=object('character-civilian','Technicien allié · test faction',1070,660,{
+   ai:{enabled:true,state:'idle',detection:220,attackRange:65,attackDamage:0,attackCooldown:2,
+    speed:0,homeX:null,homeY:null,patrolRadius:0,pathfinding:false,requireLineOfSight:false},
+   stats:defaultStats(),threatIntel:{faction:'civilian',relation:'friendly',className:'Technicien',level:1,weakness:'Aucune'},
+   playable3d:false,tags:['fieldlab-ally']
+  });
+  if(!threeD){threat.type='object';neutral.type='object';}
   if(threeD){
    object('environment-road','Piste Field Lab',505,535,{collision3d:false,solid3d:false,w:1000,depth3d:150});
    object('building-garage','Hangar de tests',1080,320,{collision3d:true,solid3d:true});

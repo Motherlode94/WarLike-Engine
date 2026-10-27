@@ -73,7 +73,7 @@ export function validateCommunityPack(input){
   description:safeText(input.description,300),recipes};
 }
 export function compareCommunityVersions(a,b){
- const semver=/^\\d+\\.\\d+\\.\\d+$/;
+ const semver=/^\d+\.\d+\.\d+$/;
  if(!semver.test(a)||!semver.test(b))throw Error('Version SemVer invalide.');
  const aa=a.split('.').map(Number),bb=b.split('.').map(Number);
  if([...aa,...bb].some(n=>!Number.isSafeInteger(n)))throw Error('Numéro de version trop élevé.');

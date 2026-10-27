@@ -125,6 +125,8 @@ document.addEventListener('warlike:project',setWorkspaceUi);
 document.addEventListener('warlike:change',()=>{if(viewport3d&&view3d.enabled!==(workspace.mode==='3d')){viewport3d.syncToWorkspace();setWorkspaceUi()}});
 $('#duplicate').onclick=duplicateSelected;
 initDocking();
+document.getElementById('quickCreateObject')?.addEventListener('click',()=>addEntity('object'));
+document.getElementById('quickCreateCharacter')?.addEventListener('click',()=>addEntity('character'));
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});
 
 initStudioMenus();

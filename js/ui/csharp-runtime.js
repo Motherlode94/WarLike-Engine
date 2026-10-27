@@ -109,6 +109,25 @@ public sealed class MyMovement : WarLikeBehaviour
    finally{busy=false;buttons()}
   });
  }
+ const genreAction=document.getElementById('csharpGenreAction');
+ const genreExecute=document.getElementById('csharpGenreExecute');
+ const genreResult=document.getElementById('csharpGenreResult');
+ const allowedGenreActions=new Set(['rp-work','rp-buy','race-start','race-checkpoint','race-finish','sim-produce','sim-deliver','sim-service','rpg-start','rpg-complete','4x-explore','4x-expand','4x-exploit','4x-conquer','4x-next-turn']);
+ genreExecute?.addEventListener('click',async()=>{
+  const target=state.entities.find(o=>o.id===state.selected.at(-1));
+  if(!target||!ui.ready||busy||state.playing){announce('Sélectionne un GameObject, synchronise la scène C# et arrête le Play Web.');return}
+  const action=genreAction?.value;
+  if(!allowedGenreActions.has(action))return;
+  busy=true;buttons();genreExecute.disabled=true;
+  try{
+   const result=await request('/genre/action','POST',{id:target.id,action});
+   if(genreResult)genreResult.textContent=JSON.stringify(result.state??{},null,2);
+   announce('Action C# : '+action+' exécutée sur '+target.name+'. État natif mis à jour.',true);
+  }catch(error){
+   if(genreResult)genreResult.textContent='Erreur : '+error.message;
+   announce('Action de genre C# impossible : '+error.message);
+  }finally{busy=false;genreExecute.disabled=false;buttons()}
+ });
  const scriptName=document.getElementById('csharpScriptName');
  const scriptSource=document.getElementById('csharpScriptSource');
  const scriptLoad=document.getElementById('csharpScriptLoad');

@@ -46,8 +46,8 @@ function component(parent,title,build){
 }
 export function renderHierarchy(){const root=document.querySelector('#objects'),filter=(document.querySelector('#hierarchySearch')?.value||'').toLowerCase();root.replaceChildren();for(const o of state.entities.filter(o=>o.name.toLowerCase().includes(filter))){const b=document.createElement('button');b.textContent=(o.type==='prefab'?'◈ ':o.type==='character'?'♟ ':'▣ ')+o.name;b.classList.toggle('selected',state.selected.includes(o.id));b.onclick=e=>{if(state.playing)return;state.selected=e.shiftKey?(state.selected.includes(o.id)?state.selected.filter(id=>id!==o.id):[...state.selected,o.id]):[o.id];notify()};root.append(b)}}
 export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
-const edition=document.createElement('div');edition.className='warlike-inspector-edition';edition.textContent='INSPECTOR PRO  •  Components / Blueprint / C#';root.append(edition);
-const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent='GameObject #'+o.id+' • '+o.type;header.append(name,meta);root.append(header);
+
+const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent=o.type+'  •  GameObject #'+o.id;header.append(name,meta);root.append(header);
 component(root,'Transform',body=>{
  const vector=(title,axes)=>{
   const row=document.createElement('div');row.className='inspector-vector-row';
@@ -120,12 +120,11 @@ component(root,'Components • Gameplay & Scripts',body=>{
 const advancedTools=document.createElement('details');
 advancedTools.className='inspector-advanced-tools';
 const advancedSummary=document.createElement('summary');
-advancedSummary.textContent='＋ Ajouter des comportements';
+advancedSummary.textContent='Add Component  ▾';
 advancedSummary.title='Modèles de gameplay, IA et systèmes optionnels';
 const advancedContent=document.createElement('div');
 advancedContent.className='inspector-advanced-content';
 advancedTools.append(advancedSummary,advancedContent);
-root.append(advancedTools);
 component(advancedContent,'Quick Start • Gameplay Recipes',body=>{
  const intro=document.createElement('p');intro.textContent='Appliquer un comportement réutilisable à cet objet. Les composants existants concernés peuvent être remplacés.';body.append(intro);
  const picker=document.createElement('select');picker.disabled=state.playing;

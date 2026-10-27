@@ -27,7 +27,8 @@ export const recipes=[
  {id:'rpg-sanctuary',name:'RPG · Sanctuaire',description:'Restaure la santé du joueur'},
  {id:'fourx-explore',name:'4X · Exploration',description:'Gagne des points de science'},
  {id:'fourx-expand',name:'4X · Colonisation',description:'Étend le territoire de la faction'},
- {id:'fourx-end-turn',name:'4X · Fin de tour',description:'Augmente le tour et produit des ressources'}
+ {id:'fourx-end-turn',name:'4X · Fin de tour',description:'Augmente le tour et produit des ressources'},
+ {id:'fourx-conquer',name:'4X · Conquête',description:'Prendre un territoire en consommant une armée'}
 
 ];
 const seq=(instructions,extra={})=>({enabled:true,event:'interact',radius:110,key:'e',once:false,conditions:[],instructions,...extra});
@@ -60,6 +61,7 @@ export function applyRecipe(o,id){
  case 'rpg-sanctuary':o.sequence=seq([{type:'healObject',targetRole:'player',value:25},{type:'message',value:'Santé +25'}]);return true;
  case 'fourx-explore':o.sequence=seq([{type:'addVariable',key:'science',value:2},{type:'emitSignal',value:'4x:explore'},{type:'message',value:'Exploration : +2 science'}]);return true;
  case 'fourx-expand':o.sequence=seq([{type:'addVariable',key:'territory',value:1},{type:'emitSignal',value:'4x:expand'},{type:'message',value:'Nouveau territoire'}]);return true;
+ case 'fourx-conquer':o.sequence={...seq([],{once:true}),branches:[{conditions:[{type:'variable',key:'army',operator:'>=',value:1}],instructions:[{type:'addVariable',key:'army',value:-1},{type:'addVariable',key:'territory',value:1},{type:'emitSignal',value:'4x:conquer'},{type:'message',value:'Territoire conquis'}]}],elseInstructions:[{type:'message',value:'Une armée est nécessaire'}]};return true;
  case 'fourx-end-turn':o.sequence=seq([{type:'addVariable',key:'turn',value:1},{type:'addVariable',key:'food',value:3},{type:'addVariable',key:'industry',value:2},{type:'addVariable',key:'science',value:1},{type:'emitSignal',value:'4x:turn'},{type:'message',value:'Tour terminé'}]);return true;
  default:return false;
  }

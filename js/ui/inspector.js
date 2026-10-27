@@ -47,7 +47,24 @@ function component(parent,title,build){
 export function renderHierarchy(){const root=document.querySelector('#objects'),filter=(document.querySelector('#hierarchySearch')?.value||'').toLowerCase();root.replaceChildren();for(const o of state.entities.filter(o=>o.name.toLowerCase().includes(filter))){const b=document.createElement('button');b.textContent=(o.type==='prefab'?'◈ ':o.type==='character'?'♟ ':'▣ ')+o.name;b.classList.toggle('selected',state.selected.includes(o.id));b.onclick=e=>{if(state.playing)return;state.selected=e.shiftKey?(state.selected.includes(o.id)?state.selected.filter(id=>id!==o.id):[...state.selected,o.id]):[o.id];notify()};root.append(b)}}
 export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
 const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent='GameObject #'+o.id+' • '+o.type;header.append(name,meta);root.append(header);
-component(root,'Transform',body=>{field(body,o,'x','Position X');field(body,o,'y',workspace.mode==='3d'?'Position Z':'Position Y');if(workspace.mode==='3d')field(body,o,'elevation3d','Position Y (3D height)');field(body,o,'rotation','Rotation');field(body,o,'w','Size X');field(body,o,'h',workspace.mode==='3d'?'Height':'Size Y')});
+component(root,'Transform',body=>{
+ const vector=(title,axes)=>{
+  const row=document.createElement('div');row.className='inspector-vector-row';
+  const label=document.createElement('strong');label.textContent=title;row.append(label);
+  const group=document.createElement('div');group.className='inspector-vector-fields';
+  for(const [axis,key] of axes){
+   const item=document.createElement('label');item.className='inspector-axis';
+   const tag=document.createElement('span');tag.textContent=axis;tag.dataset.axis=axis;
+   const input=document.createElement('input');input.type='number';input.step='any';input.value=String(o[key]??0);input.disabled=state.playing;input.setAttribute('aria-label',title+' '+axis);
+   input.onchange=()=>{const value=Number(input.value);if(!Number.isFinite(value)||(title==='Size'&&value<=0)){input.value=String(o[key]??0);return}o[key]=value;record('Transform '+title+' '+axis);notify()};
+   item.append(tag,input);group.append(item);
+  }
+  row.append(group);body.append(row);
+ };
+ vector('Position',workspace.mode==='3d'?[['X','x'],['Y','elevation3d'],['Z','y']]:[['X','x'],['Y','y']]);
+ field(body,o,'rotation','Rotation (°)');
+ vector('Size',[['X','w'],['Y','h']]);
+});
 component(root,'C# Components • .NET Runtime',body=>{
  const note=document.createElement('p');note.textContent='Configuration des composants C# pour le runtime .NET autonome. Non exécutés par Play Web.';body.append(note);
  const definitions=Array.isArray(o.csharpComponents)?o.csharpComponents:[];

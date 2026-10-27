@@ -210,7 +210,7 @@ $('#assetGridMode').onclick=()=>{view='grid';localStorage.setItem('warlike.asset
 $('#assetListMode').onclick=()=>{view='list';localStorage.setItem('warlike.assetView',view);render()};
 size.oninput=()=>{localStorage.setItem('warlike.assetSize',size.value);grid.style.setProperty('--asset-card-size',size.value+'px')};
 const center=document.querySelector('.center-stack'),splitter=$('#projectSplitter');
-let dragHeight=null;const applyHeight=h=>{const max=Math.max(190,center.clientHeight-190);const value=Math.min(max,Math.max(190,h));center.style.setProperty('--project-height',value+'px');localStorage.setItem('warlike.projectHeight',String(value))};
+let dragHeight=null;const applyHeight=h=>{const max=Math.max(190,Math.floor(center.clientHeight*0.5));const value=Math.min(max,Math.max(190,h));center.style.setProperty('--project-height',value+'px');localStorage.setItem('warlike.projectHeight',String(value))};
 const storedHeight=Number(localStorage.getItem('warlike.projectHeight'));if(storedHeight>0)applyHeight(storedHeight);
 splitter.addEventListener('pointerdown',e=>{if(e.button!==0)return;dragHeight={y:e.clientY,h:document.querySelector('.project-panel').getBoundingClientRect().height};splitter.setPointerCapture(e.pointerId);e.preventDefault()});
 splitter.addEventListener('pointermove',e=>{if(dragHeight)applyHeight(dragHeight.h+dragHeight.y-e.clientY)});

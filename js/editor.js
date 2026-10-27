@@ -160,12 +160,24 @@ document.addEventListener('keydown',event=>{
  if(event.key==='Escape')for(const other of transientMenus())other.open=false;
 });
 initDocking();
-const compactToggle=document.getElementById('studioCompactToggle');
-if(compactToggle){
- const setCompact=compact=>{document.body.classList.toggle('warlike-compact-editor',compact);compactToggle.setAttribute('aria-pressed',String(compact));compactToggle.textContent=compact?'☷ Tous les outils':'☷ Outils';try{localStorage.setItem('warlike.editor.compact.v1',String(compact))}catch{}};
- let initial=true;try{const saved=localStorage.getItem('warlike.editor.compact.v1');if(saved!==null)initial=saved!=='false'}catch{}
- setCompact(initial);compactToggle.addEventListener('click',()=>setCompact(!document.body.classList.contains('warlike-compact-editor')));
-}
+// The primary toolbar favors creation over an extra visibility toggle.
+document.body.classList.add('warlike-compact-editor');
+const quickCreate=document.getElementById('studioQuickCreate');
+quickCreate?.addEventListener('click',event=>{
+ const button=event.target.closest('[data-quick-create]');
+ if(!button)return;
+ const actions={
+  object:()=>addEntity('object'),
+  character:()=>addEntity('character'),
+  light:()=>document.getElementById('newPointLight')?.click(),
+  audio:()=>document.getElementById('newAudioSource')?.click(),
+  blueprint:()=>document.getElementById('openBlueprint')?.click()
+ };
+ actions[button.dataset.quickCreate]?.();
+ quickCreate.open=false;
+});
+document.addEventListener('pointerdown',event=>{if(quickCreate?.open&&!quickCreate.contains(event.target))quickCreate.open=false});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&quickCreate?.open)quickCreate.open=false});
 document.getElementById('quickCreateObject')?.addEventListener('click',()=>addEntity('object'));
 document.getElementById('quickCreateCharacter')?.addEventListener('click',()=>addEntity('character'));
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});

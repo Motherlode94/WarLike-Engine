@@ -1,3 +1,4 @@
+import {updateDriving3d,currentVehicle3d,driving3d,resetDriving3d} from './vehicle-3d.js';
 import {updateGenreHud} from '../ui/genre-hud.js';
 import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
@@ -273,12 +274,13 @@ export function init3d(canvas,host,buttons){
   }else stepPhysics3d(state.entities,dt);
   if(!p)return;
   updateHorror(dt,p,state.entities,state.keys);updateHorrorPerception(dt,p,state.entities,state.keys);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
-  updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
+  const inVehicle=updateDriving3d(state.entities,p,state.keys,dt);
+  if(!inVehicle)updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);
-  if(state.keys.has('f')&&p._attackCooldown===0){if(p.fpsController){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit)p.animation='attack';}
+  if(!inVehicle&&state.keys.has('f')&&p._attackCooldown===0){if(p.fpsController){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit)p.animation='attack';}
  };
- const isFps=()=>state.playing&&workspace.mode==='3d'&&!!playableActor(state.entities)?.fpsController;
+ const isFps=()=>state.playing&&workspace.mode==='3d'&&!currentVehicle3d(state.entities)&&!!playableActor(state.entities)?.fpsController;
  const camera=()=>{
   if(!isFps())return sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
   const p=playableActor(state.entities),b=objectBounds3d(p),eye=[b.x,b.y+b.h*.25,b.z];
@@ -302,11 +304,12 @@ export function init3d(canvas,host,buttons){
   if(best){damage(best,25);best.animation='hurt';}
   return !!best;
  };
- const playerTarget=()=>{const p=playableActor(state.entities);return p?[(p.x+p.w/2)/64,.5,(p.y+p.h/2)/64]:null};
+ const playerTarget=()=>{const p=currentVehicle3d(state.entities)||playableActor(state.entities);return p?[(p.x+p.w/2)/64,.5,(p.y+(p.depth3d||p.h)/2)/64]:null};
  let wasPlaying=false;
  let physicsSession=null,physicsGeneration=0,physicsAccumulator=0;
  const stopRapier=()=>{physicsGeneration++;disposeRapierScene(physicsSession);physicsSession=null;physicsAccumulator=0;};
  const enterPlay=()=>{
+  resetDriving3d();
   const pt=playerTarget();view3d.followPlayer=!!pt;if(pt){view3d.target=pt.slice();view3d.radius=12;view3d.pitch=playableActor(state.entities)?.fpsController?0:.5}
   if(localStorage.getItem('warlike.rapier3d')!=='enabled')return;
   const token=++physicsGeneration;
@@ -380,12 +383,18 @@ export function init3d(canvas,host,buttons){
   if(document.hidden)return;
   updateLighting(dt,state.playing&&workspace.mode==='3d');
   if(state.playing&&!wasPlaying)enterPlay();
-  if(!state.playing&&wasPlaying){view3d.followPlayer=false;stopRapier();}
+  if(!state.playing&&wasPlaying){view3d.followPlayer=false;resetDriving3d();stopRapier();}
   wasPlaying=state.playing;
   if(state.playing&&workspace.mode==='3d'){updateRtsOrders(state.entities,dt,true);update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,player:playableActor(state.entities)});}
   if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=Math.min(1,dt*9);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}
   if(!view3d.enabled){updateGizmos();return}
   updateGenreHud(state);updateGizmos();
+  const vehicleHud=document.getElementById('warlikeVehicle3dHud');
+  if(vehicleHud){
+   const car=currentVehicle3d(state.entities);
+   vehicleHud.hidden=!state.playing||!car;
+   if(car)vehicleHud.textContent=car.name+' · '+Math.round(Math.abs(driving3d.speed)*.36)+' km/h · ZQSD conduire · E sortir · Espace frein à main';
+  }
   const crosshair=document.getElementById('fpsCrosshair');if(crosshair)crosshair.hidden=!isFps();
   const horrorHud=document.getElementById('horror3dHud');
   if(horrorHud){

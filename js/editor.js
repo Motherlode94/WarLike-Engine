@@ -133,12 +133,23 @@ const relocateTools=(targetId,ids)=>{
 relocateTools('warlikeDemoTools',['rpgDemo','logicDemo','driveDemo','loadDemo']);
 relocateTools('warlikeCreationTools',['newPointLight','newSpotLight','newAudioSource']);
 relocateTools('warlikeRenderingTools',['audioToggle','audioVolume']);
+// One transient menu at a time, across the whole editor (not only one menu group).
 const library=document.getElementById('warlikeToolLibrary');
-library?.addEventListener('click',event=>{
- if(event.target.closest('button')&&!event.target.closest('summary'))library.open=false;
+const isTransient=details=>details.matches('.studio-menus > details, #warlikeToolLibrary, #editorAppearance');
+const transientMenus=()=>[...document.querySelectorAll('.studio-menus > details, #warlikeToolLibrary, #editorAppearance')];
+document.addEventListener('click',event=>{
+ const summary=event.target.closest('summary');
+ const owner=summary?.parentElement;
+ if(owner?.tagName==='DETAILS'&&isTransient(owner)){
+  // Native <details> toggles after click; close other menus without preventing it.
+  for(const other of transientMenus())if(other!==owner)other.open=false;
+ }else if(!event.target.closest('.studio-menus, #warlikeToolLibrary, #editorAppearance')){
+  for(const other of transientMenus())other.open=false;
+ }
+ if(library?.open&&event.target.closest('#warlikeToolLibrary button'))library.open=false;
 });
-document.addEventListener('pointerdown',event=>{
- if(library?.open&&!library.contains(event.target))library.open=false;
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape')for(const other of transientMenus())other.open=false;
 });
 initDocking();
 const compactToggle=document.getElementById('studioCompactToggle');

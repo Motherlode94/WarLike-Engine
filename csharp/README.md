@@ -18,6 +18,25 @@ dotnet build csharp/WarLike.Runtime
 - `Actor` : identifiant, position `System.Numerics.Vector3`, santé et propriétés.
 - `GameWorld.FromWarLikeJson` : importe les entités d'un export JSON de scène WarLike, avec la convention x/y sol et elevation3d hauteur.
 
+## Utiliser C# depuis WarLike Studio (Windows)
+
+Le dépôt comprend maintenant un **pont local .NET 8 relié à l’éditeur web**. À la racine du dépôt, double-clique sur `start-warlike-csharp.cmd`, ou lance :
+
+```powershell
+dotnet run --project csharp/WarLike.Bridge
+```
+
+Puis, dans l'éditeur WarLike : **Window → C# Runtime (.NET 8)**.
+
+1. **Connexion locale** vérifie `http://127.0.0.1:8765/health`.
+2. **Envoyer la scène** charge les objets et les composants `csharpComponents` dans le runtime.
+3. **Exécuter 1/60 s** exécute une étape dans le processus .NET, puis met à jour les positions, rotations et points de vie des objets correspondants dans l'éditeur.
+4. **Exemple de script .cs** exporte un comportement `WarLikeBehaviour` à inclure dans un projet .NET qui référence `WarLike.Runtime`.
+
+Composants C# native reconnus dans la scène : `AutoRotate`, `Health`, `LinearMotion`, `Rigidbody`, `FollowActor` et certains composants FPS/Deathmatch, disponibles dans l'Inspector sous « Components • Gameplay & Scripts ».
+
+**Ce mode est une exécution par étapes, pas un Play Mode C# continu**. Les scripts C# personnalisés ne sont pas compilés ni chargés par le navigateur. Pour les faire fonctionner dans le pont local, il faut les compiler dans l'application .NET et déclarer leur instanciation dans `GameWorld.FromWarLikeJson`. Un processus .NET local est nécessaire ; le site hébergé seul ne peut pas le lancer. N'importe quel changement dans l'éditeur après synchronisation nécessite un nouvel envoi de scène avant l'étape suivante. Sauvegarde ton projet avant d'appliquer des résultats C#.
+
 ## Limites importantes
 
 **La page WebGL n'exécute pas encore les scripts C#**. Le C# tourne pour l'instant dans un processus .NET indépendant. Ce SDK est une base réelle compilable pour développer ensuite un pont WASM ou une application native ; il ne fournit pas Roslyn, hot reload, Unity MonoBehaviour, PhysX ni liaison directe au rendu WebGL. Ne pas exécuter du code C# non fiable sans sandbox.

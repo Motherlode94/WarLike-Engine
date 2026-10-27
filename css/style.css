@@ -1201,3 +1201,9 @@ html[data-warlike-theme="light"] body:not(.hub-active) :is(.studio-menus,.topbar
 .unity-asset-library>button{display:block;margin:7px 10px;padding:7px 11px;max-width:calc(100% - 20px);border:1px solid var(--editor-accent,#6c9dc8);border-radius:4px;background:var(--warlike-palette-button,#454950);color:var(--warlike-palette-text,#e5e7eb);cursor:pointer}
 .unity-asset-library>button:disabled{opacity:.7;cursor:default}
 .unity-asset-library>small{display:block;padding:4px 10px 10px;line-height:1.45;color:var(--warlike-palette-muted,#adb8c1)}
+
+/* Hub asset pack selector: compact Unity-style project options */
+.hub-create #hubAssetPack{width:100%;min-height:36px;margin-top:5px}
+.hub-project-card .hub-project-pack{min-width:145px;max-width:190px;min-height:30px;padding:4px 7px;background:var(--hub-panel,#28313b);color:inherit;border:1px solid var(--hub-accent,#48cba9);border-radius:4px;font-size:11px}
+.hub-project-card .hub-project-pack:disabled{opacity:.45}
+@media(max-width:720px){.hub-project-card .hub-project-pack{min-width:110px;max-width:100%;width:100%}}

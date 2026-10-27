@@ -34,7 +34,7 @@ export function applyRecipe(o,id){
  case 'fps-player':
  case 'tps-player':o.playable3d=true;o.stats=defaultStats();o.inventory=defaultInventory();o.controller3d={...defaultController(),cameraMode:id==='fps-player'?'firstPerson':'thirdPerson'};o.tags=[...new Set([...(o.tags||[]),'player',id==='fps-player'?'fps':'tps'])];return true;
  case 'fps-enemy':o.stats=defaultStats();o.ai={...defaultAi(),detection:600,attackRange:240,attackDamage:12,speed:85,requireLineOfSight:true};return true;
- case 'rts-unit':o.stats=defaultStats();o.team=1;o.ai={...defaultAi(),state:'guard',detection:300,attackRange:160,attackDamage:9,speed:60};o.tags=[...new Set([...(o.tags||[]),'rts-unit'])];return true;
+ case 'rts-unit':o.stats=defaultStats();o.team=1;o.ai={...defaultAi(),enabled:false,state:'guard',detection:300,attackRange:160,attackDamage:9,speed:60};o.tags=[...new Set([...(o.tags||[]),'rts-unit'])];return true;
  case 'rts-command':o.sequence={...seq([{type:'setVariable',key:'rtsPointCaptured',value:1},{type:'emitSignal',value:'rts:point-captured'},{type:'message',value:'Point stratégique capturé'}],{event:'enter',radius:125,once:true})};return true;
  case 'action-checkpoint':o.sequence={...seq([{type:'setVariable',key:'checkpointX',value:o.x},{type:'setVariable',key:'checkpointY',value:o.y},{type:'emitSignal',value:'adventure:checkpoint'},{type:'message',value:'Checkpoint activé'}],{event:'enter',radius:110,once:true})};return true;
  case 'adventure-quest':o.sequence=seq([{type:'setVariable',key:'missionActive',value:1},{type:'emitSignal',value:'adventure:quest-start'},{type:'message',value:'Nouvelle mission'}]);return true;

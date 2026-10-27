@@ -241,6 +241,17 @@ export function init3d(canvas,host,buttons){
  buttons.toggle.addEventListener('click',()=>change(!view3d.enabled));
  buttons.focus.addEventListener('click',()=>{if(view3d.enabled)focusScene()});
  focusScene();sync();
+ // Hub restores workspace.mode directly; do not leave a 3D project on the 2D canvas.
+ // Keep the view renderer synchronized after loading or creating a named project.
+ const syncProjectView=()=>{
+  if(state.playing)return;
+  const expected=workspace.mode==='3d';
+  if(view3d.enabled===expected)return;
+  view3d.enabled=expected;focusScene();sync();
+ };
+ document.addEventListener('warlike:project',syncProjectView);
+ document.addEventListener('warlike:change',syncProjectView);
+ syncProjectView();
  const update3dPlay=dt=>{
   const p=playableActor(state.entities);
   updateStats(state.entities,dt);

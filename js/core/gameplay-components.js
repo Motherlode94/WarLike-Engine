@@ -17,6 +17,15 @@ export function updateAi(entities,player,dt){
  const collision=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
  const blocked=(o,x,y)=>entities.some(other=>other!==o&&other!==player&&other.collision3d!==false&&(other.solid3d===true||other.type==='object'||other.type==='mesh3d')&&collision({...o,x,y},other));
  for(const e of entities){const ai=e.ai;if(!ai?.enabled||e===player)continue;
+  // Explicit affiliations override legacy default hostility. Neutral and friendly
+  // characters can still patrol, but cannot chase or damage the player.
+  const nonHostile=['friendly','neutral'].includes(e.threatIntel?.relation);
+  if(nonHostile){
+   ai.state=(e.stats?.health??e.hp??100)<=0?'dead':'patrol';
+   ai.visible=false;ai.detected=false;
+   ai.cooldown=Math.max(0,n(ai.cooldown)-dt);
+   continue;
+  }
   ai.homeX??=e.x;ai.homeY??=e.y;
   const dx=player.x-e.x,dy=player.y-e.y,dist=Math.hypot(dx,dy)||.001;
   const hp=e.stats?.health??e.hp??100;
@@ -79,7 +88,7 @@ export function updateAi(entities,player,dt){
  }
 }
 export function attack3d(attacker,entities,{range=120,damageAmount=20,arc=1.2}={}){
- const target=entities.filter(e=>e!==attacker&&e.ai?.enabled&&(e.stats?.health??e.hp??100)>0).sort((a,b)=>Math.hypot(a.x-attacker.x,a.y-attacker.y)-Math.hypot(b.x-attacker.x,b.y-attacker.y))[0];
+ const target=entities.filter(e=>e!==attacker&&e.ai?.enabled&&!['friendly','neutral'].includes(e.threatIntel?.relation)&&(e.stats?.health??e.hp??100)>0).sort((a,b)=>Math.hypot(a.x-attacker.x,a.y-attacker.y)-Math.hypot(b.x-attacker.x,b.y-attacker.y))[0];
  if(!target||Math.hypot(target.x-attacker.x,target.y-attacker.y)>Math.max(0,n(range,120)))return null;
  damage(target,Math.max(0,n(damageAmount,20)));target.animation='hurt';return target;
 }

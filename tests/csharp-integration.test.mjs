@@ -25,3 +25,12 @@ test('C# scripts never execute through eval or dynamic browser compilation',()=>
  assert.doesNotMatch(ui,/new Function\s*\(/);
  assert.match(ui,/state\.playing\)return/);
 });
+
+test('per-object C# script source is retained in the scene and exportable',()=>{
+ const html=read('index.html');
+ for(const id of ['csharpScriptName','csharpScriptSource','csharpScriptLoad','csharpScriptSave','csharpScriptExport'])assert.ok(html.includes('id="'+id+'"'));
+ const source=read('js/ui/csharp-runtime.js');
+ assert.match(source,/object\.csharpScript=\{name:safeName\(scriptName\.value\),source:scriptSource\.value\}/);
+ assert.match(source,/record\('C# : enregistrer script/);
+ assert.match(source,/anchor\.download=safeName\(scriptName\.value\)\+'\.cs'/);
+});

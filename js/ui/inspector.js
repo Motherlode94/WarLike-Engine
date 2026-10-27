@@ -143,7 +143,7 @@ if(workspace.mode==='3d')component(root,'Physics 3D • Rigidbody',body=>{
  const info=document.createElement('p');info.textContent='Prototype physique 3D : gravité, rebond au sol et collisions AABB simples. Le joueur et les agents IA utilisent leur propre contrôleur.';body.append(info);
  const rm=document.createElement('button');rm.textContent='− Remove Rigidbody';rm.disabled=state.playing;rm.onclick=()=>{delete o.rigidbody3d;record('Remove Rigidbody');notify()};body.append(rm);
 });
-component(advancedContent,'Game Creator · Survival Horror',body=>{
+component(['horrorAiConfig','horrorHideConfig','horrorFearConfig'].some(key=>o[key])?root:advancedContent,'Survival Horror',body=>{
  const configs=[
   ['Horror AI','horrorAiConfig',{enabled:true,visionRange:230,hearingRange:220,chaseSpeed:75,searchSpeed:33,memorySeconds:5},[['visionRange','Vision (distance)'],['hearingRange','Audition (distance)'],['chaseSpeed','Vitesse poursuite'],['searchSpeed','Vitesse recherche'],['memorySeconds','Durée recherche']]],
   ['Cachette','horrorHideConfig',{enabled:true,radius:90},[['radius','Rayon cachette']]],
@@ -164,7 +164,7 @@ component(advancedContent,'Game Creator · Survival Horror',body=>{
  }
  const help=document.createElement('p');help.textContent='Ces composants sont enregistrés avec le GameObject et utilisés en mode Survival Horror 2D/3D.';body.append(help);
 });
-component(advancedContent,'Game Creator · Monde ouvert / Western / Survie',body=>{
+component(['worldPoliceConfig','worldInfectedConfig'].some(key=>o[key])?root:advancedContent,'Monde ouvert / Survie',body=>{
  const configs=[
  ['Police · Recherche','worldPoliceConfig',{enabled:true,range:450,speed:75},[['range','Distance de poursuite'],['speed','Vitesse patrouille']]],
  ['Infecté · Horde','worldInfectedConfig',{enabled:true,range:300,speed:53},[['range','Distance de détection'],['speed','Vitesse infecté']]],

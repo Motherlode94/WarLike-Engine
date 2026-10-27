@@ -52,3 +52,21 @@ test('Unity Graphite is the default and can be restored explicitly',()=>{
  assert.match(js,/getElementById\('editorThemeDefault'\)/);
  assert.match(js,/theme='graphite';\s*palette=sanitizePalette\(editorThemePresets\.graphite\);\s*save\(\)/);
 });
+
+test('Hub uses hub-open class; editor palette remains scoped to Studio',()=>{
+ const css=source('css/style.css');
+ assert.equal(css.includes('body:not(.hub-active)'),false,'stale Hub class selector');
+ assert.match(css,/body:not\(\.hub-open\) :is\(\.workspace/);
+ assert.match(css,/body:not\(\.hub-open\) :is\(\.studio-menubar/);
+});
+test('all major editors use the same palette tokens',()=>{
+ const css=source('css/style.css');
+ for(const part of ['.hierarchy','.inspector','.project-panel','.blueprint-window','.warlike-animation-studio','.render-quality-panel','.editor-appearance-menu']){
+  assert.ok(css.includes(part),'missing theme coverage: '+part);
+ }
+ const palette=source('js/ui/editor-palette.js');
+ const appearance=source('js/ui/editor-appearance.js');
+ assert.match(palette,/warlike:editor-theme-applied/);
+ assert.match(appearance,/warlike:editor-theme-applied/);
+ assert.match(palette,/root\.style\.colorScheme=/);
+});

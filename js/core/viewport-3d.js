@@ -457,15 +457,22 @@ export function init3d(canvas,host,buttons){
       for(let level=0;level<3;level++)drawShape(cone,[b.x,b.y+b.h*(.04+level*.23),b.z],[b.w*(1-level*.22),b.h*.51,b.d*(1-level*.22)],color);
      }
     }else if(shape==='humanoid'){
-     cube([b.x,b.y+b.h*.08,b.z],[b.w*.58,b.h*.43,b.d*.55],color);
-     cube([b.x,b.y+b.h*.34,b.z],[b.w*.5,b.h*.10,b.d*.48],[.31,.41,.49,1]);
-     round([b.x,b.y+b.h*.49,b.z],[b.w*.43,b.h*.24,b.d*.42],[.82,.68,.57,1]);
-     cube([b.x,b.y+b.h*.58,b.z-b.d*.035],[b.w*.49,b.h*.12,b.d*.45],[.27,.32,.38,1]);
+     // Default TPS character: procedural walking/running pose for unrigged primitives.
+     // A rendered idle mannequin must not appear frozen while the controller moves it.
+     const locomoting=state.playing&&(o.animation==='walk'||o.animation==='run');
+     const cadence=o.animation==='run'?13:8;
+     const stride=locomoting?Math.sin(now*.001*cadence):0;
+     const bounce=locomoting?Math.abs(Math.sin(now*.001*cadence))*.025*b.h:0;
+     cube([b.x,b.y+b.h*.08+bounce,b.z],[b.w*.58,b.h*.43,b.d*.55],color);
+     cube([b.x,b.y+b.h*.34+bounce,b.z],[b.w*.5,b.h*.10,b.d*.48],[.31,.41,.49,1]);
+     round([b.x,b.y+b.h*.49+bounce,b.z],[b.w*.43,b.h*.24,b.d*.42],[.82,.68,.57,1]);
+     cube([b.x,b.y+b.h*.58+bounce,b.z-b.d*.035],[b.w*.49,b.h*.12,b.d*.45],[.27,.32,.38,1]);
      for(const side of [-1,1]){
-      cube([b.x+b.w*side*.39,b.y+b.h*.03,b.z],[b.w*.20,b.h*.41,b.d*.30],color);
-      round([b.x+b.w*side*.39,b.y-b.h*.20,b.z],[b.w*.19,b.h*.16,b.d*.31],[.76,.60,.49,1]);
-      cube([b.x+b.w*side*.17,b.y-b.h*.31,b.z],[b.w*.21,b.h*.43,b.d*.31],[.27,.36,.42,1]);
-      cube([b.x+b.w*side*.17,b.y-b.h*.54,b.z+b.d*.11],[b.w*.26,b.h*.11,b.d*.45],[.18,.24,.28,1]);
+      const swing=stride*side;
+      cube([b.x+b.w*side*.39,b.y+b.h*.03+bounce,b.z-b.d*swing*.20],[b.w*.20,b.h*.41,b.d*.30],color);
+      round([b.x+b.w*side*.39,b.y-b.h*.20+bounce,b.z-b.d*swing*.25],[b.w*.19,b.h*.16,b.d*.31],[.76,.60,.49,1]);
+      cube([b.x+b.w*side*.17,b.y-b.h*.31,b.z+b.d*swing*.16],[b.w*.21,b.h*.43,b.d*.31],[.27,.36,.42,1]);
+      cube([b.x+b.w*side*.17,b.y-b.h*.54+Math.max(0,swing)*b.h*.075,b.z+b.d*(.11+swing*.28)],[b.w*.26,b.h*.11,b.d*.45],[.18,.24,.28,1]);
      }
     }else if(['car','truck','tank','bike'].includes(shape)){
      cube([b.x,b.y,b.z],[b.w,b.h*.58,b.d],color);

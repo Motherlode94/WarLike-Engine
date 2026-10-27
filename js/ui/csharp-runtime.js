@@ -21,10 +21,9 @@ export function initCSharpBridge(){
  const connect=document.getElementById('csharpRuntimeConnect'),sync=document.getElementById('csharpRuntimeSync');
  const tick=document.getElementById('csharpRuntimeTick'),template=document.getElementById('csharpRuntimeTemplate');
  if(!dialog||!button||!close||!status||!connect||!sync||!tick||!template)return;
- let lastTick=null;
  const announce=(message,ok=false)=>{status.textContent=message;status.dataset.ok=String(ok)};
  const buttons=()=>{sync.disabled=!ui.connected||state.playing;tick.disabled=!ui.connected||!ui.ready||state.playing};
- const show=()=>{dialog.hidden=false;buttons()};
+ const show=()=>{button.closest('details')?.removeAttribute('open');dialog.hidden=false;buttons()};
  button.addEventListener('click',show);
  close.addEventListener('click',()=>{dialog.hidden=true;button.focus()});
  connect.addEventListener('click',async()=>{
@@ -38,7 +37,7 @@ export function initCSharpBridge(){
   announce('Chargement de la scène dans .NET…');
   try{
    const response=await request('/scene','POST',currentScene());
-   ui.ready=response.ok===true;lastTick=null;
+   ui.ready=response.ok===true;
    announce(ui.ready?'Scène synchronisée : '+response.count+' acteurs. Le runtime C# est prêt.':'Import C# refusé',ui.ready);
   }catch(error){ui.ready=false;announce('Import C# : '+error.message)}
   buttons();
@@ -49,7 +48,8 @@ export function initCSharpBridge(){
   try{
    const result=await request('/tick','POST',{dt:1/60});
    if(!result.ok||!Array.isArray(result.actors))throw Error('Réponse invalide du runtime');
-   lastTick=result.actors;let applied=0;
+   if(state.playing)throw Error('Play activé entre-temps. Arrête Play pour appliquer le résultat C#.');
+   let applied=0;
    for(const a of result.actors){
     const target=state.entities.find(o=>o.id===a.id);
     if(!target||![a.x,a.y,a.elevation3d,a.rotation].every(Number.isFinite))continue;

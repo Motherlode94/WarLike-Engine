@@ -42,10 +42,11 @@ export function initCommunityManager(){
    'Auteur : '+information.pack.author,
    'Identifiant : '+information.pack.id,
    'API : '+information.pack.apiVersion,
+   'Compatible : '+information.pack.modes.map(mode=>mode.toUpperCase()).join(' / '),
    'État : '+(information.action==='install'?'Nouvelle installation':information.action==='upgrade'?'Mise à jour '+information.installedVersion+' → '+information.pack.version:information.action==='same-version'?'Déjà installé':'Version antérieure refusée'),
    'Permissions autorisées : '+information.permissions.join(' ; '),
    'Recettes ('+information.recipes.length+') :',
-   ...information.recipes.map(recipe=>' • '+recipe.name+' ('+recipe.event+') : '+recipe.actions.join(', '))
+   ...information.recipes.map(recipe=>' • '+recipe.name+' ['+recipe.modes.map(m=>m.toUpperCase()).join('/')+'] ('+recipe.event+') : '+recipe.actions.join(', '))
   ].join('\n');
   confirm.disabled=!pending;
   confirm.textContent=information.action==='upgrade'?'Mettre à jour le pack':'Installer le pack validé';
@@ -74,7 +75,7 @@ export function initCommunityManager(){
   for(const pack of packs){
    const card=document.createElement('article');card.className='warlike-community-pack';
    const heading=document.createElement('strong');heading.textContent=pack.name+' · v'+pack.version;
-   const subtitle=document.createElement('small');subtitle.textContent='Par '+pack.author+' · '+pack.recipes.length+' recette(s)';
+   const subtitle=document.createElement('small');subtitle.textContent='Par '+pack.author+' · '+pack.recipes.length+' recette(s) · '+pack.modes.map(m=>m.toUpperCase()).join('/');
    const desc=document.createElement('p');desc.textContent=pack.description||'Pack communautaire';
    const names=document.createElement('small');names.textContent='Blueprint : '+pack.recipes.map(r=>r.name).join(', ');
    const remove=document.createElement('button');remove.type='button';remove.textContent='Désinstaller';

@@ -1000,3 +1000,19 @@ body:not(.hub-active) .prefab-tools-collapsible{display:block!important;flex:non
 body:not(.hub-active) .prefab-tools-collapsible>summary{display:list-item!important;cursor:pointer!important;padding:9px 12px!important;color:#b7d4dc;font-size:12px;font-weight:650}
 body:not(.hub-active) .prefab-tools-collapsible:not([open])>:not(summary){display:none!important}
 body:not(.hub-active) .prefab-tools-collapsible[open]>:not(summary){box-sizing:border-box;width:calc(100% - 16px);margin:4px 8px}
+
+/* Optional cursor styling: never override text editing, scene canvas or resize handles */
+.editor-cursor-settings{display:flex;flex-direction:column;gap:9px;margin:12px 0;padding:12px;border:1px solid #485867;border-radius:7px;min-width:0}
+.editor-cursor-settings legend{padding:0 6px;font-size:12px;font-weight:700;color:var(--accent,#48cba9)}
+.editor-cursor-settings>label{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.editor-cursor-settings input[type=range]{width:100%}
+.editor-cursor-settings .cursor-effect-check{justify-content:flex-start}
+.editor-cursor-settings small{font-size:10px;line-height:1.4;color:#aebecb}
+body.warlike-custom-cursor:not(.playing){cursor:var(--warlike-cursor)!important}
+body.warlike-custom-cursor:not(.playing) button,body.warlike-custom-cursor:not(.playing) summary,body.warlike-custom-cursor:not(.playing) a,body.warlike-custom-cursor:not(.playing) .panel,body.warlike-custom-cursor:not(.playing) .studio-menubar{cursor:var(--warlike-cursor)!important}
+body.warlike-custom-cursor input,body.warlike-custom-cursor textarea,body.warlike-custom-cursor select,body.warlike-custom-cursor [contenteditable],body.warlike-custom-cursor canvas,body.warlike-custom-cursor [role=separator]{cursor:auto!important}
+body.warlike-custom-cursor input[type=text],body.warlike-custom-cursor input[type=search],body.warlike-custom-cursor textarea,body.warlike-custom-cursor [contenteditable]{cursor:text!important}
+.warlike-cursor-halo{position:fixed;top:0;left:0;z-index:9999;border:1px solid var(--cursor-accent,#48cba9);border-radius:50%;box-shadow:0 0 15px var(--cursor-accent,#48cba9);background:transparent;opacity:0;pointer-events:none;transform:translate(-100px,-100px);transition:opacity .16s ease}
+body.warlike-cursor-trail .warlike-cursor-halo.visible{opacity:.42}
+body.playing .warlike-cursor-halo{display:none}
+@media(prefers-reduced-motion:reduce){.warlike-cursor-halo{transition:none}}

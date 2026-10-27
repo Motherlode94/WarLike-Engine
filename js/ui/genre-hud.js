@@ -14,11 +14,12 @@ export function updateGenreHud(state){
  const racing=Number(globals.raceStarted)===1;
  const units=state.entities.filter(o=>state.selected.includes(o.id)&&isRtsUnit(o)).length;
  const genre=hub.genre||'sandbox';
- if(!racing&&!units&&!['rp','simulation','rpg','fourx'].includes(genre)){hud.hidden=true;return}
+ if(!racing&&!units&&!['rp','simulation','rpg','fourx','fieldlab'].includes(genre)){hud.hidden=true;return}
  const pieces=[];
  if(racing)pieces.push('🏁 '+(Number(globals.raceFinished)===1?'Arrivée':'Course')+' · '+clock(globals.raceElapsed)+' · CP '+(Number(globals.raceCheckpoint)||0));
  if(units)pieces.push('RTS · '+units+' unité'+(units>1?'s':'')+' · Clic droit : déplacer');
  const stat=(key,fallback=0)=>Number.isFinite(Number(globals[key]))?Number(globals[key]):fallback;
+ if(genre==='fieldlab')pieces.push('FIELD LAB · '+(stat('labWalk')+stat('labInteract')+stat('labDrive'))+'/3 · '+(stat('labWalk')?'✓ Marche':'○ Marche')+' · '+(stat('labInteract')?'✓ Console':'○ Console')+' · '+(stat('labDrive')?'✓ Conduite':'○ Conduite')+(stat('labCompleted')?' · DIAGNOSTIC TERMINÉ':''));
  if(genre==='rp')pieces.push('RP · '+stat('money')+' crédits · réputation '+stat('reputation')+' · E interagir');
  if(genre==='simulation')pieces.push('SIM · '+stat('money')+' crédits · '+stat('materials')+' matériaux · maintenance '+stat('maintenance'));
  if(genre==='rpg')pieces.push('RPG · '+stat('gold')+' or · '+stat('experience')+' XP · quête '+(stat('questCompleted')?'terminée':stat('questActive')?'active':'à découvrir'));

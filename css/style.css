@@ -1107,3 +1107,33 @@ body:not(.hub-active) .inspector #properties>.inspector-advanced-tools{margin:12
 body:not(.hub-active) .inspector #properties>.inspector-advanced-tools>summary{min-height:31px!important;border:1px solid var(--warlike-palette-border,#455363)!important;border-radius:4px!important;background:var(--warlike-palette-button,#354251)!important;font-size:12px!important;font-weight:600!important}
 body:not(.hub-active) .inspector #properties>.inspector-advanced-tools>.inspector-advanced-content{margin-top:7px;padding:4px!important;border:1px solid var(--warlike-palette-border,#455363);border-radius:3px}
 body:not(.hub-active) .inspector #properties>.delete-object{margin:10px 4px 6px!important;opacity:.8}
+
+/* Unified workbench panels: Hierarchy, Scene, Game, Project, Console and Inspector */
+body:not(.hub-active) .workspace :is(.hierarchy,.project-panel,.inspector){background:var(--warlike-palette-panel,#252b34)!important;border-radius:0!important;box-shadow:none!important;color:var(--warlike-custom-text,#e7eaf0)}
+body:not(.hub-active) .workspace :is(.panel-title,.bottom-tabs,.scene-tools,.scene-tabs,.asset-toolbar,.console-bar){min-height:29px;background:var(--warlike-palette-header,#303944)!important;border-color:var(--warlike-palette-border,#455363)!important;border-radius:0!important;box-shadow:none!important}
+body:not(.hub-active) .workspace :is(.panel-title,.bottom-tabs,.scene-tabs) :is(button,span){font-size:11px}
+body:not(.hub-active) .hierarchy>.panel-title{height:30px!important;min-height:30px!important;padding:0 7px!important}
+body:not(.hub-active) .hierarchy>.warlike-create-bar{display:flex;gap:5px;padding:7px 6px 5px;background:transparent!important}
+body:not(.hub-active) .hierarchy>.warlike-create-bar button{flex:1;min-width:0;min-height:26px!important;padding:4px 5px!important;border:1px solid var(--warlike-palette-border,#455363)!important;border-radius:3px!important;background:var(--warlike-palette-button,#354251)!important;color:var(--warlike-custom-text,#e7eaf0)!important;font-size:10px!important;white-space:nowrap}
+body:not(.hub-active) .hierarchy>.panel-search{box-sizing:border-box;width:calc(100% - 12px)!important;margin:3px 6px 6px!important;min-height:27px!important;border-radius:3px!important;font-size:11px!important}
+body:not(.hub-active) .hierarchy #objects{padding:2px 4px!important;background:transparent!important}
+body:not(.hub-active) .hierarchy #objects :is(button,.hierarchy-item,.object-row){min-height:23px;border-radius:2px!important}
+body:not(.hub-active) .hierarchy #objects :is(.selected,.active,[aria-selected=true]){background:color-mix(in srgb,var(--editor-accent,#48cba9) 20%,var(--warlike-palette-panel,#252b34))!important}
+body:not(.hub-active) .hierarchy>small{display:block;padding:5px 7px;font-size:10px;opacity:.65}
+body:not(.hub-active) .hierarchy-history{border-top:1px solid var(--warlike-palette-border,#455363)!important}
+body:not(.hub-active) .hierarchy-history>summary{min-height:26px!important;padding:6px 8px!important;border-radius:0!important;background:var(--warlike-palette-header,#303944)!important;font-size:11px!important}
+body:not(.hub-active) .center-stack .scene-tools{height:33px!important;min-height:33px!important;padding:0 7px!important;gap:6px!important}
+body:not(.hub-active) .center-stack :is(.scene-tools,.bottom-tabs) button{border-radius:3px!important;box-shadow:none!important}
+body:not(.hub-active) .center-stack :is(.scene-tools,.bottom-tabs) button.active{border-bottom:2px solid var(--editor-accent,#48cba9)!important}
+body:not(.hub-active) .project-panel .bottom-tabs{height:31px!important;min-height:31px!important;padding:0 6px!important;gap:4px!important}
+body:not(.hub-active) .project-panel .bottom-tab{min-height:27px!important;padding:4px 9px!important;border:0!important;background:transparent!important;color:var(--warlike-custom-text,#e7eaf0)!important}
+body:not(.hub-active) .project-panel .bottom-tab.active{background:color-mix(in srgb,var(--editor-accent,#48cba9) 10%,var(--warlike-palette-header,#303944))!important}
+body:not(.hub-active) .project-panel .browser-title{min-height:26px!important;padding:3px 8px!important;font-size:11px!important;text-transform:none!important}
+body:not(.hub-active) .project-panel :is(.asset-toolbar,.console-bar){padding:5px 7px!important;gap:6px!important}
+body:not(.hub-active) .project-panel :is(.asset-toolbar,.console-bar) :is(button,input,select){border-radius:3px!important;font-size:11px}
+body:not(.hub-active) .project-panel #assetBreadcrumb{padding:5px 8px!important;font-size:10px!important;opacity:.75}
+body:not(.hub-active) .project-panel #assetGrid{background:var(--warlike-palette-panel,#252b34)!important}
+body:not(.hub-active) .project-panel #assetGrid>*{border-radius:3px!important;box-shadow:none!important}
+body:not(.hub-active) .project-panel #assetGrid>*:hover{border-color:var(--editor-accent,#48cba9)!important}
+body:not(.hub-active) .project-panel .project-footer{background:var(--warlike-palette-header,#303944)!important;border-top:1px solid var(--warlike-palette-border,#455363)!important;font-size:10px!important}
+body:not(.hub-active) .workspace :is(.side-splitter,.project-splitter){background:var(--warlike-palette-border,#455363)!important}

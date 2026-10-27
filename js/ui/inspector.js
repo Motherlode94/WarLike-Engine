@@ -1,3 +1,4 @@
+import {get3dAsset} from '../assets/catalog-3d.js';
 import {defaultRigidbody3d,applyImpulse3d} from '../core/physics-3d.js';
 import {recipes,applyRecipe} from '../core/gameplay-recipes.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController,inventoryAdd,inventoryRemove,equipItem} from '../core/gameplay-components.js';
@@ -275,6 +276,16 @@ if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Weapons')component(root,'
  const asset=getAsset(o.assetId);for(const [k,label] of [['weaponDamage','Damage'],['weaponInterval','Seconds between attacks'],['weaponRange','Projectile range']]){if(o[k]===undefined)o[k]=asset[k]??({weaponDamage:34,weaponInterval:.16,weaponRange:650})[k];field(body,o,k,label)}
  const note=document.createElement('p');note.textContent='Play : approche une arme et appuie sur G pour équiper, puis clic gauche/F pour tirer. Armes de mêlée : attaque à courte portée.';body.append(note);
 });
+if(workspace.mode==='3d'&&o.type==='mesh3d'&&(get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles'||o.tags?.includes('race-vehicle'))){
+ component(root,'Vehicle Controller 3D',body=>{
+  const defaults={maxSpeed:310,acceleration:210,brakeForce:330,turnRate:130,drag:1.35,reverseRatio:.45};
+  for(const [key,label] of [['maxSpeed','Vitesse max (unités/s)'],['acceleration','Accélération'],['brakeForce','Freinage'],['turnRate','Direction (°/s)'],['drag','Résistance'],['reverseRatio','Ratio marche arrière']]){
+   if(!Number.isFinite(Number(o[key]))||Number(o[key])<=0)o[key]=defaults[key];
+   field(body,o,key,label);
+  }
+  const help=document.createElement('p');help.textContent='Play : E entrer/sortir · ZQSD/WASD conduire · Espace frein à main · Maj non nécessaire. Collisions 3D simplifiées.';body.append(help);
+ });
+}
 if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Vehicles'){component(root,'Vehicle Controller 2D',body=>{for(const [key,label] of [['hp','Vehicle HP'],['maxSpeed','Max Speed'],['acceleration','Acceleration'],['brakeForce','Brake Force'],['turnRate','Turn Rate °/s'],['drag','Drag'],['collisionRadius','Collision Radius']]){if(o[key]===undefined)o[key]=({maxSpeed:250,acceleration:210,brakeForce:310,turnRate:140,drag:1.4,collisionRadius:25})[key];field(body,o,key,label)}const note=document.createElement('p');note.textContent='Play : E monter/sortir • ZQSD conduite • Espace frein à main';body.append(note)})}
 if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Buildings')component(root,'Building Controller',body=>{
  const d=buildingDefaults(getAsset(o.assetId));for(const [k,v] of Object.entries(d))if(o[k]===undefined)o[k]=v;

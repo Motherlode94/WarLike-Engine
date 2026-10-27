@@ -151,5 +151,12 @@ document.getElementById('quickCreateObject')?.addEventListener('click',()=>addEn
 document.getElementById('quickCreateCharacter')?.addEventListener('click',()=>addEntity('character'));
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});
 
+document.getElementById('menuOpenBlueprint')?.addEventListener('click',()=>document.getElementById('openBlueprint')?.click());
+document.getElementById('menuAddComponent')?.addEventListener('click',()=>{
+ const inspector=document.getElementById('inspectorPanel');
+ if(inspector){inspector.scrollIntoView({block:'nearest'});}
+ const details=[...document.querySelectorAll('#properties details')].find(el=>el.querySelector('summary')?.textContent?.includes('Components'));
+ if(details){details.open=true;details.querySelector('input[type=search]')?.focus()}
+});
 initStudioMenus();
 initEditorAppearance();

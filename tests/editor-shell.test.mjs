@@ -24,3 +24,9 @@ test('menus close when another menu opens and on Escape',()=>{
 test('Project panel cannot consume most of the Scene viewport',()=>{
  assert.match(workspace,/center\.clientHeight\*0\.5/);
 });
+
+test('editor shell reserves the same footer height across the whole viewport',()=>{
+ assert.match(css,/--warlike-footer-height:44px/);
+ assert.match(css,/--warlike-menubar-height\) - var\(--warlike-toolbar-height\) - var\(--warlike-footer-height\)/);
+ assert.match(css,/\.warlike-status-footer\{box-sizing:border-box;position:fixed!important/);
+});

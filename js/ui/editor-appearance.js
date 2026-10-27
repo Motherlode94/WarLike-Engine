@@ -15,7 +15,7 @@ export function initEditorAppearance(){
   root.style.setProperty('--editor-accent',color);
   picker.value=color;
   document.querySelectorAll('#editorSwatches button').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.color===color)));
-  if(persist)safeSet(COLOR_KEY,color);
+  if(persist){safeSet(COLOR_KEY,color);document.dispatchEvent(new CustomEvent('warlike:editor-accent-change',{detail:{color}}))}
  };
  const setScale=(value,persist=true)=>{
   const next=scaleValue(value);

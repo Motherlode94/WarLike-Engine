@@ -48,25 +48,25 @@ async Task Handle(HttpListenerContext ctx) {
                 if(actor is null){res.StatusCode=404;await Reply(new {error="Actor not found"});return;}
                 object? snapshot=null;
                 switch(action){
-                    case "rpWork-work" when actor.GetComponent<RoleplayComponent>() is { } rpWork:
+                    case "rp-work" when actor.GetComponent<RoleplayComponent>() is { } rpWork:
                         rpWork.Work(); snapshot=new {money=rpWork.Money,reputation=rpWork.Reputation};break;
-                    case "rpBuy-buy" when actor.GetComponent<RoleplayComponent>() is { } rpBuy:
+                    case "rp-buy" when actor.GetComponent<RoleplayComponent>() is { } rpBuy:
                         var bought=rpBuy.BuySupplies();snapshot=new {ok=bought,money=rpBuy.Money,reputation=rpBuy.Reputation};break;
-                    case "raceStart-start" when actor.GetComponent<RacingRulesComponent>() is { } raceStart:
+                    case "race-start" when actor.GetComponent<RacingRulesComponent>() is { } raceStart:
                         raceStart.StartRace();snapshot=new {started=raceStart.Started,seconds=raceStart.Elapsed,checkpoints=raceStart.Checkpoints,finished=raceStart.Finished};break;
-                    case "raceCheckpoint-checkpoint" when actor.GetComponent<RacingRulesComponent>() is { } raceCheckpoint:
+                    case "race-checkpoint" when actor.GetComponent<RacingRulesComponent>() is { } raceCheckpoint:
                         var passed=raceCheckpoint.PassCheckpoint();snapshot=new {ok=passed,checkpoints=raceCheckpoint.Checkpoints,seconds=raceCheckpoint.Elapsed};break;
-                    case "raceFinish-finish" when actor.GetComponent<RacingRulesComponent>() is { } raceFinish:
+                    case "race-finish" when actor.GetComponent<RacingRulesComponent>() is { } raceFinish:
                         var finished=raceFinish.FinishRace();snapshot=new {ok=finished,seconds=raceFinish.Elapsed,finished=raceFinish.Finished};break;
-                    case "simProduce-produce" when actor.GetComponent<SimulationEconomyComponent>() is { } simProduce:
+                    case "sim-produce" when actor.GetComponent<SimulationEconomyComponent>() is { } simProduce:
                         simProduce.Produce();snapshot=new {materials=simProduce.Materials,money=simProduce.Money};break;
-                    case "simDeliver-deliver" when actor.GetComponent<SimulationEconomyComponent>() is { } simDeliver:
+                    case "sim-deliver" when actor.GetComponent<SimulationEconomyComponent>() is { } simDeliver:
                         var delivered=simDeliver.FulfillOrder();snapshot=new {ok=delivered,materials=simDeliver.Materials,money=simDeliver.Money};break;
-                    case "simService-service" when actor.GetComponent<SimulationEconomyComponent>() is { } simService:
+                    case "sim-service" when actor.GetComponent<SimulationEconomyComponent>() is { } simService:
                         simService.ServiceMachine();snapshot=new {maintenance=simService.Maintenance};break;
-                    case "rpgStart-start" when actor.GetComponent<RpgProgressionComponent>() is { } rpgStart:
+                    case "rpg-start" when actor.GetComponent<RpgProgressionComponent>() is { } rpgStart:
                         rpgStart.StartQuest();snapshot=new {active=rpgStart.QuestActive,level=rpgStart.Level,experience=rpgStart.Experience};break;
-                    case "rpgComplete-complete" when actor.GetComponent<RpgProgressionComponent>() is { } rpgComplete:
+                    case "rpg-complete" when actor.GetComponent<RpgProgressionComponent>() is { } rpgComplete:
                         var completed=rpgComplete.CompleteQuest();snapshot=new {ok=completed,active=rpgComplete.QuestActive,level=rpgComplete.Level,experience=rpgComplete.Experience};break;
                     case "4x-explore" when actor.GetComponent<FourXEmpireComponent>() is { } empExplore:
                         empExplore.Explore();snapshot=new {science=empExplore.Science,turn=empExplore.Turn};break;

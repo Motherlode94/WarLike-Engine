@@ -1,0 +1,59 @@
+{
+  "apiVersion": "1.0",
+  "id": "survival-signals",
+  "version": "1.0.0",
+  "name": "Survival Signals",
+  "author": "WarLike Community",
+  "description": "Recettes de signaux et de survie pour des scènes d'horreur.",
+  "recipes": [
+    {
+      "id": "alert-beacon",
+      "name": "Balise d'alerte",
+      "description": "Active une alerte globale sur interaction",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "survivalAlert",
+            "value": 1
+          },
+          {
+            "type": "emitSignal",
+            "value": "survival:alert"
+          },
+          {
+            "type": "message",
+            "value": "L'alarme résonne dans le secteur."
+          }
+        ]
+      }
+    },
+    {
+      "id": "shelter-supplies",
+      "name": "Réserve du refuge",
+      "description": "Récupérer une ration de secours",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 115,
+        "once": true,
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "ration",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Une ration trouvée."
+          }
+        ]
+      }
+    }
+  ]
+}

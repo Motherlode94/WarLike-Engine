@@ -817,3 +817,24 @@ body:not(.hub-active) .panel-search{border-radius:3px}
 #properties .warlike-add-component>button{background:#355f84;border-color:#4e86b1;color:#f3f8ff;font-weight:700}
 #properties .warlike-add-component>button:hover{background:#477ba6}
 @media(max-width:1100px){.warlike-create-bar{grid-template-columns:1fr}.warlike-create-bar button{padding:5px}}
+
+/* Unity-like focused workspace: keep essential scene manipulation and play visible */
+.studio-compact-toggle{flex:0 0 auto;white-space:nowrap;background:#343b44;border-color:#53616e;font-size:11px;padding:6px 10px}
+body.warlike-compact-editor .topbar .toolbar-group:first-of-type{display:none}
+body.warlike-compact-editor .topbar .audio-tools{display:none}
+body.warlike-compact-editor .topbar .render-quality-menu{display:none}
+body.warlike-compact-editor .topbar .save-status{display:none}
+body.warlike-compact-editor .topbar .toolbar-group{padding-right:7px}
+body.warlike-compact-editor .scene-actions .lighting-control,
+body.warlike-compact-editor .scene-actions #fpsScene,
+body.warlike-compact-editor .scene-actions #view3dFocus,
+body.warlike-compact-editor .scene-actions #view3dToggle{display:none}
+body.warlike-compact-editor .scene-tools{min-height:36px}
+body.warlike-compact-editor .scene-header{min-height:37px}
+body.warlike-compact-editor .center-stack{grid-template-rows:36px minmax(120px,1fr) var(--project-height,280px)}
+body.warlike-compact-editor #objects button{border-radius:2px;padding:5px 8px;margin-bottom:1px;font-size:12px}
+body.warlike-compact-editor #objects button.selected{background:#35536a;border-left:3px solid #7aaed6}
+body.warlike-compact-editor #properties .property-row{margin-bottom:6px}
+body.warlike-compact-editor .studio-logo span{display:none}
+body.warlike-compact-editor .studio-menubar{min-height:35px}
+@media(max-width:1250px){body.warlike-compact-editor .scene-actions #sunHour,body.warlike-compact-editor .scene-actions #sunClock{display:none}}

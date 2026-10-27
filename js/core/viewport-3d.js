@@ -1,3 +1,4 @@
+import {tickEngineDiagnostics} from './engine-diagnostics.js';
 import {updateDriving3d,currentVehicle3d,isDriveable3d,driving3d,resetDriving3d} from './vehicle-3d.js';
 import {updateGenreHud} from '../ui/genre-hud.js';
 import {updateOpenWorld} from './open-world-systems.js';
@@ -259,7 +260,9 @@ export function init3d(canvas,host,buttons){
  document.addEventListener('warlike:change',syncProjectView);
  syncProjectView();
  const update3dPlay=dt=>{
+  tickEngineDiagnostics(dt);
   const p=playableActor(state.entities);
+  if(p)p._vehicleInputConsumed=false;
   updateStats(state.entities,dt);
   updateOpenWorld(dt,p,state.entities,sequenceRuntime.globals);
   if(physicsSession){

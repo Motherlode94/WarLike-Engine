@@ -33,21 +33,21 @@ test('Racing templates provide a driveable car and race gates',()=>{
 test('4X starter supplies exploration expansion economy and turn signals',()=>{
  const entities=createGenreScene('fourx','3d').entities;
  assert.ok(entities.some(e=>e.tags?.includes('4x-city')));
- for(const step of ['Explorer','Coloniser','Mines','Fin du tour']){
+ for(const step of ['Explorer','Coloniser','Mines','Fin du tour','Camp ennemi']){
   assert.ok(entities.some(e=>e.name===step&&e.sequence),step);
  }
  const turn=entities.find(e=>e.name==='Fin du tour').sequence;
  assert.ok(turn.instructions.some(i=>i.type==='addVariable'&&i.key==='turn'));
 });
 test('all added recipes and visual logic presets produce valid sequences',()=>{
- const ids=['rp-citizen','rp-job','sim-machine','sim-contract','rpg-quest','rpg-sanctuary','fourx-explore','fourx-expand','fourx-end-turn'];
+ const ids=['rp-citizen','rp-job','sim-machine','sim-contract','rpg-quest','rpg-sanctuary','fourx-explore','fourx-expand','fourx-end-turn','fourx-conquer'];
  for(const id of ids){
   assert.ok(recipes.some(r=>r.id===id),'recipe '+id);
   const obj={id:1,type:'object',x:0,y:0,w:50,h:50};
   assert.equal(applyRecipe(obj,id),true);
   assert.ok(obj.sequence?.enabled);
  }
- for(const id of ['rp-dialogue','sim-production','rpg-quest','4x-end-turn']){
+ for(const id of ['rp-dialogue','sim-production','rpg-quest','4x-end-turn','4x-conquer']){
   assert.ok(createBlueprintPreset(id,'3d').enabled,id);
   assert.ok(createBlueprintPreset(id,'2d').enabled,id);
  }

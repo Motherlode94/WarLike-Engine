@@ -1,3 +1,4 @@
+import {createGenreScene,normalizeGenre,genreTemplates} from './genre-templates.js';
 import {inspectProject,downloadDiagnostic} from './project-diagnostics.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {prefab3d} from '../assets/catalog-3d.js';
@@ -32,7 +33,7 @@ const indexed=()=>safeRead(INDEX,[]).filter(p=>p&&typeof p.id==='string');
 const uniqueId=()=>Date.now().toString(36)+'-'+Math.floor(Math.random()*1e8).toString(36);
 export const assetPackChoices=['starter','kenney','community','both'];
 export const sanitizeAssetPack=value=>assetPackChoices.includes(value)?value:'starter';
-export const hub={projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT,assetPack:'starter'};
+export const hub={projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT,assetPack:'starter',genre:'sandbox'};
 export function chooseProjectAssets(id,assetPack){
  const pack=sanitizeAssetPack(assetPack);
  const meta=indexed().find(p=>p.id===id);if(!meta)return false;
@@ -50,28 +51,29 @@ const assertName=name=>{const n=String(name||'').trim().slice(0,64);if(!n)throw 
 function saveMeta(meta){const all=indexed().filter(p=>p.id!==meta.id);all.unshift(meta);localStorage.setItem(INDEX,JSON.stringify(all))}
 export function saveProject(){
  if(!hub.projectId||state.playing)return false;
- const data={version:5,...workspacePayload(),entities:state.entities,camera:state.camera,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack};
- try{localStorage.setItem(PREFIX+hub.projectId,JSON.stringify(data));saveMeta({id:hub.projectId,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,updated:Date.now()});return true}catch{return false}
+ const data={version:5,...workspacePayload(),entities:state.entities,camera:state.camera,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,genre:hub.genre};
+ try{localStorage.setItem(PREFIX+hub.projectId,JSON.stringify(data));saveMeta({id:hub.projectId,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,genre:hub.genre,updated:Date.now()});return true}catch{return false}
 }
-export function createProject(name,type,assetPack='starter'){
+export function createProject(name,type,assetPack='starter',genre='sandbox'){
  if(state.playing)throw Error('Arrête Play avant de créer un projet.');
  if(hub.projectId)saveProject();
  name=assertName(name);if(!['2d','3d'].includes(type))throw Error('Type de projet invalide.');
- const id=uniqueId(),data={workspaceMode:type,workspaces:{'2d':entry(defaults2d()),'3d':entry(defaults3d())}};
+ const chosenGenre=normalizeGenre(genre);
+ const id=uniqueId(),data={workspaceMode:type,workspaces:{'2d':chosenGenre==='sandbox'?entry(defaults2d()):createGenreScene(chosenGenre,'2d'),'3d':chosenGenre==='sandbox'?entry(defaults3d()):createGenreScene(chosenGenre,'3d')}};
  if(!restoreWorkspaces(data))throw Error('Impossible de créer le projet.');
- Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(assetPack)});setHubAccent(hub.accent,{persist:false});state.demoGuide='';resetHistory();saveProject();notify();return id;
+ Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(assetPack),genre:chosenGenre});setHubAccent(hub.accent,{persist:false});state.demoGuide='';resetHistory();saveProject();notify();return id;
 }
 export function openProject(id){
  if(state.playing)throw Error('Arrête Play avant de changer de projet.');
  if(hub.projectId&&hub.projectId!==id)saveProject();
  const data=safeRead(PREFIX+id,null),meta=indexed().find(p=>p.id===id);
  if(!data||!meta||!restoreWorkspaces(data))throw Error('Projet introuvable ou corrompu.');
- Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide='';resetHistory();notify();return true;
+ Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack),genre:normalizeGenre(data.genre||meta.genre)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide='';resetHistory();notify();return true;
 }
 export function deleteProject(id){
  if(state.playing)throw Error('Arrête Play avant de supprimer.');
  localStorage.removeItem(PREFIX+id);localStorage.setItem(INDEX,JSON.stringify(indexed().filter(p=>p.id!==id)));
- if(hub.projectId===id){Object.assign(hub,{projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT,assetPack:'starter'});document.body?.style?.removeProperty('--project-accent')}
+ if(hub.projectId===id){Object.assign(hub,{projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT,assetPack:'starter',genre:'sandbox'});document.body?.style?.removeProperty('--project-accent')}
 }
 export function renameProject(id,name){
  name=assertName(name);
@@ -93,7 +95,7 @@ export function importLegacyProject(){
  saveProject();return id;
 }
 export function initHub(){
- const modal=document.querySelector('#hubOverlay'),cards=document.querySelector('#hubProjects'),name=document.querySelector('#hubProjectName'),type=document.querySelector('#hubProjectType'),assetPackSelect=document.querySelector('#hubAssetPack'),message=document.querySelector('#hubMessage');
+ const modal=document.querySelector('#hubOverlay'),cards=document.querySelector('#hubProjects'),name=document.querySelector('#hubProjectName'),type=document.querySelector('#hubProjectType'),assetPackSelect=document.querySelector('#hubAssetPack'),genreSelect=document.querySelector('#hubProjectGenre'),message=document.querySelector('#hubMessage');
  const title=document.querySelector('#studioProjectName');
  const projectSearch=document.querySelector('#hubProjectSearch'),projectFilter=document.querySelector('#hubProjectFilter'),projectCount=document.querySelector('#hubProjectCount');
  const picker=document.querySelector('#hubAccentColor'),hex=document.querySelector('#hubAccentHex'),palette=document.querySelector('#hubThemePalette'),reset=document.querySelector('#hubThemeReset');
@@ -132,7 +134,7 @@ export function initHub(){
   for(const p of projects){
    const item=document.createElement('div');item.className='hub-project-card';
    const info=document.createElement('div');const heading=document.createElement('strong');heading.textContent=p.name;
-   const detail=document.createElement('small');detail.textContent=p.type.toUpperCase()+' · Assets : '+({starter:'WarLike',kenney:'Kenney CC0',community:'Community CC0',both:'Kenney + Community'}[sanitizeAssetPack(p.assetPack)])+' · '+new Date(p.updated).toLocaleString();item.style.borderLeft='4px solid '+(normalizeHubAccent(p.accent)||DEFAULT_ACCENT);
+   const detail=document.createElement('small');detail.textContent=p.type.toUpperCase()+' · '+genreTemplates[normalizeGenre(p.genre)].label+' · Assets : '+({starter:'WarLike',kenney:'Kenney CC0',community:'Community CC0',both:'Kenney + Community'}[sanitizeAssetPack(p.assetPack)])+' · '+new Date(p.updated).toLocaleString();item.style.borderLeft='4px solid '+(normalizeHubAccent(p.accent)||DEFAULT_ACCENT);
    info.append(heading,detail);
    if(p.id===hub.projectId){const current=document.createElement('span');current.className='hub-current-pill';current.textContent='Actif';info.append(current)}
    const open=document.createElement('button');open.textContent='Ouvrir';open.onclick=()=>run(()=>openProject(p.id));
@@ -225,7 +227,7 @@ export function initHub(){
  type.addEventListener('change',()=>{assetPackSelect.disabled=type.value!=='3d'});
  assetPackSelect.disabled=type.value!=='3d';
  modal.addEventListener('keydown',e=>{if(e.key==='Escape'&&!state.playing&&hub.projectId){e.preventDefault();hide()}});
- document.querySelector('#hubCreate').onclick=()=>run(()=>createProject(name.value,type.value,assetPackSelect.value));
+ document.querySelector('#hubCreate').onclick=()=>run(()=>createProject(name.value,type.value,assetPackSelect.value,genreSelect.value));
  document.querySelector('#hubLegacy').onclick=()=>run(importLegacyProject);
  document.querySelector('#hubOpen').onclick=show;
  document.querySelector('#hubClose').onclick=hide;

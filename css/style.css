@@ -932,3 +932,11 @@ body:not(.hub-active) .studio-menubar{overflow:visible!important}
 /* Studio identity: unobtrusive bottom-right signature, outside the Hub */
 .warlike-studio-signature{position:fixed;right:14px;bottom:10px;z-index:50;pointer-events:none;display:flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid #59626b80;border-radius:4px;background:#20242bdf;color:#c7d1dc;font-size:10px;letter-spacing:.07em;box-shadow:0 2px 8px #0004}
 body:has(#hubOverlay:not([hidden])) .warlike-studio-signature{display:none}
+
+/* Keep signature visible inside the actual editor, above bottom overlays */
+body .warlike-studio-signature{position:fixed!important;right:16px!important;bottom:16px!important;z-index:120!important;visibility:visible;opacity:1;max-width:calc(100vw - 32px)}
+body:has(#hubOverlay:not([hidden])) .warlike-studio-signature{display:none!important}
+body:not(.hub-active) .workspace{max-height:calc(100dvh - 78px);overflow:hidden}
+body:not(.hub-active) .center-stack{overflow:hidden}
+body:not(.hub-active) .project-panel{min-height:0;overflow:hidden}
+body:not(.hub-active) .project-panel #projectContent{overflow:auto;flex:1;min-height:0}

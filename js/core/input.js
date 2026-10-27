@@ -1,4 +1,5 @@
 import {toolsState} from '../ui/workspace.js';
+import {hitGizmo2d,gizmoCenter} from './gizmos-2d.js';
 import {state,notify} from './state.js';
 import {toWorld,zoomAt} from './camera.js';
 import {record,undo,redo} from './history.js';
@@ -26,6 +27,13 @@ export function attachInput(canvas,host){
    canvas.setPointerCapture(e.pointerId);return;
   }
   const w=toWorld(p);
+  const current=state.entities.filter(o=>state.selected.includes(o.id));
+  const handle=hitGizmo2d(w,current,toolsState.tool,state.camera.zoom);
+  if(handle){
+   drag={mode:toolsState.tool==='rect'?'scale':toolsState.tool,axis:handle,pointer:e.pointerId,start:w,center:gizmoCenter(current),
+    starting:current.map(o=>({id:o.id,x:o.x,y:o.y,w:o.w,h:o.h,rotation:o.rotation||0})),moved:false};
+   canvas.setPointerCapture(e.pointerId);e.preventDefault();return;
+  }
   const object=[...state.entities].reverse().find(o=>w.x>=o.x&&w.y>=o.y&&w.x<=o.x+o.w&&w.y<=o.y+o.h);
   if(!object){
    if(!additive(e)){state.selected=[];notify()}
@@ -61,10 +69,19 @@ export function attachInput(canvas,host){
   }
   for(const start of drag.starting){
    const o=state.entities.find(i=>i.id===start.id);if(!o)continue;
-   if(drag.mode==='rotate')o.rotation=Math.round(start.rotation+dx);
-   else if(drag.mode==='scale'||drag.mode==='rect'){
-    o.w=Math.max(4,Math.round(start.w+dx));o.h=Math.max(4,Math.round(start.h+dy));
-   }else{o.x=Math.round(start.x+dx);o.y=Math.round(start.y+dy)}
+   if(drag.mode==='rotate'){
+    const center=drag.center||{x:start.x+start.w/2,y:start.y+start.h/2};
+    const angle=Math.atan2(w.y-center.y,w.x-center.x)-Math.atan2(drag.start.y-center.y,drag.start.x-center.x);
+    o.rotation=Math.round(start.rotation+angle*180/Math.PI);
+   }else if(drag.mode==='scale'||drag.mode==='rect'){
+    if(drag.axis==='uniform'){
+     const factor=Math.max(.1,1+(dx+dy)/Math.max(16,start.w+start.h));
+     o.w=Math.max(4,Math.round(start.w*factor));o.h=Math.max(4,Math.round(start.h*factor));
+    }else{o.w=Math.max(4,Math.round(start.w+dx));o.h=Math.max(4,Math.round(start.h+dy))}
+   }else{
+    o.x=Math.round(start.x+(drag.axis==='y'?0:dx));
+    o.y=Math.round(start.y+(drag.axis==='x'?0:dy));
+   }
    if(toolsState.snap){
     for(const axis of drag.mode==='move'?['x','y']:drag.mode==='rotate'?['rotation']:['w','h'])
      o[axis]=Math.round(o[axis]/(axis==='rotation'?15:16))*(axis==='rotation'?15:16);

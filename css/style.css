@@ -856,3 +856,26 @@ body:not(.warlike-compact-editor) .topbar .toolbar-group:first-of-type{display:n
 body:not(.warlike-compact-editor) .topbar .audio-tools{display:none}
 body:not(.warlike-compact-editor) .topbar .render-quality-menu{display:none}
 body:not(.warlike-compact-editor) .topbar .save-status{display:none}
+
+/* Unity 6-inspired workspace structure: consistent tabs, restrained toolbar */
+body:not(.hub-active) .studio-menubar{height:36px;min-height:36px;padding:0 10px;gap:12px;background:#292b2f}
+body:not(.hub-active) .studio-menus{gap:1px}
+body:not(.hub-active) .studio-menus>details>summary,body:not(.hub-active) .studio-menus>button{font-size:11px;padding:6px 8px}
+body:not(.hub-active) .topbar{height:42px;min-height:42px;background:#33363b;border-bottom:1px solid #1c1e21}
+body:not(.hub-active) .studio-compact-toggle{font-size:11px}
+body:not(.hub-active) .workspace{background:#222428}
+body:not(.hub-active) .hierarchy,body:not(.hub-active) .inspector,body:not(.hub-active) .project-panel{background:#292b2f}
+body:not(.hub-active) .panel-title,body:not(.hub-active) .bottom-tabs{background:#303237;color:#d1d5da;border-bottom:1px solid #1b1d20}
+body:not(.hub-active) .scene-header{background:#303237;border-bottom:1px solid #1b1d20}
+body:not(.hub-active) .scene-tabs .tab{background:transparent;border:0;border-right:1px solid #414348;color:#afb5bd;padding:8px 16px}
+body:not(.hub-active) .scene-tabs .tab.active{background:#232529;color:#f1f3f5;border-bottom:2px solid #72a7d8}
+body:not(.hub-active) .bottom-tab{border-radius:0}
+body:not(.hub-active) .bottom-tab.active{background:#232529;border-bottom:2px solid #72a7d8}
+body:not(.hub-active) #objects button{background:transparent;border-radius:0;border:0;margin:0;padding:5px 10px}
+body:not(.hub-active) #objects button:hover{background:#393e46}
+body:not(.hub-active) #objects button.selected{background:#385b78;border-left:2px solid #8cbce7;color:#fff}
+body:not(.hub-active) #properties{padding:8px}
+body:not(.hub-active) #properties .warlike-inspector-edition{font-size:10px;letter-spacing:.02em}
+body:not(.hub-active) #properties details>summary{cursor:pointer}
+body:not(.hub-active) #viewport{border:0}
+body:not(.hub-active) .warlike-tool-library-content{top:78px}

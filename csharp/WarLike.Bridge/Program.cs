@@ -48,36 +48,36 @@ async Task Handle(HttpListenerContext ctx) {
                 if(actor is null){res.StatusCode=404;await Reply(new {error="Actor not found"});return;}
                 object? snapshot=null;
                 switch(action){
-                    case "rp-work" when actor.GetComponent<RoleplayComponent>() is { } rp:
-                        rp.Work(); snapshot=new {money=rp.Money,reputation=rp.Reputation};break;
-                    case "rp-buy" when actor.GetComponent<RoleplayComponent>() is { } rp:
-                        var bought=rp.BuySupplies();snapshot=new {ok=bought,money=rp.Money,reputation=rp.Reputation};break;
-                    case "race-start" when actor.GetComponent<RacingRulesComponent>() is { } race:
-                        race.StartRace();snapshot=new {started=race.Started,seconds=race.Elapsed,checkpoints=race.Checkpoints,finished=race.Finished};break;
-                    case "race-checkpoint" when actor.GetComponent<RacingRulesComponent>() is { } race:
-                        var passed=race.PassCheckpoint();snapshot=new {ok=passed,checkpoints=race.Checkpoints,seconds=race.Elapsed};break;
-                    case "race-finish" when actor.GetComponent<RacingRulesComponent>() is { } race:
-                        var finished=race.FinishRace();snapshot=new {ok=finished,seconds=race.Elapsed,finished=race.Finished};break;
-                    case "sim-produce" when actor.GetComponent<SimulationEconomyComponent>() is { } sim:
-                        sim.Produce();snapshot=new {materials=sim.Materials,money=sim.Money};break;
-                    case "sim-deliver" when actor.GetComponent<SimulationEconomyComponent>() is { } sim:
-                        var delivered=sim.FulfillOrder();snapshot=new {ok=delivered,materials=sim.Materials,money=sim.Money};break;
-                    case "sim-service" when actor.GetComponent<SimulationEconomyComponent>() is { } sim:
-                        sim.ServiceMachine();snapshot=new {maintenance=sim.Maintenance};break;
-                    case "rpg-start" when actor.GetComponent<RpgProgressionComponent>() is { } rpg:
-                        rpg.StartQuest();snapshot=new {active=rpg.QuestActive,level=rpg.Level,experience=rpg.Experience};break;
-                    case "rpg-complete" when actor.GetComponent<RpgProgressionComponent>() is { } rpg:
-                        var completed=rpg.CompleteQuest();snapshot=new {ok=completed,active=rpg.QuestActive,level=rpg.Level,experience=rpg.Experience};break;
-                    case "4x-explore" when actor.GetComponent<FourXEmpireComponent>() is { } empire:
-                        empire.Explore();snapshot=new {science=empire.Science,turn=empire.Turn};break;
-                    case "4x-expand" when actor.GetComponent<FourXEmpireComponent>() is { } empire:
-                        var expanded=empire.Expand();snapshot=new {ok=expanded,food=empire.Food,territory=empire.Territory};break;
-                    case "4x-exploit" when actor.GetComponent<FourXEmpireComponent>() is { } empire:
-                        empire.Exploit();snapshot=new {industry=empire.Industry};break;
-                    case "4x-conquer" when actor.GetComponent<FourXEmpireComponent>() is { } empire:
-                        var conquered=empire.Conquer();snapshot=new {ok=conquered,army=empire.Army,territory=empire.Territory};break;
-                    case "4x-next-turn" when actor.GetComponent<FourXEmpireComponent>() is { } empire:
-                        empire.NextTurn();snapshot=new {turn=empire.Turn,food=empire.Food,industry=empire.Industry,science=empire.Science,territory=empire.Territory,army=empire.Army};break;
+                    case "rpWork-work" when actor.GetComponent<RoleplayComponent>() is { } rpWork:
+                        rpWork.Work(); snapshot=new {money=rpWork.Money,reputation=rpWork.Reputation};break;
+                    case "rpBuy-buy" when actor.GetComponent<RoleplayComponent>() is { } rpBuy:
+                        var bought=rpBuy.BuySupplies();snapshot=new {ok=bought,money=rpBuy.Money,reputation=rpBuy.Reputation};break;
+                    case "raceStart-start" when actor.GetComponent<RacingRulesComponent>() is { } raceStart:
+                        raceStart.StartRace();snapshot=new {started=raceStart.Started,seconds=raceStart.Elapsed,checkpoints=raceStart.Checkpoints,finished=raceStart.Finished};break;
+                    case "raceCheckpoint-checkpoint" when actor.GetComponent<RacingRulesComponent>() is { } raceCheckpoint:
+                        var passed=raceCheckpoint.PassCheckpoint();snapshot=new {ok=passed,checkpoints=raceCheckpoint.Checkpoints,seconds=raceCheckpoint.Elapsed};break;
+                    case "raceFinish-finish" when actor.GetComponent<RacingRulesComponent>() is { } raceFinish:
+                        var finished=raceFinish.FinishRace();snapshot=new {ok=finished,seconds=raceFinish.Elapsed,finished=raceFinish.Finished};break;
+                    case "simProduce-produce" when actor.GetComponent<SimulationEconomyComponent>() is { } simProduce:
+                        simProduce.Produce();snapshot=new {materials=simProduce.Materials,money=simProduce.Money};break;
+                    case "simDeliver-deliver" when actor.GetComponent<SimulationEconomyComponent>() is { } simDeliver:
+                        var delivered=simDeliver.FulfillOrder();snapshot=new {ok=delivered,materials=simDeliver.Materials,money=simDeliver.Money};break;
+                    case "simService-service" when actor.GetComponent<SimulationEconomyComponent>() is { } simService:
+                        simService.ServiceMachine();snapshot=new {maintenance=simService.Maintenance};break;
+                    case "rpgStart-start" when actor.GetComponent<RpgProgressionComponent>() is { } rpgStart:
+                        rpgStart.StartQuest();snapshot=new {active=rpgStart.QuestActive,level=rpgStart.Level,experience=rpgStart.Experience};break;
+                    case "rpgComplete-complete" when actor.GetComponent<RpgProgressionComponent>() is { } rpgComplete:
+                        var completed=rpgComplete.CompleteQuest();snapshot=new {ok=completed,active=rpgComplete.QuestActive,level=rpgComplete.Level,experience=rpgComplete.Experience};break;
+                    case "4x-explore" when actor.GetComponent<FourXEmpireComponent>() is { } empExplore:
+                        empExplore.Explore();snapshot=new {science=empExplore.Science,turn=empExplore.Turn};break;
+                    case "4x-expand" when actor.GetComponent<FourXEmpireComponent>() is { } empExpand:
+                        var expanded=empExpand.Expand();snapshot=new {ok=expanded,food=empExpand.Food,territory=empExpand.Territory};break;
+                    case "4x-exploit" when actor.GetComponent<FourXEmpireComponent>() is { } empExploit:
+                        empExploit.Exploit();snapshot=new {industry=empExploit.Industry};break;
+                    case "4x-conquer" when actor.GetComponent<FourXEmpireComponent>() is { } empConquer:
+                        var conquered=empConquer.Conquer();snapshot=new {ok=conquered,army=empConquer.Army,territory=empConquer.Territory};break;
+                    case "4x-next-turn" when actor.GetComponent<FourXEmpireComponent>() is { } empNextTurn:
+                        empNextTurn.NextTurn();snapshot=new {turn=empNextTurn.Turn,food=empNextTurn.Food,industry=empNextTurn.Industry,science=empNextTurn.Science,territory=empNextTurn.Territory,army=empNextTurn.Army};break;
                     default:
                         res.StatusCode=400;await Reply(new {error="Unsupported genre action or component missing"});return;
                 }

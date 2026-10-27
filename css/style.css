@@ -1193,3 +1193,11 @@ body:not(.hub-active) .project-panel #assetGrid{background-color:var(--warlike-p
 body:not(.hub-active) .warlike-status-footer{background-color:var(--warlike-palette-footer,#252629)!important;border-color:var(--warlike-palette-border,#535a62)!important}
 body:not(.hub-active) #viewport{background-color:var(--warlike-palette-scene,#191b1f)!important}
 html[data-warlike-theme="light"] body:not(.hub-active) :is(.studio-menus,.topbar,.panel,.editor-appearance-menu,.csharp-runtime-panel) :is(button,select,textarea,input):not([type=color]){color:var(--warlike-palette-text,#253347)!important}
+
+/* Unity-compatible asset shelf in WarLike's existing 3D Project pane */
+.unity-asset-library{border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;margin:6px 0 9px;background:var(--warlike-palette-panel,#252b34)}
+.unity-asset-library>summary{cursor:pointer;padding:9px 11px;font-size:12px;font-weight:650;background:var(--warlike-palette-header,#303944);color:var(--warlike-palette-text,#e5e7eb)}
+.unity-asset-library p{margin:8px 10px;font-size:11px;line-height:1.5}
+.unity-asset-library>button{display:block;margin:7px 10px;padding:7px 11px;max-width:calc(100% - 20px);border:1px solid var(--editor-accent,#6c9dc8);border-radius:4px;background:var(--warlike-palette-button,#454950);color:var(--warlike-palette-text,#e5e7eb);cursor:pointer}
+.unity-asset-library>button:disabled{opacity:.7;cursor:default}
+.unity-asset-library>small{display:block;padding:4px 10px 10px;line-height:1.45;color:var(--warlike-palette-muted,#adb8c1)}

@@ -1034,3 +1034,23 @@ body:not(.hub-active) :is(.panel,.topbar,.studio-menubar) :is(small,.muted,.hint
 body:not(.hub-active) :is(.workspace,.studio-menubar,header.topbar,.warlike-status-footer){font-size:var(--warlike-palette-fontSize,12px);font-weight:var(--warlike-palette-fontWeight,500)}
 body:not(.hub-active) .warlike-status-footer{background-color:var(--warlike-palette-footer,#171d25)!important;border-top-color:var(--warlike-palette-border,#455363)!important}
 body:not(.hub-active) :is(#canvas,.canvas-wrap,.scene-viewport){background-color:var(--warlike-palette-scene,#121923)}
+
+/* Compact professional editor command strip: menus stay in row one, actions in row two */
+body:not(.hub-active) .studio-menubar{display:flex;align-items:center;gap:6px;padding-inline:12px;overflow:visible}
+body:not(.hub-active) .studio-menubar .studio-menus{display:flex;align-items:center;gap:2px;min-width:0}
+body:not(.hub-active) .studio-menubar .studio-menus>details>summary{min-height:28px;display:flex;align-items:center;padding:4px 9px;border-radius:4px}
+body:not(.hub-active) .studio-menubar .studio-menus>details[open]>summary{background:color-mix(in srgb,var(--editor-accent,#48cba9) 17%,#2c3440);color:#fff}
+body:not(.hub-active) .studio-menubar .studio-project-name{margin-left:auto;white-space:nowrap}
+body:not(.hub-active) header.topbar{display:flex;align-items:center;gap:6px;padding:0 10px;overflow:visible}
+body:not(.hub-active) header.topbar .toolbar-group{display:flex;align-items:center;gap:4px;min-width:0}
+body:not(.hub-active) header.topbar button{min-height:27px;white-space:nowrap}
+body:not(.hub-active) header.topbar .warlike-tool-library>summary{min-height:27px;display:flex;align-items:center;white-space:nowrap}
+body:not(.hub-active) header.topbar #play{font-weight:700;border-color:var(--editor-accent,#48cba9)}
+body:not(.hub-active) header.topbar .toolbar-group.transport{margin-left:8px}
+body:not(.hub-active) header.topbar .status{margin-left:auto}
+@media(max-width:1150px){
+ body:not(.hub-active) .studio-menubar .studio-menus>details>summary{padding-inline:5px;font-size:10px}
+ body:not(.hub-active) header.topbar .studio-compact-toggle{font-size:0;min-width:32px}
+ body:not(.hub-active) header.topbar .studio-compact-toggle::first-letter{font-size:15px}
+ body:not(.hub-active) header.topbar .warlike-tool-library>summary{font-size:10px}
+}

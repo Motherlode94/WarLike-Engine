@@ -989,3 +989,14 @@ body:has(#hubOverlay:not([hidden])) .warlike-status-footer{display:none!importan
 .warlike-tool-library-content section>div>label input[type=range]{flex:1;min-width:50px;max-width:200px}
 .warlike-tool-library-content section>div>button{min-height:34px;white-space:normal}
 body:not(.hub-active) .warlike-tool-library-content{max-height:min(72dvh,650px);overflow:auto}
+
+/* Workspace declutter: keep actions accessible in File menu and reveal advanced tools on demand */
+body:not(.hub-active) header.topbar .toolbar-storage-actions{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;pointer-events:none!important}
+body:not(.hub-active) .hierarchy-history{flex:none;min-height:0;border-top:1px solid #414c59}
+body:not(.hub-active) .hierarchy-history>summary{cursor:pointer;list-style:revert;padding:9px 10px;background:#222932;color:#b9c9d8;font-size:11px;font-weight:650}
+body:not(.hub-active) .hierarchy-history:not([open]) #history{display:none}
+body:not(.hub-active) .hierarchy-history[open] #history{max-height:180px;overflow:auto}
+body:not(.hub-active) .prefab-tools-collapsible{display:block!important;flex:none!important;min-height:0!important;padding:0!important;margin:0 0 8px!important;border:1px solid #435363;border-radius:5px;background:#1e2933}
+body:not(.hub-active) .prefab-tools-collapsible>summary{display:list-item!important;cursor:pointer!important;padding:9px 12px!important;color:#b7d4dc;font-size:12px;font-weight:650}
+body:not(.hub-active) .prefab-tools-collapsible:not([open])>:not(summary){display:none!important}
+body:not(.hub-active) .prefab-tools-collapsible[open]>:not(summary){box-sizing:border-box;width:calc(100% - 16px);margin:4px 8px}

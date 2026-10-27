@@ -69,15 +69,33 @@ component(root,'C# Components • .NET Runtime',body=>{
  const note=document.createElement('p');note.textContent='Configuration des composants C# pour le runtime .NET autonome. Non exécutés par Play Web.';body.append(note);
  const definitions=Array.isArray(o.csharpComponents)?o.csharpComponents:[];
  const supported={AutoRotate:[['speed','Vitesse (°/s)']],Health:[['regen','Régénération /s']],LinearMotion:[['vx','Vitesse X'],['vy','Vitesse Y'],['vz','Vitesse Z']],Rigidbody:[['gravity','Gravité'],['restitution','Rebond'],['friction','Friction']],FollowActor:[['targetId','ID cible'],['speed','Vitesse'],['stopDistance','Distance arrêt']],Team:[['teamId','Équipe ID']],Damageable:[['armor','Armure']],Score:[],Weapon:[['damage','Dégâts'],['fireRate','Tirs / seconde'],['magazineSize','Chargeur']],Respawn:[['delay','Délai de réapparition']],DeathmatchRules:[['matchDuration','Durée match (s)'],['scoreLimit','Limite de kills'],['countdown','Compte à rebours']],SpawnPoint:[['teamId','Équipe (-1 = tous)'],['radius','Rayon']],AmmoPickup:[['amount','Munitions']],HealthPickup:[['healAmount','Points de vie']],KillZone:[['damage','Dégâts']],ObjectiveZone:[['teamId','Équipe (-1 = tous)'],['captureTime','Temps de capture']],Projectile:[['speed','Vitesse'],['damage','Dégâts'],['lifetime','Durée de vie']]};
+ const defaults={AutoRotate:{speed:90},Health:{regen:0},LinearMotion:{vx:0,vy:0,vz:0},Rigidbody:{gravity:9.81,restitution:0,friction:0.5},FollowActor:{targetId:1,speed:3,stopDistance:1},Team:{teamId:0,friendlyFire:false},Damageable:{armor:0,invulnerable:false},Score:{},Weapon:{damage:25,fireRate:8,magazineSize:30},Respawn:{delay:5},DeathmatchRules:{matchDuration:600,scoreLimit:25,countdown:3},SpawnPoint:{teamId:-1,radius:1},AmmoPickup:{amount:30},HealthPickup:{healAmount:35},KillZone:{damage:10000},ObjectiveZone:{teamId:-1,captureTime:10},Projectile:{speed:30,damage:20,lifetime:5}};
+ const booleanFields={Team:[['friendlyFire','Tirs alliés']],Damageable:[['invulnerable','Invulnérable']]};
  const refresh=()=>{const existing=body.querySelector('.csharp-component-list');existing?.remove();const list=document.createElement('div');list.className='csharp-component-list';
- definitions.forEach((definition,index)=>{const box=document.createElement('fieldset');const legend=document.createElement('legend');legend.textContent=definition.kind;box.append(legend);
- for(const [key,label] of supported[definition.kind]||[]){const row=document.createElement('label');row.textContent=label+' ';const input=document.createElement('input');input.type='number';input.step='any';input.value=String(definition[key]??0);input.disabled=state.playing;input.onchange=()=>{if(!Number.isFinite(Number(input.value)))return;definition[key]=Number(input.value);record('C# '+definition.kind+' : '+key);notify()};row.append(input);box.append(row)}
- const remove=document.createElement('button');remove.type='button';remove.textContent='Supprimer';remove.disabled=state.playing;remove.onclick=()=>{definitions.splice(index,1);o.csharpComponents=definitions;record('Supprimer composant C#');notify()};box.append(remove);list.append(box)});
+ definitions.forEach((definition,index)=>{
+ const box=document.createElement('fieldset');box.className='warlike-script-component';
+ const legend=document.createElement('legend');legend.textContent=definition.kind;box.append(legend);
+ for(const [key,label] of supported[definition.kind]||[]){
+ const row=document.createElement('label');row.textContent=label+' ';
+ const input=document.createElement('input');input.type='number';input.step='any';input.value=String(definition[key]??defaults[definition.kind]?.[key]??0);input.disabled=state.playing;
+ input.onchange=()=>{const value=Number(input.value);if(!Number.isFinite(value)){input.value=String(definition[key]??0);return}definition[key]=value;record('C# '+definition.kind+' : '+key);notify()};
+ row.append(input);box.append(row);
+ }
+ for(const [key,label] of booleanFields[definition.kind]||[]){
+ const row=document.createElement('label');row.textContent=label+' ';const input=document.createElement('input');input.type='checkbox';input.checked=Boolean(definition[key]??defaults[definition.kind]?.[key]);input.disabled=state.playing;
+ input.onchange=()=>{definition[key]=input.checked;record('C# '+definition.kind+' : '+key);notify()};row.append(input);box.append(row);
+ }
+ const actions=document.createElement('div');actions.className='warlike-component-actions';
+ const duplicate=document.createElement('button');duplicate.type='button';duplicate.textContent='Dupliquer';duplicate.disabled=state.playing;duplicate.onclick=()=>{definitions.splice(index+1,0,structuredClone(definition));record('Dupliquer composant '+definition.kind);notify()};
+ const reset=document.createElement('button');reset.type='button';reset.textContent='Réinitialiser';reset.disabled=state.playing;reset.onclick=()=>{definitions[index]={kind:definition.kind,...structuredClone(defaults[definition.kind]||{})};record('Réinitialiser composant '+definition.kind);notify()};
+ const remove=document.createElement('button');remove.type='button';remove.textContent='Supprimer';remove.disabled=state.playing;remove.onclick=()=>{definitions.splice(index,1);o.csharpComponents=definitions;record('Supprimer composant C#');notify()};
+ actions.append(duplicate,reset,remove);box.append(actions);list.append(box);
+ });
  body.append(list)};
  const picker=document.createElement('select');for(const kind of Object.keys(supported)){const option=document.createElement('option');option.value=kind;option.textContent=kind;picker.append(option)}
  const search=document.createElement('input');search.type='search';search.placeholder='Rechercher un composant…';search.setAttribute('aria-label','Rechercher un composant C#');
  search.oninput=()=>{const q=search.value.trim().toLowerCase();for(const option of picker.options)option.hidden=!option.value.toLowerCase().includes(q);const first=[...picker.options].find(option=>!option.hidden);if(first)picker.value=first.value};
- const add=document.createElement('button');add.type='button';add.textContent='＋ Add Component';add.disabled=state.playing;add.onclick=()=>{const kind=picker.value;if(!kind||picker.selectedOptions[0]?.hidden)return;o.csharpComponents??=[];o.csharpComponents.push({kind});record('Ajouter composant C# '+kind);notify()};
+ const add=document.createElement('button');add.type='button';add.textContent='＋ Add Component';add.disabled=state.playing;add.onclick=()=>{const kind=picker.value;if(!kind||picker.selectedOptions[0]?.hidden)return;o.csharpComponents??=[];o.csharpComponents.push({kind,...structuredClone(defaults[kind]||{})});record('Ajouter composant C# '+kind);notify()};
  body.append(search,picker,add);refresh();
 });
 component(root,'Quick Start • Gameplay Recipes',body=>{

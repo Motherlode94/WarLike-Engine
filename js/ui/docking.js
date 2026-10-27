@@ -143,7 +143,14 @@ export function loadCustomLayout(){
  let saved;
  try{saved=JSON.parse(localStorage.getItem(customLayoutKey)||'null')}catch{return false}
  if(!saved||!Number.isFinite(saved.leftWidth)||!Number.isFinite(saved.rightWidth))return false;
- layout={leftWidth:clamp(saved.leftWidth,160,440),rightWidth:clamp(saved.rightWidth,190,480),float:saved.float&&typeof saved.float==='object'?saved.float:{}};
+ const safeFloat={};
+ if(saved.float&&typeof saved.float==='object'&&!Array.isArray(saved.float)){
+  for(const kind of Object.keys(panelMap)){
+   const panel=saved.float[kind];
+   if(panel&&['x','y','width','height'].every(key=>Number.isFinite(panel[key])))safeFloat[kind]=panel;
+  }
+ }
+ layout={leftWidth:clamp(saved.leftWidth,160,440),rightWidth:clamp(saved.rightWidth,190,480),float:safeFloat};
  const center=document.querySelector('.center-stack');
  if(center&&Number.isFinite(saved.projectHeight))center.style.setProperty('--project-height',clamp(saved.projectHeight,120,650)+'px');
  applyLayout();save();window.dispatchEvent(new Event('resize'));return true;

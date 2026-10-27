@@ -105,6 +105,11 @@ export function initEditorPalette(){
   palette=sanitizePalette({...palette,surface:defaultPalette.surface,text:defaultPalette.text,font:'default'},palette);
   theme='custom';save();
  });
+ document.getElementById('editorThemeDefault')?.addEventListener('click',()=>{
+  theme='graphite';
+  palette=sanitizePalette(editorThemePresets.graphite);
+  save();
+ });
  document.getElementById('editorAppearanceReset')?.addEventListener('click',()=>{
   theme='graphite';palette=sanitizePalette(editorThemePresets.graphite);save();
  });

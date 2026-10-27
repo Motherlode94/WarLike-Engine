@@ -34,3 +34,9 @@ test('per-object C# script source is retained in the scene and exportable',()=>{
  assert.match(source,/record\('C# : enregistrer script/);
  assert.match(source,/anchor\.download=safeName\(scriptName\.value\)\+'\.cs'/);
 });
+
+test('Inspector offers C# script editing on the selected GameObject',()=>{
+ const inspector=read('js/ui/inspector.js');
+ assert.match(inspector,/openCSharp\.textContent='C# Script'/);
+ assert.match(inspector,/document\.getElementById\('csharpScriptLoad'\)\?\.click\(\)/);
+});

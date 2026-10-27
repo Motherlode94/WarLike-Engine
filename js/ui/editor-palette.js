@@ -1,8 +1,6 @@
 // WarLike Studio unified theme engine. Single owner of preset and manual palette state.
 // Hub styling and per-project scene assets are intentionally independent.
 const KEY='warlike.editor.theme.v2';
-const OLD_PALETTE_KEY='warlike.editor.palette.v1';
-const OLD_ADVANCED_KEY='warlike.editor.advanced.v1';
 const COLOR=/^#[0-9a-f]{6}$/i;
 const P=(name,accent,surface,menu,toolbar,panel,header,button,border,muted,scene,footer,text)=>({
  name,accent,surface,menu,toolbar,panel,header,button,border,muted,scene,footer,text,font:'default',fontSize:12,fontWeight:'500'
@@ -56,17 +54,9 @@ export function initEditorPalette(){
   theme='custom';palette=sanitizePalette(saved.palette);
  }else if(saved?.palette&&saved.theme===theme){
   palette=sanitizePalette(saved.palette,editorThemePresets[theme]);
- }else if(!saved){
-  // One-time migration preserves existing users' hand-tuned colors.
-  let previousPalette=null,previousAdvanced=null;
-  try{previousPalette=JSON.parse(localStorage.getItem(OLD_PALETTE_KEY)||'null');previousAdvanced=JSON.parse(localStorage.getItem(OLD_ADVANCED_KEY)||'null')}catch{}
-  if(previousPalette||previousAdvanced){
-   let oldAccent=defaultPalette.accent;
-   try{oldAccent=localStorage.getItem('warlike.editor.accent.v1')||oldAccent}catch{}
-   theme='custom';
-   palette=sanitizePalette({...previousPalette,...(previousAdvanced||{}),accent:oldAccent});
-  }
  }
+ // Fresh installs always start with Unity Graphite. Old v1 manual colors must not
+ // silently override the default; only explicit v2 selections are restored.
  const apply=()=>{
   for(const [key,input] of Object.entries(inputs)){
    input.value=String(palette[key]);

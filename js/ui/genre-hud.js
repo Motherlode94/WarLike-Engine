@@ -1,3 +1,4 @@
+import {updateThreatScanner} from './threat-scanner.js';
 import {updateEngineDiagnosticsPanel} from './engine-diagnostics-panel.js';
 import {hub} from '../core/project-hub.js';
 // Lightweight status overlay for genre-specific playable prototypes.
@@ -9,6 +10,7 @@ const clock=seconds=>{
  return String(m).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0')+'.'+String(Math.floor(s*10)%10);
 };
 export function updateGenreHud(state){
+ updateThreatScanner(state);
  updateEngineDiagnosticsPanel(state);
  if(!hud){const host=document.getElementById('viewport');if(!host)return;hud=document.createElement('div');hud.className='warlike-genre-hud';hud.setAttribute('aria-live','off');host.append(hud)}
  if(!state.playing){hud.hidden=true;return}

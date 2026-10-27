@@ -770,3 +770,11 @@ body:not(.hub-open) .inspector{background:var(--warlike-custom-surface,#20252d);
 .inspector .inspector-axis input[type=number]{width:100%;min-width:0;padding:5px 3px;text-align:right;font-size:11px;font-variant-numeric:tabular-nums}
 .inspector .component-content input[type=search]{width:100%;min-width:0}
 @media(max-width:900px){.inspector .inspector-vector-row{grid-template-columns:1fr}.inspector .inspector-vector-fields{gap:3px}}
+
+/* Editable script component actions */
+.inspector .warlike-script-component{background:color-mix(in srgb,var(--warlike-custom-text,#eee) 3%,transparent)}
+.inspector .warlike-script-component legend{font-weight:700;font-size:12px;padding:0 5px;color:var(--editor-accent,#48cba9)}
+.inspector .warlike-script-component label:has(input[type=checkbox]){display:flex;justify-content:space-between;gap:12px}
+.inspector .warlike-script-component input[type=checkbox]{width:16px;height:16px;accent-color:var(--editor-accent,#48cba9)}
+.inspector .warlike-component-actions{display:flex;flex-wrap:wrap;gap:5px;border-top:1px solid color-mix(in srgb,var(--warlike-custom-text,#eee) 15%,transparent);padding-top:9px}
+.inspector .warlike-component-actions button{flex:1 1 auto;font-size:11px}

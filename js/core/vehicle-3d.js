@@ -1,3 +1,4 @@
+import {recordEngineEvent} from './engine-diagnostics.js';
 import {stepArcadeVehicle,moveVehicleWithCollision} from './arcade-driving.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 const center=o=>({x:o.x+(o.w||32)/2,y:o.y+(o.depth3d||o.h||32)/2});
@@ -26,13 +27,13 @@ export function updateDriving3d(entities,player,keys,dt){
     {x:car.x+(car.w||32)+12,y:car.y+((car.depth3d||car.h||32)-depth)/2}
    ];
    const free=exits.find(pos=>!entities.some(o=>solid(o,car,player)&&intersects({...player,depth3d:depth},pos.x,pos.y,o)));
-   if(free){player.x=free.x;player.y=free.y;player.elevation3d=car.elevation3d||0;player._hiddenInVehicle=false;player.animation='idle';resetDriving3d()}
+   if(free){player._vehicleInputConsumed=true;recordEngineEvent('vehicle-exit',car.name);player.x=free.x;player.y=free.y;player.elevation3d=car.elevation3d||0;player._hiddenInVehicle=false;player.animation='idle';resetDriving3d()}
   }else if(player){
    const p=center(player);
    const candidates=entities.filter(o=>o!==player&&isDriveable3d(o)).map(o=>({o,d:Math.hypot(center(o).x-p.x,center(o).y-p.y)})).sort((a,b)=>a.d-b.d);
    const nearest=candidates[0];
    if(nearest&&nearest.d<Math.max(150,(nearest.o.w||64)*.85)){
-    driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;player._hiddenInVehicle=true;player.animation='drive';
+    player._vehicleInputConsumed=true;recordEngineEvent('vehicle-enter',nearest.o.name);driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;player._hiddenInVehicle=true;player.animation='drive';
    }
   }
  }
@@ -47,7 +48,7 @@ export function updateDriving3d(entities,player,keys,dt){
  driving3d.speed=state.speed;driving3d.steer=state.steer;drivingCar.rotation=state.rotation;
  const move=moveVehicleWithCollision(drivingCar,state,(x,y)=>
   entities.some(o=>solid(o,drivingCar,player)&&intersects(drivingCar,x,y,o)),{maxStep:8});
- if(move.collision){driving3d.speed=-driving3d.speed*.12;driving3d.impact=.25}
+ if(move.collision){recordEngineEvent('collision',drivingCar.name);driving3d.speed=-driving3d.speed*.12;driving3d.impact=.25}
  player.x=drivingCar.x+((drivingCar.w||32)-(player.w||32))/2;
  player.y=drivingCar.y+((drivingCar.depth3d||drivingCar.h||32)-(player.depth3d||player.h||32))/2;
  player.elevation3d=drivingCar.elevation3d||0;player._hiddenInVehicle=true;player.animation='drive';

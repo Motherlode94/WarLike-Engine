@@ -1,0 +1,101 @@
+{
+  "apiVersion": "1.0",
+  "id": "adventure-3d",
+  "version": "1.0.0",
+  "name": "Adventure Essentials 3D",
+  "author": "WarLike Community",
+  "modes": [
+    "3d"
+  ],
+  "description": "Recettes d'aventure 3D : terminal, butin et zone de mission.",
+  "recipes": [
+    {
+      "id": "terminal-3d",
+      "name": "Terminal interactif 3D",
+      "description": "Déverrouille un accès à proximité",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 140,
+        "once": true,
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "doorAccess3d",
+            "value": 1
+          },
+          {
+            "type": "emitSignal",
+            "value": "adventure:access"
+          },
+          {
+            "type": "message",
+            "value": "Accès autorisé."
+          }
+        ]
+      }
+    },
+    {
+      "id": "supply-3d",
+      "name": "Caisse de matériel 3D",
+      "description": "Distribue des provisions",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 100,
+        "once": true,
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "medkit",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Trousse de soins obtenue."
+          }
+        ]
+      }
+    },
+    {
+      "id": "objective-3d",
+      "name": "Zone objectif 3D",
+      "description": "Valide une mission si l'accès est ouvert",
+      "sequence": {
+        "event": "enter",
+        "radius": 125,
+        "once": false,
+        "branches": [
+          {
+            "conditions": [
+              {
+                "type": "variable",
+                "key": "doorAccess3d",
+                "operator": "==",
+                "value": 1
+              }
+            ],
+            "instructions": [
+              {
+                "type": "setVariable",
+                "key": "missionDone3d",
+                "value": 1
+              },
+              {
+                "type": "message",
+                "value": "Mission accomplie !"
+              }
+            ]
+          }
+        ],
+        "elseInstructions": [
+          {
+            "type": "message",
+            "value": "Active le terminal d'abord."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -22,6 +22,7 @@ async Task Handle(HttpListenerContext ctx) {
     if (origin is not null) { res.Headers["Access-Control-Allow-Origin"]=origin; res.Headers["Vary"]="Origin"; }
     res.Headers["Access-Control-Allow-Methods"]="POST, GET, OPTIONS";
     res.Headers["Access-Control-Allow-Headers"]="Content-Type";
+    if (req.Headers["Access-Control-Request-Private-Network"] == "true") res.Headers["Access-Control-Allow-Private-Network"]="true";
     res.Headers["Cache-Control"]="no-store";
     try {
         if (req.HttpMethod=="OPTIONS"){res.StatusCode=204;return;}
@@ -38,9 +39,10 @@ async Task Handle(HttpListenerContext ctx) {
             using var doc=await JsonDocument.ParseAsync(req.InputStream);
             var root=doc.RootElement;
             var dt=root.TryGetProperty("dt",out var time)?time.GetSingle():1f/60f;
+            if(!float.IsFinite(dt)||dt<0||dt>0.25f)throw new ArgumentOutOfRangeException(nameof(dt),"Expected 0 <= dt <= 0.25");
             await gate.WaitAsync();try{
                 world.Tick(dt);
-                await Reply(new {ok=true,actors=world.Actors.Select(a=>new {id=a.Id,x=a.Position.X*64,y=a.Position.Z*64,elevation3d=a.Position.Y,hp=a.Health}).ToArray()});
+                await Reply(new {ok=true,actors=world.Actors.Select(a=>new {id=a.Id,x=a.Position.X*64,y=a.Position.Z*64,elevation3d=a.Position.Y,rotation=a.Rotation,hp=a.Health}).ToArray()});
             }finally{gate.Release();}return;
         }
         res.StatusCode=404;await Reply(new {error="Not found"});

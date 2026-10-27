@@ -32,7 +32,7 @@ test('AI follows player and changes to attack within range',()=>{
 test('3D controller applies movement and jump',()=>{
  const actor={id:1,x:0,y:0,w:20,h:20,stats:defaultStats()};
  updateController3d(actor,new Set(['w',' ','shift']),.016,0,[actor]);
- assert.ok(actor.y>0);
+ assert.ok(actor.y<0); // WarLike 3D forward faces negative ground Z at yaw 0
  assert.ok(actor.elevation3d>0);
  assert.ok(actor.stats.stamina<100);
 });

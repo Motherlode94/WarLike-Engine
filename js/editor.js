@@ -125,6 +125,12 @@ document.addEventListener('warlike:project',setWorkspaceUi);
 document.addEventListener('warlike:change',()=>{if(viewport3d&&view3d.enabled!==(workspace.mode==='3d')){viewport3d.syncToWorkspace();setWorkspaceUi()}});
 $('#duplicate').onclick=duplicateSelected;
 initDocking();
+const compactToggle=document.getElementById('studioCompactToggle');
+if(compactToggle){
+ const setCompact=compact=>{document.body.classList.toggle('warlike-compact-editor',compact);compactToggle.setAttribute('aria-pressed',String(compact));compactToggle.textContent=compact?'☷ Tous les outils':'☷ Outils';try{localStorage.setItem('warlike.editor.compact.v1',String(compact))}catch{}};
+ let initial=true;try{const saved=localStorage.getItem('warlike.editor.compact.v1');if(saved!==null)initial=saved!=='false'}catch{}
+ setCompact(initial);compactToggle.addEventListener('click',()=>setCompact(!document.body.classList.contains('warlike-compact-editor')));
+}
 document.getElementById('quickCreateObject')?.addEventListener('click',()=>addEntity('object'));
 document.getElementById('quickCreateCharacter')?.addEventListener('click',()=>addEntity('character'));
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});

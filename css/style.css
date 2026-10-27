@@ -801,15 +801,15 @@ body:not(.hub-open) .inspector{background:var(--warlike-custom-surface,#20252d);
 
 /* WarLike 3.1 — Unity-inspired docked editor workspace */
 :root{--left-pane-width:245px;--right-pane-width:350px}
-body:not(.hub-active) .studio-menubar{background:#292d33;border-bottom:1px solid #41464e}
-body:not(.hub-active) header.topbar{height:46px;min-height:46px;background:#25292f;border-bottom:1px solid #41464e}
-body:not(.hub-active) .brand{min-width:105px}
-body:not(.hub-active) .brand small{letter-spacing:.025em}
-body:not(.hub-active) .panel-title{background:#30343a;border-bottom:1px solid #42474e;font-weight:650}
-body:not(.hub-active) .panel{background:#24282e}
-body:not(.hub-active) .scene-header,body:not(.hub-active) .scene-tools{background:#292d33;border-color:#42474e}
-body:not(.hub-active) .tab.active{background:#363c44;border-bottom:2px solid #6ca9dc}
-body:not(.hub-active) .panel-search{border-radius:3px}
+body:not(.hub-open) .studio-menubar{background:#292d33;border-bottom:1px solid #41464e}
+body:not(.hub-open) header.topbar{height:46px;min-height:46px;background:#25292f;border-bottom:1px solid #41464e}
+body:not(.hub-open) .brand{min-width:105px}
+body:not(.hub-open) .brand small{letter-spacing:.025em}
+body:not(.hub-open) .panel-title{background:#30343a;border-bottom:1px solid #42474e;font-weight:650}
+body:not(.hub-open) .panel{background:#24282e}
+body:not(.hub-open) .scene-header,body:not(.hub-open) .scene-tools{background:#292d33;border-color:#42474e}
+body:not(.hub-open) .tab.active{background:#363c44;border-bottom:2px solid #6ca9dc}
+body:not(.hub-open) .panel-search{border-radius:3px}
 .warlike-create-bar{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px 8px 4px}
 .warlike-create-bar button{font-size:11px;padding:7px 3px;white-space:nowrap;background:#353b43;border:1px solid #505963}
 .warlike-create-bar button:hover{background:#42556a;border-color:#76a3cf}
@@ -858,50 +858,50 @@ body:not(.warlike-compact-editor) .topbar .render-quality-menu{display:none}
 body:not(.warlike-compact-editor) .topbar .save-status{display:none}
 
 /* Unity 6-inspired workspace structure: consistent tabs, restrained toolbar */
-body:not(.hub-active) .studio-menubar{height:36px;min-height:36px;padding:0 10px;gap:12px;background:#292b2f}
-body:not(.hub-active) .studio-menus{gap:1px}
-body:not(.hub-active) .studio-menus>details>summary,body:not(.hub-active) .studio-menus>button{font-size:11px;padding:6px 8px}
-body:not(.hub-active) .topbar{height:42px;min-height:42px;background:#33363b;border-bottom:1px solid #1c1e21}
-body:not(.hub-active) .studio-compact-toggle{font-size:11px}
-body:not(.hub-active) .workspace{background:#222428}
-body:not(.hub-active) .hierarchy,body:not(.hub-active) .inspector,body:not(.hub-active) .project-panel{background:#292b2f}
-body:not(.hub-active) .panel-title,body:not(.hub-active) .bottom-tabs{background:#303237;color:#d1d5da;border-bottom:1px solid #1b1d20}
-body:not(.hub-active) .scene-header{background:#303237;border-bottom:1px solid #1b1d20}
-body:not(.hub-active) .scene-tabs .tab{background:transparent;border:0;border-right:1px solid #414348;color:#afb5bd;padding:8px 16px}
-body:not(.hub-active) .scene-tabs .tab.active{background:#232529;color:#f1f3f5;border-bottom:2px solid #72a7d8}
-body:not(.hub-active) .bottom-tab{border-radius:0}
-body:not(.hub-active) .bottom-tab.active{background:#232529;border-bottom:2px solid #72a7d8}
-body:not(.hub-active) #objects button{background:transparent;border-radius:0;border:0;margin:0;padding:5px 10px}
-body:not(.hub-active) #objects button:hover{background:#393e46}
-body:not(.hub-active) #objects button.selected{background:#385b78;border-left:2px solid #8cbce7;color:#fff}
-body:not(.hub-active) #properties{padding:8px}
-body:not(.hub-active) #properties .warlike-inspector-edition{font-size:10px;letter-spacing:.02em}
-body:not(.hub-active) #properties details>summary{cursor:pointer}
-body:not(.hub-active) #viewport{border:0}
-body:not(.hub-active) .warlike-tool-library-content{top:78px}
+body:not(.hub-open) .studio-menubar{height:36px;min-height:36px;padding:0 10px;gap:12px;background:#292b2f}
+body:not(.hub-open) .studio-menus{gap:1px}
+body:not(.hub-open) .studio-menus>details>summary,body:not(.hub-open) .studio-menus>button{font-size:11px;padding:6px 8px}
+body:not(.hub-open) .topbar{height:42px;min-height:42px;background:#33363b;border-bottom:1px solid #1c1e21}
+body:not(.hub-open) .studio-compact-toggle{font-size:11px}
+body:not(.hub-open) .workspace{background:#222428}
+body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector,body:not(.hub-open) .project-panel{background:#292b2f}
+body:not(.hub-open) .panel-title,body:not(.hub-open) .bottom-tabs{background:#303237;color:#d1d5da;border-bottom:1px solid #1b1d20}
+body:not(.hub-open) .scene-header{background:#303237;border-bottom:1px solid #1b1d20}
+body:not(.hub-open) .scene-tabs .tab{background:transparent;border:0;border-right:1px solid #414348;color:#afb5bd;padding:8px 16px}
+body:not(.hub-open) .scene-tabs .tab.active{background:#232529;color:#f1f3f5;border-bottom:2px solid #72a7d8}
+body:not(.hub-open) .bottom-tab{border-radius:0}
+body:not(.hub-open) .bottom-tab.active{background:#232529;border-bottom:2px solid #72a7d8}
+body:not(.hub-open) #objects button{background:transparent;border-radius:0;border:0;margin:0;padding:5px 10px}
+body:not(.hub-open) #objects button:hover{background:#393e46}
+body:not(.hub-open) #objects button.selected{background:#385b78;border-left:2px solid #8cbce7;color:#fff}
+body:not(.hub-open) #properties{padding:8px}
+body:not(.hub-open) #properties .warlike-inspector-edition{font-size:10px;letter-spacing:.02em}
+body:not(.hub-open) #properties details>summary{cursor:pointer}
+body:not(.hub-open) #viewport{border:0}
+body:not(.hub-open) .warlike-tool-library-content{top:78px}
 
 /* WarLike unified editor shell v3.2 — Hub + 2D/3D + panels */
 :root{--wlk-shell:#242629;--wlk-panel:#2b2d31;--wlk-header:#35373c;--wlk-border:#17191c;--wlk-selection:#375b79;--wlk-fg:#d9dce0}
-body:not(.hub-active) .workspace{height:calc(100dvh - 78px);min-height:0;grid-template-columns:var(--left-pane-width,245px) 5px minmax(0,1fr) 5px var(--right-pane-width,350px);background:var(--wlk-border)}
-body:not(.hub-active) .center-stack{min-width:0;min-height:0;grid-template-rows:36px 37px minmax(0,1fr) 5px var(--project-height,260px)}
-body:not(.hub-active) .hierarchy,body:not(.hub-active) .inspector,body:not(.hub-active) .project-panel{background:var(--wlk-panel);border-color:var(--wlk-border)}
-body:not(.hub-active) .panel-title,body:not(.hub-active) .bottom-tabs{background:var(--wlk-header);min-height:30px;padding:6px 10px;letter-spacing:0;text-transform:none;font-size:12px;color:var(--wlk-fg)}
-body:not(.hub-active) .scene-header{background:var(--wlk-header);min-width:0;overflow:hidden}
-body:not(.hub-active) .scene-actions{min-width:0;overflow-x:auto;scrollbar-width:thin}
-body:not(.hub-active) .scene-tools{background:var(--wlk-header);overflow-x:auto;min-width:0}
-body:not(.hub-active) .scene-tabs{flex-shrink:0}
-body:not(.hub-active) #viewport{min-height:0;background:#1d1f22}
-body:not(.hub-active) #properties{min-width:0;overflow-wrap:anywhere}
-body:not(.hub-active) #projectContent{min-height:0}
-body:not(.hub-active) .studio-project-name{margin-left:auto;white-space:nowrap}
-body:not(.hub-active) .studio-menubar{overflow:visible}
-body:not(.hub-active) .studio-menus{min-width:0}
-body:not(.hub-active) .topbar{overflow-x:auto}
-body:not(.hub-active) .side-splitter,body:not(.hub-active) .project-splitter{background:#1b1d20}
-body:not(.hub-active) .side-splitter:hover,body:not(.hub-active) .project-splitter:hover{background:#5189ba}
-body:not(.hub-active) .warlike-component-card{background:#292c30}
-body:not(.hub-active) .warlike-component-card>summary{background:#373a40}
-body:not(.hub-active) .warlike-add-component{background:#2c3036}
+body:not(.hub-open) .workspace{height:calc(100dvh - 78px);min-height:0;grid-template-columns:var(--left-pane-width,245px) 5px minmax(0,1fr) 5px var(--right-pane-width,350px);background:var(--wlk-border)}
+body:not(.hub-open) .center-stack{min-width:0;min-height:0;grid-template-rows:36px 37px minmax(0,1fr) 5px var(--project-height,260px)}
+body:not(.hub-open) .hierarchy,body:not(.hub-open) .inspector,body:not(.hub-open) .project-panel{background:var(--wlk-panel);border-color:var(--wlk-border)}
+body:not(.hub-open) .panel-title,body:not(.hub-open) .bottom-tabs{background:var(--wlk-header);min-height:30px;padding:6px 10px;letter-spacing:0;text-transform:none;font-size:12px;color:var(--wlk-fg)}
+body:not(.hub-open) .scene-header{background:var(--wlk-header);min-width:0;overflow:hidden}
+body:not(.hub-open) .scene-actions{min-width:0;overflow-x:auto;scrollbar-width:thin}
+body:not(.hub-open) .scene-tools{background:var(--wlk-header);overflow-x:auto;min-width:0}
+body:not(.hub-open) .scene-tabs{flex-shrink:0}
+body:not(.hub-open) #viewport{min-height:0;background:#1d1f22}
+body:not(.hub-open) #properties{min-width:0;overflow-wrap:anywhere}
+body:not(.hub-open) #projectContent{min-height:0}
+body:not(.hub-open) .studio-project-name{margin-left:auto;white-space:nowrap}
+body:not(.hub-open) .studio-menubar{overflow:visible}
+body:not(.hub-open) .studio-menus{min-width:0}
+body:not(.hub-open) .topbar{overflow-x:auto}
+body:not(.hub-open) .side-splitter,body:not(.hub-open) .project-splitter{background:#1b1d20}
+body:not(.hub-open) .side-splitter:hover,body:not(.hub-open) .project-splitter:hover{background:#5189ba}
+body:not(.hub-open) .warlike-component-card{background:#292c30}
+body:not(.hub-open) .warlike-component-card>summary{background:#373a40}
+body:not(.hub-open) .warlike-add-component{background:#2c3036}
 /* Hub uses a project-manager shell, not an editor popover */
 #hubOverlay{background:#15171bed;backdrop-filter:blur(3px);padding:clamp(10px,2vw,26px)}
 #hubOverlay .hub-window{width:min(1280px,98vw);max-height:96dvh;background:#25282d;border:1px solid #4a4e55;border-radius:7px;box-shadow:0 25px 70px #000b}
@@ -917,7 +917,7 @@ body:not(.hub-active) .warlike-add-component{background:#2c3036}
 #hubOverlay .hub-create input,#hubOverlay .hub-create select{background:#22252a;border:1px solid #545d66;border-radius:4px}
 #hubOverlay .hub-primary{background:#366b91;border-color:#5d95bc}
 #hubOverlay .hub-project-card{border-radius:4px}
-@media(max-width:850px){#hubOverlay .hub-layout{grid-template-columns:1fr}#hubOverlay .hub-suite-grid{grid-template-columns:repeat(2,minmax(0,1fr))}body:not(.hub-active) .workspace{grid-template-columns:180px 5px minmax(0,1fr) 5px 215px}}
+@media(max-width:850px){#hubOverlay .hub-layout{grid-template-columns:1fr}#hubOverlay .hub-suite-grid{grid-template-columns:repeat(2,minmax(0,1fr))}body:not(.hub-open) .workspace{grid-template-columns:180px 5px minmax(0,1fr) 5px 215px}}
 
 /* Fix: native dropdown menus must overlay the editor and remain clickable */
 .studio-menubar{position:relative;z-index:1000;isolation:isolate}
@@ -927,7 +927,7 @@ body:not(.hub-active) .warlike-add-component{background:#2c3036}
 .studio-menus .studio-dropdown{position:absolute;top:100%;left:0;z-index:1006;min-width:230px;max-height:min(75dvh,650px);overflow-y:auto;background:#30343a;border:1px solid #59616a;box-shadow:0 12px 30px #0009}
 .studio-menus>details>summary{cursor:pointer;user-select:none}
 .studio-menus .studio-dropdown button{position:relative;z-index:1}
-body:not(.hub-active) .studio-menubar{overflow:visible!important}
+body:not(.hub-open) .studio-menubar{overflow:visible!important}
 
 /* Studio identity: unobtrusive bottom-right signature, outside the Hub */
 .warlike-studio-signature{position:fixed;right:14px;bottom:10px;z-index:50;pointer-events:none;display:flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid #59626b80;border-radius:4px;background:#20242bdf;color:#c7d1dc;font-size:10px;letter-spacing:.07em;box-shadow:0 2px 8px #0004}
@@ -936,10 +936,10 @@ body:has(#hubOverlay:not([hidden])) .warlike-studio-signature{display:none}
 /* Keep signature visible inside the actual editor, above bottom overlays */
 body .warlike-studio-signature{position:fixed!important;right:16px!important;bottom:16px!important;z-index:120!important;visibility:visible;opacity:1;max-width:calc(100vw - 32px)}
 body:has(#hubOverlay:not([hidden])) .warlike-studio-signature{display:none!important}
-body:not(.hub-active) .workspace{max-height:calc(100dvh - 78px);overflow:hidden}
-body:not(.hub-active) .center-stack{overflow:hidden}
-body:not(.hub-active) .project-panel{min-height:0;overflow:hidden}
-body:not(.hub-active) .project-panel #projectContent{overflow:auto;flex:1;min-height:0}
+body:not(.hub-open) .workspace{max-height:calc(100dvh - 78px);overflow:hidden}
+body:not(.hub-open) .center-stack{overflow:hidden}
+body:not(.hub-open) .project-panel{min-height:0;overflow:hidden}
+body:not(.hub-open) .project-panel #projectContent{overflow:auto;flex:1;min-height:0}
 
 /* Restore original graphic wordmark after moving it; position only changes */
 body .warlike-studio-signature.brand{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;width:auto;max-width:calc(100vw - 32px);padding:10px 14px;margin:0;border:1px solid #455665;border-left:3px solid #5fdfc0;border-radius:5px;background:linear-gradient(135deg,#202831f5,#171d25f5);box-shadow:0 8px 24px #0008;letter-spacing:normal}
@@ -958,7 +958,7 @@ body .warlike-footer-divider{height:13px;width:1px;background:#52606b;flex:none}
 body .warlike-status-footer .warlike-studio-signature.brand{position:static!important;right:auto!important;bottom:auto!important;z-index:auto!important;visibility:visible!important;opacity:1!important;pointer-events:none;flex:none;padding:3px 10px;border:0;border-left:2px solid #5fdfc0;border-radius:0;background:transparent;box-shadow:none}
 body .warlike-status-footer .warlike-studio-signature.brand strong{font-size:12px;line-height:1.2}
 body .warlike-status-footer .warlike-studio-signature.brand small{font-size:8px}
-body:not(.hub-active) .workspace{height:calc(100dvh - 78px - var(--warlike-footer-height));max-height:calc(100dvh - 78px - var(--warlike-footer-height))}
+body:not(.hub-open) .workspace{height:calc(100dvh - 78px - var(--warlike-footer-height));max-height:calc(100dvh - 78px - var(--warlike-footer-height))}
 body:has(#hubOverlay:not([hidden])) .warlike-status-footer{display:none!important}
 @media(max-width:600px){body .warlike-footer-status span:last-child,body .warlike-footer-divider{display:none}body .warlike-status-footer{padding:0 8px;gap:5px}body .warlike-status-footer .warlike-studio-signature.brand{padding:3px 6px}}
 
@@ -966,40 +966,40 @@ body:has(#hubOverlay:not([hidden])) .warlike-status-footer{display:none!importan
 html,body{height:100%;min-height:0}
 body .warlike-status-footer{position:fixed!important;inset:auto 0 0 0!important;width:100vw!important;height:44px!important;min-height:44px!important;max-height:44px!important;z-index:500!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;padding:0 16px!important;margin:0!important;border-radius:0!important;overflow:hidden!important;background:#171d25!important;border-top:1px solid #405160!important}
 body .warlike-status-footer .warlike-studio-signature.brand{position:static!important;inset:auto!important;transform:none!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;width:auto!important;height:auto!important;margin:0!important;padding:2px 10px!important;background:transparent!important;box-shadow:none!important;border:0!important;border-left:2px solid #5fdfc0!important;border-radius:0!important}
-body:not(.hub-active) .workspace{height:calc(100dvh - 122px)!important;max-height:calc(100dvh - 122px)!important;min-height:0!important}
+body:not(.hub-open) .workspace{height:calc(100dvh - 122px)!important;max-height:calc(100dvh - 122px)!important;min-height:0!important}
 body:has(#hubOverlay:not([hidden])) .warlike-status-footer{display:none!important}
 
 /* Application shell v3.3: a true bottom status row shared by 2D and 3D */
 :root{--warlike-menubar-height:36px;--warlike-toolbar-height:42px;--warlike-footer-height:44px}
 body{min-height:100dvh}
-body:not(.hub-active) .studio-menubar{height:var(--warlike-menubar-height);min-height:var(--warlike-menubar-height)}
-body:not(.hub-active) header.topbar{height:var(--warlike-toolbar-height);min-height:var(--warlike-toolbar-height)}
-body:not(.hub-active) .workspace{height:calc(100dvh - var(--warlike-menubar-height) - var(--warlike-toolbar-height) - var(--warlike-footer-height))!important;max-height:calc(100dvh - var(--warlike-menubar-height) - var(--warlike-toolbar-height) - var(--warlike-footer-height))!important;min-height:0!important;overflow:hidden}
-body:not(.hub-active) .center-stack{min-height:0;overflow:hidden;grid-template-rows:36px 37px minmax(0,1fr) 5px minmax(0,var(--project-height,260px))}
-body:not(.hub-active) .center-stack #viewport{min-height:0;overflow:hidden}
-body:not(.hub-active) .project-panel{min-height:0;overflow:hidden}
-body:not(.hub-active) .project-panel #projectContent{min-height:0;overflow:auto}
+body:not(.hub-open) .studio-menubar{height:var(--warlike-menubar-height);min-height:var(--warlike-menubar-height)}
+body:not(.hub-open) header.topbar{height:var(--warlike-toolbar-height);min-height:var(--warlike-toolbar-height)}
+body:not(.hub-open) .workspace{height:calc(100dvh - var(--warlike-menubar-height) - var(--warlike-toolbar-height) - var(--warlike-footer-height))!important;max-height:calc(100dvh - var(--warlike-menubar-height) - var(--warlike-toolbar-height) - var(--warlike-footer-height))!important;min-height:0!important;overflow:hidden}
+body:not(.hub-open) .center-stack{min-height:0;overflow:hidden;grid-template-rows:36px 37px minmax(0,1fr) 5px minmax(0,var(--project-height,260px))}
+body:not(.hub-open) .center-stack #viewport{min-height:0;overflow:hidden}
+body:not(.hub-open) .project-panel{min-height:0;overflow:hidden}
+body:not(.hub-open) .project-panel #projectContent{min-height:0;overflow:auto}
 body .warlike-status-footer{box-sizing:border-box;position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;width:100%!important;height:var(--warlike-footer-height)!important;max-height:var(--warlike-footer-height)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;z-index:500!important;padding:0 14px!important;background:#171d25!important;border-top:1px solid #405160!important;overflow:hidden!important}
 body .warlike-status-footer .warlike-studio-signature.brand{position:static!important;display:flex!important;flex-direction:column!important;flex:none!important;align-items:flex-start!important;gap:2px!important;inset:auto!important;transform:none!important;margin:0!important;padding:3px 10px!important;background:none!important;border:0!important;border-left:2px solid #5fdfc0!important;box-shadow:none!important;border-radius:0!important}
 body:has(#hubOverlay:not([hidden])) .warlike-status-footer{display:none!important}
-@media(max-height:600px){:root{--warlike-footer-height:36px}body .warlike-status-footer .warlike-studio-signature.brand small{display:none}body:not(.hub-active) .center-stack{grid-template-rows:32px 33px minmax(0,1fr) 5px minmax(0,var(--project-height,180px))}}
+@media(max-height:600px){:root{--warlike-footer-height:36px}body .warlike-status-footer .warlike-studio-signature.brand small{display:none}body:not(.hub-open) .center-stack{grid-template-rows:32px 33px minmax(0,1fr) 5px minmax(0,var(--project-height,180px))}}
 
 /* Tool library: grouped controls remain usable and legible */
 .warlike-tool-library-content section>div>label{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;grid-column:1/-1;padding:7px 10px;border:1px solid #45505b;border-radius:4px;background:#303944;color:#d6e0ea;font-size:11px}
 .warlike-tool-library-content section>div>label input[type=range]{flex:1;min-width:50px;max-width:200px}
 .warlike-tool-library-content section>div>button{min-height:34px;white-space:normal}
-body:not(.hub-active) .warlike-tool-library-content{max-height:min(72dvh,650px);overflow:auto}
+body:not(.hub-open) .warlike-tool-library-content{max-height:min(72dvh,650px);overflow:auto}
 
 /* Workspace declutter: keep actions accessible in File menu and reveal advanced tools on demand */
-body:not(.hub-active) header.topbar .toolbar-storage-actions{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;pointer-events:none!important}
-body:not(.hub-active) .hierarchy-history{flex:none;min-height:0;border-top:1px solid #414c59}
-body:not(.hub-active) .hierarchy-history>summary{cursor:pointer;list-style:revert;padding:9px 10px;background:#222932;color:#b9c9d8;font-size:11px;font-weight:650}
-body:not(.hub-active) .hierarchy-history:not([open]) #history{display:none}
-body:not(.hub-active) .hierarchy-history[open] #history{max-height:180px;overflow:auto}
-body:not(.hub-active) .prefab-tools-collapsible{display:block!important;flex:none!important;min-height:0!important;padding:0!important;margin:0 0 8px!important;border:1px solid #435363;border-radius:5px;background:#1e2933}
-body:not(.hub-active) .prefab-tools-collapsible>summary{display:list-item!important;cursor:pointer!important;padding:9px 12px!important;color:#b7d4dc;font-size:12px;font-weight:650}
-body:not(.hub-active) .prefab-tools-collapsible:not([open])>:not(summary){display:none!important}
-body:not(.hub-active) .prefab-tools-collapsible[open]>:not(summary){box-sizing:border-box;width:calc(100% - 16px);margin:4px 8px}
+body:not(.hub-open) header.topbar .toolbar-storage-actions{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;pointer-events:none!important}
+body:not(.hub-open) .hierarchy-history{flex:none;min-height:0;border-top:1px solid #414c59}
+body:not(.hub-open) .hierarchy-history>summary{cursor:pointer;list-style:revert;padding:9px 10px;background:#222932;color:#b9c9d8;font-size:11px;font-weight:650}
+body:not(.hub-open) .hierarchy-history:not([open]) #history{display:none}
+body:not(.hub-open) .hierarchy-history[open] #history{max-height:180px;overflow:auto}
+body:not(.hub-open) .prefab-tools-collapsible{display:block!important;flex:none!important;min-height:0!important;padding:0!important;margin:0 0 8px!important;border:1px solid #435363;border-radius:5px;background:#1e2933}
+body:not(.hub-open) .prefab-tools-collapsible>summary{display:list-item!important;cursor:pointer!important;padding:9px 12px!important;color:#b7d4dc;font-size:12px;font-weight:650}
+body:not(.hub-open) .prefab-tools-collapsible:not([open])>:not(summary){display:none!important}
+body:not(.hub-open) .prefab-tools-collapsible[open]>:not(summary){box-sizing:border-box;width:calc(100% - 16px);margin:4px 8px}
 
 /* Optional cursor styling: never override text editing, scene canvas or resize handles */
 .editor-cursor-settings{display:flex;flex-direction:column;gap:9px;margin:12px 0;padding:12px;border:1px solid #485867;border-radius:7px;min-width:0}
@@ -1023,63 +1023,63 @@ body.playing .warlike-cursor-halo{display:none}
 .editor-global-palette>label,.editor-font-settings>label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}
 .editor-global-palette input[type=color]{width:44px;min-width:44px;height:27px}
 .editor-font-settings input[type=range]{width:100%}
-body:not(.hub-active) :is(.studio-menubar,.studio-menus,.studio-project-name){background-color:var(--warlike-palette-menu,#222832)!important}
-body:not(.hub-active) header.topbar{background-color:var(--warlike-palette-toolbar,#252d38)!important}
-body:not(.hub-active) :is(.hierarchy,.inspector,.project-panel,.panel,.asset-content,.asset-folders,#properties){background-color:var(--warlike-palette-panel,#252b34)!important}
-body:not(.hub-active) :is(.panel-title,.dock-title,.bottom-tabs,.scene-tools,.asset-toolbar){background-color:var(--warlike-palette-header,#303944)!important}
-body:not(.hub-active) :is(.studio-menubar,.topbar,.panel,.dock-title,.asset-toolbar,.editor-appearance-menu){border-color:var(--warlike-palette-border,#455363)!important}
-body:not(.hub-active) :is(.studio-menubar,.topbar,.panel,.editor-appearance-menu) :is(button,select):not(.editor-swatches button){border-color:var(--warlike-palette-border,#455363)}
-body:not(.hub-active) :is(.studio-menubar,.topbar,.panel,.editor-appearance-menu) button:not(.bottom-tab,.active,.dock-toggle){background-color:var(--warlike-palette-button,#354251)}
-body:not(.hub-active) :is(.panel,.topbar,.studio-menubar) :is(small,.muted,.hint){color:var(--warlike-palette-muted,#a8b8c8)}
-body:not(.hub-active) :is(.workspace,.studio-menubar,header.topbar,.warlike-status-footer){font-size:var(--warlike-palette-fontSize,12px);font-weight:var(--warlike-palette-fontWeight,500)}
-body:not(.hub-active) .warlike-status-footer{background-color:var(--warlike-palette-footer,#171d25)!important;border-top-color:var(--warlike-palette-border,#455363)!important}
-body:not(.hub-active) :is(#canvas,.canvas-wrap,.scene-viewport){background-color:var(--warlike-palette-scene,#121923)}
+body:not(.hub-open) :is(.studio-menubar,.studio-menus,.studio-project-name){background-color:var(--warlike-palette-menu,#222832)!important}
+body:not(.hub-open) header.topbar{background-color:var(--warlike-palette-toolbar,#252d38)!important}
+body:not(.hub-open) :is(.hierarchy,.inspector,.project-panel,.panel,.asset-content,.asset-folders,#properties){background-color:var(--warlike-palette-panel,#252b34)!important}
+body:not(.hub-open) :is(.panel-title,.dock-title,.bottom-tabs,.scene-tools,.asset-toolbar){background-color:var(--warlike-palette-header,#303944)!important}
+body:not(.hub-open) :is(.studio-menubar,.topbar,.panel,.dock-title,.asset-toolbar,.editor-appearance-menu){border-color:var(--warlike-palette-border,#455363)!important}
+body:not(.hub-open) :is(.studio-menubar,.topbar,.panel,.editor-appearance-menu) :is(button,select):not(.editor-swatches button){border-color:var(--warlike-palette-border,#455363)}
+body:not(.hub-open) :is(.studio-menubar,.topbar,.panel,.editor-appearance-menu) button:not(.bottom-tab,.active,.dock-toggle){background-color:var(--warlike-palette-button,#354251)}
+body:not(.hub-open) :is(.panel,.topbar,.studio-menubar) :is(small,.muted,.hint){color:var(--warlike-palette-muted,#a8b8c8)}
+body:not(.hub-open) :is(.workspace,.studio-menubar,header.topbar,.warlike-status-footer){font-size:var(--warlike-palette-fontSize,12px);font-weight:var(--warlike-palette-fontWeight,500)}
+body:not(.hub-open) .warlike-status-footer{background-color:var(--warlike-palette-footer,#171d25)!important;border-top-color:var(--warlike-palette-border,#455363)!important}
+body:not(.hub-open) :is(#canvas,.canvas-wrap,.scene-viewport){background-color:var(--warlike-palette-scene,#121923)}
 
 /* Compact professional editor command strip: menus stay in row one, actions in row two */
-body:not(.hub-active) .studio-menubar{display:flex;align-items:center;gap:6px;padding-inline:12px;overflow:visible}
-body:not(.hub-active) .studio-menubar .studio-menus{display:flex;align-items:center;gap:2px;min-width:0}
-body:not(.hub-active) .studio-menubar .studio-menus>details>summary{min-height:28px;display:flex;align-items:center;padding:4px 9px;border-radius:4px}
-body:not(.hub-active) .studio-menubar .studio-menus>details[open]>summary{background:color-mix(in srgb,var(--editor-accent,#48cba9) 17%,#2c3440);color:#fff}
-body:not(.hub-active) .studio-menubar .studio-project-name{margin-left:auto;white-space:nowrap}
-body:not(.hub-active) header.topbar{display:flex;align-items:center;gap:6px;padding:0 10px;overflow:visible}
-body:not(.hub-active) header.topbar .toolbar-group{display:flex;align-items:center;gap:4px;min-width:0}
-body:not(.hub-active) header.topbar button{min-height:27px;white-space:nowrap}
-body:not(.hub-active) header.topbar .warlike-tool-library>summary{min-height:27px;display:flex;align-items:center;white-space:nowrap}
-body:not(.hub-active) header.topbar #play{font-weight:700;border-color:var(--editor-accent,#48cba9)}
-body:not(.hub-active) header.topbar .toolbar-group.transport{margin-left:8px}
-body:not(.hub-active) header.topbar .status{margin-left:auto}
+body:not(.hub-open) .studio-menubar{display:flex;align-items:center;gap:6px;padding-inline:12px;overflow:visible}
+body:not(.hub-open) .studio-menubar .studio-menus{display:flex;align-items:center;gap:2px;min-width:0}
+body:not(.hub-open) .studio-menubar .studio-menus>details>summary{min-height:28px;display:flex;align-items:center;padding:4px 9px;border-radius:4px}
+body:not(.hub-open) .studio-menubar .studio-menus>details[open]>summary{background:color-mix(in srgb,var(--editor-accent,#48cba9) 17%,#2c3440);color:#fff}
+body:not(.hub-open) .studio-menubar .studio-project-name{margin-left:auto;white-space:nowrap}
+body:not(.hub-open) header.topbar{display:flex;align-items:center;gap:6px;padding:0 10px;overflow:visible}
+body:not(.hub-open) header.topbar .toolbar-group{display:flex;align-items:center;gap:4px;min-width:0}
+body:not(.hub-open) header.topbar button{min-height:27px;white-space:nowrap}
+body:not(.hub-open) header.topbar .warlike-tool-library>summary{min-height:27px;display:flex;align-items:center;white-space:nowrap}
+body:not(.hub-open) header.topbar #play{font-weight:700;border-color:var(--editor-accent,#48cba9)}
+body:not(.hub-open) header.topbar .toolbar-group.transport{margin-left:8px}
+body:not(.hub-open) header.topbar .status{margin-left:auto}
 @media(max-width:1150px){
- body:not(.hub-active) .studio-menubar .studio-menus>details>summary{padding-inline:5px;font-size:10px}
- body:not(.hub-active) header.topbar .studio-compact-toggle{font-size:0;min-width:32px}
- body:not(.hub-active) header.topbar .studio-compact-toggle::first-letter{font-size:15px}
- body:not(.hub-active) header.topbar .warlike-tool-library>summary{font-size:10px}
+ body:not(.hub-open) .studio-menubar .studio-menus>details>summary{padding-inline:5px;font-size:10px}
+ body:not(.hub-open) header.topbar .studio-compact-toggle{font-size:0;min-width:32px}
+ body:not(.hub-open) header.topbar .studio-compact-toggle::first-letter{font-size:15px}
+ body:not(.hub-open) header.topbar .warlike-tool-library>summary{font-size:10px}
 }
 
 /* Primary action: quick-create objects, not a duplicate tool visibility switch */
-body:not(.hub-active) .studio-quick-create{position:relative;flex:none;z-index:90}
-body:not(.hub-active) .studio-quick-create>summary{list-style:none;display:flex;align-items:center;justify-content:center;min-height:29px;padding:5px 12px;border:1px solid var(--editor-accent,#48cba9);border-radius:5px;background:color-mix(in srgb,var(--editor-accent,#48cba9) 18%,#273541);color:#e9fff8;font-size:12px;font-weight:750;cursor:pointer;white-space:nowrap}
-body:not(.hub-active) .studio-quick-create>summary::-webkit-details-marker{display:none}
-body:not(.hub-active) .studio-quick-create[open]>summary{background:color-mix(in srgb,var(--editor-accent,#48cba9) 32%,#273541)}
-body:not(.hub-active) .studio-quick-create-menu{position:absolute;left:0;top:calc(100% + 7px);z-index:900;display:flex;flex-direction:column;gap:5px;width:205px;padding:11px;border:1px solid var(--warlike-palette-border,#455363);border-radius:7px;background:var(--warlike-palette-panel,#252b34);box-shadow:0 12px 28px #0009}
-body:not(.hub-active) .studio-quick-create-menu strong{padding:2px 5px 6px;font-size:11px;color:var(--editor-accent,#48cba9)}
-body:not(.hub-active) .studio-quick-create-menu button{width:100%;text-align:left;min-height:33px;padding:7px 9px;border:1px solid transparent;border-radius:4px;color:var(--warlike-custom-text,#e7eaf0);background:var(--warlike-palette-button,#354251);cursor:pointer}
-body:not(.hub-active) .studio-quick-create-menu button:hover{border-color:var(--editor-accent,#48cba9);filter:brightness(1.14)}
+body:not(.hub-open) .studio-quick-create{position:relative;flex:none;z-index:90}
+body:not(.hub-open) .studio-quick-create>summary{list-style:none;display:flex;align-items:center;justify-content:center;min-height:29px;padding:5px 12px;border:1px solid var(--editor-accent,#48cba9);border-radius:5px;background:color-mix(in srgb,var(--editor-accent,#48cba9) 18%,#273541);color:#e9fff8;font-size:12px;font-weight:750;cursor:pointer;white-space:nowrap}
+body:not(.hub-open) .studio-quick-create>summary::-webkit-details-marker{display:none}
+body:not(.hub-open) .studio-quick-create[open]>summary{background:color-mix(in srgb,var(--editor-accent,#48cba9) 32%,#273541)}
+body:not(.hub-open) .studio-quick-create-menu{position:absolute;left:0;top:calc(100% + 7px);z-index:900;display:flex;flex-direction:column;gap:5px;width:205px;padding:11px;border:1px solid var(--warlike-palette-border,#455363);border-radius:7px;background:var(--warlike-palette-panel,#252b34);box-shadow:0 12px 28px #0009}
+body:not(.hub-open) .studio-quick-create-menu strong{padding:2px 5px 6px;font-size:11px;color:var(--editor-accent,#48cba9)}
+body:not(.hub-open) .studio-quick-create-menu button{width:100%;text-align:left;min-height:33px;padding:7px 9px;border:1px solid transparent;border-radius:4px;color:var(--warlike-custom-text,#e7eaf0);background:var(--warlike-palette-button,#354251);cursor:pointer}
+body:not(.hub-open) .studio-quick-create-menu button:hover{border-color:var(--editor-accent,#48cba9);filter:brightness(1.14)}
 
 /* Focus mode: primary actions at the very top, secondary tools never steal scene height */
 :root{--warlike-menubar-height:42px;--warlike-toolbar-height:0px}
 body.warlike-toolbar-expanded{--warlike-toolbar-height:42px}
-body:not(.hub-active) .studio-menubar{height:var(--warlike-menubar-height)!important;min-height:var(--warlike-menubar-height)!important;gap:8px!important}
-body:not(.hub-active) .studio-primary-actions{display:flex;align-items:center;gap:5px;min-width:0;flex:none}
-body:not(.hub-active) .studio-primary-actions>button{min-height:29px;padding:5px 10px;border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;background:var(--warlike-palette-button,#354251);color:var(--warlike-custom-text,#e7eaf0);white-space:nowrap;cursor:pointer}
-body:not(.hub-active) .studio-primary-actions>#play{border-color:var(--editor-accent,#48cba9);font-weight:750}
-body:not(.hub-active) .studio-toolbar-toggle{flex:none;min-height:29px;padding:5px 10px;border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;background:transparent;color:var(--warlike-custom-text,#e7eaf0);white-space:nowrap;cursor:pointer}
-body:not(.hub-active) header.topbar{height:0!important;min-height:0!important;max-height:0!important;padding:0!important;border:0!important;overflow:hidden!important;visibility:hidden}
-body:not(.hub-active).warlike-toolbar-expanded header.topbar{height:42px!important;min-height:42px!important;max-height:42px!important;padding:0 10px!important;border-bottom:1px solid #405160!important;overflow:visible!important;visibility:visible}
-body:not(.hub-active) .workspace{height:calc(100dvh - var(--warlike-menubar-height) - var(--warlike-toolbar-height) - var(--warlike-footer-height))!important;max-height:calc(100dvh - var(--warlike-menubar-height) - var(--warlike-toolbar-height) - var(--warlike-footer-height))!important}
-body:not(.hub-active) .studio-primary-actions .warlike-tool-library-content{top:calc(var(--warlike-menubar-height) + 4px)}
-body:not(.hub-active) .studio-primary-actions .studio-quick-create-menu{top:calc(100% + 6px)}
-@media(max-width:1250px){body:not(.hub-active) .studio-primary-actions>#undo,body:not(.hub-active) .studio-primary-actions>#redo{display:none}body:not(.hub-active) .studio-primary-actions>#openBlueprint{font-size:0}body:not(.hub-active) .studio-primary-actions>#openBlueprint::after{content:'⬡ Blueprint';font-size:11px}}
-@media(max-width:900px){body:not(.hub-active) .studio-primary-actions .warlike-tool-library>summary{font-size:0}body:not(.hub-active) .studio-primary-actions .warlike-tool-library>summary::after{content:'▦ Outils';font-size:11px}body:not(.hub-active) .studio-project-name{max-width:165px;overflow:hidden}}
+body:not(.hub-open) .studio-menubar{height:var(--warlike-menubar-height)!important;min-height:var(--warlike-menubar-height)!important;gap:8px!important}
+body:not(.hub-open) .studio-primary-actions{display:flex;align-items:center;gap:5px;min-width:0;flex:none}
+body:not(.hub-open) .studio-primary-actions>button{min-height:29px;padding:5px 10px;border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;background:var(--warlike-palette-button,#354251);color:var(--warlike-custom-text,#e7eaf0);white-space:nowrap;cursor:pointer}
+body:not(.hub-open) .studio-primary-actions>#play{border-color:var(--editor-accent,#48cba9);font-weight:750}
+body:not(.hub-open) .studio-toolbar-toggle{flex:none;min-height:29px;padding:5px 10px;border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;background:transparent;color:var(--warlike-custom-text,#e7eaf0);white-space:nowrap;cursor:pointer}
+body:not(.hub-open) header.topbar{height:0!important;min-height:0!important;max-height:0!important;padding:0!important;border:0!important;overflow:hidden!important;visibility:hidden}
+body:not(.hub-open).warlike-toolbar-expanded header.topbar{height:42px!important;min-height:42px!important;max-height:42px!important;padding:0 10px!important;border-bottom:1px solid #405160!important;overflow:visible!important;visibility:visible}
+body:not(.hub-open) .workspace{height:calc(100dvh - var(--warlike-menubar-height) - var(--warlike-toolbar-height) - var(--warlike-footer-height))!important;max-height:calc(100dvh - var(--warlike-menubar-height) - var(--warlike-toolbar-height) - var(--warlike-footer-height))!important}
+body:not(.hub-open) .studio-primary-actions .warlike-tool-library-content{top:calc(var(--warlike-menubar-height) + 4px)}
+body:not(.hub-open) .studio-primary-actions .studio-quick-create-menu{top:calc(100% + 6px)}
+@media(max-width:1250px){body:not(.hub-open) .studio-primary-actions>#undo,body:not(.hub-open) .studio-primary-actions>#redo{display:none}body:not(.hub-open) .studio-primary-actions>#openBlueprint{font-size:0}body:not(.hub-open) .studio-primary-actions>#openBlueprint::after{content:'⬡ Blueprint';font-size:11px}}
+@media(max-width:900px){body:not(.hub-open) .studio-primary-actions .warlike-tool-library>summary{font-size:0}body:not(.hub-open) .studio-primary-actions .warlike-tool-library>summary::after{content:'▦ Outils';font-size:11px}body:not(.hub-open) .studio-project-name{max-width:165px;overflow:hidden}}
 
 /* Unity-style Inspector: optional recipes stay behind Add Behaviors, not in the property stack */
 #properties>.inspector-advanced-tools{margin:10px 8px 14px;border:1px solid var(--warlike-palette-border,#455363);border-radius:5px;background:var(--warlike-palette-panel,#252b34);overflow:hidden}
@@ -1092,51 +1092,51 @@ body:not(.hub-active) .studio-primary-actions .studio-quick-create-menu{top:calc
 #properties .inspector-advanced-content>.inspector-component:not([open]) .component-content{display:none}
 
 /* Unity-inspired Inspector: flat component headers, restrained density, one Add Component */
-body:not(.hub-active) .inspector #properties{gap:3px!important;padding:6px!important;background:var(--warlike-palette-panel,#252b34)}
-body:not(.hub-active) .inspector #properties>.inspector-object{padding:8px 9px!important;margin:0 0 8px!important;gap:3px!important;border:0!important;border-bottom:1px solid var(--warlike-palette-border,#455363)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
-body:not(.hub-active) .inspector #properties>.inspector-object input{font-size:13px!important;font-weight:600!important;min-height:28px!important;border-radius:3px!important}
-body:not(.hub-active) .inspector #properties>.inspector-object small{font-size:10px!important;opacity:.65}
-body:not(.hub-active) .inspector #properties>.inspector-component{margin:0!important;border:1px solid var(--warlike-palette-border,#455363)!important;border-radius:2px!important;background:var(--warlike-palette-panel,#252b34)!important;box-shadow:none!important}
-body:not(.hub-active) .inspector #properties>.inspector-component>summary{min-height:28px!important;padding:5px 9px!important;border-radius:0!important;background:var(--warlike-palette-header,#303944)!important;font-size:11px!important;font-weight:600!important;line-height:1.25!important}
-body:not(.hub-active) .inspector #properties>.inspector-component>summary::before{content:'▸'!important;color:#a6b2bd!important;font-size:11px!important}
-body:not(.hub-active) .inspector #properties>.inspector-component[open]>summary::before{transform:rotate(90deg)}
-body:not(.hub-active) .inspector #properties>.inspector-component>.component-content{padding:8px!important;gap:5px!important;background:transparent!important}
-body:not(.hub-active) .inspector #properties>.inspector-component .property-row{min-height:26px!important;gap:7px!important}
-body:not(.hub-active) .inspector #properties>.inspector-component .property-row input{min-height:24px!important}
-body:not(.hub-active) .inspector #properties>.inspector-advanced-tools{margin:12px 4px 6px!important;border:0!important;background:transparent!important;overflow:visible!important}
-body:not(.hub-active) .inspector #properties>.inspector-advanced-tools>summary{min-height:31px!important;border:1px solid var(--warlike-palette-border,#455363)!important;border-radius:4px!important;background:var(--warlike-palette-button,#354251)!important;font-size:12px!important;font-weight:600!important}
-body:not(.hub-active) .inspector #properties>.inspector-advanced-tools>.inspector-advanced-content{margin-top:7px;padding:4px!important;border:1px solid var(--warlike-palette-border,#455363);border-radius:3px}
-body:not(.hub-active) .inspector #properties>.delete-object{margin:10px 4px 6px!important;opacity:.8}
+body:not(.hub-open) .inspector #properties{gap:3px!important;padding:6px!important;background:var(--warlike-palette-panel,#252b34)}
+body:not(.hub-open) .inspector #properties>.inspector-object{padding:8px 9px!important;margin:0 0 8px!important;gap:3px!important;border:0!important;border-bottom:1px solid var(--warlike-palette-border,#455363)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+body:not(.hub-open) .inspector #properties>.inspector-object input{font-size:13px!important;font-weight:600!important;min-height:28px!important;border-radius:3px!important}
+body:not(.hub-open) .inspector #properties>.inspector-object small{font-size:10px!important;opacity:.65}
+body:not(.hub-open) .inspector #properties>.inspector-component{margin:0!important;border:1px solid var(--warlike-palette-border,#455363)!important;border-radius:2px!important;background:var(--warlike-palette-panel,#252b34)!important;box-shadow:none!important}
+body:not(.hub-open) .inspector #properties>.inspector-component>summary{min-height:28px!important;padding:5px 9px!important;border-radius:0!important;background:var(--warlike-palette-header,#303944)!important;font-size:11px!important;font-weight:600!important;line-height:1.25!important}
+body:not(.hub-open) .inspector #properties>.inspector-component>summary::before{content:'▸'!important;color:#a6b2bd!important;font-size:11px!important}
+body:not(.hub-open) .inspector #properties>.inspector-component[open]>summary::before{transform:rotate(90deg)}
+body:not(.hub-open) .inspector #properties>.inspector-component>.component-content{padding:8px!important;gap:5px!important;background:transparent!important}
+body:not(.hub-open) .inspector #properties>.inspector-component .property-row{min-height:26px!important;gap:7px!important}
+body:not(.hub-open) .inspector #properties>.inspector-component .property-row input{min-height:24px!important}
+body:not(.hub-open) .inspector #properties>.inspector-advanced-tools{margin:12px 4px 6px!important;border:0!important;background:transparent!important;overflow:visible!important}
+body:not(.hub-open) .inspector #properties>.inspector-advanced-tools>summary{min-height:31px!important;border:1px solid var(--warlike-palette-border,#455363)!important;border-radius:4px!important;background:var(--warlike-palette-button,#354251)!important;font-size:12px!important;font-weight:600!important}
+body:not(.hub-open) .inspector #properties>.inspector-advanced-tools>.inspector-advanced-content{margin-top:7px;padding:4px!important;border:1px solid var(--warlike-palette-border,#455363);border-radius:3px}
+body:not(.hub-open) .inspector #properties>.delete-object{margin:10px 4px 6px!important;opacity:.8}
 
 /* Unified workbench panels: Hierarchy, Scene, Game, Project, Console and Inspector */
-body:not(.hub-active) .workspace :is(.hierarchy,.project-panel,.inspector){background:var(--warlike-palette-panel,#252b34)!important;border-radius:0!important;box-shadow:none!important;color:var(--warlike-custom-text,#e7eaf0)}
-body:not(.hub-active) .workspace :is(.panel-title,.bottom-tabs,.scene-tools,.scene-tabs,.asset-toolbar,.console-bar){min-height:29px;background:var(--warlike-palette-header,#303944)!important;border-color:var(--warlike-palette-border,#455363)!important;border-radius:0!important;box-shadow:none!important}
-body:not(.hub-active) .workspace :is(.panel-title,.bottom-tabs,.scene-tabs) :is(button,span){font-size:11px}
-body:not(.hub-active) .hierarchy>.panel-title{height:30px!important;min-height:30px!important;padding:0 7px!important}
-body:not(.hub-active) .hierarchy>.warlike-create-bar{display:flex;gap:5px;padding:7px 6px 5px;background:transparent!important}
-body:not(.hub-active) .hierarchy>.warlike-create-bar button{flex:1;min-width:0;min-height:26px!important;padding:4px 5px!important;border:1px solid var(--warlike-palette-border,#455363)!important;border-radius:3px!important;background:var(--warlike-palette-button,#354251)!important;color:var(--warlike-custom-text,#e7eaf0)!important;font-size:10px!important;white-space:nowrap}
-body:not(.hub-active) .hierarchy>.panel-search{box-sizing:border-box;width:calc(100% - 12px)!important;margin:3px 6px 6px!important;min-height:27px!important;border-radius:3px!important;font-size:11px!important}
-body:not(.hub-active) .hierarchy #objects{padding:2px 4px!important;background:transparent!important}
-body:not(.hub-active) .hierarchy #objects :is(button,.hierarchy-item,.object-row){min-height:23px;border-radius:2px!important}
-body:not(.hub-active) .hierarchy #objects :is(.selected,.active,[aria-selected=true]){background:color-mix(in srgb,var(--editor-accent,#48cba9) 20%,var(--warlike-palette-panel,#252b34))!important}
-body:not(.hub-active) .hierarchy>small{display:block;padding:5px 7px;font-size:10px;opacity:.65}
-body:not(.hub-active) .hierarchy-history{border-top:1px solid var(--warlike-palette-border,#455363)!important}
-body:not(.hub-active) .hierarchy-history>summary{min-height:26px!important;padding:6px 8px!important;border-radius:0!important;background:var(--warlike-palette-header,#303944)!important;font-size:11px!important}
-body:not(.hub-active) .center-stack .scene-tools{height:33px!important;min-height:33px!important;padding:0 7px!important;gap:6px!important}
-body:not(.hub-active) .center-stack :is(.scene-tools,.bottom-tabs) button{border-radius:3px!important;box-shadow:none!important}
-body:not(.hub-active) .center-stack :is(.scene-tools,.bottom-tabs) button.active{border-bottom:2px solid var(--editor-accent,#48cba9)!important}
-body:not(.hub-active) .project-panel .bottom-tabs{height:31px!important;min-height:31px!important;padding:0 6px!important;gap:4px!important}
-body:not(.hub-active) .project-panel .bottom-tab{min-height:27px!important;padding:4px 9px!important;border:0!important;background:transparent!important;color:var(--warlike-custom-text,#e7eaf0)!important}
-body:not(.hub-active) .project-panel .bottom-tab.active{background:color-mix(in srgb,var(--editor-accent,#48cba9) 10%,var(--warlike-palette-header,#303944))!important}
-body:not(.hub-active) .project-panel .browser-title{min-height:26px!important;padding:3px 8px!important;font-size:11px!important;text-transform:none!important}
-body:not(.hub-active) .project-panel :is(.asset-toolbar,.console-bar){padding:5px 7px!important;gap:6px!important}
-body:not(.hub-active) .project-panel :is(.asset-toolbar,.console-bar) :is(button,input,select){border-radius:3px!important;font-size:11px}
-body:not(.hub-active) .project-panel #assetBreadcrumb{padding:5px 8px!important;font-size:10px!important;opacity:.75}
-body:not(.hub-active) .project-panel #assetGrid{background:var(--warlike-palette-panel,#252b34)!important}
-body:not(.hub-active) .project-panel #assetGrid>*{border-radius:3px!important;box-shadow:none!important}
-body:not(.hub-active) .project-panel #assetGrid>*:hover{border-color:var(--editor-accent,#48cba9)!important}
-body:not(.hub-active) .project-panel .project-footer{background:var(--warlike-palette-header,#303944)!important;border-top:1px solid var(--warlike-palette-border,#455363)!important;font-size:10px!important}
-body:not(.hub-active) .workspace :is(.side-splitter,.project-splitter){background:var(--warlike-palette-border,#455363)!important}
+body:not(.hub-open) .workspace :is(.hierarchy,.project-panel,.inspector){background:var(--warlike-palette-panel,#252b34)!important;border-radius:0!important;box-shadow:none!important;color:var(--warlike-custom-text,#e7eaf0)}
+body:not(.hub-open) .workspace :is(.panel-title,.bottom-tabs,.scene-tools,.scene-tabs,.asset-toolbar,.console-bar){min-height:29px;background:var(--warlike-palette-header,#303944)!important;border-color:var(--warlike-palette-border,#455363)!important;border-radius:0!important;box-shadow:none!important}
+body:not(.hub-open) .workspace :is(.panel-title,.bottom-tabs,.scene-tabs) :is(button,span){font-size:11px}
+body:not(.hub-open) .hierarchy>.panel-title{height:30px!important;min-height:30px!important;padding:0 7px!important}
+body:not(.hub-open) .hierarchy>.warlike-create-bar{display:flex;gap:5px;padding:7px 6px 5px;background:transparent!important}
+body:not(.hub-open) .hierarchy>.warlike-create-bar button{flex:1;min-width:0;min-height:26px!important;padding:4px 5px!important;border:1px solid var(--warlike-palette-border,#455363)!important;border-radius:3px!important;background:var(--warlike-palette-button,#354251)!important;color:var(--warlike-custom-text,#e7eaf0)!important;font-size:10px!important;white-space:nowrap}
+body:not(.hub-open) .hierarchy>.panel-search{box-sizing:border-box;width:calc(100% - 12px)!important;margin:3px 6px 6px!important;min-height:27px!important;border-radius:3px!important;font-size:11px!important}
+body:not(.hub-open) .hierarchy #objects{padding:2px 4px!important;background:transparent!important}
+body:not(.hub-open) .hierarchy #objects :is(button,.hierarchy-item,.object-row){min-height:23px;border-radius:2px!important}
+body:not(.hub-open) .hierarchy #objects :is(.selected,.active,[aria-selected=true]){background:color-mix(in srgb,var(--editor-accent,#48cba9) 20%,var(--warlike-palette-panel,#252b34))!important}
+body:not(.hub-open) .hierarchy>small{display:block;padding:5px 7px;font-size:10px;opacity:.65}
+body:not(.hub-open) .hierarchy-history{border-top:1px solid var(--warlike-palette-border,#455363)!important}
+body:not(.hub-open) .hierarchy-history>summary{min-height:26px!important;padding:6px 8px!important;border-radius:0!important;background:var(--warlike-palette-header,#303944)!important;font-size:11px!important}
+body:not(.hub-open) .center-stack .scene-tools{height:33px!important;min-height:33px!important;padding:0 7px!important;gap:6px!important}
+body:not(.hub-open) .center-stack :is(.scene-tools,.bottom-tabs) button{border-radius:3px!important;box-shadow:none!important}
+body:not(.hub-open) .center-stack :is(.scene-tools,.bottom-tabs) button.active{border-bottom:2px solid var(--editor-accent,#48cba9)!important}
+body:not(.hub-open) .project-panel .bottom-tabs{height:31px!important;min-height:31px!important;padding:0 6px!important;gap:4px!important}
+body:not(.hub-open) .project-panel .bottom-tab{min-height:27px!important;padding:4px 9px!important;border:0!important;background:transparent!important;color:var(--warlike-custom-text,#e7eaf0)!important}
+body:not(.hub-open) .project-panel .bottom-tab.active{background:color-mix(in srgb,var(--editor-accent,#48cba9) 10%,var(--warlike-palette-header,#303944))!important}
+body:not(.hub-open) .project-panel .browser-title{min-height:26px!important;padding:3px 8px!important;font-size:11px!important;text-transform:none!important}
+body:not(.hub-open) .project-panel :is(.asset-toolbar,.console-bar){padding:5px 7px!important;gap:6px!important}
+body:not(.hub-open) .project-panel :is(.asset-toolbar,.console-bar) :is(button,input,select){border-radius:3px!important;font-size:11px}
+body:not(.hub-open) .project-panel #assetBreadcrumb{padding:5px 8px!important;font-size:10px!important;opacity:.75}
+body:not(.hub-open) .project-panel #assetGrid{background:var(--warlike-palette-panel,#252b34)!important}
+body:not(.hub-open) .project-panel #assetGrid>*{border-radius:3px!important;box-shadow:none!important}
+body:not(.hub-open) .project-panel #assetGrid>*:hover{border-color:var(--editor-accent,#48cba9)!important}
+body:not(.hub-open) .project-panel .project-footer{background:var(--warlike-palette-header,#303944)!important;border-top:1px solid var(--warlike-palette-border,#455363)!important;font-size:10px!important}
+body:not(.hub-open) .workspace :is(.side-splitter,.project-splitter){background:var(--warlike-palette-border,#455363)!important}
 
 /* Compact race + RTS runtime HUD; pointer events pass through to gameplay */
 #viewport>.warlike-genre-hud{position:absolute;z-index:21;top:12px;left:50%;transform:translateX(-50%);max-width:calc(100% - 28px);padding:7px 12px;border:1px solid #607783;border-radius:5px;background:#12202de8;color:#f2f5fc;font:600 12px/1.4 system-ui,sans-serif;box-shadow:0 4px 12px #0007;white-space:nowrap;text-align:center;pointer-events:none}
@@ -1171,28 +1171,28 @@ body:not(.hub-active) .workspace :is(.side-splitter,.project-splitter){backgroun
 
 /* WarLike Studio 8 theme system: shared tokens for all editor chrome.
    Scope excludes Hub to preserve separately customized Hub palettes. */
-body:not(.hub-active){color:var(--warlike-palette-text,#e5e7eb);background:var(--warlike-palette-surface,#252629)}
-body:not(.hub-active) :is(.studio-menubar,.topbar,.workspace,.center-stack,.hierarchy,.inspector,.project-panel,.panel,.asset-content,.asset-folders,.warlike-status-footer,.csharp-runtime-panel,.blueprint-dialog,.editor-appearance-menu){color:var(--warlike-palette-text,#e5e7eb)!important}
-body:not(.hub-active) :is(.workspace,.center-stack,.hierarchy,.inspector,.project-panel,.panel,.asset-content,.asset-folders,#properties,.inspector-component,.csharp-runtime-panel){background-color:var(--warlike-palette-panel,#323438)!important}
-body:not(.hub-active) :is(.scene-tools,.bottom-tabs,.panel-title,.dock-title,.asset-toolbar,.browser-title,.console-bar,.hierarchy-history>summary,.inspector-component>summary,.csharp-runtime-panel>header){background-color:var(--warlike-palette-header,#454950)!important;color:var(--warlike-palette-text,#e5e7eb)!important;border-color:var(--warlike-palette-border,#535a62)!important}
-body:not(.hub-active) :is(.studio-menubar,.studio-menus,.studio-project-name){background-color:var(--warlike-palette-menu,#252629)!important;color:var(--warlike-palette-text,#e5e7eb)!important}
-body:not(.hub-active) header.topbar{background-color:var(--warlike-palette-toolbar,#323438)!important}
-body:not(.hub-active) :is(.studio-menubar,.studio-menus,.topbar,.panel,.project-panel,.inspector,.editor-appearance-menu,.csharp-runtime-panel) :is(button,input,select,textarea):not([type=color]):not(.warlike-color-swatch):not(.editor-swatches button){color:var(--warlike-palette-text,#e5e7eb);border-color:var(--warlike-palette-border,#535a62)}
-body:not(.hub-active) :is(.editor-appearance-menu,.panel,.csharp-runtime-panel) :is(input,select,textarea):not([type=color]):not([type=checkbox]):not([type=range]){background-color:var(--warlike-palette-surface,#252629);color:var(--warlike-palette-text,#e5e7eb)!important}
-body:not(.hub-active) .studio-menus .studio-dropdown{background-color:var(--warlike-palette-panel,#323438)!important;border-color:var(--warlike-palette-border,#535a62)!important;color:var(--warlike-palette-text,#e5e7eb)!important}
-body:not(.hub-active) .studio-menus .studio-dropdown :is(button,a,span){color:var(--warlike-palette-text,#e5e7eb)!important}
-body:not(.hub-active) :is(.studio-menus,.topbar,.panel,.editor-appearance-menu,.csharp-runtime-panel) :is(small,.muted,.hint){color:var(--warlike-palette-muted,#adb8c1)!important}
-body:not(.hub-active) :is(.studio-menubar,.topbar,.workspace,.warlike-status-footer,.editor-appearance-menu,.csharp-runtime-panel){font-size:var(--warlike-palette-fontSize,12px);font-weight:var(--warlike-palette-fontWeight,500)}
-body:not(.hub-active) .editor-appearance-menu{max-height:min(78dvh,720px)!important;overflow-y:auto!important;overscroll-behavior:contain;background:var(--warlike-palette-panel,#323438)!important;border-color:var(--warlike-palette-border,#535a62)!important}
-body:not(.hub-active) .editor-theme-preview{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:6px 0}
-body:not(.hub-active) .editor-theme-preview span{height:25px;min-width:0;border:1px solid var(--warlike-palette-border,#535a62);border-radius:3px}
-body:not(.hub-active) .editor-theme-preview span:last-child{box-shadow:inset 0 0 0 1px #80808055}
-body:not(.hub-active) .inspector #properties>.inspector-component,.inspector #properties>.inspector-advanced-tools{border-color:var(--warlike-palette-border,#535a62)!important}
-body:not(.hub-active) .inspector #properties>.inspector-component>summary{background:var(--warlike-palette-header,#454950)!important;color:var(--warlike-palette-text,#e5e7eb)!important}
-body:not(.hub-active) .project-panel #assetGrid{background-color:var(--warlike-palette-panel,#323438)!important}
-body:not(.hub-active) .warlike-status-footer{background-color:var(--warlike-palette-footer,#252629)!important;border-color:var(--warlike-palette-border,#535a62)!important}
-body:not(.hub-active) #viewport{background-color:var(--warlike-palette-scene,#191b1f)!important}
-html[data-warlike-theme="light"] body:not(.hub-active) :is(.studio-menus,.topbar,.panel,.editor-appearance-menu,.csharp-runtime-panel) :is(button,select,textarea,input):not([type=color]){color:var(--warlike-palette-text,#253347)!important}
+body:not(.hub-open){color:var(--warlike-palette-text,#e5e7eb);background:var(--warlike-palette-surface,#252629)}
+body:not(.hub-open) :is(.studio-menubar,.topbar,.workspace,.center-stack,.hierarchy,.inspector,.project-panel,.panel,.asset-content,.asset-folders,.warlike-status-footer,.csharp-runtime-panel,.blueprint-dialog,.editor-appearance-menu){color:var(--warlike-palette-text,#e5e7eb)!important}
+body:not(.hub-open) :is(.workspace,.center-stack,.hierarchy,.inspector,.project-panel,.panel,.asset-content,.asset-folders,#properties,.inspector-component,.csharp-runtime-panel){background-color:var(--warlike-palette-panel,#323438)!important}
+body:not(.hub-open) :is(.scene-tools,.bottom-tabs,.panel-title,.dock-title,.asset-toolbar,.browser-title,.console-bar,.hierarchy-history>summary,.inspector-component>summary,.csharp-runtime-panel>header){background-color:var(--warlike-palette-header,#454950)!important;color:var(--warlike-palette-text,#e5e7eb)!important;border-color:var(--warlike-palette-border,#535a62)!important}
+body:not(.hub-open) :is(.studio-menubar,.studio-menus,.studio-project-name){background-color:var(--warlike-palette-menu,#252629)!important;color:var(--warlike-palette-text,#e5e7eb)!important}
+body:not(.hub-open) header.topbar{background-color:var(--warlike-palette-toolbar,#323438)!important}
+body:not(.hub-open) :is(.studio-menubar,.studio-menus,.topbar,.panel,.project-panel,.inspector,.editor-appearance-menu,.csharp-runtime-panel) :is(button,input,select,textarea):not([type=color]):not(.warlike-color-swatch):not(.editor-swatches button){color:var(--warlike-palette-text,#e5e7eb);border-color:var(--warlike-palette-border,#535a62)}
+body:not(.hub-open) :is(.editor-appearance-menu,.panel,.csharp-runtime-panel) :is(input,select,textarea):not([type=color]):not([type=checkbox]):not([type=range]){background-color:var(--warlike-palette-surface,#252629);color:var(--warlike-palette-text,#e5e7eb)!important}
+body:not(.hub-open) .studio-menus .studio-dropdown{background-color:var(--warlike-palette-panel,#323438)!important;border-color:var(--warlike-palette-border,#535a62)!important;color:var(--warlike-palette-text,#e5e7eb)!important}
+body:not(.hub-open) .studio-menus .studio-dropdown :is(button,a,span){color:var(--warlike-palette-text,#e5e7eb)!important}
+body:not(.hub-open) :is(.studio-menus,.topbar,.panel,.editor-appearance-menu,.csharp-runtime-panel) :is(small,.muted,.hint){color:var(--warlike-palette-muted,#adb8c1)!important}
+body:not(.hub-open) :is(.studio-menubar,.topbar,.workspace,.warlike-status-footer,.editor-appearance-menu,.csharp-runtime-panel){font-size:var(--warlike-palette-fontSize,12px);font-weight:var(--warlike-palette-fontWeight,500)}
+body:not(.hub-open) .editor-appearance-menu{max-height:min(78dvh,720px)!important;overflow-y:auto!important;overscroll-behavior:contain;background:var(--warlike-palette-panel,#323438)!important;border-color:var(--warlike-palette-border,#535a62)!important}
+body:not(.hub-open) .editor-theme-preview{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:6px 0}
+body:not(.hub-open) .editor-theme-preview span{height:25px;min-width:0;border:1px solid var(--warlike-palette-border,#535a62);border-radius:3px}
+body:not(.hub-open) .editor-theme-preview span:last-child{box-shadow:inset 0 0 0 1px #80808055}
+body:not(.hub-open) .inspector #properties>.inspector-component,.inspector #properties>.inspector-advanced-tools{border-color:var(--warlike-palette-border,#535a62)!important}
+body:not(.hub-open) .inspector #properties>.inspector-component>summary{background:var(--warlike-palette-header,#454950)!important;color:var(--warlike-palette-text,#e5e7eb)!important}
+body:not(.hub-open) .project-panel #assetGrid{background-color:var(--warlike-palette-panel,#323438)!important}
+body:not(.hub-open) .warlike-status-footer{background-color:var(--warlike-palette-footer,#252629)!important;border-color:var(--warlike-palette-border,#535a62)!important}
+body:not(.hub-open) #viewport{background-color:var(--warlike-palette-scene,#191b1f)!important}
+html[data-warlike-theme="light"] body:not(.hub-open) :is(.studio-menus,.topbar,.panel,.editor-appearance-menu,.csharp-runtime-panel) :is(button,select,textarea,input):not([type=color]){color:var(--warlike-palette-text,#253347)!important}
 
 /* Unity-compatible asset shelf in WarLike's existing 3D Project pane */
 .unity-asset-library{border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;margin:6px 0 9px;background:var(--warlike-palette-panel,#252b34)}

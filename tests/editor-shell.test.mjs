@@ -60,3 +60,10 @@ test('cursor editor exposes shape, color, size, halo and reset controls',()=>{
  assert.match(editor,/initCursorSettings\(\)/);
  assert.match(css,/body\.warlike-custom-cursor/);
 });
+
+test('global editor appearance exposes full palette and typography',()=>{
+ for(const id of ['editorMenuColor','editorToolbarColor','editorPanelColor','editorHeaderColor','editorButtonColor','editorBorderColor','editorMutedColor','editorSceneColor','editorFooterColor','editorFontSize','editorFontWeight'])assert.ok(html.includes('id="'+id+'"'));
+ assert.match(editor,/initEditorPalette\(\)/);
+ assert.match(css,/--warlike-palette-footer/);
+ assert.match(css,/--warlike-palette-fontSize/);
+});

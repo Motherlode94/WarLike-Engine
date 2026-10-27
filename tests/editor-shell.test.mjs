@@ -47,3 +47,10 @@ test('corrupt floating panel layouts are discarded before rendering',()=>{
  assert.match(docking,/Number\.isFinite\(panel\[key\]\)/);
  assert.match(docking,/if\(!el\)continue/);
 });
+
+test('advanced UI stays available but collapses by default',()=>{
+ assert.match(html,/<details class="hierarchy-history"><summary>↶ History<\/summary><div id="history"><\/div><\/details>/);
+ assert.match(html,/class="toolbar-group toolbar-storage-actions"/);
+ assert.match(workspace,/createElement\('details'\);prefabTools\.className='asset-folder-import prefab-tools-collapsible'/);
+ assert.match(css,/\.prefab-tools-collapsible:not\(\[open\]\)>:not\(summary\)/);
+});

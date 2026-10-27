@@ -1,3 +1,4 @@
+import {tickEngineDiagnostics} from './engine-diagnostics.js';
 import {updateComponentRuntime} from './component-runtime.js';
 import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
@@ -31,7 +32,7 @@ function shoot(p,at,weapon){
  game.projectiles.push({x:origin.x,y:origin.y,vx:ux*speed,vy:uy*speed,life:reach/speed,damage});
  flash(origin.x+ux*22,origin.y+uy*22,weapon?.weaponClass==='energy'?'#61dfef':'#fcd36e',4);playSound(weapon?.weaponClass==='energy'?'laser':'shot');
 }
-export function updateGame(dt){if(!state.playing||game.over&&!currentMode())return;updateComponentRuntime(dt);game.time+=dt;game.fireTimer=Math.max(0,game.fireTimer-dt);game.meleeTimer=Math.max(0,game.meleeTimer-dt);game.hurtTimer=Math.max(0,game.hurtTimer-dt);const p=state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');if(!p)return;updateOpenWorld(dt,p,state.entities,sequenceRuntime.globals);updateHorror(dt,p,state.entities,state.keys);updateHorrorPerception(dt,p,state.entities,state.keys);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
+export function updateGame(dt){if(!state.playing||game.over&&!currentMode())return;tickEngineDiagnostics(dt);updateComponentRuntime(dt);game.time+=dt;game.fireTimer=Math.max(0,game.fireTimer-dt);game.meleeTimer=Math.max(0,game.meleeTimer-dt);game.hurtTimer=Math.max(0,game.hurtTimer-dt);const p=state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');if(!p)return;p._vehicleInputConsumed=false;updateOpenWorld(dt,p,state.entities,sequenceRuntime.globals);updateHorror(dt,p,state.entities,state.keys);updateHorrorPerception(dt,p,state.entities,state.keys);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
 if(modeRuntime.roundOver)return;if(modeRuntime.playerOut){updateGameMode(dt,game);return}const k=state.keys,x=(k.has('arrowright')||k.has('d')?1:0)-(k.has('arrowleft')||k.has('q')||k.has('a')?1:0),y=(k.has('arrowdown')||k.has('s')?1:0)-(k.has('arrowup')||k.has('z')||k.has('w')?1:0),length=Math.hypot(x,y)||1;updateHouseAnimation(dt);const indoors=updateHousing(dt,p);if(!indoors&&!housingActive()){updateVehicles(dt,p);if(!currentVehicle()&&!p._vehicleTransition)walkPlayer(p,dt,k);followPlayer(p,document.getElementById('canvas'),dt)}if(indoors||housingActive()){updateGameMode(dt,game);return}
 if(p.assetId==='ninja'||p.assetId==='ninja-elite'){
  if(k.has('k')&&game.meleeTimer===0&&!currentVehicle()){

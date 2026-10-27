@@ -35,6 +35,55 @@ async Task Handle(HttpListenerContext ctx) {
             var incoming=GameWorld.FromWarLikeJson(json);
             await gate.WaitAsync();try{world=incoming;await Reply(new {ok=true,count=world.Actors.Count});}finally{gate.Release();}return;
         }
+        if (req.Url?.AbsolutePath=="/genre/action"&&req.HttpMethod=="POST"){
+            using var doc=await JsonDocument.ParseAsync(req.InputStream);
+            var input=doc.RootElement;
+            if(!input.TryGetProperty("id",out var id) || !id.TryGetInt32(out int actorId) ||
+               !input.TryGetProperty("action",out var actionValue) || actionValue.ValueKind!=JsonValueKind.String){
+                res.StatusCode=400;await Reply(new {error="Invalid genre action"});return;
+            }
+            var action=actionValue.GetString();
+            await gate.WaitAsync();try{
+                var actor=world.Actors.FirstOrDefault(a=>a.Id==actorId);
+                if(actor is null){res.StatusCode=404;await Reply(new {error="Actor not found"});return;}
+                object? snapshot=null;
+                switch(action){
+                    case "rp-work" when actor.GetComponent<RoleplayComponent>() is { } rp:
+                        rp.Work(); snapshot=new {money=rp.Money,reputation=rp.Reputation};break;
+                    case "rp-buy" when actor.GetComponent<RoleplayComponent>() is { } rp:
+                        var bought=rp.BuySupplies();snapshot=new {ok=bought,money=rp.Money,reputation=rp.Reputation};break;
+                    case "race-start" when actor.GetComponent<RacingRulesComponent>() is { } race:
+                        race.StartRace();snapshot=new {started=race.Started,seconds=race.Elapsed,checkpoints=race.Checkpoints,finished=race.Finished};break;
+                    case "race-checkpoint" when actor.GetComponent<RacingRulesComponent>() is { } race:
+                        var passed=race.PassCheckpoint();snapshot=new {ok=passed,checkpoints=race.Checkpoints,seconds=race.Elapsed};break;
+                    case "race-finish" when actor.GetComponent<RacingRulesComponent>() is { } race:
+                        var finished=race.FinishRace();snapshot=new {ok=finished,seconds=race.Elapsed,finished=race.Finished};break;
+                    case "sim-produce" when actor.GetComponent<SimulationEconomyComponent>() is { } sim:
+                        sim.Produce();snapshot=new {materials=sim.Materials,money=sim.Money};break;
+                    case "sim-deliver" when actor.GetComponent<SimulationEconomyComponent>() is { } sim:
+                        var delivered=sim.FulfillOrder();snapshot=new {ok=delivered,materials=sim.Materials,money=sim.Money};break;
+                    case "sim-service" when actor.GetComponent<SimulationEconomyComponent>() is { } sim:
+                        sim.ServiceMachine();snapshot=new {maintenance=sim.Maintenance};break;
+                    case "rpg-start" when actor.GetComponent<RpgProgressionComponent>() is { } rpg:
+                        rpg.StartQuest();snapshot=new {active=rpg.QuestActive,level=rpg.Level,experience=rpg.Experience};break;
+                    case "rpg-complete" when actor.GetComponent<RpgProgressionComponent>() is { } rpg:
+                        var completed=rpg.CompleteQuest();snapshot=new {ok=completed,active=rpg.QuestActive,level=rpg.Level,experience=rpg.Experience};break;
+                    case "4x-explore" when actor.GetComponent<FourXEmpireComponent>() is { } empire:
+                        empire.Explore();snapshot=new {science=empire.Science,turn=empire.Turn};break;
+                    case "4x-expand" when actor.GetComponent<FourXEmpireComponent>() is { } empire:
+                        var expanded=empire.Expand();snapshot=new {ok=expanded,food=empire.Food,territory=empire.Territory};break;
+                    case "4x-exploit" when actor.GetComponent<FourXEmpireComponent>() is { } empire:
+                        empire.Exploit();snapshot=new {industry=empire.Industry};break;
+                    case "4x-conquer" when actor.GetComponent<FourXEmpireComponent>() is { } empire:
+                        var conquered=empire.Conquer();snapshot=new {ok=conquered,army=empire.Army,territory=empire.Territory};break;
+                    case "4x-next-turn" when actor.GetComponent<FourXEmpireComponent>() is { } empire:
+                        empire.NextTurn();snapshot=new {turn=empire.Turn,food=empire.Food,industry=empire.Industry,science=empire.Science,territory=empire.Territory,army=empire.Army};break;
+                    default:
+                        res.StatusCode=400;await Reply(new {error="Unsupported genre action or component missing"});return;
+                }
+                await Reply(new {ok=true,id=actorId,action,state=snapshot});
+            }finally{gate.Release();}return;
+        }
         if (req.Url?.AbsolutePath=="/vehicle/input"&&req.HttpMethod=="POST"){
             using var doc=await JsonDocument.ParseAsync(req.InputStream);
             var input=doc.RootElement;

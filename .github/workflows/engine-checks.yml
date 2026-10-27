@@ -20,3 +20,15 @@ jobs:
         run: find js -name '*.js' -print0 | xargs -0 -n1 node --check
       - run: npm test
       - run: npm run typecheck
+
+  dotnet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build csharp/WarLike.Runtime/WarLike.Runtime.csproj --configuration Release
+      - run: dotnet build csharp/WarLike.Bridge/WarLike.Bridge.csproj --configuration Release
+      - run: dotnet build csharp/WarLike.Demo/WarLike.Demo.csproj --configuration Release

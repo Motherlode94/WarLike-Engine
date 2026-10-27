@@ -734,3 +734,26 @@ body:not(.hub-open) .workspace :is(h1,h2,h3,h4,label,summary,p,small,strong,span
 .warlike-animation-studio #animKeys{font:12px/1.6 Consolas,monospace;overflow-wrap:anywhere;margin-top:8px}
 .warlike-animation-studio #animHint{font-size:12px;opacity:.8}
 @media(max-width:720px){.warlike-animation-studio{left:8px;right:8px;bottom:8px}}
+
+/* WarLike Inspector v2 — structured component cards, readable labels and compact fields */
+body:not(.hub-open) .inspector{background:var(--warlike-custom-surface,#20252d);color:var(--warlike-custom-text,#e7eaf0)}
+.inspector #properties{display:flex;flex-direction:column;gap:9px;padding:10px}
+.inspector .inspector-object{display:grid;gap:6px;padding:12px;border:1px solid color-mix(in srgb,var(--warlike-custom-text,#eee) 15%,transparent);border-radius:10px;background:color-mix(in srgb,var(--warlike-custom-text,#eee) 5%,transparent)}
+.inspector .inspector-object input{width:100%;font-weight:700;font-size:14px}
+.inspector .inspector-object small{opacity:.7;font-size:11px}
+.inspector .inspector-component{margin:0!important;border:1px solid color-mix(in srgb,var(--warlike-custom-text,#eee) 18%,transparent);border-radius:9px;background:color-mix(in srgb,var(--warlike-custom-text,#eee) 5%,transparent);overflow:hidden}
+.inspector .inspector-component>summary{cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:12px;font-weight:700;letter-spacing:.2px;background:color-mix(in srgb,var(--warlike-custom-text,#eee) 7%,transparent);list-style:none}
+.inspector .inspector-component>summary::-webkit-details-marker{display:none}
+.inspector .inspector-component>summary::before{content:'▸';color:var(--editor-accent,#48cba9);transition:transform .15s}
+.inspector .inspector-component[open]>summary::before{transform:rotate(90deg)}
+.inspector .inspector-component>summary:hover{background:color-mix(in srgb,var(--editor-accent,#48cba9) 12%,transparent)}
+.inspector .component-content{padding:11px 12px;display:grid;gap:8px}
+.inspector .property-row{display:grid;grid-template-columns:minmax(82px,42%) minmax(0,1fr);align-items:center;gap:10px;min-height:30px}
+.inspector .property-row>label{font-size:11px;line-height:1.35;opacity:.86}
+.inspector .property-row>input,.inspector .property-row>select,.inspector .component-content input:not([type=checkbox]):not([type=range]),.inspector .component-content select{min-width:0;max-width:100%;border:1px solid color-mix(in srgb,var(--warlike-custom-text,#eee) 22%,transparent);border-radius:5px;background:color-mix(in srgb,var(--warlike-custom-surface,#20252d) 84%,var(--warlike-custom-text,#eee));color:var(--warlike-custom-text,#e7eaf0);padding:6px 7px}
+.inspector .component-content input:focus-visible,.inspector .component-content select:focus-visible{outline:2px solid var(--editor-accent,#48cba9);outline-offset:1px}
+.inspector .component-content fieldset{min-width:0;border:1px solid color-mix(in srgb,var(--warlike-custom-text,#eee) 20%,transparent);border-radius:7px;padding:9px;display:grid;gap:7px}
+.inspector .component-content fieldset label{display:grid;grid-template-columns:minmax(85px,1fr) minmax(0,1fr);align-items:center;gap:8px;font-size:11px}
+.inspector .component-content button{min-height:28px}
+:root[data-warlike-theme="light"] body:not(.hub-open) .inspector .component-content input:not([type=checkbox]):not([type=range]),:root[data-warlike-theme="light"] body:not(.hub-open) .inspector .component-content select{background:#fff;color:#202936}
+@media(max-width:1100px){.inspector .property-row{grid-template-columns:minmax(65px,40%) minmax(0,1fr)}}

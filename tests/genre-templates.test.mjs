@@ -8,7 +8,7 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const genres=['rp','racing','simulation','rpg','fourx'];
 
 test('five genres and sandbox are supported in both WarLike workspaces',()=>{
- assert.deepEqual(Object.keys(genreTemplates),['sandbox',...genres]);
+ assert.deepEqual(Object.keys(genreTemplates),['sandbox','fieldlab',...genres]);
  assert.equal(normalizeGenre('__invalid__'),'sandbox');
  for(const mode of ['2d','3d'])for(const genre of genres){
   const scene=createGenreScene(genre,mode);

@@ -1,3 +1,4 @@
+import {recordEngineEvent} from './engine-diagnostics.js';
 import {coerceVariable} from './blueprint-graph.js';
 import {horror,triggerHorrorJumpscare} from './horror-survival.js';
 import {inventoryAdd,inventoryRemove,equipItem,damage,ensureStats} from './gameplay-components.js';
@@ -48,6 +49,7 @@ function execute(job,ctx,actionsLeft){
  while(job.index<job.steps.length&&count<actionsLeft){
   const a=job.steps[job.index++];if(!a||a.disabled||typeof a.type!=='string')continue;
   count++;
+  recordEngineEvent('blueprint',String(a.type)+' · '+String(entity.name||entity.id));
   const key=String(a.key||'score').slice(0,60),val=a.value;
   const targetObject=a.targetRole==='player'&&ctx.player?ctx.player:(ctx.entities.find(o=>o.id===number(a.targetId))||entity);
   switch(a.type){
@@ -103,9 +105,20 @@ export function updateSequences(dt,ctx){
   let trigger=false;
   switch(s.event){
   case 'start':trigger=!rt.cooldowns.has('start:'+o.id);rt.cooldowns.set('start:'+o.id,Infinity);break;
-  case 'interact':trigger=isInside&&newKey;break;
+  case 'interact':trigger=isInside&&newKey&&!ctx.player?._vehicleInputConsumed;break;
   case 'keyDown':trigger=newKey;break;
-  case 'enter':trigger=isInside&&!wasInside;break;
+  case 'enter':{
+   // A gate can become valid while the player remains inside (e.g. mounting
+   // a car). Retry until it succeeds; rejected conditions never consume 'once'.
+   const conditions=safeConditions(s.conditions);
+   const allowed=conditions.every(c=>c&&conditionPass(c,o,ctx));
+   const key='inside-ok:'+o.id;
+   const already=rt.cooldowns.get(key)===true;
+   trigger=isInside&&allowed&&!already&&(!wasInside||conditions.length>0);
+   if(!isInside||!allowed)rt.cooldowns.delete(key);
+   else if(trigger)rt.cooldowns.set(key,true);
+   break;
+  }
   case 'exit':trigger=!isInside&&wasInside;break;
   case 'signal':trigger=signals.includes(String(s.signal||''));break;
   case 'interval':{const key='interval:'+o.id,next=rt.cooldowns.get(key)??(rt.time+Math.max(.1,number(s.interval,2)));trigger=rt.time>=next;if(trigger||!rt.cooldowns.has(key))rt.cooldowns.set(key,rt.time+Math.max(.1,number(s.interval,2)));break}

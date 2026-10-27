@@ -25,6 +25,31 @@ if (vehicle.Speed >= 0)
     throw new Exception("C# vehicle brake/reverse failed.");
 Console.WriteLine("Native VehicleController smoke check: PASS");
 
+// Native genre smoke checks: standard actions and guards.
+var genres = new GameWorld();
+var rp = genres.AddComponent(genres.CreateActor("Roleplay",Vector3.Zero),new RoleplayComponent());
+rp.Work();
+if (rp.Money != 70 || rp.Reputation != 1 || !rp.BuySupplies() || rp.Money != 60)
+    throw new Exception("C# Roleplay genre failed");
+var race = genres.AddComponent(genres.CreateActor("Racing",Vector3.Zero),new RacingRulesComponent());
+race.StartRace();
+genres.Tick(1f/60f);
+if (race.Elapsed <= 0 || !race.PassCheckpoint() || !race.FinishRace())
+    throw new Exception("C# Racing genre failed");
+var sim = genres.AddComponent(genres.CreateActor("Simulation",Vector3.Zero),new SimulationEconomyComponent());
+sim.Produce();
+if (sim.Materials != 7 || !sim.FulfillOrder() || sim.Money != 125)
+    throw new Exception("C# Simulation genre failed");
+var rpg = genres.AddComponent(genres.CreateActor("RPG",Vector3.Zero),new RpgProgressionComponent());
+rpg.StartQuest();
+if (!rpg.CompleteQuest() || rpg.Experience != 50)
+    throw new Exception("C# RPG genre failed");
+var empire = genres.AddComponent(genres.CreateActor("4X",Vector3.Zero),new FourXEmpireComponent());
+empire.Explore();empire.Expand();empire.Exploit();empire.Conquer();empire.NextTurn();
+if (empire.Turn != 2 || empire.Science != 6 || empire.Territory != 3 || empire.Army != 1)
+    throw new Exception("C# 4X genre failed");
+Console.WriteLine("Native RP Racing Simulation RPG 4X smoke checks: PASS");
+
 public sealed class RotationData { public float Degrees { get; set; } }
 
 public sealed class AutoRotate : WarLikeBehaviour {

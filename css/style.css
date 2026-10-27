@@ -879,3 +879,42 @@ body:not(.hub-active) #properties .warlike-inspector-edition{font-size:10px;lett
 body:not(.hub-active) #properties details>summary{cursor:pointer}
 body:not(.hub-active) #viewport{border:0}
 body:not(.hub-active) .warlike-tool-library-content{top:78px}
+
+/* WarLike unified editor shell v3.2 — Hub + 2D/3D + panels */
+:root{--wlk-shell:#242629;--wlk-panel:#2b2d31;--wlk-header:#35373c;--wlk-border:#17191c;--wlk-selection:#375b79;--wlk-fg:#d9dce0}
+body:not(.hub-active) .workspace{height:calc(100dvh - 78px);min-height:0;grid-template-columns:var(--left-pane-width,245px) 5px minmax(0,1fr) 5px var(--right-pane-width,350px);background:var(--wlk-border)}
+body:not(.hub-active) .center-stack{min-width:0;min-height:0;grid-template-rows:36px 37px minmax(0,1fr) 5px var(--project-height,260px)}
+body:not(.hub-active) .hierarchy,body:not(.hub-active) .inspector,body:not(.hub-active) .project-panel{background:var(--wlk-panel);border-color:var(--wlk-border)}
+body:not(.hub-active) .panel-title,body:not(.hub-active) .bottom-tabs{background:var(--wlk-header);min-height:30px;padding:6px 10px;letter-spacing:0;text-transform:none;font-size:12px;color:var(--wlk-fg)}
+body:not(.hub-active) .scene-header{background:var(--wlk-header);min-width:0;overflow:hidden}
+body:not(.hub-active) .scene-actions{min-width:0;overflow-x:auto;scrollbar-width:thin}
+body:not(.hub-active) .scene-tools{background:var(--wlk-header);overflow-x:auto;min-width:0}
+body:not(.hub-active) .scene-tabs{flex-shrink:0}
+body:not(.hub-active) #viewport{min-height:0;background:#1d1f22}
+body:not(.hub-active) #properties{min-width:0;overflow-wrap:anywhere}
+body:not(.hub-active) #projectContent{min-height:0}
+body:not(.hub-active) .studio-project-name{margin-left:auto;white-space:nowrap}
+body:not(.hub-active) .studio-menubar{overflow:visible}
+body:not(.hub-active) .studio-menus{min-width:0}
+body:not(.hub-active) .topbar{overflow-x:auto}
+body:not(.hub-active) .side-splitter,body:not(.hub-active) .project-splitter{background:#1b1d20}
+body:not(.hub-active) .side-splitter:hover,body:not(.hub-active) .project-splitter:hover{background:#5189ba}
+body:not(.hub-active) .warlike-component-card{background:#292c30}
+body:not(.hub-active) .warlike-component-card>summary{background:#373a40}
+body:not(.hub-active) .warlike-add-component{background:#2c3036}
+/* Hub uses a project-manager shell, not an editor popover */
+#hubOverlay{background:#15171bed;backdrop-filter:blur(3px);padding:clamp(10px,2vw,26px)}
+#hubOverlay .hub-window{width:min(1280px,98vw);max-height:96dvh;background:#25282d;border:1px solid #4a4e55;border-radius:7px;box-shadow:0 25px 70px #000b}
+#hubOverlay .hub-heading{background:#30343a;padding:18px 26px;border-bottom:1px solid #17191d}
+#hubOverlay .hub-heading h2{font-size:22px;margin:5px 0}
+#hubOverlay .hub-heading p{font-size:12px}
+#hubOverlay .hub-suite{margin:16px 24px 8px;padding:16px;background:#2b2e34;border:1px solid #464b52;border-radius:6px}
+#hubOverlay .hub-suite-grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px}
+#hubOverlay .hub-app-card{background:#343940;border:1px solid #4c5660;border-radius:5px;min-height:104px}
+#hubOverlay .hub-app-card:hover{background:#3e4d5d;border-color:#719ac1}
+#hubOverlay .hub-layout{grid-template-columns:minmax(250px,340px) minmax(0,1fr);gap:16px;padding:18px 24px}
+#hubOverlay .hub-create,#hubOverlay .hub-list{background:#2d3036;border:1px solid #454a51;border-radius:5px;padding:16px}
+#hubOverlay .hub-create input,#hubOverlay .hub-create select{background:#22252a;border:1px solid #545d66;border-radius:4px}
+#hubOverlay .hub-primary{background:#366b91;border-color:#5d95bc}
+#hubOverlay .hub-project-card{border-radius:4px}
+@media(max-width:850px){#hubOverlay .hub-layout{grid-template-columns:1fr}#hubOverlay .hub-suite-grid{grid-template-columns:repeat(2,minmax(0,1fr))}body:not(.hub-active) .workspace{grid-template-columns:180px 5px minmax(0,1fr) 5px 215px}}

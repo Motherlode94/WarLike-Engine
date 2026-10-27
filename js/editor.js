@@ -132,7 +132,13 @@ const relocateTools=(targetId,ids)=>{
 };
 relocateTools('warlikeDemoTools',['rpgDemo','logicDemo','driveDemo','loadDemo']);
 relocateTools('warlikeCreationTools',['newPointLight','newSpotLight','newAudioSource']);
-relocateTools('warlikeRenderingTools',['audioToggle','audioVolume']);
+relocateTools('warlikeRenderingTools',['audioToggle']);
+const volumeInput=document.getElementById('audioVolume');
+if(volumeInput){
+ const volumeLabel=volumeInput.closest('label');
+ const target=document.getElementById('warlikeRenderingTools');
+ if(volumeLabel&&target)target.append(volumeLabel);
+}
 // One transient menu at a time, across the whole editor (not only one menu group).
 const library=document.getElementById('warlikeToolLibrary');
 const isTransient=details=>details.matches('.studio-menus > details, #warlikeToolLibrary, #editorAppearance');

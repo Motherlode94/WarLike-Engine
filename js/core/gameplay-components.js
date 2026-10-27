@@ -79,6 +79,15 @@ export function attack3d(attacker,entities,{range=120,damageAmount=20,arc=1.2}={
  if(!target||Math.hypot(target.x-attacker.x,target.y-attacker.y)>Math.max(0,n(range,120)))return null;
  damage(target,Math.max(0,n(damageAmount,20)));target.animation='hurt';return target;
 }
+// 3D movement is camera-relative: forward must point where the camera looks,
+// not toward the orbit camera position. x/y here are WarLike's ground X/Z.
+export function cameraRelativeWalk3d(right,forward,yaw){
+ const length=Math.hypot(right,forward);
+ if(!length)return {x:0,z:0,length:0};
+ const x=(right*Math.cos(yaw)-forward*Math.sin(yaw))/length;
+ const z=(-right*Math.sin(yaw)-forward*Math.cos(yaw))/length;
+ return {x,z,length};
+}
 export function updateController3d(p,keys,dt,yaw,entities){
  const cfg=p.controller3d||defaultController(),stats=ensureStats(p);
  const frame=Math.max(0,Math.min(.1,n(dt)));
@@ -108,9 +117,10 @@ export function updateController3d(p,keys,dt,yaw,entities){
  }
  p._dodgeHeld=dodgeDown;
  const dodge=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0;
- const velocity=(Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64+dodge)/(len||1);
- const vx=(ax*Math.cos(yaw)+az*Math.sin(yaw))*velocity;
- const vz=(-ax*Math.sin(yaw)+az*Math.cos(yaw))*velocity;
+ const movement=cameraRelativeWalk3d(ax,az,yaw);
+ const velocity=Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64+dodge;
+ const vx=movement.x*velocity;
+ const vz=movement.z*velocity;
  if(len&&sprint)stats.stamina=clamp(stats.stamina-18*frame,0,n(stats.maxStamina,100));
  const grounded=p.elevation3d<=floorAt(p.x,p.y,p.elevation3d)+.035&&p._verticalVelocity<=0;
  if(jump&&!p._jumpHeld&&grounded){p._verticalVelocity=Math.max(0,n(cfg.jumpForce,5.6));p.grounded3d=false}

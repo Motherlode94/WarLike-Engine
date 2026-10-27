@@ -55,8 +55,10 @@ export function initEditorPalette(){
   let previousPalette=null,previousAdvanced=null;
   try{previousPalette=JSON.parse(localStorage.getItem(OLD_PALETTE_KEY)||'null');previousAdvanced=JSON.parse(localStorage.getItem(OLD_ADVANCED_KEY)||'null')}catch{}
   if(previousPalette||previousAdvanced){
+   let oldAccent=defaultPalette.accent;
+   try{oldAccent=localStorage.getItem('warlike.editor.accent.v1')||oldAccent}catch{}
    theme='custom';
-   palette=sanitizePalette({...previousPalette,...(previousAdvanced||{}),accent:localStorage.getItem('warlike.editor.accent.v1')||defaultPalette.accent});
+   palette=sanitizePalette({...previousPalette,...(previousAdvanced||{}),accent:oldAccent});
   }
  }
  const apply=()=>{

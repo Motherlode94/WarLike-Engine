@@ -16,6 +16,7 @@ import {state,notify} from './state.js';
 import {record} from './history.js';
 import {getAsset} from '../assets/catalog.js';
 import {game} from './gameplay.js';
+import {initSceneGizmo3d} from './gizmos-3d.js';
 
 export const view3d={enabled:false,yaw:-.68,pitch:.62,radius:25,target:[9,0,6],drag:null,gl:null,error:null,followPlayer:true};
 export const playableActor=entities=>entities.find(o=>o.playable3d===true||o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters')||null;
@@ -303,6 +304,7 @@ export function init3d(canvas,host,buttons){
   });
  };
 
+ const updateGizmos=initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBounds3d,getCamera:camera,record,notify});
  const rectPoint=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,w:r.width,h:r.height}};
  const pick=(point,cam)=>{
   let best=null,score=Infinity;
@@ -368,7 +370,8 @@ export function init3d(canvas,host,buttons){
   wasPlaying=state.playing;
   if(state.playing&&workspace.mode==='3d'){update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,player:playableActor(state.entities)});}
   if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=Math.min(1,dt*9);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}
-  if(!view3d.enabled)return;
+  if(!view3d.enabled){updateGizmos();return}
+  updateGizmos();
   const crosshair=document.getElementById('fpsCrosshair');if(crosshair)crosshair.hidden=!isFps();
   const horrorHud=document.getElementById('horror3dHud');
   if(horrorHud){

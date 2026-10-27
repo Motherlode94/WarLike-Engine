@@ -67,7 +67,7 @@ component(root,'Transform',body=>{
  vector('Size',[['X','w'],['Y','h']]);
 });
 component(root,'Components • Gameplay & Scripts',body=>{
- const definitions=Array.isArray(o.csharpComponents)?o.csharpComponents:(o.csharpComponents=[]);
+ const definitions=Array.isArray(o.csharpComponents)?o.csharpComponents:[];
  const catalog={
  'Gameplay / Combat':{Weapon:{damage:25,fireRate:8,magazineSize:30},Damageable:{armor:0,invulnerable:false},Health:{regen:0},Projectile:{speed:30,damage:20,lifetime:5},Rigidbody:{gravity:9.81,restitution:0,friction:.5}},
  'Gameplay / Deathmatch':{Team:{teamId:0,friendlyFire:false},Score:{},Respawn:{delay:5},DeathmatchRules:{matchDuration:600,scoreLimit:25,countdown:3},SpawnPoint:{teamId:-1,radius:1},AmmoPickup:{amount:30},HealthPickup:{healAmount:35},KillZone:{damage:10000},ObjectiveZone:{teamId:-1,captureTime:10}},
@@ -113,7 +113,7 @@ component(root,'Components • Gameplay & Scripts',body=>{
  };
  search.addEventListener('input',populate);populate();
  const add=document.createElement('button');add.type='button';add.textContent='＋ Add Component';add.disabled=state.playing;
- add.onclick=()=>{const kind=picker.value;if(!kind||!defaults[kind])return;definitions.push({kind,...structuredClone(defaults[kind])});record('Ajouter '+kind);notify()};
+ add.onclick=()=>{const kind=picker.value;if(!kind||!defaults[kind])return;if(!Array.isArray(o.csharpComponents))o.csharpComponents=[];o.csharpComponents.push({kind,...structuredClone(defaults[kind])});record('Ajouter '+kind);notify()};
  addPanel.append(search,picker,add);body.append(addPanel);
 });
 component(root,'Quick Start • Gameplay Recipes',body=>{

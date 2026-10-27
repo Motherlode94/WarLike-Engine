@@ -1233,3 +1233,58 @@ body:not(.hub-open) .warlike-genre-hud{border-color:var(--wl-theme-border)!impor
 body:not(.hub-open) :is(.studio-menubar,.topbar,.workspace,.hierarchy,.inspector,.project-panel,.warlike-animation-studio,.blueprint-window,.editor-appearance-menu,.render-quality-panel,.csharp-runtime-panel) :focus-visible{outline:2px solid var(--editor-accent,#6c9dc8);outline-offset:1px}
 html[data-warlike-theme="light"] body:not(.hub-open) :is(.hierarchy,.inspector,.project-panel,.blueprint-window,.warlike-animation-studio,.editor-appearance-menu) :is(input,textarea,select){color-scheme:light}
 html:not([data-warlike-theme="light"]) body:not(.hub-open) :is(.hierarchy,.inspector,.project-panel,.blueprint-window,.warlike-animation-studio,.editor-appearance-menu) :is(input,textarea,select){color-scheme:dark}
+
+/* Theme consistency phase II — active controls, popovers and secondary surfaces */
+body:not(.hub-open) :is(.studio-dropdown,.studio-layout-presets,.studio-quick-create-menu,.warlike-tool-library-content,.editor-appearance-menu,.render-quality-panel,.warlike-animation-studio,.blueprint-window,.csharp-runtime-panel,.inspector-advanced-content,.component-content,.logic-editor,.asset-preview-panel,.asset-preview,.unitypackage-list,.unitypackage-item,.real-model-import,.asset-folder-import,.prefab-tools-collapsible,.asset-local-tools,.asset-card,.asset){
+  border-color:var(--wl-theme-border)!important;color:var(--wl-theme-fg)!important;
+}
+body:not(.hub-open) :is(.studio-dropdown,.studio-layout-presets,.studio-quick-create-menu,.warlike-tool-library-content,.inspector-advanced-content,.component-content,.logic-editor,.unitypackage-list,.unitypackage-item,.real-model-import,.asset-folder-import,.prefab-tools-collapsible,.asset-local-tools,.asset-card,.asset){
+  background-color:var(--wl-theme-panel)!important;
+}
+body:not(.hub-open) :is(.studio-dropdown,.studio-quick-create-menu,.warlike-tool-library-content,.editor-appearance-menu,.render-quality-panel,.inspector-advanced-content,.asset-grid,.asset-preview,.asset-preview-panel,.blueprint-content,.csharp-runtime-content) :is(button,select,input,textarea):not([type="color"]):not([type="checkbox"]):not([type="range"]):not(.editor-swatches button){
+  border-color:var(--wl-theme-border)!important;color:var(--wl-theme-fg)!important;
+}
+body:not(.hub-open) :is(.studio-dropdown,.studio-quick-create-menu,.warlike-tool-library-content,.editor-appearance-menu,.render-quality-panel,.inspector-advanced-content,.blueprint-content,.csharp-runtime-content) :is(input,select,textarea):not([type="color"]):not([type="checkbox"]):not([type="range"]){
+  background-color:var(--wl-theme-bg)!important;
+}
+body:not(.hub-open) :is(.studio-dropdown,.studio-quick-create-menu,.warlike-tool-library-content,.asset-grid,.asset-folders,.hierarchy,#objects,.blueprint-content) :is(button,a,[role="option"],[role="treeitem"]):hover:not(:disabled){
+  border-color:var(--editor-accent)!important;
+}
+body:not(.hub-open) :is(.studio-dropdown,.studio-quick-create-menu,.warlike-tool-library-content,.asset-grid,.asset-folders,.hierarchy,#objects,.blueprint-content) :is(button,a,[role="option"],[role="treeitem"]):focus-visible{
+  outline:2px solid var(--editor-accent)!important;outline-offset:1px;
+}
+body:not(.hub-open) :is(.studio-dropdown,.studio-quick-create-menu,.warlike-tool-library-content) :is(button,a):hover:not(:disabled){
+  background:color-mix(in srgb,var(--editor-accent) 18%,var(--wl-theme-panel))!important;
+  color:var(--wl-theme-fg)!important;
+}
+body:not(.hub-open) :is(#objects,.asset-folders,.asset-grid,.bottom-tabs,.scene-tabs,.blueprint-content) :is(.active,.selected,[aria-selected="true"]){
+  background-color:color-mix(in srgb,var(--editor-accent) 22%,var(--wl-theme-panel))!important;
+  color:var(--wl-theme-fg)!important;
+}
+body:not(.hub-open) :is(.studio-menubar,.topbar,.hierarchy,.inspector,.project-panel,.blueprint-window,.render-quality-panel,.editor-appearance-menu) :is(button,select,input,textarea):disabled{
+  opacity:.55;
+}
+body:not(.hub-open) :is(.studio-menubar,.topbar,.workspace,.blueprint-window,.warlike-animation-studio,.render-quality-panel) :is(kbd,code,.code){
+  border-color:var(--wl-theme-border);color:var(--wl-theme-fg);
+}
+body:not(.hub-open) .editor-appearance-menu :is(.editor-global-palette,.editor-font-settings,.editor-cursor-settings){
+  border-color:var(--wl-theme-border)!important;background:var(--wl-theme-panel)!important;
+}
+body:not(.hub-open) :is(.editor-appearance-menu,.studio-dropdown,.blueprint-window,.render-quality-panel) :is(label,summary,legend,strong,p,span){
+  color:var(--wl-theme-fg)!important;
+}
+body:not(.hub-open) .editor-appearance-menu .editor-theme-preview span{
+  border-color:var(--wl-theme-border)!important;
+}
+body:not(.hub-open) .editor-appearance-menu #editorThemePreset{
+  border:1px solid var(--editor-accent)!important;
+  background:var(--wl-theme-bg)!important;
+  color:var(--wl-theme-fg)!important;
+}
+body:not(.hub-open) .editor-appearance-menu #editorThemeDefault{
+  border:1px solid var(--wl-theme-border)!important;
+  background:var(--wl-theme-button)!important;color:var(--wl-theme-fg)!important;
+}
+html[data-warlike-theme="light"] body:not(.hub-open) :is(.studio-dropdown,.blueprint-window,.render-quality-panel,.warlike-animation-studio,.editor-appearance-menu,.asset-grid,.hierarchy,.inspector,.project-panel){
+  color-scheme:light;
+}

@@ -32,7 +32,7 @@ Puis, dans l'éditeur WarLike : **Window → C# Runtime (.NET 8)**.
 2. **Envoyer la scène** charge les objets et les composants `csharpComponents` dans le runtime.
 3. **Exécuter 1/60 s** exécute une étape dans le processus .NET, puis met à jour les positions, rotations et points de vie des objets correspondants dans l'éditeur.
 4. **Simuler 1 seconde** exécute quatre étapes natives de 0,25 seconde pour voir un déplacement ou une régénération.
-5. **Éditer le script C# du GameObject sélectionné** permet de saisir du C#, de conserver le code dans l'objet de la scène et de l'exporter en `.cs` (sans compilation automatique).
+5. **Éditer le script C# du GameObject sélectionné** (dans le panneau C# ou via le bouton **C# Script** de l'Inspector) permet de saisir du C#, de conserver le code dans l'objet de la scène et de l'exporter en `.cs` (sans compilation automatique).
 6. **Exemple de script .cs** exporte un comportement `WarLikeBehaviour` à inclure dans un projet .NET qui référence `WarLike.Runtime`.
 
 Composants C# native reconnus dans la scène : `AutoRotate`, `Health`, `LinearMotion`, `Rigidbody`, `FollowActor` et certains composants FPS/Deathmatch, disponibles dans l'Inspector sous « Components • Gameplay & Scripts ».

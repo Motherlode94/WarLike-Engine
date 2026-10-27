@@ -32,3 +32,4 @@ jobs:
       - run: dotnet build csharp/WarLike.Runtime/WarLike.Runtime.csproj --configuration Release
       - run: dotnet build csharp/WarLike.Bridge/WarLike.Bridge.csproj --configuration Release
       - run: dotnet build csharp/WarLike.Demo/WarLike.Demo.csproj --configuration Release
+      - run: dotnet run --project csharp/WarLike.Demo/WarLike.Demo.csproj --configuration Release --no-build

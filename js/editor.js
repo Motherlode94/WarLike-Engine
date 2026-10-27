@@ -1,3 +1,4 @@
+import {initCommunityManager} from './ui/community-manager.js';
 import {createFpsScene} from './core/fps-scene.js';
 import {initUnityPackageImport} from './ui/unitypackage-import.js';
 import {horror} from './core/horror-survival.js';
@@ -195,6 +196,7 @@ document.getElementById('menuAddComponent')?.addEventListener('click',()=>{
  document.getElementById('menuAddComponent')?.closest('details')?.removeAttribute('open');
 });
 initStudioMenus();
+initCommunityManager();
 initEditorAppearance();
 initEditorPalette();
 initCursorSettings();

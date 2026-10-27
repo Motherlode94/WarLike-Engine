@@ -63,3 +63,20 @@ La priorité est un contrat de composants cohérent entre le navigateur et le ru
 5. Ajouter un debugger, des exceptions localisées et des outils de profiling.
 
 Le SDK actuel reste autonome tant que l'étape 4 n'a pas été validée en navigateur.
+
+
+## Conduite des véhicules en C# (.NET 8)
+
+Le runtime propose `VehicleControllerComponent` : accélération progressive, freinage, marche arrière, direction sensible à la vitesse et frein à main. Les calculs s'exécutent dans `FixedUpdate` avec un pas de simulation fixe. Les unités sont cohérentes avec le contrôleur JS : positions C# en mètres, paramètres de vitesse en unités de scène par seconde.
+
+**Utilisation depuis WarLike Studio :**
+
+1. Sélectionne un véhicule 3D dans la Hierarchy.
+2. Inspector → Components • Gameplay & Scripts → **Vehicles / C# → VehicleController**. Les objets configurés via **Course · Véhicule** sont également reconnus depuis leurs tags.
+3. Lance `start-warlike-csharp.cmd` sur ton ordinateur.
+4. Dans **Window → C# Runtime**, clique **Connexion locale**, puis **Envoyer la scène**.
+5. Choisis **Accélérer**, **Freiner**, **Gauche**, **Droite**, **Frein à main** ou **Neutre**, puis clique **Simuler 1 seconde** pour visualiser le résultat. Synchronise à nouveau après toute modification de la scène ou des paramètres Inspector.
+
+La connexion passe par le pont HTTP local `POST /vehicle/input` avec `{"id":2,"throttle":1,"steer":0,"handbrake":false}`. L'API refuse les valeurs non finies ou hors intervalle [-1,1], ainsi que les ID sans composant VehicleController.
+
+**Limitations** : cette exécution C# est une simulation native à la demande, **pas le Play Mode Web en temps réel**. Le navigateur continue à utiliser le contrôleur JavaScript pour la conduite normale. La physique C# ne comporte pas encore de collision de carrosserie, de roues, de suspension ni de trafic autonome. Le transfert des poses vers l'éditeur reste manuel.

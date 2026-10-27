@@ -757,3 +757,16 @@ body:not(.hub-open) .inspector{background:var(--warlike-custom-surface,#20252d);
 .inspector .component-content button{min-height:28px}
 :root[data-warlike-theme="light"] body:not(.hub-open) .inspector .component-content input:not([type=checkbox]):not([type=range]),:root[data-warlike-theme="light"] body:not(.hub-open) .inspector .component-content select{background:#fff;color:#202936}
 @media(max-width:1100px){.inspector .property-row{grid-template-columns:minmax(65px,40%) minmax(0,1fr)}}
+
+/* Unity-like Transform vectors — axis-specific, compact and responsive */
+.inspector .inspector-vector-row{display:grid;grid-template-columns:minmax(72px,28%) minmax(0,1fr);align-items:center;gap:7px}
+.inspector .inspector-vector-row>strong{font-size:11px;font-weight:500;opacity:.86}
+.inspector .inspector-vector-fields{display:flex;gap:5px;min-width:0}
+.inspector .inspector-axis{display:flex;align-items:center;flex:1 1 0;min-width:0;gap:3px}
+.inspector .inspector-axis>span{flex:0 0 auto;font-size:10px;font-weight:800}
+.inspector .inspector-axis>[data-axis=X]{color:#ee7777}
+.inspector .inspector-axis>[data-axis=Y]{color:#8fda8a}
+.inspector .inspector-axis>[data-axis=Z]{color:#81b9f7}
+.inspector .inspector-axis input[type=number]{width:100%;min-width:0;padding:5px 3px;text-align:right;font-size:11px;font-variant-numeric:tabular-nums}
+.inspector .component-content input[type=search]{width:100%;min-width:0}
+@media(max-width:900px){.inspector .inspector-vector-row{grid-template-columns:1fr}.inspector .inspector-vector-fields{gap:3px}}

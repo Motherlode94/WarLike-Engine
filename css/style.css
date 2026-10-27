@@ -1320,3 +1320,25 @@ html[data-warlike-contrast="light"] body:not(.hub-open) :is(.studio-dropdown,.bl
 #warlikeDiagnosticsPanel button:hover{border-color:var(--editor-accent,#6c9dc8)}
 #warlikeDiagnosticsPanel .warlike-diagnostics-readout{margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere;
  font:11px/1.6 Consolas,monospace;color:var(--warlike-palette-text,#e5e7eb)}
+
+/* WarLike Threat Scanner — real AI state, keyboard T while playing. */
+#warlikeThreatScanner:not([hidden]){position:absolute;left:12px;top:48px;z-index:44;
+ width:min(350px,calc(100% - 24px));max-height:calc(100% - 65px);overflow:auto;
+ padding:12px;background:var(--warlike-palette-panel,#262a31);
+ border:1px solid var(--warlike-palette-border,#60666d);border-radius:8px;
+ color:var(--warlike-palette-text,#e5e7eb);box-shadow:0 12px 35px #0009;font:12px/1.5 system-ui,sans-serif}
+#warlikeThreatScanner[hidden]{display:none!important}
+.warlike-threat-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.warlike-threat-header strong{font-size:12px;letter-spacing:.05em;color:var(--editor-accent,#6c9dc8)}
+.warlike-threat-header button{border:1px solid var(--warlike-palette-border,#60666d);border-radius:4px;
+ background:var(--warlike-palette-button,#454950);color:inherit;padding:3px 10px;cursor:pointer}
+#warlikeThreatScanner p{font-size:11px;opacity:.8}
+.warlike-threat-results{display:grid;gap:8px}
+.warlike-threat-item{padding:9px;border:1px solid var(--warlike-palette-border,#60666d);border-radius:5px;
+ background:var(--warlike-palette-surface,#252629);display:grid;gap:4px}
+.warlike-threat-item strong{font-size:12px}
+.warlike-threat-item small{opacity:.85;overflow-wrap:anywhere}
+.warlike-threat-relation{font-size:10px;font-weight:700;letter-spacing:.06em}
+.warlike-threat-relation[data-relation="hostile"]{color:#ff8e87}
+.warlike-threat-relation[data-relation="suspicious"]{color:#f0c87d}
+.warlike-threat-relation[data-relation="friendly"]{color:#7de8bd}

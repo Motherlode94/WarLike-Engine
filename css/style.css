@@ -1296,3 +1296,12 @@ html[data-warlike-contrast="light"] body:not(.hub-open) :is(.studio-dropdown,.bl
  font:600 12px/1.5 system-ui,sans-serif;text-align:center;box-shadow:0 5px 16px #0006}
 #warlikeVehicle3dHud[hidden]{display:none!important}
 @media(max-width:680px){#warlikeVehicle3dHud:not([hidden]){font-size:11px;bottom:8px;padding:8px;white-space:normal}}
+
+/* Native .NET genre test controls — use the selected WarLike editor palette. */
+.csharp-runtime-panel .csharp-genre-controls{margin:10px 0;border:1px solid var(--warlike-palette-border,#535a62);border-radius:5px;padding:10px}
+.csharp-runtime-panel .csharp-genre-controls>legend{color:var(--editor-accent,#6c9dc8);font-size:12px;font-weight:650;padding:0 6px}
+.csharp-runtime-panel .csharp-genre-controls p{margin:6px 0 10px;font-size:11px;line-height:1.4}
+.csharp-runtime-panel .csharp-genre-form{display:flex;flex-wrap:wrap;gap:6px}
+.csharp-runtime-panel .csharp-genre-form select{flex:1 1 175px;min-width:0;max-width:100%;padding:8px;border:1px solid var(--warlike-palette-border,#535a62);background:var(--warlike-palette-surface,#252629);color:var(--warlike-palette-text,#eee)}
+.csharp-runtime-panel .csharp-genre-form button{flex:0 1 auto;padding:8px 10px;border:1px solid var(--editor-accent,#6c9dc8);border-radius:4px;background:var(--warlike-palette-button,#454950);color:var(--warlike-palette-text,#eee);cursor:pointer}
+.csharp-runtime-panel #csharpGenreResult{padding:9px;max-height:120px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.45 Consolas,monospace;background:var(--warlike-palette-surface,#252629);color:var(--warlike-palette-text,#eee)}

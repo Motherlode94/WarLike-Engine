@@ -90,3 +90,12 @@ test('nested editor dialogs and popovers follow tokens including selected states
  assert.match(css,/--wl-theme-fg/);
  assert.match(css,/color-mix\(in srgb,var\(--editor-accent\)/);
 });
+
+test('new editor installations use Unity Graphite while preserving explicitly saved themes',()=>{
+ const sourceCode=source('js/ui/editor-palette.js');
+ assert.match(sourceCode,/theme:'graphite'/);
+ assert.match(sourceCode,/saved\.palette&&saved\.theme===theme/);
+ assert.doesNotMatch(sourceCode,/OLD_PALETTE_KEY|OLD_ADVANCED_KEY/);
+ assert.match(sourceCode,/theme='graphite';/);
+ assert.equal(defaultPalette.name,'Unity Graphite');
+});

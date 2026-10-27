@@ -40,3 +40,20 @@ test('Inspector offers C# script editing on the selected GameObject',()=>{
  assert.match(inspector,/openCSharp\.textContent='C# Script'/);
  assert.match(inspector,/document\.getElementById\('csharpScriptLoad'\)\?\.click\(\)/);
 });
+
+test('native VehicleController is connected from Inspector through scene JSON to .NET runtime',()=>{
+ const inspector=read('js/ui/inspector.js');
+ const engine=read('csharp/WarLike.Runtime/Engine.cs');
+ const bridge=read('csharp/WarLike.Bridge/Program.cs');
+ const vehicle=read('csharp/WarLike.Runtime/VehicleControllerComponent.cs');
+ const ui=read('js/ui/csharp-runtime.js');
+ const html=read('index.html');
+ assert.match(inspector,/VehicleController:\{maxSpeed:310/);
+ assert.match(engine,/case "VehicleController":/);
+ assert.match(engine,/new VehicleControllerComponent/);
+ assert.match(vehicle,/override void FixedUpdate\(float fixedDeltaTime\)/);
+ assert.match(vehicle,/void SetInput\(float throttle, float steer, bool handbrake = false\)/);
+ assert.match(bridge,/AbsolutePath=="\/vehicle\/input"/);
+ assert.match(ui,/request\('\/vehicle\/input','POST'/);
+ for(const id of ['csharpVehicleForward','csharpVehicleBrake','csharpVehicleLeft','csharpVehicleRight','csharpVehicleHandbrake','csharpVehicleNeutral'])assert.ok(html.includes('id="'+id+'"'));
+});

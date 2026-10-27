@@ -18,7 +18,16 @@ export const recipes=[
  {id:'race-start',name:'Course · Départ',description:'Compte à rebours logique et signal de départ'},
  {id:'race-checkpoint',name:'Course · Passage obligatoire',description:'Validation d’un checkpoint et progression du tour'},
  {id:'race-finish',name:'Course · Arrivée',description:'Annonce une arrivée après les passages prévus'},
- {id:'race-vehicle',name:'Course · Véhicule',description:'Propriétés de conduite configurables sur un véhicule'}
+ {id:'race-vehicle',name:'Course · Véhicule',description:'Propriétés de conduite configurables sur un véhicule'},
+ {id:'rp-citizen',name:'RP · Citoyen',description:'Dialogue et réputation par interaction'},
+ {id:'rp-job',name:'RP · Métier',description:'Interaction rémunérée'},
+ {id:'sim-machine',name:'Simulation · Machine',description:'Production de matériaux'},
+ {id:'sim-contract',name:'Simulation · Contrat',description:'Valide une commande et crédite des revenus'},
+ {id:'rpg-quest',name:'RPG · Donneur de quête',description:'Débloque un objectif RPG'},
+ {id:'rpg-sanctuary',name:'RPG · Sanctuaire',description:'Restaure la santé du joueur'},
+ {id:'fourx-explore',name:'4X · Exploration',description:'Gagne des points de science'},
+ {id:'fourx-expand',name:'4X · Colonisation',description:'Étend le territoire de la faction'},
+ {id:'fourx-end-turn',name:'4X · Fin de tour',description:'Augmente le tour et produit des ressources'}
 
 ];
 const seq=(instructions,extra={})=>({enabled:true,event:'interact',radius:110,key:'e',once:false,conditions:[],instructions,...extra});
@@ -43,6 +52,15 @@ export function applyRecipe(o,id){
  case 'race-finish':o.sequence={...seq([],{event:'enter',radius:120,once:false,branches:[{conditions:[{type:'variable',key:'raceCheckpoint',operator:'>=',value:1}],instructions:[{type:'setVariable',key:'raceFinished',value:1},{type:'emitSignal',value:'race:finish'},{type:'message',value:'Arrivée !'}]}],elseInstructions:[{type:'message',value:'Passe d’abord les checkpoints'}]})};return true;
  case 'race-vehicle':o.maxSpeed=310;o.acceleration=225;o.brakeForce=310;o.turnRate=145;o.drag=1.15;o.collisionRadius=Math.max(12,(o.w||64)*.3);o.tags=[...new Set([...(o.tags||[]),'race-vehicle'])];return true;
 
+ case 'rp-citizen':o.sequence=seq([{type:'addVariable',key:'reputation',value:1},{type:'message',value:'Bienvenue ! Réputation +1'}]);return true;
+ case 'rp-job':o.sequence=seq([{type:'addVariable',key:'money',value:20},{type:'message',value:'Travail terminé : +20 crédits'}]);return true;
+ case 'sim-machine':o.sequence=seq([{type:'addVariable',key:'materials',value:2},{type:'message',value:'Production terminée : +2 matériaux'}]);return true;
+ case 'sim-contract':o.sequence=seq([{type:'addVariable',key:'money',value:25},{type:'message',value:'Commande livrée : +25 crédits'}]);return true;
+ case 'rpg-quest':o.sequence=seq([{type:'setVariable',key:'questActive',value:1},{type:'emitSignal',value:'rpg:quest'},{type:'message',value:'Nouvelle quête !'}]);return true;
+ case 'rpg-sanctuary':o.sequence=seq([{type:'healObject',targetRole:'player',value:25},{type:'message',value:'Santé +25'}]);return true;
+ case 'fourx-explore':o.sequence=seq([{type:'addVariable',key:'science',value:2},{type:'emitSignal',value:'4x:explore'},{type:'message',value:'Exploration : +2 science'}]);return true;
+ case 'fourx-expand':o.sequence=seq([{type:'addVariable',key:'territory',value:1},{type:'emitSignal',value:'4x:expand'},{type:'message',value:'Nouveau territoire'}]);return true;
+ case 'fourx-end-turn':o.sequence=seq([{type:'addVariable',key:'turn',value:1},{type:'addVariable',key:'food',value:3},{type:'addVariable',key:'industry',value:2},{type:'addVariable',key:'science',value:1},{type:'emitSignal',value:'4x:turn'},{type:'message',value:'Tour terminé'}]);return true;
  default:return false;
  }
 }

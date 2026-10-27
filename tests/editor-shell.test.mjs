@@ -22,7 +22,8 @@ test('menus close when another menu opens and on Escape',()=>{
 });
 
 test('Project panel cannot consume most of the Scene viewport',()=>{
- assert.match(workspace,/center\.clientHeight\*0\.5/);
+ assert.match(workspace,/available\*0\.5/);
+ assert.match(workspace,/ResizeObserver/);
 });
 
 test('editor shell reserves the same footer height across the whole viewport',()=>{

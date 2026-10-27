@@ -41,7 +41,7 @@ export function applyRecipe(o,id){
  case 'race-start':o.sequence={...seq([{type:'setVariable',key:'raceStarted',value:1},{type:'setVariable',key:'raceCheckpoint',value:0},{type:'emitSignal',value:'race:start'},{type:'message',value:'Course lancée !'}],{event:'interact',radius:130,once:true})};return true;
  case 'race-checkpoint':o.sequence={...seq([],{event:'enter',radius:110,once:false,branches:[{conditions:[{type:'variable',key:'raceStarted',operator:'==',value:1}],instructions:[{type:'addVariable',key:'raceCheckpoint',value:1},{type:'emitSignal',value:'race:checkpoint'},{type:'message',value:'Checkpoint validé'}]}]})};return true;
  case 'race-finish':o.sequence={...seq([],{event:'enter',radius:120,once:true,branches:[{conditions:[{type:'variable',key:'raceCheckpoint',operator:'>=',value:1}],instructions:[{type:'setVariable',key:'raceFinished',value:1},{type:'emitSignal',value:'race:finish'},{type:'message',value:'Arrivée !'}]}],elseInstructions:[{type:'message',value:'Passe d’abord les checkpoints'}]})};return true;
- case 'race-vehicle':o.vehicleConfig={...o.vehicleConfig,maxSpeed:110,acceleration:14,braking:22,steering:1.4,handling:1.0};o.tags=[...new Set([...(o.tags||[]),'race-vehicle'])];return true;
+ case 'race-vehicle':o.maxSpeed=310;o.acceleration=225;o.brakeForce=310;o.turnRate=145;o.drag=1.15;o.collisionRadius=Math.max(12,(o.w||64)*.3);o.tags=[...new Set([...(o.tags||[]),'race-vehicle'])];return true;
 
  default:return false;
  }

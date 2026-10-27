@@ -67,3 +67,10 @@ test('global editor appearance exposes full palette and typography',()=>{
  assert.match(css,/--warlike-palette-footer/);
  assert.match(css,/--warlike-palette-fontSize/);
 });
+
+test('primary toolbar exposes actual quick creation actions',()=>{
+ assert.match(html,/id="studioQuickCreate"/);
+ for(const action of ['object','character','light','audio','blueprint'])assert.ok(html.includes('data-quick-create="'+action+'"'));
+ assert.match(editor,/actions\[button\.dataset\.quickCreate\]\?\.\(\)/);
+ assert.doesNotMatch(html,/id="studioCompactToggle"/);
+});

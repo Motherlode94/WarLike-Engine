@@ -983,3 +983,9 @@ body .warlike-status-footer{box-sizing:border-box;position:fixed!important;left:
 body .warlike-status-footer .warlike-studio-signature.brand{position:static!important;display:flex!important;flex-direction:column!important;flex:none!important;align-items:flex-start!important;gap:2px!important;inset:auto!important;transform:none!important;margin:0!important;padding:3px 10px!important;background:none!important;border:0!important;border-left:2px solid #5fdfc0!important;box-shadow:none!important;border-radius:0!important}
 body:has(#hubOverlay:not([hidden])) .warlike-status-footer{display:none!important}
 @media(max-height:600px){:root{--warlike-footer-height:36px}body .warlike-status-footer .warlike-studio-signature.brand small{display:none}body:not(.hub-active) .center-stack{grid-template-rows:32px 33px minmax(0,1fr) 5px minmax(0,var(--project-height,180px))}}
+
+/* Tool library: grouped controls remain usable and legible */
+.warlike-tool-library-content section>div>label{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;grid-column:1/-1;padding:7px 10px;border:1px solid #45505b;border-radius:4px;background:#303944;color:#d6e0ea;font-size:11px}
+.warlike-tool-library-content section>div>label input[type=range]{flex:1;min-width:50px;max-width:200px}
+.warlike-tool-library-content section>div>button{min-height:34px;white-space:normal}
+body:not(.hub-active) .warlike-tool-library-content{max-height:min(72dvh,650px);overflow:auto}

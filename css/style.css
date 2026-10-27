@@ -1142,3 +1142,18 @@ body:not(.hub-active) .workspace :is(.side-splitter,.project-splitter){backgroun
 #viewport>.warlike-genre-hud{position:absolute;z-index:21;top:12px;left:50%;transform:translateX(-50%);max-width:calc(100% - 28px);padding:7px 12px;border:1px solid #607783;border-radius:5px;background:#12202de8;color:#f2f5fc;font:600 12px/1.4 system-ui,sans-serif;box-shadow:0 4px 12px #0007;white-space:nowrap;text-align:center;pointer-events:none}
 #viewport>.warlike-genre-hud[hidden]{display:none!important}
 @media(max-width:660px){#viewport>.warlike-genre-hud{font-size:10px;white-space:normal;min-width:0}}
+
+/* C# Runtime — intentional separate utility window, not part of Scene viewport */
+.csharp-runtime-panel{position:fixed;z-index:2100;right:24px;top:90px;width:min(440px,calc(100vw - 32px));border:1px solid var(--warlike-palette-border,#455363);border-radius:7px;background:var(--warlike-palette-panel,#252b34);box-shadow:0 18px 50px #0009;color:var(--warlike-custom-text,#e7eaf0);font:12px/1.5 system-ui,sans-serif}
+.csharp-runtime-panel[hidden]{display:none!important}
+.csharp-runtime-panel>header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--warlike-palette-border,#455363);background:var(--warlike-palette-header,#303944)}
+.csharp-runtime-panel>header button{border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer}
+.csharp-runtime-content{display:grid;gap:12px;padding:14px}
+.csharp-runtime-content p{margin:0}
+.csharp-runtime-content code{display:block;padding:10px;overflow-wrap:anywhere;border:1px solid var(--warlike-palette-border,#455363);background:#141e27;color:#b7f1dc}
+.csharp-runtime-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.csharp-runtime-actions button{min-height:35px;border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;background:var(--warlike-palette-button,#354251);color:inherit;cursor:pointer}
+.csharp-runtime-actions button:disabled{opacity:.5;cursor:not-allowed}
+#csharpRuntimeStatus{padding:9px;border-left:3px solid #a7adba;background:#111b2633}
+#csharpRuntimeStatus[data-ok="true"]{border-left-color:#48cba9}
+.csharp-runtime-content small{opacity:.75}

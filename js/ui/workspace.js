@@ -1,4 +1,5 @@
 import {readPrefabs,savePrefab,instantiatePrefab,applyPrefabChanges,updatePrefab} from '../core/prefab-library.js';
+import {hub,sanitizeAssetPack} from '../core/project-hub.js';
 import {persistLocalModel,restoreLocalModels,clearLocalModels} from '../core/local-asset-library.js';
 import {addCommunityModels3d} from '../assets/community-models-3d.js';
 import {loadKenneyUnityAssets} from '../assets/kenney-unity-library.js';
@@ -237,9 +238,14 @@ document.addEventListener('warlike:workspace',()=>{
  }
  for(const b of tree.querySelectorAll('[data-folder]')){const n=b.dataset.folder,catAssets=workspace.mode==='3d'?allAssets3d():catalog;b.hidden=!list.includes(n);b.querySelector('small').textContent=n==='All'?catAssets.length:catAssets.filter(a=>a.category===n).length}
  render();
- if(workspace.mode==='3d'&&!communityAttempted){communityAttempted=true;communityButton.click()}
- if(workspace.mode==='3d'&&!kenneyAttempted){kenneyAttempted=true;kenneyButton.click()}
+ if(workspace.mode==='3d'){
+  const pack=sanitizeAssetPack(hub.assetPack);
+  if((pack==='community'||pack==='both')&&!communityAttempted){communityAttempted=true;communityButton.click()}
+  if((pack==='kenney'||pack==='both')&&!kenneyAttempted){kenneyAttempted=true;kenneyButton.click()}
+ }
 });
+// Re-evaluate chosen catalog when user changes projects or a project's asset pack in Hub.
+document.addEventListener('warlike:asset-pack-change',()=>document.dispatchEvent(new Event('warlike:workspace')));
 // Apply the correct library immediately on initial load as well as on workspace changes.
 document.dispatchEvent(new Event('warlike:workspace'));
 search.oninput=render;select.onchange=()=>{selectedAsset=null;render()};sort.onchange=render;

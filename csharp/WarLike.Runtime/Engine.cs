@@ -15,6 +15,10 @@ public sealed class Actor {
     public bool Enabled { get; set; } = true;
     public Dictionary<string, object> Properties { get; } = new();
     public T? Get<T>(string key) where T : class => Properties.TryGetValue(key, out var value) ? value as T : null;
+    internal GameWorld? World { get; set; }
+    public T? GetComponent<T>() where T : WarLikeBehaviour => World?.GetComponent<T>(this);
+    public bool TryGetComponent<T>(out T? component) where T : WarLikeBehaviour { component = GetComponent<T>(); return component is not null; }
+    public T AddComponent<T>(T component) where T : WarLikeBehaviour => World?.AddComponent(this, component) ?? throw new InvalidOperationException("Actor is not attached to a world.");
 }
 
 public abstract class WarLikeBehaviour {
@@ -24,6 +28,11 @@ public abstract class WarLikeBehaviour {
     public virtual void Start() { }
     public virtual void Update(float deltaTime) { }
     public virtual void FixedUpdate(float fixedDeltaTime) { }
+    public virtual void LateUpdate(float deltaTime) { }
+    public virtual void OnEnable() { }
+    public virtual void OnDisable() { }
+    public T? GetComponent<T>() where T : WarLikeBehaviour => Actor.GetComponent<T>();
+    public T AddComponent<T>(T component) where T : WarLikeBehaviour => Actor.AddComponent(component);
     public virtual void OnDestroy() { }
 }
 
@@ -36,20 +45,30 @@ public sealed class GameWorld {
     public float FixedDeltaTime { get; set; } = 1f / 60f;
     public IReadOnlyList<Actor> Actors => _actors.AsReadOnly();
     public Actor CreateActor(string name, Vector3 position) {
-        var actor = new Actor { Id = _actors.Count == 0 ? 1 : _actors.Max(a => a.Id) + 1, Name = name, Position = position };
+        var actor = new Actor { Id = _actors.Count == 0 ? 1 : _actors.Max(a => a.Id) + 1, Name = name, Position = position, World = this };
         _actors.Add(actor); return actor;
     }
+    public T? GetComponent<T>(Actor actor) where T : WarLikeBehaviour => _behaviours.OfType<T>().FirstOrDefault(b => ReferenceEquals(b.Actor, actor));
     public T AddComponent<T>(Actor actor, T component) where T : WarLikeBehaviour {
         if (!_actors.Contains(actor)) throw new ArgumentException("Actor does not belong to the world.", nameof(actor));
         component.Actor = actor; component.World = this;
         _behaviours.Add(component);
         component.Awake();
+        if (actor.Enabled) component.OnEnable();
         if (_started) component.Start();
         return component;
     }
+    public void SetActorEnabled(Actor actor, bool enabled) {
+        if (!_actors.Contains(actor)) throw new ArgumentException("Actor does not belong to the world.", nameof(actor));
+        if (actor.Enabled == enabled) return;
+        actor.Enabled = enabled;
+        foreach (var component in _behaviours.Where(b => ReferenceEquals(b.Actor, actor)).ToArray()) {
+            if (enabled) component.OnEnable(); else component.OnDisable();
+        }
+    }
     public void RemoveActor(Actor actor) => _pending.Enqueue(() => {
         foreach (var component in _behaviours.Where(b => b.Actor == actor).ToArray()) {
-            component.OnDestroy(); _behaviours.Remove(component);
+            if (actor.Enabled) component.OnDisable(); component.OnDestroy(); _behaviours.Remove(component);
         }
         _actors.Remove(actor);
     });
@@ -65,6 +84,7 @@ public sealed class GameWorld {
             foreach (var b in _behaviours.ToArray()) if (b.Actor.Enabled) b.FixedUpdate(FixedDeltaTime);
             _accumulator -= FixedDeltaTime;
         }
+        foreach (var b in _behaviours.ToArray()) if (b.Actor.Enabled) b.LateUpdate(dt);
         while (_pending.TryDequeue(out var change)) change();
     }
     public static GameWorld FromWarLikeJson(string json) {

@@ -30,34 +30,48 @@ const entry=entities=>({entities,selected:[1],nextId:2,camera:{x:0,y:0,zoom:1}})
 const safeRead=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
 const indexed=()=>safeRead(INDEX,[]).filter(p=>p&&typeof p.id==='string');
 const uniqueId=()=>Date.now().toString(36)+'-'+Math.floor(Math.random()*1e8).toString(36);
-export const hub={projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT};
+export const assetPackChoices=['starter','kenney','community','both'];
+export const sanitizeAssetPack=value=>assetPackChoices.includes(value)?value:'starter';
+export const hub={projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT,assetPack:'starter'};
+export function chooseProjectAssets(id,assetPack){
+ const pack=sanitizeAssetPack(assetPack);
+ const meta=indexed().find(p=>p.id===id);if(!meta)return false;
+ if(hub.projectId===id){hub.assetPack=pack;saveProject()}
+ else{
+  const data=safeRead(PREFIX+id,null);if(!data)return false;
+  data.assetPack=pack;localStorage.setItem(PREFIX+id,JSON.stringify(data));
+  meta.assetPack=pack;meta.updated=Date.now();saveMeta(meta);
+ }
+ document.dispatchEvent(new CustomEvent('warlike:asset-pack-change',{detail:{projectId:id,assetPack:pack}}));
+ return true;
+}
 export const listProjects=()=>indexed().sort((a,b)=>(b.updated||0)-(a.updated||0));
 const assertName=name=>{const n=String(name||'').trim().slice(0,64);if(!n)throw Error('Choisis un nom de projet.');return n};
 function saveMeta(meta){const all=indexed().filter(p=>p.id!==meta.id);all.unshift(meta);localStorage.setItem(INDEX,JSON.stringify(all))}
 export function saveProject(){
  if(!hub.projectId||state.playing)return false;
- const data={version:5,...workspacePayload(),entities:state.entities,camera:state.camera,name:hub.projectName,type:hub.type,accent:hub.accent};
- try{localStorage.setItem(PREFIX+hub.projectId,JSON.stringify(data));saveMeta({id:hub.projectId,name:hub.projectName,type:hub.type,accent:hub.accent,updated:Date.now()});return true}catch{return false}
+ const data={version:5,...workspacePayload(),entities:state.entities,camera:state.camera,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack};
+ try{localStorage.setItem(PREFIX+hub.projectId,JSON.stringify(data));saveMeta({id:hub.projectId,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,updated:Date.now()});return true}catch{return false}
 }
-export function createProject(name,type){
+export function createProject(name,type,assetPack='starter'){
  if(state.playing)throw Error('Arrête Play avant de créer un projet.');
  if(hub.projectId)saveProject();
  name=assertName(name);if(!['2d','3d'].includes(type))throw Error('Type de projet invalide.');
  const id=uniqueId(),data={workspaceMode:type,workspaces:{'2d':entry(defaults2d()),'3d':entry(defaults3d())}};
  if(!restoreWorkspaces(data))throw Error('Impossible de créer le projet.');
- Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT});setHubAccent(hub.accent,{persist:false});state.demoGuide='';resetHistory();saveProject();notify();return id;
+ Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(assetPack)});setHubAccent(hub.accent,{persist:false});state.demoGuide='';resetHistory();saveProject();notify();return id;
 }
 export function openProject(id){
  if(state.playing)throw Error('Arrête Play avant de changer de projet.');
  if(hub.projectId&&hub.projectId!==id)saveProject();
  const data=safeRead(PREFIX+id,null),meta=indexed().find(p=>p.id===id);
  if(!data||!meta||!restoreWorkspaces(data))throw Error('Projet introuvable ou corrompu.');
- Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide='';resetHistory();notify();return true;
+ Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide='';resetHistory();notify();return true;
 }
 export function deleteProject(id){
  if(state.playing)throw Error('Arrête Play avant de supprimer.');
  localStorage.removeItem(PREFIX+id);localStorage.setItem(INDEX,JSON.stringify(indexed().filter(p=>p.id!==id)));
- if(hub.projectId===id){Object.assign(hub,{projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT});document.body?.style?.removeProperty('--project-accent')}
+ if(hub.projectId===id){Object.assign(hub,{projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT,assetPack:'starter'});document.body?.style?.removeProperty('--project-accent')}
 }
 export function renameProject(id,name){
  name=assertName(name);
@@ -79,7 +93,7 @@ export function importLegacyProject(){
  saveProject();return id;
 }
 export function initHub(){
- const modal=document.querySelector('#hubOverlay'),cards=document.querySelector('#hubProjects'),name=document.querySelector('#hubProjectName'),type=document.querySelector('#hubProjectType'),message=document.querySelector('#hubMessage');
+ const modal=document.querySelector('#hubOverlay'),cards=document.querySelector('#hubProjects'),name=document.querySelector('#hubProjectName'),type=document.querySelector('#hubProjectType'),assetPackSelect=document.querySelector('#hubAssetPack'),message=document.querySelector('#hubMessage');
  const title=document.querySelector('#studioProjectName');
  const projectSearch=document.querySelector('#hubProjectSearch'),projectFilter=document.querySelector('#hubProjectFilter'),projectCount=document.querySelector('#hubProjectCount');
  const picker=document.querySelector('#hubAccentColor'),hex=document.querySelector('#hubAccentHex'),palette=document.querySelector('#hubThemePalette'),reset=document.querySelector('#hubThemeReset');
@@ -102,7 +116,7 @@ export function initHub(){
 
  let wasPlaying=false;
  const updateTitle=()=>{title.textContent=hub.projectName+(hub.projectId?' · '+hub.type.toUpperCase():'')};
- const hide=()=>{modal.hidden=true;document.body.classList.remove('hub-open');document.dispatchEvent(new Event('warlike:project'));updateTitle()};
+ const hide=()=>{document.dispatchEvent(new CustomEvent('warlike:asset-pack-change',{detail:{projectId:hub.projectId,assetPack:hub.assetPack}}));modal.hidden=true;document.body.classList.remove('hub-open');document.dispatchEvent(new Event('warlike:project'));updateTitle()};
  const show=()=>{if(state.playing)return;saveProject();picker.value=hex.value=hub.accent;setHubAccent(hub.accent,{persist:false});modal.hidden=false;document.body.classList.add('hub-open');render();message.textContent=''};
  const run=cb=>{try{cb();picker.value=hex.value=hub.accent;setHubAccent(hub.accent,{persist:false});hide()}catch(e){message.textContent=e.message}};
  function render(){
@@ -118,13 +132,17 @@ export function initHub(){
   for(const p of projects){
    const item=document.createElement('div');item.className='hub-project-card';
    const info=document.createElement('div');const heading=document.createElement('strong');heading.textContent=p.name;
-   const detail=document.createElement('small');detail.textContent=p.type.toUpperCase()+' · '+new Date(p.updated).toLocaleString();item.style.borderLeft='4px solid '+(normalizeHubAccent(p.accent)||DEFAULT_ACCENT);
+   const detail=document.createElement('small');detail.textContent=p.type.toUpperCase()+' · Assets : '+({starter:'WarLike',kenney:'Kenney CC0',community:'Community CC0',both:'Kenney + Community'}[sanitizeAssetPack(p.assetPack)])+' · '+new Date(p.updated).toLocaleString();item.style.borderLeft='4px solid '+(normalizeHubAccent(p.accent)||DEFAULT_ACCENT);
    info.append(heading,detail);
    if(p.id===hub.projectId){const current=document.createElement('span');current.className='hub-current-pill';current.textContent='Actif';info.append(current)}
    const open=document.createElement('button');open.textContent='Ouvrir';open.onclick=()=>run(()=>openProject(p.id));
    const edit=document.createElement('button');edit.textContent='Renommer';edit.title='Renommer ce projet';edit.onclick=()=>{const next=prompt('Nouveau nom du projet',p.name);if(next!==null){try{renameProject(p.id,next);render()}catch(e){message.textContent=e.message}}};
    const del=document.createElement('button');del.textContent='×';del.title='Supprimer ce projet local';del.onclick=()=>{if(confirm('Supprimer définitivement le projet « '+p.name+' » ?')){deleteProject(p.id);render()}};
-   item.append(info,open,edit,del);cards.append(item);
+   const packs=document.createElement('select');packs.className='hub-project-pack';packs.setAttribute('aria-label','Pack d’assets de '+p.name);
+   for(const [id,label] of [['starter','WarLike intégré'],['kenney','Kenney CC0'],['community','Community CC0'],['both','Kenney + Community']]){const option=document.createElement('option');option.value=id;option.textContent=label;packs.append(option)}
+   packs.value=sanitizeAssetPack(p.assetPack);packs.disabled=p.type!=='3d';packs.title=p.type==='3d'?'Changer le pack de ce projet':'Packs 3D disponibles seulement pour projets 3D';
+   packs.onchange=()=>{try{chooseProjectAssets(p.id,packs.value);render()}catch(error){message.textContent=error.message}};
+   item.append(info,packs,open,edit,del);cards.append(item);
   }
   document.querySelector('#hubLegacy').hidden=!safeRead('warlike.scene.v1',null)?.entities;
  }
@@ -161,6 +179,7 @@ export function initHub(){
  modal.querySelector('#hubDiagnosticsClose').onclick=()=>{diagnosticPanel.hidden=true};
  modal.querySelector('#hubDiagnosticsDownload').onclick=()=>{if(latestDiagnostic)downloadDiagnostic(latestDiagnostic)};
  const launch=mode=>{
+  assetPackSelect.disabled=mode!=='3d';
   if(hub.projectId&&hub.type===mode){hide();return}
   type.value=mode;
   name.value=mode==='3d'?'Mon jeu 3D':'Mon jeu 2D';
@@ -195,8 +214,10 @@ export function initHub(){
  });
  projectSearch.addEventListener('input',render);
  projectFilter.addEventListener('change',render);
+ type.addEventListener('change',()=>{assetPackSelect.disabled=type.value!=='3d'});
+ assetPackSelect.disabled=type.value!=='3d';
  modal.addEventListener('keydown',e=>{if(e.key==='Escape'&&!state.playing&&hub.projectId){e.preventDefault();hide()}});
- document.querySelector('#hubCreate').onclick=()=>run(()=>createProject(name.value,type.value));
+ document.querySelector('#hubCreate').onclick=()=>run(()=>createProject(name.value,type.value,assetPackSelect.value));
  document.querySelector('#hubLegacy').onclick=()=>run(importLegacyProject);
  document.querySelector('#hubOpen').onclick=show;
  document.querySelector('#hubClose').onclick=hide;

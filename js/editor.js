@@ -1,3 +1,4 @@
+import {initExternalAssetLibrary} from './ui/external-asset-library.js';
 import {loadHorrorPursuitDemo} from './core/horror-pursuit-demo.js';
 import {initVisualAssetPacks} from './ui/visual-asset-packs.js';
 import {initCommunityManager} from './ui/community-manager.js';
@@ -233,3 +234,5 @@ if(primaryActions&&secondaryToolbar&&toolbarToggle){
 }
 
 initCSharpBridge();
+
+initExternalAssetLibrary();

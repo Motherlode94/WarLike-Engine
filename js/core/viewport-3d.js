@@ -459,8 +459,8 @@ export function init3d(canvas,host,buttons){
       drawShape(part.mesh,[b.x,b.y,b.z],[b.w,b.h,b.d],material);
      }
     }else{
-     // Placeholder only while downloading, or when a GLB cannot be opened.
-     cube([b.x,b.y,b.z],[b.w,b.h,b.d],cached?.status==='error'?[.72,.23,.23,1]:[.36,.48,.58,1]);
+     // Never substitute an unrelated cube for an actual GLB asset.
+     // The model loading/error state is reported in #view3dStatus.
     }
     continue;
    }

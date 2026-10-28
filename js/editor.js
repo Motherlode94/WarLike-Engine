@@ -1,3 +1,4 @@
+import {initVisualAssetPacks} from './ui/visual-asset-packs.js';
 import {initCommunityManager} from './ui/community-manager.js';
 import {createFpsScene} from './core/fps-scene.js';
 import {initUnityPackageImport} from './ui/unitypackage-import.js';
@@ -53,6 +54,7 @@ if(horrorToggle){horrorToggle.checked=horror.enabled;horrorToggle.addEventListen
 const enableLight=document.getElementById('render2dLight');
 if(enableLight){enableLight.checked=renderQuality.lighting2d;enableLight.addEventListener('change',()=>{setRenderQuality({lighting2d:enableLight.checked});saveRenderQuality()})}
 initUnityPackageImport();
+initVisualAssetPacks();
 initHub();
 initBlueprintWorkspace();
 initializeNative3d();

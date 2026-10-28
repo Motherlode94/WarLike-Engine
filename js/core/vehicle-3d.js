@@ -1,3 +1,4 @@
+import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle-weapons-3d.js';
 import {recordEngineEvent} from './engine-diagnostics.js';
 import {stepArcadeVehicle,moveVehicleWithCollision} from './arcade-driving.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
@@ -40,6 +41,11 @@ export function updateDriving3d(entities,player,keys,dt){
  driving3d.enterHeld=enter;
  const drivingCar=currentVehicle3d(entities);
  if(!drivingCar||!player)return false;
+ tickVehicleWeapon(drivingCar,step);
+ if(keys.has('f')&&vehicleWeaponConfig(drivingCar)){
+  const shot=fireVehicleWeapon(drivingCar,entities);
+  if(shot.fired)recordEngineEvent(shot.hit?'vehicle-weapon-hit':'vehicle-weapon-fire',shot.hit?shot.target:drivingCar.name);
+ }
  const throttle=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
  const steer=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const handbrake=keys.has(' ')||keys.has('space');

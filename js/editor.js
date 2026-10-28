@@ -1,3 +1,4 @@
+import {loadHorror3dDemo} from './core/horror-pursuit-3d-demo.js';
 import {initExternalAssetLibrary} from './ui/external-asset-library.js';
 import {loadHorrorPursuitDemo} from './core/horror-pursuit-demo.js';
 import {initVisualAssetPacks} from './ui/visual-asset-packs.js';
@@ -57,6 +58,7 @@ const enableLight=document.getElementById('render2dLight');
 if(enableLight){enableLight.checked=renderQuality.lighting2d;enableLight.addEventListener('change',()=>{setRenderQuality({lighting2d:enableLight.checked});saveRenderQuality()})}
 initUnityPackageImport();
 document.getElementById('horrorPursuitDemo')?.addEventListener('click',()=>{if(!window.confirm('Charger Horror Pursuit ? La scène actuelle sera remplacée. Sauvegarde ton projet avant de continuer.'))return;try{loadHorrorPursuitDemo()}catch(error){window.alert(error.message)}});
+document.getElementById('horror3dDemo')?.addEventListener('click',()=>{if(!confirm('Remplacer la scene par Horror 3D ?'))return;try{loadHorror3dDemo()}catch(error){alert(error.message)}});
 initVisualAssetPacks();
 initHub();
 initBlueprintWorkspace();

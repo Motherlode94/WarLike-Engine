@@ -1,0 +1,172 @@
+{
+  "apiVersion": "1.0",
+  "id": "warlike-2d-horror-builder",
+  "version": "1.0.0",
+  "name": "Horror Builder 2D • Suspense, survie, enquete",
+  "author": "WarLike Studio",
+  "modes": [
+    "2d"
+  ],
+  "description": "Blueprints de construction declaratifs pour scenes 2D. Appliquer chaque recette a un objet de la scene.",
+  "recipes": [
+    {
+      "id": "warning",
+      "name": "Warning Trigger",
+      "description": "Interaction preconfiguree : Warning Trigger",
+      "sequence": {
+        "event": "enter",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "danger",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Une menace approche"
+          }
+        ]
+      }
+    },
+    {
+      "id": "clue",
+      "name": "Find Clue",
+      "description": "Interaction preconfiguree : Find Clue",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "clue",
+            "value": 1
+          },
+          {
+            "type": "addVariable",
+            "key": "clues",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Indice trouve"
+          }
+        ]
+      }
+    },
+    {
+      "id": "safe-room",
+      "name": "Safe Room",
+      "description": "Interaction preconfiguree : Safe Room",
+      "sequence": {
+        "event": "enter",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "safeRoom",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Zone securisee"
+          }
+        ]
+      }
+    },
+    {
+      "id": "generator",
+      "name": "Generator Switch",
+      "description": "Interaction preconfiguree : Generator Switch",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "generatorOn",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Generateur active"
+          }
+        ]
+      }
+    },
+    {
+      "id": "escape",
+      "name": "Escape Route",
+      "description": "Interaction preconfiguree : Escape Route",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [
+          {
+            "type": "variable",
+            "key": "generatorOn",
+            "value": 1
+          }
+        ],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "escaped",
+            "value": 1
+          },
+          {
+            "type": "emitSignal",
+            "value": "escape:success"
+          },
+          {
+            "type": "message",
+            "value": "Fuite reussie"
+          }
+        ]
+      }
+    },
+    {
+      "id": "alarm",
+      "name": "Horror Alarm",
+      "description": "Interaction preconfiguree : Horror Alarm",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "emitSignal",
+            "value": "horror:jumpscare"
+          },
+          {
+            "type": "message",
+            "value": "Alerte !"
+          }
+        ]
+      }
+    }
+  ]
+}

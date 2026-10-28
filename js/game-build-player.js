@@ -1,0 +1,14 @@
+import './editor.js';
+import {state,notify} from './core/state.js';
+import {restoreWorkspaces} from './core/workspaces.js';
+import {restoreGameProject} from './core/game-project.js';
+import {toolsState} from './ui/workspace.js';
+import {motion} from './core/player-controller.js';
+const data=JSON.parse(document.getElementById('warlikeGameData').textContent);
+if(data.format!=='warlike.game.v1')throw Error('Format de jeu inconnu.');
+const scene=data.project.scenes.find(s=>s.id===data.project.startupSceneId);
+if(!scene)throw Error('Scène de démarrage absente.');
+const slot={entities:scene.entities,selected:[],nextId:Math.max(0,...scene.entities.map(o=>o.id))+1,camera:scene.camera,game:{...data.project,activeSceneId:scene.id}};
+restoreWorkspaces({workspaceMode:data.mode,workspaces:{'2d':data.mode==='2d'?slot:{entities:[],selected:[],nextId:1,camera:{x:0,y:0,zoom:1}},'3d':data.mode==='3d'?slot:{entities:[],selected:[],nextId:1,camera:{x:0,y:0,zoom:1}}}});
+restoreGameProject({...data.project,activeSceneId:scene.id});toolsState.grid=false;state.selected=[];motion.cameraFollow=true;
+document.getElementById('hubOverlay').hidden=true;document.body.classList.remove('hub-open');document.body.classList.add('warlike-game-build');document.dispatchEvent(new Event('warlike:project'));notify();

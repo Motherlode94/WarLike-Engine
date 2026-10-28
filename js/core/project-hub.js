@@ -1,3 +1,4 @@
+import {gameProject} from './game-project.js';
 import {createGenreScene,normalizeGenre,genreTemplates} from './genre-templates.js';
 import {inspectProject,downloadDiagnostic} from './project-diagnostics.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
@@ -61,6 +62,7 @@ export function createProject(name,type,assetPack='starter',genre='sandbox'){
  const chosenGenre=normalizeGenre(genre);
  const id=uniqueId(),data={workspaceMode:type,workspaces:{'2d':chosenGenre==='sandbox'?entry(defaults2d()):createGenreScene(chosenGenre,'2d'),'3d':chosenGenre==='sandbox'?entry(defaults3d()):createGenreScene(chosenGenre,'3d')}};
  if(!restoreWorkspaces(data))throw Error('Impossible de créer le projet.');
+ gameProject.id=id;gameProject.title=name;
  Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(assetPack),genre:chosenGenre});setHubAccent(hub.accent,{persist:false});state.demoGuide='';resetHistory();saveProject();notify();return id;
 }
 export function openProject(id){
@@ -68,6 +70,7 @@ export function openProject(id){
  if(hub.projectId&&hub.projectId!==id)saveProject();
  const data=safeRead(PREFIX+id,null),meta=indexed().find(p=>p.id===id);
  if(!data||!meta||!restoreWorkspaces(data))throw Error('Projet introuvable ou corrompu.');
+ gameProject.id=id;if(!data.workspaces?.[meta.type]?.game?.title)gameProject.title=meta.name;
  Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack),genre:normalizeGenre(data.genre||meta.genre)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide='';resetHistory();notify();return true;
 }
 export function deleteProject(id){
@@ -95,6 +98,7 @@ export function importLegacyProject(){
  saveProject();return id;
 }
 export function initHub(){
+ if(globalThis.__WARLIKE_BUILD__)return;
  const modal=document.querySelector('#hubOverlay'),cards=document.querySelector('#hubProjects'),name=document.querySelector('#hubProjectName'),type=document.querySelector('#hubProjectType'),assetPackSelect=document.querySelector('#hubAssetPack'),genreSelect=document.querySelector('#hubProjectGenre'),message=document.querySelector('#hubMessage');
  const title=document.querySelector('#studioProjectName');
  const projectSearch=document.querySelector('#hubProjectSearch'),projectFilter=document.querySelector('#hubProjectFilter'),projectCount=document.querySelector('#hubProjectCount');

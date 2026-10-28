@@ -1,3 +1,4 @@
+import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle} from './vehicle-components.js';
 import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle-weapons-3d.js';
 import {recordEngineEvent} from './engine-diagnostics.js';
 import {stepArcadeVehicle,moveVehicleWithCollision} from './arcade-driving.js';
@@ -28,12 +29,13 @@ export function updateDriving3d(entities,player,keys,dt){
     {x:car.x+(car.w||32)+12,y:car.y+((car.depth3d||car.h||32)-depth)/2}
    ];
    const free=exits.find(pos=>!entities.some(o=>solid(o,car,player)&&intersects({...player,depth3d:depth},pos.x,pos.y,o)));
-   if(free){player._vehicleInputConsumed=true;recordEngineEvent('vehicle-exit',car.name);player.x=free.x;player.y=free.y;player.elevation3d=car.elevation3d||0;player._hiddenInVehicle=false;player.animation='idle';resetDriving3d()}
+   if(free){player._vehicleInputConsumed=true;recordEngineEvent('vehicle-exit',car.name);player.x=free.x;player.y=free.y;player.elevation3d=car.elevation3d||0;player._hiddenInVehicle=false;player.animation='idle';vehicleComponents(car).seats.driverId=null;resetDriving3d()}
   }else if(player){
    const p=center(player);
    const candidates=entities.filter(o=>o!==player&&isDriveable3d(o)).map(o=>({o,d:Math.hypot(center(o).x-p.x,center(o).y-p.y)})).sort((a,b)=>a.d-b.d);
    const nearest=candidates[0];
-   if(nearest&&nearest.d<Math.max(150,(nearest.o.w||64)*.85)){
+   if(nearest&&nearest.d<Math.max(150,(nearest.o.w||64)*.85)&&canDriveVehicle(nearest.o)){
+    vehicleComponents(nearest.o).seats.driverId=player.id;
     player._vehicleInputConsumed=true;recordEngineEvent('vehicle-enter',nearest.o.name);driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;player._hiddenInVehicle=true;player.animation='drive';
    }
   }
@@ -46,15 +48,17 @@ export function updateDriving3d(entities,player,keys,dt){
   const shot=fireVehicleWeapon(drivingCar,entities);
   if(shot.fired)recordEngineEvent(shot.hit?'vehicle-weapon-hit':'vehicle-weapon-fire',shot.hit?shot.target:drivingCar.name);
  }
- const throttle=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
+ const inputThrottle=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
+ const throttle=canDriveVehicle(drivingCar)?inputThrottle:0;
  const steer=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const handbrake=keys.has(' ')||keys.has('space');
  const state=stepArcadeVehicle({speed:driving3d.speed,steer:driving3d.steer,rotation:drivingCar.rotation||0},
   {throttle,steer,handbrake},step,drivingCar);
  driving3d.speed=state.speed;driving3d.steer=state.steer;drivingCar.rotation=state.rotation;
+ tickVehicleSystems(drivingCar,step,{speed:state.speed,throttle});
  const move=moveVehicleWithCollision(drivingCar,state,(x,y)=>
   entities.some(o=>solid(o,drivingCar,player)&&intersects(drivingCar,x,y,o)),{maxStep:8});
- if(move.collision){recordEngineEvent('collision',drivingCar.name);driving3d.speed=-driving3d.speed*.12;driving3d.impact=.25}
+ if(move.collision){recordEngineEvent('collision',drivingCar.name);impactVehicle(drivingCar,driving3d.speed);driving3d.speed=-driving3d.speed*.12;driving3d.impact=.25}
  player.x=drivingCar.x+((drivingCar.w||32)-(player.w||32))/2;
  player.y=drivingCar.y+((drivingCar.depth3d||drivingCar.h||32)-(player.depth3d||player.h||32))/2;
  player.elevation3d=drivingCar.elevation3d||0;player._hiddenInVehicle=true;player.animation='drive';

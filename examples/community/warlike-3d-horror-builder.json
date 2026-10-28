@@ -1,0 +1,206 @@
+{
+  "apiVersion": "1.0",
+  "id": "warlike-3d-horror-builder",
+  "version": "1.0.0",
+  "name": "Horror Builder 3D • Survie et poursuite",
+  "author": "WarLike Studio",
+  "modes": [
+    "3d"
+  ],
+  "description": "Blueprints de construction declaratifs pour scenes 3D. Appliquer chaque recette a un objet de la scene.",
+  "recipes": [
+    {
+      "id": "start-threat",
+      "name": "Threat Activation",
+      "description": "Interaction preconfiguree : Threat Activation",
+      "sequence": {
+        "event": "enter",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "threatActive",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Presence detectee"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hiding-marker",
+      "name": "Hide Spot Marker",
+      "description": "Interaction preconfiguree : Hide Spot Marker",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "hideVisited",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Cachette reperee : activer le composant Horror Hide"
+          }
+        ]
+      }
+    },
+    {
+      "id": "keycard",
+      "name": "Keycard Pickup",
+      "description": "Interaction preconfiguree : Keycard Pickup",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "keycard",
+            "value": 1
+          },
+          {
+            "type": "setVariable",
+            "key": "keycardFound",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Carte d'acces trouvee"
+          }
+        ]
+      }
+    },
+    {
+      "id": "locked-door",
+      "name": "Locked Exit",
+      "description": "Interaction preconfiguree : Locked Exit",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [
+          {
+            "type": "variable",
+            "key": "keycardFound",
+            "value": 1
+          }
+        ],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "escapeUnlocked",
+            "value": 1
+          },
+          {
+            "type": "emitSignal",
+            "value": "door:unlock"
+          },
+          {
+            "type": "message",
+            "value": "Sortie deverrouillee"
+          }
+        ]
+      }
+    },
+    {
+      "id": "emergency-light",
+      "name": "Emergency Lighting",
+      "description": "Interaction preconfiguree : Emergency Lighting",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "emergencyPower",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Eclairage de secours active"
+          }
+        ]
+      }
+    },
+    {
+      "id": "jumpscare",
+      "name": "Horror Signal",
+      "description": "Interaction preconfiguree : Horror Signal",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "emitSignal",
+            "value": "horror:jumpscare"
+          },
+          {
+            "type": "message",
+            "value": "Danger !"
+          }
+        ]
+      }
+    },
+    {
+      "id": "escape-zone",
+      "name": "Horror Escape",
+      "description": "Interaction preconfiguree : Horror Escape",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [
+          {
+            "type": "variable",
+            "key": "escapeUnlocked",
+            "value": 1
+          }
+        ],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "escaped",
+            "value": 1
+          },
+          {
+            "type": "emitSignal",
+            "value": "escape:success"
+          },
+          {
+            "type": "message",
+            "value": "Vous avez survecu"
+          }
+        ]
+      }
+    }
+  ]
+}

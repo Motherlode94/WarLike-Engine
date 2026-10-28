@@ -58,6 +58,33 @@ export const dimensions3d=a=>{
  if(shape==='tree'||shape==='pine')return {w:120,h:225,d:120};
  return {w:90,h:90,d:85};
 };
+const vehicleTunings={
+ sedan:[205,155,126],police:[245,190,142],ambulance:[170,115,105],firetruck:[125,85,76],bus:[135,87,72],
+ van:[165,125,105],pickup:[185,150,117],suv:[195,148,113],taxi:[202,157,128],
+ muscle:[250,210,124],supercar:[335,260,140],formula:[360,290,154],kart:[190,210,157],rally:[260,230,151],
+ quad:[135,153,148],dirtbike:[185,210,165], 'armored-truck':[115,80,65],apc:[95,75,67],
+ ifv:[95,75,68],artillery:[75,58,52],aa:[88,65,61],recon:[215,185,137],
+ 'military-jeep':[170,140,123],rescue:[180,130,109],forklift:[65,65,92],tractor:[88,75,82],
+ bulldozer:[70,55,51],excavator:[60,48,48],garbage:[120,80,73],snowmobile:[170,165,149]
+};
+const armedKinds={apc:[18,.3],ifv:[34,.6],artillery:[72,2],aa:[16,.15],recon:[16,.35],'military-jeep':[15,.4]};
+function defaultsForVehicle(id){
+ const short=id.replace(/^vehicle-/,'');
+ const tune=vehicleTunings[short];
+ if(!tune)return {};
+ const [maxSpeed,acceleration,turnRate]=tune;
+ const result={vehicleConfig:{driveable:true},maxSpeed,acceleration,turnRate,
+  brakeForce:Math.max(130,Math.round(acceleration*1.65)),drag:short==='formula'?.9:1.45,
+  traction:['rally','quad','dirtbike','snowmobile'].includes(short)?1.18:1,
+  steeringResponse:['bus','firetruck','armored-truck','apc','ifv'].includes(short)?3.1:5.4,
+  reverseRatio:.38,tags:['vehicle',short]};
+ if(armedKinds[short]){
+  const [damage,cooldown]=armedKinds[short];
+  result.vehicleWeapon={enabled:true,range:short==='artillery'?1050:620,damage,cooldown,arc:45};
+  result.tags.push('armed-vehicle');
+ }
+ return result;
+}
 export function prefab3d(id,nextId=1,x=120,y=120){
  const a=get3dAsset(id);if(!a)return null;
  const size=dimensions3d(a);return {id:nextId,name:a.name+' '+nextId,type:'mesh3d',assetId:a.id,

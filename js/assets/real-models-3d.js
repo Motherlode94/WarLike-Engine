@@ -112,7 +112,15 @@ export function parseGlb(buffer){
    if(primitive.attributes?.POSITION===undefined)continue;
    const pos=readAccessor(json,binary,primitive.attributes.POSITION);
    const norm=primitive.attributes.NORMAL===undefined?null:readAccessor(json,binary,primitive.attributes.NORMAL);
-   const idxs=primitive.indices===undefined?Array.from({length:pos.count},(_,i)=>i):readAccessor(json,binary,primitive.indices).data;
+   let idxs=primitive.indices===undefined?Array.from({length:pos.count},(_,i)=>i):readAccessor(json,binary,primitive.indices).data;
+   // Some sample GLBs contain invalid triangles in optional meshes.
+   // Ignore only affected faces, preserving the rest of the real geometry.
+   const clean=[];
+   for(let k=0;k+2<idxs.length;k+=3){
+    const a=idxs[k],b=idxs[k+1],c=idxs[k+2];
+    if([a,b,c].every(i=>Number.isSafeInteger(i)&&i>=0&&i<pos.count))clean.push(a,b,c);
+   }
+   idxs=clean;
    if(idxs.length%3)continue;
    const pbr=json.materials?.[primitive.material]?.pbrMetallicRoughness||{};
    const color=pbr.baseColorFactor||[.75,.78,.82,1];
@@ -120,7 +128,7 @@ export function parseGlb(buffer){
    const metallic=Math.max(0,Math.min(1,Number(pbr.metallicFactor??0)));
    const vertices=[];
    for(let i=0;i<idxs.length;i+=3){const points=[];
-    for(let j=0;j<3;j++){const vi=idxs[i+j];if(vi>=pos.count)throw Error('Index GLB invalide');points.push(transform(m,pos.data.slice(vi*3,vi*3+3)))}
+    for(let j=0;j<3;j++){const vi=idxs[i+j];if(vi>=pos.count||vi<0)throw Error('Index GLB invalide');points.push(transform(m,pos.data.slice(vi*3,vi*3+3)))}
     const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
     const delta=(a,b)=>a.map((n,k)=>n-b[k]),normal=cross(delta(points[1],points[0]),delta(points[2],points[0]));
     const len=Math.hypot(...normal)||1;const flat=normal.map(n=>n/len);

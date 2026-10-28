@@ -1144,11 +1144,12 @@ body:not(.hub-open) .workspace :is(.side-splitter,.project-splitter){background:
 @media(max-width:660px){#viewport>.warlike-genre-hud{font-size:10px;white-space:normal;min-width:0}}
 
 /* C# Runtime — intentional separate utility window, not part of Scene viewport */
-.csharp-runtime-panel{position:fixed;z-index:2100;right:24px;top:90px;width:min(440px,calc(100vw - 32px));border:1px solid var(--warlike-palette-border,#455363);border-radius:7px;background:var(--warlike-palette-panel,#252b34);box-shadow:0 18px 50px #0009;color:var(--warlike-custom-text,#e7eaf0);font:12px/1.5 system-ui,sans-serif}
+.csharp-runtime-panel{position:fixed;z-index:2100;right:16px;top:90px;width:min(440px,calc(100vw / var(--editor-ui-scale,1) - 32px));max-height:calc(100dvh / var(--editor-ui-scale,1) - 106px);box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--warlike-palette-border,#455363);border-radius:7px;background:var(--warlike-palette-panel,#252b34);box-shadow:0 18px 50px #0009;color:var(--warlike-custom-text,#e7eaf0);font:12px/1.5 system-ui,sans-serif}
 .csharp-runtime-panel[hidden]{display:none!important}
-.csharp-runtime-panel>header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--warlike-palette-border,#455363);background:var(--warlike-palette-header,#303944)}
+.csharp-runtime-panel>header{display:flex;flex-shrink:0;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--warlike-palette-border,#455363);background:var(--warlike-palette-header,#303944)}
 .csharp-runtime-panel>header button{border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer}
-.csharp-runtime-content{display:grid;gap:12px;padding:14px}
+.csharp-runtime-content{display:grid;grid-auto-rows:max-content;align-content:start;gap:12px;padding:14px;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scroll-padding-block:14px}
+.csharp-runtime-content fieldset{min-inline-size:0}
 .csharp-runtime-content p{margin:0}
 .csharp-runtime-content code{display:block;padding:10px;overflow-wrap:anywhere;border:1px solid var(--warlike-palette-border,#455363);background:#141e27;color:#b7f1dc}
 .csharp-runtime-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -1161,7 +1162,7 @@ body:not(.hub-open) .workspace :is(.side-splitter,.project-splitter){background:
 /* C# source authoring per GameObject, retained in project scene JSON */
 .csharp-runtime-panel .csharp-script-editor{border:1px solid var(--warlike-palette-border,#455363);border-radius:5px;overflow:hidden}
 .csharp-runtime-panel .csharp-script-editor>summary{padding:10px 11px;cursor:pointer;background:var(--warlike-palette-header,#303944);font-weight:650}
-.csharp-runtime-panel .csharp-script-editor[open]{max-height:min(60dvh,650px);overflow:auto}
+.csharp-runtime-panel .csharp-script-editor[open]{overflow:visible}
 .csharp-runtime-panel .csharp-script-editor>label{display:flex;flex-direction:column;gap:5px;padding:8px 10px}
 .csharp-runtime-panel .csharp-script-editor input,.csharp-runtime-panel .csharp-script-editor textarea{box-sizing:border-box;width:100%;border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;background:#141d26;color:#e4eff8;padding:8px}
 .csharp-runtime-panel .csharp-script-editor textarea{min-height:150px;resize:vertical;font:12px/1.5 Consolas,monospace;tab-size:4}

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {editorThemePresets,sanitizePalette,defaultPalette,isLightPalette} from '../js/ui/editor-palette.js';
+import {editorThemePresets,sanitizePalette,defaultPalette,isLightPalette,paletteContrast,contrastRatio,mixColor,readableText} from '../js/ui/editor-palette.js';
 
 const source=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const ids=['graphite','obsidian','midnight','violet','light','tactical','racing','crimson'];
@@ -98,4 +98,24 @@ test('new editor installations use Unity Graphite while preserving explicitly sa
  assert.doesNotMatch(sourceCode,/OLD_PALETTE_KEY|OLD_ADVANCED_KEY/);
  assert.match(sourceCode,/theme='graphite';/);
  assert.equal(defaultPalette.name,'Unity Graphite');
+});
+
+test('readable text preserves a legible requested color and corrects an unreadable one',()=>{
+ assert.equal(readableText('#ffffff','#111111'),'#ffffff');
+ assert.equal(readableText('#17202d','#ffffff'),'#17202d');
+ assert.ok(contrastRatio(readableText('#192230','#252525'),'#252525')>=4.5);
+ assert.ok(contrastRatio(readableText('#eeeeee','#ffffff'),'#ffffff')>=4.5);
+});
+test('all presets and saved custom palettes get readable text for each actual surface',()=>{
+ const broken=sanitizePalette({...defaultPalette,text:'#192230',panel:'#252525',surface:'#232529',header:'#5e6c7c',menu:'#302020',toolbar:'#344454',button:'#344454',muted:'#232530',accent:'#4c00c0'});
+ const mixed=sanitizePalette({...broken,panel:'#ffffff',button:'#151719',header:'#e3e8ef'});
+ for(const palette of [...Object.values(editorThemePresets),broken,mixed]){
+  const before=structuredClone(palette),resolved=paletteContrast(palette);
+  for(const key of ['surface','menu','toolbar','panel','header','button','footer'])assert.ok(contrastRatio(resolved[key],palette[key])>=4.5,key+':'+palette.name);
+  assert.ok(contrastRatio(resolved.muted,palette.panel)>=4.5);
+  assert.ok(contrastRatio(resolved.primary,mixColor(palette.accent,'#d9ecff',.78))>=4.5);
+  assert.ok(contrastRatio(resolved.play,mixColor(palette.accent,palette.panel,.25))>=4.5);
+  for(const weight of [.15,.18,.22])assert.ok(contrastRatio(resolved.selected,mixColor(palette.accent,palette.panel,weight))>=4.5);
+  assert.deepEqual(palette,before,'saved custom settings must remain intact');
+ }
 });

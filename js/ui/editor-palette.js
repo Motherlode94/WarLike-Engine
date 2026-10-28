@@ -22,6 +22,32 @@ export function isLightPalette(surface){
  return components[0]*.2126+components[1]*.7152+components[2]*.0722>.4;
 }
 
+export function relativeLuminance(color){
+ if(!COLOR.test(String(color)))return 0;
+ const linear=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+ return linear[0]*.2126+linear[1]*.7152+linear[2]*.0722;
+}
+export function contrastRatio(a,b){const x=relativeLuminance(a),y=relativeLuminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+export function readableText(requested,backgrounds){
+ const surfaces=Array.isArray(backgrounds)?backgrounds:[backgrounds];
+ const score=color=>Math.min(...surfaces.map(bg=>contrastRatio(color,bg)));
+ if(COLOR.test(String(requested))&&score(requested)>=4.5)return requested;
+ return ['#f1f5f9','#17202d','#ffffff','#000000'].sort((a,b)=>score(b)-score(a))[0];
+}
+export function mixColor(a,b,weight){
+ const channel=i=>Math.round(parseInt(a.slice(i,i+2),16)*weight+parseInt(b.slice(i,i+2),16)*(1-weight)).toString(16).padStart(2,'0');
+ return '#'+[1,3,5].map(channel).join('');
+}
+export function paletteContrast(palette){
+ const result={};
+ for(const key of ['surface','menu','toolbar','panel','header','button','footer'])result[key]=readableText(palette.text,palette[key]);
+ result.muted=readableText(palette.muted,palette.panel);
+ result.selected=readableText(palette.text,[.15,.18,.22].map(weight=>mixColor(palette.accent,palette.panel,weight)));
+ result.primary=readableText(palette.text,mixColor(palette.accent,'#d9ecff',.78));
+ result.play=readableText(palette.text,mixColor(palette.accent,palette.panel,.25));
+ return result;
+}
+
 const fields={
  menu:'editorMenuColor',toolbar:'editorToolbarColor',panel:'editorPanelColor',
  header:'editorHeaderColor',button:'editorButtonColor',border:'editorBorderColor',
@@ -62,8 +88,12 @@ export function initEditorPalette(){
    input.value=String(palette[key]);
    if(key!=='font')root.style.setProperty('--warlike-palette-'+key,palette[key]+(key==='fontSize'?'px':''));
   }
+  const readable=paletteContrast(palette);
+  for(const [key,color] of Object.entries(readable))root.style.setProperty('--wl-text-'+key,color);
+  root.style.setProperty('--warlike-palette-text',readable.panel);
+  root.style.setProperty('--warlike-palette-muted',readable.muted);
   root.style.setProperty('--warlike-custom-surface',palette.surface);
-  root.style.setProperty('--warlike-custom-text',palette.text);
+  root.style.setProperty('--warlike-custom-text',readable.panel);
   root.style.setProperty('--editor-accent',palette.accent);
   root.dataset.warlikeFont=palette.font;
   root.dataset.warlikeTheme=theme;
@@ -78,6 +108,10 @@ export function initEditorPalette(){
     const swatch=document.createElement('span');swatch.style.backgroundColor=palette[key];
     swatch.title=key+' : '+palette[key];preview.append(swatch);
    }
+   let notice=document.getElementById('editorThemeReadability');
+   if(!notice){notice=document.createElement('small');notice.id='editorThemeReadability';notice.setAttribute('role','status');preview.parentElement?.append(notice)}
+   notice.hidden=Object.entries(readable).every(([key,color])=>color===(key==='muted'?palette.muted:palette.text));
+   notice.textContent='Le texte est ajusté automatiquement pour rester lisible.';
   }
   document.querySelectorAll('#editorSwatches button').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.color===palette.accent)));
  };

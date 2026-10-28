@@ -12,7 +12,7 @@ import {horror} from './core/horror-survival.js';
 import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality,applyHorrorAtmosphere} from './core/render-quality.js';
 import {initBlueprintWorkspace} from './ui/blueprint-workspace.js?v=blueprint-game-builder-20261028';
 import {initEditorAppearance} from './ui/editor-appearance.js?v=theme-sync-20261027';
-import {initEditorPalette} from './ui/editor-palette.js?v=graphite-default-20261028';
+import {initEditorPalette} from './ui/editor-palette.js?v=readable-custom-themes-20261028';
 import {initCursorSettings} from './ui/cursor-settings.js';
 import {initCSharpBridge} from './ui/csharp-runtime.js';
 import {initializeNative3d,nativeStatus} from './core/native-3d.js';

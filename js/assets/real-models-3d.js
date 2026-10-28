@@ -91,7 +91,9 @@ function readAccessor(json,binary,index){
  if(stride<type.size*count||offset+(a.count-1)*stride+type.size*count>binary.byteLength)throw Error('Buffer GLB incomplet');
  const dv=new DataView(binary.buffer,binary.byteOffset,binary.byteLength),out=[];
  for(let i=0;i<a.count;i++)for(let j=0;j<count;j++)out.push(dv[type.method](offset+i*stride+j*type.size,true));
- return {data:out,count,components:count};
+ // Accessor count is the number of elements, not the number of components
+ // per element (POSITION is VEC3 even when the mesh has thousands of vertices).
+ return {data:out,count:a.count,components:count};
 }
 export function parseGlb(buffer){
  if(buffer.byteLength>maxBytes)throw Error('GLB supérieur à 25 Mo');

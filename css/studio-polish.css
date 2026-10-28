@@ -37,3 +37,37 @@ body.warlike-game-build{overflow:hidden;background:#101720}body.warlike-game-bui
 
 #blueprintDialog .bp-danger{color:color-mix(in srgb,var(--bp-text) 72%,#ee596d)!important}
 #blueprintDialog .bp-sequence-meta>button{align-self:end;margin-bottom:2px}
+/* Contrast follows the background of each surface, including saved custom palettes. */
+body:not(.hub-open) :is(.workspace,.panel,.hierarchy,.inspector,.project-panel,#projectContent,#properties,.component-content,.asset-grid,.asset,.asset-preview,.blueprint-window,.blueprint-content,.bp-sidebar,.bp-tab-content,.bp-project-card,.bp-node-v2,.bp-node-inspector,.editor-appearance-menu,.studio-dropdown,.studio-quick-create-menu,.warlike-tool-library-content,.render-quality-panel,.warlike-animation-studio,.csharp-runtime-panel){--wl-theme-fg:var(--wl-text-panel,#e5e7eb);--wl-theme-muted:var(--wl-text-muted,#adb8c1);--bp-text:var(--wl-text-panel,#e5e7eb);--bp-muted:var(--wl-text-muted,#adb8c1);color:var(--wl-theme-fg)!important}
+body:not(.hub-open) :is(.studio-menubar,.studio-menus,.studio-project-name,.studio-identity,.editor-appearance>summary){--wl-theme-fg:var(--wl-text-menu,#e5e7eb);color:var(--wl-theme-fg)!important}
+body:not(.hub-open) .studio-menubar :is(summary,.studio-identity strong,.studio-identity small,.studio-project-name strong){color:var(--wl-text-menu,#e5e7eb)!important}
+body:not(.hub-open) :is(.scene-header,.scene-tools,.bottom-tabs,.panel-title,.dock-title,.asset-toolbar,.asset-breadcrumb,.browser-title,.console-bar,.project-footer,.inspector-component>summary,.inspector-advanced-tools>summary,.blueprint-heading){--wl-theme-fg:var(--wl-text-header,#e5e7eb);--bp-text:var(--wl-text-header,#e5e7eb);color:var(--wl-theme-fg)!important}
+body:not(.hub-open) :is(.scene-header,.scene-tools,.panel-title,.dock-title,.asset-toolbar,.inspector-component>summary) :is(span,label,small,strong){color:var(--wl-text-header,#e5e7eb)!important}
+body:not(.hub-open) :is(.studio-menubar,.topbar,.workspace,.blueprint-window,.editor-appearance-menu,.studio-dropdown,.studio-quick-create-menu,.warlike-tool-library-content,.render-quality-panel,.warlike-animation-studio,.csharp-runtime-panel) :is(input,select,textarea):not([type=color]):not([type=checkbox]):not([type=range]){--wl-theme-fg:var(--wl-text-surface,#e5e7eb);background-color:var(--wl-theme-bg)!important;color:var(--wl-text-surface,#e5e7eb)!important}
+body:not(.hub-open) :is(.studio-menubar,.topbar,.workspace,.blueprint-window,.editor-appearance-menu,.studio-dropdown,.studio-quick-create-menu,.warlike-tool-library-content,.render-quality-panel,.warlike-animation-studio,.csharp-runtime-panel) button:not(.asset):not(.active):not(.selected):not(.is-active):not(.bp-node-port):not(.bp-object-row):not(.bp-behavior-row):not(.bp-tab):not(.bp-primary):not(.bp-text-button):not(.warlike-color-swatch):not([aria-pressed=true]):not([data-color]){--wl-theme-fg:var(--wl-text-button,#e5e7eb);background-color:var(--wl-theme-button)!important;color:var(--wl-text-button,#e5e7eb)!important}
+body:not(.hub-open) :is(.studio-menubar,.workspace,.blueprint-window) :is(button.active,button.selected,button.is-active,button[aria-pressed=true]){color:var(--wl-text-selected,#e5e7eb)!important}
+body:not(.hub-open) .studio-primary-actions>#play{color:var(--wl-text-play,#e5e7eb)!important}
+#blueprintDialog .blueprint-heading{background:var(--wl-theme-header)!important;--wl-theme-fg:var(--wl-text-header,#e5e7eb);color:var(--wl-text-header,#e5e7eb)!important}
+#blueprintDialog .blueprint-heading :is(strong,span){color:var(--wl-text-header,#e5e7eb)!important}
+#blueprintDialog :is(input,select,textarea){background-color:var(--wl-theme-bg)!important;color:var(--wl-text-surface,#e5e7eb)!important}
+#blueprintDialog .bp-secondary{background-color:var(--wl-theme-button)!important;color:var(--wl-text-button,#e5e7eb)!important}
+#blueprintDialog .bp-text-button{color:var(--wl-text-panel,#e5e7eb)!important}
+#blueprintDialog :is(.bp-tab.is-active,.bp-object-row.is-active,.bp-behavior-row.is-active){color:var(--wl-text-selected,#e5e7eb)!important}
+:is(#blueprintDialog,.game-flow-ui) .bp-primary{color:var(--wl-text-primary,#102030)!important}
+body:not(.hub-open) .warlike-status-footer{--wl-theme-fg:var(--wl-text-footer,#e5e7eb);color:var(--wl-text-footer,#e5e7eb)!important}
+body:not(.hub-open) .editor-appearance-menu{position:fixed!important;left:auto!important;right:12px!important;top:46px!important;width:min(440px,calc(100vw / var(--editor-ui-scale,1) - 24px))!important;min-width:0!important;max-width:calc(100vw - 24px)!important;max-height:calc(100dvh / var(--editor-ui-scale,1) - 62px)!important;overflow:auto!important;padding:18px!important;box-sizing:border-box;scrollbar-gutter:stable;overscroll-behavior:contain}
+.editor-appearance-menu :is(fieldset,label,select,input){min-width:0;max-width:100%;box-sizing:border-box}.editor-appearance-menu fieldset{min-inline-size:0}.editor-appearance-menu select{min-height:34px}.editor-appearance-menu #editorThemeReadability{display:block;line-height:1.6;margin:8px 0;color:var(--wl-text-muted,#adb8c1)!important}.editor-appearance-menu #editorThemeReadability[hidden]{display:none}
+html[data-warlike-contrast=light] body:not(.hub-open) :is(input,textarea,select){color-scheme:light}
+html[data-warlike-contrast=dark] body:not(.hub-open) :is(input,textarea,select){color-scheme:dark}
+
+/* Keep the C# title and close button visible while its entire body scrolls. */
+body:not(.hub-open) .csharp-runtime-panel>header,body:not(.hub-open) .csharp-script-editor>summary{--wl-theme-fg:var(--wl-text-header,#e5e7eb);color:var(--wl-text-header,#e5e7eb)!important}
+body:not(.hub-open) .csharp-runtime-content :is(p,label,legend,strong,small){color:var(--wl-text-panel,#e5e7eb)!important}
+body:not(.hub-open) .csharp-runtime-content :is(small,legend){opacity:1}
+body:not(.hub-open) .csharp-runtime-panel #csharpGenreResult{color:var(--wl-text-surface,#e5e7eb)!important}
+
+
+:is(.csharp-runtime-content,.editor-appearance-menu){scrollbar-color:var(--wl-text-muted,#adb8c1) var(--wl-theme-panel,#252525)}
+:is(.csharp-runtime-content,.editor-appearance-menu)::-webkit-scrollbar{width:12px}
+:is(.csharp-runtime-content,.editor-appearance-menu)::-webkit-scrollbar-track{background:var(--wl-theme-panel,#252525)}
+:is(.csharp-runtime-content,.editor-appearance-menu)::-webkit-scrollbar-thumb{background:var(--wl-text-muted,#adb8c1);border:3px solid var(--wl-theme-panel,#252525);border-radius:8px}

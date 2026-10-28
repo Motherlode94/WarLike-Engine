@@ -37,7 +37,7 @@ export function initGameFlowUi(){
  }
  window.addEventListener('keydown',event=>{
   if(event.repeat||!state.playing||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
-  if(['F5','F9'].includes(event.key)){event.preventDefault();return}
+  if(['F5','F9'].includes(event.key)){event.preventDefault();if(!isLanGuest()&&state.entities.some(o=>o.survivalWorld?.enabled)){try{if(event.key==='F5')saveGameSlot(context());else{queueLoadGame(context());setGamePhase('playing')}}catch(error){gameSession.notice=error.message}signature=''}return}
   if(event.key==='Escape'&&!isLanGuest()&&['playing','paused'].includes(gameSession.phase)){event.preventDefault();document.exitPointerLock?.();setGamePhase(gameSession.phase==='paused'?'playing':'paused');state.keys.clear();signature=''}
  });
  const frame=now=>{requestAnimationFrame(frame);if(now-last<100)return;last=now;

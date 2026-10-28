@@ -1,3 +1,4 @@
+import {reconcileLanSurvivors} from './lan-survivors.js';
 import {gameProject} from './game-project.js';
 import {resolveGameGenre,genreForMode} from './game-genres.js';
 import {sequenceRuntime} from './logic-sequences.js';
@@ -27,10 +28,11 @@ function ownActor(){return state.entities.find(o=>o._netPeerId===lanState.peerId
 function roster(players){
  lanState.players=players;if(lanState.role!=='host'){changed();return}
  const host=ownActor();if(!host)return;
- for(const player of players){if(player.id===lanState.peerId||state.entities.some(o=>o._netPeerId===player.id))continue;
+ if(host.survival){reconcileLanSurvivors(state.entities,players,host,{hostId:lanState.peerId,allocateId:()=>state.nextId++})}
+ else for(const player of players){if(player.id===lanState.peerId||state.entities.some(o=>o._netPeerId===player.id))continue;
   const clone=structuredClone(host);clone.id=state.nextId++;clone.name=player.name;clone._netPeerId=player.id;clone._netRemote=true;clone.playable3d=false;clone.team=host.team??1;clone.x+=80*players.indexOf(player);clone.y+=60;delete clone.sequence;delete clone.sequences;delete clone.ai;delete clone.heroState;delete clone.survivalState;delete clone.survivalWorld;delete clone._support3d;delete clone._animatorFrame;state.entities.push(clone);
  }
- const ids=new Set(players.map(p=>p.id));state.entities=state.entities.filter(o=>!o._netRemote||ids.has(o._netPeerId));for(const id of peers.keys())if(!ids.has(id))peers.delete(id);notify();changed();
+ const ids=new Set(players.map(p=>p.id));state.entities=state.entities.filter(o=>o.coopSeat||!o._netRemote||ids.has(o._netPeerId));for(const id of peers.keys())if(!ids.has(id))peers.delete(id);notify();changed();
 }
 // Data stays JSON-only. Runtime functions, local files and credentials never enter snapshots.
 export function makeLanSnapshot(entities=state.entities){
@@ -54,7 +56,7 @@ export function interpolateLanWorld(now=performance.now()){
 }
 function remoteStep(dt){
  if(!gameIsRunning())return;
- for(const o of state.entities){if(!o._netRemote)continue;const input=peers.get(o._netPeerId),stale=!input||performance.now()-input.at>500,keys=new Set(!stale&&gameIsRunning()?input.keys:[]),pressed=new Set(!stale&&gameIsRunning()?input.pressed:[]);const actions=stale?[]:input.actions||[];if(input){input.pressed=[];input.actions=[];}
+ for(const o of state.entities){if(!o._netRemote||o.survivalDormant)continue;const input=peers.get(o._netPeerId),stale=!input||performance.now()-input.at>500,keys=new Set(!stale&&gameIsRunning()?input.keys:[]),pressed=new Set(!stale&&gameIsRunning()?input.pressed:[]);const actions=stale?[]:input.actions||[];if(input){input.pressed=[];input.actions=[];}
   o._netKeys=keys;if(healthOf(o)<=0)continue;const yaw=input?.yaw??0;
   if(workspace.mode==='3d')updateController3d(o,keys,dt,yaw,state.entities,{pressedKeys:pressed});else walkPlayer(o,dt,keys,{pressedKeys:pressed});
   if(!gameIsRunning())continue;

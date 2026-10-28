@@ -30,7 +30,7 @@ function saveKey(slot){if(!safeKey(slot))throw Error('Nom de sauvegarde invalide
 export function captureGameSave(ctx){
  if(!validEntities(ctx.entities))throw Error('La scène ne peut pas être sauvegardée.');
  return {format:'warlike.save.v1',projectId:gameProject.id,sceneId:gameSession.currentSceneId,
-  entities:clone(ctx.entities),globals:clone(ctx.globals||{}),fired:[...(ctx.fired||[])],
+  entities:ctx.entities.map(entity=>{const copy=clone(entity);for(const key of ['_netKeys','_netFrom','_netTo','_netAt','_animatorFrame','_support3d'])delete copy[key];return copy}),globals:clone(ctx.globals||{}),fired:[...(ctx.fired||[])],
   session:clone({phase:gameSession.phase,elapsed:gameSession.elapsed,objectives:gameSession.objectives,timers:gameSession.timers})};
 }
 export function validateGameSave(data,{checkpoint=false}={}){

@@ -18,7 +18,7 @@ export const genreTemplates={
 
 const details={
  superhero:{stage:'playable',features:['Six pouvoirs, animations et effets visuels','Progression RPG et escouade','Mission, secours et destruction']},
- survival:{stage:'playable',features:['Besoins vitaux, ressources et inventaire','Fabrication, feu et abri','Cycle jour/nuit et dangers']},
+ survival:{stage:'playable',features:['Première aube : camp, repas, nuit et victoire','Placement avec aperçu, rotation et grille','Sauvegarde et coop avec secours des alliés']},
  platformer:{stage:'playable',features:['Sprites Kenney et contrôleur plateforme','Gravité, saut et course','Sols solides, plateformes et caisses physiques']},
  sandbox:{stage:'blank',features:['Une scène minimale à construire librement']},
  fieldlab:{stage:'tool',features:['Circuit de diagnostic des contrôles, interactions et véhicules']},

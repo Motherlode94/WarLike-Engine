@@ -1,17 +1,18 @@
-# Survival : besoins, récolte et campement
+# Survival : Première aube · solo et coop LAN
 
 Dans le Hub, choisir **Survival · Survie** en 2D ou 3D. Dans un projet existant, **Game → Survival · Scène de survie** installe la clairière ; Annuler restaure la scène précédente.
 
-Le template contient un survivant, des arbres, de la pierre, des fibres, des baies, une source d’eau et des rôdeurs. Les objectifs guident vers un feu, un abri et la première aube. La partie continue après ces étapes.
+Le template contient un survivant, des arbres, de la pierre, des fibres, des baies, une source d’eau et des rôdeurs. Le scénario **Première aube** demande un feu alimenté, un abri, un repas cuisiné et une nuit survécue. Après l’aube, rejoindre le feu et l’abri termine l’expédition par une victoire. Ces objectifs sont communs à l’équipe et leurs conditions Blueprint sont modifiables. La défaite survient lorsque tous les survivants actifs sont à terre.
 
 ## Boucle jouable
 
 1. Se déplacer avec ZQSD / WASD ou les flèches et s’approcher d’une ressource. **E** ou **Récolter** prélève dans son stock partagé.
 2. Utiliser **Boire** ou **Manger des baies** dans le HUD. Chaque action consomme une provision dans l’inventaire du personnage.
-3. Récolter bois, pierre et fibres, puis fabriquer un campement. La construction apparaît sur un emplacement libre près du personnage ; si aucun emplacement ne convient, aucun ingrédient n’est débité.
+3. Récolter bois, pierre et fibres, puis fabriquer un campement. **Placer · Feu de camp** ou **Placer · Abri** ouvre un aperçu du vrai modèle ou sprite. Déplacer la souris dans la scène, **R** ou **Tourner** pour pivoter de 90°, cocher **Grille** pour aimanter, puis clic gauche, **Entrée** ou **Poser** pour confirmer. **Échap** annule le placement sans mettre la partie en pause. L’aperçu vert indique un emplacement libre ; rouge indique le motif du refus. La portée est de 300 unités. Les joueurs, obstacles, constructions et grands colliders sont contrôlés de nouveau à la confirmation. Aucun ingrédient n’est débité avant une pose valide. Les constructions 3D se placent sur le sol à altitude zéro ; il faut redescendre avant de construire.
 4. Se tenir près du feu pour se réchauffer. **Attiser le feu** consomme un bois et ajoute 60 secondes de combustible, dans la limite de 600 secondes.
 5. S’approcher de l’abri et choisir **Se reposer** pour récupérer 35 points de repos. Attendre 15 secondes avant un nouveau repos ; les autres actions restent disponibles après leur court délai.
-6. Préparer la nuit : de 19 h à 6 h, la chaleur baisse hors du camp et les rôdeurs détectent plus loin et courent plus vite. Le froid extrême et la privation de nourriture ou d’eau causent de vrais dégâts.
+6. **Relever · 2 fibres** permet de secourir un coéquipier à terre à moins de 135 unités. Il récupère 35 PV et un minimum de besoins vitaux. Un survivant à terre ne peut pas agir ; tant qu’un autre est vivant, la partie continue.
+7. Préparer la nuit : de 19 h à 6 h, la chaleur baisse hors du camp et les rôdeurs détectent plus loin et courent plus vite. Le froid extrême et la privation de nourriture ou d’eau causent de vrais dégâts.
 
 | Recette | Coût | Effet |
 | --- | --- | --- |
@@ -22,7 +23,7 @@ Le template contient un survivant, des arbres, de la pierre, des fibres, des bai
 | Boire | 1 eau | Restaure 35 points d’hydratation |
 | Manger des baies | 1 baie | Restaure 20 points de satiété |
 
-Les quatre jauges vont de 0 à 100 : **satiété, hydratation, repos et chaleur**. Le sprint consomme davantage de besoins. Un repos inférieur à 15 réduit la vitesse de marche à 60 % ; la fatigue réduit aussi la réserve d’endurance disponible. Les recettes vérifient les ingrédients avant de consommer quoi que ce soit.
+Les quatre jauges vont de 0 à 100 : **satiété, hydratation, repos et chaleur**. Le sprint consomme davantage de besoins. Un repos inférieur à 15 réduit la vitesse de marche à 60 % ; la fatigue réduit aussi la réserve d’endurance disponible. Les recettes vérifient les ingrédients avant de consommer quoi que ce soit. Garder du bois pour cuisiner et attiser le feu : son combustible initial ne couvre pas toute la première nuit.
 
 Le stock de chaque ressource est limité. Une ressource épuisée attend son délai de régénération ; un inventaire plein n’épuise pas la ressource. Les valeurs du template sont réglables dans l’Inspecteur. Le HUD se réduit par son bouton d’en-tête et reste défilable sur un petit viewport.
 
@@ -42,10 +43,20 @@ Le [guide multijoueur local](creative-studios-and-lan.md) explique le lancement 
 
 Une construction d’invité est visible et utilisable par tous. Seul son constructeur paie les ingrédients. Les actions du HUD sont transmises comme commandes autorisées ; l’invité n’envoie pas de position, d’inventaire ou de construction arbitraire. L’hôte conserve la gestion de la pause, des sauvegardes et des objectifs de scène.
 
+## Sauvegarder et reprendre
+
+- **F5** enregistre la partie Survival dans le navigateur de l’hôte : besoins, inventaires, géométrie du camp, combustible, stocks, jour, recettes et objectifs. **F9** la recharge. **Pause / sauvegarde** ou **Échap**, puis **Sauvegarder**, fournit les mêmes commandes à la souris.
+- **Continuer la sauvegarde** reprend la dernière partie depuis le menu de démarrage ou la pause. La sauvegarde de partie est distincte de la sauvegarde du projet d’édition : **Stop** restaure la scène d’édition, puis **F9** après un nouveau Play reprend la progression sauvegardée.
+- Pour reprendre une coop, l’hôte ouvre son projet, crée un salon, puis presse **F9**. Les invités rejoignent avec leur nom précédent. Les inventaires et la santé des invités déjà présents au moment du chargement sont restaurés ; un invité déconnecté est conservé hors de la scène simulée et récupère son survivant à sa prochaine connexion.
+- Un nouveau nom reçoit les provisions de départ configurées, jamais les ressources accumulées par l’hôte. Utiliser des noms distincts et stables : ce mécanisme privé n’est pas un compte utilisateur ni une authentification de personnage. Un invité parti ne perd pas les étapes communes déjà réalisées.
+- Les sauvegardes sont locales au navigateur et à l’adresse du site. Les déplacer entre ordinateurs ou passer de Cloudflare au serveur LAN ne transfère pas automatiquement ces sauvegardes.
+
+Les conditions Blueprint **Étape de campement partagée** (`campfire`, `shelter`, `meal`, `dawn`, `expedition`) et **Tous les survivants à terre** permettent de réutiliser cette boucle. La bibliothèque fournit les presets **Première aube**, **Équipe à terre** et **Relever un allié**. Les anciens nœuds de fabrication gardent leur placement automatique pour les scènes scriptées.
+
 ## Ressources et limites
 
 La scène 3D utilise les modèles intégrés **Kenney Survival Kit**, **Nature Kit** et un personnage / rôdeur **Quaternius Ultimate Animated Character**. La 2D utilise des PNG Kenney existants et sept nouveaux sprites isométriques transparents, rendus à partir de la géométrie originale Kenney. Ils sont identifiés comme rendus dans le catalogue ; ils ne sont pas présentés comme des sprites dessinés par Kenney. Les crédits et liens des packs sont conservés dans leurs fiches.
 
 Ces rendus sont reproductibles avec `scripts/assets/render-survival-sprites.cjs` et le renderer du moteur. Les sources sont les GLB déjà livrés, sous **CC0-1.0**. [Kenney](https://kenney.nl/) · [Survival Kit](https://kenney.nl/assets/survival-kit) · [Nature Kit](https://kenney.nl/assets/nature-kit) · [Quaternius](https://quaternius.com/) · [Sources du moteur](../SOURCES.md).
 
-Ce premier axe survival n’inclut pas encore de construction modulaire libre avec aperçu de placement, de météo, de maladies, de farming, d’outils à durabilité, de poids d’inventaire ou de monde persistant sur serveur dédié. Les constructions se placent automatiquement autour du joueur et la scène reste limitée à 256 objets pour la coop. Le soleil et les besoins constituent une simulation de jeu réglable.
+Ce premier axe survival n’inclut pas encore de construction modulaire de murs et toitures, de météo, de maladies, de farming, d’outils à durabilité, de poids d’inventaire ou de monde persistant sur serveur dédié. Le HUD propose un placement libre du feu et de l’abri ; les constructions modulaires en étages restent à développer. La scène reste limitée à 256 objets pour la coop, avec des places réservées aux trois invités. Le soleil et les besoins constituent une simulation de jeu réglable.

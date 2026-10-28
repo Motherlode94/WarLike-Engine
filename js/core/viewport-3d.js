@@ -1,3 +1,4 @@
+import {survivalPlacement} from './survival-building.js';
 import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';
 import {lanActor,isLanGuest} from './lan-state.js';
 import {solidBody3d,collisionWorldBounds3d,raycastScene3d} from './collision-3d.js';
@@ -388,6 +389,7 @@ export function init3d(canvas,host,buttons){
  const updateGizmos=initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBounds3d,getCamera:camera,record,notify});
  const rectPoint=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,w:r.width,h:r.height}};
  const pick=(point,cam)=>pickEntity3d(state.entities,point,cam,{playing:state.playing});
+ view3d.groundAt=(clientX,clientY)=>{const r=canvas.getBoundingClientRect(),hit=groundHit3d(clientX-r.left,clientY-r.top,camera(),r.width,r.height);return hit?{x:hit[0]*64,y:hit[2]*64}:null};
  view3d.pickAt=(clientX,clientY)=>{const r=canvas.getBoundingClientRect();return pick({x:clientX-r.left,y:clientY-r.top,w:r.width,h:r.height},camera())};
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerdown',e=>{
@@ -503,6 +505,7 @@ export function init3d(canvas,host,buttons){
   gl.disable(gl.CULL_FACE);
   if(!state.playing&&!globalThis.__WARLIKE_BUILD__){bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count)}
   const objects=[...state.entities].filter(o=>(state.playing||!o.editorHidden)&&(!state.playing||!((o.audioEnabled||o.lightType)&&!o.assetId)&&o.visible!==false&&o.sequenceEnabled!==false&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
+  if(state.playing&&survivalPlacement.active&&survivalPlacement.entity)objects.push(survivalPlacement.entity);
   // Depth buffering resolves overlapping faces, including the composite mesh parts.
   bind(cubes);
   for(const o of objects){
@@ -511,7 +514,7 @@ export function init3d(canvas,host,buttons){
    gl.uniform1f(u.roughness,Math.max(.04,Math.min(1,Number(o.materialRoughness??.7))));
    gl.uniform1f(u.metallic,Math.max(0,Math.min(1,Number(o.materialMetallic??0))));
    const shape=o.model3dId?'glb':get3dAsset(o.assetId)?.shape;
-   const drawShape=(mesh,p,scale,shade)=>{bind(mesh);model(p,scale,shade,angle);gl.drawArrays(gl.TRIANGLES,0,mesh.count)};
+   const drawShape=(mesh,p,scale,shade)=>{bind(mesh);if(o._survivalPreview){gl.uniform1f(alphaCutoff,.01);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}model(p,scale,o._survivalPreview?[...shade.slice(0,3),.5]:shade,angle);gl.drawArrays(gl.TRIANGLES,0,mesh.count);if(o._survivalPreview)gl.depthMask(true)};
    const cube=(p,scale,shade)=>drawShape(cubes,p,scale,shade);
    const round=(p,scale,shade)=>drawShape(sphere,p,scale,shade);
    const cyl=(p,scale,shade)=>drawShape(cylinder,p,scale,shade);

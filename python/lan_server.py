@@ -17,7 +17,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-ACTIONS = {'gather', 'drink', 'eat', 'rest', 'refuel', 'craft:campfire', 'craft:shelter', 'craft:bandage', 'craft:meal'}
+ACTIONS = {'revive', 'gather', 'drink', 'eat', 'rest', 'refuel', 'craft:campfire', 'craft:shelter', 'craft:bandage', 'craft:meal'}
 KEYS = set('wasdzqexuf123456 ') | {'shift', 'control', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'}
 
 
@@ -35,6 +35,20 @@ def clean(value, depth=0):
     if isinstance(value, float) and not math.isfinite(value):
         raise ValueError('Nombre invalide.')
     return value
+
+
+def survival_actions(value):
+    if not isinstance(value, list):
+        return []
+    actions = []
+    for action in value[:4]:
+        if isinstance(action, str) and action in ACTIONS:
+            if action not in actions:
+                actions.append(action)
+        elif isinstance(action, dict) and action.get('type') == 'place' and action.get('recipe') in ('campfire', 'shelter'):
+            if all(isinstance(action.get(k), (int, float)) and not isinstance(action[k], bool) and math.isfinite(action[k]) and abs(action[k]) <= 1000000 for k in ('x', 'y', 'rotation')):
+                actions.append({k: action[k] for k in ('type', 'recipe', 'x', 'y', 'rotation')})
+    return actions
 
 
 class Lobby:
@@ -56,8 +70,11 @@ class Lobby:
                 stream.put_nowait(event)
 
     def peer(self, room, name, host=False):
+        name = str(name or 'Joueur').strip()[:30] or 'Joueur'
+        if room.get('snapshot') and any(isinstance(o, dict) and o.get('survival') for o in room['snapshot']['entities']) and any(p['name'] == name for p in room['peers'].values()):
+            raise ValueError('Ce nom est déjà utilisé. Choisis un nom distinct pour retrouver ton survivant.')
         identity, token = secrets.token_hex(4), secrets.token_urlsafe(24)
-        peer = {'id': identity, 'token': token, 'name': str(name or 'Joueur')[:30], 'host': host, 'seen': self.clock(), 'streams': [], 'lastInput': -1, 'lastPost': 0}
+        peer = {'id': identity, 'token': token, 'name': name, 'host': host, 'seen': self.clock(), 'streams': [], 'lastInput': -1, 'lastPost': 0}
         room['peers'][identity] = peer
         self.sessions[token] = (room, peer)
         return peer
@@ -140,7 +157,7 @@ class Lobby:
                     keys = lambda field: list(dict.fromkeys(k for k in data.get(field, [])[:32] if isinstance(k, str) and k in KEYS))
                     yaw = data.get('yaw', 0)
                     yaw = max(-10000, min(10000, yaw)) if isinstance(yaw, (int, float)) and math.isfinite(yaw) else 0
-                    self.publish(room, {'type': 'input', 'peerId': peer['id'], 'keys': keys('keys'), 'pressed': keys('pressed'), 'yaw': yaw, 'actions': list(dict.fromkeys(a for a in data.get('actions', [])[:4] if isinstance(a, str) and a in ACTIONS)), 'sequence': seq}, exclude=peer['id'])
+                    self.publish(room, {'type': 'input', 'peerId': peer['id'], 'keys': keys('keys'), 'pressed': keys('pressed'), 'yaw': yaw, 'actions': survival_actions(data.get('actions')), 'sequence': seq}, exclude=peer['id'])
                 else:
                     raise ValueError('Commande inconnue.')
                 return {'ok': True}

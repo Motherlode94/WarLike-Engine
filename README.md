@@ -41,7 +41,7 @@ Sur le site public, le panneau explique le lancement local. Pour jouer, tous uti
 
 Le template **Survival · Survie**, en 2D et 3D, propose satiété, hydratation, fatigue, froid, récolte de ressources limitées, recettes sur inventaire, feu alimenté en bois et abri pour se reposer. Les rôdeurs deviennent plus dangereux la nuit. **E** récolte ; le HUD permet de boire, manger, fabriquer, construire et entretenir le camp. Les vrais modèles Kenney et Quaternius sont intégrés ; sept sprites isométriques transparents sont rendus depuis les modèles Kenney pour la 2D.
 
-En coop LAN, chacun possède ses besoins et provisions ; stocks, constructions et horloge sont partagés. Les composants et nœuds Blueprint sont réutilisables dans les autres genres. [Guide Survival, recettes, contrôles et limites](docs/survival.md).
+**Première aube** fournit une expédition complète : récolter, placer le camp avec aperçu et rotation, cuisiner, survivre à la nuit et revenir au camp. Les objectifs sont partagés et une défaite attend que toute l’équipe soit à terre ; deux fibres permettent de relever un allié. **F5 / F9** sauvegarde et recharge la partie. En coop LAN, chacun possède ses besoins et provisions ; stocks, constructions et horloge sont partagés. Les invités retrouvent leurs provisions sauvegardées chez l’hôte en gardant leur nom ; un nouveau joueur commence avec ses propres provisions de départ. Les composants et nœuds Blueprint sont réutilisables dans les autres genres. [Guide Survival, recettes, contrôles et limites](docs/survival.md).
 
 ## Souris et navigation de logiciel
 

@@ -79,7 +79,7 @@ Les ennemis peuvent cibler l’un ou l’autre joueur. La progression, les insta
 
 Pour changer de port : `python3 python/warlike.py multiplayer --port 9000`. Pour tester uniquement sur le PC hôte : ajouter `--host 127.0.0.1`.
 
-Le [template Survival](survival.md) possède un protocole dédié pour les provisions, récoltes et fabrications de chaque invité. Les campements et les stocks sont partagés.
+Le [template Survival](survival.md) possède un protocole dédié pour les provisions, récoltes et fabrications de chaque invité. Les campements, les stocks et les objectifs de Première aube sont partagés. Un invité pose ses constructions avec l’aperçu ; l’hôte valide la portée, les obstacles et les ingrédients avant de les créer. Le secours d’un allié coûte deux fibres. Les survivants déconnectés sont conservés hors de la scène dans la sauvegarde de l’hôte et retrouvent leurs provisions avec leur nom distinct. F5 / F9 et le menu Pause gèrent la sauvegarde du camp.
 
 ## Navigation A*
 

@@ -107,4 +107,5 @@ export function initCommunityManager(){
  shell.append(header,description,row,search,catalogHeading,catalog,installedHeading,list,preview,status);
  dialog.append(shell);document.body.append(dialog);
  open.addEventListener('click',()=>{preview.hidden=true;pending=null;render();dialog.showModal()});
+ document.getElementById('warlikeOpenBlueprintBuilders')?.addEventListener('click',()=>{preview.hidden=true;pending=null;search.value='Builder';render();dialog.showModal();search.focus()});
 }

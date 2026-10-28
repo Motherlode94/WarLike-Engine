@@ -2,15 +2,16 @@
 export const lighting={hour:14,speed:0,dayNight:false,sunEnabled:true,sunIntensity:1.25,ambient:.24};
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 export const lightTypes=['point','spot'];
-export function updateLighting(dt,playing){if(playing&&lighting.dayNight&&lighting.speed>0)lighting.hour=(lighting.hour+dt*lighting.speed/3600)%24}
+export function updateLighting(dt,playing){if(playing&&lighting.dayNight&&lighting.speed>0)lighting.hour=(lighting.hour+Math.min(.1,Math.max(0,Number(dt)||0))*lighting.speed/3600)%24}
+export function periodAt(hour=lighting.hour){const h=((Number(hour)||0)%24+24)%24;return h>=6&&h<8?'aube':h>=8&&h<18?'jour':h>=18&&h<20?'crépuscule':'nuit'}
 export function sunAt(hour=lighting.hour){
  const theta=((hour-6)/24)*Math.PI*2;
- const altitude=Math.sin(theta),sun=Math.max(0,altitude),twilight=Math.max(0,1-Math.abs(altitude)*4);
+ const altitude=Math.sin(theta),sun=Math.max(0,altitude),twilight=Math.max(0,1-Math.abs(altitude)*4),night=1-sun;
  return {direction:[Math.cos(theta)*.45,Math.max(.08,altitude),Math.sin(theta)*.55],
  intensity:lighting.sunEnabled?lighting.sunIntensity*(.07+.93*sun):0,
- ambient:lighting.ambient+sun*.12,
+ ambient:Math.max(.035,lighting.ambient*(.3+.7*sun))+sun*.12,
  color:[1,.93-.21*twilight,.80-.28*twilight],
- sky:[.025+.29*sun,.035+.48*sun,.072+.69*sun]};
+ sky:[.014+.31*sun+.11*twilight,.020+.49*sun+.045*twilight,.046+.71*sun+.065*twilight]};
 }
 export const validColor=value=>/^#[0-9a-f]{6}$/i.test(value||'')?value:'#ffd48b';
 export const colorRgb=hex=>[1,3,5].map(i=>parseInt(validColor(hex).slice(i,i+2),16)/255);

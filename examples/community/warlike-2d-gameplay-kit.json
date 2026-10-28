@@ -1,0 +1,111 @@
+{
+  "apiVersion": "1.0",
+  "id": "warlike-2d-gameplay-kit",
+  "version": "1.0.0",
+  "name": "WarLike 2D Gameplay Kit",
+  "author": "WarLike Studio",
+  "description": "Recettes Blueprint pour plateformes, RPG 2D et arcade : collectibles, checkpoints, quetes et portes de progression.",
+  "modes": [
+    "2d"
+  ],
+  "recipes": [
+    {
+      "id": "collect-coin",
+      "name": "Piece a ramasser",
+      "description": "Ajoute une piece a l'inventaire du joueur une seule fois.",
+      "sequence": {
+        "event": "interact",
+        "radius": 75,
+        "key": "e",
+        "once": true,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "coin",
+            "value": 1
+          },
+          {
+            "type": "addVariable",
+            "key": "coinsCollected",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "+1 piece collectee"
+          }
+        ]
+      }
+    },
+    {
+      "id": "activate-checkpoint",
+      "name": "Checkpoint 2D",
+      "description": "Enregistre une progression de niveau (variable logique, sans teleportation).",
+      "sequence": {
+        "event": "interact",
+        "radius": 85,
+        "key": "e",
+        "once": true,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "checkpointsReached",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Checkpoint active !"
+          }
+        ]
+      }
+    },
+    {
+      "id": "quest-npc",
+      "name": "PNJ de quete 2D",
+      "description": "Interaction de quete avec compteur de dialogues.",
+      "sequence": {
+        "event": "interact",
+        "radius": 100,
+        "key": "e",
+        "once": false,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "npcInteractions",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Le village a besoin de ton aide !"
+          }
+        ]
+      }
+    },
+    {
+      "id": "arcade-goal",
+      "name": "Objectif arcade",
+      "description": "Signale la sortie et augmente le compteur des objectifs.",
+      "sequence": {
+        "event": "interact",
+        "radius": 95,
+        "key": "e",
+        "once": true,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "arcadeGoals",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Objectif atteint !"
+          }
+        ]
+      }
+    }
+  ]
+}

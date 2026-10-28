@@ -1,0 +1,283 @@
+{
+  "apiVersion": "1.0",
+  "id": "warlike-2d-game-builder",
+  "version": "1.0.0",
+  "name": "Game Builder 2D • Plateforme, RPG, RTS et arcade",
+  "author": "WarLike Studio",
+  "modes": [
+    "2d"
+  ],
+  "description": "Blueprints de construction declaratifs pour scenes 2D. Appliquer chaque recette a un objet de la scene.",
+  "recipes": [
+    {
+      "id": "checkpoint",
+      "name": "Checkpoint",
+      "description": "Interaction preconfiguree : Checkpoint",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "checkpoints",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Checkpoint active"
+          }
+        ]
+      }
+    },
+    {
+      "id": "collectible",
+      "name": "Collectible",
+      "description": "Interaction preconfiguree : Collectible",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "collectible",
+            "value": 1
+          },
+          {
+            "type": "addVariable",
+            "key": "collectibles",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Objet recupere"
+          }
+        ]
+      }
+    },
+    {
+      "id": "quest-giver",
+      "name": "NPC Quest",
+      "description": "Interaction preconfiguree : NPC Quest",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "questAccepted",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Quete acceptee"
+          }
+        ]
+      }
+    },
+    {
+      "id": "quest-objective",
+      "name": "Quest objective",
+      "description": "Interaction preconfiguree : Quest objective",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [
+          {
+            "type": "variable",
+            "key": "questAccepted",
+            "value": 1
+          }
+        ],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "questProgress",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Objectif valide"
+          }
+        ]
+      }
+    },
+    {
+      "id": "exit-gate",
+      "name": "Exit Gate",
+      "description": "Interaction preconfiguree : Exit Gate",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [
+          {
+            "type": "variable",
+            "key": "questProgress",
+            "value": 1,
+            "operator": ">="
+          }
+        ],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "levelComplete",
+            "value": 1
+          },
+          {
+            "type": "emitSignal",
+            "value": "level:complete"
+          },
+          {
+            "type": "message",
+            "value": "Niveau termine"
+          }
+        ]
+      }
+    },
+    {
+      "id": "rts-resource",
+      "name": "RTS Resource Node",
+      "description": "Interaction preconfiguree : RTS Resource Node",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "resource",
+            "value": 1
+          },
+          {
+            "type": "addVariable",
+            "key": "resources",
+            "value": 10
+          },
+          {
+            "type": "message",
+            "value": "Ressources +10"
+          }
+        ]
+      }
+    },
+    {
+      "id": "arcade-score",
+      "name": "Arcade Scoring",
+      "description": "Interaction preconfiguree : Arcade Scoring",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "score",
+            "value": 100
+          },
+          {
+            "type": "message",
+            "value": "Score +100"
+          }
+        ]
+      }
+    },
+    {
+      "id": "dialogue",
+      "name": "Dialogue NPC",
+      "description": "Interaction preconfiguree : Dialogue NPC",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "dialogueCount",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Bienvenue dans WarLike"
+          }
+        ]
+      }
+    },
+    {
+      "id": "heal",
+      "name": "Healing Station",
+      "description": "Interaction preconfiguree : Healing Station",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "medkit",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Soin recupere"
+          }
+        ]
+      }
+    },
+    {
+      "id": "secret",
+      "name": "Hidden Secret",
+      "description": "Interaction preconfiguree : Hidden Secret",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "secrets",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Secret decouvert"
+          }
+        ]
+      }
+    }
+  ]
+}

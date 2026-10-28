@@ -1,3 +1,4 @@
+import {horrorAudio,unlockHorrorAudio,playHorrorCue} from './core/horror-audio.js';
 import {loadHorror3dDemo} from './core/horror-pursuit-3d-demo.js';
 import {initExternalAssetLibrary} from './ui/external-asset-library.js';
 import {loadHorrorPursuitDemo} from './core/horror-pursuit-demo.js';
@@ -241,3 +242,17 @@ if(primaryActions&&secondaryToolbar&&toolbarToggle){
 initCSharpBridge();
 
 initExternalAssetLibrary();
+
+// Horror Audio Settings use the existing editor and browser audio policy.
+const horrorPanel=document.getElementById('projectContent');
+if(horrorPanel&&!document.getElementById('warlikeHorrorAudioSettings')){
+ const panel=document.createElement('details');panel.id='warlikeHorrorAudioSettings';
+ const title=document.createElement('summary');title.textContent='🔊 Horror Audio · Ambiance et poursuite';
+ const body=document.createElement('div');body.style.cssText='display:grid;gap:8px;padding:10px';
+ const enabled=document.createElement('label'),enable=document.createElement('input');enable.type='checkbox';enable.checked=horrorAudio.enabled;enabled.append(enable,document.createTextNode(' Activer sons Horror'));enable.onchange=()=>{horrorAudio.enabled=enable.checked};
+ const volume=document.createElement('input');volume.type='range';volume.min='0';volume.max='1';volume.step='.05';volume.value=String(horrorAudio.volume);volume.setAttribute('aria-label','Volume des sons Horror');volume.oninput=()=>{horrorAudio.volume=Number(volume.value)};
+ const test=document.createElement('button');test.type='button';test.textContent='▶ Écouter un son Horror';test.onclick=()=>{unlockHorrorAudio();playHorrorCue('alert')};
+ body.append(enabled,document.createTextNode('Volume Horror'),volume,test);panel.append(title,body);horrorPanel.append(panel);
+}
+document.getElementById('play')?.addEventListener('click',()=>{unlockHorrorAudio()},{capture:true});
+

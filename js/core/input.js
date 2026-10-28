@@ -1,7 +1,7 @@
 import {isTypingTarget} from './editor-clipboard.js';
 import {toolsState} from '../ui/workspace.js';
 import {hitGizmo2d,gizmoCenter} from './gizmos-2d.js';
-import {orderRtsMove} from './rts-orders.js';
+import {orderRtsMove,orderRtsGroup,isRtsUnit} from './rts-orders.js';
 import {state,notify} from './state.js';
 import {toWorld,zoomAt} from './camera.js';
 import {record,undo,redo} from './history.js';
@@ -22,7 +22,9 @@ export function attachInput(canvas,host){
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerdown',e=>{
   if(state.playing){
-   if(e.button===2){const count=orderRtsMove(state.entities,state.selected,toWorld(screen(e)));if(count)e.preventDefault()}
+   const point=toWorld(screen(e)),unit=[...state.entities].reverse().find(o=>o.visible!==false&&point.x>=o.x&&point.x<=o.x+o.w&&point.y>=o.y&&point.y<=o.y+o.h);
+   if(e.button===0&&unit&&isRtsUnit(unit)){state.selected=additive(e)?(state.selected.includes(unit.id)?state.selected.filter(id=>id!==unit.id):[...state.selected,unit.id]):[unit.id];e.preventDefault();notify()}
+   if(e.button===2){const count=unit&&(unit.ai?.enabled||unit.tags?.includes('enemy'))?orderRtsGroup(state.entities,state.selected,'attack',unit.id):orderRtsMove(state.entities,state.selected,point);if(count)e.preventDefault()}
    return;
   }
   if(e.button!==0&&e.button!==1&&e.button!==2)return;

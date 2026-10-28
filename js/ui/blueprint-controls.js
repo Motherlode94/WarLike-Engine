@@ -29,7 +29,7 @@ export function editConditions(parent,conditions,onChange){
   const card=element('div','bp-condition-card');
   select(card,'Condition',condition.type,sequenceConditions,v=>{condition.type=v;onChange()},{kind:'condition'});
   for(const schema of conditionFields(condition.type))field(card,schema,condition,onChange);
-  if(['healthBelow','healthAbove','inventoryHas','inventoryMissing','aiStateIs','aiCanSeeTarget','aiHasTarget'].includes(condition.type))targetFields(card,condition,onChange,{defaultRole:/inventory/.test(condition.type)?'player':'self'});
+  if(['heroEnergyAbove','heroPowerReady','heroFlightActive','rpgLevelAtLeast','heroReputationAtLeast','simulationPowered','simulationRescued','healthBelow','healthAbove','inventoryHas','inventoryMissing','aiStateIs','aiCanSeeTarget','aiHasTarget'].includes(condition.type))targetFields(card,condition,onChange,{defaultRole:/inventory/.test(condition.type)?'player':'self'});
   field(card,{key:'negate',label:'Inverser le résultat',type:'boolean',default:false},condition,onChange);
   button(card,'Retirer la condition',()=>{conditions.splice(i,1);onChange()},'bp-text-button bp-danger');parent.append(card);
  }

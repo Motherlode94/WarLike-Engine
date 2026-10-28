@@ -1,3 +1,4 @@
+import {stepHeroFlight} from './hero-movement.js';
 import {controllerMode2d,walkPlatformer2d,moveBody2d} from './physics-2d.js';
 import {faceMovement2d} from './character-facing.js';
 import {followCamera2d} from './play-camera.js';
@@ -7,6 +8,7 @@ import {state} from './state.js';
 export const motion={cameraFollow:false,cameraInitialized:false,footSpeed:190,sprintMultiplier:1.55};
 export function walkPlayer(player,dt,keys=state.keys){
  if(player._vehicleTransition||player._actionAnimationUntil>performance.now()/1000)return {moving:false,sprinting:false};
+ if(player.superhero?.enabled!==false&&player.heroState?.flight){stepHeroFlight(player,keys,dt,state.entities,'2d');return {moving:true,sprinting:keys.has('shift')}}
  if(controllerMode2d(player,state.entities)==='platformer'){const beforeX=player.x,beforeY=player.y,result=walkPlatformer2d(player,dt,keys,state.entities);faceMovement2d(player,player.x-beforeX,player.y-beforeY);if(!player._ninjaAttackUntil)player.animation=player.grounded2d?(result.moving?(result.sprinting?'run':'walk'):'idle'):(player.rigidbody2d.vy<0?'jump':'fall');return result}
  const x=Number(keys.has('arrowright')||keys.has('d'))-Number(keys.has('arrowleft')||keys.has('a')||keys.has('q'));
  const y=Number(keys.has('arrowdown')||keys.has('s'))-Number(keys.has('arrowup')||keys.has('w')||keys.has('z'));

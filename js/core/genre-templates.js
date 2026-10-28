@@ -1,3 +1,4 @@
+import {createHeroForgeScene} from './hero-forge-scene.js';
 import {default2dCharacterPng} from '../assets/real-starter-sprites-2d.js?v=fix-20261028';
 // Playable starting scenes for Hub game genres. All data remains ordinary WarLike
 // entities / Blueprint Sequences, so projects can be saved, reopened and edited.
@@ -5,6 +6,7 @@ import {prefab3d} from '../assets/catalog-3d.js';
 import {defaultController,defaultInventory,defaultStats} from './gameplay-components.js';
 
 export const genreTemplates={
+ superhero:{label:'Hero Forge · Super-héros',description:'Pouvoirs, FX, progression RPG, monde réactif et escouade RTS',modes:['2d','3d']},
  sandbox:{label:'Projet vierge',description:'Scène minimale et bibliothèque libre',modes:['2d','3d']},
  tactical:{label:'FPS / TPS',description:'Capture et escouade de combat',modes:['2d','3d']},
  openworld:{label:'Monde ouvert',description:'Vehicule, PNJ et mission',modes:['2d','3d']},
@@ -29,6 +31,7 @@ const item=(key,value=1)=>({type:'giveItem',targetRole:'player',key,value});
 
 export function createGenreScene(genre,mode='3d'){
  const chosen=normalizeGenre(genre),threeD=mode==='3d';
+ if(chosen==='superhero')return createHeroForgeScene(mode);
  if(!['2d','3d'].includes(mode))throw new Error('Invalid project type');
  const objects=[];
  const spawn=(assetId,name,x,y,props={})=>{

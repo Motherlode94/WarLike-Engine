@@ -39,7 +39,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
 }
 export function finishInspector(root,owner,templates,nativeCatalog,renderNative,openScript){
  renderNative(root,owner);
- const keyByTitle={'Box Collider 2D':'collider2d','Rigidbody 2D':'rigidbody2d','Contrôleur de personnage 2D':'controller2d','Stats · Santé et endurance':'stats','Inventaire':'inventory','IA · Perception et navigation':'ai','Contrôleur de personnage 3D':'controller3d','Physics 3D • Rigidbody':'rigidbody3d'};
+ const keyByTitle={'Super-héros · Pouvoirs':'superhero','Progression RPG':'rpgProgression','Émetteur FX':'fxEmitter','Simulation · Réseau et monde':'simulationNode','Unité tactique RTS':'tacticalUnit','Box Collider 2D':'collider2d','Rigidbody 2D':'rigidbody2d','Contrôleur de personnage 2D':'controller2d','Stats · Santé et endurance':'stats','Inventaire':'inventory','IA · Perception et navigation':'ai','Contrôleur de personnage 3D':'controller3d','Physics 3D • Rigidbody':'rigidbody3d'};
  const cards=[...root.children].filter(el=>el.matches('.inspector-component'));
  for(const card of cards){
   const title=card.dataset.componentTitle||card.querySelector('summary')?.textContent||'';card.dataset.componentTitle=title;

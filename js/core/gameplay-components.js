@@ -1,3 +1,6 @@
+import {damageSimulationNode} from './simulation-nodes.js';
+import {skillRank,progressionDamageScale,awardExperience} from './rpg-progression.js';
+import {stepHeroFlight} from './hero-movement.js';
 import {cameraFacingDegrees} from './character-facing.js';
 import {findEnginePath as findPath} from './native-3d.js';
 import {healthOf,isHostileTo,isAiObstacle,hasLineOfSight,perceiveTarget} from './ai-perception.js';
@@ -15,7 +18,7 @@ export function inventoryCount(o,id){const inv=o?.inventory;if(!inv||!id)return 
 export function inventoryAdd(o,id,count=1){o.inventory??=defaultInventory();const inv=o.inventory;count=Math.floor(n(count));if(!id||count<=0)return false;const existing=inv.items.find(i=>i.id===id);if(!existing&&inv.items.length>=Math.max(1,n(inv.capacity,16)))return false;if(existing)existing.count+=count;else inv.items.push({id,count});return true}
 export function inventoryRemove(o,id,count=1){const item=o.inventory?.items?.find(i=>i.id===id);count=Math.floor(n(count));if(!item||count<=0||item.count<count)return false;item.count-=count;if(item.count===0){o.inventory.items=o.inventory.items.filter(i=>i!==item);for(const slot of Object.keys(o.inventory.equipment||{}))if(o.inventory.equipment[slot]===id)o.inventory.equipment[slot]=null}return true}
 export function equipItem(o,id,slot='weapon'){if(!o.inventory?.items?.some(i=>i.id===id&&i.count>0)||!['weapon','armor'].includes(slot))return false;o.inventory.equipment??={weapon:null,armor:null};o.inventory.equipment[slot]=id;return true}
-export function damage(o,amount){return setHealth(o,healthOf(o)-Math.max(0,n(amount)))}
+export function damage(o,amount){let hit=Math.max(0,n(amount));const hero=o.heroState;if(hero?.invulnerable>0)return healthOf(o);if(hero?.shield>0){const absorbed=Math.min(hit,Math.max(0,n(hero.shield)));hero.shield-=absorbed;hit-=absorbed;o._heroShieldImpact=absorbed>0}hit*=1-skillRank(o,'guard')*.04;return setHealth(o,healthOf(o)-hit)}
 export function updateStats(entities,dt){for(const o of entities){if(!o.stats)continue;const s=o.stats;s.stamina=clamp(n(s.stamina)+Math.max(0,n(s.staminaRegen,14))*dt,0,Math.max(1,n(s.maxStamina,100)));}}
 export function updateAi(entities,player,dt){
  const frame=Math.max(0,Math.min(.5,n(dt)));
@@ -106,11 +109,11 @@ export function updateAi(entities,player,dt){
  }
 }
 export function attack3d(attacker,entities,{range=120,damageAmount=20,arc=1.2}={}){
- const target=entities.filter(e=>e.ai?.enabled&&isHostileTo(e,attacker,attacker)&&healthOf(e)>0&&
+ const target=entities.filter(e=>e!==attacker&&(e.simulationNode?.enabled&&e.simulationNode.kind==='destructible'&&e.simulationNode.health>0||e.ai?.enabled&&isHostileTo(e,attacker,attacker)&&healthOf(e)>0)&&
   e.sequenceEnabled!==false&&hasLineOfSight(attacker,e,entities))
   .sort((a,b)=>Math.hypot(a.x-attacker.x,a.y-attacker.y)-Math.hypot(b.x-attacker.x,b.y-attacker.y))[0];
  if(!target||Math.hypot(target.x-attacker.x,target.y-attacker.y)>Math.max(0,n(range,120)))return null;
- damage(target,Math.max(0,n(damageAmount,20)));target.animation='hurt';return target;
+ const before=healthOf(target),amount=Math.max(0,n(damageAmount,20))*progressionDamageScale(attacker);if(target.simulationNode?.kind==='destructible')damageSimulationNode(target,amount,attacker,{mode:'3d'});else{damage(target,amount);if(before>0&&healthOf(target)<=0)awardExperience(attacker,40)}target.animation='hurt';return target;
 }
 // 3D movement is camera-relative: forward must point where the camera looks,
 // not toward the orbit camera position. x/y here are WarLike's ground X/Z.
@@ -125,6 +128,7 @@ export function updateController3d(p,keys,dt,yaw,entities){
  const cfg=p.controller3d||defaultController(),stats=ensureStats(p);
  const frame=Math.max(0,Math.min(.1,n(dt)));
  if(!frame)return;
+ if(p.superhero?.enabled!==false&&p.heroState?.flight){stepHeroFlight(p,keys,frame,entities,'3d',yaw);return}
  const ax=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const az=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
  const len=Math.hypot(ax,az),sprint=keys.has('shift')&&stats.stamina>0;

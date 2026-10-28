@@ -1,3 +1,9 @@
+import {castHeroPower,ensureHeroState,heroAbilities} from './superhero-runtime.js';
+import {awardExperience,upgradeHeroSkill} from './rpg-progression.js';
+import {emitFx} from './fx-runtime.js';
+import {heroCenter} from './hero-movement.js';
+import {interactSimulationNode,damageSimulationNode} from './simulation-nodes.js';
+import {orderRtsMove,orderRtsGroup} from './rts-orders.js';
 import {gameProject,safeKey} from './game-project.js';
 import {gameSession,resetGameSession,gameIsRunning,setGamePhase,setObjective,advanceObjective,completeObjective,startTimer,tickGameSession,saveGameSlot,queueLoadGame,hasGameSlot,captureGameSave,queueScene,applySessionChange} from './game-session.js';
 import {vehicleComponents,repairVehicle,refuelVehicle,setVehicleEngine,canDriveVehicle,setVehicleGear} from './vehicle-components.js';
@@ -10,8 +16,8 @@ import {healthOf,sameFaction,isHostileTo} from './ai-perception.js';
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
 export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal','healthChanged','death','variableChanged','objectiveCompleted','timerExpired'];
-export const sequenceConditions=['always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists','aiStateIs','aiAwarenessAbove','aiCanSeeTarget','aiHasTarget','sameFaction','isHostile','weaponAmmoAbove','weaponReady','vehicleDriveable','vehicleFuelBelow','vehicleHealthBelow','vehicleHasDriver','objectiveActive','objectiveComplete','timerRunning','timerExpired','gamePhaseIs','saveExists'];
-export const sequenceInstructions=['message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState','setAiState','setAiFaction','setAiTarget','setAiDetection','setAiAttackRange','setAiPatrolPoint','setWeaponAmmo','addWeaponAmmo','reloadWeapon','setWeaponDamage','fireVehicleWeapon','repairVehicle','refuelVehicle','setVehicleEngine','setVehicleGear','setVehicleWeapon','clearAiTarget','setAiEnabled','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration','branch','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'];
+export const sequenceConditions=['heroEnergyAbove','heroPowerReady','heroFlightActive','rpgLevelAtLeast','heroReputationAtLeast','simulationPowered','simulationRescued','always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists','aiStateIs','aiAwarenessAbove','aiCanSeeTarget','aiHasTarget','sameFaction','isHostile','weaponAmmoAbove','weaponReady','vehicleDriveable','vehicleFuelBelow','vehicleHealthBelow','vehicleHasDriver','objectiveActive','objectiveComplete','timerRunning','timerExpired','gamePhaseIs','saveExists'];
+export const sequenceInstructions=['castHeroPower','restoreHeroEnergy','giveExperience','upgradeHeroSkill','emitFx','repairSimulationNode','rtsOrder','message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState','setAiState','setAiFaction','setAiTarget','setAiDetection','setAiAttackRange','setAiPatrolPoint','setWeaponAmmo','addWeaponAmmo','reloadWeapon','setWeaponDamage','fireVehicleWeapon','repairVehicle','refuelVehicle','setVehicleEngine','setVehicleGear','setVehicleWeapon','clearAiTarget','setAiEnabled','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration','branch','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
 export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[],trace:[],errors:[],observed:new Map()};
 const number=(n,def=0)=>Number.isFinite(Number(n))?Number(n):def;
@@ -44,6 +50,13 @@ export function conditionPass(c,o,ctx){
  const compare=(a,b,op)=>op==='>'?number(a)>number(b):op==='<'?number(a)<number(b):op==='>='?number(a)>=number(b):op==='<='?number(a)<=number(b):op==='!='?String(a)!==String(b):String(a)===String(b);
  let pass=false;
  switch(c.type){
+ case 'heroEnergyAbove':pass=!!target?.superhero&&number(target.heroState?.energy,target.superhero.maxEnergy)>=number(c.value,25);break;
+ case 'heroPowerReady':{const def=Object.hasOwn(heroAbilities,String(c.value))?heroAbilities[String(c.value)]:null;pass=!!target?.superhero&&target.superhero.enabled!==false&&!!def&&number(target.heroState?.energy,target.superhero.maxEnergy)>=def.cost&&number(target.heroState?.cooldowns?.[c.value])<=0;break}
+ case 'heroFlightActive':pass=target?.heroState?.flight===true;break;
+ case 'rpgLevelAtLeast':pass=number(target?.rpgProgression?.level,1)>=number(c.value,1);break;
+ case 'heroReputationAtLeast':pass=number(target?.heroState?.reputation)>=number(c.value,1);break;
+ case 'simulationPowered':pass=target?.simulationNode?.enabled===true&&target.simulationNode.powered===true;break;
+ case 'simulationRescued':pass=target?.simulationNode?.rescued===true;break;
  case 'always':pass=true;break;
  case 'objectiveActive':pass=gameSession.objectives[c.key]?.status==='active';break;
  case 'objectiveComplete':pass=gameSession.objectives[c.key]?.status==='complete';break;
@@ -109,6 +122,13 @@ function execute(job,ctx,actionsLeft){
   if(!targetObject){traceAction(job,a,'error','Objet cible introuvable');continue}
   traceAction(job,a);
   try{switch(a.type){
+  case 'castHeroPower':{const result=castHeroPower(targetObject,String(val||'bolt'),{...ctx,mode:ctx.mode|| (targetObject.type==='mesh3d'?'3d':'2d'),yaw:ctx.player===targetObject?ctx.yaw:null});if(!result.ok)rt.messages.push({text:result.reason,ttl:2});break}
+  case 'restoreHeroEnergy':if(targetObject.superhero){const s=ensureHeroState(targetObject);s.energy=Math.max(0,Math.min(targetObject.superhero.maxEnergy,s.energy+number(val,25)))}break;
+  case 'giveExperience':awardExperience(targetObject,number(val,25));break;
+  case 'upgradeHeroSkill':upgradeHeroSkill(targetObject,String(val||'power'));break;
+  case 'emitFx':emitFx(String(val||'energy'),heroCenter(targetObject,ctx.mode|| (targetObject.type==='mesh3d'?'3d':'2d')),{mode:ctx.mode|| (targetObject.type==='mesh3d'?'3d':'2d'),color:a.color,scale:Math.max(.1,Math.min(8,number(a.scale,1))),count:24,ring:true});break;
+  case 'repairSimulationNode':{const result=interactSimulationNode(ctx.player,targetObject,{mode:ctx.mode||'2d'});rt.messages.push({text:result.reason,ttl:2});break}
+  case 'rtsOrder':if(val==='move')orderRtsMove(ctx.entities,[targetObject.id],{x:number(a.x),y:number(a.y)});else orderRtsGroup(ctx.entities,[targetObject.id],String(val||'follow'),a.key&&a.key!=='player'?number(a.key):ctx.player?.id);break;
   case 'message':rt.messages.push({text:String(val||'Action exécutée').slice(0,160),ttl:3});break;
   case 'setVariable':rt.globals[key]=val??0;break;
   case 'addVariable':rt.globals[key]=number(rt.globals[key])+number(val);break;
@@ -119,7 +139,7 @@ function execute(job,ctx,actionsLeft){
   case 'giveItem':{const target=targetObject;inventoryAdd(target,key,Math.max(1,number(val,1)));break}
   case 'removeItem':{const target=targetObject;inventoryRemove(target,key,Math.max(1,number(val,1)));break}
   case 'equipItem':{const target=targetObject;equipItem(target,key,a.slot||'weapon');break}
-  case 'damageObject':{const target=targetObject;damage(target,number(val,10));break}
+  case 'damageObject':{const target=targetObject;if(target.simulationNode?.kind==='destructible')damageSimulationNode(target,number(val,10),ctx.player,{mode:ctx.mode||'2d'});else damage(target,number(val,10));break}
   case 'healObject':{const target=targetObject;setHealth(target,healthOf(target)+Math.max(0,number(val,10)));break}
   case 'setHealth':{const target=targetObject;setHealth(target,number(val,100));break}
   case 'addHealth':{const target=targetObject;setHealth(target,healthOf(target)+number(val));break}

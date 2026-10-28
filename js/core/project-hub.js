@@ -100,6 +100,7 @@ export function importLegacyProject(){
 export function initHub(){
  if(globalThis.__WARLIKE_BUILD__)return;
  const modal=document.querySelector('#hubOverlay'),cards=document.querySelector('#hubProjects'),name=document.querySelector('#hubProjectName'),type=document.querySelector('#hubProjectType'),assetPackSelect=document.querySelector('#hubAssetPack'),genreSelect=document.querySelector('#hubProjectGenre'),message=document.querySelector('#hubMessage');
+ for(const [value,template] of Object.entries(genreTemplates))if(![...genreSelect.options].some(o=>o.value===value)){const option=document.createElement('option');option.value=value;option.textContent=template.label;genreSelect.append(option)}
  const title=document.querySelector('#studioProjectName');
  const projectSearch=document.querySelector('#hubProjectSearch'),projectFilter=document.querySelector('#hubProjectFilter'),projectCount=document.querySelector('#hubProjectCount');
  const picker=document.querySelector('#hubAccentColor'),hex=document.querySelector('#hubAccentHex'),palette=document.querySelector('#hubThemePalette'),reset=document.querySelector('#hubThemeReset');

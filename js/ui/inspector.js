@@ -1,3 +1,4 @@
+import {renderHeroForgeInspector} from './hero-forge-inspector.js';
 import {renderPhysics2d} from './physics-2d-inspector.js';
 import {renderSceneHierarchy} from './hierarchy-view.js';
 import {renderAnimator3d} from './animator-3d.js';
@@ -97,7 +98,7 @@ function openCSharpEditor(){
  document.getElementById('csharpScriptLoad')?.click();
  document.getElementById('csharpScriptSource')?.focus();
 }
-function finishInspector(root,o,templates){finishComponentInspector(root,o,templates,nativeComponentCatalog,renderNativeComponents,openCSharpEditor)}
+function finishInspector(root,o,templates){renderHeroForgeInspector(root,o,{component,field,selectField,colorPalette});finishComponentInspector(root,o,templates,nativeComponentCatalog,renderNativeComponents,openCSharpEditor)}
 function renderObjectBehaviors(root,owner){
  const entries=[...(owner.sequence?[{index:-1,sequence:owner.sequence}]:[]),...(owner.sequences||[]).map((sequence,index)=>({index,sequence}))];
  for(const entry of entries){

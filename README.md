@@ -17,6 +17,16 @@ WarLike réunit un Hub de projets, une scène, une hiérarchie d’objets, un In
 
 Les fenêtres flottantes se déplacent par leur en-tête et se redimensionnent par leurs huit bords et coins. Les dimensions sont mémorisées. Les panneaux conservent leur défilement, même à 140 % de zoom.
 
+## Hero Forge : super-héros, action, RPG, simulation et RTS
+
+Dans le Hub, choisir le template **Hero Forge · Super-héros** en 2D ou 3D. Dans un projet existant, **Game → Hero Forge · Scène super-héros** installe une mission avec modèles et sprites Kenney / Quaternius déjà intégrés ; Annuler restaure la scène précédente.
+
+Les six pouvoirs sont réellement jouables : **1** trait d’énergie, **2** onde de choc, **3** ruée, **4** bouclier, **5** vol, **6** ralliement. Ils utilisent énergie et temps de recharge. Les quatre archétypes — Gardien, Vélociste, Arcaniste et Technologue — se règlent dans l’Inspecteur. **E** secourt un civil ou répare un équipement proche ; **U** dépense un point dans la spécialité RPG choisie.
+
+Les composants restent utilisables séparément dans les autres genres : progression avec niveaux et compétences, émetteurs FX prévisualisables, décors destructibles, réseau de générateurs et consommateurs, escouades avec déplacement, suivi, défense et attaque. Les effets incluent énergie, feu, électricité, fumée, soin et portail, avec trois budgets de qualité. Le HUD affiche les recharges, l’énergie, les matériaux et les commandes RTS ; il se replie sur un petit viewport.
+
+[Guide Hero Forge, contrôles et nœuds Blueprint](docs/hero-forge.md).
+
 ## Souris et navigation de logiciel
 
 Le clic droit ouvre un menu adapté à la Hiérarchie, à la scène, aux ressources ou aux composants. Les commandes de copie, collage, duplication, suppression et cadrage agissent sur la sélection. Les champs de texte conservent leur édition et leur presse-papiers natifs.

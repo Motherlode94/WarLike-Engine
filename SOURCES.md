@@ -4,7 +4,7 @@
 
 **Hardi Victor MBANVU — HardieBay** : conception et développement de WarLike Studio.
 
-Le Hub, l’éditeur, Blueprint Studio, les contrôleurs, la caméra, les comportements IA, la navigation sur grille, les systèmes de jeu, le pipeline d’assets et les runtimes WarLike sont du code du projet. Les inspirations Unity, Game Creator, Emerald AI et Opsive ne constituent pas une intégration de leurs produits ou de leurs sources.
+Hero Forge (pouvoirs, progression, simulation, escouades et FX procéduraux), le Hub, l’éditeur, Blueprint Studio, les contrôleurs, la caméra, les comportements IA, la navigation sur grille, les systèmes de jeu, le pipeline d’assets et les runtimes WarLike sont du code du projet. Les inspirations Unity, Game Creator, Emerald AI et Opsive ne constituent pas une intégration de leurs produits ou de leurs sources.
 
 ## Ressources incluses
 

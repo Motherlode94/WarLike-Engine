@@ -7,5 +7,5 @@ test('FPS scene generates targets, cover, and a first-person player',()=>{
  for(const word of ['character-hero','character-robot','prop-crate','fpsController:true','playable3d:false'])assert.ok(fps.includes(word),word);
 });
 test('first-person scene has a camera, mouse look, and aimed fire in WebGL',()=>{
- for(const word of ['const isFps=','const shootFps=','requestPointerLock','movementX','fpsCrosshair','damage(best,25)'])assert.ok(viewport.includes(word),word);
+ for(const word of ['const isFps=','const shootFps=','requestPointerLock','movementX','fpsCrosshair','25*progressionDamageScale(player)','damage(best,amount)'])assert.ok(viewport.includes(word),word);
 });

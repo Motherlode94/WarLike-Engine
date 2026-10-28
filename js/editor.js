@@ -1,3 +1,4 @@
+import {initHeroForgeUi} from './ui/hero-forge-ui.js';
 import {initDesktopInteractions} from './ui/desktop-interactions.js';
 import {createBundledPhysicsScene2d} from './core/bundled-physics-scene.js';
 import {initClipboardControls} from './ui/clipboard-controls.js';
@@ -290,3 +291,5 @@ initSimpleHub();
 initClipboardControls();
 
 initDesktopInteractions();
+
+initHeroForgeUi();

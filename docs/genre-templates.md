@@ -1,9 +1,10 @@
-# Genres RP, Racing, Simulation, RPG et Stratégie 4X
+# Templates et genres de jeu
 
 Depuis **WarLike Hub → Nouveau projet**, choisir **2D ou 3D**, puis le **Genre / template du projet**. Le Hub crée un ensemble d'objets, de composants et de séquences Blueprint modifiables. Le genre est enregistré dans les données et les métadonnées du projet; les projets existants sans champ `genre` restent des projets vierges.
 
 | Genre | Scène et premières interactions | État |
 | --- | --- | --- |
+| Hero Forge · Super-héros | Six pouvoirs, FX, progression, secours, réseau énergétique et escouade RTS | Mission jouable 2D / 3D ; [guide](hero-forge.md) |
 | RP / Roleplay | Joueur, quartier, PNJ, emploi, commerce, monnaie et réputation | Prototype interactif |
 | Racing | Véhicule pilotable, départ, checkpoint, arrivée, chronomètre via Blueprint | Prototype jouable |
 | Simulation | Atelier, production de matériaux, commande rémunérée et maintenance | Prototype interactif |
@@ -22,7 +23,7 @@ Le preset Racing 3D utilise le contrôleur automobile arcade déjà disponible. 
 
 ## À ne pas confondre avec des systèmes terminés
 
-Les scènes contiennent **des exemples fonctionnels de logique**, pas des jeux complets. Le RP n'a pas encore de synchronisation multijoueur ni de système persistant de métiers. La simulation n'a pas encore de chaînes de production approfondies. Le RPG n'a pas encore d'arbre de talents complet ou d'un système de quête journalisé. Le 4X n'a pas encore de diplomatie, brouillard de guerre, terrain hexagonal ou adversaires stratégiques autonomes. Les séquences utilisées ici sont exécutées par le runtime JavaScript du navigateur; le runtime C# .NET local est séparé.
+Les scènes contiennent **des exemples fonctionnels de logique**, pas des jeux complets. Le RP n'a pas encore de synchronisation multijoueur ni de système persistant de métiers. La simulation n'a pas encore de chaînes de production approfondies. Le composant Progression RPG partagé ajoute trois branches de compétences ; le template RPG conserve ses exemples de quêtes et d’économie. Il n’existe pas encore d’éditeur graphique de grand arbre de talents. Le 4X n'a pas encore de diplomatie, brouillard de guerre, terrain hexagonal ou adversaires stratégiques autonomes. Les séquences utilisées ici sont exécutées par le runtime JavaScript du navigateur; le runtime C# .NET local est séparé.
 
 Le type de projet 2D/3D reste indépendant du genre et le thème de l'éditeur reste indépendant des données du projet.
 

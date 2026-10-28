@@ -1,3 +1,8 @@
+import {defaultSuperhero} from './superhero-runtime.js';
+import {defaultRpgProgression} from './rpg-progression.js';
+import {defaultFxEmitter} from './fx-runtime.js';
+import {defaultSimulationNode} from './simulation-nodes.js';
+import {defaultTacticalUnit} from './rts-orders.js';
 import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
 import {defaultCameraRig} from './play-camera.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController} from './gameplay-components.js';
@@ -5,6 +10,11 @@ import {defaultRigidbody3d} from './physics-3d.js';
 import {newSequence} from './logic-sequences.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
+ {id:'superhero',name:'Super-héros · Pouvoirs',category:'Hero Forge',description:'Énergie, trait, onde de choc, ruée, bouclier, vol et ralliement.',create:defaultSuperhero},
+ {id:'rpgProgression',name:'Progression RPG',category:'RPG',description:'Expérience, niveaux et compétences combat, défense et commandement.',create:defaultRpgProgression},
+ {id:'fxEmitter',name:'Émetteur FX',category:'Effets visuels',description:'Énergie, feu, électricité, fumée, soin et portail en 2D/3D.',create:defaultFxEmitter},
+ {id:'simulationNode',name:'Simulation · Réseau et monde',category:'Simulation',description:'Destruction, matériaux, réparation, réseau énergétique et civils.',create:defaultSimulationNode},
+ {id:'tacticalUnit',name:'Unité tactique RTS',category:'RTS',description:'Déplacement A*, suivi, défense et attaque d’escouade.',create:defaultTacticalUnit},
  {id:'collider2d',name:'Box Collider 2D',category:'Physique',description:'Collision solide ou trigger, dimensions et décalage.',modes:['2d'],create:defaultCollider2d},
  {id:'rigidbody2d',name:'Rigidbody 2D',category:'Physique',description:'Gravité, vitesse, rebond et friction.',modes:['2d'],create:defaultRigidbody2d},
  {id:'controller2d',name:'Contrôleur de personnage 2D',category:'Personnage',description:'Vue du dessus ou plateforme avec gravité et saut.',modes:['2d'],create:defaultController2d},
@@ -27,16 +37,17 @@ export function addObjectComponent(object,id,mode){
  const definition=componentChoices(mode).find(d=>d.id===id);if(!definition)return false;
  if(id==='sequence'&&object.sequence){object.sequences??=[];if(object.sequences.length>=32)return false;object.sequences.push(definition.create());return true}
  if(hasObjectComponent(object,id))return false;
- object[id]=definition.create();if(id==='rigidbody2d')object.collider2d??=defaultCollider2d();return true;
+ object[id]=definition.create();if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.stats??=defaultStats()}if(id==='rigidbody2d')object.collider2d??=defaultCollider2d();return true;
 }
 export function resetObjectComponent(object,id){const definition=webComponentDefinitions.find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
-export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id))return false;delete object[id];if(id==='collider2d')object.collision3d=false;return true}
+export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id))return false;delete object[id];if(id==='collider2d')object.collision3d=false;if(id==='superhero')delete object.heroState;return true}
 export const webDataComponentKinds=new Set(['Weapon','Damageable','Health','Team','Respawn','DeathmatchRules']);
 export function inspectorComponentRank(title){
  if(title==='Transform')return 0;
  if(/Renderer|Material|Sprite/.test(title))return 10;
  if(/Animator/.test(title))return 15;
  if(/Collider|Rigidbody|Collision/.test(title))return 20;
+ if(/Super-héros|Progression RPG/.test(title))return 25;
  if(/Stats|Health|Inventaire|Controller|Contrôleur/.test(title))return 30;
  if(/Enemy Intelligence|^IA|AI|Horror|Monde ouvert/.test(title))return 40;
  if(/Logic|Déclencheur|Blueprint/.test(title))return 50;

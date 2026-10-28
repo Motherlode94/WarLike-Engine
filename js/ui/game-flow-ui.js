@@ -7,18 +7,18 @@ import {togglePlay} from '../core/scene.js';
 import {element} from './blueprint-controls.js';
 const context=()=>({entities:state.entities,globals:sequenceRuntime.globals,fired:sequenceRuntime.fired});
 export function initGameFlowUi(){
- const root=element('div','game-flow-ui');root.id='gameFlowUi';document.body.append(root);let signature='',last=0;
+ const root=element('div','game-flow-ui');root.id='gameFlowUi';document.body.append(root);let signature='',last=0,objectiveHud=null;
  const action=(parent,label,fn,className='')=>{const b=element('button',className,label);b.type='button';b.onclick=()=>{unlockAudio();playSound('click');try{fn();signature=''}catch(error){gameSession.notice=error.message;signature=''}};parent.append(b);return b};
  const start=()=>{if(state.playing)togglePlay();togglePlay();state.keys.clear()};
  function draw(){
   const build=globalThis.__WARLIKE_BUILD__===true,active=state.playing;root.dataset.uiSkin=gameProject.uiSkin||'classic';
-  root.hidden=!active&&!build;root.replaceChildren();if(root.hidden)return;
+  root.hidden=!active&&!build;root.replaceChildren();objectiveHud?.remove();objectiveHud=null;if(root.hidden)return;
   const hud=element('section','game-objective-hud');
   for(const objective of Object.values(gameSession.objectives)){
    const row=element('div','game-objective-row');row.append(element('span','game-objective-check',objective.status==='complete'?'✓':'◇'),element('span','',objective.label),element('strong','',objective.current+' / '+objective.total));hud.append(row);
   }
   for(const [id,timer] of Object.entries(gameSession.timers)){const row=element('div','game-timer-row');row.append(element('span','',id),element('strong','',Math.floor(Math.ceil(timer.remaining)/60)+':'+String(Math.ceil(timer.remaining)%60).padStart(2,'0')));hud.append(row)}
-  if(active&&hud.childNodes.length)root.append(hud);
+  if(active&&hud.childNodes.length){objectiveHud=hud;(document.getElementById('viewport')||root).append(hud);}
   if(active&&gameSession.dialogue){const d=gameSession.dialogue,box=element('section','game-dialogue');box.append(element('strong','',d.speaker),element('p','',d.text));action(box,'Continuer →',()=>{gameSession.dialogue=null;gameSession.revision++;emitSequenceSignal(d.signal||'dialogue:closed')},'bp-primary');root.append(box)}
   if(gameSession.notice&&active)root.append(element('div','game-session-notice',gameSession.notice));
   if(!active||!gameIsRunning()){

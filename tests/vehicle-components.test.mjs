@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle,repairVehicle,refuelVehicle} from '../js/core/vehicle-components.js';
+import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle,repairVehicle,refuelVehicle,setVehicleEngine,setVehicleGear,vehicleSnapshot} from '../js/core/vehicle-components.js';
 
 test('default vehicle stays driveable without mandatory fuel',()=>{
  const car={};const systems=vehicleComponents(car);
@@ -22,5 +22,22 @@ test('collision damage disables and repair re-enables engine',()=>{
  assert.equal(impact.disabled,true);
  assert.equal(canDriveVehicle(car),false);
  repairVehicle(car,30);
+ assert.equal(canDriveVehicle(car),true);
+});
+
+test('automatic gear and odometer reflect movement',()=>{
+ const car={maxSpeed:200};
+ tickVehicleSystems(car,.1,{speed:150,throttle:1});
+ const status=vehicleSnapshot(car);
+ assert.ok(status.gear>=3);
+ assert.ok(status.distance>0);
+});
+test('manual gear and engine toggle are configurable',()=>{
+ const car={vehicleSystems:{transmission:{mode:'manual',gear:0,gears:6}}};
+ assert.equal(setVehicleGear(car,-1),true);
+ assert.equal(setVehicleGear(car,9),false);
+ setVehicleEngine(car,false);
+ assert.equal(canDriveVehicle(car),false);
+ setVehicleEngine(car,true);
  assert.equal(canDriveVehicle(car),true);
 });

@@ -4,7 +4,7 @@ import {tickEngineDiagnostics} from './engine-diagnostics.js';
 import {updateComponentRuntime} from './component-runtime.js';
 import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
-import {updateHorror,updateHorrorPerception} from './horror-survival.js';
+import {horror,updateHorror,updateHorrorPerception} from './horror-survival.js';
 import {updateSequences,drawSequenceMessages} from './logic-sequences.js';
 import {playSound} from './audio.js';
 import {workspace} from './workspaces.js';
@@ -51,7 +51,7 @@ game.equipHeld=equip;
 const equipped=state.entities.find(e=>e.id===game.equippedWeaponId&&getAsset(e.assetId)?.category==='Weapons');
 const aim=game.mouse.x===500&&game.mouse.y===300?{x:p.x+300,y:p.y}:game.mouse;
 if(!currentVehicle()&&(game.mouse.down||k.has('f')||k.has(' '))&&game.fireTimer===0){if(!equipped||equipped.weaponClass==='melee'||consumeAmmo())shoot(p,aim,equipped);game.fireTimer=Math.max(.06,Number(equipped?.weaponInterval)||.16)}if(k.has('h')&&game.fireTimer===0&&consumeMedkit(game))game.fireTimer=.4;
-for(const e of state.entities.filter(enemy)){if(currentMode()&&['teamDeathmatch','frontline'].includes(currentMode().kind)&&e.team===p.team)continue;e._cooldown=Math.max(0,(e._cooldown||0)-dt);e._hit=Math.max(0,(e._hit||0)-dt);const a=center(e),b=center(p),dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;if(e.assetId==='zombie-runner'&&d<600)e.animation='run_zombie';else if(e.assetId==='zombie-crawler')e.animation='crawl';else if(e.assetId==='zombie-brute'&&d<80)e.animation='mutant_smash';else if(e.assetId?.startsWith('zombie')&&d<650)e.animation='walk_zombie';const mode=e.behavior||'none',range=Math.max(70,Number(e.detectionRadius)||650),speed=Math.max(0,Number(e.aiSpeed)||65);
+for(const e of state.entities.filter(enemy)){if(currentMode()&&['teamDeathmatch','frontline'].includes(currentMode().kind)&&e.team===p.team)continue;e._cooldown=Math.max(0,(e._cooldown||0)-dt);e._hit=Math.max(0,(e._hit||0)-dt);const a=center(e),b=center(p),dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;if(e.assetId==='zombie-runner'&&d<600)e.animation='run_zombie';else if(e.assetId==='zombie-crawler')e.animation='crawl';else if(e.assetId==='zombie-brute'&&d<80)e.animation='mutant_smash';else if(e.assetId?.startsWith('zombie')&&d<650)e.animation='walk_zombie';const mode=e.horrorAiConfig?.enabled&&horror.enabled?'none':e.behavior||'none',range=Math.max(70,Number(e.detectionRadius)||650),speed=Math.max(0,Number(e.aiSpeed)||65);
 if(mode==='chase'&&d<range&&d>38)move(e,dx/d*speed*dt,dy/d*speed*dt);
 if(mode==='patrol'||mode==='wander'){const period=mode==='wander'?2.3:1.5;move(e,Math.cos(game.time*period+e.id)*speed*.4*dt,Math.sin(game.time*(mode==='wander'?1.8:.8)+e.id)*speed*.22*dt)}
 if(mode==='flee'&&d<range)move(e,-dx/d*speed*dt,-dy/d*speed*dt);

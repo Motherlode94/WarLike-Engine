@@ -1,0 +1,93 @@
+diff --git a/tests/free-assets.test.mjs b/tests/free-assets.test.mjs
+index 6dde6ee..1f55569 100644
+--- a/tests/free-assets.test.mjs
++++ b/tests/free-assets.test.mjs
+@@ -12,15 +12,15 @@ test('every included asset has a real local file, publisher, CC0 license and off
+  for(const asset of [...freeModels3d,...freeSprites2d,...freeUiAssets,...freeAudioAssets]){
+   assert.equal(asset.author,'Kenney');assert.match(asset.license,/CC0/);assert.equal(asset.sourceUrl,'https://kenney.nl/assets/'+asset.pack);assert.ok(asset.packName);assert.ok(existsSync(new URL(fileFor(asset),root)),asset.id);
+  }
+- assert.equal(freeModels3d.length,31);assert.equal(freeSprites2d.length,100);assert.equal(freeUiAssets.length,40);assert.equal(freeAudioAssets.length,24);
++ assert.equal(freeModels3d.length,4716);assert.equal(new Set(freeModels3d.map(a=>a.pack)).size,50);assert.equal(freeSprites2d.length,100);assert.equal(freeUiAssets.length,40);assert.equal(freeAudioAssets.length,24);
+ });
+ test('vendored files match the recorded source hashes without substitutions',()=>{
+  for(const manifest of ['models','sprites','ui','audio'])for(const asset of JSON.parse(read('assets/free/kenney/'+manifest+'.json'))){assert.equal(createHash('sha256').update(read(fileFor(asset))).digest('hex'),asset.sha256,asset.id)}
+ });
+ test('all bundled GLBs parse with complete geometry, proportions and embedded texture UVs',()=>{
+  let textured=0;
+- for(const asset of freeModels3d){const bytes=read(fileFor(asset)),geometry=parseGlb(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.length));assert.equal(geometry.triangleCount,asset.triangles,asset.id);assert.ok(geometry.normalizedSize.every(v=>Number.isFinite(v)&&v>0&&v<=1));
+-  for(const part of geometry.parts){assert.ok([...part.vertices].every(Number.isFinite));if(part.texture){textured++;assert.equal(part.texcoords.length,part.vertices.length/3);assert.ok([...part.texcoords].every(Number.isFinite));assert.deepEqual([...part.texture.bytes.slice(0,8)],[137,80,78,71,13,10,26,10])}}
++ for(const asset of freeModels3d){const bytes=read(fileFor(asset)),geometry=parseGlb(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.length),{baseUrl:new URL(asset.url,root).href});assert.equal(geometry.triangleCount,asset.triangles,asset.id);assert.ok(geometry.normalizedSize.every(v=>Number.isFinite(v)&&v>0&&v<=1));
++  for(const part of geometry.parts){assert.ok([...part.vertices].every(Number.isFinite));if(part.texture){textured++;assert.equal(part.texcoords.length,part.vertices.length/3);assert.ok([...part.texcoords].every(Number.isFinite));if(part.texture.url)assert.ok(existsSync(new URL(part.texture.url)),asset.id);else assert.ok(part.texture.bytes.length>8)}}
+   assert.equal(get3dAsset(asset.id),asset);assert.equal(prefab3d(asset.id).model3dId,asset.id);
+  }
+  assert.ok(textured>20,'real color textures must be retained, rather than a flat gray replacement');
+diff --git a/tests/gltf-animation.test.mjs b/tests/gltf-animation.test.mjs
+index 3d858c0..000e704 100644
+--- a/tests/gltf-animation.test.mjs
++++ b/tests/gltf-animation.test.mjs
+@@ -18,7 +18,7 @@ test('the free Universal Animation Library includes 43 distinct clips with a com
+  const clip=resolveAnimationClip(g.rig.animations,'walk'),a=deformGlbParts(g,sampleRigPose(g.rig,clip,0)),b=deformGlbParts(g,sampleRigPose(g.rig,clip,.25));assert.ok(a.some((p,i)=>p.some((v,k)=>Math.abs(v-b[i][k])>.01)));assert.ok(b.every(p=>p.every(Number.isFinite)));
+ });
+ test('all 50 Ultimate Monsters retain their original animation channels and textures',()=>{
+- const monsters=quaterniusModels3d.filter(a=>a.category==='Monsters');assert.equal(monsters.length,50);let channels=0;
++ const monsters=quaterniusModels3d.filter(a=>a.pack==='ultimate-monsters');assert.equal(monsters.length,50);let channels=0;
+  for(const asset of monsters){const g=load(asset.url);assert.deepEqual(g.rig.animations.map(a=>a.name),asset.animationClips);assert.ok(g.parts.some(p=>p.texture),asset.id);assert.ok(resolveAnimationClip(g.rig.animations,'idle'),asset.id);channels+=g.rig.animations.length;const posed=deformGlbParts(g,sampleRigPose(g.rig,g.rig.animations[0],.2));assert.ok(posed.every(p=>p.every(Number.isFinite)),asset.id)}assert.equal(channels,506);
+ });
+ test('crossfades interpolate real poses without modifying source geometry',()=>{
+diff --git a/tests/complete-model-library.test.mjs b/tests/complete-model-library.test.mjs
+new file mode 100644
+index 0000000..ae0db92
+--- /dev/null
++++ b/tests/complete-model-library.test.mjs
+@@ -0,0 +1,51 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {readFileSync,existsSync} from 'node:fs';
++import {createHash} from 'node:crypto';
++import {quaterniusModels3d} from '../js/assets/quaternius-game-assets.js';
++import {freeModels3d} from '../js/assets/free-game-assets.js';
++import {parseGlb} from '../js/assets/real-models-3d.js';
++import {get3dAsset,prefab3d} from '../js/assets/catalog-3d.js';
++import {gameRuntimeFiles,gameRuntimeModels,gameBuildModelCatalog} from '../js/core/game-build.js';
++import {sampleRigPose,deformGlbParts} from '../js/core/gltf-animation.js';
++const root=new URL('../',import.meta.url);
++const read=path=>readFileSync(new URL(path,root));
++const geometry=a=>{const b=read(a.url);return parseGlb(b.buffer.slice(b.byteOffset,b.byteOffset+b.length),{baseUrl:new URL(a.url,root).href})};
++test('complete Quaternius packs contain real geometry, original clips, local textures and source hashes',()=>{
++ assert.equal(quaterniusModels3d.length,2910);assert.equal(new Set(quaterniusModels3d.map(a=>a.pack)).size,55);
++ for(const asset of JSON.parse(read('assets/free/quaternius/models.json'))){
++  assert.equal(createHash('sha256').update(read(asset.url)).digest('hex'),asset.sha256,asset.id);
++  const g=geometry(asset);assert.equal(g.triangleCount,asset.triangles,asset.id);assert.ok(g.parts.every(p=>p.vertices.every(Number.isFinite)),asset.id);
++  assert.deepEqual(g.rig?.animations.map(a=>a.name)||[],asset.animationClips,asset.id);assert.equal(get3dAsset(asset.id).url,asset.url);assert.equal(prefab3d(asset.id).model3dId,asset.id);
++  assert.equal(asset.author,'Quaternius');assert.match(asset.sourceUrl,/^https:\/\/quaternius.com\/packs\//);assert.equal(asset.license,'CC0-1.0');
++  for(const texture of asset.textureFiles||[])assert.ok(existsSync(new URL(texture,root)),texture);
++ }
++});
++test('FBX conversion retains every dinosaur take and fixes fully transparent legacy FBX materials',()=>{
++ const asset=quaterniusModels3d.find(a=>a.id==='quaternius-animateddinosaurs-velociraptor'),g=geometry(asset);
++ assert.equal(g.rig.animations.length,6);assert.ok(g.rig.animations.some(a=>/Walk/.test(a.name)));
++ assert.ok(g.parts.some(p=>p.color[3]>0));
++ for(const clip of g.rig.animations){const posed=deformGlbParts(g,sampleRigPose(g.rig,clip,.2));assert.ok(posed.every(vertices=>vertices.every(Number.isFinite)),clip.name)}
++ const skins=freeModels3d.filter(a=>a.pack.startsWith('animated-characters-'));assert.equal(skins.length,12);for(const a of skins){assert.ok(a.animationClips.some(n=>/idle/i.test(n)),a.id);assert.ok(a.animationClips.some(n=>/run/i.test(n)),a.id)}
++});
++test('models across every requested family are included with source previews',()=>{
++ const all=[...freeModels3d,...quaterniusModels3d];assert.equal(new Set(all.map(a=>a.id)).size,all.length);
++ for(const category of ['Characters','Weapons','Vehicles','Monsters','Animals','Buildings','Nature','Props','Food'])assert.ok(all.filter(a=>a.category===category).length>=10,category);
++ for(const asset of all)assert.ok(existsSync(new URL(asset.thumbnailUrl,root)),asset.id);
++ for(const texture of JSON.parse(read('assets/free/textures.json')))assert.equal(createHash('sha256').update(read(texture.url)).digest('hex'),texture.sha256,texture.url);
++});
++test('game export includes models referenced in any scene or Blueprint and their shared textures only',()=>{
++ const used=quaterniusModels3d.find(a=>a.textureFiles?.length),unused=freeModels3d.find(a=>!a.textureFiles?.length);
++ const files=['index.html','js/editor.js',used.url.slice(2),unused.url.slice(2),...used.textureFiles.map(p=>p.slice(2)),'assets/free/textures/unused.png',used.thumbnailUrl.slice(2),'assets/free/quaternius/'+used.pack+'/CREDITS.txt','assets/free/kenney/ui-pack/menu.png','assets/free/kenney/rpg-audio/door.ogg'];
++ const selected=gameRuntimeFiles(files,{project:{scenes:[{entities:[]},{entities:[{sequence:{actions:[{assetId:used.id}]}}]}]}});
++ assert.ok(selected.includes(used.url.slice(2)));for(const texture of used.textureFiles)assert.ok(selected.includes(texture.slice(2)));
++ assert.ok(!selected.includes(unused.url.slice(2)));assert.ok(!selected.includes('assets/free/textures/unused.png'));assert.ok(!selected.some(p=>p.includes('/previews/')));assert.ok(selected.includes('assets/free/kenney/ui-pack/menu.png'));assert.ok(selected.includes('assets/free/kenney/rpg-audio/door.ogg'));
++});
++
++test('game catalogs keep model aliases and Blueprint dependencies without shipping the editor library',()=>{
++ const data={project:{scenes:[{entities:[{sequence:{actions:[{assetId:'character-hero'}]}}]}]}};
++ const models=gameRuntimeModels(data);assert.equal(models.length,1);assert.equal(models[0].id,'free-mini-characters-character-male-a');
++ const source=read('js/assets/free-game-assets.js').toString();const output=gameBuildModelCatalog('js/assets/free-game-assets.js',source,data);
++ assert.ok(output.includes('free-mini-characters-character-male-a'));assert.ok(!output.includes('free-car-kit-sedan'));assert.ok(output.includes('export const freeSprites2d='));assert.ok(output.includes('export const freeAudioAssets='));
++ assert.equal(gameBuildModelCatalog('js/assets/quaternius-game-assets.js','',data),'export const quaterniusModels3d=[];\n');
++});

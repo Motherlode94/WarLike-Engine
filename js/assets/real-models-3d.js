@@ -72,7 +72,8 @@ export async function registerRemoteModel(address,{category='Imported 3D',licens
  model.sourceUrl=url.href;
  return model;
 }
-export const model3dById=id=>realModels3d.find(a=>a.id===id)||importedModels3d.get(id)||null;
+const bundledModelLookup=new Map(realModels3d.map(asset=>[asset.id,asset]));
+export const model3dById=id=>bundledModelLookup.get(id)||importedModels3d.get(id)||null;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 const mul=(a,b)=>{const o=new Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)o[c*4+r]+=a[k*4+r]*b[c*4+k];return o};
 const transform=(m,p,w=1)=>[m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12]*w,m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13]*w,m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]*w];
@@ -98,7 +99,7 @@ function readAccessor(json,binary,index){
  // per element (POSITION is VEC3 even when the mesh has thousands of vertices).
  return {data:out,count:a.count,components:count};
 }
-export function parseGlb(buffer){
+export function parseGlb(buffer,{baseUrl}={}){
  if(buffer.byteLength>maxBytes)throw Error('GLB supérieur à 25 Mo');
  const v=new DataView(buffer);if(buffer.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==buffer.byteLength)throw Error('GLB 2.0 invalide');
  let offset=12,json=null,binary=null;
@@ -146,6 +147,10 @@ export function parseGlb(buffer){
      if(end>binary.byteLength)throw Error('Texture GLB incomplète');
      const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
      texture={bytes:binary.slice(start,end),mimeType:image.mimeType,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
+    }
+    else if(baseUrl&&image.uri&&!/^(?:[a-z]+:|\/\/)/i.test(image.uri)&&/\.(png|jpe?g|webp)$/i.test(image.uri)){
+     const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
+     texture={url:new URL(image.uri,baseUrl).href,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
     }
    }
    const vertices=[],texcoords=[];
@@ -204,7 +209,7 @@ export async function getModelGeometry(id){
     buffer=await result.arrayBuffer();
    }
   }
-  return parseGlb(buffer);
+  return parseGlb(buffer,{baseUrl:item.url?new URL(item.url,new URL('../../',import.meta.url)).href:undefined});
  })();
  modelCache.set(id,task);
  try{return await task}catch(e){modelCache.delete(id);throw e}
@@ -212,10 +217,17 @@ export async function getModelGeometry(id){
 
 // Decode once per material image; the same image feeds WebGL and library previews.
 const textureImages=new WeakMap();
+const sharedTextureImages=new Map();
 export async function getTextureImage(texture){
  if(!texture)return null;
  if(textureImages.has(texture))return textureImages.get(texture);
- const task=createImageBitmap(new Blob([texture.bytes],{type:texture.mimeType}));
+ const task=texture.url?(sharedTextureImages.get(texture.url)|| (async()=>{
+  const response=await fetch(texture.url,{mode:'cors',credentials:'omit'});
+  if(!response.ok)throw Error('Texture du modèle indisponible : HTTP '+response.status);
+  const blob=await response.blob();if(blob.size>8*1024*1024)throw Error('Texture supérieure à 8 Mo');
+  return createImageBitmap(blob);
+ })()):createImageBitmap(new Blob([texture.bytes],{type:texture.mimeType}));
+ if(texture.url){sharedTextureImages.set(texture.url,task);if(sharedTextureImages.size>256)sharedTextureImages.delete(sharedTextureImages.keys().next().value)}
  textureImages.set(texture,task);
- try{return await task}catch(error){textureImages.delete(texture);throw error}
+ try{return await task}catch(error){textureImages.delete(texture);if(texture.url)sharedTextureImages.delete(texture.url);throw error}
 }

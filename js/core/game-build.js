@@ -1,6 +1,6 @@
 import {gameProject,validEntities} from './game-project.js';
 import {inspectBlueprintGame} from './blueprint-validation.js';
-import {get3dAsset} from '../assets/catalog-3d.js';
+import {get3dAsset,prefab3d} from '../assets/catalog-3d.js';
 const encoder=new TextEncoder();
 const crcTable=Array.from({length:256},(_,i)=>{let c=i;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;return c>>>0});
 export function crc32(bytes){let c=0xffffffff;for(const byte of bytes)c=crcTable[(c^byte)&255]^(c>>>8);return (c^0xffffffff)>>>0}
@@ -36,13 +36,44 @@ export function gameBuildHtml(template,data){
  html=html.replace('</head>',()=>'<script>globalThis.__WARLIKE_BUILD__=true;</script><script type="application/json" id="warlikeGameData">'+json+'</script></head>').replace('<body>','<body class="warlike-game-build">');
  return html;
 }
+// The editor ships the complete library. A playable export only needs models
+// referenced by its scenes, prefabs and Blueprint instructions, plus the shared
+// runtime resources. Do not fetch thousands of unused meshes and thumbnails.
+export function gameRuntimeModels(data){
+ const models=new Map();
+ const visit=value=>{
+  if(typeof value==='string'){
+   const asset=get3dAsset(value);
+   if(asset?.shape==='glb')models.set(asset.id,asset);
+   else if(asset){const model=get3dAsset(prefab3d(value)?.model3dId);if(model?.shape==='glb')models.set(model.id,model)}
+  }else if(Array.isArray(value))value.forEach(visit);
+  else if(value&&typeof value==='object')Object.values(value).forEach(visit);
+ };
+ visit(data.project);
+ return [...models.values()];
+}
+export function gameRuntimeFiles(files,data){
+ const usedModels=new Set();
+ for(const asset of gameRuntimeModels(data)){if(asset.url?.startsWith('./assets/free/'))usedModels.add(asset.url.slice(2));for(const texture of asset.textureFiles||[])usedModels.add(texture.replace(/^\.\//,''))}
+ return files.filter(name=>!name.startsWith('assets/free/')||!name.includes('/previews/')&&!/\/(models|textures)\.json$/.test(name)&&(!(name.endsWith('.glb')||name.startsWith('assets/free/textures/'))||usedModels.has(name)));
+}
+export function gameBuildModelCatalog(name,source,data){
+ const models=gameRuntimeModels(data);
+ if(name==='js/assets/quaternius-game-assets.js')return 'export const quaterniusModels3d='+JSON.stringify(models.filter(a=>a.author==='Quaternius'))+';\n';
+ if(name==='js/assets/free-game-assets.js'){
+  const start=source.indexOf('export const freeSprites2d=');if(start<0)throw Error('Catalogue 2D incompatible');
+  return 'export const freeModels3d='+JSON.stringify(models.filter(a=>a.author==='Kenney'))+';\n'+source.slice(start);
+ }
+ return source;
+}
 export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}={}){
  const data=prepareGameDefinition(input),base=new URL('../../',import.meta.url);
  const get=async path=>{const response=await fetcher(new URL(path,base));if(!response.ok)throw Error('Ressource indisponible : '+path);return response};
  const manifest=await (await get('runtime-files.json')).json();
- if(!Array.isArray(manifest.files)||manifest.files.length>1000||manifest.files.some(p=>typeof p!=='string'||!/^[-A-Za-z0-9._/]+$/.test(p)||p.startsWith('/')||p.includes('..')))throw Error('Manifest du runtime invalide.');
- const entries=new Array(manifest.files.length);let cursor=0,completed=0;
- const worker=async()=>{while(cursor<manifest.files.length){const i=cursor++,name=manifest.files[i];const response=await get(name);entries[i]={name,data:name==='index.html'?gameBuildHtml(await response.text(),data):await response.arrayBuffer()};onProgress(++completed,manifest.files.length)}};
+ if(!Array.isArray(manifest.files)||manifest.files.length>25000||manifest.files.some(p=>typeof p!=='string'||!/^[-A-Za-z0-9._/]+$/.test(p)||p.startsWith('/')||p.includes('..')))throw Error('Manifest du runtime invalide.');
+ const files=gameRuntimeFiles(manifest.files,data);
+ const entries=new Array(files.length);let cursor=0,completed=0;
+ const worker=async()=>{while(cursor<files.length){const i=cursor++,name=files[i];const response=await get(name);entries[i]={name,data:name==='index.html'?gameBuildHtml(await response.text(),data):['js/assets/free-game-assets.js','js/assets/quaternius-game-assets.js'].includes(name)?gameBuildModelCatalog(name,await response.text(),data):await response.arrayBuffer()};onProgress(++completed,files.length)}};
  await Promise.all(Array.from({length:6},worker));
  entries.push({name:'game.json',data:JSON.stringify(data,null,2)},{name:'LIRE-MOI.txt',data:'WARLIKE GAME — '+data.project.title+'\n\nDécompresse cette archive et sers ce dossier via un serveur HTTP statique. Par exemple : python -m http.server 8000, puis http://localhost:8000. Le menu de démarrage est dans index.html.\n\nLe runtime JavaScript est inclus. Les modèles GLB distants demandent une connexion Internet et conservent leurs licences propres. Les ressources GLB locales sans lien durable bloquent l’export. Les scripts C#/.NET ne sont pas exécutés par ce build Web.\n\nDéplacements : ZQSD/WASD. E : interaction. Échap : pause. Les sauvegardes restent sur le navigateur.\n'});
  return {blob:createZip(entries),filename:(data.project.title.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9-]+/g,'-').replace(/^-|-$/g,'')||'warlike-game')+'.zip',files:entries.length};

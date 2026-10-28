@@ -1,0 +1,68 @@
+name: Bundle the complete free model library
+on:
+  push:
+    branches: [main]
+    paths: [scripts/assets/import-request.json]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: bundle-free-models-main
+  cancel-in-progress: false
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the conversion and preview tools
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --package-lock=false playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python -m pip install Pillow==12.3.0
+          curl --fail --retry 3 --location https://download.blender.org/release/Blender4.2/blender-4.2.0-linux-x64.tar.xz --output "$RUNNER_TEMP/blender.tar.xz"
+          echo '4f4fd7646af01f6fee9d420408318381a6e52571268eb7cf9cd5033bd9e7a359  '"$RUNNER_TEMP/blender.tar.xz" | sha256sum --check
+          tar -xJf "$RUNNER_TEMP/blender.tar.xz" -C "$RUNNER_TEMP"
+      - name: Bundle the exact CC0 source archives and original animations
+        run: python scripts/assets/import-free-models.py --cache "$RUNNER_TEMP/free-model-sources" --download --blender "$RUNNER_TEMP/blender-4.2.0-linux-x64/blender"
+      - name: Normalize and index the models
+        run: node scripts/assets/normalize-free-models.mjs
+      - name: Render the actual textured models
+        env:
+          WARLIKE_THUMB_WORKERS: '2'
+        run: node scripts/assets/render-free-model-thumbnails.cjs
+      - name: Preserve credits and apply full-library validation
+        run: |
+          node scripts/assets/write-library-inventory.mjs
+          if git apply --check scripts/assets/validation-changes.patch; then
+            git apply scripts/assets/validation-changes.patch
+          else
+            git apply --reverse --check scripts/assets/validation-changes.patch
+          fi
+      - name: Commit the bundled files and include concurrent main changes
+        run: |
+          git config user.name 'WarLike Asset Builder'
+          git config user.email 'warlike-assets@users.noreply.github.com'
+          git add assets/free js/assets/free-game-assets.js js/assets/quaternius-game-assets.js docs/complete-model-library.md docs/free-model-library-inventory.json scripts/assets/import-report.json tests/free-assets.test.mjs tests/gltf-animation.test.mjs tests/complete-model-library.test.mjs
+          git commit -m 'Bundle 7,626 Kenney and Quaternius models with original animations and previews'
+          git fetch origin main
+          git rebase origin/main
+          npm run build:runtime
+          git add runtime-files.json
+          git commit --amend --no-edit
+      - name: Validate the resulting engine
+        run: |
+          npm test
+          npm run typecheck
+          git diff --check
+      - name: Publish directly to main
+        run: git push origin HEAD:main

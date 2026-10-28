@@ -166,7 +166,7 @@
 .dock-panel.floating-panel.moving-panel{user-select:none;opacity:.94}
 #hierarchyPanel.floating-panel #objects{overflow:auto;flex:1}
 #inspectorPanel.floating-panel #properties{overflow:auto;flex:1}
-#projectPanel.floating-panel{height:320px!important}
+#projectPanel.floating-panel{height:320px}
 #projectPanel.floating-panel .bottom-tabs{cursor:move;touch-action:none}
 body.hierarchy-floating #leftSplitter,body.inspector-floating #rightSplitter{visibility:hidden;pointer-events:none}
 body.project-floating #projectSplitter{visibility:hidden;pointer-events:none}

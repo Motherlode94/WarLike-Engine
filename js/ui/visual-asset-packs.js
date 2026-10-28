@@ -12,9 +12,9 @@ const PACKS = [
  {id:'starter-2d', mode:'2d', name:'2D • Starter', categories:['Characters','Props','Elements']},
  {id:'world-2d', mode:'2d', name:'2D • World & RPG', categories:['Buildings','Monsters','VFX']},
  {id:'combat-2d', mode:'2d', name:'2D • Combat & Racing', categories:['Weapons','Vehicles']},
- {id:'starter-3d', mode:'3d', name:'3D • Starter', categories:['Primitives','Nature','Terrain','Props']},
- {id:'world-3d', mode:'3d', name:'3D • World & Adventure', categories:['Buildings','Characters']},
- {id:'combat-3d', mode:'3d', name:'3D • FPS & Racing', categories:['Weapons','Vehicles']}
+ {id:'prototype-3d', mode:'3d', name:'3D • Prototypage / primitives', categories:['Primitives','Nature','Terrain','Props','Buildings','Vehicles','Characters'], proceduralOnly:true},
+ {id:'world-3d', mode:'3d', name:'3D • World & Adventure (GLB)', categories:['Buildings','Characters','Props'], realOnly:true},
+ {id:'combat-3d', mode:'3d', name:'3D • Vehicles (GLB)', categories:['Vehicles'], realOnly:true}
 ];
 export function initVisualAssetPacks(){
  const parent=document.querySelector('#projectContent');
@@ -63,7 +63,7 @@ export function initVisualAssetPacks(){
   select.replaceChildren(...valid.map(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;return o}));
   select.value=valid.some(p=>p.id===previous)?previous:valid[0].id;
   const pack=PACKS.find(p=>p.id===select.value),query=search.value.trim().toLowerCase();
-  const assets=(mode==='3d'?allAssets3d():catalog).filter(a=>pack.categories.includes(a.category) && (!pack.realOnly||(a.shape==='glb'&&!/test|reference|morph|variant|transmission|texture coordinate|specular|clear coat|normal map/i.test(a.name))) && (a.name+' '+a.category).toLowerCase().includes(query));
+  const assets=(mode==='3d'?allAssets3d():catalog).filter(a=>pack.categories.includes(a.category) && (!pack.proceduralOnly||a.shape!=='glb') && (!pack.realOnly||(a.shape==='glb'&&!/test|reference|morph|variant|transmission|texture coordinate|specular|clear coat|normal map/i.test(a.name))) && (a.name+' '+a.category).toLowerCase().includes(query));
   info.textContent=assets.length+(pack.realOnly?' fichiers GLB de modèles identifiés · aperçu 3D non généré · chargement réseau à l’insertion':' éléments du catalogue, dont certains procéduraux')+' • Ajouter dans la scène';
   const fragment=document.createDocumentFragment();
   for(const asset of assets){

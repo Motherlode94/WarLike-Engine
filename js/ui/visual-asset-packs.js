@@ -15,7 +15,6 @@ const PACKS = [
  {id:'world-3d', mode:'3d', name:'3D • World & Adventure', categories:['Buildings','Characters']},
  {id:'combat-3d', mode:'3d', name:'3D • FPS & Racing', categories:['Weapons','Vehicles']}
 ];
-const escapes = s => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 export function initVisualAssetPacks(){
  const parent=document.querySelector('#projectContent');
  if(!parent || document.querySelector('#warlikeVisualPacks'))return;

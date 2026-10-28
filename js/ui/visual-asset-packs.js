@@ -57,6 +57,16 @@ export function initVisualAssetPacks(){
    addPrefab(button.dataset.assetId);
   }
  });
+ document.querySelectorAll('[data-warlike-open-pack]').forEach(menuButton=>menuButton.addEventListener('click',()=>{
+  const mode=menuButton.dataset.warlikeOpenPack;
+  if(mode!==workspace.mode)document.getElementById(mode==='3d'?'workspace3d':'workspace2d')?.click();
+  document.getElementById('projectTab')?.click();
+  document.querySelectorAll('.studio-menubar details[open]').forEach(d=>d.open=false);
+  search.value='';
+  render();
+  root.scrollIntoView({block:'nearest',behavior:'smooth'});
+  select.focus();
+ }));
  let priorMode=workspace.mode;
  document.addEventListener('warlike:change',()=>{if(priorMode!==workspace.mode){priorMode=workspace.mode;search.value='';render()}});
  render();

@@ -25,10 +25,12 @@ export function stepArcadeVehicle(current,controls,dt,tuning={}){
  if(handbrake)speed=towards(speed,0,(cfg.brakeForce*.85+Math.abs(speed)*1.8)*step);
  speed=clamp(speed,-cfg.maxSpeed*cfg.reverseRatio,cfg.maxSpeed);
  if(Math.abs(speed)<.15&&throttle===0)speed=0;
- const steer=towards(steer0,turn,step*(handbrake?7:5));
+ const steeringResponse=Number.isFinite(Number(tuning.steeringResponse))?clamp(Number(tuning.steeringResponse),1,16):5;
+ const steer=towards(steer0,turn,step*(handbrake?steeringResponse*1.5:steeringResponse));
  const pace=Math.abs(speed)/cfg.maxSpeed;
  const lowSpeedFactor=clamp(Math.abs(speed)/50,0,1);
- const turnFactor=lowSpeedFactor*(1-.50*pace)*(handbrake?1.55:1);
+ const grip=Number.isFinite(Number(tuning.traction))?clamp(Number(tuning.traction),.4,2):1;
+ const turnFactor=lowSpeedFactor*(1-.50*pace)*(handbrake?1.55:1)*grip;
  const rotation=(Number(current.rotation)||0)+steer*cfg.turnRate*turnFactor*Math.sign(speed||1)*step;
  const radians=rotation*Math.PI/180;
  return {speed,steer,rotation,dx:Math.sin(radians)*speed*step,dy:-Math.cos(radians)*speed*step,

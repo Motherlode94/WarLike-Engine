@@ -2,10 +2,11 @@
 // The browser needs a precompiled native/dist bundle: never compile user C++ in-browser.
 import {findPath as jsPath} from './pathfinding.js';
 let native=null;
-let loadState='idle';
+let loadState='idle',loadPromise=null;
 export const nativeStatus=()=>loadState;
-export async function initializeNative3d(){
- if(loadState==='loading'||loadState==='ready')return;
+export function initializeNative3d(){
+ if(loadPromise)return loadPromise;
+ loadPromise=(async()=>{
  loadState='loading';
  try {
   const module=await import('../../native/dist/warlike_pathfinding.mjs');
@@ -14,6 +15,7 @@ export async function initializeNative3d(){
   if(typeof native._wl_find_path!=='function'||typeof native._wl_integrate_gravity!=='function'||typeof native._wl_overlap_aabb3d!=='function'||typeof native._malloc!=='function'||typeof native._free!=='function'||!native.HEAPF32)throw Error('Incomplete native module');
   loadState='ready';
  }catch(error){native=null;loadState='fallback';console.info('[WarLike Native] JS navigation fallback:',error?.message||error)}
+})();return loadPromise;
 }
 export function findEnginePath(start,goal,obstacles=[],options={}){
  if(!native)return jsPath(start,goal,obstacles,options);

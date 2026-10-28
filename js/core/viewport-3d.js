@@ -501,7 +501,7 @@ export function init3d(canvas,host,buttons){
   gl.uniform1fv(u.lightCone,new Float32Array(padded('cone',.7)));
   gl.uniform1fv(u.lightSpot,new Float32Array(lamps.map(l=>l.spot?1:0).concat(Array(8-lamps.length).fill(0))));
   gl.disable(gl.CULL_FACE);
-  bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count);
+  if(!state.playing&&!globalThis.__WARLIKE_BUILD__){bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count)}
   const objects=[...state.entities].filter(o=>(state.playing||!o.editorHidden)&&(!state.playing||!((o.audioEnabled||o.lightType)&&!o.assetId)&&o.visible!==false&&o.sequenceEnabled!==false&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
   // Depth buffering resolves overlapping faces, including the composite mesh parts.
   bind(cubes);

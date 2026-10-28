@@ -8,6 +8,7 @@ import {record} from '../core/history.js';
 /** Visual asset browser. Uses the existing native 2D and 3D catalogs,
  * not fake GLB files or external model downloads. */
 const PACKS = [
+ {id:'genuine-3d', mode:'3d', name:'3D • Vrais modèles GLB', categories:['Characters','Vehicles','Props','Buildings','Nature','Weapons'], realOnly:true},
  {id:'starter-2d', mode:'2d', name:'2D • Starter', categories:['Characters','Props','Elements']},
  {id:'world-2d', mode:'2d', name:'2D • World & RPG', categories:['Buildings','Monsters','VFX']},
  {id:'combat-2d', mode:'2d', name:'2D • Combat & Racing', categories:['Weapons','Vehicles']},
@@ -30,16 +31,16 @@ export function initVisualAssetPacks(){
   select.replaceChildren(...valid.map(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;return o}));
   select.value=valid.some(p=>p.id===previous)?previous:valid[0].id;
   const pack=PACKS.find(p=>p.id===select.value),query=search.value.trim().toLowerCase();
-  const assets=(mode==='3d'?allAssets3d():catalog).filter(a=>pack.categories.includes(a.category) && (a.name+' '+a.category).toLowerCase().includes(query));
-  info.textContent=assets.length+' assets disponibles • Aperçu illustratif (2D SVG / 3D procédural ou modèle référencé) • Ajouter dans la scène';
+  const assets=(mode==='3d'?allAssets3d():catalog).filter(a=>pack.categories.includes(a.category) && (!pack.realOnly||a.shape==='glb') && (a.name+' '+a.category).toLowerCase().includes(query));
+  info.textContent=assets.length+(pack.realOnly?' véritables modèles 3D GLB référencés (chargement réseau à l’insertion, licence indiquée)':' éléments du catalogue, dont certains procéduraux')+' • Ajouter dans la scène';
   const fragment=document.createDocumentFragment();
   for(const asset of assets){
    const button=document.createElement('button');button.type='button';button.dataset.assetId=asset.id;button.dataset.mode=mode;
-   button.title='Ajouter '+asset.name+' dans la scène';
+   button.title='Ajouter '+asset.name+' dans la scène'+(asset.license?' • '+asset.license:'');
    button.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px;border:1px solid #687888;border-radius:7px;background:transparent;color:inherit;cursor:pointer;min-width:0';
    const img=document.createElement('img');img.src=mode==='3d'?url3d(asset.id):urlFor(asset.id);img.alt='';img.loading='lazy';img.style.cssText='width:75px;height:72px;object-fit:contain';
    const name=document.createElement('small');name.textContent=asset.name;name.style.cssText='text-align:center;overflow-wrap:anywhere';
-   button.append(img,name);fragment.append(button);
+   button.append(img,name);if(asset.shape==='glb'){const tag=document.createElement('small');tag.textContent='GLB réel'+(asset.license?' · '+asset.license:'');tag.style.cssText='font-size:10px;opacity:.8;overflow-wrap:anywhere;text-align:center';button.append(tag)}fragment.append(button);
   }
   grid.replaceChildren(fragment);
  };

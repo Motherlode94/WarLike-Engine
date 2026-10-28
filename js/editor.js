@@ -82,7 +82,7 @@ requestAnimationFrame(audioFrame);
 
 $('#undo').onclick=undo;
 $('#redo').onclick=redo;
-$('#play').onclick=togglePlay;
+$('#play').onclick=()=>{try{togglePlay()}catch(error){console.error('[WarLike Play]',error);const message='Play impossible : '+(error?.message||String(error));log(message);window.alert(message)}};
 $('#save').onclick=exportScene;
 $('#load').onclick=()=>$('#file').click();
 $('#file').onchange=async e=>{try{await importScene(e.target.files?.[0])}catch(error){alert('Impossible de charger la scène : '+error.message)}finally{e.target.value=''}};
@@ -111,9 +111,11 @@ const viewport3d=init3d($('#canvas3d'),host,{toggle:$('#view3dToggle'),focus:$('
 
 const sceneTab=$('#sceneTab'),gameTab=$('#gameTab');
 function syncTabs(){sceneTab.classList.toggle('active',!state.playing);gameTab.classList.toggle('active',state.playing);$('#gameHint').hidden=!state.playing;$('#gameHint').textContent=(state.demoGuide|| (workspace.mode==='3d'?'3D Play • ZQSD/WASD : avancer • Maj : courir • Souris droite : orienter caméra • Molette : zoom':'2D Play • ZQSD/WASD : marcher • E : interagir/véhicule • F : tirer'));$('#status').textContent=(workspace.mode==='3d'?'3D':'2D')+' • '+(state.playing?'Play':'Édition');$('#workspace2d').disabled=state.playing||!!hub.projectId&&hub.type!=='2d';$('#workspace3d').disabled=state.playing||!!hub.projectId&&hub.type!=='3d'}
-sceneTab.onclick=()=>{if(state.playing)togglePlay();syncTabs()};
-gameTab.onclick=()=>{if(!state.playing)togglePlay();syncTabs()};
+sceneTab.onclick=()=>{if(state.playing)$('#play').click();syncTabs()};
+gameTab.onclick=()=>{if(!state.playing)$('#play').click();syncTabs()};
 $('#play').addEventListener('click',syncTabs);
+$('#play').disabled=false;
+$('#play').setAttribute('aria-label','Lancer ou arrêter le jeu');
 const setWorkspaceUi=()=>{
  const is3d=workspace.mode==='3d';
  document.dispatchEvent(new Event('warlike:workspace'));

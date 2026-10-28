@@ -55,3 +55,5 @@ Un premier runtime C# autonome est disponible dans [`csharp/`](./csharp/README.m
 ## C++ natif dans le moteur 3D (WebAssembly)
 
 Un nouveau module **C++17** de navigation A* est disponible dans [`native/`](./native/README.md). Le moteur 3D charge son **WebAssembly** lors du démarrage et utilise automatiquement la navigation JavaScript si le binaire compilé n'a pas été déployé. Compiler avec Emscripten : `sh native/build-wasm.sh`. Le C++ n'est pas encore un langage de scripts attachables aux objets dans l'Inspector ; il accélère actuellement une fonction interne du moteur. Le build `.wasm` n'est pas inclus par défaut.
+
+Made by Hardi Victor MBANVU

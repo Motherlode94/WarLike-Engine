@@ -1,4 +1,4 @@
-import {horrorAudio,unlockHorrorAudio,playHorrorCue} from './core/horror-audio.js';
+import {horrorAudio,horrorAmbiences,setHorrorAmbience,unlockHorrorAudio,playHorrorCue} from './core/horror-audio.js';
 import {loadHorror3dDemo} from './core/horror-pursuit-3d-demo.js';
 import {initExternalAssetLibrary} from './ui/external-asset-library.js';
 import {loadHorrorPursuitDemo} from './core/horror-pursuit-demo.js';
@@ -252,6 +252,17 @@ if(horrorPanel&&!document.getElementById('warlikeHorrorAudioSettings')){
  const enabled=document.createElement('label'),enable=document.createElement('input');enable.type='checkbox';enable.checked=horrorAudio.enabled;enabled.append(enable,document.createTextNode(' Activer sons Horror'));enable.onchange=()=>{horrorAudio.enabled=enable.checked};
  const volume=document.createElement('input');volume.type='range';volume.min='0';volume.max='1';volume.step='.05';volume.value=String(horrorAudio.volume);volume.setAttribute('aria-label','Volume des sons Horror');volume.oninput=()=>{horrorAudio.volume=Number(volume.value)};
  const test=document.createElement('button');test.type='button';test.textContent='▶ Écouter un son Horror';test.onclick=()=>{unlockHorrorAudio();playHorrorCue('alert')};
+ const ambienceLabel=document.createElement('label');ambienceLabel.textContent='Ambiance de la scène';
+ const ambienceSelect=document.createElement('select');ambienceSelect.setAttribute('aria-label','Ambiance Horror');
+ for(const [key,name] of Object.entries(horrorAmbiences)){const option=document.createElement('option');option.value=key;option.textContent=name;ambienceSelect.append(option)}
+ ambienceSelect.value=horrorAudio.environment;
+ ambienceSelect.onchange=()=>{setHorrorAmbience(ambienceSelect.value);try{localStorage.setItem('warlike.horror.ambience.v1',ambienceSelect.value)}catch{}};
+ ambienceLabel.append(ambienceSelect);
+ const detailsLabel=document.createElement('label'),detailsToggle=document.createElement('input');detailsToggle.type='checkbox';detailsToggle.checked=horrorAudio.details;detailsToggle.onchange=()=>{horrorAudio.details=detailsToggle.checked};detailsLabel.append(detailsToggle,document.createTextNode(' Bruits environnementaux'));
+ const heartLabel=document.createElement('label'),heartToggle=document.createElement('input');heartToggle.type='checkbox';heartToggle.checked=horrorAudio.heartbeat;heartToggle.onchange=()=>{horrorAudio.heartbeat=heartToggle.checked};heartLabel.append(heartToggle,document.createTextNode(' Battements de coeur selon la peur'));
+ body.append(ambienceLabel,detailsLabel,heartLabel);
+ try{setHorrorAmbience(localStorage.getItem('warlike.horror.ambience.v1')||'abandoned')}catch{}
+ ambienceSelect.value=horrorAudio.environment;
  body.append(enabled,document.createTextNode('Volume Horror'),volume,test);panel.append(title,body);horrorPanel.append(panel);
 }
 document.getElementById('play')?.addEventListener('click',()=>{unlockHorrorAudio()},{capture:true});

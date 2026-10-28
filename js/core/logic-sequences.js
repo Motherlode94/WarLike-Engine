@@ -1,3 +1,5 @@
+import {vehicleComponents,repairVehicle,refuelVehicle,setVehicleEngine,canDriveVehicle,setVehicleGear} from './vehicle-components.js';
+import {fireVehicleWeapon} from './vehicle-weapons-3d.js';
 import {recordEngineEvent} from './engine-diagnostics.js';
 import {coerceVariable} from './blueprint-graph.js';
 import {horror,triggerHorrorJumpscare} from './horror-survival.js';
@@ -5,8 +7,8 @@ import {inventoryAdd,inventoryRemove,equipItem,damage,ensureStats} from './gamep
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
 export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal'];
-export const sequenceConditions=['always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists'];
-export const sequenceInstructions=['message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState'];
+export const sequenceConditions=['always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists','aiStateIs','aiAwarenessAbove','sameFaction','isHostile','weaponAmmoAbove','weaponReady','vehicleDriveable','vehicleFuelBelow','vehicleHealthBelow','vehicleHasDriver'];
+export const sequenceInstructions=['message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState','setAiState','setAiFaction','setAiTarget','setAiDetection','setAiAttackRange','setAiPatrolPoint','setWeaponAmmo','addWeaponAmmo','reloadWeapon','setWeaponDamage','fireVehicleWeapon','repairVehicle','refuelVehicle','setVehicleEngine','setVehicleGear','setVehicleWeapon','clearAiTarget'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
 export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[]};
 const number=(n,def=0)=>Number.isFinite(Number(n))?Number(n):def;
@@ -44,6 +46,16 @@ export function conditionPass(c,o,ctx){
  case 'horrorFearAbove':pass=number(horror.fear)>number(c.value,50);break;
  case 'gameTimeAbove':pass=number(sequenceRuntime.time)>number(c.value,10);break;
  case 'objectType':pass=String(o.type)===String(c.value);break;
+ case 'aiStateIs':pass=String(o.ai?.state||o.horrorAI?.state||o.behavior||'idle')===String(c.value);break;
+ case 'aiAwarenessAbove':pass=number(o.horrorAI?.awareness??o.ai?.awareness)>number(c.value,.5);break;
+ case 'sameFaction':pass=String(o.aiFaction??o.team??'neutral')===String(ctx.player?.aiFaction??ctx.player?.team??'neutral');break;
+ case 'isHostile':pass=String(o.aiFaction??o.team??'neutral')!==String(ctx.player?.aiFaction??ctx.player?.team??'neutral');break;
+ case 'weaponAmmoAbove':pass=number(o.weaponSystem?.ammo)>number(c.value,0);break;
+ case 'weaponReady':pass=number(o.weaponSystem?.ammo)>0&&number(o.weaponSystem?.cooldown)<=0;break;
+ case 'vehicleDriveable':pass=!!o.vehicleSystems&&canDriveVehicle(o);break;
+ case 'vehicleFuelBelow':pass=number(o.vehicleSystems?.fuel?.amount,100)<number(c.value,25);break;
+ case 'vehicleHealthBelow':pass=number(o.vehicleSystems?.engine?.health,100)<number(c.value,50);break;
+ case 'vehicleHasDriver':pass=o.vehicleSystems?.seats?.driverId!=null;break;
  case 'entityExists':pass=(ctx.entities||[]).some(entity=>entity.id===number(c.value)||entity.name===String(c.value));break;
  default:pass=false;
  }
@@ -113,6 +125,23 @@ function execute(job,ctx,actionsLeft){
   case 'setLight':targetObject.lightEnabled=val!==false&&String(val)!=='false';break;
   case 'setAudio':targetObject.audioEnabled=val!==false&&String(val)!=='false';break;
   case 'setVehicleState':targetObject.vehicleState=String(val??'parked').slice(0,60);break;
+  case 'setAiState':targetObject.ai??={};targetObject.ai.state=String(val||'idle').slice(0,40);break;
+  case 'setAiFaction':targetObject.aiFaction=String(val||'neutral').slice(0,40);break;
+  case 'setAiTarget':targetObject.aiTargetId=number(val,ctx.player?.id||0);break;
+  case 'clearAiTarget':targetObject.aiTargetId=null;break;
+  case 'setAiDetection':targetObject.ai??={};targetObject.ai.detection=Math.max(0,number(val,300));break;
+  case 'setAiAttackRange':targetObject.ai??={};targetObject.ai.attackRange=Math.max(0,number(val,70));break;
+  case 'setAiPatrolPoint':targetObject.ai??={};targetObject.ai.homeX=number(a.x,targetObject.x);targetObject.ai.homeY=number(a.y,targetObject.y);targetObject.ai.state='patrol';break;
+  case 'setWeaponAmmo':targetObject.weaponSystem??={};targetObject.weaponSystem.ammo=Math.max(0,Math.trunc(number(val)));break;
+  case 'addWeaponAmmo':targetObject.weaponSystem??={};targetObject.weaponSystem.ammo=Math.max(0,Math.trunc(number(targetObject.weaponSystem.ammo)+number(val)));break;
+  case 'reloadWeapon':targetObject.weaponSystem??={};targetObject.weaponSystem.ammo=Math.max(0,Math.trunc(number(targetObject.weaponSystem.magazineSize,30)));break;
+  case 'setWeaponDamage':targetObject.weaponSystem??={};targetObject.weaponSystem.damage=Math.max(0,number(val,20));break;
+  case 'fireVehicleWeapon':{const shot=fireVehicleWeapon(targetObject,ctx.entities);if(shot.fired)emitSequenceSignal(shot.hit?'weapon:hit':'weapon:fired');break}
+  case 'repairVehicle':repairVehicle(targetObject,Math.max(0,number(val,25)));break;
+  case 'refuelVehicle':refuelVehicle(targetObject,Math.max(0,number(val,25)));break;
+  case 'setVehicleEngine':setVehicleEngine(targetObject,val!==false&&String(val)!=='false'&&String(val)!=='0');break;
+  case 'setVehicleGear':setVehicleGear(targetObject,number(val,1));break;
+  case 'setVehicleWeapon':targetObject.vehicleWeapon??={};targetObject.vehicleWeapon.enabled=val!==false&&String(val)!=='false'&&String(val)!=='0';break;
   case 'wait':job.wait=Math.min(120,Math.max(0,number(val,.5)));return count;
   }
  }

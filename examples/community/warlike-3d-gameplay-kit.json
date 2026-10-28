@@ -1,0 +1,112 @@
+{
+  "apiVersion": "1.0",
+  "id": "warlike-3d-gameplay-kit",
+  "version": "1.0.0",
+  "name": "WarLike 3D Gameplay Kit",
+  "author": "WarLike Studio",
+  "description": "Recettes Blueprint pour FPS, TPS, exploration, conduite et simulation 3D : terminaux, butin, garages et missions.",
+  "modes": [
+    "3d"
+  ],
+  "recipes": [
+    {
+      "id": "mission-terminal",
+      "name": "Terminal de mission",
+      "description": "Valide une interaction avec un terminal de mission FPS/TPS.",
+      "sequence": {
+        "event": "interact",
+        "radius": 160,
+        "key": "e",
+        "once": true,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "missionTerminals",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Terminal active : donnees recuperees."
+          }
+        ]
+      }
+    },
+    {
+      "id": "supply-box",
+      "name": "Caisse de ravitaillement",
+      "description": "Ajoute du materiel a l'inventaire sans generer d'arme graphique.",
+      "sequence": {
+        "event": "interact",
+        "radius": 130,
+        "key": "e",
+        "once": true,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "supplies",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Materiel recupere."
+          }
+        ]
+      }
+    },
+    {
+      "id": "garage-checkin",
+      "name": "Point garage",
+      "description": "Ajoute un point de passage de garage pour prototype racing.",
+      "sequence": {
+        "event": "interact",
+        "radius": 180,
+        "key": "e",
+        "once": false,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "garageVisits",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Garage disponible. La conduite doit etre configuree separement."
+          }
+        ]
+      }
+    },
+    {
+      "id": "exploration-cache",
+      "name": "Cache d'exploration",
+      "description": "Objet de decouverte reutilisable dans une aventure 3D.",
+      "sequence": {
+        "event": "interact",
+        "radius": 145,
+        "key": "e",
+        "once": true,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "artifact",
+            "value": 1
+          },
+          {
+            "type": "addVariable",
+            "key": "secretsFound",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Secret decouvert !"
+          }
+        ]
+      }
+    }
+  ]
+}

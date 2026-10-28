@@ -3,7 +3,7 @@
 Run with Python 3 + Pillow, Blender 4.2.0, then normalize-free-models.mjs
 and render-free-model-thumbnails.cjs. Source files are data, never executed.
 """
-import argparse,base64,concurrent.futures,hashlib,io,json,re,struct,subprocess,urllib.parse,urllib.request,zipfile
+import argparse,base64,concurrent.futures,hashlib,io,json,re,struct,subprocess,time,urllib.error,urllib.parse,urllib.request,zipfile
 from pathlib import Path,PurePosixPath
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[2]
@@ -89,15 +89,25 @@ def main():
   candidates=[cache/(source['id']+'-complete.zip'),cache/(source['id']+'.zip')];target=next((p for p in candidates if p.exists()),candidates[0])
   if not target.exists():
    if not args.download:raise FileNotFoundError(target)
-   with urllib.request.urlopen(source['url'],timeout=180) as response,target.open('wb') as output:
-    while payload:=response.read(1024*1024):output.write(payload)
+   for attempt in range(5):
+    temporary=target.with_suffix('.partial')
+    try:
+     request=urllib.request.Request(source['url'],headers={'User-Agent':'WarLike-Engine-CC0-Importer/1.0'})
+     with urllib.request.urlopen(request,timeout=180) as response,temporary.open('wb') as output:
+      while payload:=response.read(1024*1024):output.write(payload)
+     if digest(temporary.read_bytes())!=source['sha256']:raise ValueError('Downloaded archive hash mismatch: '+source['id'])
+     temporary.replace(target);break
+    except (urllib.error.URLError,TimeoutError) as error:
+     if isinstance(error,urllib.error.HTTPError) and error.code not in [408,429,500,502,503,504]:raise
+     if attempt==4:raise
+     print('Retrying source archive',source['id'],str(error),flush=True);time.sleep(min(10,2**attempt))
   if digest(target.read_bytes())!=source['sha256']:raise ValueError('Archive hash mismatch: '+source['id'])
   return zipfile.ZipFile(target)
  if args.download:
   def prefetch(source):
    with archive(source):pass
    return source['id']
-  with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+  with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
    for id in pool.map(prefetch,sources):print('Verified source archive',id,flush=True)
  # Preserve already integrated Quaternius models and their stable IDs.
  records['quaternius']=old['quaternius'][:51]

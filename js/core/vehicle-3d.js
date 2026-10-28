@@ -49,7 +49,9 @@ export function updateDriving3d(entities,player,keys,dt){
   if(shot.fired)recordEngineEvent(shot.hit?'vehicle-weapon-hit':'vehicle-weapon-fire',shot.hit?shot.target:drivingCar.name);
  }
  const inputThrottle=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
- const throttle=canDriveVehicle(drivingCar)?inputThrottle:0;
+ const systems=vehicleComponents(drivingCar);
+ const allowedGear=systems.transmission.mode!=='manual'||(inputThrottle<0?systems.transmission.gear===-1:systems.transmission.gear>0);
+ const throttle=canDriveVehicle(drivingCar)&&allowedGear?inputThrottle:0;
  const steer=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const handbrake=keys.has(' ')||keys.has('space');
  const state=stepArcadeVehicle({speed:driving3d.speed,steer:driving3d.steer,rotation:drivingCar.rotation||0},

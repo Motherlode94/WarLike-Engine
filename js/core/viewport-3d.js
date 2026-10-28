@@ -1,3 +1,4 @@
+import {updateHorrorAudio} from './horror-audio.js';
 import {tickEngineDiagnostics} from './engine-diagnostics.js';
 import {updateDriving3d,currentVehicle3d,isDriveable3d,driving3d,resetDriving3d} from './vehicle-3d.js';
 import {updateGenreHud} from '../ui/genre-hud.js';
@@ -281,7 +282,7 @@ export function init3d(canvas,host,buttons){
    while(physicsAccumulator>=fixed&&steps++<6){stepRapierScene(physicsSession,fixed);physicsAccumulator-=fixed}
   }else stepPhysics3d(state.entities,dt);
   if(!p)return;
-  updateHorror(dt,p,state.entities,state.keys);updateHorrorPerception(dt,p,state.entities,state.keys);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
+  updateHorror(dt,p,state.entities,state.keys);updateHorrorPerception(dt,p,state.entities,state.keys);updateHorrorAudio(dt,p,state.entities,state.keys,horror);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
   const inVehicle=updateDriving3d(state.entities,p,state.keys,dt);
   if(!inVehicle)updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
   updateAi(state.entities,p,dt);

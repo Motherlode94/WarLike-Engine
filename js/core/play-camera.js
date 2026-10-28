@@ -20,7 +20,7 @@ export function cameraBoomFraction(target,eye,obstacles,padding=.18){
    if(Math.abs(delta[axis])<1e-8){if(target[axis]<low||target[axis]>high){hit=false;break}continue}
    let a=(low-target[axis])/delta[axis],b=(high-target[axis])/delta[axis];if(a>b)[a,b]=[b,a];enter=Math.max(enter,a);exit=Math.min(exit,b);if(enter>exit){hit=false;break}
   }
-  if(hit&&enter>=0&&enter<1)fraction=Math.min(fraction,Math.max(.04,enter-.025));
+  if(hit&&enter>=0&&enter<1)fraction=Math.min(fraction,Math.max(0,enter-.015/Math.max(.001,Math.hypot(...delta))));
  }
  return fraction;
 }
@@ -32,4 +32,12 @@ export function followCamera2d(camera,player,viewport,dt,{snap=false}={}){
  const zoom=camera.zoom||1,targetX=viewport.width/2-(player.x+player.w/2)*zoom,targetY=viewport.height/2-(player.y+player.h/2)*zoom;
  const factor=snap?1:cameraDamping(Number(player.cameraRig?.followSharpness)||9,dt);
  return {...camera,x:camera.x+(targetX-camera.x)*factor,y:camera.y+(targetY-camera.y)*factor};
+}
+
+// Contract immediately at contact, then restore distance smoothly when space clears.
+export function resolveCameraBoom(target,desiredEye,obstacles,{previousDistance=null,dt=0,sharpness=8,padding=.18}={}){
+ const length=Math.hypot(...desiredEye.map((v,i)=>v-target[i]));if(length<1e-8)return {eye:target.slice(),distance:0};
+ const allowed=length*cameraBoomFraction(target,desiredEye,obstacles,padding),prior=Number.isFinite(previousDistance)?Math.max(0,previousDistance):allowed;
+ const distance=allowed<=prior?allowed:Math.min(allowed,prior+(allowed-prior)*cameraDamping(sharpness,dt));
+ return {eye:desiredEye.map((v,i)=>target[i]+(v-target[i])*distance/length),distance};
 }

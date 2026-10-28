@@ -9,10 +9,10 @@ const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
 const nearest=(p)=>state.entities.filter(isHome).map(h=>({h,d:Math.hypot(p.x+p.w/2-(h.x+h.w/2),p.y+p.h/2-(h.y+h.h+12))})).sort((a,b)=>a.d-b.d)[0];
 export function resetHousing(){Object.assign(housing,{inside:null,doorHeld:false,lightHeld:false,progress:0,lightOn:true,x:0,y:0,transition:0})}
 export function housingActive(){return !!housing.inside}
-export function updateHousing(dt,p){
+export function updateHousing(dt,p,input=state.keys){
  if(!state.playing||!p)return false;
  housing.transition=Math.max(0,housing.transition-dt);
- const keys=state.keys,pressed=keys.has('e'),light=keys.has('l');
+ const keys=input,pressed=keys.has('e'),light=keys.has('l');
  const near=nearest(p);
  if(housing.inside){
   if(light&&!housing.lightHeld){housing.lightOn=!housing.lightOn;playSound('switch');const building=state.entities.find(o=>o.id===housing.inside);if(building)building.houseLightsOn=housing.lightOn;}

@@ -48,6 +48,14 @@ Le clic droit ouvre un menu adapté à la Hiérarchie, à la scène, aux ressour
 
 **Window → Plein écran** agrandit l’espace de travail. Les gestes de navigation déplacent la caméra de l’éditeur sans modifier les objets. En Play, le joueur utilise son propre contrôleur et sa caméra.
 
+## Physique, caméra et contrôles en Play
+
+Le contrôleur 3D, le vol, les véhicules et les corps physiques partagent un balayage de collision qui arrête les mouvements rapides devant les parois fines. Les objets désactivés ou détruits cessent de bloquer. Le personnage peut monter une petite marche avec suffisamment de hauteur libre et suivre une plateforme mobile ; la tolérance après un rebord et la mémorisation d’un appui de saut se règlent dans l’Inspecteur.
+
+La caméra se rapproche immédiatement devant un obstacle et reprend progressivement sa distance lorsqu’il disparaît. Un changement de scène ou une grande téléportation recadre le suivi. Le tir FPS est arrêté par les murs et les combats 3D prennent l’altitude en compte. Les dialogues, l’inventaire et le journal bloquent les commandes de déplacement et de combat. [Détails, paramètres et limites](docs/runtime-foundation.md).
+
+Blueprint Studio indique les nœuds en erreur et permet de les sélectionner depuis le diagnostic, au clic ou au clavier. Les commandes et conditions ont leurs libellés français ; la validation avertit des clés manquantes et des signaux écoutés sans émetteur explicite dans la scène.
+
 ## Physique 2D et obstacles
 
 Les terrains Kenney 2D bloquent réellement le déplacement. **Box Collider 2D** permet d’activer un volume solide ou un trigger et de régler ses dimensions et décalages. **Rigidbody 2D** ajoute gravité, vitesse, rebond et friction, avec corps dynamique, cinématique ou statique.

@@ -1,16 +1,17 @@
+import {moveBody3d,solidBody3d,supportBody3d} from './collision-3d.js';
 import {damageSimulationNode} from './simulation-nodes.js';
 import {skillRank,progressionDamageScale,awardExperience} from './rpg-progression.js';
 import {stepHeroFlight} from './hero-movement.js';
 import {cameraFacingDegrees} from './character-facing.js';
 import {findEnginePath as findPath} from './native-3d.js';
-import {healthOf,isHostileTo,isAiObstacle,hasLineOfSight,perceiveTarget} from './ai-perception.js';
+import {healthOf,actorDistance,isHostileTo,isAiObstacle,hasLineOfSight,perceiveTarget} from './ai-perception.js';
 // Configurable gameplay components. Positions use WarLike's existing 2D ground coordinates.
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const defaultStats=()=>({maxHealth:100,health:100,maxStamina:100,stamina:100,staminaRegen:14});
 export const defaultInventory=()=>({capacity:16,items:[],equipment:{weapon:null,armor:null}});
 export const defaultAi=()=>({enabled:true,state:'idle',detection:450,attackRange:65,attackDamage:8,attackCooldown:1.2,speed:75,homeX:null,homeY:null,patrolRadius:130,pathfinding:true,requireLineOfSight:false,fieldOfView:360,memoryDuration:4,searchDuration:2,pathCellSize:48,repathInterval:.75});
-export const defaultController=()=>({walkSpeed:4.2,sprintSpeed:7,jumpForce:5.6,gravity:15,dodgeDistance:1.8,dodgeCooldown:.8,staminaCost:20});
+export const defaultController=()=>({walkSpeed:4.2,sprintSpeed:7,jumpForce:5.6,gravity:15,dodgeDistance:1.8,dodgeCooldown:.8,staminaCost:20,stepHeight:.28,coyoteTime:.1,jumpBuffer:.12});
 export function ensureStats(o){o.stats??={...defaultStats(),maxHealth:Math.max(100,healthOf(o)),health:Math.max(0,healthOf(o))};return o.stats}
 export function ensureAi(o){o.ai={...defaultAi(),...o.ai};return o.ai}
 export function setHealth(o,value){const s=ensureStats(o);s.health=clamp(n(value),0,Math.max(1,n(s.maxHealth,100)));o.hp=s.health;return s.health}
@@ -111,8 +112,8 @@ export function updateAi(entities,player,dt){
 export function attack3d(attacker,entities,{range=120,damageAmount=20,arc=1.2}={}){
  const target=entities.filter(e=>e!==attacker&&(e.simulationNode?.enabled&&e.simulationNode.kind==='destructible'&&e.simulationNode.health>0||e.ai?.enabled&&isHostileTo(e,attacker,attacker)&&healthOf(e)>0)&&
   e.sequenceEnabled!==false&&hasLineOfSight(attacker,e,entities))
-  .sort((a,b)=>Math.hypot(a.x-attacker.x,a.y-attacker.y)-Math.hypot(b.x-attacker.x,b.y-attacker.y))[0];
- if(!target||Math.hypot(target.x-attacker.x,target.y-attacker.y)>Math.max(0,n(range,120)))return null;
+  .sort((a,b)=>actorDistance(a,attacker)-actorDistance(b,attacker))[0];
+ if(!target||actorDistance(target,attacker)>Math.max(0,n(range,120)))return null;
  const before=healthOf(target),amount=Math.max(0,n(damageAmount,20))*progressionDamageScale(attacker);if(target.simulationNode?.kind==='destructible')damageSimulationNode(target,amount,attacker,{mode:'3d'});else{damage(target,amount);if(before>0&&healthOf(target)<=0)awardExperience(attacker,40)}target.animation='hurt';return target;
 }
 // 3D movement is camera-relative: forward must point where the camera looks,
@@ -124,78 +125,42 @@ export function cameraRelativeWalk3d(right,forward,yaw){
  const z=(-right*Math.sin(yaw)-forward*Math.cos(yaw))/length;
  return {x,z,length};
 }
-export function updateController3d(p,keys,dt,yaw,entities){
- const cfg=p.controller3d||defaultController(),stats=ensureStats(p);
- const frame=Math.max(0,Math.min(.1,n(dt)));
- if(!frame)return;
- if(p.superhero?.enabled!==false&&p.heroState?.flight){stepHeroFlight(p,keys,frame,entities,'3d',yaw);return}
+export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()}={}){
+ const cfg=p.controller3d||defaultController(),stats=ensureStats(p),frame=clamp(n(dt),0,.1);if(!frame)return;
+ if(p.superhero?.enabled!==false&&p.heroState?.flight){delete p._support3d;stepHeroFlight(p,keys,frame,entities,'3d',yaw);return}
+ // A moving support carries its passenger, while walls and ceilings still block it.
+ const prior=p._support3d,support=prior&&entities.find(o=>o.id===prior.id&&solidBody3d(o));
+ if(support&&p.grounded3d&&n(p._verticalVelocity)<=0){const dx=n(support.x)-prior.x,dy=n(support.y)-prior.y,dz=(n(support.elevation3d)-prior.z)*64;if(Math.hypot(dx,dy,dz)<256)moveBody3d(p,dx,dy,dz,entities,{ignore:support,recover:false})}
+ moveBody3d(p,0,0,0,entities);
  const ax=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const az=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
- const len=Math.hypot(ax,az),sprint=keys.has('shift')&&stats.stamina>0;
- const jump=keys.has(' ')||keys.has('space');
- const solid=o=>o!==p&&o.collision3d!==false&&!o.lightType&&!o.audioEnabled&&(o.solid3d===true||o.type==='object'||o.type==='mesh3d');
- const radiusX=Math.max(1,n(p.w,32)),radiusZ=Math.max(1,n(p.depth3d,p.h||32)),height=Math.max(.1,n(p.h,100)/64);
- const top=o=>n(o.elevation3d)+Math.max(.1,n(o.h,32)/64);
- const overlapsXZ=(x,z,o)=>x<n(o.x)+n(o.w,32)&&x+radiusX>n(o.x)&&z<n(o.y)+n(o.depth3d,o.h||32)&&z+radiusZ>n(o.y);
- const horizontalBlocked=(x,z,elevation)=>entities.some(o=>solid(o)&&overlapsXZ(x,z,o)&&elevation<top(o)-.0001&&elevation+height>n(o.elevation3d)+.0001);
- const floorAt=(x,z,current)=>entities.reduce((floor,o)=>{
-  if(!solid(o)||!overlapsXZ(x,z,o))return floor;
-  const candidate=top(o);
-  return candidate<=current+.03&&candidate>floor?candidate:floor;
- },0);
- p.elevation3d=Math.max(0,n(p.elevation3d));
- p._verticalVelocity=n(p._verticalVelocity);
- p._dodgeTimer=Math.max(0,n(p._dodgeTimer)-frame);
+ const len=Math.hypot(ax,az),sprint=keys.has('shift')&&stats.stamina>0,jump=keys.has(' ')||keys.has('space');
+ p._verticalVelocity=n(p._verticalVelocity);p._dodgeTimer=Math.max(0,n(p._dodgeTimer)-frame);
  const dodgeDown=keys.has('control');
- if(dodgeDown&&!p._dodgeHeld&&p._dodgeTimer<=0&&len&&stats.stamina>=n(cfg.staminaCost,20)){
-  p._dodgeTimer=Math.max(.1,n(cfg.dodgeCooldown,.8));
-  p._dodgeBoost=Math.max(0,n(cfg.dodgeDistance,1.8))*64/.18;
-  stats.stamina=Math.max(0,stats.stamina-n(cfg.staminaCost,20));
- }
+ if(dodgeDown&&!p._dodgeHeld&&p._dodgeTimer<=0&&len&&stats.stamina>=n(cfg.staminaCost,20)){p._dodgeTimer=Math.max(.1,n(cfg.dodgeCooldown,.8));p._dodgeBoost=Math.max(0,n(cfg.dodgeDistance,1.8))*64/.18;stats.stamina=Math.max(0,stats.stamina-n(cfg.staminaCost,20))}
  p._dodgeHeld=dodgeDown;
- const dodge=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0;
- const movement=cameraRelativeWalk3d(ax,az,yaw);
- const velocity=Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64+dodge;
- const vx=movement.x*velocity;
- const vz=movement.z*velocity;
- if(Number.isFinite(yaw))p.rotation=cameraFacingDegrees(yaw);
- if(len&&sprint)stats.stamina=clamp(stats.stamina-18*frame,0,n(stats.maxStamina,100));
- const grounded=p.elevation3d<=floorAt(p.x,p.y,p.elevation3d)+.035&&p._verticalVelocity<=0;
- if(jump&&!p._jumpHeld&&grounded){p._verticalVelocity=Math.max(0,n(cfg.jumpForce,5.6));p.grounded3d=false}
- p._jumpHeld=jump;
- const steps=Math.max(1,Math.ceil(Math.max(Math.abs(vx),Math.abs(vz))*frame/Math.max(4,Math.min(radiusX,radiusZ)*.3)),Math.ceil(frame/(1/90)));
- const t=frame/steps,stepHeight=Math.max(0,Math.min(.6,n(cfg.stepHeight,.28))),gravity=Math.max(0,n(cfg.gravity,15));
- for(let step=0;step<steps;step++){
-  const oldFloor=floorAt(p.x,p.y,p.elevation3d);
-  const wasGrounded=p.elevation3d<=oldFloor+.035&&p._verticalVelocity<=0;
-  for(const [axis,delta] of [['x',vx*t],['y',vz*t]]){
-   if(!delta)continue;
-   const candidate=p[axis]+delta;
-   const x=axis==='x'?candidate:p.x,z=axis==='y'?candidate:p.y;
-   if(!horizontalBlocked(x,z,p.elevation3d)){p[axis]=candidate;continue}
-   // Grounded characters can step onto low obstacles, but cannot phase through walls.
-   if(wasGrounded&&p._verticalVelocity<=0){
-    const raised=p.elevation3d+stepHeight;
-    if(!horizontalBlocked(x,z,raised)){
-     p[axis]=candidate;
-     const support=floorAt(x,z,raised);
-     p.elevation3d=Math.max(p.elevation3d,support);
-    }
+ const dodge=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0,movement=cameraRelativeWalk3d(ax,az,yaw),speed=Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64+dodge;
+ if(Number.isFinite(yaw))p.rotation=cameraFacingDegrees(yaw);if(len&&sprint)stats.stamina=clamp(stats.stamina-18*frame,0,n(stats.maxStamina,100));
+ const grounded=(p.elevation3d<=.0001||!!supportBody3d(p,entities))&&p._verticalVelocity<=0;
+ p._coyote3d=grounded?clamp(n(cfg.coyoteTime,.1),0,.3):Math.max(0,n(p._coyote3d)-frame);
+ p._jumpBuffer3d=Math.max(0,n(p._jumpBuffer3d)-frame);
+ if(jump&&!p._jumpHeld||pressedKeys.has(' ')||pressedKeys.has('space'))p._jumpBuffer3d=Math.max(.001,clamp(n(cfg.jumpBuffer,.12),0,.3));p._jumpHeld=jump;
+ if(p._jumpBuffer3d>0&&(grounded||p._coyote3d>0)){p._verticalVelocity=Math.max(0,n(cfg.jumpForce,5.6));p._jumpBuffer3d=0;p._coyote3d=0;p.grounded3d=false;delete p._support3d}
+ const steps=Math.max(1,Math.ceil(frame/(1/90))),t=frame/steps,stepHeight=clamp(n(cfg.stepHeight,.28),0,.6),gravity=Math.max(0,n(cfg.gravity,15));
+ for(let i=0;i<steps;i++){
+  const supported=(p.elevation3d<=.0001||!!supportBody3d(p,entities))&&p._verticalVelocity<=0;
+  for(const [axis,delta] of [['x',movement.x*speed*t],['y',movement.z*speed*t]]){
+   if(!delta)continue;const before={x:p.x,y:p.y,z:p.elevation3d},result=moveBody3d(p,axis==='x'?delta:0,axis==='y'?delta:0,0,entities,{recover:false});
+   if(supported&&stepHeight>0&&result[axis==='x'?'blockedX':'blockedY']){
+    // Try the whole step from the original position; check headroom on ascent.
+    p.x=before.x;p.y=before.y;p.elevation3d=before.z;const rise=moveBody3d(p,0,0,stepHeight*64,entities,{recover:false}),attempt=rise.blockedZ?null:moveBody3d(p,axis==='x'?delta:0,axis==='y'?delta:0,0,entities,{recover:false});
+    if(attempt&&!attempt.blockedX&&!attempt.blockedY)moveBody3d(p,0,0,-stepHeight*64,entities,{recover:false});
+    else{p.x=before.x;p.y=before.y;p.elevation3d=before.z;moveBody3d(p,axis==='x'?delta:0,axis==='y'?delta:0,0,entities,{recover:false})}
    }
   }
-  const oldHeight=p.elevation3d;
-  p._verticalVelocity-=gravity*t;
-  const candidate=Math.max(0,oldHeight+p._verticalVelocity*t);
-  const floor=entities.reduce((value,o)=>{
-   if(!solid(o)||!overlapsXZ(p.x,p.y,o))return value;
-   const level=top(o);
-   return level<=oldHeight+.035&&level>=candidate-.001?Math.max(value,level):value;
-  },0);
-  if(p._verticalVelocity<=0&&candidate<=floor){p.elevation3d=floor;p._verticalVelocity=0}
-  else if(p._verticalVelocity>0&&entities.some(o=>solid(o)&&overlapsXZ(p.x,p.y,o)&&oldHeight+height<=n(o.elevation3d)+.01&&candidate+height>n(o.elevation3d))){p._verticalVelocity=0}
-  else p.elevation3d=candidate;
+  p._verticalVelocity-=gravity*t;const contact=moveBody3d(p,0,0,p._verticalVelocity*t*64,entities,{recover:false});if(contact.blockedZ)p._verticalVelocity=0;
  }
- const support=floorAt(p.x,p.y,p.elevation3d+.04);
- p.grounded3d=p.elevation3d<=support+.035&&p._verticalVelocity<=0;
+ const standing=supportBody3d(p,entities);p.grounded3d=(p.elevation3d<=.0001||!!standing)&&p._verticalVelocity<=0;
+ p._support3d=p.grounded3d&&standing?{id:standing.id,x:n(standing.x),y:n(standing.y),z:n(standing.elevation3d)}:null;
  p.animation=p.grounded3d?(len?(sprint?'run':'walk'):'idle'):(p._verticalVelocity>0?'jump':'fall');
 }

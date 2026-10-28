@@ -1,5 +1,8 @@
+import {collisionBox3d,segmentBox3d,activeBody3d} from './collision-3d.js';
 // Shared ground-plane perception for AI, combat and Blueprint conditions.
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
+export const spatialActor3d=o=>o?.type==='mesh3d'||o?.playable3d===true||Number.isFinite(o?.depth3d);
+export const actorDistance=(a,b)=>Math.hypot(finite(a?.x)-finite(b?.x),finite(a?.y)-finite(b?.y),spatialActor3d(a)||spatialActor3d(b)?(finite(a?.elevation3d)-finite(b?.elevation3d))*64:0);
 export const healthOf=entity=>finite(entity?.stats?.health??entity?.hp,100);
 export const factionOf=entity=>String(entity?.aiFaction||(entity?.team??entity?.threatIntel?.faction??'neutral'));
 const hasFaction=entity=>!!entity?.aiFaction||entity?.team!=null||!!entity?.threatIntel?.faction;
@@ -13,13 +16,14 @@ export function isHostileTo(actor,target,player=target){
  return target===player||actor.aiTargetId===target.id||(hasFaction(actor)&&hasFaction(target)&&factionOf(actor)!=='neutral'&&factionOf(target)!=='neutral');
 }
 export function isAiObstacle(entity,actor,target){
- return entity!==actor&&entity!==target&&entity.collision3d!==false&&
+ return entity!==actor&&entity!==target&&activeBody3d(entity)&&entity.collision3d!==false&&
   entity.sequenceEnabled!==false&&!entity._sequenceDestroyed&&!entity._hiddenInVehicle&&
   !entity.lightType&&!entity.audioEnabled&&!entity.ai&&!entity.playable3d&&entity.type!=='player'&&entity.type!=='character'&&
   (entity.solid3d===true||entity.type==='object'||entity.type==='mesh3d');
 }
 export function hasLineOfSight(actor,target,entities){
  if(!actor||!target)return false;
+ if(spatialActor3d(actor)||spatialActor3d(target)){const center=o=>{const b=collisionBox3d(o);return {x:b.x+b.w/2,y:b.y+b.d/2,z:b.z+b.h*.6}},from=center(actor),to=center(target);return !entities.some(o=>isAiObstacle(o,actor,target)&&segmentBox3d(from,to,collisionBox3d(o))!==null)}
  const x0=finite(actor.x)+finite(actor.w)*.5,y0=finite(actor.y)+finite(actor.depth3d,finite(actor.h))*.5;
  const x1=finite(target.x)+finite(target.w)*.5,y1=finite(target.y)+finite(target.depth3d,finite(target.h))*.5;
  return !entities.some(obstacle=>{
@@ -39,11 +43,11 @@ export function hasLineOfSight(actor,target,entities){
 }
 export function perceiveTarget(actor,target,entities){
  const ai=actor.ai||{},dx=finite(target?.x)-finite(actor.x),dy=finite(target?.y)-finite(actor.y);
- const distance=Math.hypot(dx,dy),inRange=!!target&&distance<=Math.max(0,finite(ai.detection,450));
+ const distance=actorDistance(actor,target),inRange=!!target&&distance<=Math.max(0,finite(ai.detection,450));
  const fov=Math.max(0,Math.min(360,finite(ai.fieldOfView,360)));
  // 0 degrees faces +X, 90 degrees faces +Y (ground Z in the 3D workspace).
  const facing=finite(actor.rotation)*Math.PI/180;
- const inView=distance<.001||fov>=360||(dx*Math.cos(facing)+dy*Math.sin(facing))/distance>=Math.cos(fov*Math.PI/360);
+ const inView=distance<.001||fov>=360||(dx*Math.cos(facing)+dy*Math.sin(facing))/(Math.hypot(dx,dy)||1)>=Math.cos(fov*Math.PI/360);
  const lineOfSight=inRange&&hasLineOfSight(actor,target,entities);
  return {distance,visible:inRange&&inView&&lineOfSight,
   detected:inRange&&inView&&(ai.requireLineOfSight!==true||lineOfSight)};

@@ -1,4 +1,4 @@
-import {createGraph,applyGraph,inspectGraph,graphPort} from '../core/blueprint-graph.js';
+import {createGraph,applyGraph,inspectGraph,inspectGraphDetailed,graphPort} from '../core/blueprint-graph.js';
 import {sequenceEvents,sequenceRuntime} from '../core/logic-sequences.js';
 import {labelFor,eventFields} from '../core/blueprint-catalog.js';
 import {state} from '../core/state.js';
@@ -65,7 +65,9 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
   world.append(box);boxes.set(n.id,box);
  }
  board.addEventListener('keydown',event=>{if(event.key==='Delete'&&!['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName)){event.preventDefault();removeSelected()}});
- const errors=inspectGraph(graph);validation.textContent=errors[0]||'✓ Graphe valide';validation.classList.toggle('has-error',!!errors.length);
+ const issues=inspectGraphDetailed(graph);validation.textContent=issues[0]?issues[0].message+(issues.length>1?' (+'+(issues.length-1)+')':''):'✓ Graphe valide';validation.classList.toggle('has-error',!!issues.length);
+ for(const issue of issues)boxes.get(issue.nodeId)?.classList.add('has-graph-error');
+ const firstBad=issues.find(issue=>boxes.has(issue.nodeId));if(firstBad){const focusIssue=()=>{selectNode(firstBad.nodeId);boxes.get(firstBad.nodeId)?.scrollIntoView({block:'nearest',inline:'center'})};validation.style.cursor='pointer';validation.title='Sélectionner le nœud concerné';validation.setAttribute('role','button');validation.tabIndex=0;validation.onclick=focusIssue;validation.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();focusIssue()}}}
  const last=sequenceRuntime.trace.at(-1);if(last?.nodeId)boxes.get(last.nodeId)?.classList.add(last.status==='error'?'has-runtime-error':'was-executed');
  root.append(toolbar,layout);host.append(root);size();wires();details();
 }

@@ -26,31 +26,33 @@ export function createGraph(sequence={}){
  }else chain(sequence.instructions,'event');
  return {version:2,nodes,links,variables:[]};
 }
-export function inspectGraph(graph){
- const errors=[];
- if(!graph||!Array.isArray(graph.nodes)||!Array.isArray(graph.links))return ['Graphe invalide'];
- if(graph.nodes.length>128||graph.links.length>256)return ['Graphe trop volumineux (128 nœuds maximum)'];
+// Detailed diagnostics: every issue carries the node it concerns so the editor can highlight it.
+export function inspectGraphDetailed(graph){
+ const issues=[],seen=new Set(),add=(message,nodeId=null)=>{const key=message+'|'+nodeId;if(!seen.has(key)){seen.add(key);issues.push({message,nodeId})}};
+ if(!graph||!Array.isArray(graph.nodes)||!Array.isArray(graph.links))return [{message:'Graphe invalide',nodeId:null}];
+ if(graph.nodes.length>128||graph.links.length>256)return [{message:'Graphe trop volumineux (128 nœuds maximum)',nodeId:null}];
  const ids=new Set(),byId=new Map();
  for(const node of graph.nodes){
-  if(!node||typeof node.id!=='string'||ids.has(node.id)||!['event','action','condition'].includes(node.kind)){errors.push('Nœud invalide ou ID dupliqué');continue}
+  if(!node||typeof node.id!=='string'||ids.has(node.id)||!['event','action','condition'].includes(node.kind)){add('Nœud invalide ou ID dupliqué',typeof node?.id==='string'?node.id:null);continue}
   ids.add(node.id);byId.set(node.id,node);
  }
- const events=graph.nodes.filter(n=>n?.kind==='event');if(events.length!==1)errors.push('Un seul nœud Event est nécessaire');
+ const events=graph.nodes.filter(n=>n?.kind==='event');if(events.length!==1)add('Un seul nœud Event est nécessaire',events[1]?.id??null);
  const outputs=new Set(),inbound=new Map(),edges=new Map();
  for(const edge of graph.links){
   const node=byId.get(edge?.from),port=graphPort(edge||{}),key=edge?.from+':'+port;
-  if(!ids.has(edge?.from)||!ids.has(edge?.to)||edge.from===edge.to||outputs.has(key)||!(node?.kind==='condition'?['true','false']:['next']).includes(port)){errors.push('Connexion invalide ou sortie déjà utilisée');continue}
-  if(byId.get(edge.to)?.kind==='event'){errors.push('Event ne peut pas recevoir de connexion');continue}
+  if(!ids.has(edge?.from)||!ids.has(edge?.to)||edge.from===edge.to||outputs.has(key)||!(node?.kind==='condition'?['true','false']:['next']).includes(port)){add('Connexion invalide ou sortie déjà utilisée',ids.has(edge?.from)?edge.from:null);continue}
+  if(byId.get(edge.to)?.kind==='event'){add('Event ne peut pas recevoir de connexion',edge.from);continue}
   outputs.add(key);inbound.set(edge.to,(inbound.get(edge.to)||0)+1);
   const list=edges.get(edge.from)||[];list.push(edge.to);edges.set(edge.from,list);
  }
- for(const node of graph.nodes)if(node?.kind!=='event'&&!inbound.has(node?.id))errors.push('Graphe déconnecté : relie toutes les actions et conditions à Event');
+ for(const node of graph.nodes)if(node?.kind!=='event'&&!inbound.has(node?.id))add('Graphe déconnecté : relie toutes les actions et conditions à Event',node?.id??null);
  const visiting=new Set(),visited=new Set();
- const visit=id=>{if(visiting.has(id)){errors.push('Boucle de connexion détectée');return}if(visited.has(id))return;visiting.add(id);for(const next of edges.get(id)||[])visit(next);visiting.delete(id);visited.add(id)};
+ const visit=id=>{if(visiting.has(id)){add('Boucle de connexion détectée',id);return}if(visited.has(id))return;visiting.add(id);for(const next of edges.get(id)||[])visit(next);visiting.delete(id);visited.add(id)};
  if(events[0])visit(events[0].id);
- if(visited.size!==ids.size)errors.push('Graphe déconnecté : certains nœuds ne sont pas exécutables');
- return [...new Set(errors)];
+ if(visited.size!==ids.size)for(const id of ids)if(!visited.has(id))add('Graphe déconnecté : certains nœuds ne sont pas exécutables',id);
+ return issues;
 }
+export function inspectGraph(graph){return [...new Set(inspectGraphDetailed(graph).map(issue=>issue.message))]}
 export function compileGraph(graph,{nodeIds=false}={}){
  const errors=inspectGraph(graph);if(errors.length)throw Error(errors.join(' · '));
  const byId=new Map(graph.nodes.map(node=>[node.id,node]));

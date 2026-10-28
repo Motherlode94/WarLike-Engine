@@ -46,3 +46,13 @@ test('fixed colliders follow scripted position and changing geometry requires re
  assert.equal(synchronizeRapierScene(scene,[]),false);
  disposeRapierScene(scene);
 });
+test('dynamic gameplay teleports survive native synchronization and do not feed back every frame',()=>{
+ const entity=dynamic(),scene=createRapierScene(RAPIER,[entity]);entity.x=640;entity.elevation3d=5;
+ assert.equal(synchronizeRapierScene(scene,[entity]),true);assert.equal(scene.actors.get(1).body.translation().x,10.5);assert.equal(scene.actors.get(1).body.translation().y,5.5);
+ stepRapierScene(scene,1/60);const writes=scene.actors.get(1).body.writes;assert.equal(synchronizeRapierScene(scene,[entity]),true);assert.equal(scene.actors.get(1).body.writes,writes);disposeRapierScene(scene);
+});
+test('deactivation, reactivation and body settings rebuild the native collider set',()=>{
+ const entity=dynamic(),scene=createRapierScene(RAPIER,[entity]);entity.sequenceEnabled=false;assert.equal(synchronizeRapierScene(scene,[entity]),false);delete entity.sequenceEnabled;
+ entity.rigidbody3d.mass=5;assert.equal(synchronizeRapierScene(scene,[entity]),false);disposeRapierScene(scene);
+ const disabled={...dynamic(),collision3d:false},empty=createRapierScene(RAPIER,[disabled]);assert.equal(empty.actors.size,0);disabled.collision3d=true;assert.equal(synchronizeRapierScene(empty,[disabled]),false);disposeRapierScene(empty);
+});

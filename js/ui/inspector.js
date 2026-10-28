@@ -257,7 +257,7 @@ renderObjectBehaviors(root,o);
   const pathLabel=document.createElement('label');const pathCb=document.createElement('input');pathCb.type='checkbox';pathCb.checked=ai.pathfinding!==false;pathCb.disabled=state.playing;pathCb.onchange=()=>{ai.pathfinding=pathCb.checked;record('Navigation A*');notify()};pathLabel.append(pathCb,document.createTextNode(' Navigation A*'));body.append(pathLabel);
  });
  if(workspace.mode==='3d'&&o.controller3d)component(root,'Contrôleur de personnage 3D',body=>{
-  for(const [key,label] of [['walkSpeed','Marche'],['sprintSpeed','Sprint'],['jumpForce','Saut'],['gravity','Gravité'],['dodgeDistance','Esquive (préparation)'],['dodgeCooldown','Cooldown esquive (préparation)'],['staminaCost','Coût endurance (préparation)']])field(body,o.controller3d,key,label);
+  for(const [key,label] of [['walkSpeed','Marche'],['sprintSpeed','Sprint'],['jumpForce','Saut'],['gravity','Gravité'],['stepHeight','Hauteur de marche (m)'],['coyoteTime','Tolérance après rebord (s)'],['jumpBuffer','Mémorisation du saut (s)'],['dodgeDistance','Distance esquive (m)'],['dodgeCooldown','Recharge esquive (s)'],['staminaCost','Coût endurance']])field(body,o.controller3d,key,label);
  });
 if(o.playable3d||o.type==='player'||o.type==='character'||getAsset(o.assetId)?.category==='Characters'||o.cameraRig){
  component(root,'Caméra de jeu',body=>{

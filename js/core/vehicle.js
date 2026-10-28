@@ -14,9 +14,9 @@ export function resetDriving(){Object.assign(driving,{vehicleId:null,speed:0,ste
 export function currentVehicle(){return state.entities.find(o=>o.id===driving.vehicleId&&vehicle(o))||null}
 const solid=o=>isBuildingSolid(o)||o.type==='object'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock','stone-wall','wooden-palisade','traffic-barrier'].includes(o.assetId);
 const overlapCircleRect=collisionCircleRect;
-export function updateVehicles(dt,player){
+export function updateVehicles(dt,player,keys=state.keys){
  driving.collisionFlash=Math.max(0,driving.collisionFlash-dt);
- const k=state.keys,pressed=k.has('e')&&!housingActive()&&housing.transition===0;
+ const k=keys,pressed=k.has('e')&&!housingActive()&&housing.transition===0;
  if(driving.transition){const action=driving.transition;action.remaining-=dt;if(action.remaining<=0){if(action.type==='enter'){playSound('vehicle');recordEngineEvent('vehicle-enter',String(action.carId));driving.vehicleId=action.carId;driving.speed=0;driving.steer=0;player._hiddenInVehicle=true;player.animation='drive';}else{playSound('door');player.x=action.x;player.y=action.y;recordEngineEvent('vehicle-exit',String(driving.vehicleId));player._hiddenInVehicle=false;driving.vehicleId=null;driving.speed=0;driving.steer=0;player.animation='exit_vehicle';player._actionAnimationUntil=performance.now()/1000+.45}driving.transition=null;player._vehicleTransition=false}else{player._vehicleTransition=true;player.animation=action.type==='enter'?'enter_vehicle':'exit_vehicle';driving.enterHeld=pressed;return}}
 
  if(pressed&&!driving.enterHeld&&player){

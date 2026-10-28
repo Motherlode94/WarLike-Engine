@@ -51,7 +51,7 @@ test('3D vehicle selection excludes ordinary scene meshes',()=>{
 });
 test('viewport binds vehicle physics and HUD to 3D Play',()=>{
  const source=readFileSync(new URL('../js/core/viewport-3d.js',import.meta.url),'utf8');
- assert.match(source,/updateDriving3d\(state\.entities,p,state\.keys,dt\)/);
+ assert.match(source,/updateDriving3d\(state\.entities,p,input,dt\)/);
  assert.match(source,/if\(!inVehicle\)updateController3d/);
  assert.match(source,/drivingHud\.id='warlikeVehicle3dHud'/);
 });

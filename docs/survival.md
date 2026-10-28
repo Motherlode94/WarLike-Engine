@@ -27,6 +27,27 @@ Les quatre jauges vont de 0 à 100 : **satiété, hydratation, repos et chaleur*
 
 Le stock de chaque ressource est limité. Une ressource épuisée attend son délai de régénération ; un inventaire plein n’épuise pas la ressource. Les valeurs du template sont réglables dans l’Inspecteur. Le HUD se réduit par son bouton d’en-tête et reste défilable sur un petit viewport.
 
+## Outils, récolte et obstacles
+
+Le HUD affiche la ressource à portée, son stock restant, la quantité prévue et l’outil utilisé. **E** ou **Récolter** choisit une ressource visible à moins de 135 unités. Une ressource épuisée ne masque plus un autre stock accessible. Les obstacles actifs bloquent la récolte, y compris les colliders 2D décalés ; un trigger ne la bloque pas. Une récolte impossible ne débite aucun stock et n’use pas l’outil.
+
+Ouvrir **Outils · fabriquer et réparer** dans le HUD :
+
+| Outil | Fabrication | Effet | Réparation |
+| --- | --- | --- | --- |
+| Hache | 2 bois + 2 pierres + 1 fibre | +2 bois par récolte réussie | 1 bois + 1 pierre |
+| Pioche | 2 bois + 3 pierres + 1 fibre | +2 pierres par récolte réussie | 1 bois + 1 pierre |
+
+Un outil neuf dispose de **20 utilisations**. Il s’utilise automatiquement sur sa ressource ; récolter de l’eau, des baies ou des fibres ne l’use pas. La dernière utilisation garde le bonus puis casse l’outil. La récolte à la main reste possible. **Réparer** restaure toute la durabilité sans créer un deuxième outil ; un outil intact ne consomme pas d’ingrédient. Un outil occupe un emplacement d’inventaire : la fabrication vérifie la place après consommation des ingrédients avant de valider l’échange.
+
+La durabilité et le bonus sont réglables dans **Inspecteur → Survie · Besoins et fabrication**. Les outils appartiennent à chaque survivant et suivent les sauvegardes, chargements et reconnexions LAN. Le serveur ne relaie que les intentions fabriquer/réparer : l’hôte calcule les ingrédients, l’usure et le rendement.
+
+Les cartes utilisent les vignettes des vrais modèles **Kenney Survival Kit** déjà intégrés, avec auteur, pack, licence et liens. Les modèles, textures et deux vignettes sont inclus dans les exports Survival, y compris ceux d’anciens projets qui ne possédaient pas encore de réglage d’outil. Les outils sont actuellement des objets d’inventaire utilisés par le système de récolte ; leur modèle n’est pas attaché à la main du personnage.
+
+Dans la scène de départ 2D, les arbres et les rochers possèdent un **Box Collider 2D** placé sur leur empreinte au sol. Le personnage ne traverse plus leur tronc ou leur base. L’image de la canopée reste distincte de ce volume physique.
+
+Blueprint fournit **Réparer un outil de survie**, **Outil de survie utilisable** et **Durabilité d’un outil inférieure à** (pourcentage). **Fabriquer un objet de survie** propose désormais la hache et la pioche. Les presets de la catégorie **Survival jouable** offrent fabrication et réparation.
+
 ## Composants réutilisables
 
 - **Survie · Besoins et fabrication** : ajouter à un personnage pour activer ses besoins, son inventaire et ses recettes. Régler les consommations et dégâts. Le bouton des prefabs installe les vrais modèles de campement Kenney pour les constructions 2D et 3D.
@@ -59,4 +80,4 @@ La scène 3D utilise les modèles intégrés **Kenney Survival Kit**, **Nature K
 
 Ces rendus sont reproductibles avec `scripts/assets/render-survival-sprites.cjs` et le renderer du moteur. Les sources sont les GLB déjà livrés, sous **CC0-1.0**. [Kenney](https://kenney.nl/) · [Survival Kit](https://kenney.nl/assets/survival-kit) · [Nature Kit](https://kenney.nl/assets/nature-kit) · [Quaternius](https://quaternius.com/) · [Sources du moteur](../SOURCES.md).
 
-Ce premier axe survival n’inclut pas encore de construction modulaire de murs et toitures, de météo, de maladies, de farming, d’outils à durabilité, de poids d’inventaire ou de monde persistant sur serveur dédié. Le HUD propose un placement libre du feu et de l’abri ; les constructions modulaires en étages restent à développer. La scène reste limitée à 256 objets pour la coop, avec des places réservées aux trois invités. Le soleil et les besoins constituent une simulation de jeu réglable.
+Ce premier axe survival n’inclut pas encore de construction modulaire de murs et toitures, de météo, de maladies, de farming, de poids d’inventaire ou de monde persistant sur serveur dédié. Le HUD propose un placement libre du feu et de l’abri ; les constructions modulaires en étages restent à développer. La scène reste limitée à 256 objets pour la coop, avec des places réservées aux trois invités. Le soleil et les besoins constituent une simulation de jeu réglable.

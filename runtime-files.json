@@ -16046,6 +16046,7 @@
     "js/core/survival-building.js",
     "js/core/survival-runtime.js",
     "js/core/survival-scene.js",
+    "js/core/survival-tools.js",
     "js/core/threat-intelligence.js",
     "js/core/unitypackage.js",
     "js/core/vehicle-3d.js",

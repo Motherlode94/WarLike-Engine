@@ -37,6 +37,9 @@ test('Survival room names are trimmed and distinct so saved companions are unamb
  const h=(await post('create',{key:'LAN-TEST-OWNER',name:' Gardien '})).data;assert.ok(h.token);await post('snapshot',{token:h.token,snapshot:{...snapshot,genre:'survival',entities:[{...snapshot.entities[0],survival:{enabled:true}}]}});
  const duplicate=await post('join',{code:h.code,name:' Gardien '});assert.equal(duplicate.status,400);assert.match(duplicate.data.error,/nom/);assert.equal((await post('join',{code:h.code,name:'Ami'})).status,200);await post('leave',{token:h.token});
 });
+test('LAN forwards tool crafting and repair without accepting client durability overrides',{timeout:8000},async()=>{
+ const abort=new AbortController();try{const response=await fetch(base+'/lan/events?token='+host.token,{signal:abort.signal}),reader=response.body.getReader();await reader.read();await wait(20);assert.equal((await post('input',{token:guest.token,sequence:5,actions:['craft:axe','craft:pickaxe','repair:axe',{type:'repair',tool:'axe',durability:999}]})).status,200);let text='';for(let i=0;i<8&&!text.includes('"input"');i++){const next=await reader.read();text+=new TextDecoder().decode(next.value)}const event=text.split('\n').filter(s=>s.startsWith('data:')).map(s=>JSON.parse(s.slice(5))).find(e=>e.type==='input');assert.deepEqual(event.actions,['craft:axe','craft:pickaxe','repair:axe']);assert.equal(event.peerId,guest.peerId)}finally{abort.abort()}
+});
 test('a private room has at most four peers and leaving the host closes it',async()=>{
  const third=(await post('join',{code,name:'Trois'})).data,fourth=(await post('join',{code,name:'Quatre'})).data;assert.ok(third.token&&fourth.token);assert.equal((await post('join',{code,name:'Cinq'})).status,400);assert.equal((await post('leave',{token:host.token})).status,200);assert.equal((await post('ping',{token:guest.token})).status,403);assert.equal((await post('join',{code})).status,400);
 });

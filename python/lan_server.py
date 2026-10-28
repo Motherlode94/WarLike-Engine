@@ -17,7 +17,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-ACTIONS = {'revive', 'gather', 'drink', 'eat', 'rest', 'refuel', 'craft:campfire', 'craft:shelter', 'craft:bandage', 'craft:meal'}
+ACTIONS = {'craft:axe', 'craft:pickaxe', 'repair:axe', 'repair:pickaxe', 'revive', 'gather', 'drink', 'eat', 'rest', 'refuel', 'craft:campfire', 'craft:shelter', 'craft:bandage', 'craft:meal'}
 KEYS = set('wasdzqexuf123456 ') | {'shift', 'control', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'}
 
 

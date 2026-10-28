@@ -1,3 +1,6 @@
+import {survivalTools,survivalToolStatus,wearSurvivalTool} from './survival-tools.js';
+import {activeBody3d,collisionBox3d,segmentBox3d,solidBody3d} from './collision-3d.js';
+import {colliderRect2d,solidCollider2d} from './physics-2d.js';
 import {inventoryAdd,inventoryRemove,inventoryCount,damage,setHealth} from './gameplay-components.js';
 import {healthOf} from './ai-perception.js';
 import {inspectSurvivalPlacement} from './survival-building.js';
@@ -8,9 +11,11 @@ export const survivalRecipes={
  campfire:{name:'Feu de camp',cost:{wood:4,stone:2},build:'campfire'},
  shelter:{name:'Abri',cost:{wood:6,fiber:4},build:'shelter'},
  bandage:{name:'Bandage · +25 PV',cost:{fiber:2},heal:25},
+ axe:{name:'Hache',cost:{wood:2,stone:2,fiber:1},tool:'axe'},
+ pickaxe:{name:'Pioche',cost:{wood:2,stone:3,fiber:1},tool:'pickaxe'},
  meal:{name:'Repas · +45 satiété',cost:{berries:2,wood:1},food:45,station:'campfire'}
 };
-export const defaultSurvival=()=>({enabled:true,foodDrain:.12,waterDrain:.2,restDrain:.08,starvationDamage:2,coldDamage:1,buildTemplates:{},startInventory:[{id:'water',count:1},{id:'berries',count:1}]});
+export const defaultSurvival=()=>({enabled:true,foodDrain:.12,waterDrain:.2,restDrain:.08,starvationDamage:2,coldDamage:1,toolDurability:20,toolHarvestBonus:2,buildTemplates:{},startInventory:[{id:'water',count:1},{id:'berries',count:1}]});
 export const defaultSurvivalNode=()=>({enabled:true,kind:'wood',stock:12,maxStock:12,amount:2,respawn:90,cooldown:0});
 export const defaultSurvivalWorld=()=>({enabled:true,hour:17,timeScale:240,day:1});
 export function ensureSurvival(o){o.survivalState??={food:85,water:80,rest:100,warmth:80,elapsed:0,harvested:0,crafted:0,actionCooldown:0,restCooldown:0,nights:0,builds:{},notice:'',noticeTime:0};return o.survivalState}
@@ -33,11 +38,48 @@ export function tickSurvival(entities,dt,{mode='2d',hour=14,player=null,keys=new
  }
  return world||{hour,day:1};
 }
+const activeResource=o=>activeBody3d(o)&&o.visible!==false&&o.survivalNode?.enabled!==false&&o.survivalNode&&Object.hasOwn(survivalResources,o.survivalNode.kind);
+export function survivalResourceBlocked(actor,node,entities,mode='2d'){
+ const a=center(actor,mode),b=center(node,mode),from={...a,z:mode==='3d'?a.z+n(actor.h,64)*.5:.5},to={...b,z:mode==='3d'?b.z+n(node.h,32)*.5:.5};
+ return entities.some(o=>{
+  if(o===actor||o===node||!activeBody3d(o))return false;
+  if(mode==='3d')return solidBody3d(o)&&segmentBox3d(from,to,collisionBox3d(o))!==null;
+  if(!solidCollider2d(o))return false;const r=colliderRect2d(o);
+  return segmentBox3d(from,to,{x:r.x,y:r.y,z:0,w:r.w,d:r.h,h:1})!==null;
+ });
+}
+export function survivalHarvestTarget(actor,entities,{mode='2d'}={}){
+ if(!actor)return null;
+ const candidates=entities.filter(o=>activeResource(o)&&survivalDistance(actor,o,mode)<=135).sort((a,b)=>survivalDistance(actor,a,mode)-survivalDistance(actor,b,mode));
+ const stocked=candidates.filter(o=>Math.floor(n(o.survivalNode.stock))>0);
+ const node=stocked.find(o=>!survivalResourceBlocked(actor,o,entities,mode))||stocked[0]||candidates[0];if(!node)return null;
+ const stock=Math.max(0,Math.floor(n(node.survivalNode.stock))),blocked=survivalResourceBlocked(actor,node,entities,mode);
+ const id=Object.keys(survivalTools).find(id=>survivalTools[id].resource===node.survivalNode.kind),tool=survivalToolStatus(actor,id);
+ const amount=Math.min(stock,Math.max(1,Math.floor(n(node.survivalNode.amount,2)))+(tool?.usable?tool.bonus:0));
+ return {node,stock,blocked,tool,amount,available:stock>0&&!blocked};
+}
 export function gatherSurvival(actor,entities,{mode='2d'}={}){
  const s=ensureSurvival(actor);if(s.actionCooldown>0)return result(actor,false,'Attends un instant.');
- const node=entities.filter(o=>o.survivalNode?.enabled!==false&&o.survivalNode&&Object.hasOwn(survivalResources,o.survivalNode.kind)&&survivalDistance(actor,o,mode)<=135).sort((a,b)=>survivalDistance(actor,a,mode)-survivalDistance(actor,b,mode))[0];
- if(!node)return result(actor,false,'Approche-toi d’une ressource pour récolter.');const c=node.survivalNode,amount=Math.min(Math.max(0,Math.floor(n(c.stock))),Math.max(1,Math.floor(n(c.amount,2))));if(!amount)return result(actor,false,'Ressource épuisée · elle se régénère.');if(!inventoryAdd(actor,c.kind,amount))return result(actor,false,'Inventaire plein.');
- c.stock-=amount;if(c.stock<=0)c.cooldown=Math.max(0,n(c.respawn,90));s.harvested+=amount;s.actionCooldown=.35;noteAnimatorAction(actor,'gather',.4);return result(actor,true,'+'+amount+' '+survivalResources[c.kind]);
+ const target=survivalHarvestTarget(actor,entities,{mode});
+ if(!target)return result(actor,false,'Approche-toi d’une ressource pour récolter.');
+ if(!target.stock)return result(actor,false,'Ressource épuisée · elle se régénère.');
+ if(target.blocked)return result(actor,false,'Obstacle entre toi et la ressource · contourne-le.');
+ const {node,amount,tool}=target,c=node.survivalNode;
+ if(!inventoryAdd(actor,c.kind,amount))return result(actor,false,'Inventaire plein.');
+ c.stock-=amount;if(c.stock<=0)c.cooldown=Math.max(0,n(c.respawn,90));
+ const after=tool?.usable?wearSurvivalTool(actor,tool.id):null;
+ s.harvested=n(s.harvested)+amount;s.actionCooldown=.35;noteAnimatorAction(actor,'gather',.4);
+ return result(actor,true,'+'+amount+' '+survivalResources[c.kind]+(after?' · '+after.name+' '+after.durability+'/'+after.maxDurability+(after.durability?'':' · cassée, répare-la'):tool?.owned?' · à la main, outil cassé':''));
+}
+export function repairSurvivalTool(actor,id){
+ const tool=survivalToolStatus(actor,id),s=ensureSurvival(actor);
+ if(!tool?.owned)return result(actor,false,'Fabrique cet outil avant de le réparer.');
+ if(s.actionCooldown>0)return result(actor,false,'Attends un instant.');
+ if(tool.durability>=tool.maxDurability)return result(actor,false,'Cet outil est déjà en bon état.');
+ for(const [item,count] of Object.entries(tool.repair))if(inventoryCount(actor,item)<count)return result(actor,false,'Réparation : il manque '+survivalResources[item]+'.');
+ for(const [item,count] of Object.entries(tool.repair))inventoryRemove(actor,item,count);
+ s.tools??={};s.tools[id]={durability:tool.maxDurability,maxDurability:tool.maxDurability};s.actionCooldown=.5;
+ noteAnimatorAction(actor,'craft',.5);return result(actor,true,tool.name+' réparée · '+tool.maxDurability+'/'+tool.maxDurability+'.');
 }
 function buildSpot(actor,template,entities,mode){
  const a=center(actor,mode),distance=100+Math.max(n(template.w),n(mode==='3d'?template.depth3d:template.h))/2;
@@ -49,15 +91,18 @@ function buildSpot(actor,template,entities,mode){
 export function craftSurvival(actor,id,entities,{mode='2d',allocateId=null,placement=null}={}){
  const recipe=Object.hasOwn(survivalRecipes,id)?survivalRecipes[id]:null,s=ensureSurvival(actor);if(!recipe)return result(actor,false,'Recette inconnue.');if(s.actionCooldown>0)return result(actor,false,'Attends un instant.');
  for(const [item,count] of Object.entries(recipe.cost))if(inventoryCount(actor,item)<count)return result(actor,false,'Il manque '+survivalResources[item]+'.');
+ if(recipe.tool&&survivalToolStatus(actor,recipe.tool)?.owned)return result(actor,false,'Tu possèdes déjà cet outil · utilise Réparer.');
  if(recipe.station&&!station(actor,entities,recipe.station,mode))return result(actor,false,'Approche-toi d’un feu pour cuisiner.');
  let build=null;if(recipe.build){const template=actor.survival?.buildTemplates?.[mode]?.[recipe.build];if(!template||!allocateId)return result(actor,false,'Prefab de construction à configurer dans le composant Survie.');if(placement){const check=inspectSurvivalPlacement(actor,template,placement,entities,{mode});if(!check.ok)return result(actor,false,check.message);build=check.entity}else build=buildSpot(actor,template,entities,mode);if(!build)return result(actor,false,'Libère une place près du personnage.');build.id=allocateId();build.survivalBuiltBy=actor.coopName||actor.name||'Survivant';if(!Number.isSafeInteger(build.id)||entities.some(o=>o.id===build.id))return result(actor,false,'Identifiant de construction invalide.')}
- for(const [item,count] of Object.entries(recipe.cost))inventoryRemove(actor,item,count);
+ let preparedInventory=null;if(recipe.tool){const copy={inventory:structuredClone(actor.inventory)};for(const [item,count] of Object.entries(recipe.cost))inventoryRemove(copy,item,count);if(!inventoryAdd(copy,survivalTools[recipe.tool].item,1))return result(actor,false,'Inventaire plein · libère une place pour l’outil.');preparedInventory=copy.inventory}
+ if(preparedInventory){actor.inventory=preparedInventory;const tool=survivalToolStatus(actor,recipe.tool);s.tools??={};s.tools[recipe.tool]={durability:tool.maxDurability,maxDurability:tool.maxDurability}}else for(const [item,count] of Object.entries(recipe.cost))inventoryRemove(actor,item,count);
  if(build){entities.push(build);s.builds??={};s.builds[recipe.build]=n(s.builds[recipe.build])+1}if(recipe.heal)setHealth(actor,healthOf(actor)+recipe.heal);if(recipe.food)s.food=clamp(s.food+recipe.food,0,100);s.recipes??={};s.recipes[id]=n(s.recipes[id])+1;s.crafted++;s.actionCooldown=.5;noteAnimatorAction(actor,'craft',.5);return result(actor,true,recipe.name+' fabriqué'+(build?' et posé.':'.'));
 }
 export function survivalAction(actor,action,entities,ctx={}){
  if(!actor?.survival||actor.survival.enabled===false||actor.survivalDormant||healthOf(actor)<=0)return {ok:false,message:'Personnage indisponible.'};
  if(action&&typeof action==='object'){if(action.type!=='place'||!['campfire','shelter'].includes(action.recipe))return result(actor,false,'Commande de construction inconnue.');return craftSurvival(actor,action.recipe,entities,{...ctx,placement:action})}
  if(typeof action!=='string')return result(actor,false,'Commande inconnue.');
+ if(action.startsWith('repair:'))return repairSurvivalTool(actor,action.slice(7));
  if(action==='gather')return gatherSurvival(actor,entities,ctx);if(action.startsWith('craft:'))return craftSurvival(actor,action.slice(6),entities,ctx);const s=ensureSurvival(actor);if(s.actionCooldown>0)return result(actor,false,'Attends un instant.');
  if(action==='refuel'){const fire=entities.find(o=>o.survivalNode?.kind==='campfire'&&survivalDistance(actor,o,ctx.mode||'2d')<180);if(!fire)return result(actor,false,'Approche-toi d’un feu de camp.');if(!inventoryRemove(actor,'wood',1))return result(actor,false,'Il manque du bois.');fire.survivalNode.fuel=Math.min(600,n(fire.survivalNode.fuel)+60);s.actionCooldown=.5;return result(actor,true,'Feu alimenté · +60 s.')}
  if(action==='rest'){if(s.restCooldown>0)return result(actor,false,'Laisse passer quelques secondes entre deux repos.');if(!station(actor,entities,'shelter',ctx.mode||'2d'))return result(actor,false,'Construis un abri et approche-toi pour te reposer.');s.rest=clamp(s.rest+35,0,100);s.actionCooldown=.5;s.restCooldown=15;return result(actor,true,'Repos +35 · nouvel arrêt dans 15 s.')}

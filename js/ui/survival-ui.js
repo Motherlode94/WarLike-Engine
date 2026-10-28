@@ -1,3 +1,5 @@
+import {get3dAsset} from '../assets/catalog-3d.js';
+import {survivalTools,survivalToolStatus} from '../core/survival-tools.js';
 import {state} from '../core/state.js';
 import {workspace} from '../core/workspaces.js';
 import {playableActor,view3d} from '../core/viewport-3d.js';
@@ -5,7 +7,7 @@ import {gameIsRunning,setGamePhase} from '../core/game-session.js';
 import {gameplayInputBlocked} from '../core/gameplay-input.js';
 import {inventoryCount} from '../core/gameplay-components.js';
 import {healthOf} from '../core/ai-perception.js';
-import {ensureSurvival,survivalAction,survivalRecipes,survivalResources,survivalMilestones} from '../core/survival-runtime.js';
+import {ensureSurvival,survivalAction,survivalRecipes,survivalResources,survivalMilestones,survivalHarvestTarget} from '../core/survival-runtime.js';
 import {survivalPlacement as placement,clearSurvivalPlacement,inspectSurvivalPlacement,survivalCenter} from '../core/survival-building.js';
 import {isLanGuest,lanCommands} from '../core/lan-state.js';
 import {loadSurvivalScene} from '../core/survival-scene.js';
@@ -18,7 +20,7 @@ export function initSurvivalUi(){
  for(const [key,label] of [['food','Satiété'],['water','Hydratation'],['rest','Repos'],['warmth','Chaleur']]){
   const row=el('label'),value=el('span'),meter=el('progress');meter.max=100;meter.setAttribute('aria-label',label);row.append(value,meter);meters.append(row);bars[key]={value,meter,label};
  }
- body.append(meters);const supplies=el('p','survival-supplies'),actions=el('div','survival-actions');body.append(supplies,actions);
+ body.append(meters);const supplies=el('p','survival-supplies'),actions=el('div','survival-actions');const resource=el('section','survival-resource'),resourceTitle=el('strong','','À PORTÉE'),resourceText=el('span'),resourceHint=el('small');resource.setAttribute('aria-label','Ressource à portée');resource.append(resourceTitle,resourceText,resourceHint);body.append(supplies,resource,actions);
  const run=action=>{
   const p=playableActor(state.entities);if(!state.playing||!gameIsRunning()||gameplayInputBlocked()||!p?.survival)return false;
   document.activeElement?.blur();
@@ -35,13 +37,14 @@ export function initSurvivalUi(){
   document.exitPointerLock?.();document.activeElement?.blur();const c=survivalCenter(p,workspace.mode);
   Object.assign(placement,{active:true,recipe:id,actorId:p.id,point:{x:c.x+150,y:c.y},rotation:0,entity:null,valid:false});
  };
+ const tools=el('details','survival-tools');tools.open=false;const toolSummary=el('summary','','Outils · fabriquer et réparer');tools.append(toolSummary);const toolRows={};
  const craft=el('details','survival-crafting');craft.open=true;craft.append(el('summary','','Fabrication et campement'));const craftButtons={};
  for(const [id,recipe] of Object.entries(survivalRecipes)){
   const b=el('button','survival-recipe');b.type='button';b.dataset.survivalRecipe=id;
   b.append(el('strong','',(recipe.build?'Placer · ':'Fabriquer · ')+recipe.name),el('small','',Object.entries(recipe.cost).map(([item,count])=>count+' '+survivalResources[item]).join(' · ')+(recipe.station?' · près du feu':'')));
-  b.onclick=()=>recipe.build?begin(id):run('craft:'+id);craft.append(b);craftButtons[id]=b;
+  b.onclick=()=>recipe.build?begin(id):run('craft:'+id);if(recipe.tool){const card=el('section','survival-tool'),head=el('div','survival-tool-head'),img=el('img'),text=el('span'),meter=el('progress'),repair=el('button','','Réparer · 1 bois + 1 pierre');img.alt=survivalTools[recipe.tool].name+' · modèle Kenney';img.width=img.height=54;meter.setAttribute('aria-label','Durabilité '+recipe.name);repair.type='button';repair.dataset.survivalRepair=recipe.tool;repair.onclick=()=>run('repair:'+recipe.tool);head.append(img,text);card.append(head,meter,b,repair);tools.append(card);toolRows[recipe.tool]={card,img,text,meter,repair}}else craft.append(b);craftButtons[id]=b;
  }
- body.append(craft);
+ const credits=el('small','survival-tool-credit');credits.append(document.createTextNode('Modèles : '));for(const [label,url] of [['Kenney','https://kenney.nl/'],['Survival Kit','https://kenney.nl/assets/survival-kit']]){const a=el('a','',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';credits.append(a,document.createTextNode(' · '))}credits.append(document.createTextNode('CC0-1.0'));tools.append(credits);body.append(tools,craft);
  const mission=el('section','survival-mission'),missionTitle=el('strong','','PREMIÈRE AUBE · objectif commun'),goals={};mission.append(missionTitle);
  for(const [key,label] of [['campfire','Un feu alimenté'],['shelter','Un abri'],['meal','Un repas cuisiné'],['dawn','Une nuit survécue']]){const row=el('div','',label);row.dataset.survivalGoal=key;mission.append(row);goals[key]={row,label}}
  mission.append(el('small','','Après l’aube, rejoignez le feu et l’abri pour terminer l’expédition.'));body.append(mission);
@@ -96,11 +99,15 @@ export function initSurvivalUi(){
   const expanded=!(hud.classList.contains('compact')&&!hud.classList.contains('expanded')||hud.classList.contains('minimized'));toggle.textContent=expanded?'−':'＋';toggle.setAttribute('aria-expanded',String(expanded));night.style.opacity=s.night?'.2':'.02';
   for(const [key,b] of Object.entries(bars)){b.value.textContent=b.label+' '+Math.ceil(s[key])+' %';b.meter.value=s[key];b.meter.classList.toggle('low',s[key]<20)}
   supplies.textContent=Object.entries(survivalResources).map(([id,name])=>name+' '+inventoryCount(p,id)).join(' · ');
+  const target=survivalHarvestTarget(p,state.entities,{mode:workspace.mode});resourceText.textContent=target?(target.node.name||survivalResources[target.node.survivalNode.kind])+' · stock '+target.stock:'Approche-toi d’une ressource';resourceHint.textContent=!target?'E ou Récolter pour prélever.':target.blocked?'Obstacle devant la ressource · contourne-le.':!target.stock?(target.node.survivalNode.respawn>0?'Épuisée · retour dans '+Math.ceil(target.node.survivalNode.cooldown||0)+' s.':'Épuisée · sans régénération.'):'+'+target.amount+' '+survivalResources[target.node.survivalNode.kind]+(target.tool?.usable?' · '+target.tool.name+' équipée automatiquement':' · à la main');resource.classList.toggle('blocked',!!target&&!target.available);
   const disabled=!gameIsRunning()||gameplayInputBlocked()||healthOf(p)<=0||s.actionCooldown>0;
   for(const b of Object.values(buttons))b.disabled=disabled;
+  buttons.gather.disabled||=!target?.available;
   buttons.drink.disabled||=inventoryCount(p,'water')<=0;buttons.eat.disabled||=inventoryCount(p,'berries')<=0;buttons.refuel.disabled||=inventoryCount(p,'wood')<=0;buttons.rest.disabled||=s.restCooldown>0;buttons.revive.disabled||=inventoryCount(p,'fiber')<2;
   pause.hidden=isLanGuest();pause.disabled=!gameIsRunning();
   for(const [id,b] of Object.entries(craftButtons))b.disabled=disabled||Object.entries(survivalRecipes[id].cost).some(([item,count])=>inventoryCount(p,item)<count);
+  for(const [id,row] of Object.entries(toolRows)){const tool=survivalToolStatus(p,id),asset=get3dAsset(tool.modelId);if(asset?.thumbnailUrl&&!row.img.getAttribute('src'))row.img.src=asset.thumbnailUrl;row.img.hidden=!asset?.thumbnailUrl;row.meter.max=tool.maxDurability;row.meter.value=tool.durability;row.card.classList.toggle('broken',tool.owned&&!tool.usable);row.text.textContent=tool.owned?tool.name+' · '+tool.durability+'/'+tool.maxDurability+' utilisations'+(tool.usable?'':' · cassée'):tool.name+' à fabriquer · +'+tool.bonus+' '+survivalResources[tool.resource]+' / récolte';row.repair.disabled=disabled||!tool.owned||tool.durability===tool.maxDurability||Object.entries(tool.repair).some(([id,count])=>inventoryCount(p,id)<count);craftButtons[id].disabled||=tool.owned}
+  const ownedTools=Object.keys(survivalTools).map(id=>survivalToolStatus(p,id)).filter(tool=>tool.owned);toolSummary.textContent=ownedTools.length?'Outils · '+ownedTools.map(tool=>tool.name+' '+tool.durability+'/'+tool.maxDurability).join(' · '):'Outils · fabriquer et réparer';
   const progress=survivalMilestones(state.entities,{mode:workspace.mode});
   for(const [key,{row,label}] of Object.entries(goals)){row.textContent=(progress[key]?'✓ ':'◇ ')+label;row.classList.toggle('complete',progress[key])}
   party.textContent=state.entities.filter(o=>o.survival&&!o.survivalDormant).map(o=>(o===p?'Toi':o.name)+' · '+(healthOf(o)>0?Math.ceil(healthOf(o))+' PV':'À TERRE')).join(' / ');

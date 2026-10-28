@@ -1,3 +1,4 @@
+import {survivalTools} from './survival-tools.js';
 import {resolveGameGenre,genreCompatible} from './game-genres.js';
 import {gameProject,validEntities} from './game-project.js';
 import {inspectBlueprintGame} from './blueprint-validation.js';
@@ -50,15 +51,15 @@ export function gameRuntimeModels(data){
    if(asset?.shape==='glb')models.set(asset.id,asset);
    else if(asset){const model=get3dAsset(prefab3d(value)?.model3dId);if(model?.shape==='glb')models.set(model.id,model)}
   }else if(Array.isArray(value))value.forEach(visit);
-  else if(value&&typeof value==='object')Object.values(value).forEach(visit);
+  else if(value&&typeof value==='object'){if(value.survival)for(const tool of Object.values(survivalTools))visit(tool.modelId);Object.values(value).forEach(visit)}
  };
  visit(data.project);
  return [...models.values()];
 }
 export function gameRuntimeFiles(files,data){
- const usedModels=new Set();
- for(const asset of gameRuntimeModels(data)){if(asset.url?.startsWith('./assets/free/'))usedModels.add(asset.url.slice(2));for(const texture of asset.textureFiles||[])usedModels.add(texture.replace(/^\.\//,''))}
- return files.filter(name=>!name.startsWith('assets/free/')||!name.includes('/previews/')&&!/\/(models|textures)\.json$/.test(name)&&(!(name.endsWith('.glb')||name.startsWith('assets/free/textures/'))||usedModels.has(name)));
+ const usedModels=new Set(),toolPreviews=new Set(),toolIds=new Set(Object.values(survivalTools).map(tool=>tool.modelId));
+ for(const asset of gameRuntimeModels(data)){if(toolIds.has(asset.id)&&asset.thumbnailUrl?.startsWith('./assets/free/'))toolPreviews.add(asset.thumbnailUrl.slice(2));if(asset.url?.startsWith('./assets/free/'))usedModels.add(asset.url.slice(2));for(const texture of asset.textureFiles||[])usedModels.add(texture.replace(/^\.\//,''))}
+ return files.filter(name=>toolPreviews.has(name)||!name.startsWith('assets/free/')||!name.includes('/previews/')&&!/\/(models|textures)\.json$/.test(name)&&(!(name.endsWith('.glb')||name.startsWith('assets/free/textures/'))||usedModels.has(name)));
 }
 export function gameBuildModelCatalog(name,source,data){
  const models=gameRuntimeModels(data);

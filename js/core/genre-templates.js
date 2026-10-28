@@ -51,6 +51,7 @@ export function createGenreScene(genre,mode='3d'){
   const mission=(name,x,y,actions)=>marker(name,x,y,interact(actions,{radius:130,once:true}));
   if(chosen==='tactical'){
    object('building-wall','Couverture',400,260,{collision3d:true,solid3d:true});
+   object('vehicle-tank','Char arme',270,520,{team:1,maxSpeed:95,acceleration:80,brakeForce:180,turnRate:65,drag:2,vehicleWeapon:{enabled:true,range:700,damage:38,cooldown:.8,arc:35},tags:['armed-vehicle','military']});
    object('character-soldier','Allie',240,370,{team:1,playable3d:false});
    object('character-soldier','Opposant',760,390,{team:2,playable3d:false,stats:defaultStats(),ai:{enabled:true,detection:300,speed:35,attackRange:75,attackDamage:6,attackCooldown:2}});
    mission('Capturer',900,190,[variable('captured',1),signal('fps:capture'),msg('Zone capturee')]);

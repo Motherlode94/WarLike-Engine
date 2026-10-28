@@ -1,0 +1,5672 @@
+[
+  {
+    "pack": "quaternius-cubeworldkit",
+    "note": "CC0 per original pack page; short or absent archive notice"
+  },
+  {
+    "pack": "quaternius-modularmedievalbuildings",
+    "note": "CC0 per original pack page; short or absent archive notice"
+  },
+  {
+    "pack": "quaternius-piratekit",
+    "note": "CC0 per original pack page; short or absent archive notice"
+  },
+  {
+    "pack": "quaternius-publictransport",
+    "note": "CC0 per original pack page; short or absent archive notice"
+  },
+  {
+    "pack": "quaternius-sushirestaurantkit",
+    "note": "CC0 per original pack page; short or absent archive notice"
+  },
+  {
+    "pack": "quaternius-texturedfantasynature",
+    "note": "CC0 per original pack page; short or absent archive notice"
+  },
+  {
+    "pack": "quaternius-toonshootergamekit",
+    "note": "CC0 per original pack page; short or absent archive notice"
+  },
+  {
+    "pack": "kenney-retro-urban-kit",
+    "note": "CC0 per original pack page; short or absent archive notice"
+  },
+  {
+    "id": "quaternius-3dcardkitfantasy-0-card-back",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedalien-alien",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedalien-alien-helmet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animateddinosaurs-apatosaurus",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animateddinosaurs-parasaurolophus",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animateddinosaurs-stegosaurus",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animateddinosaurs-trex",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animateddinosaurs-triceratops",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animateddinosaurs-velociraptor",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedfish-dolphin",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedfish-fish1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedfish-fish2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedfish-fish3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedfish-manta-ray",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedfish-shark",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedfish-whale",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedrobot-robot",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedtanks-tank",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedtanks-tank2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedtanks-tank3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-animatedtanks-tank4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-hairstyle-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-hairstyle-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-hairstyle-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-hairstyle-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-lookingup",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-pickingup",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-running",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-sitting",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-sitting-cheering",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-standing",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-standing-coveringeyes",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-standing-hips",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-female-walking",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-hairstyle-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-hairstyle-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-hairstyle-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-hairstyle-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-lookingup",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-pickingup",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-running",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-sitting",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-sitting-cheering",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-standing",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-standing-coveringeyes",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-standing-hips",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-standing-waving",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-male-walking",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-backgroundposedhumans-woman-standing-waving",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-cars-cop",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-cars-normalcar1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-cars-normalcar2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-cars-sportscar",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-cars-sportscar2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-cars-suv",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-cars-taxi",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmanimal-cow",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmanimal-horse",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmanimal-llama",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmanimal-pig",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmanimal-pug",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmanimal-sheep",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmanimal-zebra",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-barn",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-bigbarn",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-chickencoop",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-fence",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-fence2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-openbarn",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-silo",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-silo-house",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-smallbarn",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-towerwindmill",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-watertower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-well",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-farmbuildings-windmill",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-knightcharacter-club",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-knightcharacter-helmet1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-knightcharacter-helmet2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-knightcharacter-helmet3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-knightcharacter-katana",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-knightcharacter-knightcharacter",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-knightcharacter-shortsword",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-knightcharacter-shoulderpads",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-knightcharacter-sword",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-medievalvillage-bag",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-bag-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-bags",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-barrel",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-bell",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-bell-tower",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-bench-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-bench-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-blacksmith",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-bonfire",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-bonfire-lit",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-cart",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-cauldron",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-crate",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-door-round",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-door-straight",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-fence",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-gazebo",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-hay",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-house-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-house-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-house-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-house-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-inn",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-marketstand-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-marketstand-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-mill",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-package-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-package-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-path-square",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-path-straight",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-rock-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-rock-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-rock-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-sawmill",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-sawmill-saw",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-smoke",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-stable",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-stairs",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-well",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-window-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-window-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-window-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-medievalvillage-window-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-banner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-bridge",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-door",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-dummy",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-largesimpletower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-largesquaretower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-largesquaretowerbricks",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-largetower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-pointytower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-simpletower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-simpletowerbricks",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-smallsquaretower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-smallsquaretowerbricks",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-smalltower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-tallwall",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-tallwallbricks",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-tallwallentrance",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-target",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-targetwitharrows",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-tower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-tunnel",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-wall",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-wallbricks",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-wallentrance",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-wallentrancebricks",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-watchtower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-watchtowerwroof",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-well",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-windowgothic",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularmedievalbuildings-windowsquare",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottommetal-corner-round-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottommetal-corner-round-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottommetal-corner-square-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottommetal-corner-square-outer-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottommetal-corner-square-outer-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottommetal-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottomsimple-corner-round-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottomsimple-corner-round-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottomsimple-corner-square-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottomsimple-corner-square-outer-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottomsimple-corner-square-outer-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-bottomsimple-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-column-astra",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-column-hollow",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-column-large-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-column-metalsupport",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-column-metalsupport-curve",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-column-pipes",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-column-round",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-column-simple",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-0",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-6",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-7",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-8",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-9",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-a",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-dashes",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-k",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-line-90",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-logo",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-logo-letters",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-logo-small",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-sign",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-v",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-x",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-xsign",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-decal-z",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-door-darkmetal",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-door-frame-a",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-door-frame-square",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-door-frame-square-blocked",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-door-frame-squaretall",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-door-metal",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-door-simple",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-3plates",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-centerplate",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-centerplate-curve",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-darkplates",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-darkplates-curves",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-metal",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-metal-curve",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-metal2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-metal2-curve",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-rails-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-rails-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-rails-4wide",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-rails-4widetall",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-ramp-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-ramp-2short",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-ramp-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-ramp-4wide",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-round1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-simple",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-simple-curve",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-simple2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-simple2-curve",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-squares",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-squares-curve",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-stairs-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-stairs-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-stairs-4wide",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-stairs-4widetall",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-window-thin",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-window-wide",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-platform-x",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-accesspoint",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-barrel-large",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-cable-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-cable-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-chest",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-clamp",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-computer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-crate3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-crate4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-fan-small",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-fan-small-propeller",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-itemholder",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-light-corner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-light-floor",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-light-small",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-light-wide",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-pipeholder",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-rail-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-rail-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-rail-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-rail-incline-long-l",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-rail-incline-long-r",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-rail-incline-short-l",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-rail-incline-short-r",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-rail-round-big",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-rail-round-small",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-vent-big",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-vent-small",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-prop-vent-wide",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-accentstrip-corner-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-accentstrip-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-accentstrip-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-band2-corner-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-band2-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-band2-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-darkmetal2-corner-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-darkmetal2-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-darkmetal2-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-darkplastic-corner-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-darkplastic-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-darkplastic-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-metal2-corner-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-metal2-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-metal2-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-metalplates-corner-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-metalplates-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-metalplates-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-simple1-corner-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-simple1-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-simple1-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-simple2-corner-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-simple2-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-simple2-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-triangles-corner-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-triangles-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-triangles-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-whiteplate2-corner-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-whiteplate2-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-shortwall-whiteplate2-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topastra-corner-round-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topastra-curve-round-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topastra-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topcables-corner-round-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topcables-corner-round-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topcables-corner-square-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topcables-corner-square-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topcables-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topcables-straight-hanging",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topplastic-corner-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topplastic-corner-round-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topplastic-corner-round-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topplastic-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topsimple-corner-round-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topsimple-corner-round-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topsimple-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topwindow-corner-curve-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topwindow-corner-curve-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-topwindow-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallastra-corner-round-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallastra-corner-round-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallastra-corner-square-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallastra-corner-square-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallastra-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallastra-straight-broken",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallastra-straight-divided",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallastra-straight-flat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallastra-straight-flat-window",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallastra-straight-window",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallband-corner-round-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallband-corner-round-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallband-corner-square-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallband-corner-square-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallband-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallband-straight-broken",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallwindow-cap-a",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallwindow-cap-b",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallwindow-corner-round-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallwindow-corner-round-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallwindow-corner-square-inner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallwindow-corner-square-outer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularscifimegakit-wallwindow-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-sign-noparking",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-sign-stop",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-sign-triangle",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-3way",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-3way-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-4way",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-4way-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-bridge",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-bridge-ramp",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-bridge-underpass",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-bridge-water",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-bridge-waterramp",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-curve",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-deadend",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-elevated",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-elevated-ramp",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-empty",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-empty-water",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-street-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-streetlight-double",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-streetlight-single",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-streetlight-triple",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-streets-all",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-trafficlight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modularstreets-trafficlight-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-cargotrain-coalcontainer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-cargotrain-container",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-cargotrain-front",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-cargotrain-wagon",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-cargotrain-wagonempty",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-cargotrain-wagonopencontainer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-highspeed-front",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-highspeed-wagon",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-locomotive-coaltender",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-locomotive-front",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-locomotive-passengerwagon",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-locomotive-wagon",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-railwaytrack-curve",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-modulartrain-railwaytrack-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-ambulance",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-bicycle",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-bus",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-schoolbus",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-squareframebicycle",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-taxi",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-trafficcone",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-trafficlight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-trafficsign1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-trafficsign2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-trafficsign3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-publictransport-train",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ships-boat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ships-boatwsail",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ships-cruiseship",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ships-lifeboat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ships-sail-ship",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ships-viking-boat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-survival-axe",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-axe-small",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-backpack",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-bandages",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-battery-big",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-battery-small",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-beartrap-closed",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-beartrap-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-bonfire",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-bonfire-fire",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-can-broken",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-can-closed",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-can-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-can-red",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-compass-closed",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-compass-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-firstaidkit",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-firstaidkit-hard",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-flaregun",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-gascan",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-knife",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-match",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-match-burnt",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-match-fire",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-matchbox",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-pan",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-pan-small",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-phone",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-pistol-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-pistol-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-pot",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-pot-small",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-propanetank",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-radio",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-raft",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-raft-paddle",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-revolver-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-revolver-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-revolver-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-shotgun-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-shotgun-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-shotgun-sawedoff",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-shotgun-shortstock",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-shovel",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-tent",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-torch",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-trashcan",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-waterbottle-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-waterbottle-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-waterbottle-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-woodentorch",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-woodentorch-fire",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-survival-woodlog",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-bigbush",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-biggerbush",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-bigtree",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-bigtree2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-bush",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-flower",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-flower2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-flower3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-mushroom",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-smalltree",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-texturedfantasynature-tree",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-bomber-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-bomber-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-cannon-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-cannon-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-cannon-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-cannon-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-cannon-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-cannon-6",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-cannon-7",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gearcannon-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gearcannon-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gun",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gun-10",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gun-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gun-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gun-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gun-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gun-6",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gun-7",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gun-8",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-gun-9",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-laser-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-laser-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-laser-doble",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-laser-machinegun",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-laser-quad",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-long-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-long-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-teleporter1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-teleporter2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-teleporter3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-teleporter4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-teleporter5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-upwards-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-upwards-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-turretpack-upwards-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatecrops-apple-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-apple-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-apple-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-apple-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-apple-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-apple-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bamboo-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bamboo-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bamboo-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bamboo-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bamboo-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-beet-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-beet-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-beet-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-beet-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-beet-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bushberries-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bushberries-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bushberries-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bushberries-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bushberries-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-bushberries-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-cactus-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-cactus-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-cactus-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-cactus-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-cactus-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-cactus-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-carrot-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-carrot-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-carrot-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-carrot-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-carrot-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-coconut-half",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-corn-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-corn-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-corn-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-corn-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-corn-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-corn-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-flower-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-flower-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-flower-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-flower-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-flowers-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-flowers-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-grass-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-grass-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-grass-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-grass-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-lettuce-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-lettuce-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-lettuce-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-lettuce-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-lettuce-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-lettuce-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-mushroom-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-mushroom-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-mushroom-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-mushroom-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-mushroom-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-mushroom-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-orange-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-orange-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-orange-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-orange-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-orange-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-orange-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-palmtree-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-palmtree-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-palmtree-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-palmtree-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-palmtree-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-palmtree-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-pumpkin-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-pumpkin-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-pumpkin-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-pumpkin-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-pumpkin-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-pumpkin-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-rice-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-rice-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-rice-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-rice-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-rice-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-tomato-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-tomato-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-tomato-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-tomato-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-tomato-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-tomato-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-watermelon-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-watermelon-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-watermelon-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-watermelon-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-watermelon-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-watermelon-harvested",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-wheat-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-wheat-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-wheat-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-wheat-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatecrops-wheat-crop",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatefood-apple",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-apple-green",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-avocado",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-avocado-empty",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-bacon-burned",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-bacon-cooked",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-bacon-uncooked",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-banana",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-bottle1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-bottle2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-bread",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-bread-slice",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-broccoli",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-burger",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-burger-bread",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-burgerlarge",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-burgerpatty-burned",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-burgerpatty-cooked",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-burgerpatty-raw",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-carrot",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-cheese-singles",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-cheeseburger",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-chickenleg",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-chocolatebar",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-chopsticks",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-coconut",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-coconut-half",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-cookingpot",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-cookingpot-soup",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-cookingpot2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-cookingpot2-soup",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-corndog",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-croissant",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-cupcake",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-donut1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-donut2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-donut3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-donut4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-doublecheeseburger",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-egg-burned",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-egg-fried",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-egg-whole",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-egg-whole-white",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-eggplant",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-fish",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-fishbone",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-fork",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-fries",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-fryingpan",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-hotdog",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-hotdog-bun",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-icecream-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-icecream-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-icecream-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-icecream-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-icecream-cone",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-icecream-cone2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-jar-large",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-ketchupbottle",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-ketchupmustard",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-knife",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-lettuce",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-lettuce-whole",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-mayobottle",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-mushroom",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-mushroom-sliced",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-mustardbottle",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-orange",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-pancake",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-pancakes-stack",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-peanutbutter",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-peanutbutter-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-pepper-green",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-pepper-red",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-pizza",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-pizza-burned",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-pizza-slice",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-plate",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-plate-square",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-plate2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-popsicle-chocolate",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-popsicle-multiple",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-popsicle-strawberry",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-pumpkin",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-sashimi-salmon",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-sashimi-salmon2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-sausage-cooked",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-sausage-raw",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-soda",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-soysauce",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-spoon",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-steak",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-steak-burned",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-sushi-nigiri1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-sushi-nigiri2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-sushi-nigirioctopus",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-sushi-roll1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-sushi-roll2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-tentacle",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-tomato",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-tomato-slice",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-turnip",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatefood-waffle",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-assaultrifle-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-assaultrifle-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-assaultrifle-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-assaultrifle-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-assaultrifle-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-assaultrifle2-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-assaultrifle2-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-assaultrifle2-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-assaultrifle2-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-bayonet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-bayonet-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-bipod",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-bullpup-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-bullpup-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-bullpup-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-flashlight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-grip",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-pistol-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-pistol-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-pistol-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-pistol-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-pistol-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-pistol-6",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-revolver-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-revolver-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-revolver-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-revolver-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-revolver-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-scope-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-scope-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-scope-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-shotgun-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-shotgun-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-shotgun-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-shotgun-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-shotgun-sawedoff",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-shotgun-shortstock",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-silencer-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-silencer-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-silencer-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-silencer-long",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-silencer-short",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-sniperrifle-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-sniperrifle-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-sniperrifle-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-sniperrifle-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-sniperrifle-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-sniperrifle-6",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-stock",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-submachinegun-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-submachinegun-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-submachinegun-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-submachinegun-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-submachinegun-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimategun-tripod",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-bathtub",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-mirror1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-mirror2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-shower1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-sink",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-toilet",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-toilet2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-toiletpaper",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-toiletpaperpile",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-towel",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bathroom-washingmachine",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bed-bunk",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bed-king",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bed-single",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-bookshelf",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-carpet-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-carpet-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-carpet-round",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-chair-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-chair-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-chair-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-chair-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-column-round1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-column-round2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-column-round3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-column-squarebig",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-column-squaresmall",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-couch-l",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-couch-large1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-couch-large2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-couch-large3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-couch-medium1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-couch-medium2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-couch-small1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-couch-small2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-curtains-double",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-curtains-single",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-door-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-door-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-door-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-door-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-door-5",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-door-6",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-door-7",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-door-8",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-door-9",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-door-double",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-drawer-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-drawer-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-drawer-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-drawer-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-drawer-5",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-fireplace",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-fork",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-houseplant-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-houseplant-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-houseplant-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-houseplant-4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-houseplant-5",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-houseplant-6",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-houseplant-7",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-houseplant-8",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-kitchen-1drawers",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-kitchen-2drawers",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-kitchen-3drawers",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-kitchen-cabinet1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-kitchen-cabinet2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-kitchen-cabinetsmall",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-kitchen-fridge",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-kitchen-oven",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-kitchen-oven-large",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-kitchen-sink",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-knife",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-ceiling1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-ceiling2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-ceiling3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-ceiling4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-ceiling5",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-ceiling6",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-ceilingsingle",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-chandelier",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-cube",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-cube2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-desk",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-floor1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-floor2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-floor3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-floor4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-icosahedron",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-icosahedron2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-small",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-stand1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-light-stand2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-nightstand-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-nightstand-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-nightstand-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-plate-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-plate-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-plate-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-shelf-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-shelf-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-shelf-large",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-shelf-small1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-shelf-small2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-shelf-small3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-spoon",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-stool",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-table-roundlarge",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-table-roundsmall",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-table-roundsmall2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-trashcan-cylindric",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-trashcan-green",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-trashcan-large",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-trashcan-small1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-trashcan-small2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-window-large1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-window-large2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-window-round1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-window-round2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-window-round3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-window-small1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-window-small2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatehomeinterior-window-small3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-adventurer-backpack",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-adventurer-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-adventurer-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-adventurer-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-adventurer-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-animations",
+    "error": "No mesh geometry: animation-only or empty source file",
+    "file": "Source/Separate Skeletal Meshes and Animations/Animations.fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-beach-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-beach-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-beach-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-beach-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-casual",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-casual-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-casual-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-casual-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-casual-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-casual2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-casual2-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-casual2-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-casual2-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-casual2-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-farmer-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-farmer-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-farmer-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-farmer-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-horse-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-humans-master",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-king-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-king-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-king-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-king-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-pistol",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-punk-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-punk-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-punk-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-punk-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-spacesuit-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-spacesuit-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-spacesuit-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-spacesuit-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-suit-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-suit-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-suit-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-suit-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-swat-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-swat-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-swat-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-swat-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-sword",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-worker-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-worker-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-worker-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularcharacters-worker-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-arch-gothic",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-arch-gothic-roundcolumn",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-arch-round",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-arch-round-roundcolumn",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-barrel",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-beartrap-closed",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-beartrap-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-bookcase-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-bookcase-full",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-brick",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-bricks",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-bridgesection",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-bush-1x1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-bush-2x1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-bush-2x2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-bush-large",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-bush-round",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-candles-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-candles-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-cart",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-character-animated",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-chest",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-chest-gold",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-column-bridgesupport",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-column-round",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-column-round-short",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-column-square",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-crate",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-curve-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-curve-1-overgrown",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-curve-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-curve-2-overgrown",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-deadtree-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-deadtree-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-deadtree-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-doors-gothicarch",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-doors-gothicarch-covered",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-doors-roundarch",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-doors-roundarch-covered",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-flag-gothicarch",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-flag-roundarch",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-flag-wall",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-flag-wall2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-floor-diamond",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-floor-hole-corner",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-floor-hole-straight",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-floor-squarelarge",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-floor-squares",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-floor-standard",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-floor-standard-half",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-floor-tree",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-grass",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-pot1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-pot1-broken",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-pot2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-pot2-broken",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-pot3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-pot3-broken",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-rail-corner",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-rail-divider",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-rail-straight",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-skull",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-stairs",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-stairs-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-statue-fox",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-statue-stag",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-support-center",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-support-left",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-support-right",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-support-tall",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-torch",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-trapdoor",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-tree-1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-tree-2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-tree-3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-archgothic",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-archround",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-archround-broken",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-archround-overgrown",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-archround-overgrown-broken",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-broken",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-double-broken",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-double-hole",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-half",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-hole",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-wall-overgrown",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-window-bars",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-window-bars-double-overgrown",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-window-bars-overgrown",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-window-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularruins-window-open-double",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-column-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-column-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-column-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-column-slim",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-arrow",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-arrow-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-basic-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-basic-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-basic-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-basic-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-cylinder",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-cylinder-long",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-dots",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-hexagon",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-output",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-output-small",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-pipes-long",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-pipes-medium",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-pipes-small",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-plate-details",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-plate-large",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-plate-long",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-plate-small",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-triangles",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-vent-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-vent-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-vent-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-vent-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-vent-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-details-x",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-door-double",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-door-single",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-doordouble-wall-sidea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-doordouble-wall-sideb",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-doordoublelong-wall-sidea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-doorsingle-wall-sidea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-doorsingle-wall-sideb",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-doorsinglelong-wall-sidea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-floortile-basic",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-floortile-basic2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-floortile-corner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-floortile-double-hallway",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-floortile-empty",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-floortile-innercorner",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-floortile-side",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-longwindow-wall-sidea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-longwindow-wall-sideb",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-pipes",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-capsule",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-chest",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-computer",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-computersmall",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-containerfull",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-crate",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-cratelong",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-laser",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-pod",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-shelf",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-shelf-tall",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-statue",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-teleporter-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-teleporter-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-vessel",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-vessel-short",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-props-vessel-tall",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-corner-pipes",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-details",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-empty",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-innercorner-pipes",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-orangevent",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-pipes1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-pipes2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-plate",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-plate2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-sides-pipes",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-smallvents",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-rooftile-vents",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-smallwindows-wall-sidea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-smallwindows-wall-sideb",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-staircase",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-threewindows-wall-sidea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-threewindows-wall-sideb",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-wall-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-wall-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-wall-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-wall-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-wall-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-wall-empty",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-window-wall-sidea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularscifi-window-wall-sideb",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-adventurer-backpack",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-adventurer-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-adventurer-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-adventurer-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-adventurer-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-all-together",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-animations",
+    "error": "No mesh geometry: animation-only or empty source file",
+    "file": "Source/Separate Skeletal Meshes and Animations/Animations.fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-casual-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-casual-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-casual-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-casual-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-formal-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-formal-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-formal-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-formal-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-gun",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-humanoid-rig",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-medieval-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-medieval-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-medieval-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-medieval-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-punk-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-punk-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-punk-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-punk-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-scifi-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-scifi-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-scifi-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-scifi-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-soldier-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-soldier-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-soldier-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-soldier-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-suit-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-suit-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-suit-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-suit-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-sword",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-witch-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-witch-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-witch-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-witch-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-worker-body",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-worker-feet",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-worker-head",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatemodularwomen-worker-legs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimaterpg-armor-black",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-armor-golden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-armor-leather",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-armor-metal",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-armor-metal2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-arrow",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-arrow-golden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-axe-double",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-axe-double-golden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-axe-small",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-axe-small-golden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-backpack",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-bag",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-bone",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-book1-closed",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-book1-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-book2-closed",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-book2-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-book3-closed",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-book3-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-book4-closed",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-book4-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-bow-golden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-bow-wooden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-chalice",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-chest-closed",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-chest-ingots",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-chest-open",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-chickenleg",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-coin",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-coin-skull",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-coin-star",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crown",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crown2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crystal1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crystal1-damaged",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crystal2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crystal2-damaged",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crystal3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crystal3-damaged",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crystal4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crystal5",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-crystal5-damaged",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-dagger",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-dagger-golden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-dart",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-dart-golden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-fishbone",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-glove",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-gold-ingots",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-hammer-double",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-hammer-double-golden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-heart",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-heart-broken",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-heart-half",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-key1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-key2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-key3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-key4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-mineral",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-necklace1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-necklace2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-necklace3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-padlock",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-parchment",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion1-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion1-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion10-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion10-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion11-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion11-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion2-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion2-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion3-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion3-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion4-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion4-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion5-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion5-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion6-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion6-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion7-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion7-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion8-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion8-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion9-empty",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-potion9-filled",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-pouch",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-ring1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-ring2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-ring3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-ring4",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-ring5",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-ring6",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-ring7",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-scroll",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-skull",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-skull2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-snowflake1",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-snowflake2",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-snowflake3",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-star",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-sword",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-sword-big",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-sword-big-golden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimaterpg-sword-golden",
+    "converted": ".obj"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-normaltree-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-normaltree-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-normaltree-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-normaltree-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-normaltree-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-palmtree-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-palmtree-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-palmtree-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-palmtree-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-palmtree-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-petals-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-petals-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-petals-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-petals-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-pinetree-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-pinetree-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-pinetree-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-pinetree-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-pinetree-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-plant-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-plant-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-plant-flowers",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-rock-1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-rock-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-rock-3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-rock-4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatestylizednature-rock-5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-gableroof",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-gableroof-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-gableroof-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-roundroof",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-roundroof-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-roundroof-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-sign",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-sign-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-1story-sign-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-2-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-balcony",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-balcony-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-center",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-center-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-center-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-columns",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-columns-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-columns-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-double",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-double-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-gableroof",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-gableroof-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-gableroof-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-roundroof",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-roundroof-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-roundroof-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-sidehouse",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-sidehouse-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-sidehouse-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-sign",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-sign-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-sign-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-slim",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-slim-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-slim-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-stairs",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-stairs-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-wide",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-wide-2doors",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-wide-2doors-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-wide-2doors-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-wide-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-2story-wide-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-3story-balcony",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-3story-balcony-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-3story-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-3story-slim",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-3story-slim-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-3story-slim-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-3story-small",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-3story-small-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-4story",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-4story-center",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-4story-center-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-4story-center-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-4story-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-4story-wide-2doors",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-4story-wide-2doors-base",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-4story-wide-2doors-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-4story-wide-2doors-roof",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-4story-wide-2doors-roof-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-6story-stack",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-6story-stack-mat",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-ac-unit",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-ac-unitx4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-balcony",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-bricks-half",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-bricks-large",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-bricks-leftstraight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-bricks-rightstraight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-bricks-single",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-bricks-small",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-casinosign",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-door-double",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-door-window",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-door-window2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-door1",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-door2",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-door3",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-door4",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-door5",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-pipe-l",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-pipe-straight",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-pipe-straight-short",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-sign-bakery",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-sign-barbershop",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-sign-bookshop",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-sign-hardware",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-sign-pharmacy",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-staircase",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-stairs-roof",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-window",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-window-double",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-window-double-roof",
+    "converted": ".fbx"
+  },
+  {
+    "id": "quaternius-ultimatetexturedbuildings-window-roof",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-survivors-survivorfemalea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-survivors-survivormaleb",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-survivors-zombiea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-survivors-zombiec",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-protagonists-criminalmalea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-protagonists-cyborgfemalea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-protagonists-skaterfemalea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-protagonists-skatermalea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-retro-humanfemalea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-retro-humanmalea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-retro-zombiefemalea",
+    "converted": ".fbx"
+  },
+  {
+    "id": "free-animated-characters-retro-zombiemalea",
+    "converted": ".fbx"
+  }
+]

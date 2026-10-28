@@ -1,23 +1,59 @@
-# Ressources Kenney incluses
+# Kenney — modèles intégrés
 
 Auteur : Kenney — https://kenney.nl/
+Licence des archives incluses : CC0 1.0 Universal — https://creativecommons.org/publicdomain/zero/1.0/
 
-Les sprites, modèles, sons et éléments UI contenus dans ce dossier sont sous CC0 1.0 : https://creativecommons.org/publicdomain/zero/1.0/
-Les logos et polices du fournisseur ne sont pas inclus.
+4716 modèles dans 50 packs. Les fichiers sources sont convertis uniquement pour le runtime Web ; les auteurs restent identifiés dans le moteur. Les empreintes SHA-256 et la provenance exacte sont dans models.json. Les notices de chaque archive sont conservées dans les dossiers du pack.
 
-Les archives officielles publiées par Kenney sur OpenGameArt ont fourni Tiny Dungeon, Platformer Art Deluxe, UI Pack, Interface Sounds et RPG Audio. Les modèles GLB ont été récupérés dans le miroir Hidencod/tge-assets au commit d4597ae135b1c2abe272da8f2b0797e10f06cb45, qui intègre les textures dans les fichiers GLB.
-Les fichiers models.json, sprites.json, ui.json et audio.json indiquent la page officielle du pack, l’auteur, la licence et le SHA-256 de chaque ressource. Les originaux n’ont pas été redessinés. Les vignettes 3D sont calculées à partir des maillages et textures.
+- Prototype Kit : https://kenney.nl/assets/prototype-kit (145 modèles)
+- Platformer Kit : https://kenney.nl/assets/platformer-kit (153 modèles)
+- Nature Kit : https://kenney.nl/assets/nature-kit (329 modèles)
+- Car Kit : https://kenney.nl/assets/car-kit (50 modèles)
+- City Kit (Commercial) : https://kenney.nl/assets/city-kit-commercial (41 modèles)
+- City Kit (Suburban) : https://kenney.nl/assets/city-kit-suburban (40 modèles)
+- City Kit (Roads) : https://kenney.nl/assets/city-kit-roads (95 modèles)
+- Food Kit : https://kenney.nl/assets/food-kit (200 modèles)
+- Furniture Kit : https://kenney.nl/assets/furniture-kit (140 modèles)
+- Space Kit : https://kenney.nl/assets/space-kit (153 modèles)
+- Pirate Kit : https://kenney.nl/assets/pirate-kit (72 modèles)
+- Castle Kit : https://kenney.nl/assets/castle-kit (76 modèles)
+- Tower Defense Kit : https://kenney.nl/assets/tower-defense-kit (160 modèles)
+- Mini Dungeon : https://kenney.nl/assets/mini-dungeon (30 modèles)
+- Blaster Kit : https://kenney.nl/assets/blaster-kit (40 modèles)
+- Graveyard Kit : https://kenney.nl/assets/graveyard-kit (91 modèles)
+- Cube Pets : https://kenney.nl/assets/cube-pets (24 modèles)
+- Mini Characters : https://kenney.nl/assets/mini-characters (26 modèles)
+- Blocky Characters : https://kenney.nl/assets/blocky-characters (18 modèles)
+- 3D Road Tiles : https://kenney.nl/assets/3d-road-tiles (302 modèles)
+- Brick Kit : https://kenney.nl/assets/brick-kit (296 modèles)
+- Building Kit : https://kenney.nl/assets/building-kit (79 modèles)
+- City Kit (Industrial) : https://kenney.nl/assets/city-kit-industrial (37 modèles)
+- Coaster Kit : https://kenney.nl/assets/coaster-kit (183 modèles)
+- Factory Kit : https://kenney.nl/assets/factory-kit (143 modèles)
+- Fantasy Town Kit : https://kenney.nl/assets/fantasy-town-kit (167 modèles)
+- Hexagon Kit : https://kenney.nl/assets/hexagon-kit (72 modèles)
+- Holiday Kit : https://kenney.nl/assets/holiday-kit (99 modèles)
+- Marble Kit : https://kenney.nl/assets/marble-kit (162 modèles)
+- Mini Arcade : https://kenney.nl/assets/mini-arcade (20 modèles)
+- Mini Arena : https://kenney.nl/assets/mini-arena (22 modèles)
+- Mini Forest : https://kenney.nl/assets/mini-forest (22 modèles)
+- Mini Market : https://kenney.nl/assets/mini-market (20 modèles)
+- Mini Skate : https://kenney.nl/assets/mini-skate (20 modèles)
+- Minigolf Kit : https://kenney.nl/assets/minigolf-kit (126 modèles)
+- Modular Buildings : https://kenney.nl/assets/modular-buildings (108 modèles)
+- Modular Cave Kit : https://kenney.nl/assets/modular-cave-kit (40 modèles)
+- Modular Dungeon Kit : https://kenney.nl/assets/modular-dungeon-kit (39 modèles)
+- Modular Space Kit : https://kenney.nl/assets/modular-space-kit (40 modèles)
+- Racing Kit : https://kenney.nl/assets/racing-kit (112 modèles)
+- Retro Fantasy Kit : https://kenney.nl/assets/retro-fantasy-kit (105 modèles)
+- Retro Urban Kit : https://kenney.nl/assets/retro-urban-kit (124 modèles)
+- Space Station Kit : https://kenney.nl/assets/space-station-kit (97 modèles)
+- Survival Kit : https://kenney.nl/assets/survival-kit (80 modèles)
+- Toy Car Kit : https://kenney.nl/assets/toy-car-kit (157 modèles)
+- Train Kit : https://kenney.nl/assets/train-kit (103 modèles)
+- Watercraft Kit : https://kenney.nl/assets/watercraft-kit (46 modèles)
+- Animated Characters Survivors : https://kenney.nl/assets/animated-characters-survivors (4 modèles)
+- Animated Characters Protagonists : https://kenney.nl/assets/animated-characters-protagonists (4 modèles)
+- Animated Characters Retro : https://kenney.nl/assets/animated-characters-retro (4 modèles)
 
-| Pack | Source officielle |
-| --- | --- |
-| tiny-dungeon | https://kenney.nl/assets/tiny-dungeon |
-| platformer-art-deluxe | https://kenney.nl/assets/platformer-art-deluxe |
-| nature-kit | https://kenney.nl/assets/nature-kit |
-| car-kit | https://kenney.nl/assets/car-kit |
-| mini-characters | https://kenney.nl/assets/mini-characters |
-| blaster-kit | https://kenney.nl/assets/blaster-kit |
-| castle-kit | https://kenney.nl/assets/castle-kit |
-| furniture-kit | https://kenney.nl/assets/furniture-kit |
-| ui-pack | https://kenney.nl/assets/ui-pack |
-| interface-sounds | https://kenney.nl/assets/interface-sounds |
-| rpg-audio | https://kenney.nl/assets/rpg-audio |
+Géométrie et animations d’origine ; formats FBX/OBJ convertis en GLB, textures Web limitées à 1 024 pixels et partagées localement. Aucune édition payante Pro/Source n’est incluse.

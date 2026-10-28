@@ -18,7 +18,7 @@ test('the free Universal Animation Library includes 43 distinct clips with a com
  const clip=resolveAnimationClip(g.rig.animations,'walk'),a=deformGlbParts(g,sampleRigPose(g.rig,clip,0)),b=deformGlbParts(g,sampleRigPose(g.rig,clip,.25));assert.ok(a.some((p,i)=>p.some((v,k)=>Math.abs(v-b[i][k])>.01)));assert.ok(b.every(p=>p.every(Number.isFinite)));
 });
 test('all 50 Ultimate Monsters retain their original animation channels and textures',()=>{
- const monsters=quaterniusModels3d.filter(a=>a.category==='Monsters');assert.equal(monsters.length,50);let channels=0;
+ const monsters=quaterniusModels3d.filter(a=>a.pack==='ultimate-monsters');assert.equal(monsters.length,50);let channels=0;
  for(const asset of monsters){const g=load(asset.url);assert.deepEqual(g.rig.animations.map(a=>a.name),asset.animationClips);assert.ok(g.parts.some(p=>p.texture),asset.id);assert.ok(resolveAnimationClip(g.rig.animations,'idle'),asset.id);channels+=g.rig.animations.length;const posed=deformGlbParts(g,sampleRigPose(g.rig,g.rig.animations[0],.2));assert.ok(posed.every(p=>p.every(Number.isFinite)),asset.id)}assert.equal(channels,506);
 });
 test('crossfades interpolate real poses without modifying source geometry',()=>{

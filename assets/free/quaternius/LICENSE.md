@@ -1,13 +1,64 @@
-# Quaternius — modèles et animations inclus
+# Quaternius — modèles intégrés
 
 Auteur : Quaternius — https://quaternius.com/
-Licence : CC0 1.0 Universal — https://creativecommons.org/publicdomain/zero/1.0/
+Licence des archives incluses : CC0 1.0 Universal — https://creativecommons.org/publicdomain/zero/1.0/
 
-- Ultimate Monsters : https://quaternius.com/packs/ultimatemonsters.html
-- Universal Animation Library, Standard gratuit : https://quaternius.com/packs/universalanimationlibrary.html
+2910 modèles dans 55 packs. Les fichiers sources sont convertis uniquement pour le runtime Web ; les auteurs restent identifiés dans le moteur. Les empreintes SHA-256 et la provenance exacte sont dans models.json. Les notices de chaque archive sont conservées dans les dossiers du pack.
 
-Ultimate Monsters : 50 glTF originaux, récupérés dans la copie publique du pack sur https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemonsters/data.zip après dépassement du quota du Google Drive officiel. Les trois sous-groupes Big, Blob et Flying sont conservés. Conversion en GLB autonome avec textures et animations intégrées, sans modification artistique.
+- Ultimate Monsters : https://quaternius.com/packs/ultimatemonsters.html (50 modèles)
+- Universal Animation Library · Standard : https://quaternius.com/packs/universalanimationlibrary.html (1 modèles)
+- 3D Card Kit — Fantasy : https://quaternius.com/packs/3dcardkitfantasy.html (34 modèles)
+- Animated Alien Pack : https://quaternius.com/packs/animatedalien.html (2 modèles)
+- Animated Dinosaur Pack : https://quaternius.com/packs/animateddinosaurs.html (6 modèles)
+- Animated Fish Pack : https://quaternius.com/packs/animatedfish.html (7 modèles)
+- Animated Mech Pack : https://quaternius.com/packs/animatedmech.html (4 modèles)
+- Animated Robot Pack : https://quaternius.com/packs/animatedrobot.html (1 modèles)
+- Animated Tanks Pack : https://quaternius.com/packs/animatedtanks.html (4 modèles)
+- Background Posed Humans Pack : https://quaternius.com/packs/backgroundposedhumans.html (28 modèles)
+- Cars Pack : https://quaternius.com/packs/cars.html (7 modèles)
+- Cube World Kit : https://quaternius.com/packs/cubeworldkit.html (106 modèles)
+- Cyberpunk Game Kit : https://quaternius.com/packs/cyberpunkgamekit.html (71 modèles)
+- Downtown City MegaKit : https://quaternius.com/packs/downtowncitymegakit.html (153 modèles)
+- Fantasy Props MegaKit : https://quaternius.com/packs/fantasypropsmegakit.html (94 modèles)
+- Farm Animal Pack : https://quaternius.com/packs/farmanimal.html (7 modèles)
+- Farm Buildings Pack : https://quaternius.com/packs/farmbuildings.html (13 modèles)
+- Animated Knight Pack : https://quaternius.com/packs/knightcharacter.html (9 modèles)
+- Medieval Village — vesnice : https://quaternius.com/packs/medievalvillage.html (44 modèles)
+- Medieval Village MegaKit : https://quaternius.com/packs/medievalvillagemegakit.html (176 modèles)
+- Modular Character Outfits — Fantasy : https://quaternius.com/packs/modularcharacteroutfitsfantasy.html (24 modèles)
+- Modular Medieval Building Pack : https://quaternius.com/packs/modularmedievalbuildings.html (30 modèles)
+- Modular Sci-Fi MegaKit : https://quaternius.com/packs/modularscifimegakit.html (191 modèles)
+- Modular Streets Pack : https://quaternius.com/packs/modularstreets.html (25 modèles)
+- Modular Train Pack : https://quaternius.com/packs/modulartrain.html (14 modèles)
+- Pirate Kit : https://quaternius.com/packs/piratekit.html (72 modèles)
+- Public Transport Pack : https://quaternius.com/packs/publictransport.html (12 modèles)
+- RPG Character Pack : https://quaternius.com/packs/rpgcharacters.html (6 modèles)
+- Sci-Fi Essentials Kit : https://quaternius.com/packs/scifiessentialskit.html (37 modèles)
+- Ships Pack : https://quaternius.com/packs/ships.html (6 modèles)
+- Stylized Nature MegaKit : https://quaternius.com/packs/stylizednaturemegakit.html (68 modèles)
+- Survival Pack : https://quaternius.com/packs/survival.html (53 modèles)
+- Sushi Restaurant Kit : https://quaternius.com/packs/sushirestaurantkit.html (109 modèles)
+- Texture Fantasy Nature Pack : https://quaternius.com/packs/texturedfantasynature.html (11 modèles)
+- Toon Shooter Game Kit : https://quaternius.com/packs/toonshootergamekit.html (74 modèles)
+- Steampunk Turret Pack : https://quaternius.com/packs/turretpack.html (37 modèles)
+- Ultimate Animated Animals — zvířata : https://quaternius.com/packs/ultimateanimatedanimals.html (12 modèles)
+- Ultimate Crops Pack : https://quaternius.com/packs/ultimatecrops.html (102 modèles)
+- Ultimate Animated Character Pack : https://quaternius.com/packs/ultimatedanimatedcharacter.html (52 modèles)
+- Ultimate Fantasy RTS : https://quaternius.com/packs/ultimatefantasyrts.html (128 modèles)
+- Ultimate Food Pack : https://quaternius.com/packs/ultimatefood.html (103 modèles)
+- Ultimate Guns Pack : https://quaternius.com/packs/ultimategun.html (55 modèles)
+- Ultimate House Interior Pack : https://quaternius.com/packs/ultimatehomeinterior.html (123 modèles)
+- Ultimate Modular Men Pack : https://quaternius.com/packs/ultimatemodularcharacters.html (62 modèles)
+- Ultimate Modular Ruins — ruiny : https://quaternius.com/packs/ultimatemodularruins.html (92 modèles)
+- Ultimate Modular Sci-Fi Pack : https://quaternius.com/packs/ultimatemodularscifi.html (91 modèles)
+- Ultimate Modular Women Pack : https://quaternius.com/packs/ultimatemodularwomen.html (55 modèles)
+- Ultimate RPG Pack : https://quaternius.com/packs/ultimaterpg.html (106 modèles)
+- Ultimate Space Kit : https://quaternius.com/packs/ultimatespacekit.html (92 modèles)
+- Ultimate Spaceships — vesmírné lodě : https://quaternius.com/packs/ultimatespaceships.html (11 modèles)
+- Ultimate Stylized Nature Pack : https://quaternius.com/packs/ultimatestylizednature.html (63 modèles)
+- Ultimate Buildings Pack : https://quaternius.com/packs/ultimatetexturedbuildings.html (102 modèles)
+- Universal Animation Library 2 : https://quaternius.com/packs/universalanimationlibrary2.html (3 modèles)
+- Universal Base Characters · účesy (částečný výběr) : https://quaternius.com/packs/universalbasecharacters.html (8 modèles)
+- Zombie Apocalypse Kit : https://quaternius.com/packs/zombieapocalypsekit.html (64 modèles)
 
-UAL1 Standard : fichier GLB d’origine avec 43 animations et le mannequin de référence. Copie publique au commit référencé dans models.json ; aucune version Pro ou Source payante n’est incluse. Le clip sans root motion est utilisé pour que le contrôleur du jeu reste responsable du déplacement.
-
-models.json contient les empreintes SHA-256, les clips et le lien source de chaque ressource.
+Géométrie et animations d’origine ; formats FBX/OBJ convertis en GLB, textures Web limitées à 1 024 pixels et partagées localement. Aucune édition payante Pro/Source n’est incluse.

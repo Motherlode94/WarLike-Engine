@@ -1,0 +1,6 @@
+CC0-1.0
+Author: Kenney
+Source: https://kenney.nl/assets/hexagon-kit
+License: https://kenney.nl/assets/hexagon-kit
+Source asset files; source-page previews remain external references.
+Verified 2026-10-06

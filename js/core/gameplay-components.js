@@ -1,94 +1,113 @@
 import {findEnginePath as findPath} from './native-3d.js';
+import {healthOf,isHostileTo,isAiObstacle,hasLineOfSight,perceiveTarget} from './ai-perception.js';
 // Configurable gameplay components. Positions use WarLike's existing 2D ground coordinates.
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const defaultStats=()=>({maxHealth:100,health:100,maxStamina:100,stamina:100,staminaRegen:14});
 export const defaultInventory=()=>({capacity:16,items:[],equipment:{weapon:null,armor:null}});
-export const defaultAi=()=>({enabled:true,state:'idle',detection:450,attackRange:65,attackDamage:8,attackCooldown:1.2,speed:75,homeX:null,homeY:null,patrolRadius:130,pathfinding:true,requireLineOfSight:false,pathCellSize:48,repathInterval:.75});
+export const defaultAi=()=>({enabled:true,state:'idle',detection:450,attackRange:65,attackDamage:8,attackCooldown:1.2,speed:75,homeX:null,homeY:null,patrolRadius:130,pathfinding:true,requireLineOfSight:false,fieldOfView:360,memoryDuration:4,searchDuration:2,pathCellSize:48,repathInterval:.75});
 export const defaultController=()=>({walkSpeed:4.2,sprintSpeed:7,jumpForce:5.6,gravity:15,dodgeDistance:1.8,dodgeCooldown:.8,staminaCost:20});
-export function ensureStats(o){o.stats??=defaultStats();return o.stats}
+export function ensureStats(o){o.stats??={...defaultStats(),maxHealth:Math.max(100,healthOf(o)),health:Math.max(0,healthOf(o))};return o.stats}
+export function ensureAi(o){o.ai={...defaultAi(),...o.ai};return o.ai}
+export function setHealth(o,value){const s=ensureStats(o);s.health=clamp(n(value),0,Math.max(1,n(s.maxHealth,100)));o.hp=s.health;return s.health}
+export function inventoryCount(o,id){const inv=o?.inventory;if(!inv||!id)return 0;return Math.max(0,n(Array.isArray(inv.items)?inv.items.find(item=>item.id===id)?.count:inv[id]??inv.items?.[id]))}
 export function inventoryAdd(o,id,count=1){o.inventory??=defaultInventory();const inv=o.inventory;count=Math.floor(n(count));if(!id||count<=0)return false;const existing=inv.items.find(i=>i.id===id);if(!existing&&inv.items.length>=Math.max(1,n(inv.capacity,16)))return false;if(existing)existing.count+=count;else inv.items.push({id,count});return true}
-export function inventoryRemove(o,id,count=1){const item=o.inventory?.items?.find(i=>i.id===id);count=Math.floor(n(count));if(!item||count<=0||item.count<count)return false;item.count-=count;if(item.count===0)o.inventory.items=o.inventory.items.filter(i=>i!==item);return true}
+export function inventoryRemove(o,id,count=1){const item=o.inventory?.items?.find(i=>i.id===id);count=Math.floor(n(count));if(!item||count<=0||item.count<count)return false;item.count-=count;if(item.count===0){o.inventory.items=o.inventory.items.filter(i=>i!==item);for(const slot of Object.keys(o.inventory.equipment||{}))if(o.inventory.equipment[slot]===id)o.inventory.equipment[slot]=null}return true}
 export function equipItem(o,id,slot='weapon'){if(!o.inventory?.items?.some(i=>i.id===id&&i.count>0)||!['weapon','armor'].includes(slot))return false;o.inventory.equipment??={weapon:null,armor:null};o.inventory.equipment[slot]=id;return true}
-export function damage(o,amount){const s=ensureStats(o);s.health=clamp(n(s.health,s.maxHealth)-Math.max(0,n(amount)),0,Math.max(1,n(s.maxHealth,100)));o.hp=s.health;return s.health}
+export function damage(o,amount){return setHealth(o,healthOf(o)-Math.max(0,n(amount)))}
 export function updateStats(entities,dt){for(const o of entities){if(!o.stats)continue;const s=o.stats;s.stamina=clamp(n(s.stamina)+Math.max(0,n(s.staminaRegen,14))*dt,0,Math.max(1,n(s.maxStamina,100)));}}
 export function updateAi(entities,player,dt){
- if(!player||((player.stats?.health??player.hp??100)<=0))return;
- const collision=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
- const blocked=(o,x,y)=>entities.some(other=>other!==o&&other!==player&&other.collision3d!==false&&(other.solid3d===true||other.type==='object'||other.type==='mesh3d')&&collision({...o,x,y},other));
- for(const e of entities){const ai=e.ai;if(!ai?.enabled||e===player)continue;
-  // Explicit affiliations override legacy default hostility. Neutral and friendly
-  // characters can still patrol, but cannot chase or damage the player.
-  const nonHostile=['friendly','neutral'].includes(e.threatIntel?.relation);
-  if(nonHostile){
-   ai.state=(e.stats?.health??e.hp??100)<=0?'dead':'patrol';
-   ai.visible=false;ai.detected=false;
-   ai.cooldown=Math.max(0,n(ai.cooldown)-dt);
-   continue;
-  }
+ const frame=Math.max(0,Math.min(.5,n(dt)));
+ for(const e of entities){
+  const ai=e.ai;
+  if(!ai?.enabled||e===player)continue;
+  ai.visible=false;ai.detected=false;
+  ai.cooldown=Math.max(0,n(ai.cooldown)-frame);
+  if(healthOf(e)<=0){ai.state='dead';ai.targetId=null;ai.awareness=0;e.animation='dead';continue}
+  if(e.sequenceEnabled===false||e._sequenceDestroyed){ai.targetId=null;ai.memoryRemaining=0;ai.searchRemaining=0;continue}
   ai.homeX??=e.x;ai.homeY??=e.y;
-  const dx=player.x-e.x,dy=player.y-e.y,dist=Math.hypot(dx,dy)||.001;
-  const hp=e.stats?.health??e.hp??100;
-  if(hp<=0){ai.state='dead';ai.visible=false;ai.detected=false;continue}
-  const detection=Math.max(0,n(ai.detection,450)),attackRange=Math.max(5,n(ai.attackRange,65));
-  // Sight checks account for walls/cover before entering pursuit.
-  const visible=dist<=detection&&!entities.some(o=>{
-   if(o===e||o===player||o.collision3d===false||!(o.solid3d===true||o.type==='object'||o.type==='mesh3d'))return false;
-   const x0=e.x+(e.w||0)*.5,y0=e.y+(e.h||0)*.5,x1=player.x+(player.w||0)*.5,y1=player.y+(player.h||0)*.5;
-   let near=0,far=1;
-   for(const [start,delta,min,max] of [[x0,x1-x0,o.x,o.x+(o.w||0)],[y0,y1-y0,o.y,o.y+(o.h||0)]]){
-    if(Math.abs(delta)<1e-8){if(start<min||start>max)return false;continue}
-    const a=(min-start)/delta,b=(max-start)/delta;
-    near=Math.max(near,Math.min(a,b));far=Math.min(far,Math.max(a,b));
-    if(near>far)return false;
+  ai.clock=n(ai.clock)+frame;
+  // A Blueprint target is authoritative; a missing/dead target must never
+  // silently redirect attacks to the player. Null restores automatic targeting.
+  const explicit=e.aiTargetId!=null&&n(e.aiTargetId)>0;
+  const candidate=explicit?entities.find(target=>target.id===n(e.aiTargetId)):player;
+  const target=candidate&&healthOf(candidate)>0&&candidate.sequenceEnabled!==false&&
+   !candidate._sequenceDestroyed&&isHostileTo(e,candidate,player)?candidate:null;
+  if(ai._candidateId!==(target?.id??null)){ai.path=null;ai.repathTimer=0;ai.memoryRemaining=0;ai.searchRemaining=0}
+  ai._candidateId=target?.id??null;
+  const perception=perceiveTarget(e,target,entities);
+  ai.visible=!!target&&perception.visible;
+  ai.detected=!!target&&perception.detected;
+  const attackRange=Math.max(0,n(ai.attackRange,65));
+  const previous=ai.state;
+  let tx=null,ty=null;
+  if(ai.detected){
+   ai.lastKnownX=target.x;ai.lastKnownY=target.y;
+   ai.memoryRemaining=Math.max(0,n(ai.memoryDuration,4));
+   ai.searchRemaining=Math.max(0,n(ai.searchDuration,2));
+   ai.awareness=1;
+   ai.state=perception.distance<=attackRange?'attack':'chase';
+   tx=target.x;ty=target.y;
+  }else if(target&&(n(ai.memoryRemaining)>0||n(ai.searchRemaining)>0)){
+   ai.memoryRemaining=Math.max(0,n(ai.memoryRemaining)-frame);
+   ai.awareness=clamp(n(ai.memoryRemaining)/Math.max(.001,n(ai.memoryDuration,4)),0,1);
+   tx=ai.lastKnownX;ty=ai.lastKnownY;
+   const reached=Math.hypot(n(tx)-e.x,n(ty)-e.y)<=Math.max(8,n(ai.speed,75)*frame);
+   if(!reached&&ai.memoryRemaining>0)ai.state='investigate';
+   else{
+    ai.state='search';tx=null;ty=null;
+    ai.searchRemaining=Math.max(0,n(ai.searchRemaining)-frame);
+    if(ai.searchRemaining===0){ai.memoryRemaining=0;ai.awareness=0;ai.state='return'}
    }
-   return near<1&&far>0;
-  });
-  // Expose genuine perception to the enemy scanner; never reveal a fabricated target.
-  ai.visible=visible;
-  ai.detected=dist<=detection&&(ai.requireLineOfSight!==true||visible);
-  if(ai.detected){ai.lastKnownX=player.x;ai.lastKnownY=player.y;}
-  ai.state=(ai.requireLineOfSight===true&&!visible)?'patrol':dist<=attackRange?'attack':dist<=detection?'chase':'patrol';
-  const step=Math.max(0,n(ai.speed,75))*dt;
-  if(ai.state==='chase'||ai.state==='patrol'){
-   let tx=ai.state==='chase'?player.x:ai.homeX+Math.sin((ai.clock??0)*.65+e.id)*Math.max(0,n(ai.patrolRadius,130));
-   let ty=ai.state==='chase'?player.y:ai.homeY+Math.cos((ai.clock??0)*.65+e.id)*Math.max(0,n(ai.patrolRadius,130));
-   if(ai.state==='chase'&&ai.pathfinding!==false){
-    ai.repathTimer=n(ai.repathTimer)-dt;
-    if(ai.repathTimer<=0||!Array.isArray(ai.path)){
-     const obstacles=entities.filter(o=>o!==e&&o!==player&&o.collision3d!==false&&(o.solid3d===true||o.type==='object'||o.type==='mesh3d'));
-     ai.path=findPath({x:e.x,y:e.y},{x:player.x,y:player.y},obstacles,{cellSize:Math.max(24,n(ai.pathCellSize,48)),padding:Math.max(e.w,e.h)*.35,maxNodes:1200});
+  }else{
+   ai.awareness=0;
+   const away=Math.hypot(ai.homeX-e.x,ai.homeY-e.y)>8;
+   ai.state=away&&['chase','attack','investigate','search','return'].includes(previous)?'return':'patrol';
+  }
+  ai.targetId=ai.detected||n(ai.memoryRemaining)>0||n(ai.searchRemaining)>0?target?.id??null:null;
+  if(ai.state==='return'){tx=ai.homeX;ty=ai.homeY}
+  if(ai.state==='patrol'){
+   const radius=Math.max(0,n(ai.patrolRadius,130)),phase=ai.clock*.65+n(e.id);
+   tx=ai.homeX+Math.sin(phase)*radius;ty=ai.homeY+Math.cos(phase)*radius;
+  }
+  const step=Math.min(2000,Math.max(0,n(ai.speed,75)))*frame;
+  if(tx!=null&&ty!=null&&ai.state!=='attack'){
+   const obstacles=entities.filter(other=>isAiObstacle(other,e,target));
+   if(ai.pathfinding!==false&&ai.state!=='patrol'){
+    ai.repathTimer=n(ai.repathTimer)-frame;
+    if(ai.repathTimer<=0||!Array.isArray(ai.path)||previous!==ai.state){
+     // Navigation takes body origins; perception uses ground footprints.
+     ai.path=findPath({x:e.x,y:e.y},{x:tx,y:ty},obstacles.map(o=>({...o,h:o.depth3d??o.h})),
+      {cellSize:Math.max(24,n(ai.pathCellSize,48)),padding:Math.max(n(e.w),n(e.depth3d,e.h))*.35,maxNodes:1200});
      ai.repathTimer=Math.max(.2,n(ai.repathInterval,.75));
     }
     while(ai.path?.length&&Math.hypot(ai.path[0].x-e.x,ai.path[0].y-e.y)<Math.max(8,step*1.5))ai.path.shift();
     if(ai.path?.length){tx=ai.path[0].x;ty=ai.path[0].y}
    }
-   const length=Math.hypot(tx-e.x,ty-e.y);
-   if(length>2){const distanceStep=Math.min(step,length),ux=(tx-e.x)/length,uy=(ty-e.y)/length;const candidates=[[ux,uy],[ux,0],[0,uy],[-uy,ux],[uy,-ux]];for(const [cx,cy] of candidates){const x=e.x+cx*distanceStep,y=e.y+cy*distanceStep;if(!blocked(e,x,y)){e.x=x;e.y=y;break}}}
-   e.animation=ai.state==='chase'?'run':'walk';
-  }
-  ai.clock=n(ai.clock)+dt;ai.cooldown=Math.max(0,n(ai.cooldown)-dt);
-  if(ai.state==='attack'&&ai.cooldown===0){
-   // Prevent hits through walls or props: sample the line of sight against solid rectangles.
-   const obscured=entities.some(o=>{
-    if(o===e||o===player||o.collision3d===false||!(o.solid3d===true||o.type==='object'||o.type==='mesh3d'))return false;
-    const x0=e.x+e.w*.5,y0=e.y+e.h*.5,x1=player.x+player.w*.5,y1=player.y+player.h*.5;
-    const dx=x1-x0,dy=y1-y0;let near=0,far=1;
-    for(const [start,delta,min,max] of [[x0,dx,o.x,o.x+o.w],[y0,dy,o.y,o.y+o.h]]){
-     if(Math.abs(delta)<1e-8){if(start<min||start>max)return false;continue}
-     const first=(min-start)/delta,second=(max-start)/delta;
-     near=Math.max(near,Math.min(first,second));far=Math.min(far,Math.max(first,second));
-     if(near>far)return false;
+   const dx=tx-e.x,dy=ty-e.y,length=Math.hypot(dx,dy);
+   if(length>2){
+    const ux=dx/length,uy=dy/length,distanceStep=Math.min(step,length);
+    // Substeps prevent fast AI tunnelling through thin walls.
+    const count=Math.max(1,Math.ceil(distanceStep/Math.max(4,Math.min(n(e.w,32),n(e.depth3d,e.h||32))*.3)));
+    for(let i=0;i<count;i++)for(const [cx,cy] of [[ux,uy],[ux,0],[0,uy],[-uy,ux],[uy,-ux]]){
+     if(!cx&&!cy)continue;
+     const x=e.x+cx*distanceStep/count,y=e.y+cy*distanceStep/count;
+     if(!obstacles.some(o=>x<o.x+o.w&&x+n(e.w,32)>o.x&&y<o.y+n(o.depth3d,o.h)&&y+n(e.depth3d,e.h||32)>o.y)){
+      e.x=x;e.y=y;e.rotation=Math.atan2(cy,cx)*180/Math.PI;break;
+     }
     }
-    return near<1&&far>0;
-   });
-   if(!obscured){damage(player,n(ai.attackDamage,8));e.animation='attack'}
-   ai.cooldown=Math.max(.1,n(ai.attackCooldown,1.2));
+   }
+   e.animation=ai.state==='chase'?'run':'walk';
+  }else e.animation=ai.state==='attack'?'attack':'idle';
+  if(ai.state==='attack'&&target&&ai.cooldown===0&&hasLineOfSight(e,target,entities)){
+   damage(target,n(ai.attackDamage,8));ai.cooldown=Math.max(.1,n(ai.attackCooldown,1.2));
   }
  }
 }
 export function attack3d(attacker,entities,{range=120,damageAmount=20,arc=1.2}={}){
- const target=entities.filter(e=>e!==attacker&&e.ai?.enabled&&!['friendly','neutral'].includes(e.threatIntel?.relation)&&(e.stats?.health??e.hp??100)>0).sort((a,b)=>Math.hypot(a.x-attacker.x,a.y-attacker.y)-Math.hypot(b.x-attacker.x,b.y-attacker.y))[0];
+ const target=entities.filter(e=>e.ai?.enabled&&isHostileTo(e,attacker,attacker)&&healthOf(e)>0&&
+  e.sequenceEnabled!==false&&hasLineOfSight(attacker,e,entities))
+  .sort((a,b)=>Math.hypot(a.x-attacker.x,a.y-attacker.y)-Math.hypot(b.x-attacker.x,b.y-attacker.y))[0];
  if(!target||Math.hypot(target.x-attacker.x,target.y-attacker.y)>Math.max(0,n(range,120)))return null;
  damage(target,Math.max(0,n(damageAmount,20)));target.animation='hurt';return target;
 }

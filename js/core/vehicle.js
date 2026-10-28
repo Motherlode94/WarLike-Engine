@@ -58,7 +58,7 @@ export function drawDrivingHud(ctx,w,h,player){
   if(driving.collisionFlash>0){ctx.strokeStyle='#ef7d5c';ctx.lineWidth=3;ctx.strokeRect(w-200,16,184,99)}
  }else{
   const pc=center(player),nearest=state.entities.filter(vehicle).map(o=>({o,d:Math.hypot(center(o).x-pc.x,center(o).y-pc.y)})).sort((a,b)=>a.d-b.d)[0];
-  if(nearest?.d<Math.max(115,(nearest.o.w+player.w)*.7)){ctx.fillStyle='#172d37e8';ctx.fillRect(w/2-115,h-88,230,28);ctx.fillStyle='#acfce0';ctx.textAlign='center';ctx.fillText('E — Entrer dans '+nearest.o.name,w/2,h-69)}
+  if(nearest&&nearest.d<Math.max(115,(nearest.o.w+player.w)*.7)){ctx.fillStyle='#172d37e8';ctx.fillRect(w/2-115,h-88,230,28);ctx.fillStyle='#acfce0';ctx.textAlign='center';ctx.fillText('E — Entrer dans '+nearest.o.name,w/2,h-69)}
  }
  ctx.restore();
 }

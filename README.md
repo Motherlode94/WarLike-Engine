@@ -42,11 +42,17 @@ Le code WarLike Studio est un prototype original. Certains modèles de démonstr
 
 ## Gameplay Components (prototype)
 
+### IA et Blueprints — perception et interactions
+
+L'IA configurable fonctionne en Play 2D et 3D : champ de vision, obstacles, mémoire de la dernière position observée, investigation, recherche et retour en patrouille. L'Inspector expose ces paramètres et les séquences peuvent activer l'IA ou lui désigner une cible. Les factions communes protègent les alliés.
+
+Les conditions d'inventaire vérifient les objets réellement ramassés ; les actions de santé synchronisent Stats et `hp`. La bibliothèque comprend une porte à clé réelle, une alerte de vie basse et des commandes de suspension/reprise IA. [Guide et limites](./docs/reference-gameplay-runtime.md).
+
 Depuis **Inspector > Gameplay Components**, ajoute **Stats**, **Inventaire**, **AI State Machine** ou **Character Controller 3D** à un objet. Le moteur dispose désormais de points de vie, endurance, sauts, sprint et esquive (**Ctrl**), d'une IA simple avec patrouille/poursuite/attaque et d'attaques 3D de proximité (**F**). Une arme équipée via l'Inspector augmente la portée et les dégâts de l'attaque ; il ne s'agit pas encore d'une représentation animée de l'arme ni d'un système de projectiles.
 
 Dans **Logic Sequences**, les instructions peuvent donner/retirer un objet, équiper une arme/armure, soigner et infliger des dégâts. Le panneau **Graphique des comportements** affiche une **prévisualisation** des triggers et branches ; les connexions ne sont pas encore modifiables par glisser-déposer.
 
-La navigation IA utilise un **évitement local simplifié** (pas de NavMesh ni de recherche de chemin A*). Les collisions 3D et animations restent expérimentales. Les tests ajoutés au dépôt doivent être exécutés avec `npm test`, et l'ensemble doit être vérifié en navigateur avant utilisation dans un projet de production.
+La navigation IA utilise une **recherche A* sur grille avec évitement local simplifié** ; elle ne dispose pas de NavMesh. Les collisions 3D et animations restent expérimentales. Les tests ajoutés au dépôt doivent être exécutés avec `npm test`, et l'ensemble doit être vérifié en navigateur avant utilisation dans un projet de production.
 
 ## Développement en C# (SDK .NET 8 expérimental)
 

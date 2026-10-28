@@ -81,7 +81,9 @@ test('manifest cannot modify prototype keys in global Blueprint storage',()=>{
 });
 test('catalog only loads curated same-origin manifests',async()=>{
  const {communityCatalog,loadCatalogEntry}=await import('../js/core/community-catalog.js');
- assert.equal(communityCatalog.length,4);
+ assert.ok(communityCatalog.length>=4);
+ assert.equal(new Set(communityCatalog.map(entry=>entry.id)).size,communityCatalog.length);
+ assert.ok(communityCatalog.every(entry=>entry.source.startsWith('./examples/community/')&&entry.source.endsWith('.json')&&!entry.source.includes('..')));
  const result=await loadCatalogEntry('field-tools',{fetcher:async url=>({
   ok:true,headers:{get:()=>null},text:async()=>readFileSync(new URL('../'+url.replace(/^\.\//,''),import.meta.url),'utf8')
  })});

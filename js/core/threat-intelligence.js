@@ -1,3 +1,4 @@
+import {factionOf,sameFaction,isHostileTo} from './ai-perception.js';
 // WarLike Threat Intelligence: authorable NPC identity, faction and runtime perception.
 // Scanner reads actual AI state and distance; it does not invent unseen enemies.
 export const threatFactions=['civilian','player','guard','bandit','undead','military','creature','custom'];
@@ -7,8 +8,8 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export function threatProfile(entity,player){
  if(!entity||entity===player||!entity.ai?.enabled)return null;
  const intelligence=entity.threatIntel||{};
- const relation=threatRelations.includes(intelligence.relation)?intelligence.relation:'hostile';
- const faction=threatFactions.includes(intelligence.faction)?intelligence.faction:'custom';
+ const relation=sameFaction(entity,player)?'friendly':threatRelations.includes(intelligence.relation)?intelligence.relation:isHostileTo(entity,player,player)?'hostile':'neutral';
+ const faction=factionOf(entity);
  const hp=finite(entity.stats?.health??entity.hp,100);
  const maximum=Math.max(1,finite(entity.stats?.maxHealth,100));
  const px=finite(player?.x)+finite(player?.w)/2,py=finite(player?.y)+finite(player?.h)/2;

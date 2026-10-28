@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assets3d,categories3d,get3dAsset,prefab3d,thumbnail3d} from '../js/assets/catalog-3d.js';
 
-test('3D catalog contains 43 unique native assets',()=>{
- assert.equal(assets3d.length,43);
- assert.equal(new Set(assets3d.map(a=>a.id)).size,43);
+test('3D catalog retains starter assets and unique IDs as the library grows',()=>{
+ assert.ok(assets3d.length>=43);
+ assert.equal(new Set(assets3d.map(a=>a.id)).size,assets3d.length);
  for(const asset of assets3d){
   assert.equal(get3dAsset(asset.id),asset);
   assert.ok(categories3d.includes(asset.category));

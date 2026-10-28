@@ -1,3 +1,4 @@
+import {renderGlbPreview} from './glb-preview.js';
 import {catalog, urlFor} from '../assets/catalog.js';
 import {allAssets3d, prefab3d, url3d} from '../assets/catalog-3d.js';
 import {workspace} from '../core/workspaces.js';
@@ -57,7 +58,9 @@ export function initVisualAssetPacks(){
  });
 
  const select=root.querySelector('#visualPackSelect'),search=root.querySelector('#visualPackSearch'),grid=root.querySelector('#visualPackItems'),info=root.querySelector('#visualPackInfo');
+ let previewObserver=null;
  const render=()=>{
+  previewObserver?.disconnect();
   const mode=workspace.mode==='3d'?'3d':'2d', valid=PACKS.filter(p=>p.mode===mode);
   const previous=select.value;
   select.replaceChildren(...valid.map(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;return o}));
@@ -72,9 +75,23 @@ export function initVisualAssetPacks(){
    button.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px;border:1px solid #687888;border-radius:7px;background:transparent;color:inherit;cursor:pointer;min-width:0';
    const img=document.createElement('img');img.src=mode==='3d'?url3d(asset.id):urlFor(asset.id);img.alt='';img.loading='lazy';img.style.cssText='width:75px;height:72px;object-fit:contain';
    const name=document.createElement('small');name.textContent=asset.name;name.style.cssText='text-align:center;overflow-wrap:anywhere';
-   if(asset.shape==='glb'){img.remove();const placeholder=document.createElement('div');placeholder.textContent='3D · GLB';placeholder.style.cssText='display:grid;place-items:center;width:75px;height:72px;border:1px dashed #7590a2;border-radius:8px;color:#b2d4ed;font-weight:700;font-size:12px';button.append(placeholder)}else button.append(img);button.append(name);if(asset.shape==='glb'){const tag=document.createElement('small');tag.textContent='GLB réel'+(asset.license?' · '+asset.license:'');tag.style.cssText='font-size:10px;opacity:.8;overflow-wrap:anywhere;text-align:center';button.append(tag)}fragment.append(button);
+   if(asset.shape==='glb'){const preview=document.createElement('canvas');preview.width=144;preview.height=136;preview.dataset.glbPreview=asset.id;preview.style.cssText='width:100%;max-width:120px;height:82px;object-fit:contain;border:1px solid #536575;border-radius:7px';preview.setAttribute('aria-label','Aperçu du véritable maillage GLB : '+asset.name);button.append(preview)}else button.append(img);button.append(name);if(asset.shape==='glb'){const tag=document.createElement('small');tag.textContent='GLB réel'+(asset.license?' · '+asset.license:'');tag.style.cssText='font-size:10px;opacity:.8;overflow-wrap:anywhere;text-align:center';button.append(tag)}fragment.append(button);
   }
   grid.replaceChildren(fragment);
+  previewObserver=new IntersectionObserver(entries=>{
+   for(const entry of entries){
+    if(!entry.isIntersecting)continue;
+    const canvas=entry.target;previewObserver.unobserve(canvas);
+    if(!canvas.isConnected)continue;
+    renderGlbPreview(canvas,canvas.dataset.glbPreview).catch(error=>{
+     if(!canvas.isConnected)return;
+     const ctx=canvas.getContext('2d');ctx?.clearRect(0,0,canvas.width,canvas.height);
+     const msg=document.createElement('small');msg.textContent='GLB non chargé : '+String(error?.message||'erreur').slice(0,95);msg.style.cssText='color:#ffb5a5;overflow-wrap:anywhere;text-align:center';
+     canvas.replaceWith(msg);
+    });
+   }
+  },{root:expanded?root:null,rootMargin:'160px'});
+  grid.querySelectorAll('canvas[data-glb-preview]').forEach(canvas=>previewObserver.observe(canvas));
  };
  const selectChange=()=>{search.value='';render()};
  select.addEventListener('change',selectChange);search.addEventListener('input',render);

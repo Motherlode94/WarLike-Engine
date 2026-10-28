@@ -24,6 +24,26 @@ export function initVisualAssetPacks(){
  root.style.cssText='padding:12px;border-bottom:1px solid var(--border,#56616d);color:inherit';
  root.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px"><strong>▦ Asset Packs 2D / 3D</strong><select id="visualPackSelect" aria-label="Pack visuel"></select><input type="search" id="visualPackSearch" placeholder="Rechercher..." aria-label="Rechercher dans le pack" style="min-width:110px;flex:1"></div><p id="visualPackInfo" style="font-size:12px;opacity:.8;margin:4px 0 10px"></p><div id="visualPackItems" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;max-height:270px;overflow:auto"></div>';
  parent.prepend(root);
+ const uploadRow=document.createElement('div');uploadRow.style.cssText='padding:7px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+ const importSprite=document.createElement('input');importSprite.type='file';importSprite.accept='image/png';importSprite.multiple=true;importSprite.setAttribute('aria-label','Importer de vrais sprites PNG');
+ const spriteInfo=document.createElement('small');spriteInfo.textContent='2D : importer des fichiers PNG (max 1 Mo chacun).';
+ uploadRow.append(importSprite,spriteInfo);root.append(uploadRow);
+ importSprite.addEventListener('change',async()=>{
+  if(workspace.mode!=='2d'||state.playing){spriteInfo.textContent='Ouvre un projet 2D en mode édition.';return}
+  const files=[...importSprite.files].slice(0,24);let count=0;
+  for(const file of files){
+   if(file.type!=='image/png'||file.size>1024*1024){spriteInfo.textContent='PNG requis, 1 Mo maximum par fichier.';continue}
+   const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Lecture PNG impossible'));reader.readAsDataURL(file)});
+   if(typeof data!=='string'||!data.startsWith('data:image/png;base64,'))continue;
+   const name=file.name.replace(/\.png$/i,'').slice(0,80);
+   const o={id:state.nextId++,name,type:'object',x:120+(count%5)*80,y:100+Math.floor(count/5)*80,w:64,h:64,color:'#96a5b8',spriteDataUrl:data};
+   state.entities.push(o);state.selected=[o.id];count++;
+  }
+  if(count){record('Importer '+count+' sprites PNG');notify()}
+  spriteInfo.textContent=count+' sprites PNG ajoutés dans la scène. Ils sont intégrés au fichier du projet.';
+  importSprite.value='';
+ });
+
  const select=root.querySelector('#visualPackSelect'),search=root.querySelector('#visualPackSearch'),grid=root.querySelector('#visualPackItems'),info=root.querySelector('#visualPackInfo');
  const render=()=>{
   const mode=workspace.mode==='3d'?'3d':'2d', valid=PACKS.filter(p=>p.mode===mode);

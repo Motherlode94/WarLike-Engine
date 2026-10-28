@@ -43,11 +43,11 @@ export function renderSequenceEditor(root,o){
   conditions.forEach((c,i)=>{
    const block=document.createElement('div');block.className='sequence-step';
    select(block,'Condition',c.type,sequenceConditions,v=>{c.type=v;save('Condition')});
-   if(['variable','localVariable'].includes(c.type)){
+   if(['variable','localVariable','inventoryHas','inventoryMissing'].includes(c.type)){
     text(block,'Nom',c.key||'',v=>{c.key=v;save('Nom variable')});
     select(block,'Comparaison',c.operator||'==',['==','!=','>','<','>=','<='],v=>{c.operator=v;save('Opérateur')});
    }
-   if(['variable','localVariable','distanceLess','distanceGreater','healthBelow','healthAbove','hasTag','randomChance'].includes(c.type))text(block,'Valeur',c.value??0,v=>{c.value=v;save('Valeur')});
+   if(['variable','localVariable','distanceLess','distanceGreater','healthBelow','healthAbove','hasTag','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists'].includes(c.type))text(block,'Valeur',c.value??0,v=>{c.value=v;save('Valeur')});
    toggle(block,'Inverser (NOT)',c.negate===true,v=>{c.negate=v;save('NOT')});
    button(block,'− Condition',()=>{conditions.splice(i,1);save('Retirer condition')});parent.append(block);
   });
@@ -59,10 +59,10 @@ export function renderSequenceEditor(root,o){
    const block=document.createElement('div');block.className='sequence-step';
    const caption=document.createElement('small');caption.textContent='#'+(i+1);block.append(caption);
    select(block,'Instruction',step.type,sequenceInstructions,v=>{step.type=v;save('Instruction')});
-   if(['setVariable','addVariable','setLocal','addLocal','emitSignal','giveItem','removeItem','equipItem'].includes(step.type))text(block,'Variable / Signal',step.key||'',v=>{step.key=v;save('Nom')});
+   if(['setVariable','addVariable','setLocal','addLocal','emitSignal','giveItem','removeItem','equipItem','setTag','removeTag','setObjective','completeObjective'].includes(step.type))text(block,'Variable / Signal',step.key||'',v=>{step.key=v;save('Nom')});
    if(!['destroyObject'].includes(step.type))text(block,'Valeur',step.value??'',v=>{step.value=v;save('Valeur')});
-   if(['moveObject','teleportObject'].includes(step.type)){text(block,'Delta X',step.x??0,v=>{step.x=v;save('X')},'number');text(block,'Delta Z/Y',step.y??0,v=>{step.y=v;save('Y')},'number')}
-   if(['enableObject','moveObject','teleportObject','setHealth','addHealth','setAnimation','setBehavior','giveItem','removeItem','equipItem','damageObject','healObject'].includes(step.type))text(block,'ID cible (optionnel)',step.targetId??'',v=>{step.targetId=v;save('Cible')},'number');
+   if(['moveObject','teleportObject','setPosition'].includes(step.type)){text(block,'Delta X',step.x??0,v=>{step.x=v;save('X')},'number');text(block,'Delta Z/Y',step.y??0,v=>{step.y=v;save('Y')},'number')}
+   if(['enableObject','moveObject','teleportObject','setHealth','addHealth','setAnimation','setBehavior','giveItem','removeItem','equipItem','damageObject','healObject','setPosition','setRotation','setScale','setVisibility','setCollision','setSpeed','addSpeed','setTeam','setFuel','addFuel','setLight','setAudio','setVehicleState','setTag','removeTag'].includes(step.type))text(block,'ID cible (optionnel)',step.targetId??'',v=>{step.targetId=v;save('Cible')},'number');
    if(step.type==='equipItem')select(block,'Slot',step.slot||'weapon',['weapon','armor'],v=>{step.slot=v;save('Slot')});
    toggle(block,'Désactiver instruction',step.disabled===true,v=>{step.disabled=v;save('Désactiver')});
    const tools=document.createElement('div');tools.className='sequence-buttons';

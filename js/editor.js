@@ -1,3 +1,4 @@
+import {loadHorrorPursuitDemo} from './core/horror-pursuit-demo.js';
 import {initVisualAssetPacks} from './ui/visual-asset-packs.js';
 import {initCommunityManager} from './ui/community-manager.js';
 import {createFpsScene} from './core/fps-scene.js';
@@ -54,6 +55,7 @@ if(horrorToggle){horrorToggle.checked=horror.enabled;horrorToggle.addEventListen
 const enableLight=document.getElementById('render2dLight');
 if(enableLight){enableLight.checked=renderQuality.lighting2d;enableLight.addEventListener('change',()=>{setRenderQuality({lighting2d:enableLight.checked});saveRenderQuality()})}
 initUnityPackageImport();
+document.getElementById('horrorPursuitDemo')?.addEventListener('click',()=>{if(!window.confirm('Charger Horror Pursuit ? La scène actuelle sera remplacée. Sauvegarde ton projet avant de continuer.'))return;try{loadHorrorPursuitDemo()}catch(error){window.alert(error.message)}});
 initVisualAssetPacks();
 initHub();
 initBlueprintWorkspace();

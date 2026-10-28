@@ -1362,3 +1362,11 @@ html[data-warlike-contrast="light"] body:not(.hub-open) :is(.studio-dropdown,.bl
  border:1px solid var(--warlike-palette-border,#535a62);background:var(--warlike-palette-surface,#22272c)}
 .warlike-community-pack button{justify-self:start}
 .warlike-community-pack small{opacity:.85}
+
+/* Visual packs follow the editor palette instead of browser/default colors. */
+body:not(.hub-open) #warlikeVisualPacks{background:var(--warlike-palette-panel,#323438)!important;color:var(--warlike-palette-text,#e5e7eb)!important;border-color:var(--warlike-palette-border,#535a62)!important}
+body:not(.hub-open) #warlikeVisualPacks button{background:var(--warlike-palette-button,#454950)!important;color:var(--warlike-palette-text,#e5e7eb)!important;border-color:var(--warlike-palette-border,#535a62)!important}
+body:not(.hub-open) #warlikeVisualPacks button:hover{border-color:var(--editor-accent,#6c9dc8)!important}
+body:not(.hub-open) #warlikeVisualPacks input,body:not(.hub-open) #warlikeVisualPacks select{background:var(--warlike-palette-surface,#252629)!important;color:var(--warlike-palette-text,#e5e7eb)!important;border:1px solid var(--warlike-palette-border,#535a62)!important}
+body:not(.hub-open) #studioPrimaryActions #play{opacity:1!important;color:var(--warlike-palette-text,#e5e7eb)!important;background:var(--warlike-palette-button,#454950)!important;border:1px solid var(--editor-accent,#6c9dc8)!important}
+body:not(.hub-open) #studioPrimaryActions #play:hover{filter:brightness(1.16)}

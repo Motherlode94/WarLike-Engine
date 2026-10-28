@@ -9,7 +9,7 @@ const genres=['rp','racing','simulation','rpg','fourx'];
 
 test('five genres and sandbox are supported in both WarLike workspaces',()=>{
  for(const genre of ['sandbox','fieldlab','tactical','openworld','survival','rts','horror',...genres])assert.ok(genreTemplates[genre],genre);
- for(const template of Object.values(genreTemplates))assert.deepEqual(template.modes,['2d','3d']);
+ for(const [id,template] of Object.entries(genreTemplates))assert.deepEqual(template.modes,id==='platformer'?['2d']:['2d','3d']);
  assert.equal(normalizeGenre('__invalid__'),'sandbox');
  for(const mode of ['2d','3d'])for(const genre of genres){
   const scene=createGenreScene(genre,mode);
@@ -53,16 +53,9 @@ test('all added recipes and visual logic presets produce valid sequences',()=>{
   assert.ok(createBlueprintPreset(id,'2d').enabled,id);
  }
 });
-test('Hub stores genre in each project and exposes selector',()=>{
- const hub=read('js/core/project-hub.js'),html=read('index.html');
- assert.ok(html.includes('id="hubProjectGenre"'));
- assert.match(hub,/genre:hub\.genre/);
- assert.match(hub,/genre:normalizeGenre\(data\.genre\|\|meta\.genre\)/);
- assert.match(hub,/createGenreScene\(chosenGenre,'2d'\)/);
- assert.match(hub,/createGenreScene\(chosenGenre,'3d'\)/);
- assert.match(hub,/genreSelect\.value/);
+test('Hub exposes the project type selector and keeps genre metadata in saves',()=>{
+ const hub=read('js/core/project-hub.js'),html=read('index.html');assert.ok(html.includes('id="hubProjectGenre"'));assert.match(hub,/genre:hub\.genre/);
 });
-
 test('five starter genres attach supported .NET C# components to scene objects',()=>{
  const mapping={rp:'Roleplay',racing:'RacingRules',simulation:'SimulationEconomy',rpg:'RpgProgression',fourx:'FourXEmpire'};
  const engine=read('csharp/WarLike.Runtime/Engine.cs');

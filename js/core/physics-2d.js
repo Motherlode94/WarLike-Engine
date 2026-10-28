@@ -57,13 +57,13 @@ export function stepPhysics2d(entities,dt,{exclude=null,only=null}={}){
   if(result.grounded&&rb.bodyType!=='kinematic'){rb.vx*=Math.pow(1-clamp(n(rb.friction,.8),0,1),step*10);if(Math.abs(rb.vx)<.01)rb.vx=0}
  }
 }
-export function walkPlatformer2d(player,dt,keys,entities){
+export function walkPlatformer2d(player,dt,keys,entities,{pressedKeys=new Set()}={}){
  const cfg=player.controller2d||defaultController2d();player.rigidbody2d??=defaultRigidbody2d();const rb=player.rigidbody2d;
  if(rb.enabled===false||rb.bodyType==='static')return {moving:false,sprinting:false,mode:'platformer'};
  const frame=clamp(n(dt),0,.1),axis=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const jump=keys.has(' ')||keys.has('space')||keys.has('w')||keys.has('z')||keys.has('arrowup'),sprint=keys.has('shift');
  const support=moveBody2d(player,0,.001,entities);if(support.grounded&&n(rb.vy)>=0)rb.vy=0;
- if(jump&&!player._jump2dHeld&&support.grounded&&rb.enabled!==false)rb.vy=-Math.max(0,n(cfg.jumpSpeed,430));player._jump2dHeld=jump;
+ if((jump&&!player._jump2dHeld||[' ','space','w','z','arrowup'].some(key=>pressedKeys.has(key)))&&support.grounded&&rb.enabled!==false)rb.vy=-Math.max(0,n(cfg.jumpSpeed,430));player._jump2dHeld=jump;
  rb.vx=axis*Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,sprint?295:190))*(player.survival?.enabled!==false&&player.survival&&player.survivalState?.rest<15?.6:1);
  stepPhysics2d(entities.includes(player)?entities:[player,...entities],frame,{only:player});
  // Other bodies are stepped by the scene runtime, not again by the controller.

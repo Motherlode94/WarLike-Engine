@@ -1,3 +1,4 @@
+import {resolveGameGenre,genreCompatible} from './game-genres.js';
 import {gameProject,validEntities} from './game-project.js';
 import {inspectBlueprintGame} from './blueprint-validation.js';
 import {get3dAsset,prefab3d} from '../assets/catalog-3d.js';
@@ -17,8 +18,10 @@ export function createZip(entries){
  return new Blob([...local,...central,end.bytes],{type:'application/zip'});
 }
 export function prepareGameDefinition({entities,camera,mode='2d',project=gameProject}){
+ if(!['2d','3d'].includes(mode))throw Error('Type de projet invalide.');
  if(!validEntities(entities))throw Error('La scène active est invalide.');
  const definition=structuredClone(project),scene={id:definition.activeSceneId,name:definition.scenes.find(s=>s.id===definition.activeSceneId)?.name||'Scène principale',entities:structuredClone(entities),camera:structuredClone(camera||{x:0,y:0,zoom:1})};
+ definition.genre=resolveGameGenre(definition.genre,entities);if(!genreCompatible(definition.genre,mode))throw Error('Le type de jeu '+definition.genre+' est incompatible avec le projet '+mode.toUpperCase()+'.');
  const index=definition.scenes.findIndex(s=>s.id===scene.id);if(index<0)definition.scenes.push(scene);else definition.scenes[index]=scene;
  const issues=definition.scenes.flatMap(s=>inspectBlueprintGame(s.entities,{project:definition}).map(i=>({...i,message:s.name+' : '+i.message})));
  for(const s of definition.scenes)for(const o of s.entities)if(mode==='3d'&&(o.model3dId||o.assetId)){

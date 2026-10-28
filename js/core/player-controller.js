@@ -6,10 +6,10 @@ import {playSound} from './audio.js';
 // WarLike 2D foot controller with solid collisions and an optional chase camera.
 import {state} from './state.js';
 export const motion={cameraFollow:false,cameraInitialized:false,footSpeed:190,sprintMultiplier:1.55};
-export function walkPlayer(player,dt,keys=state.keys){
+export function walkPlayer(player,dt,keys=state.keys,{pressedKeys=state.keyPresses}={}){
  if(player._vehicleTransition||player._actionAnimationUntil>performance.now()/1000)return {moving:false,sprinting:false};
  if(player.superhero?.enabled!==false&&player.heroState?.flight){stepHeroFlight(player,keys,dt,state.entities,'2d');return {moving:true,sprinting:keys.has('shift')}}
- if(controllerMode2d(player,state.entities)==='platformer'){const beforeX=player.x,beforeY=player.y,result=walkPlatformer2d(player,dt,keys,state.entities);faceMovement2d(player,player.x-beforeX,player.y-beforeY);if(!player._ninjaAttackUntil)player.animation=player.grounded2d?(result.moving?(result.sprinting?'run':'walk'):'idle'):(player.rigidbody2d.vy<0?'jump':'fall');return result}
+ if(controllerMode2d(player,state.entities)==='platformer'){const beforeX=player.x,beforeY=player.y,result=walkPlatformer2d(player,dt,keys,state.entities,{pressedKeys});faceMovement2d(player,player.x-beforeX,player.y-beforeY);if(!player._ninjaAttackUntil)player.animation=player.grounded2d?(result.moving?(result.sprinting?'run':'walk'):'idle'):(player.rigidbody2d.vy<0?'jump':'fall');return result}
  const x=Number(keys.has('arrowright')||keys.has('d'))-Number(keys.has('arrowleft')||keys.has('a')||keys.has('q'));
  const y=Number(keys.has('arrowdown')||keys.has('s'))-Number(keys.has('arrowup')||keys.has('w')||keys.has('z'));
  const length=Math.hypot(x,y);const sprint=keys.has('shift')&&length>0;

@@ -1,5 +1,6 @@
-import {gameProject} from './game-project.js';
-import {createGenreScene,normalizeGenre,genreTemplates} from './genre-templates.js';
+import {gameProject,freshGameProject} from './game-project.js';
+import {createGenreScene} from './genre-templates.js';
+import {normalizeGenre,genreTemplates,genreCompatible,compatibleGenres,genreForMode,genreLabel,genreStage,resolveGameGenre} from './game-genres.js';
 import {inspectProject,downloadDiagnostic} from './project-diagnostics.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {prefab3d} from '../assets/catalog-3d.js';
@@ -34,7 +35,7 @@ const indexed=()=>safeRead(INDEX,[]).filter(p=>p&&typeof p.id==='string');
 const uniqueId=()=>Date.now().toString(36)+'-'+Math.floor(Math.random()*1e8).toString(36);
 export const assetPackChoices=['starter','kenney','community','both'];
 export const sanitizeAssetPack=value=>assetPackChoices.includes(value)?value:'starter';
-export const hub={projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT,assetPack:'starter',genre:'sandbox'};
+export const hub={projectId:null,projectName:'Sans titre',type:'2d',accent:DEFAULT_ACCENT,assetPack:'starter',get genre(){return gameProject.genre},set genre(value){gameProject.genre=normalizeGenre(value)}};
 export function chooseProjectAssets(id,assetPack){
  const pack=sanitizeAssetPack(assetPack);
  const meta=indexed().find(p=>p.id===id);if(!meta)return false;
@@ -52,6 +53,7 @@ const assertName=name=>{const n=String(name||'').trim().slice(0,64);if(!n)throw 
 function saveMeta(meta){const all=indexed().filter(p=>p.id!==meta.id);all.unshift(meta);localStorage.setItem(INDEX,JSON.stringify(all))}
 export function saveProject(){
  if(!hub.projectId||state.playing)return false;
+ hub.type=workspace.mode;gameProject.genre=genreForMode(gameProject.genre,workspace.mode);
  const data={version:5,...workspacePayload(),entities:state.entities,camera:state.camera,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,genre:hub.genre};
  try{localStorage.setItem(PREFIX+hub.projectId,JSON.stringify(data));saveMeta({id:hub.projectId,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,genre:hub.genre,updated:Date.now()});return true}catch{return false}
 }
@@ -59,19 +61,27 @@ export function createProject(name,type,assetPack='starter',genre='sandbox'){
  if(state.playing)throw Error('Arrête Play avant de créer un projet.');
  if(hub.projectId)saveProject();
  name=assertName(name);if(!['2d','3d'].includes(type))throw Error('Type de projet invalide.');
- const chosenGenre=normalizeGenre(genre);
- const id=uniqueId(),data={workspaceMode:type,workspaces:{'2d':chosenGenre==='sandbox'?entry(defaults2d()):createGenreScene(chosenGenre,'2d'),'3d':chosenGenre==='sandbox'?entry(defaults3d()):createGenreScene(chosenGenre,'3d')}};
+ const chosenGenre=normalizeGenre(genre);if(!genreCompatible(genre,type))throw Error('Ce type de jeu est incompatible avec un projet '+type.toUpperCase()+'.');
+ const id=uniqueId(),slots={};for(const mode of ['2d','3d']){const selected=genreForMode(chosenGenre,mode);slots[mode]=selected==='sandbox'?entry(mode==='2d'?defaults2d():defaults3d()):createGenreScene(selected,mode);slots[mode].game={...freshGameProject(),id,title:name,genre:selected}}
+ const data={workspaceMode:type,workspaces:slots};
  if(!restoreWorkspaces(data))throw Error('Impossible de créer le projet.');
  gameProject.id=id;gameProject.title=name;
- Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(assetPack),genre:chosenGenre});setHubAccent(hub.accent,{persist:false});state.demoGuide='';resetHistory();record('Créer le projet '+name);saveProject();notify();return id;
+ Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(assetPack),genre:chosenGenre});setHubAccent(hub.accent,{persist:false});state.demoGuide=slots[type].guide||'';resetHistory();record('Créer le projet '+name);saveProject();notify();return id;
 }
 export function openProject(id){
  if(state.playing)throw Error('Arrête Play avant de changer de projet.');
  if(hub.projectId&&hub.projectId!==id)saveProject();
  const data=safeRead(PREFIX+id,null),meta=indexed().find(p=>p.id===id);
  if(!data||!meta||!restoreWorkspaces(data))throw Error('Projet introuvable ou corrompu.');
- gameProject.id=id;if(!data.workspaces?.[meta.type]?.game?.title)gameProject.title=meta.name;
- Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack),genre:normalizeGenre(data.genre||meta.genre)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide='';resetHistory();record('Ouvrir le projet '+meta.name);notify();return true;
+ gameProject.id=id;if(!data.workspaces?.[workspace.mode]?.game?.title)gameProject.title=meta.name;
+ Object.assign(hub,{projectId:id,projectName:meta.name,type:workspace.mode,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack),genre:genreForMode(resolveGameGenre(data.workspaces?.[workspace.mode]?.game?.genre??data.genre??meta.genre,state.entities),workspace.mode)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide='';resetHistory();record('Ouvrir le projet '+meta.name);notify();return true;
+}
+export function chooseProjectGenre(id,genre){
+ if(state.playing)throw Error('Arrête Play avant de changer le type de jeu.');
+ const meta=indexed().find(p=>p.id===id);if(!meta)return false;const active=hub.projectId===id,data=active?null:safeRead(PREFIX+id,null),mode=active?workspace.mode:(['2d','3d'].includes(data?.workspaceMode)?data.workspaceMode:meta.type);
+ if(!genreCompatible(genre,mode))throw Error('Ce type de jeu est incompatible avec le projet '+String(mode).toUpperCase()+'.');
+ if(active){const previous=gameProject.genre;gameProject.genre=genre;if(!saveProject()){gameProject.genre=previous;throw Error('Le type de jeu n’a pas pu être enregistré.')}notify();return true}
+ const slot=data?.workspaces?.[mode];if(!slot)return false;slot.game={...freshGameProject(),id,title:data.name||meta.name,...slot.game,genre};data.genre=genre;localStorage.setItem(PREFIX+id,JSON.stringify(data));meta.genre=genre;meta.type=mode;meta.updated=Date.now();saveMeta(meta);return true;
 }
 export function deleteProject(id){
  if(state.playing)throw Error('Arrête Play avant de supprimer.');
@@ -93,14 +103,17 @@ export function importLegacyProject(){
  const id=createProject(name,legacy.workspaceMode==='3d'?'3d':'2d');
  if(legacy.workspaces)restoreWorkspaces(legacy);
  else{
-  state.entities=structuredClone(legacy.entities);state.nextId=Math.max(0,...state.entities.map(e=>e.id||0))+1;state.selected=state.entities.length?[state.entities[0].id]:[];notify();
+  state.entities=structuredClone(legacy.entities);state.nextId=Math.max(0,...state.entities.map(e=>e.id||0))+1;state.selected=state.entities.length?[state.entities[0].id]:[];gameProject.genre=genreForMode(resolveGameGenre(legacy.genre,state.entities),workspace.mode);notify();
  }
  saveProject();return id;
 }
 export function initHub(){
  if(globalThis.__WARLIKE_BUILD__)return;
  const modal=document.querySelector('#hubOverlay'),cards=document.querySelector('#hubProjects'),name=document.querySelector('#hubProjectName'),type=document.querySelector('#hubProjectType'),assetPackSelect=document.querySelector('#hubAssetPack'),genreSelect=document.querySelector('#hubProjectGenre'),message=document.querySelector('#hubMessage');
- for(const [value,template] of Object.entries(genreTemplates))if(![...genreSelect.options].some(o=>o.value===value)){const option=document.createElement('option');option.value=value;option.textContent=template.label;genreSelect.append(option)}
+ const preview=document.createElement('article');preview.id='hubGenrePreview';preview.className='hub-genre-preview';preview.setAttribute('aria-live','polite');genreSelect.closest('label').after(preview);
+ const describeGenre=()=>{const template=genreTemplates[genreSelect.value];preview.replaceChildren();if(!template)return;const heading=document.createElement('strong'),status=document.createElement('span'),description=document.createElement('p'),list=document.createElement('ul');heading.textContent=genreLabel(genreSelect.value,type.value);status.className='hub-genre-status';status.textContent='Compatible '+type.value.toUpperCase()+' · '+genreStage(genreSelect.value);description.textContent=template.description;for(const feature of template.features){const li=document.createElement('li');li.textContent=feature;list.append(li)}preview.append(heading,status,description,list)};
+ const syncGenres=()=>{const selected=genreSelect.value;genreSelect.replaceChildren();for(const [stage,label] of [['playable','Scènes jouables'],['base','Bases à compléter'],['other','Projet libre et diagnostic']]){const group=document.createElement('optgroup');group.label=label;for(const [id,template] of compatibleGenres(type.value)){if(stage==='other'?!['blank','tool'].includes(template.stage):template.stage!==stage)continue;const option=document.createElement('option');option.value=id;option.textContent=genreLabel(id,type.value);group.append(option)}if(group.children.length)genreSelect.append(group)}genreSelect.value=genreForMode(selected,type.value);describeGenre()};
+ genreSelect.addEventListener('change',describeGenre);type.addEventListener('change',syncGenres);syncGenres();
  const title=document.querySelector('#studioProjectName');
  const projectSearch=document.querySelector('#hubProjectSearch'),projectFilter=document.querySelector('#hubProjectFilter'),projectCount=document.querySelector('#hubProjectCount');
  const picker=document.querySelector('#hubAccentColor'),hex=document.querySelector('#hubAccentHex'),palette=document.querySelector('#hubThemePalette'),reset=document.querySelector('#hubThemeReset');
@@ -122,7 +135,7 @@ export function initHub(){
  commitAccent(currentAccent());
 
  let wasPlaying=false;
- const updateTitle=()=>{title.textContent=hub.projectName+(hub.projectId?' · '+hub.type.toUpperCase():'')};
+ const updateTitle=()=>{title.textContent=hub.projectName+(hub.projectId?' · '+workspace.mode.toUpperCase()+' · '+genreLabel(gameProject.genre,workspace.mode):'')};
  const hide=()=>{document.dispatchEvent(new CustomEvent('warlike:asset-pack-change',{detail:{projectId:hub.projectId,assetPack:hub.assetPack}}));modal.hidden=true;document.body.classList.remove('hub-open');document.dispatchEvent(new Event('warlike:project'));updateTitle()};
  const show=()=>{if(state.playing)return;saveProject();picker.value=hex.value=hub.accent;setHubAccent(hub.accent,{persist:false});modal.hidden=false;document.body.classList.add('hub-open');render();message.textContent='';document.dispatchEvent(new Event('warlike:hub-opened'))};
  const run=cb=>{try{cb();picker.value=hex.value=hub.accent;setHubAccent(hub.accent,{persist:false});hide()}catch(e){message.textContent=e.message}};
@@ -139,7 +152,7 @@ export function initHub(){
   for(const p of projects){
    const item=document.createElement('div');item.className='hub-project-card';item.dataset.projectId=p.id;
    const info=document.createElement('div');const heading=document.createElement('strong');heading.textContent=p.name;
-   const detail=document.createElement('small');detail.textContent=p.type.toUpperCase()+' · '+genreTemplates[normalizeGenre(p.genre)].label+' · Assets : '+({starter:'WarLike',kenney:'Kenney CC0',community:'Community CC0',both:'Kenney + Community'}[sanitizeAssetPack(p.assetPack)])+' · '+new Date(p.updated).toLocaleString();item.style.borderLeft='4px solid '+(normalizeHubAccent(p.accent)||DEFAULT_ACCENT);
+   const detail=document.createElement('small');detail.textContent=p.type.toUpperCase()+' · '+genreLabel(p.genre,p.type)+' · Assets : '+({starter:'WarLike',kenney:'Kenney CC0',community:'Community CC0',both:'Kenney + Community'}[sanitizeAssetPack(p.assetPack)])+' · '+new Date(p.updated).toLocaleString();item.style.borderLeft='4px solid '+(normalizeHubAccent(p.accent)||DEFAULT_ACCENT);
    info.append(heading,detail);
    if(p.id===hub.projectId){const current=document.createElement('span');current.className='hub-current-pill';current.textContent='Actif';info.append(current)}
    const open=document.createElement('button');open.textContent='Ouvrir';open.onclick=()=>run(()=>openProject(p.id));
@@ -188,7 +201,7 @@ export function initHub(){
  const launch=mode=>{
   assetPackSelect.disabled=mode!=='3d';
   if(hub.projectId&&hub.type===mode){hide();return}
-  type.value=mode;
+  type.value=mode;syncGenres();
   name.value=mode==='3d'?'Mon jeu 3D':'Mon jeu 2D';
   message.textContent='Module '+mode.toUpperCase()+' sélectionné : crée un projet ou ouvre un projet récent de ce type.';
   name.focus();
@@ -199,7 +212,7 @@ export function initHub(){
   if(app==='diagnostics'){showDiagnostics();return}
   if(app==='assets'){
    if(!hub.projectId){
-    type.value='3d';assetPackSelect.disabled=false;
+    type.value='3d';syncGenres();assetPackSelect.disabled=false;
     assetPackSelect.focus();assetPackSelect.scrollIntoView({block:'center',behavior:'smooth'});
     message.textContent='Choisis un pack puis crée un projet 3D.';
     return;
@@ -208,7 +221,7 @@ export function initHub(){
    const current=Array.from(cards.querySelectorAll('.hub-project-card')).find(card=>card.querySelector('.hub-current-pill'));
    const chooser=current?.querySelector('.hub-project-pack');
    if(chooser&&!chooser.disabled){chooser.focus();chooser.scrollIntoView({block:'center',behavior:'smooth'});message.textContent='Choisis le pack de ton projet puis ouvre-le dans Studio.'}
-   else{type.value='3d';assetPackSelect.disabled=false;assetPackSelect.focus();message.textContent='Crée un projet 3D pour sélectionner des packs 3D.'}
+   else{type.value='3d';syncGenres();assetPackSelect.disabled=false;assetPackSelect.focus();message.textContent='Crée un projet 3D pour sélectionner des packs 3D.'}
    return;
   }
  });

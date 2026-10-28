@@ -1,3 +1,6 @@
+import {gameProject} from './game-project.js';
+import {resolveGameGenre,genreForMode} from './game-genres.js';
+import {sequenceRuntime} from './logic-sequences.js';
 import {survivalAction} from './survival-runtime.js';
 import {lanState,isLanGuest,lanCommands} from './lan-state.js';
 import {state,notify} from './state.js';
@@ -33,11 +36,12 @@ function roster(players){
 export function makeLanSnapshot(entities=state.entities){
  if(entities.length>256)throw Error('Le multi local accepte 256 objets par scène.');
  const copy=JSON.parse(JSON.stringify(entities,(key,value)=>key.startsWith('_')&&!networkFields.includes(key)?undefined:key==='file'||key==='csharpScript'?undefined:value));
- return {mode:workspace.mode,entities:copy,lighting:{hour:lighting.hour,dayNight:lighting.dayNight,speed:lighting.speed},sceneId:gameSession.currentSceneId,phase:gameSession.phase,objectives:gameSession.objectives,timers:gameSession.timers,elapsed:gameSession.elapsed,notice:gameSession.notice,bolts:heroRuntime.bolts.slice(-96),fx:{particles:fxRuntime.particles.slice(-220),rings:fxRuntime.rings.slice(-24),clock:fxRuntime.clock}};
+ return {mode:workspace.mode,genre:gameProject.genre,globals:sequenceRuntime.globals,entities:copy,lighting:{hour:lighting.hour,dayNight:lighting.dayNight,speed:lighting.speed},sceneId:gameSession.currentSceneId,phase:gameSession.phase,objectives:gameSession.objectives,timers:gameSession.timers,elapsed:gameSession.elapsed,notice:gameSession.notice,bolts:heroRuntime.bolts.slice(-96),fx:{particles:fxRuntime.particles.slice(-220),rings:fxRuntime.rings.slice(-24),clock:fxRuntime.clock}};
 }
 function receiveWorld(data){
  const incoming=data.snapshot;if(!incoming||!Array.isArray(incoming.entities)||incoming.entities.length>256||data.sequence<=received)return;
  if(!incoming.entities.every(o=>o&&Number.isSafeInteger(o.id)&&['object','player','character','prefab','mesh3d'].includes(o.type)&&[o.x,o.y,o.w,o.h].every(Number.isFinite)))return;
+ lanState.genre=genreForMode(resolveGameGenre(incoming.genre,incoming.entities),incoming.mode);lanState.variables=incoming.globals&&typeof incoming.globals==='object'&&!Array.isArray(incoming.globals)?incoming.globals:{};
  received=data.sequence;lanState.lastSnapshot=performance.now();snapshot=incoming;
  const previousActor=lanState.actorId,existing=new Map(state.entities.map(o=>[o.id,o]));state.entities=incoming.entities.map(o=>{const previous=existing.get(o.id);if(!previous)return o;const before={x:previous.x,y:previous.y,elevation3d:previous.elevation3d||0,rotation:previous.rotation||0};for(const key of Object.keys(previous))if(!key.startsWith('_')&&!(key in o)||networkFields.includes(key)&&!(key in o))delete previous[key];Object.assign(previous,o);previous._netFrom=before;previous._netTo={x:o.x,y:o.y,elevation3d:o.elevation3d||0,rotation:o.rotation||0};previous._netAt=performance.now();return previous});
  state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1;lanState.actorId=state.entities.find(o=>o._netPeerId===lanState.peerId)?.id??null;
@@ -52,7 +56,7 @@ function remoteStep(dt){
  if(!gameIsRunning())return;
  for(const o of state.entities){if(!o._netRemote)continue;const input=peers.get(o._netPeerId),stale=!input||performance.now()-input.at>500,keys=new Set(!stale&&gameIsRunning()?input.keys:[]),pressed=new Set(!stale&&gameIsRunning()?input.pressed:[]);const actions=stale?[]:input.actions||[];if(input){input.pressed=[];input.actions=[];}
   o._netKeys=keys;if(healthOf(o)<=0)continue;const yaw=input?.yaw??0;
-  if(workspace.mode==='3d')updateController3d(o,keys,dt,yaw,state.entities,{pressedKeys:pressed});else walkPlayer(o,dt,keys);
+  if(workspace.mode==='3d')updateController3d(o,keys,dt,yaw,state.entities,{pressedKeys:pressed});else walkPlayer(o,dt,keys,{pressedKeys:pressed});
   if(!gameIsRunning())continue;
   for(let i=0;i<6;i++)if(pressed.has(String(i+1)))castHeroPower(o,o.superhero?.slots?.[i]||Object.keys(heroAbilities)[i],{mode:workspace.mode,entities:state.entities,yaw});
   for(const action of actions)survivalAction(o,action,state.entities,{mode:workspace.mode,allocateId:()=>state.nextId++});
@@ -88,7 +92,7 @@ export async function connectLan({host=false,key='',code='',name='Joueur'}={}){
  }catch(error){await disconnectLan();throw error}
 }
 export async function disconnectLan(reason='Hors connexion'){
- generation++;clearInterval(timer);timer=null;stream?.close();stream=null;const old=token;token=null;const wasConnected=lanState.connected;Object.assign(lanState,{connected:false,role:null,peerId:null,actorId:null,code:'',players:[],status:reason});peers.clear();lanCommands.length=0;snapshot=null;busy=false;
+ generation++;clearInterval(timer);timer=null;stream?.close();stream=null;const old=token;token=null;const wasConnected=lanState.connected;Object.assign(lanState,{connected:false,role:null,peerId:null,actorId:null,genre:null,variables:null,code:'',players:[],status:reason});peers.clear();lanCommands.length=0;snapshot=null;busy=false;
  if(old)try{await fetch('/lan/leave',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:old}),keepalive:true})}catch{}
  if(wasConnected&&state.playing)togglePlay();if(beforeMode&&beforeMode!==workspace.mode)switchWorkspace(beforeMode);beforeMode=null;changed();
 }

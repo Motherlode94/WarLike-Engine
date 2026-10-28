@@ -8,12 +8,14 @@ WarLike réunit un Hub de projets, une scène, une hiérarchie d’objets, un In
 
 ## Commencer un jeu
 
-1. Dans le Hub, cliquer sur **Nouveau projet**, choisir 2D ou 3D et un template.
+1. Dans le Hub, cliquer sur **Nouveau projet**, choisir 2D ou 3D, puis un **type de jeu compatible**. La fiche précise les systèmes présents et si la scène est jouable ou constitue une base à compléter. **Plateforme** est disponible en 2D.
 2. Parcourir **Project / Assets** : dossiers Scènes, Scripts, Prefabs et Imports, puis ressources classées par auteur et par pack. Les modèles et leurs aperçus sont livrés dans le dépôt.
 3. Cliquer sur une ressource ou la glisser dans la scène. Sélectionner l’objet dans la Hiérarchie, puis régler ses composants dans l’Inspecteur. **Ajouter un composant** se trouve en bas ; le menu `⋮` de chaque composant propose ses commandes.
 4. En 3D, **Scène test 3D** installe un terrain et des décors Kenney, un soldat animé, des véhicules, deux monstres et six armes Quaternius Ultimate Guns. La scène précédente reste récupérable avec Annuler.
 5. Ouvrir **Blueprint Studio** pour construire les événements, conditions, dialogues, inventaires, objectifs, checkpoints et changements de scène. **Projet & export** permet de créer un exemple de jeu complet.
 6. Tester avec **Play**, puis **Exporter le jeu**. Décompresser le ZIP et le servir en HTTP. Sauvegarder aussi le projet en JSON : le Hub conserve ses projets dans le navigateur utilisé.
+
+Le type de jeu est conservé dans le projet et l’export Web. Dans la liste des projets, **⋮ → Type de jeu** change son classement et son HUD en conservant ses scènes. [Types compatibles, fonctionnalités et limites](docs/genre-templates.md).
 
 Les fenêtres flottantes se déplacent par leur en-tête et se redimensionnent par leurs huit bords et coins. Les dimensions sont mémorisées. Les panneaux conservent leur défilement, même à 140 % de zoom.
 

@@ -6,22 +6,9 @@ import {default2dCharacterPng} from '../assets/real-starter-sprites-2d.js?v=fix-
 import {prefab3d} from '../assets/catalog-3d.js';
 import {defaultController,defaultInventory,defaultStats} from './gameplay-components.js';
 
-export const genreTemplates={
- superhero:{label:'Hero Forge · Super-héros',description:'Pouvoirs, FX, progression RPG, monde réactif et escouade RTS',modes:['2d','3d']},
- sandbox:{label:'Projet vierge',description:'Scène minimale et bibliothèque libre',modes:['2d','3d']},
- tactical:{label:'FPS / TPS',description:'Capture et escouade de combat',modes:['2d','3d']},
- openworld:{label:'Monde ouvert',description:'Vehicule, PNJ et mission',modes:['2d','3d']},
- survival:{label:'Survival · Survie',description:'Besoins vitaux, récolte, fabrication, campement et dangers nocturnes',modes:['2d','3d']},
- rts:{label:'RTS',description:'Unites et capture',modes:['2d','3d']},
- horror:{label:'Horror',description:'Traque, cachette et generatrice',modes:['2d','3d']},
- fieldlab:{label:'WarLike Field Lab',description:'Circuit de diagnostic : marche, interactions, véhicule et obstacles',modes:['2d','3d']},
- rp:{label:'Roleplay (RP)',description:'Ville, PNJ, dialogue, boutique, réputation',modes:['2d','3d']},
- racing:{label:'Racing',description:'Véhicule pilotable, départ, checkpoints, arrivée',modes:['2d','3d']},
- simulation:{label:'Simulation',description:'Atelier, machines, production et ressources',modes:['2d','3d']},
- rpg:{label:'RPG',description:'Personnage, quête, expérience, marchand et soin',modes:['2d','3d']},
- fourx:{label:'Stratégie 4X',description:'Explorer, étendre, exploiter, exterminer (prototype au tour par tour)',modes:['2d','3d']}
-};
-export const normalizeGenre=value=>Object.hasOwn(genreTemplates,value)?value:'sandbox';
+export {genreTemplates,normalizeGenre} from './game-genres.js';
+import {normalizeGenre,genreCompatible} from './game-genres.js';
+import {createBundledPhysicsScene2d} from './bundled-physics-scene.js';
 const interact=(instructions,{once=false,radius=170}={})=>({enabled:true,event:'interact',key:'e',radius,once,conditions:[],instructions});
 const enter=(instructions,{once=true,radius=130}={})=>({enabled:true,event:'enter',radius,once,conditions:[],instructions});
 const msg=value=>({type:'message',value});
@@ -31,10 +18,12 @@ const signal=value=>({type:'emitSignal',value});
 const item=(key,value=1)=>({type:'giveItem',targetRole:'player',key,value});
 
 export function createGenreScene(genre,mode='3d'){
+ if(!['2d','3d'].includes(mode))throw new Error('Type de projet invalide.');
+ if(!genreCompatible(genre,mode))throw new Error('Ce type de jeu est incompatible avec le projet '+mode.toUpperCase()+'.');
  const chosen=normalizeGenre(genre),threeD=mode==='3d';
+ if(chosen==='platformer')return createBundledPhysicsScene2d();
  if(chosen==='superhero')return createHeroForgeScene(mode);
  if(chosen==='survival')return createSurvivalScene(mode);
- if(!['2d','3d'].includes(mode))throw new Error('Invalid project type');
  const objects=[];
  const spawn=(assetId,name,x,y,props={})=>{
   const id=objects.length+1;

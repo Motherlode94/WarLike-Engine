@@ -1,3 +1,4 @@
+import {gameProject} from './game-project.js';
 import {prefab3d,get3dAsset} from '../assets/catalog-3d.js';
 import {getAsset} from '../assets/catalog.js';
 import {defaultController,defaultStats,defaultInventory,defaultAi} from './gameplay-components.js';
@@ -30,4 +31,4 @@ export function createSurvivalScene(mode='3d'){
  player.sequences=[...['campfire','shelter'].map((key,i)=>({enabled:true,event:'interval',interval:.5,once:true,conditions:[{type:'survivalBuilt',key}],instructions:[{type:'completeObjective',key:i?'survivalShelter':'survivalCamp'}]})),{enabled:true,event:'interval',interval:.5,once:true,conditions:[{type:'survivalNightsAtLeast',value:1}],instructions:[{type:'completeObjective',key:'survivalDawn'},{type:'message',value:'L’aube est là · continue à développer ton camp.'}]},{enabled:true,event:'death',once:true,conditions:[],instructions:[{type:'loseGame',value:'Le survivant est tombé · prépare eau, nourriture et feu avant la nuit.'}]}];
  return {entities,selected:[player.id],nextId:entities.length+1,camera:{x:0,y:0,zoom:.8},playerId:player.id};
 }
-export function loadSurvivalScene(){if(state.playing)return false;const scene=createSurvivalScene(workspace.mode);state.entities=scene.entities;state.selected=scene.selected;state.nextId=scene.nextId;state.camera=scene.camera;record('Survival · Clairière');notify();return true}
+export function loadSurvivalScene(){if(state.playing)return false;const scene=createSurvivalScene(workspace.mode);state.entities=scene.entities;state.selected=scene.selected;state.nextId=scene.nextId;state.camera=scene.camera;gameProject.genre='survival';record('Survival · Clairière');notify();return true}

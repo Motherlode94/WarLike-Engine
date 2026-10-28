@@ -1,3 +1,4 @@
+import {genreForMode} from './game-genres.js';
 import {gameProject,restoreGameProject} from './game-project.js';
 import {prefab3d} from '../assets/catalog-3d.js';
 // Independent 2D/3D workspaces. Each keeps its own scene, selection and camera.
@@ -18,7 +19,7 @@ export function switchWorkspace(mode){
  if(workspace.mode===mode)return true;
  captureWorkspace();state.keys.clear();const slot=workspace.scenes[mode];
  workspace.mode=mode;
- restoreGameProject(slot.game);
+ restoreGameProject(slot.game,{entities:slot.entities});gameProject.genre=genreForMode(gameProject.genre,mode);
  state.entities=clone(slot.entities||[]);state.selected=clone(slot.selected||[]);
  state.nextId=slot.nextId||1;state.camera=clone(slot.camera||{x:0,y:0,zoom:1});
  notify();return true;
@@ -49,7 +50,7 @@ export function restoreWorkspaces(data,retainCurrent=false){
  }catch{return false}
  const mode=retainCurrent?workspace.mode:(data.workspaceMode==='3d'?'3d':'2d');
  workspace.scenes=next;workspace.mode=mode;
- const slot=next[mode];restoreGameProject(slot.game);
+ const slot=next[mode];restoreGameProject(slot.game,{entities:slot.entities,genre:data.genre});gameProject.genre=genreForMode(gameProject.genre,mode);
  state.entities=clone(slot.entities);state.selected=clone(slot.selected);
  state.nextId=slot.nextId;state.camera=clone(slot.camera);
  notify();return true;

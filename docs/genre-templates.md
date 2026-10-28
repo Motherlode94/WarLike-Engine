@@ -1,15 +1,27 @@
 # Templates et genres de jeu
 
-Depuis **WarLike Hub → Nouveau projet**, choisir **2D ou 3D**, puis le **Genre / template du projet**. Le Hub crée un ensemble d'objets, de composants et de séquences Blueprint modifiables. Le genre est enregistré dans les données et les métadonnées du projet; les projets existants sans champ `genre` restent des projets vierges.
+Depuis **WarLike Hub → Nouveau projet**, choisir **2D ou 3D**, puis **Type de jeu compatible avec le projet**. Le sélecteur affiche les types disponibles pour ce mode, avec une fiche des systèmes présents et de leur état. **Plateforme** est réservé au 2D ; l’action 2D est indiquée comme vue du dessus, et le FPS/TPS comme 3D.
 
-| Genre | Scène et premières interactions | État |
-| --- | --- | --- |
-| Hero Forge · Super-héros | Six pouvoirs, FX, progression, secours, réseau énergétique et escouade RTS | Mission jouable 2D / 3D ; [guide](hero-forge.md) |
-| RP / Roleplay | Joueur, quartier, PNJ, emploi, commerce, monnaie et réputation | Prototype interactif |
-| Racing | Véhicule pilotable, départ, checkpoint, arrivée, chronomètre via Blueprint | Prototype jouable |
-| Simulation | Atelier, production de matériaux, commande rémunérée et maintenance | Prototype interactif |
-| RPG | Donneur de quête, zone d'objectif, expérience, marchand, sanctuaire et inventaire | Prototype interactif |
-| Stratégie 4X | Capitale, exploration, colonisation, mines, camp ennemi, armée et fin de tour avec production | Prototype simplifié (pas un vrai jeu de stratégie complet) |
+| Type de jeu | 2D | 3D | Base fournie |
+| --- | --- | --- | --- |
+| Hero Forge · Super-héros | Oui | Oui | Mission jouable : pouvoirs, FX, progression, secours, destruction et escouade |
+| Survival · Survie | Oui | Oui | Scène jouable : besoins, récolte, fabrication, feu, abri et nuit |
+| Plateforme | Oui | — | Scène jouable : sprites Kenney, saut, gravité, plateformes et colliders |
+| Action | Vue du dessus | FPS / TPS | Base à compléter : couverture, adversaire, véhicule armé et capture |
+| RPG | Oui | Oui | Base à compléter : quête, inventaire, marchand, expérience et soin |
+| RTS | Oui | Oui | Base à compléter : escouade, ressources, déplacement et capture |
+| Course | Oui | Oui | Prototype jouable : véhicule, départ, checkpoint et arrivée |
+| Simulation | Oui | Oui | Base à compléter : atelier, matériaux, commande et maintenance |
+| Monde ouvert | Oui | Oui | Base à compléter : véhicule, PNJ et livraison |
+| Horreur | Oui | Oui | Base à compléter : traque, cachette et génératrice |
+| RP / Roleplay | Oui | Oui | Base à compléter : PNJ, emploi, commerce, monnaie et réputation |
+| Stratégie 4X | Oui | Oui | Prototype : exploration, colonisation, ressources et fin de tour |
+
+**Projet libre** est une scène minimale. **Field Lab** est un circuit de diagnostic, classé parmi les outils.
+
+Le genre fait partie de la configuration du jeu : il est conservé dans les sauvegardes du projet, les espaces 2D/3D et les exports Web. Les anciens projets utilisent leur métadonnée de genre ; sans cette information, certains composants caractéristiques permettent de reconnaître Survival, Hero Forge, Plateforme et les templates C#. Un choix de genre explicite reste prioritaire.
+
+Dans la liste des projets, ouvrir **⋮ → Type de jeu** pour changer le classement et le HUD d’un projet existant. Ses objets et ses scènes sont conservés ; ce réglage n’installe pas une nouvelle scène de template. Pour obtenir une scène complète de départ, créer un nouveau projet avec le type souhaité, ou utiliser les commandes de scène Hero Forge / Survival.
 
 ## Utilisation
 
@@ -17,15 +29,15 @@ Depuis **WarLike Hub → Nouveau projet**, choisir **2D ou 3D**, puis le **Genre
 2. Ouvrir la scène générée; les GameObjects peuvent être déplacés ou remplacés.
 3. Lancer **Play**, se déplacer avec **ZQSD/WASD**, puis interagir via **E** près des marqueurs.
 4. Ouvrir **Inspector → Gameplay Recipes** ou **Blueprint** pour personnaliser les comportements.
-5. Les indicateurs de RP / Simulation / RPG / 4X apparaissent pendant Play.
+5. Le HUD correspondant au genre apparaît pendant Play et dans le jeu exporté. En coop LAN, l’invité reçoit le genre et les variables du monde de l’hôte pour afficher les mêmes indicateurs ; son projet local retrouve ses réglages lorsqu’il quitte.
 
 Le preset Racing 3D utilise le contrôleur automobile arcade déjà disponible. Le chronomètre utilise les variables `raceStarted`, `raceElapsed`, `raceCheckpoint`, `raceFinished` du runtime Blueprint. Pour le 4X, « Fin du tour » est une interaction (E), pas encore un moteur global de stratégie au tour par tour. Le camp ennemi exige au moins une armée et ne propose pas d'IA adverse pour le moment.
 
 ## À ne pas confondre avec des systèmes terminés
 
-Les scènes contiennent **des exemples fonctionnels de logique**, pas des jeux complets. Le RP n'a pas encore de synchronisation multijoueur ni de système persistant de métiers. La simulation n'a pas encore de chaînes de production approfondies. Le composant Progression RPG partagé ajoute trois branches de compétences ; le template RPG conserve ses exemples de quêtes et d’économie. Il n’existe pas encore d’éditeur graphique de grand arbre de talents. Le 4X n'a pas encore de diplomatie, brouillard de guerre, terrain hexagonal ou adversaires stratégiques autonomes. Les séquences utilisées ici sont exécutées par le runtime JavaScript du navigateur; le runtime C# .NET local est séparé.
+Les scènes contiennent **des exemples fonctionnels de logique**, pas des jeux complets. La coop LAN partage les déplacements et les états de scène, mais le RP n’a pas encore de protocole complet de métiers, de dialogues à choix et de transactions indépendantes par joueur. La simulation n'a pas encore de chaînes de production approfondies. Le composant Progression RPG partagé ajoute trois branches de compétences ; le template RPG conserve ses exemples de quêtes et d’économie. Il n’existe pas encore d’éditeur graphique de grand arbre de talents. Le 4X n'a pas encore de diplomatie, brouillard de guerre, terrain hexagonal ou adversaires stratégiques autonomes. Les séquences utilisées ici sont exécutées par le runtime JavaScript du navigateur; le runtime C# .NET local est séparé.
 
-Le type de projet 2D/3D reste indépendant du genre et le thème de l'éditeur reste indépendant des données du projet.
+La disponibilité d’un type de jeu dépend du mode 2D/3D et le thème de l'éditeur reste indépendant des données du projet.
 
 
 ## Composants C# natifs (runtime .NET 8 local)

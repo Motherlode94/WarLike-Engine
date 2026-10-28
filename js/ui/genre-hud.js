@@ -1,6 +1,7 @@
 import {updateThreatScanner} from './threat-scanner.js';
 import {updateEngineDiagnosticsPanel} from './engine-diagnostics-panel.js';
-import {hub} from '../core/project-hub.js';
+import {gameProject} from '../core/game-project.js';
+import {lanState,isLanGuest} from '../core/lan-state.js';
 // Lightweight status overlay for genre-specific playable prototypes.
 import {sequenceRuntime} from '../core/logic-sequences.js';
 import {isRtsUnit} from '../core/rts-orders.js';
@@ -14,15 +15,16 @@ export function updateGenreHud(state){
  updateEngineDiagnosticsPanel(state);
  if(!hud){const host=document.getElementById('viewport');if(!host)return;hud=document.createElement('div');hud.className='warlike-genre-hud';hud.setAttribute('aria-live','off');host.append(hud)}
  if(!state.playing){hud.hidden=true;return}
- const globals=sequenceRuntime.globals;
+ const globals=isLanGuest()?lanState.variables||{}:sequenceRuntime.globals;
  const racing=Number(globals.raceStarted)===1;
  const units=state.entities.filter(o=>state.selected.includes(o.id)&&isRtsUnit(o)).length;
- const genre=hub.genre||'sandbox';
- if(!racing&&!units&&!['rp','simulation','rpg','fourx','fieldlab'].includes(genre)){hud.hidden=true;return}
+ const genre=(isLanGuest()?lanState.genre:gameProject.genre)||'sandbox';
+ if(!racing&&!units&&!['platformer','rp','simulation','rpg','fourx','fieldlab'].includes(genre)){hud.hidden=true;return}
  const pieces=[];
  if(racing)pieces.push('🏁 '+(Number(globals.raceFinished)===1?'Arrivée':'Course')+' · '+clock(globals.raceElapsed)+' · CP '+(Number(globals.raceCheckpoint)||0));
  if(units)pieces.push('RTS · '+units+' unité'+(units>1?'s':'')+' · Clic droit : déplacer');
  const stat=(key,fallback=0)=>Number.isFinite(Number(globals[key]))?Number(globals[key]):fallback;
+ if(genre==='platformer')pieces.push('PLATEFORME · Q/D ou flèches : marcher · Espace/Z/W : sauter · Maj : courir');
  if(genre==='fieldlab')pieces.push('FIELD LAB · '+(stat('labWalk')+stat('labInteract')+stat('labDrive'))+'/3 · '+(stat('labWalk')?'✓ Marche':'○ Marche')+' · '+(stat('labInteract')?'✓ Console':'○ Console')+' · '+(stat('labDrive')?'✓ Conduite':'○ Conduite')+(stat('labCompleted')?' · DIAGNOSTIC TERMINÉ':''));
  if(genre==='rp')pieces.push('RP · '+stat('money')+' crédits · réputation '+stat('reputation')+' · E interagir');
  if(genre==='simulation')pieces.push('SIM · '+stat('money')+' crédits · '+stat('materials')+' matériaux · maintenance '+stat('maintenance'));

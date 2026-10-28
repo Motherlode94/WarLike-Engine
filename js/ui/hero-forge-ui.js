@@ -1,3 +1,4 @@
+import {gameProject} from '../core/game-project.js';
 import {lanActor,isLanGuest} from '../core/lan-state.js';
 import {gameplayInputBlocked} from '../core/gameplay-input.js';
 import {playSound} from '../core/audio.js';
@@ -14,7 +15,7 @@ import {view3d} from '../core/viewport-3d.js';
 import {record} from '../core/history.js';
 const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e};
 export function loadHeroForgeScene(){
- if(state.playing)return;if(!confirm('Charger Hero Forge ? La scène actuelle reste récupérable avec Ctrl+Z.'))return;record('Avant Hero Forge');const scene=createHeroForgeScene(workspace.mode);state.entities=scene.entities;state.selected=scene.selected;state.nextId=scene.nextId;state.camera=scene.camera;state.demoGuide=scene.guide;if(workspace.mode==='3d')Object.assign(view3d,{target:[0,1,1],radius:23,yaw:-.35,pitch:.62});record('Hero Forge · Scène complète');notify();
+ if(state.playing)return;if(!confirm('Charger Hero Forge ? La scène actuelle reste récupérable avec Ctrl+Z.'))return;record('Avant Hero Forge');const scene=createHeroForgeScene(workspace.mode);state.entities=scene.entities;state.selected=scene.selected;state.nextId=scene.nextId;state.camera=scene.camera;state.demoGuide=scene.guide;gameProject.genre='superhero';if(workspace.mode==='3d')Object.assign(view3d,{target:[0,1,1],radius:23,yaw:-.35,pitch:.62});record('Hero Forge · Scène complète');notify();
 }
 export function initHeroForgeUi(){
  heroRuntime.onPower=power=>playSound(power==='bolt'?'laser':power==='nova'?'impact':power==='rally'?'pickup':'jump',{cooldown:.08,gain:.55});

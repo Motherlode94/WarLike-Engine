@@ -16,7 +16,7 @@ export function frameEditorSelection(){
  state.camera.x=host.clientWidth/2-(minX+maxX)/2*state.camera.zoom;state.camera.y=host.clientHeight/2-(minY+maxY)/2*state.camera.zoom;
 }
 export function initDesktopInteractions(){
- if(document.body.dataset.desktopInteractions)return;document.body.dataset.desktopInteractions='true';document.body.classList.add('warlike-desktop');
+ if(globalThis.__WARLIKE_BUILD__||document.body.dataset.desktopInteractions)return;document.body.dataset.desktopInteractions='true';document.body.classList.add('warlike-desktop');
  for(const id of ['canvas','canvas3d']){const c=document.getElementById(id);c.tabIndex=0;c.setAttribute('aria-keyshortcuts','F Q W E R T');c.addEventListener('pointerdown',()=>c.focus({preventScroll:true}))}
  const menu=document.createElement('div');menu.id='warlikeDesktopMenu';menu.className='desktop-context-menu';menu.hidden=true;menu.setAttribute('role','menu');document.body.append(menu);
  let anchor=null,right=null,lastRight=null,pan=null;
@@ -34,6 +34,7 @@ export function initDesktopInteractions(){
   else if(target.closest('.inspector-component>summary')){const card=target.closest('.inspector-component');items=[...card.querySelectorAll('.unity-component-menu button')].map(b=>action(b.textContent,()=>b.click(),b.disabled));}
   else if(target.closest('#objects,#viewport,#properties,#projectContent')){
    const row=target.closest('[data-object-id]');if(row&&!state.selected.includes(Number(row.dataset.objectId))){state.selected=[Number(row.dataset.objectId)];notify()}
+   if(!row&&workspace.mode==='3d'&&target.closest('#viewport')){const picked=view3d.pickAt?.(event.clientX,event.clientY);if(picked&&!state.selected.includes(picked.id)){state.selected=[picked.id];notify()}}
    const has=state.selected.length>0,canvas=document.getElementById(workspace.mode==='3d'?'canvas3d':'canvas'),r=canvas.getBoundingClientRect(),zoom=Number.parseFloat(getComputedStyle(document.body).zoom)||1;
    let point={x:160,y:120};if(target.closest('#viewport')){if(workspace.mode==='3d'){const hit=groundHit3d(event.clientX-r.left,event.clientY-r.top,sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius),r.width,r.height);if(hit)point={x:hit[0]*64,y:hit[2]*64}}else point={x:((event.clientX-r.left)/zoom-state.camera.x)/state.camera.zoom,y:((event.clientY-r.top)/zoom-state.camera.y)/state.camera.zoom}}
    items=[action('Créer un GameObject',()=>create('object',point)),action('Créer un personnage',()=>create('character',point)),null,action('Cadrer la sélection',frameEditorSelection,!has,'F'),action('Copier',copySelectedObjects,!has,'Ctrl+C'),action('Coller',pasteObjectsFromClipboard,false,'Ctrl+V'),action('Dupliquer',duplicateSelected,!has,'Ctrl+D'),null,action('Ajouter un composant…',openComponentBrowser,!has),action('Ouvrir Blueprint',()=>document.getElementById('openBlueprint').click(),!has),action('Supprimer',deleteSelected,!has,'Suppr')];

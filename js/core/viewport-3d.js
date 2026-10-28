@@ -376,6 +376,7 @@ export function init3d(canvas,host,buttons){
    if(d<radius*1.35&&screen.depth+d*.2<score){best=o;score=screen.depth+d*.2}
   }return best;
  };
+ view3d.pickAt=(clientX,clientY)=>{const r=canvas.getBoundingClientRect();return pick({x:clientX-r.left,y:clientY-r.top,w:r.width,h:r.height},camera())};
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('pointerdown',e=>{
   if(!view3d.enabled)return;

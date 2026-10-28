@@ -36,15 +36,28 @@ export function updateHorrorPerception(dt,player,entities,keys=new Set()){
   const dx=px-Number(enemy.x||0),dy=py-Number(enemy.y||0),distance=Math.hypot(dx,dy);
   const vision=(crouched?.55:1)*clamp(Number(cfg?.visionRange??230),10,1000);
   const hearing=70+clamp(Number(cfg?.hearingRange??220),0,1000)*horror.noise;
-  const spotted=!hidden&&distance<vision,heard=!hidden&&distance<hearing&&horror.noise>.25;
+  // Occlusion: a solid wall blocks sight, but not a nearby loud noise.
+  const blockedSight=(entities||[]).some(o=>{
+   if(o===enemy||o===player||o.collision3d===false||!(o.type==='object'||o.type==='mesh3d'||o.solid3d===true))return false;
+   const x0=Number(enemy.x||0),y0=Number(enemy.y||0),x1=px,y1=py;
+   let lo=0,hi=1;
+   for(const [origin,delta,min,max] of [[x0,x1-x0,Number(o.x||0),Number(o.x||0)+Number(o.w||0)],[y0,y1-y0,Number(o.y||0),Number(o.y||0)+Number(o.h||0)]]){
+    if(Math.abs(delta)<1e-8){if(origin<min||origin>max)return false;continue}
+    const t1=(min-origin)/delta,t2=(max-origin)/delta;lo=Math.max(lo,Math.min(t1,t2));hi=Math.min(hi,Math.max(t1,t2));if(lo>hi)return false;
+   }
+   return lo<1&&hi>0;
+  });
+  const spotted=!hidden&&!blockedSight&&distance<vision,heard=!hidden&&distance<hearing&&horror.noise>.25;
   const ai=enemy.horrorAI??={awareness:0,searchTimer:0,lastKnown:null};
   if(spotted||heard){ai.awareness=clamp(ai.awareness+dt*(spotted?1.1:.55),0,1);ai.lastKnown={x:px,y:py};ai.searchTimer=clamp(Number(cfg?.memorySeconds??5),.1,60)}
   else{ai.awareness=clamp(ai.awareness-dt*.18,0,1);ai.searchTimer=Math.max(0,ai.searchTimer-dt)}
   ai.state=ai.awareness>.65?'chase':ai.searchTimer>0?'search':'patrol';
   if(ai.state==='chase'||ai.state==='search'){
    const target=ai.state==='chase'?{x:px,y:py}:ai.lastKnown;
-   if(target&&distance>25){const dx2=target.x-Number(enemy.x||0),dy2=target.y-Number(enemy.y||0),len=Math.hypot(dx2,dy2)||1,speed=ai.state==='chase'?75:33;
-    enemy.x+=dx2/len*speed*dt;enemy.y+=dy2/len*speed*dt;
+   if(target&&distance>25){const dx2=target.x-Number(enemy.x||0),dy2=target.y-Number(enemy.y||0),len=Math.hypot(dx2,dy2)||1,speed=ai.state==='chase'?Number(cfg?.chaseSpeed??75):Number(cfg?.searchSpeed??33);
+    const nx=Number(enemy.x||0)+dx2/len*speed*dt,ny=Number(enemy.y||0)+dy2/len*speed*dt;
+    const collided=(entities||[]).some(o=>o!==enemy&&o!==player&&o.collision3d!==false&&(o.type==='object'||o.type==='mesh3d'||o.solid3d===true)&&nx<Number(o.x||0)+Number(o.w||0)&&nx+Number(enemy.w||0)>Number(o.x||0)&&ny<Number(o.y||0)+Number(o.h||0)&&ny+Number(enemy.h||0)>Number(o.y||0));
+    if(!collided){enemy.x=nx;enemy.y=ny}
    }
   }
  }

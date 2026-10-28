@@ -21,3 +21,8 @@ test('projection clips objects behind the camera',()=>{
  const behind=[c.eye[0]-c.forward[0],c.eye[1]-c.forward[1],c.eye[2]-c.forward[2]];
  assert.equal(project3d(behind,c,800,600),null);
 });
+
+ test('3D bounds use ground depth independently of model height for rendering and camera tracking',()=>{
+ const b=objectBounds3d({x:64,y:128,w:64,h:192,depth3d:32,elevation3d:0,type:'mesh3d'});
+ assert.equal(b.z,2.25);assert.equal(b.d,.5);assert.equal(b.h,3);
+});

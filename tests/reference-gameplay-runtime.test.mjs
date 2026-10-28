@@ -157,12 +157,12 @@ test('import and duplication retain independent AI, identity, health and invento
 test('2D foot collision opens after inventory Blueprint unlocks the door',async()=>{
  const {state}=await import('../js/core/state.js');
  const {walkPlayer}=await import('../js/core/player-controller.js');
- const backup=state.entities,p=hero({x:0}),door={id:3,type:'object',x:22,y:-10,w:20,h:60,
+ const backup=state.entities,p=hero({x:0}),door={id:3,type:'object',x:22,y:-10,w:20,h:60,collider2d:{enabled:true},
   sequence:createBlueprintPreset('inventory-key-door','2d')};
  try{
-  state.entities=[p,door];walkPlayer(p,.1,new Set(['d']));assert.equal(p.x,0);
+  state.entities=[p,door];walkPlayer(p,.1,new Set(['d']));assert.ok(p.x+p.w<=door.x);const blockedX=p.x;
   inventoryAdd(p,'key');resetSequences();tick([p,door],p,.1,['e']);
-  walkPlayer(p,.1,new Set(['d']));assert.ok(p.x>0);
+  walkPlayer(p,.1,new Set(['d']));assert.ok(p.x>blockedX);
  }finally{state.entities=backup}
 });
 

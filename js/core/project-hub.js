@@ -3,7 +3,7 @@ import {createGenreScene,normalizeGenre,genreTemplates} from './genre-templates.
 import {inspectProject,downloadDiagnostic} from './project-diagnostics.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {prefab3d} from '../assets/catalog-3d.js';
-import {resetHistory} from './history.js';
+import {resetHistory,record} from './history.js';
 // WarLike Hub — local named projects, independent 2D/3D templates.
 // Storage stays on this browser. Export JSON to transfer projects to another device.
 import {workspace,restoreWorkspaces,workspacePayload} from './workspaces.js';
@@ -63,7 +63,7 @@ export function createProject(name,type,assetPack='starter',genre='sandbox'){
  const id=uniqueId(),data={workspaceMode:type,workspaces:{'2d':chosenGenre==='sandbox'?entry(defaults2d()):createGenreScene(chosenGenre,'2d'),'3d':chosenGenre==='sandbox'?entry(defaults3d()):createGenreScene(chosenGenre,'3d')}};
  if(!restoreWorkspaces(data))throw Error('Impossible de créer le projet.');
  gameProject.id=id;gameProject.title=name;
- Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(assetPack),genre:chosenGenre});setHubAccent(hub.accent,{persist:false});state.demoGuide='';resetHistory();saveProject();notify();return id;
+ Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(assetPack),genre:chosenGenre});setHubAccent(hub.accent,{persist:false});state.demoGuide='';resetHistory();record('Créer le projet '+name);saveProject();notify();return id;
 }
 export function openProject(id){
  if(state.playing)throw Error('Arrête Play avant de changer de projet.');
@@ -71,7 +71,7 @@ export function openProject(id){
  const data=safeRead(PREFIX+id,null),meta=indexed().find(p=>p.id===id);
  if(!data||!meta||!restoreWorkspaces(data))throw Error('Projet introuvable ou corrompu.');
  gameProject.id=id;if(!data.workspaces?.[meta.type]?.game?.title)gameProject.title=meta.name;
- Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack),genre:normalizeGenre(data.genre||meta.genre)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide='';resetHistory();notify();return true;
+ Object.assign(hub,{projectId:id,projectName:meta.name,type:meta.type,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack),genre:normalizeGenre(data.genre||meta.genre)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide='';resetHistory();record('Ouvrir le projet '+meta.name);notify();return true;
 }
 export function deleteProject(id){
  if(state.playing)throw Error('Arrête Play avant de supprimer.');
@@ -123,7 +123,7 @@ export function initHub(){
  let wasPlaying=false;
  const updateTitle=()=>{title.textContent=hub.projectName+(hub.projectId?' · '+hub.type.toUpperCase():'')};
  const hide=()=>{document.dispatchEvent(new CustomEvent('warlike:asset-pack-change',{detail:{projectId:hub.projectId,assetPack:hub.assetPack}}));modal.hidden=true;document.body.classList.remove('hub-open');document.dispatchEvent(new Event('warlike:project'));updateTitle()};
- const show=()=>{if(state.playing)return;saveProject();picker.value=hex.value=hub.accent;setHubAccent(hub.accent,{persist:false});modal.hidden=false;document.body.classList.add('hub-open');render();message.textContent=''};
+ const show=()=>{if(state.playing)return;saveProject();picker.value=hex.value=hub.accent;setHubAccent(hub.accent,{persist:false});modal.hidden=false;document.body.classList.add('hub-open');render();message.textContent='';document.dispatchEvent(new Event('warlike:hub-opened'))};
  const run=cb=>{try{cb();picker.value=hex.value=hub.accent;setHubAccent(hub.accent,{persist:false});hide()}catch(e){message.textContent=e.message}};
  function render(){
   cards.replaceChildren();
@@ -136,7 +136,7 @@ export function initHub(){
   projectCount.textContent=projects.length+' projet'+(projects.length>1?'s':'');
   if(!projects.length){const empty=document.createElement('p');empty.className='hub-empty-projects';empty.textContent=projectSearch.value||projectFilter.value!=='all'?'Aucun projet ne correspond à ta recherche.':'Aucun projet créé. Choisis WarLike 2D ou 3D pour commencer.';cards.append(empty)}
   for(const p of projects){
-   const item=document.createElement('div');item.className='hub-project-card';
+   const item=document.createElement('div');item.className='hub-project-card';item.dataset.projectId=p.id;
    const info=document.createElement('div');const heading=document.createElement('strong');heading.textContent=p.name;
    const detail=document.createElement('small');detail.textContent=p.type.toUpperCase()+' · '+genreTemplates[normalizeGenre(p.genre)].label+' · Assets : '+({starter:'WarLike',kenney:'Kenney CC0',community:'Community CC0',both:'Kenney + Community'}[sanitizeAssetPack(p.assetPack)])+' · '+new Date(p.updated).toLocaleString();item.style.borderLeft='4px solid '+(normalizeHubAccent(p.accent)||DEFAULT_ACCENT);
    info.append(heading,detail);

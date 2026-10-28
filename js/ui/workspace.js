@@ -179,7 +179,7 @@ communityButton.onclick=async()=>{
  }finally{communityButton.disabled=false}
 };
 // Kenney models: original CC0 GLB for WarLike and static Unity-ready OBJ export.
-const kenneyTools=document.createElement('details');kenneyTools.className='real-model-import unity-asset-library';
+const kenneyTools=document.createElement('details');kenneyTools.id='legacyKenneySourcePanel';kenneyTools.className='real-model-import unity-asset-library';
 const kenneyHeading=document.createElement('summary');kenneyHeading.textContent='▧ Assets compatibles Unity · Kenney CC0';
 const kenneyDescription=document.createElement('p');kenneyDescription.textContent='Personnages, véhicules, armes, bâtiments et décors. Modèles Kenney réels sous licence CC0. GLB pour WarLike ; export OBJ (mesh statique) pour Unity.';
 const kenneyButton=document.createElement('button');kenneyButton.type='button';kenneyButton.textContent='＋ Ajouter 500 assets 3D Kenney';
@@ -201,7 +201,7 @@ kenneyButton.onclick=async()=>{
 kenneyTools.append(kenneyHeading,kenneyDescription,kenneyButton,kenneyStatus);
 kenneyTools.hidden=workspace.mode!=='3d';
 tree.parentNode?.querySelector('.asset-content')?.prepend(kenneyTools);
-const externalLibrary=document.createElement('details');externalLibrary.className='real-model-import';
+const externalLibrary=document.createElement('details');externalLibrary.id='legacyExternalLibrariesPanel';externalLibrary.className='real-model-import';
 const externalTitle=document.createElement('summary');externalTitle.textContent='🌐 Bibliothèques 3D gratuites (sites officiels)';
 externalLibrary.append(externalTitle);
 const externalNote=document.createElement('p');externalNote.textContent='Choisis un modèle sur le site, télécharge-le légalement, puis importe son fichier .glb ci-dessus. Les formats FBX/OBJ nécessitent une conversion GLB (par exemple via Blender).';externalLibrary.append(externalNote);
@@ -289,7 +289,7 @@ splitter.addEventListener('pointermove',e=>{if(dragHeight)applyHeight(dragHeight
 splitter.addEventListener('pointerup',()=>dragHeight=null);splitter.addEventListener('pointercancel',()=>dragHeight=null);
 splitter.addEventListener('keydown',e=>{if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();applyHeight(document.querySelector('.project-panel').getBoundingClientRect().height+(e.key==='ArrowUp'?30:-30))}});
 render();
-const canvas=$('#canvas');canvas.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('application/x-warlike-asset'))e.preventDefault()});canvas.addEventListener('drop',e=>{e.preventDefault();const id=e.dataTransfer.getData('application/x-warlike-asset');if(state.playing)return; if(workspace.mode==='3d'){if(!get3dAsset(id))return;add3d(id);return}if(!catalog.some(a=>a.id===id))return;addPrefab(id);const item=state.entities.find(o=>o.id===state.selected.at(-1));if(item){const rect=canvas.getBoundingClientRect(),p={x:e.clientX-rect.left,y:e.clientY-rect.top};item.x=Math.round((p.x-state.camera.x)/state.camera.zoom-item.w/2);item.y=Math.round((p.y-state.camera.y)/state.camera.zoom-item.h/2);notify()}log('Déposé : '+id)});
+const canvas=$('#canvas');canvas.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('application/x-warlike-asset'))e.preventDefault()});canvas.addEventListener('drop',e=>{e.preventDefault();const id=e.dataTransfer.getData('application/x-warlike-asset');if(state.playing)return; if(workspace.mode==='3d'){if(!get3dAsset(id))return;add3d(id);return}if(!catalog.some(a=>a.id===id))return;addPrefab(id);const item=state.entities.find(o=>o.id===state.selected.at(-1));if(item){const rect=canvas.getBoundingClientRect(),p={x:(e.clientX-rect.left)*canvas.clientWidth/rect.width,y:(e.clientY-rect.top)*canvas.clientHeight/rect.height};item.x=Math.round((p.x-state.camera.x)/state.camera.zoom-item.w/2);item.y=Math.round((p.y-state.camera.y)/state.camera.zoom-item.h/2);record('Positionner prefab 2D');notify()}log('Déposé : '+id)});
 const canvas3d=$('#canvas3d');
 canvas3d.addEventListener('dragover',e=>{if(workspace.mode==='3d'&&e.dataTransfer.types.includes('application/x-warlike-asset'))e.preventDefault()});
 canvas3d.addEventListener('drop',e=>{
@@ -302,8 +302,8 @@ canvas3d.addEventListener('drop',e=>{
  const position=groundHit3d(e.clientX-rect.left,e.clientY-rect.top,cam,rect.width,rect.height);
  add3d(id);
  const obj=state.entities.find(o=>o.id===state.selected.at(-1));
- if(obj&&position){obj.x=Math.round(position[0]*64-obj.w/2);obj.y=Math.round(position[2]*64-obj.h/2);record('Positionner prefab 3D');notify()}
+ if(obj&&position){obj.x=Math.round(position[0]*64-obj.w/2);obj.y=Math.round(position[2]*64-(obj.depth3d??obj.h)/2);record('Positionner prefab 3D');notify()}
  log('Prefab 3D déposé : '+id);
 });
-window.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||e.ctrlKey||e.metaKey||state.playing)return;const map={q:'hand',w:'move',e:'rotate',r:'scale',t:'rect'};if(map[e.key.toLowerCase()])setTool(map[e.key.toLowerCase()])});
+window.addEventListener('keydown',e=>{if(e.defaultPrevented||view3d.drag?.nav==='look')return;if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||e.ctrlKey||e.metaKey||state.playing)return;const map={q:'hand',w:'move',e:'rotate',r:'scale',t:'rect'};if(map[e.key.toLowerCase()])setTool(map[e.key.toLowerCase()])});
 log('WarLike Engine editor démarré');}

@@ -24,7 +24,7 @@ export function createRapierScene(RAPIER,entities,gravity=15){
  const actors=new Map();
  const toMeters=v=>Number(v||0)/64;
  for(const o of entities){
-  if(o.collision3d===false||!(o.solid3d===true||o.type==='mesh3d'||o.rigidbody3d?.enabled))continue;
+  if(o.collision3d===false||o.lightType||o.audioEnabled||!(o.solid3d===true||o.type==='object'||o.type==='mesh3d'||o.rigidbody3d?.enabled))continue;
   const isDynamic=!!o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!o.playable3d&&!o.ai?.enabled&&o.type!=='player';
   const width=Math.max(.01,toMeters(o.w||32)),depth=Math.max(.01,toMeters(o.depth3d||o.h||32)),height=Math.max(.01,toMeters(o.h||32));
   const pos={x:toMeters(o.x||0)+width/2,y:Number(o.elevation3d||0)+height/2,z:toMeters(o.y||0)+depth/2};

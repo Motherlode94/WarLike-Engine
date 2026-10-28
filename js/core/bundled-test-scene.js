@@ -11,7 +11,7 @@ export function createBundledTestScene(kind='town'){
  };
  const playerId=get3dAsset('quaternius-ultimatedanimatedcharacter-bluesoldier-male')?'quaternius-ultimatedanimatedcharacter-bluesoldier-male':'free-mini-characters-character-male-a';
  const player=put(playerId,'Player · Soldat animé',0,7,1.8,'Joueur',{playable3d:true,controller3d:defaultController(),stats:defaultStats(),inventory:defaultInventory(),cameraRig:{mode:'thirdPerson',distance:4.8,height:.72,followSharpness:10,sensitivity:.0026,collision:true},tags:['player']});
- put('free-nature-kit-ground-grass','Terrain · Kenney Nature Kit',0,0,32,'Environnement',{collision3d:false,elevation3d:-.015});
+ for(const z of [-8,8])put('free-nature-kit-ground-grass','Terrain · Kenney Nature Kit',0,z,32,'Environnement',{collision3d:false,elevation3d:-.12,w:32*64,h:.12*64,depth3d:16*64});
  for(const [x,z] of [[-14,-10],[-10,-11],[14,-10],[13,-4],[-14,5],[14,10],[-10,12],[-4,12]])put('free-nature-kit-tree-oak','Chêne',x,z,3.6,'Végétation');
  for(const [x,z] of [[-12,-4],[12,-3],[-11,9],[10,11]])put('free-nature-kit-rock-largea','Rocher',x,z,1.4,'Végétation');
  if(kind==='nature'){

@@ -1,9 +1,13 @@
+import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
 import {defaultCameraRig} from './play-camera.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController} from './gameplay-components.js';
 import {defaultRigidbody3d} from './physics-3d.js';
 import {newSequence} from './logic-sequences.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
+ {id:'collider2d',name:'Box Collider 2D',category:'Physique',description:'Collision solide ou trigger, dimensions et décalage.',modes:['2d'],create:defaultCollider2d},
+ {id:'rigidbody2d',name:'Rigidbody 2D',category:'Physique',description:'Gravité, vitesse, rebond et friction.',modes:['2d'],create:defaultRigidbody2d},
+ {id:'controller2d',name:'Contrôleur de personnage 2D',category:'Personnage',description:'Vue du dessus ou plateforme avec gravité et saut.',modes:['2d'],create:defaultController2d},
  {id:'cameraRig',name:'Caméra de jeu',category:'Caméra',description:'Suivi fluide, distance, sensibilité et évitement des obstacles.',create:defaultCameraRig},
  {id:'stats',name:'Stats · Santé et endurance',category:'Personnage',description:'Santé, endurance et régénération.',create:defaultStats},
  {id:'inventory',name:'Inventaire',category:'Personnage',description:'Objets, capacité et équipement.',create:defaultInventory},
@@ -23,10 +27,10 @@ export function addObjectComponent(object,id,mode){
  const definition=componentChoices(mode).find(d=>d.id===id);if(!definition)return false;
  if(id==='sequence'&&object.sequence){object.sequences??=[];if(object.sequences.length>=32)return false;object.sequences.push(definition.create());return true}
  if(hasObjectComponent(object,id))return false;
- object[id]=definition.create();return true;
+ object[id]=definition.create();if(id==='rigidbody2d')object.collider2d??=defaultCollider2d();return true;
 }
 export function resetObjectComponent(object,id){const definition=webComponentDefinitions.find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
-export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id))return false;delete object[id];return true}
+export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id))return false;delete object[id];if(id==='collider2d')object.collision3d=false;return true}
 export const webDataComponentKinds=new Set(['Weapon','Damageable','Health','Team','Respawn','DeathmatchRules']);
 export function inspectorComponentRank(title){
  if(title==='Transform')return 0;

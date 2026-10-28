@@ -6,7 +6,10 @@ const P=(name,accent,surface,menu,toolbar,panel,header,button,border,muted,scene
  name,accent,surface,menu,toolbar,panel,header,button,border,muted,scene,footer,text,font:'default',fontSize:12,fontWeight:'500'
 });
 export const editorThemePresets={
- graphite:P('Unity Graphite','#6c9dc8','#252629','#252629','#323438','#323438','#454950','#454950','#535a62','#adb8c1','#191b1f','#252629','#e5e7eb'),
+ graphite:P('Unity Graphite','#4c88b7','#292929','#222222','#303030','#383838','#303030','#484848','#242424','#b8b8b8','#242424','#292929','#dedede'),
+ scifi:P('Science-fiction','#50dce9','#0c1720','#09121b','#12232f','#152936','#1c3a4b','#244554','#316375','#a8c6cf','#071119','#09121b','#e2f7fa'),
+ fantasy:P('Fantastique','#d3b579','#201b18','#211a18','#302923','#383027','#463a2c','#50412f','#786448','#c6b899','#17140f','#211a18','#f1e6cd'),
+ nature:P('Nature','#8aba82','#18221d','#15201a','#223129','#2a3a2f','#354b3b','#3c5541','#56755b','#b2c5ae','#101c14','#15201a','#e4eee0'),
  obsidian:P('WarLike Obsidian','#48cba9','#101316','#101316','#1c2228','#1c2228','#303a43','#303a43','#45535b','#9fadaf','#0c1115','#101316','#f1f5f9'),
  midnight:P('Midnight Blue','#4ca9d9','#101827','#101827','#192638','#192638','#283e57','#283e57','#3f5973','#a4c3d5','#0b1421','#101827','#e2f0ff'),
  violet:P('Cyber Violet','#a784f7','#171322','#171322','#261f37','#261f37','#37304d','#37304d','#574969','#baabd9','#100e1b','#171322','#f0e8ff'),
@@ -71,10 +74,13 @@ export function initEditorPalette(){
  const select=document.getElementById('editorThemePreset');
  const inputs=Object.fromEntries(Object.entries(fields).map(([key,id])=>[key,document.getElementById(id)]));
  if(!select||Object.values(inputs).some(value=>!value))return;
+ for(const [id,preset] of Object.entries(editorThemePresets))if(![...select.options].some(o=>o.value===id)){const option=document.createElement('option');option.value=id;option.textContent=preset.name;select.append(option)}
  const preview=document.getElementById('editorThemePreview');
  const root=document.documentElement;
  let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY)||'null')}catch{}
  let theme=saved&&Object.prototype.hasOwnProperty.call(editorThemePresets,saved.theme)?saved.theme:'graphite';
+ let design='classic';try{const value=localStorage.getItem('warlike.editor.design.v1');if(['classic','scifi','fantasy','nature'].includes(value))design=value}catch{}
+ if(['scifi','fantasy','nature'].includes(theme))design=theme;
  let palette=sanitizePalette(editorThemePresets[theme]);
  if(saved?.palette&&saved.theme==='custom'){
   theme='custom';palette=sanitizePalette(saved.palette);
@@ -96,7 +102,7 @@ export function initEditorPalette(){
   root.style.setProperty('--warlike-custom-text',readable.panel);
   root.style.setProperty('--editor-accent',palette.accent);
   root.dataset.warlikeFont=palette.font;
-  root.dataset.warlikeTheme=theme;
+  root.dataset.warlikeTheme=theme;root.dataset.warlikeDesign=design;
   root.style.colorScheme=isLightPalette(palette.panel)?'light':'dark';
   root.dataset.warlikeContrast=isLightPalette(palette.panel)?'light':'dark';
   select.value=theme;
@@ -115,11 +121,12 @@ export function initEditorPalette(){
   }
   document.querySelectorAll('#editorSwatches button').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.color===palette.accent)));
  };
+ document.addEventListener('warlike:editor-design-change',event=>{const next=event.detail?.design;if(!['classic','scifi','fantasy','nature'].includes(next))return;design=next;root.dataset.warlikeDesign=design;try{localStorage.setItem('warlike.editor.design.v1',design)}catch{}});
  const save=()=>{apply();try{localStorage.setItem(KEY,JSON.stringify({theme,palette}))}catch{}};
  const manual=(key,value)=>{palette=sanitizePalette({...palette,[key]:value},palette);theme='custom';save()};
  select.addEventListener('change',()=>{
   if(!Object.prototype.hasOwnProperty.call(editorThemePresets,select.value)){select.value=theme;return}
-  theme=select.value;palette=sanitizePalette(editorThemePresets[theme]);save();
+  theme=select.value;design=['scifi','fantasy','nature'].includes(theme)?theme:'classic';try{localStorage.setItem('warlike.editor.design.v1',design)}catch{}palette=sanitizePalette(editorThemePresets[theme]);save();
  });
  for(const [key,input] of Object.entries(inputs)){
   if(key==='accent')continue; // Owned by editor-appearance; listen for its custom event.

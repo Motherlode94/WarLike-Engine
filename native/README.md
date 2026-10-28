@@ -10,7 +10,9 @@ Installer Emscripten (commande `emcc` disponible), puis :
 sh native/build-wasm.sh
 ```
 
-Cela génère `native/dist/warlike_pathfinding.mjs` et `native/dist/warlike_pathfinding.wasm`. Les fichiers générés doivent être publiés à côté de l'application pour activer l'accélérateur. Si absents, le moteur continue avec l'A* JavaScript existant.
+Le workflow GitHub `native-wasm.yml` compile et publie automatiquement ces fichiers sur `main`.
+
+La commande locale génère `native/dist/warlike_pathfinding.mjs` et `native/dist/warlike_pathfinding.wasm`. Les fichiers générés doivent être publiés à côté de l'application pour activer l'accélérateur. Si absents, le moteur continue avec l'A* JavaScript existant.
 
 ## Fonction et limites
 
@@ -19,3 +21,6 @@ Le C++ exporte `wl_find_path` via une interface C vers WASM ; les obstacles sont
 ## Physique C++
 
 `warlike_physics.cpp` contient `wl_integrate_gravity`, appelée depuis `js/core/physics-3d.js` lorsque le module WASM est présent. Sans binaire compilé, la simulation JavaScript reprend automatiquement. Il s'agit d'un intégrateur vertical simple et non d'une physique rigide complète.
+
+
+Le module est livré au navigateur et aux exports Web. Il accélère A*, la gravité par lots et les intersections 3D. Les appels simultanés à son initialisation partagent le même chargement. Le repli JavaScript reste disponible en cas d’échec.

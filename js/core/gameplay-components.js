@@ -1,3 +1,4 @@
+import {cameraFacingDegrees} from './character-facing.js';
 import {findEnginePath as findPath} from './native-3d.js';
 import {healthOf,isHostileTo,isAiObstacle,hasLineOfSight,perceiveTarget} from './ai-perception.js';
 // Configurable gameplay components. Positions use WarLike's existing 2D ground coordinates.
@@ -153,7 +154,7 @@ export function updateController3d(p,keys,dt,yaw,entities){
  const velocity=Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64+dodge;
  const vx=movement.x*velocity;
  const vz=movement.z*velocity;
- if(len&&!p.fpsController){const target=Math.atan2(-movement.x,movement.z)*180/Math.PI,current=Number(p.rotation)||0,delta=((target-current+540)%360)-180;p.rotation=current+delta*(1-Math.exp(-14*frame))}
+ if(Number.isFinite(yaw))p.rotation=cameraFacingDegrees(yaw);
  if(len&&sprint)stats.stamina=clamp(stats.stamina-18*frame,0,n(stats.maxStamina,100));
  const grounded=p.elevation3d<=floorAt(p.x,p.y,p.elevation3d)+.035&&p._verticalVelocity<=0;
  if(jump&&!p._jumpHeld&&grounded){p._verticalVelocity=Math.max(0,n(cfg.jumpForce,5.6));p.grounded3d=false}

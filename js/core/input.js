@@ -1,3 +1,4 @@
+import {isTypingTarget} from './editor-clipboard.js';
 import {toolsState} from '../ui/workspace.js';
 import {hitGizmo2d,gizmoCenter} from './gizmos-2d.js';
 import {orderRtsMove} from './rts-orders.js';
@@ -12,10 +13,10 @@ export const rectFromPoints=(a,b)=>({x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),w:M
 export const touchesSelection=(entity,rect,contain=false)=>contain
  ?entity.x>=rect.x&&entity.y>=rect.y&&entity.x+entity.w<=rect.x+rect.w&&entity.y+entity.h<=rect.y+rect.h
  :entity.x<rect.x+rect.w&&entity.x+entity.w>rect.x&&entity.y<rect.y+rect.h&&entity.y+entity.h>rect.y;
-export const selectInRect=(entities,rect,contain=false)=>entities.filter(e=>touchesSelection(e,rect,contain)).map(e=>e.id);
+export const selectInRect=(entities,rect,contain=false)=>entities.filter(e=>!e.editorHidden&&touchesSelection(e,rect,contain)).map(e=>e.id);
 export function attachInput(canvas,host){
  let drag=null,space=false;
- const screen=e=>{const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+ const screen=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.clientWidth/r.width,y:(e.clientY-r.top)*canvas.clientHeight/r.height}};
  const additive=e=>e.shiftKey||e.ctrlKey||e.metaKey;
  const clearBox=()=>{selectionBox.active=false;selectionBox.start=null;selectionBox.end=null};
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
@@ -25,8 +26,9 @@ export function attachInput(canvas,host){
    return;
   }
   if(e.button!==0&&e.button!==1&&e.button!==2)return;
+  if(e.button===2){const point=toWorld(screen(e)),object=[...state.entities].reverse().find(o=>!o.editorHidden&&point.x>=o.x&&point.x<=o.x+o.w&&point.y>=o.y&&point.y<=o.y+o.h);if(object&&!state.selected.includes(object.id)){state.selected=[object.id];notify()}return}
   const p=screen(e);
-  if(e.button===1||e.button===2||space||toolsState.tool==='hand'){
+  if(e.button===1||e.altKey||space||toolsState.tool==='hand'){
    drag={mode:'pan',pointer:e.pointerId,p,x:state.camera.x,y:state.camera.y};
    canvas.setPointerCapture(e.pointerId);return;
   }
@@ -38,7 +40,7 @@ export function attachInput(canvas,host){
     starting:current.map(o=>({id:o.id,x:o.x,y:o.y,w:o.w,h:o.h,rotation:o.rotation||0})),moved:false};
    canvas.setPointerCapture(e.pointerId);e.preventDefault();return;
   }
-  const object=[...state.entities].reverse().find(o=>w.x>=o.x&&w.y>=o.y&&w.x<=o.x+o.w&&w.y<=o.y+o.h);
+  const object=[...state.entities].reverse().find(o=>!o.editorHidden&&w.x>=o.x&&w.y>=o.y&&w.x<=o.x+o.w&&w.y<=o.y+o.h);
   if(!object){
    if(!additive(e)){state.selected=[];notify()}
    drag={mode:'marquee',pointer:e.pointerId,start:w,current:w,base:state.selected.slice(),add:additive(e),moved:false};
@@ -103,9 +105,9 @@ export function attachInput(canvas,host){
  canvas.addEventListener('pointerup',finish);
  canvas.addEventListener('pointercancel',finish);
  canvas.addEventListener('lostpointercapture',finish);
- canvas.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.deltaY<0?1.1:1/1.1,screen(e))},{passive:false});
+ canvas.addEventListener('wheel',e=>{if(e.defaultPrevented)return;e.preventDefault();zoomAt(e.deltaY<0?1.1:1/1.1,screen(e))},{passive:false});
  window.addEventListener('keydown',e=>{
-  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
+  if(e.defaultPrevented||isTypingTarget(document.activeElement)||isTypingTarget(e.target)||document.body?.classList.contains('hub-open'))return;
   const key=e.key.toLowerCase();
   // During Play, prevent Space / arrows from activating focused editor controls
   // or scrolling the page while they are used for walking, sprint and jump.
@@ -117,6 +119,7 @@ export function attachInput(canvas,host){
   if((e.ctrlKey||e.metaKey)&&key==='z'){e.preventDefault();e.shiftKey?redo():undo();return}
   if((e.ctrlKey||e.metaKey)&&key==='y'){e.preventDefault();redo();return}
   if(!state.playing&&(key==='delete'||key==='backspace')){e.preventDefault();deleteSelected();return}
+  if((e.ctrlKey||e.metaKey)&&key!=='control')return;
   if(e.code==='Space')space=true;
   state.keys.add(key);
   if(state.playing&&!e.repeat)state.keyPresses?.add(key);

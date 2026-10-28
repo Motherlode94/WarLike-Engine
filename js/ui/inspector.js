@@ -1,3 +1,5 @@
+import {renderPhysics2d} from './physics-2d-inspector.js';
+import {renderSceneHierarchy} from './hierarchy-view.js';
 import {renderAnimator3d} from './animator-3d.js';
 import {freeAudioAssets} from '../assets/free-game-assets.js';
 import {assetCredits} from './asset-credits.js';
@@ -48,8 +50,8 @@ const INSPECTOR_FOLDS_KEY='warlike.inspector.folds.v1';
 function readFolds(){try{return JSON.parse(localStorage.getItem(INSPECTOR_FOLDS_KEY)||'{}')||{}}catch{return {}}}
 function component(parent,title,build){
  const details=document.createElement('details');details.className='inspector-component';details.dataset.componentTitle=title;
- const folds=readFolds();details.open=folds[title]!==false;
- const summary=document.createElement('summary');summary.textContent=title;
+ const folds=readFolds();details.open=folds[title]??title==='Transform';
+ const summary=document.createElement('summary');const icon=document.createElement('span');icon.className='unity-component-icon';icon.textContent=title==='Transform'?'✥':title.includes('Collider')?'◇':title.includes('Animator')?'▷':title.includes('Renderer')?'▧':title.includes('Audio')?'♫':'▣';summary.append(icon,document.createTextNode(title));
  const body=document.createElement('div');body.className='component-content';
  details.append(summary,body);build(body);parent.append(details);
  details.addEventListener('toggle',()=>{const saved=readFolds();saved[title]=details.open;try{localStorage.setItem(INSPECTOR_FOLDS_KEY,JSON.stringify(saved))}catch{}});
@@ -111,10 +113,18 @@ function renderObjectBehaviors(root,owner){
   card.querySelector('.component-content').prepend(overview,open);
  }
 }
-export function renderHierarchy(){const root=document.querySelector('#objects'),filter=(document.querySelector('#hierarchySearch')?.value||'').toLowerCase();root.replaceChildren();for(const o of state.entities.filter(o=>o.name.toLowerCase().includes(filter))){const b=document.createElement('button');b.textContent=(o.type==='prefab'?'◈ ':o.type==='character'?'♟ ':'▣ ')+o.name;b.classList.toggle('selected',state.selected.includes(o.id));b.onclick=e=>{if(state.playing)return;state.selected=e.shiftKey?(state.selected.includes(o.id)?state.selected.filter(id=>id!==o.id):[...state.selected,o.id]):[o.id];notify()};root.append(b)}}
+export function renderHierarchy(){renderSceneHierarchy()}
 export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
 
-const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent=o.type+'  •  GameObject #'+o.id;header.append(name,meta);root.append(header);
+const header=document.createElement('div');header.className='inspector-object';
+const identity=document.createElement('div');identity.className='unity-object-identity';
+const icon=document.createElement('span');icon.className='unity-object-icon';icon.textContent=workspace.mode==='3d'?'◇':'▧';
+const visible=document.createElement('input');visible.type='checkbox';visible.checked=o.visible!==false;visible.disabled=state.playing;visible.title='Afficher le rendu de cet objet en Play';visible.setAttribute('aria-label','Afficher le rendu en Play');visible.onchange=()=>{o.visible=visible.checked;record('Rendu en jeu : '+o.name);notify()};
+const name=document.createElement('input');name.className='inspector-object-name';name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.setAttribute('aria-label','Nom du GameObject');name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};identity.append(icon,visible,name);
+const meta=document.createElement('small');meta.className='unity-object-meta';meta.textContent=o.type+' · #'+o.id;
+const labels=document.createElement('div');labels.className='unity-object-labels';
+for(const [key,label,value] of [['tags','Tag',o.tags?.[0]||''],['hierarchyGroup','Groupe',o.hierarchyGroup||'']]){const field=document.createElement('label');field.append(document.createTextNode(label));const input=document.createElement('input');input.type='text';input.value=value;input.placeholder=key==='tags'?'Untagged':'Aucun';input.disabled=state.playing;input.setAttribute('aria-label',label+' du GameObject');input.onchange=()=>{const v=input.value.trim().slice(0,80);if(key==='tags')o.tags=[...(v?[v]:[]),...(o.tags||[]).slice(1)];else if(v)o.hierarchyGroup=v;else delete o.hierarchyGroup;record(label+' du GameObject');notify()};field.append(input);labels.append(field)}
+header.append(identity,labels,meta);root.append(header);
 component(root,'Transform',body=>{
  const vector=(title,axes)=>{
   const row=document.createElement('div');row.className='inspector-vector-row';
@@ -123,15 +133,15 @@ component(root,'Transform',body=>{
   for(const [axis,key] of axes){
    const item=document.createElement('label');item.className='inspector-axis';
    const tag=document.createElement('span');tag.textContent=axis;tag.dataset.axis=axis;
-   const input=document.createElement('input');input.type='number';input.step='any';const divisor=workspace.mode==='3d'&&key!=='elevation3d'?64:1;input.value=String((o[key]??(key==='depth3d'?o.w:0))/divisor);input.disabled=state.playing;input.setAttribute('aria-label',title+' '+axis);input.title=workspace.mode==='3d'?'Mètres':'Unités de scène';
-   input.onchange=()=>{const value=Number(input.value)*divisor;if(!Number.isFinite(value)||(title==='Size'&&value<=0)){input.value=String(o[key]??0);return}o[key]=value;record('Transform '+title+' '+axis);notify()};
+   const input=document.createElement('input');input.type='number';input.step='any';const divisor=workspace.mode==='3d'&&key!=='elevation3d'?64:1;input.value=String(Number(((o[key]??(key==='depth3d'?o.w:0))/divisor).toFixed(3)));input.disabled=state.playing;input.setAttribute('aria-label',title+' '+axis);input.title=workspace.mode==='3d'?'Mètres':'Unités de scène';
+   input.onchange=()=>{const value=Number(input.value)*divisor;if(!Number.isFinite(value)||(title==='Dimensions'&&value<=0)){input.value=String(o[key]??0);return}o[key]=value;record('Transform '+title+' '+axis);notify()};
    item.append(tag,input);group.append(item);
   }
   row.append(group);body.append(row);
  };
  vector('Position',workspace.mode==='3d'?[['X','x'],['Y','elevation3d'],['Z','y']]:[['X','x'],['Y','y']]);
  field(body,o,'rotation','Rotation (°)');
- vector('Size',workspace.mode==='3d'?[['X','w'],['Y','h'],['Z','depth3d']]:[['X','w'],['Y','h']]);
+ vector('Dimensions',workspace.mode==='3d'?[['X','w'],['Y','h'],['Z','depth3d']]:[['X','w'],['Y','h']]);
 });
 // Unity-style Inspector: component properties first, optional gameplay templates in one closed drawer.
 const advancedTools=document.createElement('details');
@@ -369,7 +379,7 @@ if(o.type==='character'||o.type==='player'||o.type==='prefab'&&getAsset(o.assetI
  if(o.team===undefined)o.team=1;field(body,o,'team','Team (1 / 2)');
  if(o.gameMode)body.append(document.createTextNode('Le Game Mode définit les règles de la partie.'));
 });
-if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Collision 2D',body=>{const note=document.createElement('p');note.textContent='Collision rectangulaire (AABB), selon le type d’objet.';body.append(note)});
+
 if(o.logic){
 const logicSection=document.createElement('details');logicSection.className='inspector-component';logicSection.open=true;const title=document.createElement('summary');title.textContent='⚡ Visual Logic • Triggers / Conditions / Actions';const inner=document.createElement('div');inner.className='component-content logic-editor';logicSection.append(title,inner);root.append(logicSection);
 const saveLogic=msg=>{record(msg);notify()};
@@ -397,6 +407,7 @@ const removeLogic=document.createElement('button');removeLogic.textContent='Remo
 }
 }
 root.append(advancedTools);
+renderPhysics2d(root,o,{component,field,selectField});
 const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=deleteSelected;root.append(del);finishInspector(root,o,advancedTools)}
 export function renderUI(){renderHierarchy();renderInspector()}
 document.addEventListener('warlike:change',renderUI);

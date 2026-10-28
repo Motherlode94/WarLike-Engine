@@ -1,3 +1,4 @@
+import {applyCsharpFrame} from '../core/csharp-frame.js';
 // WarLike C# local bridge controls. C# executes only in a separately started .NET process.
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
@@ -22,11 +23,13 @@ export function initCSharpBridge(){
  const tick=document.getElementById('csharpRuntimeTick'),second=document.getElementById('csharpRuntimeSecond'),template=document.getElementById('csharpRuntimeTemplate');
  if(!dialog||!button||!close||!status||!connect||!sync||!tick||!second||!template)return;
  const announce=(message,ok=false)=>{status.textContent=message;status.dataset.ok=String(ok)};
- let busy=false;
- const buttons=()=>{connect.disabled=busy;sync.disabled=busy||!ui.connected||state.playing;tick.disabled=busy||!ui.connected||!ui.ready||state.playing;second.disabled=tick.disabled};
+ let busy=false,streaming=false,streamToken=0,streamTimer=null,streamBefore=null,streamApplied=false;
+ const live=document.createElement('button');live.type='button';live.id='csharpRuntimeLive';live.textContent='▶ Aperçu C# continu';second.after(live);
+ const restore=document.createElement('button');restore.type='button';restore.id='csharpRuntimeRestore';restore.textContent='Restaurer avant aperçu';restore.disabled=true;live.after(restore);
+ const buttons=()=>{connect.disabled=busy||streaming;sync.disabled=busy||streaming||!ui.connected||state.playing;tick.disabled=busy||streaming||!ui.connected||!ui.ready||state.playing;second.disabled=tick.disabled;live.disabled=!streaming&&(busy||!ui.connected||!ui.ready||state.playing);live.textContent=streaming?'■ Arrêter l’aperçu C#':'▶ Aperçu C# continu';restore.disabled=streaming||!streamBefore||state.playing};
  const show=()=>{button.closest('details')?.removeAttribute('open');dialog.hidden=false;buttons()};
  button.addEventListener('click',show);
- close.addEventListener('click',()=>{dialog.hidden=true;button.focus()});
+ close.addEventListener('click',()=>{stopStream();dialog.hidden=true;button.focus()});
  connect.addEventListener('click',async()=>{
   announce('Recherche du runtime C# local…');
   try{const health=await request('/health');ui.connected=health.ready===true;ui.ready=false;announce(ui.connected?'Connecté : '+(health.engine||'.NET 8'):'Runtime non prêt',ui.connected)}
@@ -52,19 +55,33 @@ export function initCSharpBridge(){
    for(let i=0;i<count;i++)result=await request('/tick','POST',{dt});
    if(!result?.ok||!Array.isArray(result.actors))throw Error('Réponse invalide du runtime');
    if(state.playing)throw Error('Play activé entre-temps. Arrête Play pour appliquer les résultats C#.');
-   let applied=0;
-   for(const a of result.actors){
-    const target=state.entities.find(o=>o.id===a.id);
-    if(!target||![a.x,a.y,a.elevation3d,a.rotation].every(Number.isFinite))continue;
-    target.x=a.x;target.y=a.y;target.elevation3d=a.elevation3d;target.rotation=a.rotation;
-    if(Number.isFinite(a.hp)){target.hp=a.hp;if(target.stats)target.stats.health=a.hp}
-    applied++;
-   }
+   const applied=applyCsharpFrame(state.entities,result.actors);
    if(applied)record('C# Runtime : '+duration+' s');
    notify();announce('C# .NET : '+applied+' acteurs mis à jour après '+duration+' s.',true);
   }catch(error){announce('Erreur C# : '+error.message)}
   finally{busy=false;buttons()}
  };
+ function stopStream(){
+  if(!streaming)return;streaming=false;streamToken++;clearTimeout(streamTimer);busy=false;
+  if(streamApplied)record('Aperçu C# continu');notify();buttons();announce('Aperçu C# arrêté. Les positions sont conservées ; Restaurer permet de revenir au départ.',true);
+ }
+ live.addEventListener('click',async()=>{
+  if(streaming){stopStream();return}if(busy||state.playing||!ui.ready)return;
+  streamBefore=state.entities.map(o=>({id:o.id,x:o.x,y:o.y,elevation3d:Number(o.elevation3d)||0,rotation:Number(o.rotation)||0,hp:Number.isFinite(o.hp)?o.hp:o.stats?.health}));
+  streaming=true;streamApplied=false;const token=++streamToken;let previous=performance.now(),lastNotify=0;buttons();
+  announce('Aperçu local .NET en cours · 30 étapes/s maximum. Le Play Web reste indépendant.',true);
+  const frame=async()=>{
+   if(!streaming||token!==streamToken)return;if(state.playing){stopStream();return}
+   const now=performance.now(),dt=Math.min(.1,Math.max(1/240,(now-previous)/1000));previous=now;
+   try{const result=await request('/tick','POST',{dt});if(!streaming||token!==streamToken||state.playing)return;
+    if(!result.ok)throw Error('Tick refusé.');streamApplied=applyCsharpFrame(state.entities,result.actors)>0||streamApplied;
+    if(now-lastNotify>250){lastNotify=now;notify()}
+    streamTimer=setTimeout(frame,Math.max(0,1000/30-(performance.now()-now)));
+   }catch(error){stopStream();ui.ready=false;buttons();announce('Aperçu C# : '+error.message)}
+  };frame();
+ });
+ restore.addEventListener('click',()=>{if(streaming||state.playing||!streamBefore)return;applyCsharpFrame(state.entities,streamBefore);record('Restaurer avant aperçu C#');notify();ui.ready=false;streamBefore=null;buttons();announce('Scène restaurée. Synchronise à nouveau avant le prochain aperçu.',true)});
+ document.addEventListener('warlike:change',()=>{if(state.playing)stopStream();buttons()});
  tick.addEventListener('click',()=>simulate(1/60));
  second.addEventListener('click',()=>simulate(1));
  template.addEventListener('click',()=>{

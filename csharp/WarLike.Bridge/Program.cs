@@ -10,7 +10,7 @@ Console.WriteLine("WarLike C# bridge listening on http://127.0.0.1:8765/");
 var world = new GameWorld();
 var gate = new SemaphoreSlim(1,1);
 const int MaxSceneBytes = 2*1024*1024;
-var permittedOrigins = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "http://localhost:8765", "http://127.0.0.1:8765", "https://warlike-engine.pages.dev" };
+var permittedOrigins = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "http://localhost:8000", "http://127.0.0.1:8000", "http://localhost:8765", "http://127.0.0.1:8765", "https://warlike-engine.pages.dev" };
 while (true) {
     var context = await builder.GetContextAsync();
     _ = Handle(context);

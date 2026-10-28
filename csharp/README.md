@@ -80,3 +80,8 @@ Le runtime propose `VehicleControllerComponent` : accélération progressive, fr
 La connexion passe par le pont HTTP local `POST /vehicle/input` avec `{"id":2,"throttle":1,"steer":0,"handbrake":false}`. L'API refuse les valeurs non finies ou hors intervalle [-1,1], ainsi que les ID sans composant VehicleController.
 
 **Limitations** : cette exécution C# est une simulation native à la demande, **pas le Play Mode Web en temps réel**. Le navigateur continue à utiliser le contrôleur JavaScript pour la conduite normale. La physique C# ne comporte pas encore de collision de carrosserie, de roues, de suspension ni de trafic autonome. Le transfert des poses vers l'éditeur reste manuel.
+
+
+## Aperçu continu dans Studio
+
+Démarrer le bridge avec `python3 python/warlike.py csharp` ou `dotnet run --project csharp/WarLike.Bridge`. Le serveur Python standard du projet utilise `http://127.0.0.1:8000`, autorisé par le bridge. Dans Window → C# Runtime : connecter, synchroniser puis lancer **Aperçu C# continu**. Les requêtes restent séquentielles, à 30 étapes/s maximum ; la fermeture du panneau ou le démarrage du Play Web arrête l’aperçu. **Restaurer avant aperçu** rétablit les positions puis exige une nouvelle synchronisation. Les fichiers C# doivent être compilés dans le projet .NET pour être exécutés.

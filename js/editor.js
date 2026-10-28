@@ -1,3 +1,8 @@
+import {initDesktopInteractions} from './ui/desktop-interactions.js';
+import {createBundledPhysicsScene2d} from './core/bundled-physics-scene.js';
+import {initClipboardControls} from './ui/clipboard-controls.js';
+import {isTypingTarget} from './core/editor-clipboard.js';
+import {initSimpleHub} from './ui/simple-hub.js';
 import {openComponentBrowser} from './ui/component-browser.js';
 import {initGameFlowUi} from './ui/game-flow-ui.js';
 import {initStudioPolish} from './ui/studio-polish.js';
@@ -36,7 +41,7 @@ import {state,notify} from './core/state.js';
 import {autoSave,recoverLocal,hasLocalSave,backupLocalSave,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo,renderHistory} from './core/history.js';
-import {addEntity,addPrefab,addLogicHotspot,loadLogicDemo,loadRpgDemo,loadCombatDemo,loadDrivingDemo,addLight,addAudioEmitter,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
+import {addEntity,addPrefab,addLogicHotspot,loadLogicDemo,loadRpgDemo,loadCombatDemo,loadDrivingDemo,load3dBetaDemo,addLight,addAudioEmitter,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
@@ -105,7 +110,7 @@ attachInput(canvas,host);
 bindGameInput(canvas);
 initializeRpgUi();
 bindModeInput();
-window.addEventListener('keydown',e=>{if(!state.playing||e.repeat||e.key.toLowerCase()!=='c'||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;motion.cameraFollow=!motion.cameraFollow;log('Caméra : '+(motion.cameraFollow?'suivi du joueur':'libre'))});
+window.addEventListener('keydown',e=>{if(!state.playing||e.repeat||e.ctrlKey||e.metaKey||e.key.toLowerCase()!=='c'||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;motion.cameraFollow=!motion.cameraFollow;log('Caméra : '+(motion.cameraFollow?'suivi du joueur':'libre'))});
 $('#rpgDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger RPG Demo ? Cette action remplace la scène actuelle (Ctrl+Z pour annuler).'))return;loadRpgDemo();log('RPG Demo chargé — Play, E, I et J')};
 $('#logicDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Visual Logic Demo ? La scène actuelle sera remplacée (Ctrl+Z pour annuler).'))return;loadLogicDemo();log('Visual Logic Demo chargé — Play et E pour interagir')};
 $('#driveDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Driving Sandbox ? Tu peux annuler ce remplacement avec Ctrl+Z.'))return;loadDrivingDemo();log('Driving Sandbox chargé — Play, puis E pour monter')};
@@ -198,7 +203,7 @@ document.addEventListener('pointerdown',event=>{if(quickCreate?.open&&!quickCrea
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&quickCreate?.open)quickCreate.open=false});
 document.getElementById('quickCreateObject')?.addEventListener('click',()=>addEntity('object'));
 document.getElementById('quickCreateCharacter')?.addEventListener('click',()=>addEntity('character'));
-window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();duplicateSelected()}});
+window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!isTypingTarget(document.activeElement)){e.preventDefault();duplicateSelected()}});
 
 document.getElementById('menuOpenBlueprint')?.addEventListener('click',()=>{
  document.getElementById('openBlueprint')?.click();
@@ -272,3 +277,16 @@ document.getElementById('play')?.addEventListener('click',()=>{unlockHorrorAudio
 
 initGameFlowUi();
 initStudioPolish();
+
+document.addEventListener('warlike:load-asset-test',()=>{
+ if(state.playing)return;
+ if(workspace.mode==='2d'){if(!confirm('Charger la scène test de physique 2D ? La scène actuelle reste récupérable avec Ctrl+Z.'))return;record('Avant scène de physique 2D');const scene=createBundledPhysicsScene2d();Object.assign(state,scene);state.demoGuide=scene.guide;delete state.guide;record('Scène test · Physique 2D');notify();log(scene.guide);return}
+ if(!confirm('Reconstruire la scène test avec les modèles Kenney et Quaternius ? La scène actuelle est remplaçable avec Ctrl+Z.'))return;
+ load3dBetaDemo('town');Object.assign(view3d,{target:[0,1,0],radius:24,yaw:-.65,pitch:.65});log('Scène test reconstruite : Ultimate Guns, personnages et monstres animés, véhicules et décors intégrés.');
+});
+
+initSimpleHub();
+
+initClipboardControls();
+
+initDesktopInteractions();

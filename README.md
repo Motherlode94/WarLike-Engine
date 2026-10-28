@@ -1,73 +1,133 @@
-# WarLike Studio — Moteur et éditeur de jeux 2D / 3D
+# WarLike Studio
 
-Éditeur de jeux web expérimental, avec **WarLike Hub**, bibliothèques d'assets 2D/3D, mode Play, Inspector, séquences logiques sans code et import de modèles 3D glTF binaires.
+**Moteur et éditeur de jeux 2D / 3D développé par Hardi Victor MBANVU — HardieBay.**
 
-**[Lire la documentation complète en français](./docs/index.html)** · [Démonstration en ligne](https://warlike-engine.pages.dev/) · [Guide des vrais prefabs 3D](./REAL-3D-PREFABS-BETA72.md) · [Logic Sequences](./LOGIC-SEQUENCES-BETA7.md)
+[Ouvrir le moteur](https://warlike-engine.pages.dev/) · [Documentation française](https://warlike-engine.pages.dev/docs/) · [Créer un jeu de A à Z](docs/blueprint-game-builder.md) · [Sources et licences](SOURCES.md)
 
-## Blueprint Studio — construire, tester et exporter un jeu
+WarLike réunit un Hub de projets, une scène, une hiérarchie d’objets, un Inspecteur de composants, Blueprint Studio et un export de jeu Web. Le Hub et l’espace de travail reprennent l’organisation visuelle d’Unity, avec des thèmes personnalisables : graphite, clair, science-fiction, fantastique, nature et six autres palettes.
 
-Un espace dédié réunit **Graphe**, **Instructions**, **Bibliothèque**, **Projet & export** et **Débogage**. Chaque objet peut porter plusieurs comportements indépendants. Les graphes exécutent des conditions Oui/Non, avec paramètres de nœud dans un inspecteur séparé.
+## Commencer un jeu
 
-Objectifs à progression, comptes à rebours, dialogues, menus de pause/victoire/défaite, checkpoints, sauvegardes et changements de scène composent une boucle de jeu complète. **Projet & export → Créer un exemple de jeu complet** installe une mission de collecte en conservant la scène existante. **Exporter le jeu Web (.zip)** produit un petit jeu jouable avec son menu et son runtime, à servir en HTTP.
+1. Dans le Hub, cliquer sur **Nouveau projet**, choisir 2D ou 3D et un template.
+2. Parcourir **Project / Assets** : dossiers Scènes, Scripts, Prefabs et Imports, puis ressources classées par auteur et par pack. Les modèles et leurs aperçus sont livrés dans le dépôt.
+3. Cliquer sur une ressource ou la glisser dans la scène. Sélectionner l’objet dans la Hiérarchie, puis régler ses composants dans l’Inspecteur. **Ajouter un composant** se trouve en bas ; le menu `⋮` de chaque composant propose ses commandes.
+4. En 3D, **Scène test 3D** installe un terrain et des décors Kenney, un soldat animé, des véhicules, deux monstres et six armes Quaternius Ultimate Guns. La scène précédente reste récupérable avec Annuler.
+5. Ouvrir **Blueprint Studio** pour construire les événements, conditions, dialogues, inventaires, objectifs, checkpoints et changements de scène. **Projet & export** permet de créer un exemple de jeu complet.
+6. Tester avec **Play**, puis **Exporter le jeu**. Décompresser le ZIP et le servir en HTTP. Sauvegarder aussi le projet en JSON : le Hub conserve ses projets dans le navigateur utilisé.
 
-**[Guide de création de A à Z](./docs/blueprint-game-builder.md)**. Le build Web est expérimental : les modèles distants demandent Internet, les GLB locaux sans ressource durable bloquent l’export et les scripts C#/.NET ne s’exécutent pas dans ce build.
+Les fenêtres flottantes se déplacent par leur en-tête et se redimensionnent par leurs huit bords et coins. Les dimensions sont mémorisées. Les panneaux conservent leur défilement, même à 140 % de zoom.
 
-## Communauté — WarLike Open Ecosystem
+## Souris et navigation de logiciel
 
-Le moteur accepte désormais des **packs communautaires JSON déclaratifs** via **Assets → Communauté · Plugins**. Les recettes Blueprint importées apparaissent dans l'Inspector, sans exécuter de JavaScript tiers. Cette première version du SDK est locale et limitée ; elle ne constitue pas encore une Marketplace hébergée.
+Le clic droit ouvre un menu adapté à la Hiérarchie, à la scène, aux ressources ou aux composants. Les commandes de copie, collage, duplication, suppression et cadrage agissent sur la sélection. Les champs de texte conservent leur édition et leur presse-papiers natifs.
 
-**[Guide du SDK communautaire](./docs/community-sdk.md)** · [Exemple de pack](./examples/community/field-tools.json)
+| Geste dans l’éditeur | Effet |
+| --- | --- |
+| Clic / Ctrl ou Maj + clic | Sélection simple / multiple |
+| Glisser dans le vide | Rectangle de sélection |
+| Molette centrale maintenue | Déplacer la vue 2D / 3D |
+| Alt + clic gauche en 3D | Orbiter autour du point de vue |
+| Alt + clic droit en 3D | Rapprocher / éloigner la caméra |
+| Clic droit maintenu en 3D | Regarder ; déplacement avec les touches physiques WASD, Q/E verticalement, Maj pour accélérer |
+| F / double clic dans la Hiérarchie | Cadrer la sélection |
+| Q, W, E, R, T | Main, déplacement, rotation, échelle, rectangle |
+| Ctrl/Cmd+S | Enregistrer le projet dans le Hub |
+| Ctrl/Cmd+Maj+S | Exporter la scène JSON |
+| Ctrl/Cmd+P | Play / Stop |
+| Ctrl + molette | Taille de l’interface, sans zoom de page |
 
-## Démarrer
+**Window → Plein écran** agrandit l’espace de travail. Les gestes de navigation déplacent la caméra de l’éditeur sans modifier les objets. En Play, le joueur utilise son propre contrôleur et sa caméra.
 
-1. Ouvrir `index.html` depuis un serveur statique ou utiliser la version Cloudflare Pages.
-2. Dans **WarLike Hub**, créer un projet nommé et choisir **2D** ou **3D**.
-3. Dans **Project / Assets**, sélectionner un asset puis le glisser dans la scène.
-4. Ajuster les propriétés dans **Inspector**, puis lancer **Play**.
-5. Exporter la scène en JSON pour conserver une sauvegarde externe.
+## Physique 2D et obstacles
 
-## Prefabs réels 3D
+Les terrains Kenney 2D bloquent réellement le déplacement. **Box Collider 2D** permet d’activer un volume solide ou un trigger et de régler ses dimensions et décalages. **Rigidbody 2D** ajoute gravité, vitesse, rebond et friction, avec corps dynamique, cinématique ou statique.
 
-La Beta.7.2 référence des modèles GLB de démonstration du catalogue Khronos et permet l'import temporaire de modèles personnels `.glb` (jusqu'à 25 Mo). Les personnages, armes, véhicules et autres GLB sont affichés par leurs triangles lorsque leur format est pris en charge, mais le moteur ne gère pas encore tous les matériaux, les textures, les animations ou la physique d'un moteur professionnel. Les binaires GLB locaux **ne sont pas inclus dans l'export JSON**.
+Le **Contrôleur de personnage 2D** propose vue du dessus et plateforme. Son mode automatique reconnaît les personnages et les terrains Kenney Platformer, y compris dans les scènes existantes. Le mode plateforme applique la gravité, permet de sauter et empêche de traverser sols, plafonds et obstacles. Une collision balayée empêche de passer à travers un mur fin à grande vitesse.
 
-## Tests
+Le bouton **Scène test 2D** construit une scène Kenney avec plateformes, obstacles solides et caisses physiques. Les paramètres sont conservés par les sauvegardes, le copier-coller et l’export Web. [Guide de la physique 2D](docs/physics-2d.md).
+
+## Contrôles et presse-papiers
+
+- **ZQSD / WASD / flèches** : déplacement ; **Maj** : sprint.
+- **2D** : le personnage reste droit et se retourne vers la gauche ou la droite selon son déplacement. Son dernier regard horizontal est conservé pendant un déplacement vertical ou à l’arrêt.
+- **3D** : le clic droit fait tourner la caméra et le personnage ; les déplacements restent relatifs à la caméra. Reculer ou se déplacer latéralement conserve cette orientation. Le mode première personne utilise le verrouillage de la souris.
+- **3D** : E pour entrer/sortir d’un véhicule, F pour attaquer, espace pour sauter, Ctrl pour esquiver.
+- Dans la scène : **Ctrl/Cmd+C**, **X**, **V** pour copier, couper et coller les objets sélectionnés. Les composants et références internes de la sélection sont conservés avec de nouveaux identifiants. Dans un champ de texte ou un éditeur de scripts, les raccourcis restent ceux du texte.
+
+## Bibliothèque livrée avec le moteur
+
+**7 626 modèles 3D dans 105 packs CC0**, avec géométrie réelle, textures locales et animations originales lorsqu’elles sont présentes :
+
+| Auteur | Modèles | Packs | Exemples |
+| --- | ---: | ---: | --- |
+| [Kenney](https://kenney.nl/) | 4 716 | 50 | Personnages, véhicules, armes, ville, nature, bâtiments, mobilier, espace |
+| [Quaternius](https://quaternius.com/) | 2 910 | 55 | Ultimate Guns **55 armes**, Ultimate Monsters **50 monstres**, personnages, dinosaures, animaux et bibliothèques d’animations Standard |
+
+Les sprites PNG 2D, sons enregistrés et éléments UI Kenney sont également intégrés. Ils disposent de leurs propres dossiers et aperçus. Les couleurs des menus du jeu peuvent utiliser les habillages du UI Pack.
+
+Les crédits détaillés sont dans **Hub → À propos / Sources**, dans l’Inspecteur de la ressource et dans [l’inventaire des packs](docs/complete-model-library.md). Chaque entrée indique l’auteur, la licence et le lien du pack. Les sources exactes, SHA-256 et notices d’origine sont conservés dans `scripts/assets/` et `assets/free/`.
+
+Le dépôt inclut les fichiers utilisables ; les liens officiels servent à l’attribution et à la provenance. Les anciens catalogues externes restent optionnels. L’export Web emporte les modèles et textures effectivement référencés, sans copier toute la bibliothèque.
+
+**Périmètre :** les 50 packs 3D Kenney recensés sont intégrés. 27 autres anciens packs Quaternius n’ont pas pu être récupérés à cause des quotas de leurs hébergements ; ils sont recensés dans l’inventaire. Les packs soumis à une licence interdisant la redistribution d’assets, dont certaines éditions récentes QAL, ne sont pas inclus.
+
+## Python, C++ et C# : rôles réels
+
+| Langage | Utilisation |
+| --- | --- |
+| JavaScript / TypeScript | Interface, Blueprint, simulation et rendu principal dans le navigateur ; contrats TypeScript pour les systèmes |
+| Python | Validation des scènes, serveur local, inventaire, import de sources 3D, contrôle des archives et orchestration des builds |
+| C++17 / WebAssembly | Navigation A*, intégration de gravité par lots et intersections 3D ; compilation automatique et binaire livré au navigateur, avec repli JavaScript si le module est indisponible |
+| C# / .NET 8 | Monde à composants et comportements natifs, simulation, véhicules et règles de jeu ; bridge local avec étapes manuelles ou aperçu continu, restauration de la scène et export des scripts |
+
+```bash
+# Serveur et outils Python sans dépendances supplémentaires
+python3 python/warlike.py serve
+python3 python/warlike.py validate mon-projet.json
+python3 python/warlike.py assets
+
+# Compiler le runtime C++ avec Emscripten activé
+python3 python/warlike.py build-native
+
+# Lancer le bridge avec le SDK .NET 8 installé
+python3 python/warlike.py csharp
+```
+
+Dans **Window → C# Runtime**, connecter le bridge, synchroniser la scène puis lancer une étape ou **Aperçu C# continu**. L’aperçu effectue au maximum 30 étapes par seconde sans empiler les requêtes. Il s’arrête à la fermeture du panneau ou au démarrage du Play Web. Les scripts C# enregistrés doivent être intégrés et compilés dans le projet .NET pour être exécutés ; ils ne sont pas compilés par le navigateur.
+
+[Runtime C#](csharp/README.md) · [Systèmes C++](native/README.md) · [Pipeline des modèles](docs/complete-model-library.md)
+
+## Organisation du dépôt
+
+```text
+js/core/             Scènes, Blueprint, gameplay, sauvegardes et export
+js/ui/               Hub, Inspecteur, Hiérarchie, dossiers et fenêtres
+js/assets/           Catalogues, chargement GLB et animations
+css/                 Thèmes et présentation de l’éditeur
+assets/free/         Modèles, textures, sprites, audio, UI et licences
+python/              Commandes de développement Python
+native/              Sources C++ et runtime compilé dans dist/
+csharp/              Runtime .NET, bridge local et démonstration
+scripts/assets/      Import reproductible et inventaire des packs
+tests/               Tests des systèmes et des ressources
+docs/                Guides et références
+```
+
+## Développer et vérifier
 
 ```bash
 npm install
 npm test
 npm run typecheck
+npm run build:runtime
+sh native/tests/run-smoke.sh
+dotnet run --project csharp/WarLike.Demo
 ```
 
-La couverture est partielle : des contrôles d'intégration dans les navigateurs restent nécessaires.
+Le site est statique, déployable sur Cloudflare Pages depuis `main` avec le dépôt comme répertoire de sortie. Les workflows vérifient JavaScript, TypeScript et .NET ; des workflows distincts reconstruisent les assets et le module WASM.
 
-## Déploiement
+## Limites actuelles
 
-Le dépôt peut être hébergé sur Cloudflare Pages en site statique (framework : None, répertoire de sortie : `/`). La sauvegarde dans le Hub repose principalement sur le stockage local du navigateur.
+WarLike reste un moteur expérimental. L’IA utilise A* sur grille, sans NavMesh. Le rendu principal prend en charge une partie de glTF, avec animations squelettiques et textures, mais pas tous ses matériaux et extensions. La physique et les interactions demandent des tests dans le jeu construit. Les imports GLB temporaires doivent être rendus durables avant l’export ; les modèles externes non intégrés nécessitent Internet. Python sert aux outils locaux et C# s’exécute dans le processus .NET, indépendamment du Play Web.
 
-## Licences et provenance
-
-Le code WarLike Studio est un prototype original. Certains modèles de démonstration sont chargés à distance depuis [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) ; **leurs licences propres doivent être vérifiées pour tout usage ou redistribution**. L'import local exige que l'utilisateur dispose des droits sur ses modèles.
-
-## Gameplay Components (prototype)
-
-### IA et Blueprints — perception et interactions
-
-L'IA configurable fonctionne en Play 2D et 3D : champ de vision, obstacles, mémoire de la dernière position observée, investigation, recherche et retour en patrouille. L'Inspector expose ces paramètres et les séquences peuvent activer l'IA ou lui désigner une cible. Les factions communes protègent les alliés.
-
-Les conditions d'inventaire vérifient les objets réellement ramassés ; les actions de santé synchronisent Stats et `hp`. La bibliothèque comprend une porte à clé réelle, une alerte de vie basse et des commandes de suspension/reprise IA. [Guide et limites](./docs/reference-gameplay-runtime.md).
-
-Depuis **Inspector > Gameplay Components**, ajoute **Stats**, **Inventaire**, **AI State Machine** ou **Character Controller 3D** à un objet. Le moteur dispose désormais de points de vie, endurance, sauts, sprint et esquive (**Ctrl**), d'une IA simple avec patrouille/poursuite/attaque et d'attaques 3D de proximité (**F**). Une arme équipée via l'Inspector augmente la portée et les dégâts de l'attaque ; il ne s'agit pas encore d'une représentation animée de l'arme ni d'un système de projectiles.
-
-Dans **Logic Sequences**, les instructions peuvent donner/retirer un objet, équiper une arme/armure, soigner et infliger des dégâts. **Blueprint Studio** permet de déplacer les nœuds, de connecter les ports, de créer des branches Oui/Non et de consulter les paramètres et l’exécution. Les graphes invalides sont signalés avant Play.
-
-La navigation IA utilise une **recherche A* sur grille avec évitement local simplifié** ; elle ne dispose pas de NavMesh. Les collisions 3D et animations restent expérimentales. Les tests ajoutés au dépôt doivent être exécutés avec `npm test`, et l'ensemble doit être vérifié en navigateur avant utilisation dans un projet de production.
-
-## Développement en C# (SDK .NET 8 expérimental)
-
-Un premier runtime C# autonome est disponible dans [`csharp/`](./csharp/README.md), avec `GameWorld`, `Actor`, `WarLikeBehaviour`, les callbacks `Awake`, `Start`, `Update`, `FixedUpdate`, `OnDestroy` et un exemple exécutable. Pour démarrer : `dotnet run --project csharp/WarLike.Demo`. Le SDK peut importer les entités depuis un export JSON du studio. **Attention : les scripts C# ne s'exécutent pas encore dans le navigateur / Play Mode WebGL** ; ce runtime .NET est une base indépendante en vue d'une intégration future.
-
-## C++ natif dans le moteur 3D (WebAssembly)
-
-Un nouveau module **C++17** de navigation A* est disponible dans [`native/`](./native/README.md). Le moteur 3D charge son **WebAssembly** lors du démarrage et utilise automatiquement la navigation JavaScript si le binaire compilé n'a pas été déployé. Compiler avec Emscripten : `sh native/build-wasm.sh`. Le C++ n'est pas encore un langage de scripts attachables aux objets dans l'Inspector ; il accélère actuellement une fonction interne du moteur. Le build `.wasm` n'est pas inclus par défaut.
-
-Made by Hardi Victor MBANVU
+Les références Unity, Game Creator, Emerald AI ou Opsive décrivent des inspirations d’ergonomie et de fonctionnalités. Leurs plugins commerciaux ne sont pas inclus dans WarLike.

@@ -1,0 +1,18 @@
+import {copyEntitiesPayload,readEntitiesPayload,pasteEntitiesPayload,isTypingTarget} from '../core/editor-clipboard.js';
+import {state,notify} from '../core/state.js';
+import {workspace} from '../core/workspaces.js';
+import {record} from '../core/history.js';
+let localCopy='',pasteSerial=0,timer;
+const announce=message=>{let toast=document.querySelector('.studio-toast');if(!toast){toast=document.createElement('div');toast.className='studio-toast';toast.setAttribute('role','status');document.body.append(toast)}toast.textContent=message;toast.hidden=false;clearTimeout(timer);timer=setTimeout(()=>toast.hidden=true,2100)};
+const sceneScope=event=>!state.playing&&!document.body.classList.contains('hub-open')&&!document.querySelector('#blueprintDialog:not([hidden])')&&!isTypingTarget(event?.target)&&!isTypingTarget(document.activeElement);
+const capture=()=>{localCopy=copyEntitiesPayload(state.entities,state.selected,workspace.mode);pasteSerial=0;return localCopy};
+const apply=text=>{if(!readEntitiesPayload(text))return false;if(state.entities.length+readEntitiesPayload(text).entities.length>10000)throw Error('La scène est limitée à 10 000 objets.');record('Avant collage');Object.assign(state,pasteEntitiesPayload(text,{entities:state.entities,mode:workspace.mode,nextId:state.nextId,offset:24*(++pasteSerial)}));record('Coller '+state.selected.length+' objet(s)');notify();announce(state.selected.length+' objet(s) collé(s)');return true};
+export async function copySelectedObjects(){try{const text=capture();try{await navigator.clipboard?.writeText(text)}catch{}announce(state.selected.length+' objet(s) copié(s)')}catch(error){announce(error.message)}}
+export async function pasteObjectsFromClipboard(){try{let text=localCopy;try{text=await navigator.clipboard.readText()}catch{}if(!apply(text))announce('Copie d’abord des objets dans l’éditeur.')}catch(error){announce(error.message)}}
+export function initClipboardControls(){
+ document.addEventListener('copy',event=>{if(!sceneScope(event)||window.getSelection()?.toString()||!state.selected.length)return;try{const text=capture();event.clipboardData?.setData('text/plain',text);event.clipboardData?.setData('application/x-warlike-entities',text);event.preventDefault();announce(state.selected.length+' objet(s) copié(s)')}catch(error){announce(error.message)}});
+ document.addEventListener('cut',event=>{if(!sceneScope(event)||window.getSelection()?.toString()||!state.selected.length)return;try{const text=capture();event.clipboardData?.setData('text/plain',text);event.preventDefault();record('Avant coupe');state.entities=state.entities.filter(o=>!state.selected.includes(o.id));state.selected=[];record('Couper les objets');notify();announce('Objets coupés · Ctrl+V pour coller')}catch(error){announce(error.message)}});
+ document.addEventListener('paste',event=>{if(!sceneScope(event))return;const text=event.clipboardData?.getData('application/x-warlike-entities')||event.clipboardData?.getData('text/plain')||'';if(!readEntitiesPayload(text))return;event.preventDefault();try{apply(text)}catch(error){announce(error.message)}});
+ const edit=[...document.querySelectorAll('#studioMenus>details')].find(d=>d.querySelector('summary')?.textContent.trim()==='Édition')?.querySelector('.studio-dropdown');
+ if(edit)for(const [label,key,action] of [['Copier les objets','Ctrl+C',copySelectedObjects],['Coller les objets','Ctrl+V',pasteObjectsFromClipboard]]){const button=document.createElement('button');button.type='button';button.append(document.createTextNode(label));const shortcut=document.createElement('kbd');shortcut.textContent=key;button.append(shortcut);button.onclick=()=>{button.closest('details').open=false;if(!state.playing)action()};edit.append(button)}
+}

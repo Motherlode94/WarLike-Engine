@@ -137,7 +137,7 @@ function execute(job,ctx,actionsLeft){
   case 'setRotation':targetObject.rotation=number(val);break;
   case 'setScale':targetObject.scale=Math.max(.01,number(val,1));break;
   case 'setVisibility':targetObject.visible=val!==false&&String(val)!=='false';break;
-  case 'setCollision':targetObject.collision3d=val!==false&&String(val)!=='false';break;
+  case 'setCollision':targetObject.collision3d=val!==false&&String(val)!=='false';if(targetObject.collider2d)targetObject.collider2d.enabled=targetObject.collision3d;break;
   case 'setObjective':setObjective(key,val,a.total);rt.globals['objective:'+key]=0;rt.messages.push({text:String(val||key).slice(0,160),ttl:3});break;
   case 'completeObjective':{const previous=gameSession.objectives[key]?.status;if(!gameSession.objectives[key])setObjective(key,key);completeObjective(key);rt.globals['objective:'+key]=1;if(previous!=='complete')emitSequenceSignal('objective:'+key);break}
   case 'setCheckpoint':rt.globals.checkpointX=number(targetObject.x);rt.globals.checkpointY=number(targetObject.y);gameSession.checkpoint=captureGameSave({...ctx,globals:rt.globals,fired:rt.fired});break;

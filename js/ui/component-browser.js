@@ -39,7 +39,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
 }
 export function finishInspector(root,owner,templates,nativeCatalog,renderNative,openScript){
  renderNative(root,owner);
- const keyByTitle={'Stats · Santé et endurance':'stats','Inventaire':'inventory','IA · Perception et navigation':'ai','Contrôleur de personnage 3D':'controller3d','Physics 3D • Rigidbody':'rigidbody3d'};
+ const keyByTitle={'Box Collider 2D':'collider2d','Rigidbody 2D':'rigidbody2d','Contrôleur de personnage 2D':'controller2d','Stats · Santé et endurance':'stats','Inventaire':'inventory','IA · Perception et navigation':'ai','Contrôleur de personnage 3D':'controller3d','Physics 3D • Rigidbody':'rigidbody3d'};
  const cards=[...root.children].filter(el=>el.matches('.inspector-component'));
  for(const card of cards){
   const title=card.dataset.componentTitle||card.querySelector('summary')?.textContent||'';card.dataset.componentTitle=title;
@@ -55,10 +55,12 @@ export function finishInspector(root,owner,templates,nativeCatalog,renderNative,
   return rank(a)-rank(b);
  });
  const header=root.querySelector('.inspector-object');if(header){
-  const actions=make('div','inspector-object-actions'),add=make('button','','＋ Composant'),blueprint=make('button','','⬡ Blueprint');add.type=blueprint.type='button';add.disabled=state.playing;add.onclick=openComponentBrowser;blueprint.onclick=()=>document.getElementById('openBlueprint')?.click();actions.append(add,blueprint);header.append(actions);
+  const actions=make('div','inspector-object-actions'),blueprint=make('button','','⬡ Blueprint');blueprint.type='button';blueprint.onclick=()=>document.getElementById('openBlueprint')?.click();actions.append(blueprint);header.append(actions);
   const meta=header.querySelector('small');if(meta)meta.textContent=(workspace.mode==='3d'?'GameObject 3D':'GameObject 2D')+' · '+cards.length+' composants';
  }
- root.append(...cards);renderComponentBrowser(root,owner,nativeCatalog,openScript);
+ root.append(...cards);
+ for(const card of cards){const actions=card.querySelector(':scope>.warlike-component-actions,:scope>.component-content>.warlike-component-actions');if(!actions)continue;actions.classList.add('unity-component-menu');actions.hidden=true;const menu=make('button','component-menu-toggle','⋮');menu.type='button';menu.title='Actions du composant';menu.setAttribute('aria-label','Actions : '+card.dataset.componentTitle);menu.setAttribute('aria-expanded','false');menu.onclick=event=>{event.preventDefault();event.stopPropagation();actions.hidden=!actions.hidden;menu.setAttribute('aria-expanded',String(!actions.hidden));card.classList.toggle('component-menu-open',!actions.hidden)};card.querySelector(':scope>summary')?.append(menu);card.append(actions)}
+ renderComponentBrowser(root,owner,nativeCatalog,openScript);
  if(templates)root.append(templates);
  const remove=root.querySelector('.delete-object');if(remove)root.append(remove);
 }

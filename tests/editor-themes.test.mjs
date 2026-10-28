@@ -4,11 +4,11 @@ import {readFileSync} from 'node:fs';
 import {editorThemePresets,sanitizePalette,defaultPalette,isLightPalette,paletteContrast,contrastRatio,mixColor,readableText} from '../js/ui/editor-palette.js';
 
 const source=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const ids=['graphite','obsidian','midnight','violet','light','tactical','racing','crimson'];
+const ids=['graphite','obsidian','midnight','violet','light','tactical','racing','crimson','scifi','fantasy','nature'];
 const colorKeys=['accent','surface','menu','toolbar','panel','header','button','border','muted','scene','footer','text'];
 
-test('eight full themes have independent valid palettes and legible contrast',()=>{
- assert.deepEqual(Object.keys(editorThemePresets),ids);
+test('eleven full themes have independent valid palettes and legible contrast',()=>{
+ assert.deepEqual(Object.keys(editorThemePresets).sort(),[...ids].sort());
  for(const [id,palette] of Object.entries(editorThemePresets)){
   for(const key of colorKeys)assert.match(palette[key],/^#[0-9a-f]{6}$/i,id+':'+key);
   assert.notEqual(palette.text,palette.panel,id+':foreground');

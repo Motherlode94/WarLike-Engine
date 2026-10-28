@@ -44,7 +44,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  };
  layer.addEventListener('pointerdown',event=>{
   const axis=event.target.getAttribute('data-gizmo-axis');
-  if(!axis||event.button!==0||state.playing)return;
+  if(!axis||event.button!==0||event.altKey||state.playing)return;
   const selected=state.entities.filter(o=>state.selected.includes(o.id));
   if(!selected.length)return;
   event.preventDefault();event.stopPropagation();

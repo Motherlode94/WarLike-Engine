@@ -1,3 +1,4 @@
+import {default2dCharacterPng} from '../assets/real-starter-sprites-2d.js';
 // Playable starting scenes for Hub game genres. All data remains ordinary WarLike
 // entities / Blueprint Sequences, so projects can be saved, reopened and edited.
 import {prefab3d} from '../assets/catalog-3d.js';
@@ -40,7 +41,7 @@ export function createGenreScene(genre,mode='3d'){
  const actor=()=>{
   const player=spawn('character-hero','Player',125,160,threeD?{
    playable3d:true,controller3d:defaultController(),stats:defaultStats(),inventory:defaultInventory(),tags:['player']
-  }:{type:'player',w:38,h:38,color:'#41cdb5',tags:['player']});
+  }:{type:'player',w:64,h:64,color:'#41cdb5',tags:['player'],spriteDataUrl:default2dCharacterPng});
   return player;
  };
  const object=(assetId,name,x,y,props={})=>spawn(assetId,name,x,y,props);

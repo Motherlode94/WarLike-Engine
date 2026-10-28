@@ -1,0 +1,281 @@
+{
+  "apiVersion": "1.0",
+  "id": "warlike-3d-game-builder",
+  "version": "1.0.0",
+  "name": "Game Builder 3D • FPS, TPS, RPG et exploration",
+  "author": "WarLike Studio",
+  "modes": [
+    "3d"
+  ],
+  "description": "Blueprints de construction declaratifs pour scenes 3D. Appliquer chaque recette a un objet de la scene.",
+  "recipes": [
+    {
+      "id": "mission-terminal",
+      "name": "Mission Terminal",
+      "description": "Interaction preconfiguree : Mission Terminal",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "missionActive",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Mission commencee"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mission-item",
+      "name": "Objective Pickup",
+      "description": "Interaction preconfiguree : Objective Pickup",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "intel",
+            "value": 1
+          },
+          {
+            "type": "addVariable",
+            "key": "intelCollected",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Information acquise"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mission-extraction",
+      "name": "Extraction Zone",
+      "description": "Interaction preconfiguree : Extraction Zone",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [
+          {
+            "type": "variable",
+            "key": "intelCollected",
+            "operator": ">=",
+            "value": 1
+          }
+        ],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "missionComplete",
+            "value": 1
+          },
+          {
+            "type": "emitSignal",
+            "value": "mission:complete"
+          },
+          {
+            "type": "message",
+            "value": "Extraction reussie"
+          }
+        ]
+      }
+    },
+    {
+      "id": "weapon-cache",
+      "name": "Supply Cache",
+      "description": "Interaction preconfiguree : Supply Cache",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "giveItem",
+            "targetRole": "player",
+            "key": "ammo",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Munitions ajoutees a l'inventaire"
+          }
+        ]
+      }
+    },
+    {
+      "id": "garage",
+      "name": "Garage Interaction",
+      "description": "Interaction preconfiguree : Garage Interaction",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "garageVisits",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Garage visite - vehicle a configurer dans Inspector"
+          }
+        ]
+      }
+    },
+    {
+      "id": "racing-checkpoint",
+      "name": "Racing Checkpoint",
+      "description": "Interaction preconfiguree : Racing Checkpoint",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "raceCheckpoint",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Checkpoint de course"
+          }
+        ]
+      }
+    },
+    {
+      "id": "rpg-npc",
+      "name": "Quest NPC",
+      "description": "Interaction preconfiguree : Quest NPC",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "questActive",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Nouvelle quete"
+          }
+        ]
+      }
+    },
+    {
+      "id": "rpg-goal",
+      "name": "Quest Goal",
+      "description": "Interaction preconfiguree : Quest Goal",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [
+          {
+            "type": "variable",
+            "key": "questActive",
+            "value": 1
+          }
+        ],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "questObjectives",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Progression de quete"
+          }
+        ]
+      }
+    },
+    {
+      "id": "door-control",
+      "name": "Door Switch",
+      "description": "Interaction preconfiguree : Door Switch",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "doorUnlocked",
+            "value": 1
+          },
+          {
+            "type": "emitSignal",
+            "value": "door:unlock"
+          },
+          {
+            "type": "message",
+            "value": "Commande deverrouillee"
+          }
+        ]
+      }
+    },
+    {
+      "id": "team-capture",
+      "name": "Capture Point",
+      "description": "Interaction preconfiguree : Capture Point",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 125,
+        "once": true,
+        "interval": 5,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "capturePoints",
+            "value": 1
+          },
+          {
+            "type": "message",
+            "value": "Point capture (logique locale)"
+          }
+        ]
+      }
+    }
+  ]
+}

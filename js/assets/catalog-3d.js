@@ -85,11 +85,21 @@ function defaultsForVehicle(id){
  }
  return result;
 }
+// Actual GLB geometry for supported starter prefabs; procedural primitives remain explicit tools.
+const defaultRealModel={
+ 'character-hero':'real-cesium-man',
+ 'character-soldier':'real-rigged-figure',
+ 'character-civilian':'real-cesium-man',
+ 'vehicle-truck':'real-cesium-milk-truck',
+ 'vehicle-van':'real-cesium-milk-truck',
+ 'vehicle-toycar':'real-toycar',
+ 'building-lamp':'real-lantern'
+};
 export function prefab3d(id,nextId=1,x=120,y=120){
  const a=get3dAsset(id);if(!a)return null;
- const size=dimensions3d(a);return {id:nextId,name:a.name+' '+nextId,type:'mesh3d',assetId:a.id,
- x,y,w:size.w,h:size.h,depth3d:size.d,meshShape:a.shape,elevation3d:0,color:a.color,rotation:0,
- collision3d:!['water','ground','road','lamp','bush'].includes(a.shape),...(a.shape==='glb'?{model3dId:a.id}:{}),...(a.category==='Characters'?{playable3d:true}:{})};
+ const size=dimensions3d(a),realId=defaultRealModel[a.id],real=realId&&model3dById(realId);return {id:nextId,name:a.name+' '+nextId,type:'mesh3d',assetId:a.id,
+ x,y,w:size.w,h:size.h,depth3d:size.d,meshShape:real?'glb':a.shape,elevation3d:0,color:a.color,rotation:0,
+ collision3d:!['water','ground','road','lamp','bush'].includes(a.shape),...(real?{model3dId:realId}:a.shape==='glb'?{model3dId:a.id}:{}),...(a.category==='Characters'?{playable3d:true}:{})};
 }
 export function thumbnail3d(asset){
  const a=typeof asset==='string'?get3dAsset(asset):asset;if(!a)return '';

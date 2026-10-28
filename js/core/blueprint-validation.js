@@ -1,6 +1,6 @@
 import {sequenceEntries,sequenceEvents,sequenceInstructions} from './logic-sequences.js';
 import {inspectGraph,compileGraph} from './blueprint-graph.js';
-const requiredKey=new Set(['setVariable','addVariable','setLocal','addLocal','setObjective','addObjectiveProgress','completeObjective','startTimer','stopTimer','giveItem','removeItem','equipItem']);
+const requiredKey=new Set(['setVariable','addVariable','setLocal','addLocal','setObjective','addObjectiveProgress','completeObjective','startTimer','stopTimer','giveItem','removeItem','consumeQuestItem','equipItem']);
 import {getAsset} from '../assets/catalog.js';
 import {gameProject,validEntities,safeKey} from './game-project.js';
 export function inspectBlueprintGame(entities,{project=gameProject,requirePlayer=true}={}){

@@ -4,6 +4,7 @@ export const genreTemplates={
  sandbox:{label:'Projet vierge',description:'Scène minimale et bibliothèque libre',modes:['2d','3d']},
  tactical:{label:'FPS / TPS',description:'Capture et escouade de combat',modes:['2d','3d']},
  openworld:{label:'Monde ouvert',description:'Vehicule, PNJ et mission',modes:['2d','3d']},
+ adventure:{label:'Aventure',description:'Exploration, dialogues à choix, indices, énigmes et quête scénarisée',modes:['2d','3d']},
  platformer:{label:'Plateforme',description:'Personnage, saut, gravité, plateformes et obstacles Kenney',modes:['2d']},
  survival:{label:'Survival · Survie',description:'Besoins vitaux, récolte, fabrication, campement et dangers nocturnes',modes:['2d','3d']},
  rts:{label:'RTS',description:'Unites et capture',modes:['2d','3d']},
@@ -19,6 +20,7 @@ export const genreTemplates={
 const details={
  superhero:{stage:'playable',features:['Six pouvoirs, animations et effets visuels','Progression RPG et escouade','Mission, secours et destruction']},
  survival:{stage:'playable',features:['Première aube : camp, repas, nuit et victoire','Placement avec aperçu, rotation et grille','Sauvegarde et coop avec secours des alliés']},
+ adventure:{stage:'playable',features:['Le phare oublié : exploration et énigmes','Dialogues à choix, clé et grille physique','Journal, objectifs et sauvegardes']},
  platformer:{stage:'playable',features:['Sprites Kenney et contrôleur plateforme','Gravité, saut et course','Sols solides, plateformes et caisses physiques']},
  sandbox:{stage:'blank',features:['Une scène minimale à construire librement']},
  fieldlab:{stage:'tool',features:['Circuit de diagnostic des contrôles, interactions et véhicules']},
@@ -44,6 +46,7 @@ export function resolveGameGenre(value,entities=[]){
  if(Object.hasOwn(genreTemplates,value))return value;
  if(!Array.isArray(entities))return 'sandbox';
  entities=entities.filter(o=>o&&typeof o==='object');
+ if(entities.some(o=>o.adventure))return 'adventure';
  if(entities.some(o=>o.survival))return 'survival';
  if(entities.some(o=>o.superhero))return 'superhero';
  if(entities.some(o=>Array.isArray(o.tags)&&o.tags.some(t=>typeof t==='string'&&t.startsWith('fieldlab-'))))return 'fieldlab';

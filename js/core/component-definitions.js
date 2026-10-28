@@ -13,6 +13,8 @@ import {defaultRigidbody3d} from './physics-3d.js';
 import {newSequence} from './logic-sequences.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
+ {id:'adventure',name:'Aventure · Journal et quête',category:'Aventure',description:'Journal, indices révélés et objets de quête communs à l’équipe.',create:()=>({combatEnabled:false,title:'Mon aventure',items:[],notes:[]})},
+ {id:'adventureInteractable',name:'Aventure · Interaction ciblée',category:'Aventure',description:'Interaction E ciblée avec portée et contrôle des obstacles.',create:()=>({enabled:true,label:'Interagir',radius:150})},
  {id:'animatorGraph',name:'Animator · Graphe d’états',category:'Animation',description:'États, transitions, mélange 1D, couches et événements.',create:defaultAnimatorGraph},
  {id:'survival',name:'Survie · Besoins et fabrication',category:'Survie',description:'Satiété, hydratation, fatigue, froid et recettes sur inventaire.',create:()=>({...defaultSurvival(),buildTemplates:survivalBuildTemplates()})},
  {id:'survivalNode',name:'Survie · Ressource ou campement',category:'Survie',description:'Récolte limitée, régénération, feu ou abri partagé.',create:defaultSurvivalNode},

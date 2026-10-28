@@ -1,3 +1,4 @@
+import {makeGameDialogue,validGameDialogue} from './game-dialogue.js';
 import {gameProject,safeKey,validEntities,sceneDefinition} from './game-project.js';
 const clone=value=>structuredClone(value);
 const finite=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
@@ -8,6 +9,15 @@ export const gameIsRunning=()=>gameSession.phase==='playing';
 export function setGamePhase(phase,message=''){
  if(!['playing','paused','won','lost'].includes(phase))return false;
  gameSession.phase=phase;gameSession.notice=String(message).slice(0,240);gameSession.revision++;return true;
+}
+export function openGameDialogue(action,actorId=null,speaker=''){
+ if(gameSession.dialogue)return false;
+ gameSession.dialogue=makeGameDialogue(action,{actorId,speaker});gameSession.revision++;return true;
+}
+export function chooseGameDialogue(index,{id=null,actorId=null}={}){
+ const d=gameSession.dialogue;if(!d||id&&d.id!==id||actorId!=null&&d.actorId!=null&&actorId!==d.actorId||!Number.isSafeInteger(index)||index< -1||index>=Math.max(1,d.choices?.length||0))return null;
+ const choice=index<0?null:d.choices?.[index];gameSession.dialogue=null;gameSession.revision++;
+ return [...new Set([d.signal,...(choice?.signal?[choice.signal]:[])].filter(Boolean))];
 }
 export function setObjective(id,label,total=1){
  if(!safeKey(id))return false;
@@ -31,7 +41,7 @@ export function captureGameSave(ctx){
  if(!validEntities(ctx.entities))throw Error('La scène ne peut pas être sauvegardée.');
  return {format:'warlike.save.v1',projectId:gameProject.id,sceneId:gameSession.currentSceneId,
   entities:ctx.entities.map(entity=>{const copy=clone(entity);for(const key of ['_netKeys','_netFrom','_netTo','_netAt','_animatorFrame','_support3d'])delete copy[key];return copy}),globals:clone(ctx.globals||{}),fired:[...(ctx.fired||[])],
-  session:clone({phase:gameSession.phase,elapsed:gameSession.elapsed,objectives:gameSession.objectives,timers:gameSession.timers})};
+  session:clone({phase:gameSession.phase,elapsed:gameSession.elapsed,objectives:gameSession.objectives,timers:gameSession.timers,dialogue:gameSession.dialogue})};
 }
 export function validateGameSave(data,{checkpoint=false}={}){
  if(data?.format!=='warlike.save.v1'||data.projectId!==gameProject.id||!validEntities(data.entities))throw Error('Sauvegarde incompatible avec ce jeu.');
@@ -45,6 +55,7 @@ export function validateGameSave(data,{checkpoint=false}={}){
  for(const timer of Object.values(data.session.timers))if(!Number.isFinite(timer.remaining)||timer.remaining<0||typeof timer.expired!=='boolean')throw Error('Chronomètre de sauvegarde invalide.');
  if(!Number.isFinite(data.session.elapsed)||data.session.elapsed<0)throw Error('Durée de partie invalide.');
  if(!Array.isArray(data.fired)||data.fired.length>20000||data.fired.some(key=>typeof key!=='string'&&!Number.isSafeInteger(key)))throw Error('État des déclencheurs invalide.');
+ if(data.session.dialogue!=null&&!validGameDialogue(data.session.dialogue))throw Error('Dialogue de sauvegarde invalide.');
  if(data.checkpoint!=null){if(checkpoint)throw Error('Checkpoints imbriqués invalides.');validateGameSave(data.checkpoint,{checkpoint:true})}
  return data;
 }
@@ -72,6 +83,6 @@ export function applySessionChange(ctx){
  const data=validateGameSave(pending.data);
  ctx.entities.splice(0,ctx.entities.length,...clone(data.entities));
  for(const key of Object.keys(ctx.globals))delete ctx.globals[key];Object.assign(ctx.globals,clone(data.globals));
- Object.assign(gameSession,{elapsed:data.session.elapsed,objectives:clone(data.session.objectives),timers:clone(data.session.timers),checkpoint:Object.hasOwn(data,'checkpoint')?clone(data.checkpoint):gameSession.checkpoint,phase:'playing',currentSceneId:data.sceneId,pending:null,dialogue:null,revision:gameSession.revision+1});
+ Object.assign(gameSession,{elapsed:data.session.elapsed,objectives:clone(data.session.objectives),timers:clone(data.session.timers),checkpoint:Object.hasOwn(data,'checkpoint')?clone(data.checkpoint):gameSession.checkpoint,phase:'playing',currentSceneId:data.sceneId,pending:null,dialogue:data.session.dialogue?makeGameDialogue(data.session.dialogue,{actorId:data.session.dialogue.actorId}):null,revision:gameSession.revision+1});
  return {kind:'restore',fired:data.fired};
 }

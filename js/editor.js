@@ -1,3 +1,4 @@
+import {initAdventureUi} from './ui/adventure-ui.js';
 import {initSurvivalUi} from './ui/survival-ui.js';
 import {initCreativeStudios} from './ui/creative-studios.js';
 import {initCreativeRuntime} from './core/creative-runtime.js';
@@ -300,4 +301,4 @@ initHeroForgeUi();
 
 initLanPanel();
 
-initCreativeStudios();initCreativeRuntime();initSurvivalUi();
+initCreativeStudios();initCreativeRuntime();initSurvivalUi();initAdventureUi();

@@ -37,6 +37,10 @@ La **coop locale accueille jusqu’à quatre joueurs**, en 2D ou 3D. Dans le dos
 
 Sur le site public, le panneau explique le lancement local. Pour jouer, tous utilisent l’adresse servie par votre Python. La coop est également accessible depuis le menu de démarrage des exports Web. [Guide Animator, FX Studio, LAN et limites](docs/creative-studios-and-lan.md).
 
+## Aventure : Le phare oublié
+
+Créer un projet **Aventure** en 2D ou 3D, ou charger **Game → Aventure · Le phare oublié**. L’expédition relie Mira, un indice à lire, une clé, deux stèles à résoudre, une grille avec collision et le cristal à rallumer. **E** cible une seule interaction accessible ; **J / I** ouvre le journal commun. Les dialogues proposent des réponses à la souris ou au clavier, modifiables dans Blueprint. **F5 / F9** conserve aussi une conversation ouverte. En LAN, le joueur qui ouvre le dialogue choisit ses réponses ; la clé et les objectifs sont communs, y compris lorsque son porteur quitte la partie. Le template privilégie l’exploration ; le combat se règle dans son composant. [Guide Aventure et création de dialogues](docs/adventure.md).
+
 ## Survival : construire un camp et passer la nuit
 
 Le template **Survival · Survie**, en 2D et 3D, propose satiété, hydratation, fatigue, froid, récolte de ressources limitées, recettes sur inventaire, feu alimenté en bois et abri pour se reposer. Les rôdeurs deviennent plus dangereux la nuit. **E** récolte ; le HUD permet de boire, manger, fabriquer, construire et entretenir le camp. Les vrais modèles Kenney et Quaternius sont intégrés ; sept sprites isométriques transparents sont rendus depuis les modèles Kenney pour la 2D.

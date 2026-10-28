@@ -20,9 +20,9 @@ export function reconcileLanSurvivors(entities,players,host,{hostId,allocateId})
   if(!survivor){
    survivor=cleanCompanion(host);
    for(const key of Object.keys(survivor))if(key.startsWith('_')||['sequence','sequences','ai','heroState','survivalState','survivalWorld'].includes(key))delete survivor[key];
-   survivor.inventory={capacity:host.inventory?.capacity||24,items:structuredClone(host.survival.startInventory||[{id:'water',count:1},{id:'berries',count:1}]),equipment:{}};
+   survivor.inventory={capacity:host.inventory?.capacity||24,items:structuredClone(host.survival?.startInventory||(host.survival?[{id:'water',count:1},{id:'berries',count:1}]:host.adventure?.startInventory||[])),equipment:{}};
    if(survivor.stats){survivor.stats.health=survivor.stats.maxHealth||100;survivor.stats.stamina=survivor.stats.maxStamina||100}
-   survivor.x+=80*seat;survivor.y+=60;ensureSurvival(survivor);
+   survivor.x+=80*seat;survivor.y+=60;if(survivor.survival)ensureSurvival(survivor);
   }
   survivor.id=allocateId();
   Object.assign(survivor,{coopSeat:seat,coopName:peer.name,name:peer.name,_netPeerId:peer.id,_netRemote:true,_netKeys:new Set(),playable3d:false,survivalDormant:false,visible:true,_modeEliminated:false});

@@ -339,7 +339,7 @@ export function init3d(canvas,host,buttons){
   if(!inVehicle)updateController3d(p,input,dt,view3d.yaw,state.entities,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses});
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);
-  if(!inVehicle&&healthOf(p)>0&&(input.has('f')||!gameplayInputBlocked()&&state.keyPresses?.has('f'))&&p._attackCooldown===0){if(isFps()){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit){p.animation='attack';emitFx('electric',heroCenter(hit,'3d'),{mode:'3d',color:'#ffd899',count:16,ring:true,lifetime:.3,scale:.7})}}
+  if(p.adventure?.combatEnabled!==false&&!inVehicle&&healthOf(p)>0&&(input.has('f')||!gameplayInputBlocked()&&state.keyPresses?.has('f'))&&p._attackCooldown===0){if(isFps()){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit){p.animation='attack';emitFx('electric',heroCenter(hit,'3d'),{mode:'3d',color:'#ffd899',count:16,ring:true,lifetime:.3,scale:.7})}}
  };
  const isFps=()=>state.playing&&workspace.mode==='3d'&&!currentVehicle3d(state.entities)&&cameraRigFor(playableActor(state.entities)).mode==='firstPerson';
  let boomDistance=null,cameraFrame=1/60,lastCameraActor=null,lastCameraScene=null;
@@ -360,7 +360,7 @@ export function init3d(canvas,host,buttons){
  };
  const shootFps=()=>{
   if(!isFps()||!gameIsRunning()||gameplayInputBlocked())return false;
-  const player=playableActor(state.entities),cam=camera();if(healthOf(player)<=0||(player._attackCooldown||0)>0)return false;
+  const player=playableActor(state.entities),cam=camera();if(player.adventure?.combatEnabled===false)return false;if(healthOf(player)<=0||(player._attackCooldown||0)>0)return false;
   player._attackCooldown=.23;noteAnimatorAction(player,'attack',.35);
   const damageable=o=>healthOf(o)>0&&!sameFaction(o,player)&&(o.assetId?.includes('character-')||o.ai?.enabled||o.simulationNode?.kind==='destructible'&&o.simulationNode.health>0);
   const hit=raycastScene3d(cam.eye,cam.forward,state.entities,{exclude:player,maxDistance:45,target:damageable}),best=hit&&damageable(hit.entity)?hit.entity:null;

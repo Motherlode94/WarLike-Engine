@@ -5,6 +5,7 @@ Depuis **WarLike Hub → Nouveau projet**, choisir **2D ou 3D**, puis **Type de 
 | Type de jeu | 2D | 3D | Base fournie |
 | --- | --- | --- | --- |
 | Hero Forge · Super-héros | Oui | Oui | Mission jouable : pouvoirs, FX, progression, secours, destruction et escouade |
+| Aventure | Oui | Oui | Scène jouable : dialogues à choix, journal, clé, deux stèles, grille et victoire |
 | Survival · Survie | Oui | Oui | Scène jouable : besoins, récolte, fabrication, feu, abri et nuit |
 | Plateforme | Oui | — | Scène jouable : sprites Kenney, saut, gravité, plateformes et colliders |
 | Action | Vue du dessus | FPS / TPS | Base à compléter : couverture, adversaire, véhicule armé et capture |
@@ -51,3 +52,7 @@ Pour tester un composant natif : démarrer le pont avec `start-warlike-csharp.cm
 ## Survival · Survie
 
 Le template Survival est désormais une boucle jouable avec besoins, récolte, recettes, feu alimenté et abri, en 2D/3D et en coop LAN. Voir le [guide Survival](survival.md). Les anciens presets basés sur des variables restent disponibles.
+
+## Aventure · Le phare oublié
+
+Le template 2D/3D contient une quête complète et des dialogues à réponses éditables, un journal et des objets de quête partagés. Les interactions sont ciblées et contrôlent les obstacles. Voir le [guide Aventure](adventure.md) pour le parcours, les composants, les sauvegardes et la coop LAN.

@@ -45,6 +45,14 @@ def survival_actions(value):
         if isinstance(action, str) and action in ACTIONS:
             if action not in actions:
                 actions.append(action)
+        elif isinstance(action, dict) and action.get('type') == 'interact':
+            target = action.get('targetId')
+            if isinstance(target, int) and not isinstance(target, bool) and 0 < target <= 9007199254740991:
+                actions.append({'type': 'interact', 'targetId': target})
+        elif isinstance(action, dict) and action.get('type') == 'dialogue':
+            identity, index = action.get('dialogueId'), action.get('index')
+            if isinstance(identity, str) and 0 < len(identity) <= 80 and isinstance(index, int) and not isinstance(index, bool) and -1 <= index <= 5:
+                actions.append({'type': 'dialogue', 'dialogueId': identity, 'index': index})
         elif isinstance(action, dict) and action.get('type') == 'place' and action.get('recipe') in ('campfire', 'shelter'):
             if all(isinstance(action.get(k), (int, float)) and not isinstance(action[k], bool) and math.isfinite(action[k]) and abs(action[k]) <= 1000000 for k in ('x', 'y', 'rotation')):
                 actions.append({k: action[k] for k in ('type', 'recipe', 'x', 'y', 'rotation')})
@@ -71,7 +79,7 @@ class Lobby:
 
     def peer(self, room, name, host=False):
         name = str(name or 'Joueur').strip()[:30] or 'Joueur'
-        if room.get('snapshot') and any(isinstance(o, dict) and o.get('survival') for o in room['snapshot']['entities']) and any(p['name'] == name for p in room['peers'].values()):
+        if room.get('snapshot') and any(isinstance(o, dict) and (o.get('survival') or o.get('adventure')) for o in room['snapshot']['entities']) and any(p['name'] == name for p in room['peers'].values()):
             raise ValueError('Ce nom est déjà utilisé. Choisis un nom distinct pour retrouver ton survivant.')
         identity, token = secrets.token_hex(4), secrets.token_urlsafe(24)
         peer = {'id': identity, 'token': token, 'name': name, 'host': host, 'seen': self.clock(), 'streams': [], 'lastInput': -1, 'lastPost': 0}

@@ -1,3 +1,5 @@
+import {questItemCount,consumeQuestItem} from './quest-inventory.js';
+import {adventureTarget} from './adventure-runtime.js';
 import {survivalToolStatus} from './survival-tools.js';
 import {survivalAction,survivalMilestones} from './survival-runtime.js';
 import {playAnimatorState,setAnimatorParameter} from './animator-graph.js';
@@ -8,7 +10,7 @@ import {heroCenter} from './hero-movement.js';
 import {interactSimulationNode,damageSimulationNode} from './simulation-nodes.js';
 import {orderRtsMove,orderRtsGroup} from './rts-orders.js';
 import {gameProject,safeKey} from './game-project.js';
-import {gameSession,resetGameSession,gameIsRunning,setGamePhase,setObjective,advanceObjective,completeObjective,startTimer,tickGameSession,saveGameSlot,queueLoadGame,hasGameSlot,captureGameSave,queueScene,applySessionChange} from './game-session.js';
+import {gameSession,resetGameSession,openGameDialogue,chooseGameDialogue,gameIsRunning,setGamePhase,setObjective,advanceObjective,completeObjective,startTimer,tickGameSession,saveGameSlot,queueLoadGame,hasGameSlot,captureGameSave,queueScene,applySessionChange} from './game-session.js';
 import {vehicleComponents,repairVehicle,refuelVehicle,setVehicleEngine,canDriveVehicle,setVehicleGear} from './vehicle-components.js';
 import {fireVehicleWeapon} from './vehicle-weapons-3d.js';
 import {recordEngineEvent} from './engine-diagnostics.js';
@@ -19,17 +21,19 @@ import {healthOf,sameFaction,isHostileTo} from './ai-perception.js';
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
 export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal','healthChanged','death','variableChanged','objectiveCompleted','timerExpired'];
-export const sequenceConditions=['survivalToolUsable','survivalToolDurabilityBelow','survivalMilestone','survivalPartyDefeated','survivalNeedBelow','survivalBuilt','survivalNightsAtLeast','animatorStateIs','heroEnergyAbove','heroPowerReady','heroFlightActive','rpgLevelAtLeast','heroReputationAtLeast','simulationPowered','simulationRescued','always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists','aiStateIs','aiAwarenessAbove','aiCanSeeTarget','aiHasTarget','sameFaction','isHostile','weaponAmmoAbove','weaponReady','vehicleDriveable','vehicleFuelBelow','vehicleHealthBelow','vehicleHasDriver','objectiveActive','objectiveComplete','timerRunning','timerExpired','gamePhaseIs','saveExists'];
-export const sequenceInstructions=['repairSurvivalTool','survivalInteract','craftSurvivalItem','consumeSurvivalItem','playAnimatorState','setAnimatorParameter','emitOwnedFx','castHeroPower','restoreHeroEnergy','giveExperience','upgradeHeroSkill','emitFx','repairSimulationNode','rtsOrder','message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState','setAiState','setAiFaction','setAiTarget','setAiDetection','setAiAttackRange','setAiPatrolPoint','setWeaponAmmo','addWeaponAmmo','reloadWeapon','setWeaponDamage','fireVehicleWeapon','repairVehicle','refuelVehicle','setVehicleEngine','setVehicleGear','setVehicleWeapon','clearAiTarget','setAiEnabled','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration','branch','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'];
+export const sequenceConditions=['inventoryHasRoom','questItemAtLeast','survivalToolUsable','survivalToolDurabilityBelow','survivalMilestone','survivalPartyDefeated','survivalNeedBelow','survivalBuilt','survivalNightsAtLeast','animatorStateIs','heroEnergyAbove','heroPowerReady','heroFlightActive','rpgLevelAtLeast','heroReputationAtLeast','simulationPowered','simulationRescued','always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists','aiStateIs','aiAwarenessAbove','aiCanSeeTarget','aiHasTarget','sameFaction','isHostile','weaponAmmoAbove','weaponReady','vehicleDriveable','vehicleFuelBelow','vehicleHealthBelow','vehicleHasDriver','objectiveActive','objectiveComplete','timerRunning','timerExpired','gamePhaseIs','saveExists'];
+export const sequenceInstructions=['consumeQuestItem','repairSurvivalTool','survivalInteract','craftSurvivalItem','consumeSurvivalItem','playAnimatorState','setAnimatorParameter','emitOwnedFx','castHeroPower','restoreHeroEnergy','giveExperience','upgradeHeroSkill','emitFx','repairSimulationNode','rtsOrder','message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState','setAiState','setAiFaction','setAiTarget','setAiDetection','setAiAttackRange','setAiPatrolPoint','setWeaponAmmo','addWeaponAmmo','reloadWeapon','setWeaponDamage','fireVehicleWeapon','repairVehicle','refuelVehicle','setVehicleEngine','setVehicleGear','setVehicleWeapon','clearAiTarget','setAiEnabled','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration','branch','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
-export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[],trace:[],errors:[],observed:new Map()};
+export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[],trace:[],errors:[],observed:new Map(),interactions:[],signalActors:new Map()};
 const number=(n,def=0)=>Number.isFinite(Number(n))?Number(n):def;
 const MAX_ACTIONS=256,MAX_SIGNALS=64,MAX_JOBS=100;
 const distance=(a,b)=>Math.hypot((number(a.x)+number(a.w)/2)-(number(b.x)+number(b.w)/2),(number(a.y)+number(a.h)/2)-(number(b.y)+number(b.h)/2));
 const safeSteps=steps=>Array.isArray(steps)?steps.slice(0,MAX_ACTIONS):[];
 const safeConditions=conditions=>Array.isArray(conditions)?conditions.slice(0,MAX_ACTIONS):[];
-export function resetSequences(){sequenceRuntime.globals={};sequenceRuntime.messages=[];sequenceRuntime.time=0;sequenceRuntime.pressed.clear();sequenceRuntime.inside.clear();sequenceRuntime.fired.clear();sequenceRuntime.cooldowns.clear();sequenceRuntime.jobs=[];sequenceRuntime.signals=[];sequenceRuntime.trace=[];sequenceRuntime.errors=[];sequenceRuntime.observed.clear();resetGameSession();for(const v of gameProject.variables)if(safeKey(v.name))sequenceRuntime.globals[v.name]=coerceVariable(v.type,v.value)}
-export const emitSequenceSignal=name=>{if(sequenceRuntime.signals.length<MAX_SIGNALS)sequenceRuntime.signals.push(String(name||'').slice(0,60))};
+export function resetSequences(){sequenceRuntime.globals={};sequenceRuntime.messages=[];sequenceRuntime.time=0;sequenceRuntime.pressed.clear();sequenceRuntime.inside.clear();sequenceRuntime.fired.clear();sequenceRuntime.cooldowns.clear();sequenceRuntime.jobs=[];sequenceRuntime.signals=[];sequenceRuntime.trace=[];sequenceRuntime.errors=[];sequenceRuntime.observed.clear();sequenceRuntime.interactions=[];sequenceRuntime.signalActors.clear();resetGameSession();for(const v of gameProject.variables)if(safeKey(v.name))sequenceRuntime.globals[v.name]=coerceVariable(v.type,v.value)}
+export const emitSequenceSignal=(name,actorId=null)=>{const key=String(name||'').slice(0,60);if(sequenceRuntime.signals.length<MAX_SIGNALS){sequenceRuntime.signals.push(key);if(Number.isSafeInteger(actorId))sequenceRuntime.signalActors.set(key,actorId)}};
+export function queueSequenceInteraction(actorId,targetId){if(![actorId,targetId].every(id=>Number.isSafeInteger(id)&&id>0)||sequenceRuntime.interactions.length>=8)return false;sequenceRuntime.interactions.push({actorId,targetId});return true}
+export function chooseSequenceDialogue(index,options={}){if(!gameIsRunning())return false;const owner=gameSession.dialogue?.actorId,signals=chooseGameDialogue(index,options);if(!signals)return false;for(const signal of signals)emitSequenceSignal(signal,owner);return true}
 export function sequenceEntries(owner){
  const entries=owner.sequence&&typeof owner.sequence==='object'?[{key:owner.id,sequence:owner.sequence}]:[];
  if(Array.isArray(owner.sequences))owner.sequences.slice(0,32).forEach((sequence,i)=>{if(sequence&&typeof sequence==='object')entries.push({key:owner.id+':extra:'+i,sequence})});
@@ -53,6 +57,7 @@ export function conditionPass(c,o,ctx){
  const compare=(a,b,op)=>op==='>'?number(a)>number(b):op==='<'?number(a)<number(b):op==='>='?number(a)>=number(b):op==='<='?number(a)<=number(b):op==='!='?String(a)!==String(b):String(a)===String(b);
  let pass=false;
  switch(c.type){
+ case 'questItemAtLeast':pass=questItemCount(ctx.entities||[],String(c.key||''))>=Math.max(1,number(c.value,1));break;
  case 'survivalToolUsable':pass=survivalToolStatus(target,c.key)?.usable===true;break;
  case 'survivalToolDurabilityBelow':{const tool=survivalToolStatus(target,c.key);pass=!!tool?.owned&&tool.durability/tool.maxDurability*100<number(c.value,25);break}
  case 'survivalNeedBelow':pass=!!target?.survivalState&&['food','water','rest','warmth'].includes(c.key)&&number(target.survivalState[c.key],100)<number(c.value,20);break;
@@ -86,6 +91,7 @@ export function conditionPass(c,o,ctx){
  case 'playerOnFoot':pass=!!ctx.player&&!ctx.player._hiddenInVehicle;break;
  case 'randomChance':pass=Math.random()<Math.max(0,Math.min(1,number(c.value,.5)));break;
  case 'objectEnabled':pass=o.sequenceEnabled!==false;break;
+ case 'inventoryHasRoom':{const inv=inventoryTarget?.inventory;pass=!!inv&&Array.isArray(inv.items)&&(inv.items.some(item=>item.id===c.key&&number(item.count)>0)||inv.items.length<Math.max(1,number(inv.capacity,16)));break}
  case 'inventoryHas':pass=inventoryCount(inventoryTarget,c.key)>=Math.max(1,number(c.value,1));break;
  case 'inventoryMissing':pass=inventoryCount(inventoryTarget,c.key)<Math.max(1,number(c.value,1));break;
  case 'tagMissing':pass=!Array.isArray(o.tags)||!o.tags.includes(String(c.value??''));break;
@@ -120,6 +126,7 @@ export function chooseSequenceBranch(sequence,obj,ctx){
  return safeSteps(sequence.elseInstructions);
 }
 function execute(job,ctx,actionsLeft){
+ if(job.playerId!=null){const player=ctx.entities.find(o=>o.id===job.playerId);if(!player){job.index=job.steps.length;return 0}ctx={...ctx,player}}
  const rt=sequenceRuntime,entity=ctx.entities.find(o=>o.id===job.objectId);
  if(!entity||!jobSequence(entity,job)||jobSequence(entity,job)?.enabled===false||entity.sequenceEnabled===false||entity._sequenceDestroyed){job.index=job.steps.length;return 0}
  let count=0;
@@ -133,6 +140,7 @@ function execute(job,ctx,actionsLeft){
   if(!targetObject){traceAction(job,a,'error','Objet cible introuvable');continue}
   traceAction(job,a);
   try{switch(a.type){
+  case 'consumeQuestItem':if(!consumeQuestItem(ctx.entities,key,number(val,1))){traceAction(job,a,'error','Objet de quête manquant.');job.index=job.steps.length;return count}break;
   case 'repairSurvivalTool':survivalAction(targetObject,'repair:'+String(val||'axe'),ctx.entities,{mode:ctx.mode||'2d'});break;
   case 'survivalInteract':survivalAction(targetObject,'gather',ctx.entities,{mode:ctx.mode||'2d'});break;
   case 'craftSurvivalItem':survivalAction(targetObject,'craft:'+String(val||'campfire'),ctx.entities,{mode:ctx.mode||'2d',allocateId:ctx.allocateId});break;
@@ -165,7 +173,7 @@ function execute(job,ctx,actionsLeft){
   case 'setBehavior':{const target=targetObject;const behavior=String(val||'none');if(['none','patrol','chase','guard','wander','flee','follow'].includes(behavior))target.behavior=behavior;break}
   case 'setColor':if(/^#[a-f0-9]{6}$/i.test(String(val))){entity.color=val;entity.colorCustomized=true}break;
   case 'enableObject':{const target=targetObject;target.sequenceEnabled=val!==false&&String(val)!=='false';break}
-  case 'emitSignal':if(horror.enabled&&String(val||key)==='horror:jumpscare')triggerHorrorJumpscare();emitSequenceSignal(val||key);break;
+  case 'emitSignal':if(horror.enabled&&String(val||key)==='horror:jumpscare')triggerHorrorJumpscare();emitSequenceSignal(val||key,ctx.player?.id);break;
   case 'destroyObject':targetObject._sequenceDestroyed=true;break;
   case 'setTag':targetObject.tags=Array.from(new Set([...(Array.isArray(targetObject.tags)?targetObject.tags:[]),String(val??key).slice(0,60)]));break;
   case 'removeTag':targetObject.tags=(targetObject.tags||[]).filter(tag=>tag!==String(val??key));break;
@@ -229,7 +237,7 @@ function execute(job,ctx,actionsLeft){
   case 'loseGame':setGamePhase('lost',String(val||'Partie terminée'));return count;
   case 'pauseGame':setGamePhase('paused');return count;
   case 'resumeGame':setGamePhase('playing');break;
-  case 'showDialogue':gameSession.dialogue={speaker:String(a.speaker||entity.name||'').slice(0,80),text:String(val||'').slice(0,1200),signal:String(a.signal||'dialogue:closed').slice(0,60)};gameSession.revision++;break;
+  case 'showDialogue':openGameDialogue(a,ctx.player?.id,entity.name||'');break;
   case 'closeDialogue':gameSession.dialogue=null;gameSession.revision++;break;
   case 'spawnObject':{const template=ctx.entities.find(o=>o.id===number(val));if(!template)throw Error('Objet modèle introuvable');if(ctx.entities.length>=10000)throw Error('Limite de 10000 objets atteinte');const copy=structuredClone(template);copy.id=ctx.allocateId?ctx.allocateId():Math.max(0,...ctx.entities.map(o=>o.id))+1;copy.name=String(a.name||template.name+' · instance');copy.x=number(a.x,template.x+40);copy.y=number(a.y,template.y);copy.playable3d=false;delete copy._sequenceDestroyed;ctx.entities.push(copy);break}
   case 'wait':job.wait=Math.min(120,Math.max(0,number(val,.5)));return count;
@@ -243,13 +251,13 @@ export function updateSequences(dt,ctx){
  const rt=sequenceRuntime;
  ctx={...ctx,globals:rt.globals,fired:rt.fired};
  const change=applySessionChange(ctx);
- if(change){rt.time=gameSession.elapsed;rt.jobs=[];rt.inside.clear();rt.cooldowns.clear();rt.observed.clear();rt.fired=new Set(change.fired||[]);if(change.kind==='restore')for(const o of ctx.entities)for(const entry of sequenceEntries(o))if(entry.sequence.event==='start')rt.cooldowns.set('start:'+entry.key,Infinity);emitSequenceSignal(change.kind==='restore'?'game:loaded':'scene:loaded');ctx.onSceneChange?.(change);ctx.pressedKeys?.clear();return}
+ if(change){rt.interactions=[];rt.signalActors.clear();rt.time=gameSession.elapsed;rt.jobs=[];rt.inside.clear();rt.cooldowns.clear();rt.observed.clear();rt.fired=new Set(change.fired||[]);if(change.kind==='restore')for(const o of ctx.entities)for(const entry of sequenceEntries(o))if(entry.sequence.event==='start')rt.cooldowns.set('start:'+entry.key,Infinity);emitSequenceSignal(change.kind==='restore'?'game:loaded':'scene:loaded');ctx.onSceneChange?.(change);ctx.pressedKeys?.clear();return}
  const running=gameIsRunning();dt=running?Math.min(.1,Math.max(0,number(dt))):0;rt.time+=dt;
  for(const signal of tickGameSession(dt))emitSequenceSignal(signal);
  // Shared race clock for racing Blueprints; advances only while a race is active.
  if(number(rt.globals.raceStarted)===1&&number(rt.globals.raceFinished)!==1)rt.globals.raceElapsed=Math.round((number(rt.globals.raceElapsed)+dt)*1000)/1000;
  const keys=ctx.keys instanceof Set?ctx.keys:new Set(),player=ctx.player||null,objects=Array.isArray(ctx.entities)?ctx.entities:[];
- const signals=rt.signals.splice(0,MAX_SIGNALS);let budget=MAX_ACTIONS;
+ const signals=rt.signals.splice(0,MAX_SIGNALS),signalActors=new Map(rt.signalActors),interactions=rt.interactions.splice(0,8);rt.signalActors.clear();let budget=MAX_ACTIONS;
  // Only jobs suspended before this frame spend dt. Newly started Wait actions
  // must receive their full requested delay, even on the first frame.
  const pendingJobs=running?rt.jobs.splice(0):[];
@@ -260,15 +268,16 @@ export function updateSequences(dt,ctx){
   if(job.wait<=1e-9&&budget>0)budget-=execute(job,ctx,budget)||0;
   if(job.index<job.steps.length)rt.jobs.push(job);
  }
- const start=(o,s,id)=>{
+ const start=(o,s,id,actor=player)=>{
+  const eventCtx={...ctx,player:actor};
   if(!gameIsRunning()&&!s.runWhenPaused)return;
   if(rt.jobs.length>=MAX_JOBS||budget<=0)return;
   if(s.once&&rt.fired.has(id))return;
   if(Array.isArray(s.graph?.variables))for(const v of s.graph.variables.slice(0,128)){if(v&&safeKey(v.name)&&!(v.name in rt.globals))rt.globals[v.name]=coerceVariable(v.type,v.value)}
-  const basePassed=conditionsPass(s.conditions,o,ctx,s.conditionMode);
-  if(!basePassed&&!Array.isArray(s.elseInstructions))return;
-  rt.fired.add(id);const steps=safeSteps(basePassed?chooseSequenceBranch(s,o,ctx):s.elseInstructions);
-  const job={objectId:o.id,sequenceKey:id,runWhenPaused:s.runWhenPaused===true,steps:structuredClone(steps),index:0,wait:0};
+  const basePassed=conditionsPass(s.conditions,o,eventCtx,s.conditionMode);
+  if(!basePassed&&!Array.isArray(s.elseInstructions)){if(o.adventureInteractable?.lockedHint)rt.messages.push({text:String(o.adventureInteractable.lockedHint).slice(0,160),ttl:3});return;}
+  rt.fired.add(id);const steps=safeSteps(basePassed?chooseSequenceBranch(s,o,eventCtx):s.elseInstructions);
+  const job={objectId:o.id,playerId:objects.some(o=>o===actor)?actor.id:undefined,sequenceKey:id,runWhenPaused:s.runWhenPaused===true,steps:structuredClone(steps),index:0,wait:0};
   budget-=execute(job,ctx,budget)||0;
   if(job.index<job.steps.length)rt.jobs.push(job);
  };
@@ -279,10 +288,10 @@ export function updateSequences(dt,ctx){
   const wasInside=rt.inside.has(sequenceKey);if(isInside)rt.inside.add(sequenceKey);else rt.inside.delete(sequenceKey);
   if(!running&&!s.runWhenPaused)continue;
   const k=String(s.key||'e').toLowerCase();const newKey=ctx.pressedKeys?.has(k)||(keys.has(k)&&!rt.pressed.has(k));
-  let trigger=false;
+  let trigger=false,eventPlayer=player;
   switch(s.event){
   case 'start':trigger=!rt.cooldowns.has('start:'+sequenceKey);rt.cooldowns.set('start:'+sequenceKey,Infinity);break;
-  case 'interact':trigger=isInside&&newKey&&!ctx.player?._vehicleInputConsumed;break;
+  case 'interact':if(o.adventureInteractable){if(gameSession.dialogue)break;const request=interactions.find(r=>r.targetId===o.id);eventPlayer=request?objects.find(p=>p.id===request.actorId):player;trigger=!!(request||newKey)&&adventureTarget(eventPlayer,objects,{mode:ctx.mode||'2d'})===o}else trigger=isInside&&newKey&&!ctx.player?._vehicleInputConsumed;break;
   case 'keyDown':trigger=newKey;break;
   case 'enter':{
    // A gate can become valid while the player remains inside (e.g. mounting
@@ -297,14 +306,14 @@ export function updateSequences(dt,ctx){
    break;
   }
   case 'exit':trigger=!isInside&&wasInside;break;
-  case 'signal':trigger=signals.includes(String(s.signal||''));break;
+  case 'signal':trigger=signals.includes(String(s.signal||''));if(trigger&&signalActors.has(String(s.signal||'')))eventPlayer=objects.find(p=>p.id===signalActors.get(String(s.signal||'')))||player;break;
   case 'healthChanged':case 'death':{const hp=healthOf(o),previous=rt.observed.get(sequenceKey);trigger=previous!==undefined&&(s.event==='death'?previous>0&&hp<=0:previous!==hp);rt.observed.set(sequenceKey,hp);break}
   case 'variableChanged':{const value=rt.globals[s.variable||'score'],previous=rt.observed.get(sequenceKey);trigger=rt.observed.has(sequenceKey)&&previous!==value;rt.observed.set(sequenceKey,value);break}
   case 'objectiveCompleted':trigger=signals.includes('objective:'+String(s.signal||s.variable||''));break;
   case 'timerExpired':trigger=signals.includes('timer:'+String(s.signal||s.variable||''));break;
   case 'interval':{const key='interval:'+sequenceKey,next=rt.cooldowns.get(key)??(rt.time+Math.max(.1,number(s.interval,2)));trigger=rt.time>=next;if(trigger||!rt.cooldowns.has(key))rt.cooldowns.set(key,rt.time+Math.max(.1,number(s.interval,2)));break}
   }
-  if(trigger)start(o,s,sequenceKey);
+  if(trigger)start(o,s,sequenceKey,eventPlayer);
  }
  }
  for(const k of Array.from(rt.pressed))if(!keys.has(k))rt.pressed.delete(k);

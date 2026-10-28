@@ -14,6 +14,7 @@ export function select(parent,label,value,choices,onChange,{kind=null}={}){
  input.value=value??(typeof choices[0]==='string'?choices[0]:choices[0].value);input.onchange=()=>onChange(input.value);row.append(caption,input);parent.append(row);return input;
 }
 export function field(parent,schema,data,onChange){
+ if(schema.type==='dialogueChoices'){const group=element('section','bp-dialogue-choices');group.append(element('strong','',schema.label));const choices=Array.isArray(data.choices)?data.choices:[];for(const [i,choice] of choices.entries()){const row=element('div','bp-choice-card');field(row,{key:'label',label:'Réponse '+(i+1),type:'text'},choice,onChange);field(row,{key:'signal',label:'Signal de la réponse '+(i+1),type:'text'},choice,onChange);button(row,'Retirer cette réponse',()=>{choices.splice(i,1);data.choices=choices;onChange()},'bp-text-button');group.append(row)}if(choices.length<6)button(group,'＋ Ajouter une réponse',()=>{data.choices=[...choices,{label:'Nouvelle réponse',signal:'dialogue:choice'+(choices.length+1)}];onChange()},'bp-secondary');parent.append(group);return group}
  if(schema.type==='select'||schema.type==='boolean')return select(parent,schema.label,String(data[schema.key]??schema.default??(schema.type==='boolean'?true:schema.choices[0])),schema.type==='boolean'?[{value:'true',label:'Oui'},{value:'false',label:'Non'}]:schema.choices,v=>{data[schema.key]=schema.type==='boolean'?v==='true':v;onChange()});
  const row=element('label','bp-field'),caption=element('span','',schema.label),input=element(schema.type==='text'&&['message','showDialogue'].includes(data.type)?'textarea':'input');
  if(input.tagName==='INPUT')input.type=schema.type==='number'?'number':'text';
@@ -29,7 +30,7 @@ export function editConditions(parent,conditions,onChange){
   const card=element('div','bp-condition-card');
   select(card,'Condition',condition.type,sequenceConditions,v=>{condition.type=v;onChange()},{kind:'condition'});
   for(const schema of conditionFields(condition.type))field(card,schema,condition,onChange);
-  if(['heroEnergyAbove','heroPowerReady','heroFlightActive','rpgLevelAtLeast','heroReputationAtLeast','simulationPowered','simulationRescued','healthBelow','healthAbove','inventoryHas','inventoryMissing','aiStateIs','aiCanSeeTarget','aiHasTarget'].includes(condition.type))targetFields(card,condition,onChange,{defaultRole:/inventory/.test(condition.type)?'player':'self'});
+  if(['heroEnergyAbove','heroPowerReady','heroFlightActive','rpgLevelAtLeast','heroReputationAtLeast','simulationPowered','simulationRescued','healthBelow','healthAbove','inventoryHas','inventoryMissing','inventoryHasRoom','aiStateIs','aiCanSeeTarget','aiHasTarget'].includes(condition.type))targetFields(card,condition,onChange,{defaultRole:/inventory/.test(condition.type)?'player':'self'});
   field(card,{key:'negate',label:'Inverser le résultat',type:'boolean',default:false},condition,onChange);
   button(card,'Retirer la condition',()=>{conditions.splice(i,1);onChange()},'bp-text-button bp-danger');parent.append(card);
  }

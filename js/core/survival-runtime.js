@@ -1,6 +1,7 @@
 import {survivalTools,survivalToolStatus,wearSurvivalTool} from './survival-tools.js';
-import {activeBody3d,collisionBox3d,segmentBox3d,solidBody3d} from './collision-3d.js';
-import {colliderRect2d,solidCollider2d} from './physics-2d.js';
+import {activeBody3d} from './collision-3d.js';
+import {interactionBlocked as survivalResourceBlocked} from './interaction-range.js';
+export {interactionBlocked as survivalResourceBlocked} from './interaction-range.js';
 import {inventoryAdd,inventoryRemove,inventoryCount,damage,setHealth} from './gameplay-components.js';
 import {healthOf} from './ai-perception.js';
 import {inspectSurvivalPlacement} from './survival-building.js';
@@ -39,15 +40,6 @@ export function tickSurvival(entities,dt,{mode='2d',hour=14,player=null,keys=new
  return world||{hour,day:1};
 }
 const activeResource=o=>activeBody3d(o)&&o.visible!==false&&o.survivalNode?.enabled!==false&&o.survivalNode&&Object.hasOwn(survivalResources,o.survivalNode.kind);
-export function survivalResourceBlocked(actor,node,entities,mode='2d'){
- const a=center(actor,mode),b=center(node,mode),from={...a,z:mode==='3d'?a.z+n(actor.h,64)*.5:.5},to={...b,z:mode==='3d'?b.z+n(node.h,32)*.5:.5};
- return entities.some(o=>{
-  if(o===actor||o===node||!activeBody3d(o))return false;
-  if(mode==='3d')return solidBody3d(o)&&segmentBox3d(from,to,collisionBox3d(o))!==null;
-  if(!solidCollider2d(o))return false;const r=colliderRect2d(o);
-  return segmentBox3d(from,to,{x:r.x,y:r.y,z:0,w:r.w,d:r.h,h:1})!==null;
- });
-}
 export function survivalHarvestTarget(actor,entities,{mode='2d'}={}){
  if(!actor)return null;
  const candidates=entities.filter(o=>activeResource(o)&&survivalDistance(actor,o,mode)<=135).sort((a,b)=>survivalDistance(actor,a,mode)-survivalDistance(actor,b,mode));

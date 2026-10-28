@@ -403,7 +403,7 @@ export function init3d(canvas,host,buttons){
    const player=playableActor(state.entities);
    const nearby=!car&&player?state.entities.filter(isDriveable3d).map(o=>({o,d:Math.hypot((o.x+(o.w||32)/2)-(player.x+(player.w||32)/2),(o.y+(o.depth3d||o.h||32)/2)-(player.y+(player.depth3d||player.h||32)/2))})).sort((a,b)=>a.d-b.d)[0]:null;
    vehicleHud.hidden=!state.playing||(!car&&!(nearby&&nearby.d<Math.max(150,(nearby.o.w||64)*.85)));
-   if(car)vehicleHud.textContent=car.name+' · '+Math.round(Math.abs(driving3d.speed)*.36)+' km/h · ZQSD conduire · E sortir · Espace frein à main'+(car.vehicleWeapon?.enabled?' · F tirer':'');
+   if(car)vehicleHud.textContent=car.name+' · '+Math.round(Math.abs(driving3d.speed)*.36)+' km/h · Rapport '+(car.vehicleSystems?.transmission?.gear??1)+' · ZQSD conduire · E sortir · Espace frein à main'+(car.vehicleWeapon?.enabled?' · F tirer':'');
    else if(nearby)vehicleHud.textContent='E — Entrer dans '+nearby.o.name;
   }
   const crosshair=document.getElementById('fpsCrosshair');if(crosshair)crosshair.hidden=!isFps();

@@ -21,9 +21,21 @@ export function initVisualAssetPacks(){
  if(!parent || document.querySelector('#warlikeVisualPacks'))return;
  const root=document.createElement('section');root.id='warlikeVisualPacks';
  root.setAttribute('aria-label','Packs visuels 2D et 3D');
- root.style.cssText='padding:12px;border-bottom:1px solid var(--border,#56616d);color:inherit';
- root.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px"><strong>▦ Asset Packs 2D / 3D</strong><select id="visualPackSelect" aria-label="Pack visuel"></select><input type="search" id="visualPackSearch" placeholder="Rechercher..." aria-label="Rechercher dans le pack" style="min-width:110px;flex:1"></div><p id="visualPackInfo" style="font-size:12px;opacity:.8;margin:4px 0 10px"></p><div id="visualPackItems" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;max-height:270px;overflow:auto"></div>';
+ root.style.cssText='padding:12px;border-bottom:1px solid var(--border,#56616d);color:inherit;min-height:180px;resize:vertical;overflow:auto;box-sizing:border-box';
+ root.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px"><strong>▦ Asset Packs 2D / 3D</strong><button type="button" id="visualPackExpand" aria-pressed="false" title="Agrandir ou réduire la bibliothèque">⛶ Agrandir</button><select id="visualPackSelect" aria-label="Pack visuel"></select><input type="search" id="visualPackSearch" placeholder="Rechercher..." aria-label="Rechercher dans le pack" style="min-width:110px;flex:1"></div><p id="visualPackInfo" style="font-size:12px;opacity:.8;margin:4px 0 10px"></p><div id="visualPackItems" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;min-height:140px;max-height:none;overflow:auto"></div>';
  parent.prepend(root);
+ const expand=root.querySelector('#visualPackExpand');let expanded=false;
+ const toggleExpanded=next=>{
+  expanded=next;root.classList.toggle('warlike-asset-library-maximized',expanded);
+  root.style.position=expanded?'fixed':'relative';root.style.inset=expanded?'3vh 3vw':'auto';root.style.width=expanded?'94vw':'auto';
+  root.style.height=expanded?'94vh':'auto';root.style.zIndex=expanded?'99999':'auto';
+  root.style.background=expanded?'var(--panel,#202934)':'transparent';root.style.border=expanded?'2px solid #7fa2bf':'none';
+  root.style.boxShadow=expanded?'0 15px 75px #000a':'none';root.style.resize=expanded?'none':'vertical';
+  expand.textContent=expanded?'↙ Réduire':'⛶ Agrandir';expand.setAttribute('aria-pressed',String(expanded));
+ };
+ expand.addEventListener('click',()=>toggleExpanded(!expanded));
+ root.addEventListener('keydown',e=>{if(e.key==='Escape'&&expanded){toggleExpanded(false);e.stopPropagation()}});
+
  const uploadRow=document.createElement('div');uploadRow.style.cssText='padding:7px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap';
  const importSprite=document.createElement('input');importSprite.type='file';importSprite.accept='image/png';importSprite.multiple=true;importSprite.setAttribute('aria-label','Importer de vrais sprites PNG');
  const spriteInfo=document.createElement('small');spriteInfo.textContent='2D : importer des fichiers PNG (max 1 Mo chacun).';
@@ -51,8 +63,8 @@ export function initVisualAssetPacks(){
   select.replaceChildren(...valid.map(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;return o}));
   select.value=valid.some(p=>p.id===previous)?previous:valid[0].id;
   const pack=PACKS.find(p=>p.id===select.value),query=search.value.trim().toLowerCase();
-  const assets=(mode==='3d'?allAssets3d():catalog).filter(a=>pack.categories.includes(a.category) && (!pack.realOnly||a.shape==='glb') && (a.name+' '+a.category).toLowerCase().includes(query));
-  info.textContent=assets.length+(pack.realOnly?' véritables modèles 3D GLB référencés (chargement réseau à l’insertion, licence indiquée)':' éléments du catalogue, dont certains procéduraux')+' • Ajouter dans la scène';
+  const assets=(mode==='3d'?allAssets3d():catalog).filter(a=>pack.categories.includes(a.category) && (!pack.realOnly||(a.shape==='glb'&&!/test|reference|morph|variant|transmission|texture coordinate|specular|clear coat|normal map/i.test(a.name))) && (a.name+' '+a.category).toLowerCase().includes(query));
+  info.textContent=assets.length+(pack.realOnly?' fichiers GLB de modèles identifiés · aperçu 3D non généré · chargement réseau à l’insertion':' éléments du catalogue, dont certains procéduraux')+' • Ajouter dans la scène';
   const fragment=document.createDocumentFragment();
   for(const asset of assets){
    const button=document.createElement('button');button.type='button';button.dataset.assetId=asset.id;button.dataset.mode=mode;
@@ -60,7 +72,7 @@ export function initVisualAssetPacks(){
    button.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px;border:1px solid #687888;border-radius:7px;background:transparent;color:inherit;cursor:pointer;min-width:0';
    const img=document.createElement('img');img.src=mode==='3d'?url3d(asset.id):urlFor(asset.id);img.alt='';img.loading='lazy';img.style.cssText='width:75px;height:72px;object-fit:contain';
    const name=document.createElement('small');name.textContent=asset.name;name.style.cssText='text-align:center;overflow-wrap:anywhere';
-   button.append(img,name);if(asset.shape==='glb'){const tag=document.createElement('small');tag.textContent='GLB réel'+(asset.license?' · '+asset.license:'');tag.style.cssText='font-size:10px;opacity:.8;overflow-wrap:anywhere;text-align:center';button.append(tag)}fragment.append(button);
+   if(asset.shape==='glb'){img.remove();const placeholder=document.createElement('div');placeholder.textContent='3D · GLB';placeholder.style.cssText='display:grid;place-items:center;width:75px;height:72px;border:1px dashed #7590a2;border-radius:8px;color:#b2d4ed;font-weight:700;font-size:12px';button.append(placeholder)}else button.append(img);button.append(name);if(asset.shape==='glb'){const tag=document.createElement('small');tag.textContent='GLB réel'+(asset.license?' · '+asset.license:'');tag.style.cssText='font-size:10px;opacity:.8;overflow-wrap:anywhere;text-align:center';button.append(tag)}fragment.append(button);
   }
   grid.replaceChildren(fragment);
  };

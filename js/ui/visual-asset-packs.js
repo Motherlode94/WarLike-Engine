@@ -59,7 +59,12 @@ export function initVisualAssetPacks(){
  });
  document.querySelectorAll('[data-warlike-open-pack]').forEach(menuButton=>menuButton.addEventListener('click',()=>{
   const mode=menuButton.dataset.warlikeOpenPack;
-  if(mode!==workspace.mode)document.getElementById(mode==='3d'?'workspace3d':'workspace2d')?.click();
+  if(mode!==workspace.mode){
+   const switcher=document.getElementById(mode==='3d'?'workspace3d':'workspace2d');
+   if(switcher?.disabled){window.alert('Ce projet est verrouillé en '+workspace.mode.toUpperCase()+'. Ouvre le Hub et crée ou sélectionne un projet '+mode.toUpperCase()+'.');document.getElementById('hubOpen')?.click();return}
+   switcher?.click();
+   if(workspace.mode!==mode){window.alert('Impossible de changer de mode pour ce projet.');return}
+  }
   document.getElementById('projectTab')?.click();
   document.querySelectorAll('.studio-menubar details[open]').forEach(d=>d.open=false);
   search.value='';

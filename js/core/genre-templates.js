@@ -1,4 +1,4 @@
-import {default2dCharacterPng} from '../assets/real-starter-sprites-2d.js';
+import {default2dCharacterPng} from '../assets/real-starter-sprites-2d.js?v=fix-20261028';
 // Playable starting scenes for Hub game genres. All data remains ordinary WarLike
 // entities / Blueprint Sequences, so projects can be saved, reopened and edited.
 import {prefab3d} from '../assets/catalog-3d.js';

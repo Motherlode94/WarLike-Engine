@@ -37,7 +37,7 @@ test('per-object C# script source is retained in the scene and exportable',()=>{
 
 test('Inspector offers C# script editing on the selected GameObject',()=>{
  const inspector=read('js/ui/inspector.js');
- assert.match(inspector,/openCSharp\.textContent='C# Script'/);
+ assert.match(inspector,/function openCSharpEditor\(/);assert.match(read('js/ui/component-browser.js'),/name:'Script C# local'/);
  assert.match(inspector,/document\.getElementById\('csharpScriptLoad'\)\?\.click\(\)/);
 });
 

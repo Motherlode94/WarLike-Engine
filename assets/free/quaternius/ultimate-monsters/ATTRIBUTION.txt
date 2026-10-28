@@ -1,0 +1,6 @@
+Ultimate Monsters — monstra
+Author: Quaternius
+Source: https://quaternius.com/packs/ultimatemonsters.html
+License: CC0-1.0
+https://creativecommons.org/publicdomain/zero/1.0/
+Changes: Selection of the author's glTF or OBJ, materials, textures and documentation.

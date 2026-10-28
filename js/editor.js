@@ -1,3 +1,4 @@
+import {openComponentBrowser} from './ui/component-browser.js';
 import {initGameFlowUi} from './ui/game-flow-ui.js';
 import {initStudioPolish} from './ui/studio-polish.js';
 import {horrorAudio,horrorAmbiences,setHorrorAmbience,unlockHorrorAudio,playHorrorCue} from './core/horror-audio.js';
@@ -206,8 +207,7 @@ document.getElementById('menuOpenBlueprint')?.addEventListener('click',()=>{
 document.getElementById('menuAddComponent')?.addEventListener('click',()=>{
  const inspector=document.getElementById('inspectorPanel');
  if(inspector){inspector.scrollIntoView({block:'nearest'});}
- const details=[...document.querySelectorAll('#properties details')].find(el=>el.querySelector('summary')?.textContent?.includes('Components'));
- if(details){details.open=true;details.querySelector('input[type=search]')?.focus()}
+ openComponentBrowser();
  document.getElementById('menuAddComponent')?.closest('details')?.removeAttribute('open');
 });
 initStudioMenus();

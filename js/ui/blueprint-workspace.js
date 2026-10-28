@@ -114,4 +114,5 @@ export function initBlueprintWorkspace(){
  dialog.addEventListener('keydown',event=>{event.stopPropagation();if(event.key==='Escape'){event.preventDefault();hide();return}if(event.key==='Tab'){const controls=[...dialog.querySelectorAll('button,input,select,textarea,a[href]')].filter(el=>!el.disabled&&el.getClientRects().length);if(!controls.length){event.preventDefault();dialog.focus();return}const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}}});
  setInterval(()=>{if(!dialog.hidden)updateDebug()},250);
  document.addEventListener('warlike:open-game-project',()=>{ui.tab='project';show()});
+ document.addEventListener('warlike:open-behavior',event=>{const owner=state.entities.find(o=>o.id===event.detail?.ownerId);if(!owner)return;state.selected=[owner.id];ui.sequenceKey=event.detail.sequenceKey;ui.tab='graph';ui.nodeId=null;dialog.hidden=false;render();dialog.focus()});
 }

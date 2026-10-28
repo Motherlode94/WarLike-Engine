@@ -1,11 +1,12 @@
+import {freeAudioAssets} from '../assets/free-game-assets.js';
 // WarLike Audio Source Beta: attached emitter, listener distance and optional local WAV/MP3.
-import {audio,initAudio,unlockAudio,playSound} from './audio.js';
+import {audio,initAudio,unlockAudio,playSound,recordedSoundAsset,recordedSoundBuffer,loadRecordedSound} from './audio.js';
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
 export const audioClips=new Map(); // Runtime only: blobs are intentionally not serialized in JSON.
 const active=new Map();
 const last=new Map();
-export const soundChoices=['vehicle','shot','laser','door','step','pickup','heal','checkpoint','teleport','switch','explosion','victory'];
+export const soundChoices=['vehicle','shot','laser','door','step','pickup','heal','checkpoint','teleport','switch','explosion','victory',...freeAudioAssets.map(asset=>asset.id)];
 export const distanceGain=(d,range)=>Math.pow(Math.max(0,1-d/Math.max(.1,range)),2);
 export async function importSoundFile(file,o){
  if(!file||!o||!file.type.startsWith('audio/')&&!/\.(wav|mp3|ogg)$/i.test(file.name))throw Error('Choisis un fichier WAV, MP3 ou OGG.');
@@ -32,13 +33,14 @@ export function updateAudioSources(now=performance.now()/1000){
   const radius=Math.max(1,Number(o.audioRange)||18),level=Math.min(1,Math.max(0,Number.isFinite(Number(o.audioGain))?Number(o.audioGain):.7));
   const spatial=o.audioSpatial!==false;
   const factor=spatial?distanceGain(dist,radius):1;
-  const existing=active.get(o.id),clip=audioClips.get(o.id);
+  let clip=audioClips.get(o.id);const recorded=recordedSoundAsset(o.audioClip);if(recorded){const buffer=recordedSoundBuffer(o.audioClip);if(buffer)clip={buffer};else{loadRecordedSound(o.audioClip).catch(error=>console.warn('[WarLike Audio Source]',error.message));continue}}
+  const existing=active.get(o.id);
   if(existing){
    existing.gain.gain.setTargetAtTime(level*factor,audio.context.currentTime,.035);
    if(existing.panner)existing.panner.pan.setTargetAtTime(Math.max(-1,Math.min(1,(x-listener[0])/(radius*64))),audio.context.currentTime,.04);
    continue;
   }
-  if(o.audioClip==='imported'&&clip){
+  if((o.audioClip==='imported'||recorded)&&clip){
    if(!o.audioLoop&&last.has(o.id))continue;
    const source=audio.context.createBufferSource(),gain=audio.context.createGain();
    source.buffer=clip.buffer;source.loop=o.audioLoop!==false;gain.gain.value=level*factor;

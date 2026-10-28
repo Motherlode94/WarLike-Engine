@@ -4,7 +4,7 @@ import {armory,garage,weaponStats,vehicleStats} from '../js/assets/armory-garage
 test('48 distinct new weapons and vehicles integrated',()=>{
  assert.equal(armory.length,24);assert.equal(garage.length,24);
  assert.equal(new Set([...armory,...garage].map(r=>r[0])).size,48);
- assert.equal(catalog.length,295);
+ assert.equal(catalog.filter(a=>!a.spriteUrl).length,295);
  assert.equal(new Set(catalog.map(a=>a.id)).size,catalog.length);
 });
 test('weapon stats and vehicle performance are exposed by assets',()=>{

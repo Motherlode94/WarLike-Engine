@@ -42,11 +42,12 @@ export const assets3d=[
 ].map(([id,name,category,color,shape])=>({id,name,category,color,shape}));
 const lookup=new Map(assets3d.map(a=>[a.id,a]));
 export const get3dAsset=id=>lookup.get(id)||model3dById(id)||null;
-export const allAssets3d=()=>[...assets3d,...realModels3d,...importedModels3d.values()];
+export const allAssets3d=()=>[...realModels3d,...importedModels3d.values(),...assets3d];
 export const categories3d=['All',...new Set(allAssets3d().map(a=>a.category)),'Weapons'];
 export const dimensions3d=a=>{
  const kind=typeof a==='string'?get3dAsset(a):a;
  const shape=kind?.shape||'cube';
+ if(shape==='glb'&&kind.normalizedSize){const size=['Characters','Monsters'].includes(kind.category)?135:kind.category==='Vehicles'?190:kind.category==='Nature'?180:kind.category==='Buildings'?210:90;const [w,h,d]=kind.normalizedSize.map(value=>Math.max(8,Math.round(size*value)));return {w,h,d}}
  if(shape==='ground'||shape==='road'||shape==='water')return {w:460,h:5,d:360};
  if(shape==='wall'||shape==='fence')return {w:210,h:130,d:28};
  if(shape==='house'||shape==='hangar'||shape==='garage')return {w:210,h:150,d:165};
@@ -87,18 +88,18 @@ function defaultsForVehicle(id){
 }
 // Actual GLB geometry for supported starter prefabs; procedural primitives remain explicit tools.
 const defaultRealModel={
- 'character-hero':'real-cesium-man',
- 'character-soldier':'real-rigged-figure',
- 'character-civilian':'real-cesium-man',
- 'vehicle-truck':'real-cesium-milk-truck',
- 'vehicle-van':'real-cesium-milk-truck',
+ 'character-hero':'free-mini-characters-character-male-a',
+ 'character-soldier':'free-mini-characters-character-male-b',
+ 'character-civilian':'free-mini-characters-character-female-a',
+ 'vehicle-truck':'free-car-kit-truck',
+ 'vehicle-van':'free-car-kit-sedan',
  'vehicle-toycar':'real-toycar',
  'building-lamp':'real-lantern'
 };
 export function prefab3d(id,nextId=1,x=120,y=120){
  const a=get3dAsset(id);if(!a)return null;
  const size=dimensions3d(a),realId=defaultRealModel[a.id],real=realId&&model3dById(realId);return {id:nextId,name:a.name+' '+nextId,type:'mesh3d',assetId:a.id,
- x,y,w:size.w,h:size.h,depth3d:size.d,meshShape:real?'glb':a.shape,elevation3d:0,color:a.color,rotation:0,
+ x,y,w:size.w,h:size.h,depth3d:size.d,meshShape:real?'glb':a.shape,elevation3d:0,color:a.color||'#ffffff',rotation:0,
  collision3d:!['water','ground','road','lamp','bush'].includes(a.shape),...(real?{model3dId:realId}:a.shape==='glb'?{model3dId:a.id}:{}),...(a.category==='Characters'?{playable3d:true}:{})};
 }
 export function thumbnail3d(asset){

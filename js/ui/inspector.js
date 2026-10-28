@@ -1,3 +1,9 @@
+import {renderAnimator3d} from './animator-3d.js';
+import {freeAudioAssets} from '../assets/free-game-assets.js';
+import {assetCredits} from './asset-credits.js';
+import {componentChoices,addObjectComponent,resetObjectComponent,removeObjectComponent,webDataComponentKinds,inspectorComponentRank} from '../core/component-definitions.js';
+import {newSequence} from '../core/logic-sequences.js';
+import {finishInspector as finishComponentInspector,openComponentBrowser} from './component-browser.js';
 import {communityRecipes,applyCommunityRecipe} from '../core/community-plugins.js';
 import {threatFactions,threatRelations,threatProfile} from '../core/threat-intelligence.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
@@ -18,7 +24,8 @@ import {getAsset} from '../assets/catalog.js';
 import {state,active,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 import {deleteSelected} from '../core/scene.js';
-function field(parent,o,key,label,type='number'){const line=document.createElement('div');line.className='property-row';const name=document.createElement('label');name.textContent=label;const input=document.createElement('input');input.type=type;input.value=o[key]??(type==='number'?0:'');input.disabled=state.playing;input.onchange=()=>{const v=type==='number'?Number(input.value):input.value;if(type==='number'&&!Number.isFinite(v))return;if(['w','h'].includes(key)&&v<=0)return;o[key]=v;record('Inspector : '+label);notify()};line.append(name,input);parent.append(line)}
+let inspectorFieldSerial=0;
+function field(parent,o,key,label,type='number'){const line=document.createElement('div');line.className='property-row';const name=document.createElement('label');name.textContent=label;const input=document.createElement('input');input.id='inspector-field-'+(++inspectorFieldSerial);name.htmlFor=input.id;input.type=type;input.value=o[key]??(type==='number'?0:'');input.disabled=state.playing;input.onchange=()=>{const v=type==='number'?Number(input.value):input.value;if(type==='number'&&!Number.isFinite(v))return;if(['w','h'].includes(key)&&v<=0)return;o[key]=v;record('Inspector : '+label);notify()};line.append(name,input);parent.append(line)}
 const colorsPreset=['#41cdb5','#ffffff','#1b2535','#ef5350','#ff9f43','#ffd166','#74c96c','#4f9ce9','#9b78ef','#e667b4','#926b4c','#9daab5'];
 const normalizedHex=value=>/^#[0-9a-f]{6}$/i.test(String(value||''))?String(value).toLowerCase():'#8195ef';
 function colorPalette(parent,o,key,label='Couleur'){
@@ -33,72 +40,37 @@ function colorPalette(parent,o,key,label='Couleur'){
  hex.addEventListener('change',()=>{if(!/^#[0-9a-f]{6}$/i.test(hex.value.trim())){hex.value=normalizedHex(o[key]);return}apply(hex.value.trim())});
  controls.append(picker,hex);root.append(controls);
  const palette=document.createElement('div');palette.className='warlike-color-swatches';
- for(const color of colorsPreset){const btn=document.createElement('button');btn.type='button';btn.className='warlike-color-swatch';btn.style.backgroundColor=color;btn.title=color;btn.setAttribute('aria-label','Appliquer '+color);btn.disabled=state.playing;btn.onclick=()=>apply(color);palette.append(btn)}
+ for(const color of colorsPreset){const btn=document.createElement('button');btn.type='button';btn.className='warlike-color-swatch';btn.style.backgroundColor=color;btn.style.setProperty('--swatch-color',color);btn.title=color;btn.setAttribute('aria-label','Appliquer '+color);btn.disabled=state.playing;btn.onclick=()=>apply(color);palette.append(btn)}
  root.append(palette);parent.append(root);
 }
-function selectField(parent,o,key,label,opts){const line=document.createElement('div');line.className='property-row';const title=document.createElement('label');title.textContent=label;const select=document.createElement('select');select.disabled=state.playing;for(const value of opts){const option=document.createElement('option');option.value=value;option.textContent=value;select.append(option)}select.value=o[key]||opts[0];select.onchange=()=>{o[key]=select.value;record('Inspector : '+label);notify()};line.append(title,select);parent.append(line)}
+function selectField(parent,o,key,label,opts){const line=document.createElement('div');line.className='property-row';const title=document.createElement('label');title.textContent=label;const select=document.createElement('select');select.id='inspector-select-'+(++inspectorFieldSerial);title.htmlFor=select.id;select.disabled=state.playing;for(const value of opts){const option=document.createElement('option');option.value=typeof value==='object'?value.value:value;option.textContent=typeof value==='object'?value.label:value;select.append(option)}select.value=o[key]||(typeof opts[0]==='object'?opts[0].value:opts[0]);select.onchange=()=>{o[key]=select.value;record('Inspector : '+label);notify()};line.append(title,select);parent.append(line)}
 const INSPECTOR_FOLDS_KEY='warlike.inspector.folds.v1';
 function readFolds(){try{return JSON.parse(localStorage.getItem(INSPECTOR_FOLDS_KEY)||'{}')||{}}catch{return {}}}
 function component(parent,title,build){
- const details=document.createElement('details');details.className='inspector-component';
+ const details=document.createElement('details');details.className='inspector-component';details.dataset.componentTitle=title;
  const folds=readFolds();details.open=folds[title]!==false;
  const summary=document.createElement('summary');summary.textContent=title;
  const body=document.createElement('div');body.className='component-content';
  details.append(summary,body);build(body);parent.append(details);
  details.addEventListener('toggle',()=>{const saved=readFolds();saved[title]=details.open;try{localStorage.setItem(INSPECTOR_FOLDS_KEY,JSON.stringify(saved))}catch{}});
 }
-export function renderHierarchy(){const root=document.querySelector('#objects'),filter=(document.querySelector('#hierarchySearch')?.value||'').toLowerCase();root.replaceChildren();for(const o of state.entities.filter(o=>o.name.toLowerCase().includes(filter))){const b=document.createElement('button');b.textContent=(o.type==='prefab'?'◈ ':o.type==='character'?'♟ ':'▣ ')+o.name;b.classList.toggle('selected',state.selected.includes(o.id));b.onclick=e=>{if(state.playing)return;state.selected=e.shiftKey?(state.selected.includes(o.id)?state.selected.filter(id=>id!==o.id):[...state.selected,o.id]):[o.id];notify()};root.append(b)}}
-export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
-
-const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent=o.type+'  •  GameObject #'+o.id;header.append(name,meta);root.append(header);
-component(root,'Transform',body=>{
- const vector=(title,axes)=>{
-  const row=document.createElement('div');row.className='inspector-vector-row';
-  const label=document.createElement('strong');label.textContent=title;row.append(label);
-  const group=document.createElement('div');group.className='inspector-vector-fields';
-  for(const [axis,key] of axes){
-   const item=document.createElement('label');item.className='inspector-axis';
-   const tag=document.createElement('span');tag.textContent=axis;tag.dataset.axis=axis;
-   const input=document.createElement('input');input.type='number';input.step='any';input.value=String(o[key]??0);input.disabled=state.playing;input.setAttribute('aria-label',title+' '+axis);
-   input.onchange=()=>{const value=Number(input.value);if(!Number.isFinite(value)||(title==='Size'&&value<=0)){input.value=String(o[key]??0);return}o[key]=value;record('Transform '+title+' '+axis);notify()};
-   item.append(tag,input);group.append(item);
-  }
-  row.append(group);body.append(row);
- };
- vector('Position',workspace.mode==='3d'?[['X','x'],['Y','elevation3d'],['Z','y']]:[['X','x'],['Y','y']]);
- field(body,o,'rotation','Rotation (°)');
- vector('Size',[['X','w'],['Y','h']]);
-});
-component(root,'Components • Gameplay & Scripts',body=>{
- const definitions=Array.isArray(o.csharpComponents)?o.csharpComponents:[];
- const catalog={
+const nativeComponentCatalog={
  'Gameplay / Combat':{Weapon:{damage:25,fireRate:8,magazineSize:30},Damageable:{armor:0,invulnerable:false},Health:{regen:0},Projectile:{speed:30,damage:20,lifetime:5},Rigidbody:{gravity:9.81,restitution:0,friction:.5}},
  'Gameplay / Deathmatch':{Team:{teamId:0,friendlyFire:false},Score:{},Respawn:{delay:5},DeathmatchRules:{matchDuration:600,scoreLimit:25,countdown:3},SpawnPoint:{teamId:-1,radius:1},AmmoPickup:{amount:30},HealthPickup:{healAmount:35},KillZone:{damage:10000},ObjectiveZone:{teamId:-1,captureTime:10}},
  'Movement / AI':{AutoRotate:{speed:90},LinearMotion:{vx:0,vy:0,vz:0},FollowActor:{targetId:1,speed:3,stopDistance:1}},
  'Vehicles / C#':{VehicleController:{maxSpeed:310,acceleration:225,brakeForce:310,turnRate:145,drag:1.15,reverseRatio:.45}},
  'Genres / C#':{Roleplay:{money:50,reputation:0},RacingRules:{},SimulationEconomy:{money:100,materials:5},RpgProgression:{gold:100},FourXEmpire:{}}
  };
+
+function renderNativeComponents(root,o){
+ const definitions=Array.isArray(o.csharpComponents)?o.csharpComponents:[];
  const labels={damage:'Dégâts',fireRate:'Tirs / seconde',magazineSize:'Taille du chargeur',armor:'Armure',invulnerable:'Invulnérable',regen:'Régénération / s',speed:'Vitesse',lifetime:'Durée de vie',gravity:'Gravité',restitution:'Rebond',friction:'Friction',teamId:'Équipe ID',friendlyFire:'Tirs alliés',delay:'Délai (s)',matchDuration:'Durée du match (s)',scoreLimit:'Limite de kills',countdown:'Compte à rebours',radius:'Rayon',amount:'Quantité',healAmount:'Soin',captureTime:'Temps de capture',vx:'Vitesse X',vy:'Vitesse Y',vz:'Vitesse Z',targetId:'ID de la cible',stopDistance:'Distance d’arrêt',maxSpeed:'Vitesse max',acceleration:'Accélération',brakeForce:'Freinage',turnRate:'Direction (°/s)',drag:'Résistance',reverseRatio:'Rapport marche arrière',money:'Crédits',reputation:'Réputation',materials:'Matériaux',gold:'Or'};
- const defaults=Object.assign({},...Object.values(catalog));
- const title=document.createElement('div');title.className='warlike-component-toolbar';
- const count=document.createElement('strong');count.textContent=definitions.length+' composant(s)';
- const openBlueprint=document.createElement('button');openBlueprint.type='button';openBlueprint.textContent='⬡ Blueprint';openBlueprint.onclick=()=>document.getElementById('openBlueprint')?.click();
- const openCSharp=document.createElement('button');openCSharp.type='button';openCSharp.textContent='C# Script';
- openCSharp.title='Éditer le script C# de ce GameObject';
- openCSharp.onclick=()=>{
-  document.getElementById('openCsharpRuntime')?.click();
-  const editor=document.querySelector('#csharpRuntimePanel .csharp-script-editor');
-  if(editor)editor.open=true;
-  document.getElementById('csharpScriptLoad')?.click();
- };
- title.append(count,openBlueprint,openCSharp);body.append(title);
- const note=document.createElement('p');note.className='warlike-component-hint';note.textContent='Propriétés enregistrées dans la scène. Certains composants sont utilisables par le runtime Web ; les autres nécessitent encore une intégration Play.';body.append(note);
- const list=document.createElement('div');list.className='csharp-component-list';
+ const defaults=Object.assign({},...Object.values(nativeComponentCatalog));
  definitions.forEach((definition,index)=>{
- const card=document.createElement('details');card.className='warlike-component-card';card.open=true;
- const heading=document.createElement('summary');heading.textContent=definition.kind||'Composant';card.append(heading);
+ const card=document.createElement('details');card.className='inspector-component warlike-component-card';card.dataset.componentTitle=definition.kind;card.dataset.runtime=webDataComponentKinds.has(definition.kind)?'web':'dotnet';card.open=true;
+ const heading=document.createElement('summary');heading.textContent=definition.kind||'Composant';const badge=document.createElement('small');badge.className='component-runtime-badge';badge.textContent=webDataComponentKinds.has(definition.kind)?'Web':'C# local';heading.append(badge);card.append(heading);
  const fields=document.createElement('div');fields.className='warlike-component-fields';
- const keys=Object.keys(defaults[definition.kind]||{});for(const key of Object.keys(definition)){if(key!=='kind'&&!keys.includes(key))keys.push(key)}
+ const keys=Object.keys(defaults[definition.kind]||{});for(const key of Object.keys(definition)){if(!['kind','enabled'].includes(key)&&!keys.includes(key))keys.push(key)}
  for(const key of keys){const row=document.createElement('label');row.className='warlike-component-field';
  const label=document.createElement('span');label.textContent=labels[key]||key;row.append(label);
  const value=definition[key]??defaults[definition.kind]?.[key];
@@ -113,27 +85,59 @@ component(root,'Components • Gameplay & Scripts',body=>{
  const duplicate=document.createElement('button');duplicate.textContent='Dupliquer';duplicate.disabled=state.playing;duplicate.onclick=()=>{definitions.splice(index+1,0,structuredClone(definition));record('Dupliquer '+definition.kind);notify()};
  const reset=document.createElement('button');reset.textContent='Réinitialiser';reset.disabled=state.playing;reset.onclick=()=>{definitions[index]={kind:definition.kind,...structuredClone(defaults[definition.kind]||{})};record('Réinitialiser '+definition.kind);notify()};
  const remove=document.createElement('button');remove.textContent='Supprimer';remove.disabled=state.playing;remove.onclick=()=>{definitions.splice(index,1);record('Supprimer '+definition.kind);notify()};
- actions.append(duplicate,reset,remove);card.append(fields,actions);list.append(card);
- });body.append(list);
- const addPanel=document.createElement('div');addPanel.className='warlike-add-component';
- const search=document.createElement('input');search.type='search';search.placeholder='Rechercher : Weapon, Respawn, AI…';search.setAttribute('aria-label','Rechercher un composant');
- const picker=document.createElement('select');picker.setAttribute('aria-label','Choisir un composant');
- const populate=()=>{const previous=picker.value;picker.replaceChildren();const query=search.value.trim().toLowerCase();
- for(const [category,items] of Object.entries(catalog)){const group=document.createElement('optgroup');group.label=category;
- for(const kind of Object.keys(items)){if(query&&!kind.toLowerCase().includes(query)&&!category.toLowerCase().includes(query))continue;const option=document.createElement('option');option.value=kind;option.textContent=kind;group.append(option)}
- if(group.children.length)picker.append(group)}
- if([...picker.options].some(opt=>opt.value===previous))picker.value=previous;
+ actions.append(duplicate,reset,remove);card.append(fields,actions);root.append(card);
+ })
+}
+function openCSharpEditor(){
+ document.getElementById('openCsharpRuntime')?.click();
+ const editor=document.querySelector('#csharpRuntimePanel .csharp-script-editor');
+ if(editor)editor.open=true;
+ document.getElementById('csharpScriptLoad')?.click();
+ document.getElementById('csharpScriptSource')?.focus();
+}
+function finishInspector(root,o,templates){finishComponentInspector(root,o,templates,nativeComponentCatalog,renderNativeComponents,openCSharpEditor)}
+function renderObjectBehaviors(root,owner){
+ const entries=[...(owner.sequence?[{index:-1,sequence:owner.sequence}]:[]),...(owner.sequences||[]).map((sequence,index)=>({index,sequence}))];
+ for(const entry of entries){
+  renderSequenceEditor(root,owner,{sequence:entry.sequence,expanded:false,onChange:(sequence,label)=>{
+   if(entry.index<0){if(sequence)owner.sequence=sequence;else delete owner.sequence}
+   else if(sequence)owner.sequences[entry.index]=sequence;else owner.sequences.splice(entry.index,1);
+   record('Blueprint : '+label);notify();
+  }});
+  const card=root.lastElementChild;card.dataset.componentTitle='Déclencheur · '+(entry.sequence.name||entry.sequence.event);card.dataset.componentKey='sequence';
+  const summary=card.querySelector('summary');summary.textContent=card.dataset.componentTitle;
+  const overview=document.createElement('p');overview.className='inspector-behavior-flow';overview.textContent='Événement → Conditions → Instructions';
+  const open=document.createElement('button');open.type='button';open.textContent='Ouvrir ce comportement dans Blueprint';open.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:open-behavior',{detail:{ownerId:owner.id,sequenceKey:entry.index<0?owner.id:owner.id+':extra:'+entry.index}}));
+  card.querySelector('.component-content').prepend(overview,open);
+ }
+}
+export function renderHierarchy(){const root=document.querySelector('#objects'),filter=(document.querySelector('#hierarchySearch')?.value||'').toLowerCase();root.replaceChildren();for(const o of state.entities.filter(o=>o.name.toLowerCase().includes(filter))){const b=document.createElement('button');b.textContent=(o.type==='prefab'?'◈ ':o.type==='character'?'♟ ':'▣ ')+o.name;b.classList.toggle('selected',state.selected.includes(o.id));b.onclick=e=>{if(state.playing)return;state.selected=e.shiftKey?(state.selected.includes(o.id)?state.selected.filter(id=>id!==o.id):[...state.selected,o.id]):[o.id];notify()};root.append(b)}}
+export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
+
+const header=document.createElement('div');header.className='inspector-object';const name=document.createElement('input');name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};const meta=document.createElement('small');meta.textContent=o.type+'  •  GameObject #'+o.id;header.append(name,meta);root.append(header);
+component(root,'Transform',body=>{
+ const vector=(title,axes)=>{
+  const row=document.createElement('div');row.className='inspector-vector-row';
+  const label=document.createElement('strong');label.textContent=title;row.append(label);
+  const group=document.createElement('div');group.className='inspector-vector-fields';
+  for(const [axis,key] of axes){
+   const item=document.createElement('label');item.className='inspector-axis';
+   const tag=document.createElement('span');tag.textContent=axis;tag.dataset.axis=axis;
+   const input=document.createElement('input');input.type='number';input.step='any';const divisor=workspace.mode==='3d'&&key!=='elevation3d'?64:1;input.value=String((o[key]??(key==='depth3d'?o.w:0))/divisor);input.disabled=state.playing;input.setAttribute('aria-label',title+' '+axis);input.title=workspace.mode==='3d'?'Mètres':'Unités de scène';
+   input.onchange=()=>{const value=Number(input.value)*divisor;if(!Number.isFinite(value)||(title==='Size'&&value<=0)){input.value=String(o[key]??0);return}o[key]=value;record('Transform '+title+' '+axis);notify()};
+   item.append(tag,input);group.append(item);
+  }
+  row.append(group);body.append(row);
  };
- search.addEventListener('input',populate);populate();
- const add=document.createElement('button');add.type='button';add.textContent='＋ Add Component';add.disabled=state.playing;
- add.onclick=()=>{const kind=picker.value;if(!kind||!defaults[kind])return;if(!Array.isArray(o.csharpComponents))o.csharpComponents=[];o.csharpComponents.push({kind,...structuredClone(defaults[kind])});record('Ajouter '+kind);notify()};
- addPanel.append(search,picker,add);body.append(addPanel);
+ vector('Position',workspace.mode==='3d'?[['X','x'],['Y','elevation3d'],['Z','y']]:[['X','x'],['Y','y']]);
+ field(body,o,'rotation','Rotation (°)');
+ vector('Size',workspace.mode==='3d'?[['X','w'],['Y','h'],['Z','depth3d']]:[['X','w'],['Y','h']]);
 });
 // Unity-style Inspector: component properties first, optional gameplay templates in one closed drawer.
 const advancedTools=document.createElement('details');
 advancedTools.className='inspector-advanced-tools';
 const advancedSummary=document.createElement('summary');
-advancedSummary.textContent='Add Component  ▾';
+advancedSummary.textContent='Modèles de gameplay';
 advancedSummary.title='Modèles de gameplay, IA et systèmes optionnels';
 const advancedContent=document.createElement('div');
 advancedContent.className='inspector-advanced-content';
@@ -152,7 +156,7 @@ component(advancedContent,'Quick Start • Gameplay Recipes',body=>{
  body.append(picker);
  const apply=document.createElement('button');apply.textContent='＋ Appliquer le modèle';apply.disabled=state.playing;apply.onclick=()=>{if(!confirm('Appliquer ce modèle à '+o.name+' ? Les composants concernés seront remplacés.'))return;if((picker.value.startsWith('community:')?applyCommunityRecipe(o,picker.value,workspace.mode):applyRecipe(o,picker.value))){record('Gameplay Recipe : '+picker.value);notify()}};body.append(apply);
 });
-if(workspace.mode==='3d')component(root,'Physics 3D • Rigidbody',body=>{
+if(workspace.mode==='3d'&&o.rigidbody3d)component(root,'Physics 3D • Rigidbody',body=>{
  if(!o.rigidbody3d){const add=document.createElement('button');add.textContent='＋ Add Rigidbody 3D';add.disabled=state.playing;add.onclick=()=>{o.rigidbody3d=defaultRigidbody3d();record('Add Rigidbody 3D');notify()};body.append(add);return}
  const rb=o.rigidbody3d;
  for(const [key,label] of [['mass','Mass'],['gravity','Gravity'],['restitution','Bounciness (0-1)'],['friction','Friction (0-1)'],['vx','Velocity X'],['vy','Velocity Y'],['vz','Velocity Z']])field(body,rb,key,label);
@@ -160,15 +164,15 @@ if(workspace.mode==='3d')component(root,'Physics 3D • Rigidbody',body=>{
   const row=document.createElement('label');row.className='logic-flag';const input=document.createElement('input');input.type='checkbox';input.checked=rb[key]===true;input.disabled=state.playing;input.onchange=()=>{rb[key]=input.checked;record('Rigidbody '+key);notify()};row.append(input,document.createTextNode(label));body.append(row);
  }
  const info=document.createElement('p');info.textContent='Prototype physique 3D : gravité, rebond au sol et collisions AABB simples. Le joueur et les agents IA utilisent leur propre contrôleur.';body.append(info);
- const rm=document.createElement('button');rm.textContent='− Remove Rigidbody';rm.disabled=state.playing;rm.onclick=()=>{delete o.rigidbody3d;record('Remove Rigidbody');notify()};body.append(rm);
+
 });
-component(['horrorAiConfig','horrorHideConfig','horrorFearConfig'].some(key=>o[key])?root:advancedContent,'Survival Horror',body=>{
+if(['horrorAiConfig','horrorHideConfig','horrorFearConfig'].some(key=>o[key]))component(root,'Survival Horror',body=>{
  const configs=[
   ['Horror AI','horrorAiConfig',{enabled:true,visionRange:230,hearingRange:220,chaseSpeed:75,searchSpeed:33,memorySeconds:5},[['visionRange','Vision (distance)'],['hearingRange','Audition (distance)'],['chaseSpeed','Vitesse poursuite'],['searchSpeed','Vitesse recherche'],['memorySeconds','Durée recherche']]],
   ['Cachette','horrorHideConfig',{enabled:true,radius:90},[['radius','Rayon cachette']]],
   ['Zone de peur','horrorFearConfig',{enabled:true,radius:170,strength:12},[['radius','Rayon de peur'],['strength','Intensité']]],
  ];
- for(const [label,key,defaults,properties] of configs){
+ for(const [label,key,defaults,properties] of configs){if(!o[key])continue;
   const sub=document.createElement('details');sub.className='inspector-component';
   const heading=document.createElement('summary');heading.textContent=label;sub.append(heading);
   if(!o[key]){const add=document.createElement('button');add.type='button';add.textContent='＋ Ajouter '+label;add.disabled=state.playing;add.onclick=()=>{o[key]={...defaults};record('Game Creator : '+label);notify()};sub.append(add)}
@@ -183,12 +187,12 @@ component(['horrorAiConfig','horrorHideConfig','horrorFearConfig'].some(key=>o[k
  }
  const help=document.createElement('p');help.textContent='Ces composants sont enregistrés avec le GameObject et utilisés en mode Survival Horror 2D/3D.';body.append(help);
 });
-component(['worldPoliceConfig','worldInfectedConfig'].some(key=>o[key])?root:advancedContent,'Monde ouvert / Survie',body=>{
+if(['worldPoliceConfig','worldInfectedConfig'].some(key=>o[key]))component(root,'Monde ouvert / Survie',body=>{
  const configs=[
  ['Police · Recherche','worldPoliceConfig',{enabled:true,range:450,speed:75},[['range','Distance de poursuite'],['speed','Vitesse patrouille']]],
  ['Infecté · Horde','worldInfectedConfig',{enabled:true,range:300,speed:53},[['range','Distance de détection'],['speed','Vitesse infecté']]],
  ];
- for(const [label,key,defaults,properties] of configs){
+ for(const [label,key,defaults,properties] of configs){if(!o[key])continue;
   const section=document.createElement('details');section.className='inspector-component';
   const summary=document.createElement('summary');summary.textContent=label;section.append(summary);
   const cfg=o[key];
@@ -202,21 +206,19 @@ component(['worldPoliceConfig','worldInfectedConfig'].some(key=>o[key])?root:adv
  }
  const hint=document.createElement('small');hint.textContent='Police : suit le joueur si wantedLevel > 0. Infecté : suit le joueur à proximité. Les modèles Western, commerces, missions et campements se trouvent dans la bibliothèque Blueprint.';body.append(hint);
 });
-renderSequenceEditor(root,o);
-component(root,'Gameplay Components',body=>{
- const addComponent=(name,key,factory)=>{if(!o[key]){const b=document.createElement('button');b.textContent='＋ '+name;b.disabled=state.playing;b.onclick=()=>{o[key]=factory();record('Ajouter '+name);notify()};body.append(b);return false}return true};
- if(addComponent('Stats','stats',defaultStats)){
+renderObjectBehaviors(root,o);
+ if(o.stats)component(root,'Stats · Santé et endurance',body=>{
   const s=o.stats;for(const [key,label] of [['maxHealth','Vie maximale'],['health','Vie actuelle'],['maxStamina','Endurance maximale'],['stamina','Endurance'],['staminaRegen','Régénération']])field(body,s,key,label);
-  const remove=document.createElement('button');remove.textContent='− Supprimer Stats';remove.disabled=state.playing;remove.onclick=()=>{delete o.stats;record('Retirer Stats');notify()};body.append(remove);
- }
- if(addComponent('Inventaire','inventory',defaultInventory)){
+
+ });
+ if(o.inventory)component(root,'Inventaire',body=>{
   const inv=o.inventory;field(body,inv,'capacity','Emplacements');const row=document.createElement('div');row.className='property-row';
   const item=document.createElement('input');item.placeholder='ID objet (ex: sword)';item.disabled=state.playing;const add=document.createElement('button');add.textContent='＋ Objet';add.disabled=state.playing;add.onclick=()=>{if(inventoryAdd(o,item.value.trim())){record('Inventaire : ajouter');notify()}};row.append(item,add);body.append(row);
   for(const entry of inv.items){const line=document.createElement('div');line.className='property-row';const label=document.createElement('span');label.textContent=entry.id+' ×'+entry.count;line.append(label);
    for(const [slot,title] of [['weapon','Arme'],['armor','Armure']]){const btn=document.createElement('button');btn.textContent=title;btn.disabled=state.playing;btn.onclick=()=>{if(equipItem(o,entry.id,slot)){record('Équiper '+slot);notify()}};line.append(btn)}
    const remove=document.createElement('button');remove.textContent='−';remove.disabled=state.playing;remove.onclick=()=>{inventoryRemove(o,entry.id,1);record('Inventaire : retirer');notify()};line.append(remove);body.append(line)}
   const equipped=document.createElement('small');equipped.textContent='Équipé : '+JSON.stringify(inv.equipment||{});body.append(equipped);
- }
+ });
  if(o.ai&&o.ai.enabled!==false){
   component(root,'Enemy Intelligence · identité / factions',body=>{
    o.threatIntel??={faction:'bandit',relation:'hostile',className:'Ennemi',level:1,weakness:'Non identifiée'};
@@ -234,7 +236,7 @@ component(root,'Gameplay Components',body=>{
    body.append(live);
   });
  }
- if(addComponent('AI State Machine','ai',defaultAi)){
+ if(o.ai)component(root,'IA · Perception et navigation',body=>{
   const ai=o.ai;ai.fieldOfView??=360;ai.memoryDuration??=4;ai.searchDuration??=2;
   selectField(body,ai,'state','État IA',['idle','patrol','chase','attack','investigate','search','return','dead']);
   field(body,o,'aiFaction','Faction personnalisée (optionnel)','text');
@@ -242,33 +244,31 @@ component(root,'Gameplay Components',body=>{
   const flag=document.createElement('label');const cb=document.createElement('input');cb.type='checkbox';cb.checked=ai.enabled!==false;cb.disabled=state.playing;cb.onchange=()=>{ai.enabled=cb.checked;record('IA activée');notify()};flag.append(cb,document.createTextNode(' IA activée'));body.append(flag);
   const sightLabel=document.createElement('label');const sightCb=document.createElement('input');sightCb.type='checkbox';sightCb.checked=ai.requireLineOfSight===true;sightCb.disabled=state.playing;sightCb.onchange=()=>{ai.requireLineOfSight=sightCb.checked;record('IA : détection masquée par obstacles');notify()};sightLabel.append(sightCb,document.createTextNode(' Vision bloquée par les obstacles'));body.append(sightLabel);
   const pathLabel=document.createElement('label');const pathCb=document.createElement('input');pathCb.type='checkbox';pathCb.checked=ai.pathfinding!==false;pathCb.disabled=state.playing;pathCb.onchange=()=>{ai.pathfinding=pathCb.checked;record('Navigation A*');notify()};pathLabel.append(pathCb,document.createTextNode(' Navigation A*'));body.append(pathLabel);
- }
- if(addComponent('Character Controller 3D','controller3d',defaultController)){
+ });
+ if(workspace.mode==='3d'&&o.controller3d)component(root,'Contrôleur de personnage 3D',body=>{
   for(const [key,label] of [['walkSpeed','Marche'],['sprintSpeed','Sprint'],['jumpForce','Saut'],['gravity','Gravité'],['dodgeDistance','Esquive (préparation)'],['dodgeCooldown','Cooldown esquive (préparation)'],['staminaCost','Coût endurance (préparation)']])field(body,o.controller3d,key,label);
- }
-});
-
-if(workspace.mode==='3d'){
-component(root,'Lighting 3D Beta',body=>{
- selectField(body,o,'lightType','Type',['none','point','spot']);
- if(o.lightType!=='none'&&o.lightType){
-  const flag=document.createElement('label');flag.className='logic-flag';
-  const cb=document.createElement('input');cb.type='checkbox';cb.checked=o.lightEnabled!==false;cb.disabled=state.playing;
-  cb.onchange=()=>{o.lightEnabled=cb.checked;record('Light On/Off');notify()};
-  flag.append(cb,document.createTextNode(' Enabled'));body.append(flag);
-  if(o.lightColor===undefined)o.lightColor='#ffd48b';
-  colorPalette(body,o,'lightColor','Couleur de la lumière');
-  for(const [key,label,type] of [['lightIntensity','Intensity','number'],['lightRange','Range (meters)','number'],['lightAngle','Spot Angle','number']]){if(key==='lightAngle'&&o.lightType!=='spot')continue;field(body,o,key,label,type)}
- }
- const tip=document.createElement('p');tip.textContent='Les lumières modifient les volumes dans la vue 3D. 8 lumières proches rendues simultanément.';body.append(tip);
-});
-component(root,'Audio Source Beta',body=>{
+ });
+if(o.playable3d||o.type==='player'||o.type==='character'||getAsset(o.assetId)?.category==='Characters'||o.cameraRig){
+ component(root,'Caméra de jeu',body=>{
+  const cfg=o.cameraRig||{mode:o.fpsController?'firstPerson':'thirdPerson',distance:4.8,height:.72,followSharpness:10,sensitivity:.0026,collision:true};
+  const note=document.createElement('p');note.textContent='Caméra utilisée en Play. La vue de travail est restaurée à l’arrêt.';body.append(note);
+  const store=()=>{o.cameraRig=cfg;record('Caméra de jeu');notify()};
+  if(workspace.mode==='3d'){
+   const collision=document.createElement('label'),check=document.createElement('input');collision.className='logic-flag';check.type='checkbox';check.checked=cfg.collision!==false;check.disabled=state.playing;check.onchange=()=>{cfg.collision=check.checked;store()};collision.append(check,document.createTextNode('Éviter les obstacles'));body.append(collision);
+   const mode=document.createElement('select');mode.setAttribute('aria-label','Mode de caméra');
+   for(const [value,label] of [['thirdPerson','Troisième personne'],['firstPerson','Première personne'],['orbit','Vue orbitale']]){const option=document.createElement('option');option.value=value;option.textContent=label;mode.append(option)}mode.value=cfg.mode;mode.disabled=state.playing;mode.onchange=()=>{cfg.mode=mode.value;if(mode.value!=='firstPerson')delete o.fpsController;store()};body.append(mode);
+   for(const [key,label] of [['distance','Distance (m)'],['height','Hauteur de visée (× taille)'],['sensitivity','Sensibilité souris']]){const row=document.createElement('label');row.textContent=label;const input=document.createElement('input');input.type='number';input.step='any';input.value=cfg[key];input.disabled=state.playing;input.onchange=()=>{const value=Number(input.value);if(Number.isFinite(value)&&value>0){cfg[key]=value;store()}};row.append(input);body.append(row)}
+  }
+  const row=document.createElement('label');row.textContent='Réactivité du suivi';const input=document.createElement('input');input.type='number';input.min='1';input.max='30';input.value=cfg.followSharpness;input.disabled=state.playing;input.onchange=()=>{cfg.followSharpness=Math.max(1,Math.min(30,Number(input.value)||10));store()};row.append(input);body.append(row);
+ });
+}
+if(o.audioEnabled!==undefined||o.audioClip)component(root,'Audio Source',body=>{
  const flag=document.createElement('label');flag.className='logic-flag';const cb=document.createElement('input');
  cb.type='checkbox';cb.checked=o.audioEnabled===true;cb.disabled=state.playing;
  cb.onchange=()=>{o.audioEnabled=cb.checked;record('Audio Enabled');notify()};
  flag.append(cb,document.createTextNode(' Active'));body.append(flag);
  if(o.audioClip===undefined)o.audioClip='none';
- selectField(body,o,'audioClip','Clip',['none',...soundChoices,'imported']);
+ selectField(body,o,'audioClip','Clip',['none',...soundChoices.map(value=>({value,label:(freeAudioAssets.find(a=>a.id===value)?freeAudioAssets.find(a=>a.id===value).name+' · Kenney':value)})),'imported']);const sound=freeAudioAssets.find(a=>a.id===o.audioClip);if(sound)body.append(assetCredits(sound));
  if(o.audioGain===undefined)o.audioGain=.6;
  if(o.audioRange===undefined)o.audioRange=18;
  if(o.audioInterval===undefined)o.audioInterval=3;
@@ -289,15 +289,19 @@ component(root,'Audio Source Beta',body=>{
  const text=document.createElement('p');text.textContent=o.audioFileName?'Audio local : '+o.audioFileName+(audioClips.has(o.id)?' (chargé)':' (réimporter après rechargement)'):'Importer un WAV/MP3/OGG pour cette session (fichier non incorporé dans JSON).';body.append(text);
  const preview=document.createElement('button');preview.textContent='▶ Écouter';preview.onclick=()=>previewSound(o);body.append(preview);
 });
-component(root,'Material 3D Beta',body=>{colorPalette(body,o,'color','Couleur du matériau');if(o.materialRoughness===undefined)o.materialRoughness=.7;if(o.materialMetallic===undefined)o.materialMetallic=0;field(body,o,'materialRoughness','Rugosité 0–1');field(body,o,'materialMetallic','Métal 0–1');const hint=document.createElement('p');hint.textContent='Matériaux provisoires : volumes 3D sans textures. Les prefabs utilisent une palette par catégorie.';body.append(hint)});
-const del3d=document.createElement('button');del3d.className='delete-object';del3d.textContent='Supprimer objet 3D';del3d.disabled=state.playing;del3d.onclick=deleteSelected;root.append(del3d);
-return;
-}
-component(root,'Sprite Renderer',body=>{colorPalette(body,o,'color','Couleur de l’objet');if(o.type==='prefab'){const label=document.createElement('p');label.textContent='Source : '+(getAsset(o.assetId)?.name||o.assetId);body.append(label)}if(o.type==='character')selectField(body,o,'skin','Character',['scout','soldier'])});
-if(o.type==='character'||o.type==='prefab')component(root,'Animator 2D',body=>{const kind=o.type==='character'?'actor':getAsset(o.assetId)?.kind||'prop';selectField(body,o,'animation','Clip',availableClips(kind,o.assetId));if(o.animationSpeed===undefined)o.animationSpeed=1;field(body,o,'animationSpeed','Playback Speed');const line=document.createElement('label');line.className='logic-flag';const check=document.createElement('input');check.type='checkbox';check.checked=!!o.animationPreview;check.disabled=state.playing;check.onchange=()=>{o.animationPreview=check.checked;record('Prévisualisation animation');notify()};line.append(check,document.createTextNode('Preview animation in Scene'));body.append(line)});
-if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Weapons')component(root,'Weapon Configuration',body=>{
- const asset=getAsset(o.assetId);for(const [k,label] of [['weaponDamage','Damage'],['weaponInterval','Seconds between attacks'],['weaponRange','Projectile range']]){if(o[k]===undefined)o[k]=asset[k]??({weaponDamage:34,weaponInterval:.16,weaponRange:650})[k];field(body,o,k,label)}
- const note=document.createElement('p');note.textContent='Play : approche une arme et appuie sur G pour équiper, puis clic gauche/F pour tirer. Armes de mêlée : attaque à courte portée.';body.append(note);
+if(workspace.mode==='3d'){
+if(o.lightType&&o.lightType!=='none')component(root,'Lighting 3D',body=>{
+ selectField(body,o,'lightType','Type',['none','point','spot']);
+ if(o.lightType!=='none'&&o.lightType){
+  const flag=document.createElement('label');flag.className='logic-flag';
+  const cb=document.createElement('input');cb.type='checkbox';cb.checked=o.lightEnabled!==false;cb.disabled=state.playing;
+  cb.onchange=()=>{o.lightEnabled=cb.checked;record('Light On/Off');notify()};
+  flag.append(cb,document.createTextNode(' Enabled'));body.append(flag);
+  if(o.lightColor===undefined)o.lightColor='#ffd48b';
+  colorPalette(body,o,'lightColor','Couleur de la lumière');
+  for(const [key,label,type] of [['lightIntensity','Intensity','number'],['lightRange','Range (meters)','number'],['lightAngle','Spot Angle','number']]){if(key==='lightAngle'&&o.lightType!=='spot')continue;field(body,o,key,label,type)}
+ }
+ const tip=document.createElement('p');tip.textContent='Les lumières modifient les volumes dans la vue 3D. 8 lumières proches rendues simultanément.';body.append(tip);
 });
 if(workspace.mode==='3d'&&o.type==='mesh3d'&&(get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles'||o.tags?.includes('race-vehicle'))){
  component(root,'Vehicle Controller 3D',body=>{
@@ -309,6 +313,21 @@ if(workspace.mode==='3d'&&o.type==='mesh3d'&&(get3dAsset(o.assetId||o.model3dId)
   const help=document.createElement('p');help.textContent='Play : E entrer/sortir · ZQSD/WASD conduire · Espace frein à main · Maj non nécessaire. Collisions 3D simplifiées.';body.append(help);
  });
 }
+if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Box Collider 3D',body=>{
+ const label=document.createElement('label'),input=document.createElement('input');label.className='logic-flag';input.type='checkbox';input.checked=o.collision3d!==false;input.disabled=state.playing;input.onchange=()=>{o.collision3d=input.checked;record('Collider 3D');notify()};label.append(input,document.createTextNode('Collisions actives'));body.append(label);
+ const note=document.createElement('small');note.textContent='Volume de collision AABB, calculé à partir des dimensions de l’objet.';body.append(note);
+});
+if(o.model3dId||get3dAsset(o.assetId)?.shape==='glb')renderAnimator3d(root,o);
+if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Mesh Renderer · Matériau',body=>{const isGlb=!!o.model3dId||get3dAsset(o.assetId)?.shape==='glb';if(isGlb){const label=document.createElement('label'),check=document.createElement('input');label.className='logic-flag';check.type='checkbox';check.checked=o.colorCustomized===true;check.disabled=state.playing;check.onchange=()=>{o.colorCustomized=check.checked;o.color??='#ffffff';record('Teinte personnalisée');notify()};label.append(check,document.createTextNode('Teinte personnalisée'));body.append(label)}if(!isGlb||o.colorCustomized)colorPalette(body,o,'color','Couleur du matériau');field(body,o,'materialRoughness','Rugosité 0–1');field(body,o,'materialMetallic','Métal 0–1');const hint=document.createElement('p');hint.textContent='Les GLB conservent leurs textures et couleurs. Une couleur personnalisée teinte le matériau.';body.append(hint);const asset=get3dAsset(o.model3dId||o.assetId);if(asset?.author)body.append(assetCredits(asset));for(const [i,key] of ['materialRoughness','materialMetallic'].entries()){const input=body.querySelectorAll('.property-row input')[i];if(o[key]===undefined){input.value='';input.placeholder='Matériau du GLB'}input.addEventListener('change',()=>{if(!input.value.trim()){delete o[key];record('Matériau d’origine');notify()}})}});
+const del3d=document.createElement('button');del3d.className='delete-object';del3d.textContent='Supprimer objet 3D';del3d.disabled=state.playing;del3d.onclick=deleteSelected;root.append(del3d);finishInspector(root,o,advancedTools);
+return;
+}
+if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Sprite Renderer',body=>{if(!getAsset(o.assetId)?.spriteUrl)colorPalette(body,o,'color','Couleur de l’objet');if(o.type==='prefab'){const label=document.createElement('p');label.textContent='Source : '+(getAsset(o.assetId)?.name||o.assetId);body.append(label);const asset=getAsset(o.assetId);if(asset?.author)body.append(assetCredits(asset))}if(o.type==='character')selectField(body,o,'skin','Character',['scout','soldier'])});
+if(o.type==='character'||o.type==='prefab')component(root,'Animator 2D',body=>{const kind=o.type==='character'?'actor':getAsset(o.assetId)?.kind||'prop';selectField(body,o,'animation','Clip',getAsset(o.assetId)?.sourceType==='png'?['idle',...Object.keys(getAsset(o.assetId).frames||{}).filter(key=>key!=='idle')]:availableClips(kind,o.assetId));if(o.animationSpeed===undefined)o.animationSpeed=1;field(body,o,'animationSpeed','Playback Speed');const line=document.createElement('label');line.className='logic-flag';const check=document.createElement('input');check.type='checkbox';check.checked=!!o.animationPreview;check.disabled=state.playing;check.onchange=()=>{o.animationPreview=check.checked;record('Prévisualisation animation');notify()};line.append(check,document.createTextNode('Preview animation in Scene'));body.append(line)});
+if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Weapons')component(root,'Weapon Configuration',body=>{
+ const asset=getAsset(o.assetId);for(const [k,label] of [['weaponDamage','Damage'],['weaponInterval','Seconds between attacks'],['weaponRange','Projectile range']]){if(o[k]===undefined)o[k]=asset[k]??({weaponDamage:34,weaponInterval:.16,weaponRange:650})[k];field(body,o,k,label)}
+ const note=document.createElement('p');note.textContent='Play : approche une arme et appuie sur G pour équiper, puis clic gauche/F pour tirer. Armes de mêlée : attaque à courte portée.';body.append(note);
+});
 if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Vehicles'){component(root,'Vehicle Controller 2D',body=>{for(const [key,label] of [['hp','Vehicle HP'],['maxSpeed','Max Speed'],['acceleration','Acceleration'],['brakeForce','Brake Force'],['turnRate','Turn Rate °/s'],['drag','Drag'],['reverseRatio','Reverse Ratio'],['collisionRadius','Collision Radius']]){if(o[key]===undefined)o[key]=({maxSpeed:250,acceleration:210,brakeForce:310,turnRate:140,drag:1.4,reverseRatio:.45,collisionRadius:25})[key];field(body,o,key,label)}const note=document.createElement('p');note.textContent='Play : E monter/sortir • ZQSD conduite • Espace frein à main';body.append(note)})}
 if(o.type==='prefab'&&getAsset(o.assetId)?.category==='Buildings')component(root,'Building Controller',body=>{
  const d=buildingDefaults(getAsset(o.assetId));for(const [k,v] of Object.entries(d))if(o[k]===undefined)o[k]=v;
@@ -335,7 +354,7 @@ if(isElement(o))component(root,'Game Element',body=>{
  field(body,o,'elementKey','Key Item Name','text');
  const row=document.createElement('label');row.className='logic-flag';const check=document.createElement('input');check.type='checkbox';check.disabled=state.playing;check.checked=o.elementEnabled!==false;check.onchange=()=>{o.elementEnabled=check.checked;record('Element enabled');notify()};row.append(check,document.createTextNode('Enabled'));body.append(row)
 });
-if(o.type==='prefab'){component(root,'Health',body=>field(body,o,'hp','Hit Points'));if(getAsset(o.assetId)?.category==='Monsters')component(root,'AI Controller',body=>{selectField(body,o,'behavior','Behaviour',['none','patrol','chase','guard','wander','flee','follow']);if(o.aiSpeed===undefined)o.aiSpeed=65;if(o.detectionRadius===undefined)o.detectionRadius=650;field(body,o,'aiSpeed','Move speed');field(body,o,'detectionRadius','Detection range')})}
+if(o.type==='prefab'){if(!o.stats&&(!getAsset(o.assetId)?.spriteUrl||getAsset(o.assetId)?.kind==='actor'))component(root,'Health',body=>field(body,o,'hp','Hit Points'));if(getAsset(o.assetId)?.category==='Monsters')component(root,'AI Controller',body=>{selectField(body,o,'behavior','Behaviour',['none','patrol','chase','guard','wander','flee','follow']);if(o.aiSpeed===undefined)o.aiSpeed=65;if(o.detectionRadius===undefined)o.detectionRadius=650;field(body,o,'aiSpeed','Move speed');field(body,o,'detectionRadius','Detection range')})}
 if(o.gameMode)component(root,'Game Mode Rules',body=>{
  const m=o.gameMode;for(const [key,value] of Object.entries(modeDefaults()))if(m[key]===undefined)m[key]=value;
  selectField(body,m,'kind','Mode',Object.keys(modeNames));
@@ -350,7 +369,8 @@ if(o.type==='character'||o.type==='player'||o.type==='prefab'&&getAsset(o.assetI
  if(o.team===undefined)o.team=1;field(body,o,'team','Team (1 / 2)');
  if(o.gameMode)body.append(document.createTextNode('Le Game Mode définit les règles de la partie.'));
 });
-component(root,'Box Collider 2D',body=>{const note=document.createElement('p');note.textContent='Collision rectangulaire (AABB), selon le type d’objet.';body.append(note)});
+if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Collision 2D',body=>{const note=document.createElement('p');note.textContent='Collision rectangulaire (AABB), selon le type d’objet.';body.append(note)});
+if(o.logic){
 const logicSection=document.createElement('details');logicSection.className='inspector-component';logicSection.open=true;const title=document.createElement('summary');title.textContent='⚡ Visual Logic • Triggers / Conditions / Actions';const inner=document.createElement('div');inner.className='component-content logic-editor';logicSection.append(title,inner);root.append(logicSection);
 const saveLogic=msg=>{record(msg);notify()};
 if(!o.logic){const add=document.createElement('button');add.textContent='+ Add Visual Logic';add.disabled=state.playing;add.onclick=()=>{o.logic=defaultLogic();saveLogic('Add Visual Logic')};inner.append(add)}
@@ -375,7 +395,8 @@ const addNode=document.createElement('button');addNode.textContent='+ Dialogue N
 });
 const removeLogic=document.createElement('button');removeLogic.textContent='Remove Visual Logic component';removeLogic.disabled=state.playing;removeLogic.onclick=()=>{delete o.logic;saveLogic('Remove Visual Logic')};inner.append(removeLogic)
 }
+}
 root.append(advancedTools);
-const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=deleteSelected;root.append(del)}
+const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=deleteSelected;root.append(del);finishInspector(root,o,advancedTools)}
 export function renderUI(){renderHierarchy();renderInspector()}
 document.addEventListener('warlike:change',renderUI);

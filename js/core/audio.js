@@ -1,4 +1,5 @@
-// WarLike Audio Beta — lightweight synthesized sounds, no external assets.
+import {freeAudioAssets} from '../assets/free-game-assets.js';
+// Recorded Kenney CC0 sounds are shipped locally; legacy tones remain available.
 // Browsers require a user gesture before AudioContext can play.
 export const audio={enabled:true,volume:.48,ready:false,context:null,master:null,last:new Map()};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -27,11 +28,31 @@ const tones={
  teleport:[240,1200,.48,'sine',.15],explosion:[95,28,.42,'sawtooth',.22],
  victory:[440,880,.48,'sine',.16],click:[650,420,.055,'sine',.06]
 };
+const recordedBuffers=new Map(),recordedLoads=new Map();
+const soundAliases={click:'kenney-interface-sounds-click_001',switch:'kenney-interface-sounds-select_001',pickup:'kenney-rpg-audio-handleCoins',step:'kenney-rpg-audio-footstep00',door:'kenney-rpg-audio-doorOpen_1',checkpoint:'kenney-interface-sounds-confirmation_001',victory:'kenney-interface-sounds-confirmation_002'};
+export const recordedSoundAsset=name=>freeAudioAssets.find(asset=>asset.id===(soundAliases[name]||name))||null;
+export const recordedSoundBuffer=name=>recordedBuffers.get(recordedSoundAsset(name)?.id)||null;
+export async function loadRecordedSound(name){
+ const asset=recordedSoundAsset(name);if(!asset)throw Error('Son enregistré introuvable : '+name);
+ if(recordedBuffers.has(asset.id))return recordedBuffers.get(asset.id);
+ if(recordedLoads.has(asset.id))return recordedLoads.get(asset.id);
+ if(!initAudio())throw Error('Web Audio indisponible');
+ const task=(async()=>{const url=new URL('../../'+asset.url.replace(/^\.\//,''),import.meta.url),response=await fetch(url);if(!response.ok)throw Error('Audio HTTP '+response.status);const buffer=await audio.context.decodeAudioData(await response.arrayBuffer());recordedBuffers.set(asset.id,buffer);return buffer})();recordedLoads.set(asset.id,task);
+ try{return await task}finally{recordedLoads.delete(asset.id)}
+}
+export async function playRecordedSound(name,options={}){
+ unlockAudio();if(!audio.enabled||!audio.context)return false;const buffer=await loadRecordedSound(name);if(!audio.enabled)return false;
+ const source=audio.context.createBufferSource(),gain=audio.context.createGain();source.buffer=buffer;gain.gain.value=clamp(options.gain??.65,0,1);source.connect(gain);
+ const pan=Number.isFinite(options.pan)&&audio.context.createStereoPanner?audio.context.createStereoPanner():null;
+ if(pan){pan.pan.value=clamp(options.pan,-1,1);gain.connect(pan);pan.connect(audio.master)}else gain.connect(audio.master);
+ source.onended=()=>{source.disconnect();gain.disconnect();pan?.disconnect()};source.start();return true;
+}
 export function playSound(name,options={}){
  if(!audio.enabled||!audio.ready||!audio.context||audio.context.state!=='running')return false;
  const preset=tones[name]||tones.click,now=audio.context.currentTime,limit=options.cooldown??(name==='step'?.16:.04);
  if(now-(audio.last.get(name)??-100)<limit)return false;
  audio.last.set(name,now);
+ if(recordedSoundAsset(name)){playRecordedSound(name,options).catch(error=>console.warn('[WarLike Audio]',error.message));return true;}
  try{
   const [start,end,duration,type,amp]=preset;
   const osc=audio.context.createOscillator(),gain=audio.context.createGain();

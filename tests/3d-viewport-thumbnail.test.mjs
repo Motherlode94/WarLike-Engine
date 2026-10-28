@@ -18,6 +18,6 @@ test('GLB cards and preview load geometry-derived thumbnails',()=>{
  assert.match(ui,/assignModelThumbnail\(img,a.id\)/);
  assert.match(ui,/assignModelThumbnail\(picture,asset.id\)/);
  const thumb=read('js/ui/real-model-thumbnail.js');
- assert.match(thumb,/getModelGeometry\(id\)/);
+ assert.match(thumb,/renderGlbPreview\(canvas,id\)/);assert.match(read('js/ui/glb-preview.js'),/getModelGeometry\(id\)/);
  assert.match(thumb,/canvas\.toDataURL/);
 });

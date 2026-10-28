@@ -24,7 +24,7 @@ import {updateVehicles,currentVehicle,drawDrivingHud,resetDriving} from './vehic
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
 export const game={equippedWeaponId:null,equipHeld:false,projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,mouse:{x:500,y:300,down:false},kills:0};
-export function resetGame(){motion.cameraFollow=true;resetGameMode();resetAdvanced();resetLogic();resetDriving();resetHousing();resetElements();resetRpg();Object.assign(game,{equippedWeaponId:null,equipHeld:false,projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}const player=playerEntity();if(player)game.life=healthOf(player)}
+export function resetGame(){motion.cameraFollow=true;motion.cameraInitialized=false;resetGameMode();resetAdvanced();resetLogic();resetDriving();resetHousing();resetElements();resetRpg();Object.assign(game,{equippedWeaponId:null,equipHeld:false,projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}const player=playerEntity();if(player)game.life=healthOf(player)}
 const center=e=>({x:e.x+e.w/2,y:e.y+e.h/2});
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const playerEntity=()=>state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');

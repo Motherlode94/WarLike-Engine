@@ -1,5 +1,5 @@
 // Serializable game configuration, shared by the Hub, Blueprint and exported builds.
-export const freshGameProject=()=>({version:1,id:'untitled',title:'Mon jeu',activeSceneId:'main',startupSceneId:'main',scenes:[],variables:[]});
+export const freshGameProject=()=>({version:1,id:'untitled',title:'Mon jeu',activeSceneId:'main',startupSceneId:'main',scenes:[],variables:[],uiSkin:'kenney-blue'});
 export const gameProject=freshGameProject();
 const clone=value=>structuredClone(value);
 export const safeKey=key=>typeof key==='string'&&key.length>0&&key.length<=80&&!['__proto__','prototype','constructor'].includes(key);
@@ -13,6 +13,7 @@ export function restoreGameProject(value){
  const next=freshGameProject();
  if(value&&typeof value==='object'){
   for(const key of ['id','activeSceneId','startupSceneId'])if(safeKey(value[key]))next[key]=value[key];
+  if(['classic','kenney-blue','kenney-grey'].includes(value.uiSkin))next.uiSkin=value.uiSkin;
   if(typeof value.title==='string')next.title=value.title.slice(0,120);
   if(Array.isArray(value.scenes))next.scenes=value.scenes.filter(s=>s&&safeKey(s.id)&&validEntities(s.entities)).slice(0,40).map(s=>({id:s.id,name:String(s.name||s.id).slice(0,80),entities:clone(s.entities),camera:clone(s.camera||{x:0,y:0,zoom:1})}));
   next.scenes=next.scenes.filter((s,i,a)=>a.findIndex(other=>other.id===s.id)===i);

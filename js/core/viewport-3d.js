@@ -1,3 +1,5 @@
+import {sampleRigPose,deformGlbParts,animationClipForState} from './gltf-animation.js';
+import {cameraRigFor,cameraTargetFor,cameraBoomFraction,cameraPose,cameraDamping} from './play-camera.js';
 import {gameIsRunning} from './game-session.js';
 import {updateHorrorAudio} from './horror-audio.js';
 import {tickEngineDiagnostics} from './engine-diagnostics.js';
@@ -10,7 +12,7 @@ import {renderQuality} from './render-quality.js';
 import {stepPhysics3d} from './physics-3d.js';
 import {loadRapier3d,createRapierScene,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
-import {getModelGeometry,model3dById} from '../assets/real-models-3d.js';
+import {getModelGeometry,getTextureImage,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences} from './logic-sequences.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {workspace,switchWorkspace} from './workspaces.js';
@@ -36,7 +38,7 @@ const V={
 export const objectBounds3d=o=>{
  const asset=getAsset(o.assetId)||get3dAsset(o.assetId);
  const width=Math.max(.25,o.w/64),depth=Math.max(.25,(o.depth3d??(asset?.category==='Vehicles'?o.h*.65:o.w*.8))/64);
- const height=Math.max(.2,(asset?.category==='Buildings'?o.h*1.45:asset?.category==='Vehicles'?o.h*.60:o.h)/64);
+ const height=Math.max(.2,(asset?.shape==='glb'?o.h:asset?.category==='Buildings'?o.h*1.45:asset?.category==='Vehicles'?o.h*.60:o.h)/64);
  return {x:(o.x+o.w/2)/64,y:height/2+(Number(o.elevation3d)||0),z:(o.y+o.h/2)/64,w:width,h:height,d:depth};
 };
 export const sceneCamera3d=(target,yaw,pitch,radius)=>{
@@ -61,12 +63,12 @@ const shader=(gl,type,text)=>{
 };
 const program3d=gl=>{
  const vs=`precision highp float;
- attribute vec3 aPosition;attribute vec3 aNormal;
+ attribute vec3 aPosition;attribute vec3 aNormal;attribute vec2 aTexcoord;varying vec2 vTexcoord;
  uniform vec3 uEye,uRight,uUp,uForward,uPosition,uScale;
  uniform float uAngle,uAspect;
  varying vec3 vNormal,vWorld;
  void main(){
- vec3 q=aPosition*uScale;
+ vTexcoord=aTexcoord;vec3 q=aPosition*uScale;
  float cs=cos(uAngle),sn=sin(uAngle);
  q=vec3(q.x*cs-q.z*sn,q.y,q.x*sn+q.z*cs);
  vec3 rel=q+uPosition-uEye;
@@ -78,7 +80,7 @@ const program3d=gl=>{
  
  }`;
  const fs=`precision highp float;
- uniform vec4 uColor;
+ uniform vec4 uColor;uniform sampler2D uBaseColorTexture;uniform bool uUseTexture;uniform float uAlphaCutoff;varying vec2 vTexcoord;
  uniform vec3 uEye;
  uniform float uRoughness,uMetallic,uExposure,uFogDensity;
  uniform vec3 uFlashPos,uFlashDir;
@@ -90,6 +92,7 @@ const program3d=gl=>{
  uniform float uLightPower[8],uLightRange[8],uLightCone[8],uLightSpot[8];
  varying vec3 vNormal,vWorld;
  void main(){
+ vec4 baseColor=uColor;if(uUseTexture){vec4 texel=texture2D(uBaseColorTexture,vTexcoord);baseColor*=vec4(pow(texel.rgb,vec3(2.2)),texel.a);}if(uAlphaCutoff<0.)baseColor.a=1.;else if(baseColor.a<uAlphaCutoff)discard;
  vec3 normal=normalize(vNormal);
  if(!gl_FrontFacing)normal=-normal;
  vec3 skyLight=vec3(.60,.73,.91),groundLight=vec3(.24,.27,.32);
@@ -116,13 +119,13 @@ const program3d=gl=>{
  vec3 viewDir=normalize(uEye-vWorld);
  vec3 reflected=reflect(-normalize(uSunDir),normal);
  float gloss=pow(max(0.,dot(reflected,viewDir)),mix(48.,5.,clamp(uRoughness,0.04,1.)));
- vec3 specular=mix(vec3(.18),uColor.rgb,clamp(uMetallic,0.,1.))*gloss*uSunIntensity*(1.-uRoughness*.75);
- vec3 lit=uColor.rgb*clamp(irradiance,0.,3.0)+specular;
+ vec3 specular=mix(vec3(.18),baseColor.rgb,clamp(uMetallic,0.,1.))*gloss*uSunIntensity*(1.-uRoughness*.75);
+ vec3 lit=baseColor.rgb*clamp(irradiance,0.,3.0)+specular;
  float fog=1.-exp(-pow(max(0.,length(uEye-vWorld)-22.)*uFogDensity,2.));
  vec3 fogged=mix(lit,vec3(.24,.34,.43),clamp(fog,0.,.87));
  vec3 exposed=fogged*uExposure;
  vec3 mapped=exposed/(vec3(1.)+exposed);
- gl_FragColor=vec4(pow(max(mapped,vec3(0.)),vec3(1./2.2)),uColor.a);
+ gl_FragColor=vec4(pow(max(mapped,vec3(0.)),vec3(1./2.2)),baseColor.a);
  }`;
  const p=gl.createProgram();gl.attachShader(p,shader(gl,gl.VERTEX_SHADER,vs));gl.attachShader(p,shader(gl,gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);
  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p)||'Erreur programme');
@@ -212,16 +215,33 @@ export function init3d(canvas,host,buttons){
  try{program=program3d(gl)}catch(err){renderFailure('Compilation shader : '+String(err.message||err));return {setEnabled:()=>false,focus:()=>{},syncToWorkspace:()=>renderFailure(view3d.error)}}
  const loc=n=>gl.getUniformLocation(program,n);
  const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),angle:loc('uAngle'),aspect:loc('uAspect'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
- const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal');
- const makeBuffer=data=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
+ const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal'),aTexcoord=gl.getAttribLocation(program,'aTexcoord');
+ const textureUniform=loc('uBaseColorTexture'),useTexture=loc('uUseTexture'),alphaCutoff=loc('uAlphaCutoff');
+ const makeBuffer=(data,dynamic=false)=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,dynamic?gl.DYNAMIC_DRAW:gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
  const cubes=makeBuffer(cubeVerts()),sphere=makeBuffer(curvedVerts('sphere')),cylinder=makeBuffer(curvedVerts('cylinder')),cone=makeBuffer(curvedVerts('cone')),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
- const realGlbBuffers=new Map();
+ const realGlbBuffers=new Map(),animationStates=new WeakMap();
  const ensureModel=id=>{
   if(realGlbBuffers.has(id))return;
   realGlbBuffers.set(id,{status:'loading'});
-  getModelGeometry(id).then(data=>{
-   const parts=data.parts.map(part=>({mesh:makeBuffer(part.vertices),color:part.color,roughness:part.roughness,metallic:part.metallic}));
-   realGlbBuffers.set(id,{status:'ready',parts,triangles:data.triangleCount});
+  getModelGeometry(id).then(async data=>{
+   const parts=await Promise.all(data.parts.map(async part=>{
+    const mesh=makeBuffer(part.vertices,!!data.rig);
+    if(part.texture){
+     const image=await getTextureImage(part.texture),texture=gl.createTexture();
+     gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
+     const powerOfTwo=value=>(value&(value-1))===0;
+     const repeat=powerOfTwo(image.width)&&powerOfTwo(image.height);
+     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,repeat?part.texture.wrapS:gl.CLAMP_TO_EDGE);
+     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,repeat?part.texture.wrapT:gl.CLAMP_TO_EDGE);
+     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+     const uvBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,uvBuffer);gl.bufferData(gl.ARRAY_BUFFER,part.texcoords,gl.STATIC_DRAW);
+     Object.assign(mesh,{texture,uvBuffer});
+    }
+    Object.assign(mesh,{alphaMode:part.alphaMode,alphaCutoff:part.alphaCutoff});
+    return {mesh,color:part.color,roughness:part.roughness,metallic:part.metallic};
+   }));
+   realGlbBuffers.set(id,{status:'ready',parts,geometry:data,normalizedSize:data.normalizedSize,triangles:data.triangleCount});
   }).catch(error=>{
    const message=String(error.message||error);
    realGlbBuffers.set(id,{status:'error',message});
@@ -234,7 +254,12 @@ export function init3d(canvas,host,buttons){
  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
  // glTF models may include material surfaces wound in either orientation. Keep them visible in the editor.
  gl.disable(gl.CULL_FACE);
- const bind=mesh=>{gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aNormal)};
+ const bind=mesh=>{gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aNormal);
+  gl.uniform1i(useTexture,mesh.texture?1:0);gl.uniform1f(alphaCutoff,mesh.alphaMode==='OPAQUE'?-1:mesh.alphaMode==='MASK'?mesh.alphaCutoff:.01);
+  if(mesh.texture){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,mesh.texture);gl.uniform1i(textureUniform,0);gl.bindBuffer(gl.ARRAY_BUFFER,mesh.uvBuffer);gl.vertexAttribPointer(aTexcoord,2,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(aTexcoord)}
+  else{gl.disableVertexAttribArray(aTexcoord);gl.vertexAttrib2f(aTexcoord,0,0)}
+  if(mesh.alphaMode==='BLEND'){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA)}else gl.disable(gl.BLEND);
+ };
  const model=(pos,scale,color,angle=0)=>{gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform1f(u.angle,angle);gl.uniform4fv(u.color,color)};
  view3d.enabled=workspace.mode==='3d';
  const resize=()=>{const d=Math.min(2,window.devicePixelRatio||1),w=Math.round(host.clientWidth*d),h=Math.round(host.clientHeight*d);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h)};
@@ -289,12 +314,19 @@ export function init3d(canvas,host,buttons){
   if(!inVehicle)updateController3d(p,state.keys,dt,view3d.yaw,state.entities);
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);
-  if(!inVehicle&&state.keys.has('f')&&p._attackCooldown===0){if(p.fpsController){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit)p.animation='attack';}
+  if(!inVehicle&&state.keys.has('f')&&p._attackCooldown===0){if(isFps()){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit)p.animation='attack';}
  };
- const isFps=()=>state.playing&&workspace.mode==='3d'&&!currentVehicle3d(state.entities)&&!!playableActor(state.entities)?.fpsController;
+ const isFps=()=>state.playing&&workspace.mode==='3d'&&!currentVehicle3d(state.entities)&&cameraRigFor(playableActor(state.entities)).mode==='firstPerson';
  const camera=()=>{
-  if(!isFps())return sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
-  const p=playableActor(state.entities),b=objectBounds3d(p),eye=[b.x,b.y+b.h*.25,b.z];
+  if(!isFps()){
+   const desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
+   if(!state.playing)return desired;
+   const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities));
+   const obstacles=state.entities.filter(o=>o!==actor&&!o._hiddenInVehicle&&o.collision3d!==false&&!o.lightType&&!o.audioEnabled&&(o.type==='mesh3d'||o.type==='object')).map(objectBounds3d);
+   const factor=rig.collision?cameraBoomFraction(view3d.target,desired.eye,obstacles):1;
+   const eye=desired.eye.map((n,i)=>view3d.target[i]+(n-view3d.target[i])*factor);return cameraPose(view3d.target,eye);
+  }
+  const p=playableActor(state.entities),b=objectBounds3d(p),eye=[b.x,b.y-b.h/2+b.h*.9,b.z];
   const forward=V.norm([-Math.sin(view3d.yaw)*Math.cos(view3d.pitch),-Math.sin(view3d.pitch),-Math.cos(view3d.yaw)*Math.cos(view3d.pitch)]);
   const right=V.norm(V.cross(forward,[0,1,0])),up=V.norm(V.cross(right,forward));
   return {eye,forward,right,up};
@@ -315,13 +347,13 @@ export function init3d(canvas,host,buttons){
   if(best){damage(best,25);best.animation='hurt';}
   return !!best;
  };
- const playerTarget=()=>{const p=currentVehicle3d(state.entities)||playableActor(state.entities);return p?[(p.x+p.w/2)/64,.5,(p.y+(p.depth3d||p.h)/2)/64]:null};
- let wasPlaying=false;
+ const playerTarget=()=>{const vehicle=currentVehicle3d(state.entities),p=vehicle||playableActor(state.entities);return p?cameraTargetFor(objectBounds3d(p),cameraRigFor(p,!!vehicle)):null};
+ let wasPlaying=false,editorCamera=null;
  let physicsSession=null,physicsGeneration=0,physicsAccumulator=0;
  const stopRapier=()=>{physicsGeneration++;disposeRapierScene(physicsSession);physicsSession=null;physicsAccumulator=0;};
  const enterPlay=()=>{
-  resetDriving3d();
-  const pt=playerTarget();view3d.followPlayer=!!pt;if(pt){view3d.target=pt.slice();view3d.radius=12;view3d.pitch=playableActor(state.entities)?.fpsController?0:.5}
+  editorCamera={yaw:view3d.yaw,pitch:view3d.pitch,radius:view3d.radius,target:view3d.target.slice()};view3d.drag=null;resetDriving3d();
+  const p=playableActor(state.entities),pt=playerTarget(),rig=cameraRigFor(p);view3d.followPlayer=!!pt;if(pt){view3d.target=pt.slice();view3d.radius=rig.distance;view3d.yaw=Math.PI-(Number(p.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18}
   if(localStorage.getItem('warlike.rapier3d')!=='enabled')return;
   const token=++physicsGeneration;
   loadRapier3d().then(api=>{
@@ -360,11 +392,11 @@ export function init3d(canvas,host,buttons){
   view3d.drag={button:e.button,x:p.x,y:p.y,target:[...view3d.target],yaw:view3d.yaw,pitch:view3d.pitch,start:point,selected:selected&&e.button===0?state.entities.filter(o=>state.selected.includes(o.id)).map(o=>({id:o.id,x:o.x,y:o.y,z:o.z||0})):null,moved:false,pointer:e.pointerId};
   canvas.setPointerCapture(e.pointerId);
  });
- document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&isFps()){view3d.yaw-=e.movementX*.0026;view3d.pitch=clamp(view3d.pitch+e.movementY*.0026,-1.25,1.25)}});
+ document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&isFps()&&gameIsRunning()){const sensitivity=cameraRigFor(playableActor(state.entities)).sensitivity;view3d.yaw-=e.movementX*sensitivity;view3d.pitch=clamp(view3d.pitch+e.movementY*sensitivity,-1.25,1.25)}});
  canvas.addEventListener('pointermove',e=>{
   if(!view3d.enabled)return;const p=rectPoint(e),cam=camera();
   if(state.playing){
-   const d=view3d.drag;if(d?.button===2&&d.pointer===e.pointerId){view3d.yaw=d.yaw-(p.x-d.x)*.009;view3d.pitch=clamp(d.pitch+(p.y-d.y)*.009,.08,1.5)}
+   if(!gameIsRunning())return;const d=view3d.drag;if(d?.button===2&&d.pointer===e.pointerId){view3d.yaw=d.yaw-(p.x-d.x)*.009;view3d.pitch=clamp(d.pitch+(p.y-d.y)*.006,-.22,1.15)}
    return;
   }
   const drag=view3d.drag;if(!drag||drag.pointer!==e.pointerId)return;
@@ -385,7 +417,7 @@ export function init3d(canvas,host,buttons){
   view3d.drag=null;notify();
  };
  canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);canvas.addEventListener('lostpointercapture',stop);
- canvas.addEventListener('wheel',e=>{if(!view3d.enabled)return;e.preventDefault();view3d.radius=clamp(view3d.radius*Math.exp(e.deltaY*.001),3,150)},{passive:false});
+ canvas.addEventListener('wheel',e=>{if(!view3d.enabled)return;e.preventDefault();if(state.playing&&(isFps()||!gameIsRunning()))return;view3d.radius=clamp(view3d.radius*Math.exp(e.deltaY*.001),state.playing?1.2:3,state.playing?16:150)},{passive:false});
 
  let previousTime=performance.now();
  function draw(now=performance.now()){
@@ -394,10 +426,10 @@ export function init3d(canvas,host,buttons){
   if(document.hidden)return;
   updateLighting(dt,state.playing&&workspace.mode==='3d');
   if(state.playing&&!wasPlaying)enterPlay();
-  if(!state.playing&&wasPlaying){view3d.followPlayer=false;resetDriving3d();stopRapier();}
+  if(!state.playing&&wasPlaying){view3d.followPlayer=false;view3d.drag=null;if(editorCamera)Object.assign(view3d,editorCamera);editorCamera=null;if(document.pointerLockElement===canvas)document.exitPointerLock?.();resetDriving3d();stopRapier();}
   wasPlaying=state.playing;
   if(state.playing&&workspace.mode==='3d'){updateRtsOrders(state.entities,dt,gameIsRunning());update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,pressedKeys:state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}
-  if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=Math.min(1,dt*9);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}
+  if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=cameraDamping(cameraRigFor(currentVehicle3d(state.entities)||playableActor(state.entities)).followSharpness,dt);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}
   if(!view3d.enabled){updateGizmos();return}
   updateGenreHud(state);updateGizmos();
   const vehicleHud=document.getElementById('warlikeVehicle3dHud');
@@ -437,7 +469,7 @@ export function init3d(canvas,host,buttons){
   gl.uniform1fv(u.lightSpot,new Float32Array(lamps.map(l=>l.spot?1:0).concat(Array(8-lamps.length).fill(0))));
   gl.disable(gl.CULL_FACE);
   bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count);
-  const objects=[...state.entities].filter(o=>(!state.playing||o.visible!==false&&o.sequenceEnabled!==false&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
+  const objects=[...state.entities].filter(o=>(!state.playing||!((o.audioEnabled||o.lightType)&&!o.assetId)&&o.visible!==false&&o.sequenceEnabled!==false&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
   // Depth buffering resolves overlapping faces, including the composite mesh parts.
   bind(cubes);
   for(const o of objects){
@@ -445,7 +477,7 @@ export function init3d(canvas,host,buttons){
    const angle=(o.rotation||0)*Math.PI/180;
    gl.uniform1f(u.roughness,Math.max(.04,Math.min(1,Number(o.materialRoughness??.7))));
    gl.uniform1f(u.metallic,Math.max(0,Math.min(1,Number(o.materialMetallic??0))));
-   const shape=get3dAsset(o.assetId)?.shape;
+   const shape=o.model3dId?'glb':get3dAsset(o.assetId)?.shape;
    const drawShape=(mesh,p,scale,shade)=>{bind(mesh);model(p,scale,shade,angle);gl.drawArrays(gl.TRIANGLES,0,mesh.count)};
    const cube=(p,scale,shade)=>drawShape(cubes,p,scale,shade);
    const round=(p,scale,shade)=>drawShape(sphere,p,scale,shade);
@@ -454,11 +486,26 @@ export function init3d(canvas,host,buttons){
     const id=o.model3dId||o.assetId;ensureModel(id);
     const cached=realGlbBuffers.get(id);
     if(cached?.status==='ready'){
-     for(const part of cached.parts){
+     let posed=null;const rig=cached.geometry.rig;
+     if(rig?.animations.length&&(state.playing||o.animationPreview)){
+      const desired=o.animationAuto===false?o.animation3dClip||'idle':(o.animation==='dead'?'death':o.animation||'idle');
+      const clip=animationClipForState(rig.animations,desired,o.animationMap||{},animationStates.get(o),{automatic:o.animationAuto!==false});
+      if(clip){
+       let track=animationStates.get(o);if(!track){track={clip,time:0,previous:null,transition:1,buffers:[],oneShot:o.animationAuto!==false&&['attack','hurt'].includes(desired)};animationStates.set(o,track)}
+       if(track.clip!==clip){track.previous={clip:track.clip,time:track.time};track.clip=clip;track.time=0;track.transition=0;track.oneShot=o.animationAuto!==false&&['attack','hurt'].includes(desired)}else if(track.oneShot&&track.time>=clip.duration&&desired==='attack'){track.time=0}
+       const step=state.playing&&!gameIsRunning()?0:dt*Math.max(.05,Math.min(4,Number(o.animationSpeed)||1));track.time+=step;track.transition=Math.min(1,track.transition+step/.18);
+       const loop=!track.oneShot&&o.animationLoop!==false&&!/death|die|jump_start|jump_land/i.test(clip.name);
+       posed=deformGlbParts(cached.geometry,sampleRigPose(rig,clip,track.time,{loop,previous:track.previous,blend:track.transition}),{buffers:track.buffers});
+      }
+     }
+     for(const [partIndex,part] of cached.parts.entries()){
+      if(posed){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,posed[partIndex])}
+      else if(rig){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,cached.geometry.parts[partIndex].vertices)}
       const material=o.colorCustomized?color:part.color;
-      gl.uniform1f(u.roughness,Number.isFinite(part.roughness)?part.roughness:1);
-      gl.uniform1f(u.metallic,Number.isFinite(part.metallic)?part.metallic:0);
-      drawShape(part.mesh,[b.x,b.y,b.z],[b.w,b.h,b.d],material);
+      gl.uniform1f(u.roughness,Math.max(.04,Math.min(1,Number(o.materialRoughness??part.roughness??1))));
+      gl.uniform1f(u.metallic,Math.max(0,Math.min(1,Number(o.materialMetallic??part.metallic??0))));
+      const size=cached.normalizedSize||[1,1,1],scale=Math.min(b.w/size[0],b.h/size[1],b.d/size[2]);
+      drawShape(part.mesh,[b.x,(Number(o.elevation3d)||0)+size[1]*scale/2,b.z],[scale,scale,scale],material);
      }
     }else{
      // Never substitute an unrelated cube for an actual GLB asset.

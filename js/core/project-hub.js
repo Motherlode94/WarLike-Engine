@@ -26,7 +26,7 @@ export function setHubAccent(value,{persist=true}={}){
  return true;
 }
 
-const defaults2d=()=>[{id:1,name:'Player',type:'player',x:100,y:110,w:38,h:38,color:'#41cdb5'}];
+const defaults2d=()=>[{id:1,name:'Player',type:'prefab',assetId:'free-platformer-art-deluxe-p1-stand',x:100,y:110,w:64,h:88,color:'#41cdb5',animation:'idle',animationSpeed:1,hp:100,behavior:'none'}];
 const defaults3d=()=>[{...prefab3d('character-hero',1,150,150),name:'3D Player',playable3d:true}];
 const entry=entities=>({entities,selected:[1],nextId:2,camera:{x:0,y:0,zoom:1}});
 const safeRead=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};

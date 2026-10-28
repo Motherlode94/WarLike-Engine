@@ -1,3 +1,4 @@
+import {freeSprites2d,freeUiAssets} from './free-game-assets.js';
 import {newWeaponEntries,newVehicleEntries,armoryGarageSvg,weaponStats,vehicleStats} from './armory-garage.js';
 import {genrePack,genreSvg} from './genre-essentials.js';
 import {elements,elementSvg} from './game-elements.js';
@@ -17,8 +18,8 @@ defs.Buildings=buildings.map(([id,name])=>[id,name]);
 defs.Elements=elements.map(([id,name])=>[id,name]);
 for(const [category,items] of Object.entries(genrePack))defs[category].push(...items);
 defs.Weapons.push(...newWeaponEntries);defs.Vehicles.push(...newVehicleEntries);
-export const catalog=Object.entries(defs).flatMap(([category,items])=>items.map(([id,name],index)=>({id,category,name,index,kind:category==='Elements'?'element':category==='Buildings'?'building':category==='Characters'||category==='Monsters'?'actor':category==='Vehicles'?'vehicle':category==='Weapons'?'weapon':category==='VFX'?'effect':'prop',width:category==='Elements'?48:category==='Buildings'?128:category==='Vehicles'?110:category==='Weapons'?76:category==='Props'?64:category==='VFX'?90:56,height:category==='Elements'?48:category==='Buildings'?112:category==='Vehicles'?66:category==='Weapons'?40:category==='Props'?64:category==='VFX'?90:80,hp:category==='Buildings'?600:category==='Monsters'?65:category==='Vehicles'?180:100,animation:'idle',...(category==='Weapons'?weaponStats(id)||{}:{}),...(category==='Vehicles'?vehicleStats(id)||{}:{})})));
-export const categories=['All',...Object.keys(defs)];
+export const catalog=[...freeSprites2d,...freeUiAssets,...Object.entries(defs).flatMap(([category,items])=>items.map(([id,name],index)=>({id,category,name,index,kind:category==='Elements'?'element':category==='Buildings'?'building':category==='Characters'||category==='Monsters'?'actor':category==='Vehicles'?'vehicle':category==='Weapons'?'weapon':category==='VFX'?'effect':'prop',width:category==='Elements'?48:category==='Buildings'?128:category==='Vehicles'?110:category==='Weapons'?76:category==='Props'?64:category==='VFX'?90:56,height:category==='Elements'?48:category==='Buildings'?112:category==='Vehicles'?66:category==='Weapons'?40:category==='Props'?64:category==='VFX'?90:80,hp:category==='Buildings'?600:category==='Monsters'?65:category==='Vehicles'?180:100,animation:'idle',...(category==='Weapons'?weaponStats(id)||{}:{}),...(category==='Vehicles'?vehicleStats(id)||{}:{})})))];
+export const categories=['All',...new Set(catalog.map(asset=>asset.category))];
 export const getAsset=id=>catalog.find(a=>a.id===id);
 const palette={Characters:['#32c4a8','#5e92e1','#f4e0cc','#7596b2','#e0b65e','#ba85d2'],Monsters:['#6ba869','#7ade96','#d7d6b2','#799447','#839da9','#a25378'],Vehicles:['#688b78','#d3ad5b','#6e8672','#6b85b4','#7d8790'],Weapons:['#bdc5d1','#839aac','#d0b781'],Props:['#b48b57','#919ba3','#6e8c65','#a06f50']};
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
@@ -50,5 +51,15 @@ else if(asset.id==='medkit')art='<rect x="10" y="32" width="44" height="42" rx="
 return '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="96" viewBox="0 0 64 96"><title>'+esc(asset.name)+'</title>'+art+'</svg>'}
 export const animationClips=['idle','walk','run','attack','hurt','death','move','pulse','loop'];
 const cache=new Map();
-export function imageFor(id){if(cache.has(id))return cache.get(id);const asset=getAsset(id);if(!asset)return null;const img=new Image();img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgFor(asset));cache.set(id,img);return img}
-export function urlFor(id){const asset=getAsset(id);return asset?'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgFor(asset)):''}
+export function imageFor(id){if(cache.has(id))return cache.get(id);const asset=getAsset(id);if(!asset)return null;const img=new Image();img.src=asset.spriteUrl||'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgFor(asset));cache.set(id,img);return img}
+export function urlFor(id){const asset=getAsset(id);return asset?(asset.spriteUrl||'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgFor(asset))):''}
+
+const frameCache=new Map();
+export function spriteFrameFor(id,animation,now,playing){
+ const asset=getAsset(id);if(!asset)return null;
+ const frames=asset.frames?.[animation==='run'?'walk':animation];
+ if(!playing||!frames?.length)return imageFor(id);
+ const url=frames[Math.floor(now/100)%frames.length];
+ if(!frameCache.has(url)){const image=new Image();image.src=url;frameCache.set(url,image)}
+ const image=frameCache.get(url);return image.complete&&image.naturalWidth?image:imageFor(id);
+}

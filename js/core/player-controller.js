@@ -1,11 +1,12 @@
+import {followCamera2d} from './play-camera.js';
 import {playSound} from './audio.js';
 // WarLike 2D foot controller with solid collisions and an optional chase camera.
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
 import {isBuildingSolid} from './building-system.js';
-const solid=o=>o.collision3d!==false&&(o.type==='object'||isBuildingSolid(o)||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock','stone-wall','wooden-palisade','traffic-barrier','ruins'].includes(o.assetId));
+const solid=o=>o.collision3d!==false&&!o.audioEnabled&&!o.lightType&&(o.type==='object'||isBuildingSolid(o)||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock','stone-wall','wooden-palisade','traffic-barrier','ruins'].includes(o.assetId));
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
-export const motion={cameraFollow:false,footSpeed:190,sprintMultiplier:1.55};
+export const motion={cameraFollow:false,cameraInitialized:false,footSpeed:190,sprintMultiplier:1.55};
 export function walkPlayer(player,dt,keys=state.keys){
  if(player._vehicleTransition||player._actionAnimationUntil>performance.now()/1000)return {moving:false,sprinting:false};
  const x=Number(keys.has('arrowright')||keys.has('d'))-Number(keys.has('arrowleft')||keys.has('a')||keys.has('q'));
@@ -23,9 +24,5 @@ export function walkPlayer(player,dt,keys=state.keys){
 }
 export function followPlayer(player,canvas,dt){
  if(!motion.cameraFollow||!player||!canvas)return;
- const camera=state.camera,zoom=camera.zoom||1;
- const x=canvas.clientWidth*.5-(player.x+player.w*.5)*zoom;
- const y=canvas.clientHeight*.5-(player.y+player.h*.5)*zoom;
- const factor=1-Math.exp(-7*Math.max(0,dt));
- camera.x+=(x-camera.x)*factor;camera.y+=(y-camera.y)*factor;
+ Object.assign(state.camera,followCamera2d(state.camera,player,{width:canvas.clientWidth,height:canvas.clientHeight},dt,{snap:!motion.cameraInitialized}));motion.cameraInitialized=true;
 }

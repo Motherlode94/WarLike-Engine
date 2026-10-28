@@ -5,7 +5,7 @@ import {prefab3d,get3dAsset,allAssets3d} from '../js/assets/catalog-3d.js';
 test('real GLB prefabs are referenced in 3D catalog',()=>{
  assert.ok(realModels3d.length>=7);
  for(const asset of realModels3d){
-  assert.ok(asset.url.startsWith('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/'));
+  assert.ok(asset.url.startsWith('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/')||asset.url.startsWith('./assets/free/kenney/')||asset.url.startsWith('./assets/free/quaternius/'));
   assert.equal(get3dAsset(asset.id)?.shape,'glb');
   const p=prefab3d(asset.id,1,180,200);
   assert.equal(p.type,'mesh3d');assert.equal(p.model3dId,asset.id);

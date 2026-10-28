@@ -1,6 +1,9 @@
+import {quaterniusModels3d} from './quaternius-game-assets.js';
+import {readAnimationRig} from '../core/gltf-animation.js';
+import {freeModels3d} from './free-game-assets.js';
 // WarLike static glTF 2.0 GLB mesh loader. No eval, scripts or external binary executables.
 // Supports embedded GLB, node hierarchy/TRS, material baseColorFactor, triangle indices.
-export const realModels3d=[
+export const realModels3d=[...freeModels3d,...quaterniusModels3d,
  {id:'real-specular-test',name:'Specular Material Test',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/SpecularTest.glb',license:'CC-BY-4.0 • Ed Mackey'},
  {id:'real-normal-tangent-test',name:'Normal Map Geometry Reference',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/NormalTangentTest/glTF-Binary/NormalTangentTest.glb',license:'CC0 • Ed Mackey'},
  {id:'real-texture-coordinate-test',name:'Textured Geometry Reference',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/TextureCoordinateTest/glTF-Binary/TextureCoordinateTest.glb',license:'CC0 • Ed Mackey'},
@@ -85,12 +88,12 @@ function readAccessor(json,binary,index){
  const a=json.accessors?.[index],v=json.bufferViews?.[a?.bufferView],type=types[a?.componentType];
  if(!a||!v||!type||a.sparse)throw Error('Accessor glTF non pris en charge');
  if(v.buffer!==undefined&&v.buffer!==0)throw Error('GLB externe non pris en charge');
- const count=({SCALAR:1,VEC2:2,VEC3:3,VEC4:4})[a.type];
+ const count=({SCALAR:1,VEC2:2,VEC3:3,VEC4:4,MAT2:4,MAT3:9,MAT4:16})[a.type];
  if(!count||a.count>3000000)throw Error('Données GLB invalides');
  const stride=v.byteStride||type.size*count,offset=(v.byteOffset||0)+(a.byteOffset||0);
  if(stride<type.size*count||offset+(a.count-1)*stride+type.size*count>binary.byteLength)throw Error('Buffer GLB incomplet');
  const dv=new DataView(binary.buffer,binary.byteOffset,binary.byteLength),out=[];
- for(let i=0;i<a.count;i++)for(let j=0;j<count;j++)out.push(dv[type.method](offset+i*stride+j*type.size,true));
+ for(let i=0;i<a.count;i++)for(let j=0;j<count;j++){let value=dv[type.method](offset+i*stride+j*type.size,true);if(a.normalized&&a.componentType!==5126){const maximum=({5120:127,5121:255,5122:32767,5123:65535,5125:4294967295})[a.componentType];value=Math.max(-1,value/maximum)}out.push(value)}
  // Accessor count is the number of elements, not the number of components
  // per element (POSITION is VEC3 even when the mesh has thousands of vertices).
  return {data:out,count:a.count,components:count};
@@ -104,6 +107,8 @@ export function parseGlb(buffer){
  if(type===0x004e4942)binary=new Uint8Array(buffer,offset,length);offset+=length;
  }
  if(!json||!binary||!Array.isArray(json.meshes))throw Error('GLB sans géométrie intégrée');
+ const accessorCache=new Map();const accessor=index=>{if(!accessorCache.has(index))accessorCache.set(index,readAccessor(json,binary,index));return accessorCache.get(index)};
+ const rig=readAnimationRig(json,accessor);
  const roots=json.scenes?.[json.scene||0]?.nodes||json.nodes?.map((_,i)=>i)||[],parts=[];
  const walk=(idx,parent,depth)=>{
   if(depth>64||parts.length>300)return;
@@ -112,9 +117,9 @@ export function parseGlb(buffer){
   for(const primitive of (json.meshes?.[node.mesh]?.primitives||[])){
    if(primitive.mode!==undefined&&primitive.mode!==4||primitive.extensions)continue;
    if(primitive.attributes?.POSITION===undefined)continue;
-   const pos=readAccessor(json,binary,primitive.attributes.POSITION);
-   const norm=primitive.attributes.NORMAL===undefined?null:readAccessor(json,binary,primitive.attributes.NORMAL);
-   let idxs=primitive.indices===undefined?Array.from({length:pos.count},(_,i)=>i):readAccessor(json,binary,primitive.indices).data;
+   const pos=accessor(primitive.attributes.POSITION);
+   const norm=primitive.attributes.NORMAL===undefined?null:accessor(primitive.attributes.NORMAL);
+   let idxs=primitive.indices===undefined?Array.from({length:pos.count},(_,i)=>i):accessor(primitive.indices).data;
    // Some sample GLBs contain invalid triangles in optional meshes.
    // Ignore only affected faces, preserving the rest of the real geometry.
    const clean=[];
@@ -125,18 +130,41 @@ export function parseGlb(buffer){
    idxs=clean;
    if(idxs.length%3)continue;
    const pbr=json.materials?.[primitive.material]?.pbrMetallicRoughness||{};
-   const color=pbr.baseColorFactor||[.75,.78,.82,1];
+   const color=pbr.baseColorFactor||[1,1,1,1];
    const roughness=Math.max(.04,Math.min(1,Number(pbr.roughnessFactor??1)));
    const metallic=Math.max(0,Math.min(1,Number(pbr.metallicFactor??0)));
-   const vertices=[];
+   const textureInfo=pbr.baseColorTexture,textureTransform=textureInfo?.extensions?.KHR_texture_transform;
+   const uvIndex=textureTransform?.texCoord??textureInfo?.texCoord??0;
+   const uvAccessor=primitive.attributes['TEXCOORD_'+uvIndex];
+   const uv=uvAccessor===undefined?null:accessor(uvAccessor);
+   const image=json.images?.[json.textures?.[textureInfo?.index]?.source];
+   let texture=null;
+   if(image&&uv){
+    const imageView=json.bufferViews?.[image.bufferView];
+    if(imageView&&(!imageView.buffer||imageView.buffer===0)&&['image/png','image/jpeg','image/webp'].includes(image.mimeType)){
+     const start=imageView.byteOffset||0,end=start+imageView.byteLength;
+     if(end>binary.byteLength)throw Error('Texture GLB incomplète');
+     const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
+     texture={bytes:binary.slice(start,end),mimeType:image.mimeType,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
+    }
+   }
+   const vertices=[],texcoords=[];
    for(let i=0;i<idxs.length;i+=3){const points=[];
     for(let j=0;j<3;j++){const vi=idxs[i+j];if(vi>=pos.count||vi<0)throw Error('Index GLB invalide');points.push(transform(m,pos.data.slice(vi*3,vi*3+3)))}
     const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
     const delta=(a,b)=>a.map((n,k)=>n-b[k]),normal=cross(delta(points[1],points[0]),delta(points[2],points[0]));
     const len=Math.hypot(...normal)||1;const flat=normal.map(n=>n/len);
-    for(let j=0;j<3;j++){let n=flat;if(norm){const raw=transform(m,norm.data.slice(idxs[i+j]*3,idxs[i+j]*3+3),0);const l=Math.hypot(...raw)||1;n=raw.map(z=>z/l)}vertices.push(...points[j],...n)}
+    for(let j=0;j<3;j++){let n=flat;if(norm){const raw=transform(m,norm.data.slice(idxs[i+j]*3,idxs[i+j]*3+3),0);const l=Math.hypot(...raw)||1;n=raw.map(z=>z/l)}vertices.push(...points[j],...n);
+     if(texture){
+      let u=uv.data[idxs[i+j]*uv.components],v=uv.data[idxs[i+j]*uv.components+1];
+      const scale=textureTransform?.scale||[1,1],offset=textureTransform?.offset||[0,0],angle=textureTransform?.rotation||0;
+      const x=u*scale[0],y=v*scale[1];
+      texcoords.push(offset[0]+Math.cos(angle)*x-Math.sin(angle)*y,offset[1]+Math.sin(angle)*x+Math.cos(angle)*y);
+     }
+    }
    }
-   if(vertices.length)parts.push({vertices:new Float32Array(vertices),color,roughness,metallic});
+   const motion=rig?{nodeIndex:idx,skinIndex:node.skin,indices:new Uint32Array(idxs),vertexIds:new Uint32Array([...new Set(idxs)]),positions:new Float32Array(pos.data),normals:norm?new Float32Array(norm.data):null,...(node.skin!==undefined&&primitive.attributes.JOINTS_0!==undefined?{joints:new Uint16Array(accessor(primitive.attributes.JOINTS_0).data),weights:new Float32Array(accessor(primitive.attributes.WEIGHTS_0).data),influences:accessor(primitive.attributes.JOINTS_0).components}:{})}:null;
+   if(vertices.length)parts.push({...(motion?{motion}:{}),vertices:new Float32Array(vertices),color,roughness,metallic,...(texture?{texture,texcoords:new Float32Array(texcoords)}:{}),alphaMode:json.materials?.[primitive.material]?.alphaMode||'OPAQUE',alphaCutoff:json.materials?.[primitive.material]?.alphaCutoff??.5});
   }
   for(const child of node.children||[])walk(child,m,depth+1);
  };
@@ -148,7 +176,7 @@ export function parseGlb(buffer){
  // A single uniform scale preserves proportions. Per-axis normalization turned humans into distorted blocks.
  const longest=Math.max(...size);
  for(const part of parts)for(let j=0;j<part.vertices.length;j+=6)for(let k=0;k<3;k++)part.vertices[j+k]=(part.vertices[j+k]-center[k])/longest;
- return {parts,triangleCount:parts.reduce((sum,p)=>sum+p.vertices.length/18,0),source:json.asset?.generator||'glTF 2.0'};
+ return {parts,rig,normalizationCenter:center,normalizationScale:longest,normalizedSize:size.map(value=>value/longest),triangleCount:parts.reduce((sum,p)=>sum+p.vertices.length/18,0),source:json.asset?.generator||'glTF 2.0'};
 }
 export async function getModelGeometry(id){
  if(modelCache.has(id))return modelCache.get(id);
@@ -180,4 +208,14 @@ export async function getModelGeometry(id){
  })();
  modelCache.set(id,task);
  try{return await task}catch(e){modelCache.delete(id);throw e}
+}
+
+// Decode once per material image; the same image feeds WebGL and library previews.
+const textureImages=new WeakMap();
+export async function getTextureImage(texture){
+ if(!texture)return null;
+ if(textureImages.has(texture))return textureImages.get(texture);
+ const task=createImageBitmap(new Blob([texture.bytes],{type:texture.mimeType}));
+ textureImages.set(texture,task);
+ try{return await task}catch(error){textureImages.delete(texture);throw error}
 }

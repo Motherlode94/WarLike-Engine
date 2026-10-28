@@ -4,6 +4,14 @@
 
 **[Lire la documentation complète en français](./docs/index.html)** · [Démonstration en ligne](https://warlike-engine.pages.dev/) · [Guide des vrais prefabs 3D](./REAL-3D-PREFABS-BETA72.md) · [Logic Sequences](./LOGIC-SEQUENCES-BETA7.md)
 
+## Blueprint Studio — construire, tester et exporter un jeu
+
+Un espace dédié réunit **Graphe**, **Instructions**, **Bibliothèque**, **Projet & export** et **Débogage**. Chaque objet peut porter plusieurs comportements indépendants. Les graphes exécutent des conditions Oui/Non, avec paramètres de nœud dans un inspecteur séparé.
+
+Objectifs à progression, comptes à rebours, dialogues, menus de pause/victoire/défaite, checkpoints, sauvegardes et changements de scène composent une boucle de jeu complète. **Projet & export → Créer un exemple de jeu complet** installe une mission de collecte en conservant la scène existante. **Exporter le jeu Web (.zip)** produit un petit jeu jouable avec son menu et son runtime, à servir en HTTP.
+
+**[Guide de création de A à Z](./docs/blueprint-game-builder.md)**. Le build Web est expérimental : les modèles distants demandent Internet, les GLB locaux sans ressource durable bloquent l’export et les scripts C#/.NET ne s’exécutent pas dans ce build.
+
 ## Communauté — WarLike Open Ecosystem
 
 Le moteur accepte désormais des **packs communautaires JSON déclaratifs** via **Assets → Communauté · Plugins**. Les recettes Blueprint importées apparaissent dans l'Inspector, sans exécuter de JavaScript tiers. Cette première version du SDK est locale et limitée ; elle ne constitue pas encore une Marketplace hébergée.
@@ -50,7 +58,7 @@ Les conditions d'inventaire vérifient les objets réellement ramassés ; les ac
 
 Depuis **Inspector > Gameplay Components**, ajoute **Stats**, **Inventaire**, **AI State Machine** ou **Character Controller 3D** à un objet. Le moteur dispose désormais de points de vie, endurance, sauts, sprint et esquive (**Ctrl**), d'une IA simple avec patrouille/poursuite/attaque et d'attaques 3D de proximité (**F**). Une arme équipée via l'Inspector augmente la portée et les dégâts de l'attaque ; il ne s'agit pas encore d'une représentation animée de l'arme ni d'un système de projectiles.
 
-Dans **Logic Sequences**, les instructions peuvent donner/retirer un objet, équiper une arme/armure, soigner et infliger des dégâts. Le panneau **Graphique des comportements** affiche une **prévisualisation** des triggers et branches ; les connexions ne sont pas encore modifiables par glisser-déposer.
+Dans **Logic Sequences**, les instructions peuvent donner/retirer un objet, équiper une arme/armure, soigner et infliger des dégâts. **Blueprint Studio** permet de déplacer les nœuds, de connecter les ports, de créer des branches Oui/Non et de consulter les paramètres et l’exécution. Les graphes invalides sont signalés avant Play.
 
 La navigation IA utilise une **recherche A* sur grille avec évitement local simplifié** ; elle ne dispose pas de NavMesh. Les collisions 3D et animations restent expérimentales. Les tests ajoutés au dépôt doivent être exécutés avec `npm test`, et l'ensemble doit être vérifié en navigateur avant utilisation dans un projet de production.
 

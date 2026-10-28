@@ -1,3 +1,4 @@
+import {gameIsRunning} from './game-session.js';
 import {updateHorrorAudio} from './horror-audio.js';
 import {tickEngineDiagnostics} from './engine-diagnostics.js';
 import {updateDriving3d,currentVehicle3d,isDriveable3d,driving3d,resetDriving3d} from './vehicle-3d.js';
@@ -261,6 +262,7 @@ export function init3d(canvas,host,buttons){
  document.addEventListener('warlike:change',syncProjectView);
  syncProjectView();
  const update3dPlay=dt=>{
+  if(!gameIsRunning())return;
   tickEngineDiagnostics(dt);
   const p=playableActor(state.entities);
   if(p)p._vehicleInputConsumed=false;
@@ -298,7 +300,7 @@ export function init3d(canvas,host,buttons){
   return {eye,forward,right,up};
  };
  const shootFps=()=>{
-  if(!isFps())return false;
+  if(!isFps()||!gameIsRunning())return false;
   const player=playableActor(state.entities),cam=camera();if((player._attackCooldown||0)>0)return false;
   player._attackCooldown=.23;
   const candidates=state.entities.filter(o=>o!==player&&(o.hp??o.stats?.health??100)>0&&(o.assetId?.includes('character-')||o.ai?.enabled));
@@ -394,7 +396,7 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&!wasPlaying)enterPlay();
   if(!state.playing&&wasPlaying){view3d.followPlayer=false;resetDriving3d();stopRapier();}
   wasPlaying=state.playing;
-  if(state.playing&&workspace.mode==='3d'){updateRtsOrders(state.entities,dt,true);update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,player:playableActor(state.entities)});}
+  if(state.playing&&workspace.mode==='3d'){updateRtsOrders(state.entities,dt,gameIsRunning());update3dPlay(dt);updateSequences(dt,{playing:true,entities:state.entities,keys:state.keys,pressedKeys:state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}
   if(state.playing&&view3d.followPlayer){const pt=playerTarget();if(pt){const t=Math.min(1,dt*9);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t))}}
   if(!view3d.enabled){updateGizmos();return}
   updateGenreHud(state);updateGizmos();
@@ -435,7 +437,7 @@ export function init3d(canvas,host,buttons){
   gl.uniform1fv(u.lightSpot,new Float32Array(lamps.map(l=>l.spot?1:0).concat(Array(8-lamps.length).fill(0))));
   gl.disable(gl.CULL_FACE);
   bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count);
-  const objects=[...state.entities].filter(o=>(!state.playing||!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
+  const objects=[...state.entities].filter(o=>(!state.playing||o.visible!==false&&o.sequenceEnabled!==false&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
   // Depth buffering resolves overlapping faces, including the composite mesh parts.
   bind(cubes);
   for(const o of objects){

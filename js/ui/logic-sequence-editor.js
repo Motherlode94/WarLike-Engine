@@ -1,102 +1,32 @@
 import {renderBlueprintGraph} from './blueprint-graph-editor.js';
-import {newSequence,sequenceEvents,sequenceConditions,sequenceInstructions} from '../core/logic-sequences.js';
+import {newSequence,sequenceEvents} from '../core/logic-sequences.js';
+import {eventFields} from '../core/blueprint-catalog.js';
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
-
-export function renderSequenceEditor(root,o){
- const details=document.createElement('details');details.className='inspector-component sequence-editor';details.open=!!o.sequence;
- const title=document.createElement('summary');title.textContent='⚡ Logic Sequences • Game Creator-inspired';
- const body=document.createElement('div');body.className='component-content';details.append(title,body);root.append(details);
- const save=label=>{record('Logic Sequence : '+label);notify()};
- const button=(parent,label,handler)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.disabled=state.playing;b.onclick=handler;parent.append(b);return b};
- const text=(parent,label,value,handler,type='text')=>{
-  const row=document.createElement('label');row.className='sequence-field';row.textContent=label;
-  const input=document.createElement('input');input.type=type;input.disabled=state.playing;input.value=value??'';input.onchange=()=>handler(type==='number'?Number(input.value):input.value);row.append(input);parent.append(row);return input;
- };
- const select=(parent,label,value,choices,handler)=>{
-  const row=document.createElement('label');row.className='sequence-field';row.textContent=label;
-  const field=document.createElement('select');field.disabled=state.playing;
-  for(const choice of choices){const option=document.createElement('option');option.value=choice;option.textContent=choice;field.append(option)}
-  field.value=value||choices[0];field.onchange=()=>handler(field.value);row.append(field);parent.append(row);
- };
- const toggle=(parent,label,checked,handler)=>{
-  const row=document.createElement('label');row.className='sequence-toggle';const input=document.createElement('input');input.type='checkbox';input.checked=!!checked;input.disabled=state.playing;input.onchange=()=>handler(input.checked);row.append(input,document.createTextNode(label));parent.append(row);
- };
- if(!o.sequence){
-  button(body,'＋ Add Logic Sequence',()=>{o.sequence=newSequence();save('Ajouter')});
-  button(body,'Exemple : porte à clé',()=>{o.sequence={...newSequence(),once:true,conditions:[],branches:[{conditions:[{type:'variable',key:'hasKey',operator:'==',value:1}],instructions:[{type:'message',value:'Porte ouverte !'},{type:'setColor',value:'#65ceab'}]}],elseInstructions:[{type:'message',value:'Porte verrouillée : trouve la clé.'}]};save('Modèle porte à clé')});
-  button(body,'Exemple : interrupteur',()=>{o.sequence={...newSequence(),event:'interact',once:false,instructions:[{type:'addVariable',key:'switchCount',value:1},{type:'message',value:'Interrupteur activé'}]};save('Modèle interrupteur')});
-  button(body,'Exemple : événement temporisé',()=>{o.sequence={...newSequence(),event:'start',once:true,instructions:[{type:'message',value:'Début de l’événement'},{type:'wait',value:2},{type:'setColor',value:'#4f9ce9'},{type:'message',value:'Événement terminé'}]};save('Modèle temporisé')});
-  return
- }
+import {element,button,select,field,editConditions,editActions} from './blueprint-controls.js';
+export function renderSequenceEditor(root,owner,options={}){
+ const o=options.sequence?{...owner,sequence:options.sequence}:owner;
+ const details=element('details','inspector-component sequence-editor');details.open=options.expanded??!!o.sequence;
+ details.append(element('summary','','⚡ Logic Sequences · événements & actions'));
+ const body=element('div','component-content bp-instructions');details.append(body);root.append(details);
+ const save=label=>{if(options.onChange)options.onChange(o.sequence,label);else{record('Blueprint : '+label);notify()}};
+ if(!o.sequence){button(body,'＋ Ajouter un comportement',()=>{o.sequence=newSequence();save('Ajouter')},'bp-primary');return}
  const s=o.sequence;
- button(body,'Supprimer la séquence',()=>{delete o.sequence;save('Supprimer')});
- toggle(body,'Activée',s.enabled!==false,v=>{s.enabled=v;save('Activation')});
- select(body,'Trigger (événement)',s.event,sequenceEvents,v=>{s.event=v;save('Trigger')});
- if(['interact','enter','exit'].includes(s.event))text(body,'Rayon (unités)',s.radius??96,v=>{s.radius=Math.max(1,v);save('Rayon')},'number');
- if(['interact','keyDown'].includes(s.event))text(body,'Touche (e, f, g...)',s.key||'e',v=>{s.key=v.toLowerCase().slice(0,24);save('Touche')});
- if(s.event==='interval')text(body,'Intervalle (secondes)',s.interval??2,v=>{s.interval=Math.max(.1,v);save('Intervalle')},'number');
- if(s.event==='signal')text(body,'Signal reçu',s.signal||'',v=>{s.signal=v.slice(0,60);save('Signal')});
- toggle(body,'Une seule fois',s.once===true,v=>{s.once=v;save('Once')});
- function editConditions(parent,conditions){
-  const heading=document.createElement('strong');heading.textContent='Conditions (AND)';parent.append(heading);
-  conditions.forEach((c,i)=>{
-   const block=document.createElement('div');block.className='sequence-step';
-   select(block,'Condition',c.type,sequenceConditions,v=>{c.type=v;save('Condition')});
-   if(['variable','localVariable','inventoryHas','inventoryMissing'].includes(c.type)){
-    text(block,'Nom',c.key||'',v=>{c.key=v;save('Nom variable')});
-    select(block,'Comparaison',c.operator||'==',['==','!=','>','<','>=','<='],v=>{c.operator=v;save('Opérateur')});
-   }
-   if(['variable','localVariable','distanceLess','distanceGreater','healthBelow','healthAbove','hasTag','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists','aiStateIs','aiAwarenessAbove','weaponAmmoAbove','vehicleFuelBelow','vehicleHealthBelow'].includes(c.type))text(block,'Valeur',c.value??0,v=>{c.value=v;save('Valeur')});
-   if(['healthBelow','healthAbove','inventoryHas','inventoryMissing','aiStateIs','aiAwarenessAbove','aiCanSeeTarget','aiHasTarget','sameFaction','isHostile'].includes(c.type)){
-    select(block,'Objet à vérifier',c.targetRole||(['inventoryHas','inventoryMissing'].includes(c.type)?'player':'self'),['self','player'],v=>{c.targetRole=v;delete c.targetId;save('Cible condition')});
-    if(c.targetRole!=='player')text(block,'ID objet (optionnel)',c.targetId??'',v=>{c.targetId=v;save('ID condition')},'number');
-   }
-   toggle(block,'Inverser (NOT)',c.negate===true,v=>{c.negate=v;save('NOT')});
-   button(block,'− Condition',()=>{conditions.splice(i,1);save('Retirer condition')});parent.append(block);
-  });
-  button(parent,'＋ Condition',()=>{conditions.push({type:'variable',key:'score',operator:'>=',value:1});save('Ajouter condition')});
+ if(s.graph){body.append(element('p','bp-info-banner','Ce comportement utilise un graphe. Ses instructions sont générées à partir des connexions.'));
+  button(body,'Convertir en liste modifiable',()=>{delete s.graph;save('Convertir le graphe en liste')},'bp-secondary');
+  const list=element('ol','bp-readonly-steps');const describe=steps=>{for(const a of steps||[]){const row=element('li','',a.type+(a.key?' · '+a.key:'')+(a.value!=null?' : '+String(a.value):''));list.append(row);if(a.type==='branch'){describe(a.thenInstructions);describe(a.elseInstructions)}}};describe(s.instructions);body.append(list);return;
  }
- function editInstructions(parent,list){
-  const heading=document.createElement('strong');heading.textContent='Instructions (séquence)';parent.append(heading);
-  list.forEach((step,i)=>{
-   const block=document.createElement('div');block.className='sequence-step';
-   const caption=document.createElement('small');caption.textContent='#'+(i+1);block.append(caption);
-   select(block,'Instruction',step.type,sequenceInstructions,v=>{step.type=v;save('Instruction')});
-   if(['setVariable','addVariable','setLocal','addLocal','emitSignal','giveItem','removeItem','equipItem','setTag','removeTag','setObjective','completeObjective'].includes(step.type))text(block,'Variable / Signal',step.key||'',v=>{step.key=v;save('Nom')});
-   if(!['destroyObject'].includes(step.type))text(block,'Valeur',step.value??'',v=>{step.value=v;save('Valeur')});
-   if(['moveObject','teleportObject','setPosition','setAiPatrolPoint'].includes(step.type)){text(block,'X',step.x??0,v=>{step.x=v;save('X')},'number');text(block,'Y / Z au sol',step.y??0,v=>{step.y=v;save('Y')},'number')}
-   if(['enableObject','moveObject','teleportObject','setHealth','addHealth','setAnimation','setBehavior','giveItem','removeItem','equipItem','damageObject','healObject','setPosition','setRotation','setScale','setVisibility','setCollision','setSpeed','addSpeed','setTeam','setFuel','addFuel','setLight','setAudio','setVehicleState','setTag','removeTag','setCheckpoint','setAiState','setAiFaction','setAiTarget','clearAiTarget','setAiDetection','setAiAttackRange','setAiPatrolPoint','setAiEnabled','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration','setWeaponAmmo','addWeaponAmmo','reloadWeapon','setWeaponDamage','fireVehicleWeapon','repairVehicle','refuelVehicle','setVehicleEngine','setVehicleGear','setVehicleWeapon'].includes(step.type)){
-    select(block,'Objet cible',step.targetRole||'self',['self','player'],v=>{step.targetRole=v;delete step.targetId;save('Objet cible')});
-    if(step.targetRole!=='player')text(block,'ID cible (optionnel)',step.targetId??'',v=>{step.targetId=v;save('Cible')},'number');
-   }
-   if(step.type==='equipItem')select(block,'Slot',step.slot||'weapon',['weapon','armor'],v=>{step.slot=v;save('Slot')});
-   toggle(block,'Désactiver instruction',step.disabled===true,v=>{step.disabled=v;save('Désactiver')});
-   const tools=document.createElement('div');tools.className='sequence-buttons';
-   if(i>0)button(tools,'↑',()=>{[list[i-1],list[i]]=[list[i],list[i-1]];save('Remonter')});
-   if(i<list.length-1)button(tools,'↓',()=>{[list[i+1],list[i]]=[list[i],list[i+1]];save('Descendre')});
-   button(tools,'−',()=>{list.splice(i,1);save('Retirer instruction')});block.append(tools);parent.append(block);
-  });
-  button(parent,'＋ Instruction',()=>{list.push({type:'message',value:'Hello !'});save('Ajouter instruction')});
- }
- s.conditions??=[];s.instructions??=[];
- if(!s.branches?.length){
-  editConditions(body,s.conditions);editInstructions(body,s.instructions);
-  button(body,'＋ Branches IF / ELSE',()=>{s.branches=[{conditions:structuredClone(s.conditions),instructions:structuredClone(s.instructions)}];s.elseInstructions=[];save('Créer branches')});
- }else{
-  const base=document.createElement('details');base.className='sequence-branch';const baseTitle=document.createElement('summary');baseTitle.textContent='Conditions globales (avant IF / ELSE)';base.append(baseTitle);editConditions(base,s.conditions);body.append(base);
-  for(const [i,branch] of s.branches.entries()){
-   const group=document.createElement('details');group.open=true;group.className='sequence-branch';
-   const label=document.createElement('summary');label.textContent='IF / ELSE IF • Branche '+(i+1);group.append(label);
-   branch.conditions??=[];branch.instructions??=[];
-   editConditions(group,branch.conditions);editInstructions(group,branch.instructions);
-   button(group,'Retirer branche',()=>{s.branches.splice(i,1);if(!s.branches.length)delete s.branches;save('Retirer branche')});
-   body.append(group);
-  }
-  button(body,'＋ ELSE IF',()=>{s.branches.push({conditions:[],instructions:[{type:'message',value:'Nouvelle branche'}]});save('Branche')});
-  const fallback=document.createElement('details');fallback.open=true;const label=document.createElement('summary');label.textContent='ELSE • Si aucune condition';fallback.append(label);
-  s.elseInstructions??=[];editInstructions(fallback,s.elseInstructions);body.append(fallback);
- }
- renderBlueprintGraph(body,s,save);
- const help=document.createElement('p');help.textContent='Pendant Play, les séquences exécutent les instructions dans l’ordre. Wait suspend l’exécution, Emit Signal déclenche d’autres objets.';body.append(help);
+ const config=element('section','bp-form-section');config.append(element('h3','','Déclencheur'));
+ select(config,'Événement',s.event,sequenceEvents,v=>{s.event=v;save('Événement')},{kind:'event'});
+ for(const schema of eventFields(s.event))field(config,schema,s,()=>save('Paramètre événement'));
+ field(config,{key:'once',label:'Une seule fois',type:'boolean',default:false},s,()=>save('Répétition'));
+ field(config,{key:'runWhenPaused',label:'Actif pendant la pause / fin',type:'boolean',default:false},s,()=>save('Pause'));
+ body.append(config);
+ const conditions=element('details','bp-form-section');conditions.append(element('summary','','Conditions de déclenchement'));s.conditions??=[];
+ select(conditions,'Combinaison',s.conditionMode||'all',[{value:'all',label:'Toutes (ET)'},{value:'any',label:'Au moins une (OU)'}],v=>{s.conditionMode=v;save('Combinaison')});editConditions(conditions,s.conditions,()=>save('Condition'));body.append(conditions);
+ const actions=element('section','bp-form-section');actions.append(element('h3','','Instructions'));s.instructions??=[];editActions(actions,s.instructions,()=>save('Instruction'));
+ body.append(actions);
+ if(s.branches?.length){for(const [i,branch] of s.branches.entries()){const group=element('details','bp-form-section');group.append(element('summary','','Branche '+(i+1)));branch.conditions??=[];branch.instructions??=[];editConditions(group,branch.conditions,()=>save('Branche'));editActions(group,branch.instructions,()=>save('Branche'));body.append(group)}s.elseInstructions??=[];const fallback=element('details','bp-form-section');fallback.append(element('summary','','Sinon'));editActions(fallback,s.elseInstructions,()=>save('Sinon'));body.append(fallback)}
+ if(options.showGraph)renderBlueprintGraph(body,s,save);
+ button(body,'Supprimer ce comportement',()=>{delete o.sequence;save('Supprimer')},'bp-text-button bp-danger');
 }

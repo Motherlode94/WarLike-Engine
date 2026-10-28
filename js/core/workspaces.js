@@ -1,3 +1,4 @@
+import {gameProject,restoreGameProject} from './game-project.js';
 import {prefab3d} from '../assets/catalog-3d.js';
 // Independent 2D/3D workspaces. Each keeps its own scene, selection and camera.
 // Switching cannot happen during Play; callers stop simulation before switching.
@@ -9,7 +10,7 @@ export const workspace={mode:'2d',scenes:{
 const clone=v=>structuredClone(v);
 export function captureWorkspace(){
  const slot=workspace.scenes[workspace.mode];
- Object.assign(slot,{entities:clone(state.entities),selected:clone(state.selected),nextId:state.nextId,camera:clone(state.camera)});
+ Object.assign(slot,{entities:clone(state.entities),selected:clone(state.selected),nextId:state.nextId,camera:clone(state.camera),game:clone(gameProject)});
 }
 export function switchWorkspace(mode){
  if(!['2d','3d'].includes(mode))return false;
@@ -17,6 +18,7 @@ export function switchWorkspace(mode){
  if(workspace.mode===mode)return true;
  captureWorkspace();state.keys.clear();const slot=workspace.scenes[mode];
  workspace.mode=mode;
+ restoreGameProject(slot.game);
  state.entities=clone(slot.entities||[]);state.selected=clone(slot.selected||[]);
  state.nextId=slot.nextId||1;state.camera=clone(slot.camera||{x:0,y:0,zoom:1});
  notify();return true;
@@ -42,12 +44,12 @@ export function restoreWorkspaces(data,retainCurrent=false){
    const nextId=Math.max(1,...slot.entities.map(e=>e.id+1));
    const camera=slot.camera||{x:0,y:0,zoom:1};
    if(!['x','y','zoom'].every(k=>Number.isFinite(camera[k]))||camera.zoom<=0)return false;
-   next[key]={entities:clone(slot.entities),selected:clone(selected),nextId:Math.max(nextId,Number.isSafeInteger(slot.nextId)?slot.nextId:1),camera:clone(camera)};
+   next[key]={entities:clone(slot.entities),selected:clone(selected),nextId:Math.max(nextId,Number.isSafeInteger(slot.nextId)?slot.nextId:1),camera:clone(camera),game:clone(slot.game||null)};
   }
  }catch{return false}
  const mode=retainCurrent?workspace.mode:(data.workspaceMode==='3d'?'3d':'2d');
  workspace.scenes=next;workspace.mode=mode;
- const slot=next[mode];
+ const slot=next[mode];restoreGameProject(slot.game);
  state.entities=clone(slot.entities);state.selected=clone(slot.selected);
  state.nextId=slot.nextId;state.camera=clone(slot.camera);
  notify();return true;

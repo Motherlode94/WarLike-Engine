@@ -1,3 +1,5 @@
+import {initGameFlowUi} from './ui/game-flow-ui.js';
+import {initStudioPolish} from './ui/studio-polish.js';
 import {horrorAudio,horrorAmbiences,setHorrorAmbience,unlockHorrorAudio,playHorrorCue} from './core/horror-audio.js';
 import {loadHorror3dDemo} from './core/horror-pursuit-3d-demo.js';
 import {initExternalAssetLibrary} from './ui/external-asset-library.js';
@@ -8,7 +10,7 @@ import {createFpsScene} from './core/fps-scene.js';
 import {initUnityPackageImport} from './ui/unitypackage-import.js';
 import {horror} from './core/horror-survival.js';
 import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality,applyHorrorAtmosphere} from './core/render-quality.js';
-import {initBlueprintWorkspace} from './ui/blueprint-workspace.js?v=hub-recovery-20261028';
+import {initBlueprintWorkspace} from './ui/blueprint-workspace.js?v=blueprint-game-builder-20261028';
 import {initEditorAppearance} from './ui/editor-appearance.js?v=theme-sync-20261027';
 import {initEditorPalette} from './ui/editor-palette.js?v=graphite-default-20261028';
 import {initCursorSettings} from './ui/cursor-settings.js';
@@ -267,3 +269,6 @@ if(horrorPanel&&!document.getElementById('warlikeHorrorAudioSettings')){
 }
 document.getElementById('play')?.addEventListener('click',()=>{unlockHorrorAudio()},{capture:true});
 
+
+initGameFlowUi();
+initStudioPolish();

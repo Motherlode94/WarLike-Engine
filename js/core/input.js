@@ -119,8 +119,9 @@ export function attachInput(canvas,host){
   if(!state.playing&&(key==='delete'||key==='backspace')){e.preventDefault();deleteSelected();return}
   if(e.code==='Space')space=true;
   state.keys.add(key);
+  if(state.playing&&!e.repeat)state.keyPresses?.add(key);
   if(key.startsWith('arrow'))e.preventDefault();
  });
  window.addEventListener('keyup',e=>{state.keys.delete(e.key.toLowerCase());if(e.code==='Space')space=false});
- window.addEventListener('blur',()=>{state.keys.clear();space=false;drag=null;clearBox()});
+ window.addEventListener('blur',()=>{state.keys.clear();state.keyPresses?.clear();space=false;drag=null;clearBox()});
 }

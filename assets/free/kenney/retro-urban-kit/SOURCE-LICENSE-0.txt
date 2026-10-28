@@ -1,0 +1,6 @@
+CC0-1.0
+Autor: Kenney
+Zdroj: https://opengameart.org/content/retro-urban-kit
+Licence: https://creativecommons.org/publicdomain/zero/1.0/
+Ověřeno: 2026-10-04
+Otisk autorského podání: 9c78cc8b2c0123abc85ed69b078039f7bb1c2c5c9a681e31b3f8125f1c5a4304

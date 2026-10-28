@@ -1,6 +1,8 @@
 // Trusted external CC0 asset providers. This is a download directory,
 // not a claim that binary assets have been installed or loaded by WarLike.
 export const externalAssetSources=[
+ {id:'kenney-platformer-real',name:'Kenney · New Platformer Pack (440 PNG)',provider:'Kenney',modes:['2d'],genres:['Platformer','Arcade','Action'],kind:'Vrais sprites PNG, tilesets, personnages et décors à importer',url:'https://kenney.nl/assets/new-platformer-pack',license:'CC0',status:'external'},
+ {id:'kenney-roguelike-real',name:'Kenney · Roguelike Characters (450 sprites)',provider:'Kenney',modes:['2d'],genres:['RPG','RTS','Action','Horror'],kind:'Sprites PNG de personnages et équipements à importer',url:'https://kenney.nl/assets/roguelike-characters',license:'CC0',status:'external'},
  {id:'kenney-2d',name:'Kenney · Sprites & UI',provider:'Kenney',modes:['2d'],genres:['Platformer','Arcade','RPG','RTS','Sports','Simulation'],kind:'Sprites, spritesheets, interfaces et sons',url:'https://kenney.nl/assets',license:'CC0',status:'external'},
  {id:'kenney-3d',name:'Kenney · 3D Game Kits',provider:'Kenney',modes:['3d'],genres:['FPS','TPS','Racing','RTS','Sports','Simulation'],kind:'Bâtiments, véhicules, accessoires, environnements',url:'https://kenney.nl/assets',license:'CC0',status:'external'},
  {id:'quaternius-characters',name:'Quaternius · Characters & Animation',provider:'Quaternius',modes:['3d'],genres:['FPS','TPS','RPG','Horror','Survival','Action'],kind:'Personnages, ennemis et animations 3D',url:'https://quaternius.com/',license:'CC0',status:'external'},

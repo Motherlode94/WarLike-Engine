@@ -530,6 +530,8 @@
     "js/v2/editor.js",
     "js/v2/framework-registry.js",
     "js/v2/phaser-2d.js",
+    "native/dist/warlike_pathfinding.mjs",
+    "native/dist/warlike_pathfinding.wasm",
     "src/math/clamp.js",
     "vendor/phaser/LICENSE.md",
     "vendor/phaser/src/math/Clamp.js"

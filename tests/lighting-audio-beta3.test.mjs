@@ -19,7 +19,7 @@ test('up to eight nearest lights are used',()=>{
 });
 test('day-night advances only during play',()=>{
  const initial={...lighting};
- try{lighting.dayNight=true;lighting.speed=60;lighting.hour=8;updateLighting(60,false);assert.equal(lighting.hour,8);updateLighting(60,true);assert.equal(lighting.hour,9)}
+ try{lighting.dayNight=true;lighting.speed=60;lighting.hour=8;updateLighting(60,false);assert.equal(lighting.hour,8);for(let frame=0;frame<600;frame++)updateLighting(.1,true);assert.ok(Math.abs(lighting.hour-9)<1e-9);updateLighting(60,true);assert.ok(lighting.hour<9.01,'long background frames are clamped')}
  finally{Object.assign(lighting,initial)}
 });
 test('spatial audio attenuates and includes selectable cues',()=>{

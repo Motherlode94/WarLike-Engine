@@ -36,7 +36,7 @@ export function applyRecipe(o,id){
  if(!o||typeof o!=='object')return false;
  switch(id){
  case 'player-adventure':o.playable3d=true;o.stats=defaultStats();o.inventory=defaultInventory();o.controller3d=defaultController();return true;
- case 'enemy-guard':o.stats=defaultStats();o.ai={...defaultAi(),detection:450,attackRange:65,speed:75};return true;
+ case 'enemy-guard':o.stats=defaultStats();o.ai={...defaultAi(),detection:450,attackRange:65,speed:75,requireLineOfSight:true,fieldOfView:160};return true;
  case 'enemy-boss':o.stats={...defaultStats(),maxHealth:350,health:350};o.ai={...defaultAi(),detection:750,attackRange:95,attackDamage:20,speed:90,attackCooldown:1.8};return true;
  case 'healing-station':o.sequence=seq([{type:'healObject',targetRole:'player',value:25},{type:'message',value:'Soins +25'}],{interval:1});return true;
  case 'locked-door':o.sequence=seq([],{branches:[{conditions:[{type:'variable',key:'hasKey',operator:'==',value:1}],instructions:[{type:'message',value:'Porte ouverte'},{type:'enableObject',value:false}]}],elseInstructions:[{type:'message',value:'Porte verrouillée : clé requise'}]});return true;

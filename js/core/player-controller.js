@@ -3,7 +3,7 @@ import {playSound} from './audio.js';
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
 import {isBuildingSolid} from './building-system.js';
-const solid=o=>o.type==='object'||isBuildingSolid(o)||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock','stone-wall','wooden-palisade','traffic-barrier','ruins'].includes(o.assetId);
+const solid=o=>o.collision3d!==false&&(o.type==='object'||isBuildingSolid(o)||o.type==='prefab'&&getAsset(o.assetId)?.category==='Props'&&['crate','barrel','wall','sandbag','fence','rock','stone-wall','wooden-palisade','traffic-barrier','ruins'].includes(o.assetId));
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 export const motion={cameraFollow:false,footSpeed:190,sprintMultiplier:1.55};
 export function walkPlayer(player,dt,keys=state.keys){

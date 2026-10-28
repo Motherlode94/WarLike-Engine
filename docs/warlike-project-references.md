@@ -6,6 +6,8 @@ Ce document distingue les références de conception explicites des fonctionnali
 - **Unity / Unity Hub** : architecture des projets, Hub, Scene/Game, Hierarchy, Inspector, composants, organisation des fenêtres, modes 2D/3D et flux Play/Stop.
 - **Unreal Engine** : qualité visée pour le rendu et approche de graphes Blueprint; ne signifie pas compatibilité Unreal.
 - **Game Creator 2** : logique de gameplay à événements, conditions, actions, variables, quêtes, interactions, et composition de comportements réutilisables.
+- **Emerald AI** : perception, occultation, mémoire d'une cible et relations de factions ; adaptation originale au runtime WarLike.
+- **Opsive Ultimate Character Controller** : séparation des comportements de personnage, inventaire, équipement et états de santé ; référence de conception sans compatibilité de composants Unity.
 
 ## Inspirations de gameplay
 - **GTA V** : conduite, contrôle des personnages, monde ouvert et interactions.

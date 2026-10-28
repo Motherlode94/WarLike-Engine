@@ -235,8 +235,10 @@ component(root,'Gameplay Components',body=>{
   });
  }
  if(addComponent('AI State Machine','ai',defaultAi)){
-  const ai=o.ai;selectField(body,ai,'state','État initial',['idle','patrol','chase','attack','dead']);
-  for(const [key,label] of [['detection','Rayon détection'],['attackRange','Portée attaque'],['attackDamage','Dégâts'],['attackCooldown','Cooldown'],['speed','Vitesse'],['patrolRadius','Rayon patrouille'],['pathCellSize','Taille cellule A*'],['repathInterval','Recalcul chemin (s)']])field(body,ai,key,label);
+  const ai=o.ai;ai.fieldOfView??=360;ai.memoryDuration??=4;ai.searchDuration??=2;
+  selectField(body,ai,'state','État IA',['idle','patrol','chase','attack','investigate','search','return','dead']);
+  field(body,o,'aiFaction','Faction personnalisée (optionnel)','text');
+  for(const [key,label] of [['detection','Rayon détection'],['fieldOfView','Champ de vision (°)'],['memoryDuration','Mémoire cible (s)'],['searchDuration','Recherche sur place (s)'],['attackRange','Portée attaque'],['attackDamage','Dégâts'],['attackCooldown','Cooldown'],['speed','Vitesse'],['patrolRadius','Rayon patrouille'],['pathCellSize','Taille cellule A*'],['repathInterval','Recalcul chemin (s)']])field(body,ai,key,label);
   const flag=document.createElement('label');const cb=document.createElement('input');cb.type='checkbox';cb.checked=ai.enabled!==false;cb.disabled=state.playing;cb.onchange=()=>{ai.enabled=cb.checked;record('IA activée');notify()};flag.append(cb,document.createTextNode(' IA activée'));body.append(flag);
   const sightLabel=document.createElement('label');const sightCb=document.createElement('input');sightCb.type='checkbox';sightCb.checked=ai.requireLineOfSight===true;sightCb.disabled=state.playing;sightCb.onchange=()=>{ai.requireLineOfSight=sightCb.checked;record('IA : détection masquée par obstacles');notify()};sightLabel.append(sightCb,document.createTextNode(' Vision bloquée par les obstacles'));body.append(sightLabel);
   const pathLabel=document.createElement('label');const pathCb=document.createElement('input');pathCb.type='checkbox';pathCb.checked=ai.pathfinding!==false;pathCb.disabled=state.playing;pathCb.onchange=()=>{ai.pathfinding=pathCb.checked;record('Navigation A*');notify()};pathLabel.append(pathCb,document.createTextNode(' Navigation A*'));body.append(pathLabel);

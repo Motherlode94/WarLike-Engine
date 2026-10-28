@@ -5,7 +5,7 @@ import {createFpsScene} from './core/fps-scene.js';
 import {initUnityPackageImport} from './ui/unitypackage-import.js';
 import {horror} from './core/horror-survival.js';
 import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality,applyHorrorAtmosphere} from './core/render-quality.js';
-import {initBlueprintWorkspace} from './ui/blueprint-workspace.js?v=blueprint-taxonomy-20261028';
+import {initBlueprintWorkspace} from './ui/blueprint-workspace.js?v=survival-20261028';
 import {initEditorAppearance} from './ui/editor-appearance.js?v=theme-sync-20261027';
 import {initEditorPalette} from './ui/editor-palette.js?v=graphite-default-20261028';
 import {initCursorSettings} from './ui/cursor-settings.js';

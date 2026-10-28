@@ -1,5 +1,5 @@
 import {workspace} from '../core/workspaces.js';
-import {presetsForWorkspace,createBlueprintPreset} from '../core/blueprint-presets.js';
+import {presetsForWorkspace,createBlueprintPreset} from '../core/blueprint-presets.js?v=hub-recovery-20261028';
 import {active,state} from '../core/state.js';
 import {renderSequenceEditor} from './logic-sequence-editor.js';
 import {newSequence} from '../core/logic-sequences.js';

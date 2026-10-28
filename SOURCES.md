@@ -4,7 +4,7 @@
 
 **Hardi Victor MBANVU — HardieBay** : conception et développement de WarLike Studio.
 
-Hero Forge (pouvoirs, progression, simulation, escouades et FX procéduraux), le Hub, l’éditeur, Blueprint Studio, les contrôleurs, la caméra, les comportements IA, la navigation sur grille, les systèmes de jeu, le pipeline d’assets et les runtimes WarLike sont du code du projet. Les inspirations Unity, Game Creator, Emerald AI et Opsive ne constituent pas une intégration de leurs produits ou de leurs sources.
+Hero Forge (pouvoirs, progression, simulation, escouades et FX procéduraux), Survival (besoins, récolte, fabrication et campements), Animator, FX Studio, la coop et le relais Python LAN, le Hub, l’éditeur, Blueprint Studio, les contrôleurs, la caméra, les comportements IA, la navigation sur grille, les systèmes de jeu, le pipeline d’assets et les runtimes WarLike sont du code du projet. Le lissage et l’optimisation A* intègrent le patch de navigation fourni pour ce projet. Les inspirations Unity, Game Creator, Emerald AI et Opsive ne constituent pas une intégration de leurs produits ou de leurs sources.
 
 ## Ressources incluses
 
@@ -12,6 +12,8 @@ Hero Forge (pouvoirs, progression, simulation, escouades et FX procéduraux), le
 - **[Quaternius](https://quaternius.com/)** — modèles 3D et animations des archives CC0 retenues. **CC0-1.0**. [Ultimate Guns](https://quaternius.com/packs/ultimategun.html) · [Ultimate Monsters](https://quaternius.com/packs/ultimatemonsters.html) · [Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html) · [Notice locale](assets/free/quaternius/LICENSE.md).
 
 Les GLB, textures, sons et aperçus sont livrés dans `assets/free/`. Les notices originales sont conservées. Le [tableau complet des 105 packs 3D](docs/complete-model-library.md) indique le nom, l’auteur, la licence et le lien officiel de chaque pack. Le [catalogue d’inventaire](docs/free-model-library-inventory.json) et `assets/free/*/models.json` associent les fichiers à leurs sources et empreintes SHA-256.
+
+Les sept sprites isométriques de [survival-sprites-2d.js](js/assets/survival-sprites-2d.js) sont des rendus transparents réalisés dans WarLike à partir des modèles CC0 **Kenney Survival Kit et Nature Kit** déjà inclus. Leurs fiches conservent l’identifiant du GLB source, l’auteur, la licence et le lien du pack. Le [script de rendu](scripts/assets/render-survival-sprites.cjs) permet de les régénérer. Ces dérivés ne sont pas comptés comme des modèles 3D supplémentaires.
 
 Le pipeline utilise les archives officielles ou des miroirs CC0 épinglés par révision, dont [Hidencod/tge-assets](https://github.com/Hidencod/tge-assets). Les URL exactes et empreintes des archives sont dans [free-model-sources.json](scripts/assets/free-model-sources.json). Les aperçus non fournis par la source sont rendus à partir des véritables modèles dans le renderer du moteur. La conversion conserve les prises d’animation originales ; les grandes textures sont partagées localement et limitées à 1 024 pixels.
 

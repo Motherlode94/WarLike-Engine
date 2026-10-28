@@ -1,3 +1,5 @@
+import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';
+import {lanActor,isLanGuest} from './lan-state.js';
 import {solidBody3d,collisionWorldBounds3d,raycastScene3d} from './collision-3d.js';
 import {gameplayInputBlocked,gameplayKeys} from './gameplay-input.js';
 import {sameFaction,healthOf} from './ai-perception.js';
@@ -37,7 +39,7 @@ import {initSceneGizmo3d} from './gizmos-3d.js';
 import {orderRtsMove,orderRtsGroup,isRtsUnit,updateRtsOrders} from './rts-orders.js';
 
 export const view3d={enabled:false,yaw:-.68,pitch:.62,radius:25,target:[9,0,6],drag:null,gl:null,error:null,followPlayer:true};
-export const playableActor=entities=>entities.find(o=>o.playable3d===true||o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters')||null;
+export const playableActor=entities=>lanActor(entities,entities.find(o=>o.playable3d===true||o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters')||null);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const V={
  add:(a,b)=>a.map((x,i)=>x+b[i]),sub:(a,b)=>a.map((x,i)=>x-b[i]),
@@ -358,7 +360,7 @@ export function init3d(canvas,host,buttons){
  const shootFps=()=>{
   if(!isFps()||!gameIsRunning()||gameplayInputBlocked())return false;
   const player=playableActor(state.entities),cam=camera();if(healthOf(player)<=0||(player._attackCooldown||0)>0)return false;
-  player._attackCooldown=.23;
+  player._attackCooldown=.23;noteAnimatorAction(player,'attack',.35);
   const damageable=o=>healthOf(o)>0&&!sameFaction(o,player)&&(o.assetId?.includes('character-')||o.ai?.enabled||o.simulationNode?.kind==='destructible'&&o.simulationNode.health>0);
   const hit=raycastScene3d(cam.eye,cam.forward,state.entities,{exclude:player,maxDistance:45,target:damageable}),best=hit&&damageable(hit.entity)?hit.entity:null;
   if(hit&&!best)emitFx('electric',hit.point,{mode:'3d',color:'#ffd899',count:10,lifetime:.2});
@@ -393,9 +395,9 @@ export function init3d(canvas,host,buttons){
   const p=rectPoint(e),cam=camera();
   if(state.playing){
    if(!gameIsRunning()||gameplayInputBlocked())return;
-   if(e.button===0){const unit=pick(p,cam);if(unit&&isRtsUnit(unit)){state.selected=e.shiftKey||e.ctrlKey||e.metaKey?(state.selected.includes(unit.id)?state.selected.filter(id=>id!==unit.id):[...state.selected,unit.id]):[unit.id];e.preventDefault();notify();return}}
-   if(e.button===2){const target=pick(p,cam);if(target&&(target.ai?.enabled||target.tags?.includes('enemy'))&&orderRtsGroup(state.entities,state.selected,'attack',target.id)){e.preventDefault();return}const hit=groundHit3d(p.x,p.y,cam,p.w,p.h);if(hit&&orderRtsMove(state.entities,state.selected,{x:hit[0]*64,y:hit[2]*64})){e.preventDefault();return}}
-   if(isFps()){if(e.button===0){shootFps();canvas.requestPointerLock?.()}return}
+   if(e.button===0&&!isLanGuest()){const unit=pick(p,cam);if(unit&&isRtsUnit(unit)){state.selected=e.shiftKey||e.ctrlKey||e.metaKey?(state.selected.includes(unit.id)?state.selected.filter(id=>id!==unit.id):[...state.selected,unit.id]):[unit.id];e.preventDefault();notify();return}}
+   if(e.button===2&&!isLanGuest()){const target=pick(p,cam);if(target&&(target.ai?.enabled||target.tags?.includes('enemy'))&&orderRtsGroup(state.entities,state.selected,'attack',target.id)){e.preventDefault();return}const hit=groundHit3d(p.x,p.y,cam,p.w,p.h);if(hit&&orderRtsMove(state.entities,state.selected,{x:hit[0]*64,y:hit[2]*64})){e.preventDefault();return}}
+   if(isFps()){if(e.button===0){if(isLanGuest())state.keyPresses.add('f');else shootFps();canvas.requestPointerLock?.()}return}
    if(e.button===2){view3d.drag={button:2,x:p.x,y:p.y,yaw:view3d.yaw,pitch:view3d.pitch,pointer:e.pointerId,selected:null,moved:false};canvas.setPointerCapture(e.pointerId)}
    return;
   }
@@ -458,7 +460,7 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&!wasPlaying)enterPlay();
   if(!state.playing&&wasPlaying){view3d.followPlayer=false;view3d.drag=null;if(editorCamera)Object.assign(view3d,editorCamera);editorCamera=null;if(document.pointerLockElement===canvas)document.exitPointerLock?.();resetDriving3d();stopRapier();}
   wasPlaying=state.playing;
-  if(state.playing&&workspace.mode==='3d'){updateRtsOrders(state.entities,dt,gameIsRunning(),{mode:'3d'});update3dPlay(dt);updateSequences(dt,{mode:'3d',yaw:view3d.yaw,playing:true,entities:state.entities,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}
+  if(state.playing&&workspace.mode==='3d'&&!isLanGuest()){updateRtsOrders(state.entities,dt,gameIsRunning(),{mode:'3d'});update3dPlay(dt);updateSequences(dt,{mode:'3d',yaw:view3d.yaw,playing:true,entities:state.entities,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}
   if(state.playing&&gameIsRunning()&&view3d.followPlayer){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),pt=playerTarget();if(pt){const cut=actor!==lastCameraActor||gameSession.currentSceneId!==lastCameraScene||Math.hypot(...V.sub(pt,view3d.target))>12,t=cut?1:cameraDamping(cameraRigFor(actor).followSharpness,dt);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t));if(cut)boomDistance=null}lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;}
   if(!view3d.enabled){updateGizmos();return}
   updateGenreHud(state);updateGizmos();
@@ -518,7 +520,9 @@ export function init3d(canvas,host,buttons){
     const cached=realGlbBuffers.get(id);
     if(cached?.status==='ready'){
      let posed=null;const rig=cached.geometry.rig;
-     if(rig?.animations.length&&(state.playing||o.animationPreview)){
+     if(rig?.animations.length&&(state.playing||o.animationPreview||o.animatorPreview)){
+      if(o.animatorGraph&&o.animatorGraph.enabled!==false&&o._animatorFrame){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}track.graph=true;const options=animatorPoseOptions(o._animatorFrame,rig.animations,o.animationMap||{});posed=deformGlbParts(cached.geometry,sampleRigPose(rig,null,0,options),{buffers:track.buffers})}else{
+      if(animationStates.get(o)?.graph)animationStates.delete(o);
       const desired=o.animationAuto===false?o.animation3dClip||'idle':(o.animation==='dead'?'death':o.animation||'idle');
       const clip=animationClipForState(rig.animations,desired,o.animationMap||{},animationStates.get(o),{automatic:o.animationAuto!==false});
       if(clip){
@@ -527,6 +531,7 @@ export function init3d(canvas,host,buttons){
        const step=state.playing&&!gameIsRunning()?0:dt*Math.max(.05,Math.min(4,Number(o.animationSpeed)||1));track.time+=step;track.transition=Math.min(1,track.transition+step/.18);
        const loop=!track.oneShot&&o.animationLoop!==false&&!/death|die|jump_start|jump_land/i.test(clip.name);
        posed=deformGlbParts(cached.geometry,sampleRigPose(rig,clip,track.time,{loop,previous:track.previous,blend:track.transition}),{buffers:track.buffers});
+      }
       }
      }
      for(const [partIndex,part] of cached.parts.entries()){

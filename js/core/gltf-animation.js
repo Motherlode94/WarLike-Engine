@@ -39,14 +39,17 @@ export function readAnimationRig(json,accessor){
  });
  return {nodes,parents,skins,animations};
 }
-export function sampleRigPose(rig,clip,time,{loop=true,previous=null,blend=1}={}){
- const sample=(animation,seconds)=>{
+export function sampleRigPose(rig,clip,time,{loop=true,previous=null,blend=1,samples=null,layers=[]}={}){
+ const sample=(animation,seconds,repeat=loop)=>{
   const nodes=rig.nodes.map(n=>({...n,translation:n.translation.slice(),rotation:n.rotation.slice(),scale:n.scale.slice()}));
-  if(animation){const t=loop&&animation.duration>0?((seconds%animation.duration)+animation.duration)%animation.duration:Math.min(Math.max(0,seconds),animation.duration);for(const channel of animation.channels){const value=sampleChannel(channel,t);if(value)nodes[channel.node][channel.path]=value}}
+  if(animation){const t=repeat&&animation.duration>0?((seconds%animation.duration)+animation.duration)%animation.duration:Math.min(Math.max(0,seconds),animation.duration);for(const channel of animation.channels){const value=sampleChannel(channel,t);if(value)nodes[channel.node][channel.path]=value}}
   return nodes;
  };
- const nodes=sample(clip,time);
- if(previous&&blend<1){const old=sample(previous.clip,previous.time);for(let i=0;i<nodes.length;i++){for(const key of ['translation','scale'])nodes[i][key]=old[i][key].map((v,k)=>v+(nodes[i][key][k]-v)*blend);nodes[i].rotation=slerpQuaternion(old[i].rotation,nodes[i].rotation,blend)}}
+ const mix=(a,b,weight,mask=null)=>{for(let i=0;i<a.length;i++){if(mask&&!mask.has(i))continue;for(const key of ['translation','scale'])a[i][key]=a[i][key].map((v,k)=>v+(b[i][key][k]-v)*weight);a[i].rotation=slerpQuaternion(a[i].rotation,b[i].rotation,weight)}return a};
+ const weighted=list=>{let nodes=null,total=0;for(const item of list||[]){const weight=Math.max(0,Number(item.weight)||0);if(!item.clip||!weight)continue;const pose=sample(item.clip,item.time||0,item.loop!==false);nodes=nodes?mix(nodes,pose,weight/(total+weight)):pose;total+=weight}return nodes||sample(null,0)};
+ let nodes=samples?.length?weighted(samples):sample(clip,time);
+ if(previous&&blend<1){const old=previous.samples?weighted(previous.samples):sample(previous.clip,previous.time);nodes=mix(old,nodes,Math.max(0,Math.min(1,blend)))}
+ for(const layer of layers.slice(0,4)){if(!layer.clip)continue;const roots=new Set((layer.bones||[]).map(name=>rig.nodes.findIndex(n=>n.name===name)).filter(i=>i>=0)),mask=layer.bones?.length?new Set(roots):null;if(mask)for(let i=0;i<rig.nodes.length;i++){let parent=rig.parents[i];for(let k=0;parent>=0&&k<rig.nodes.length;k++,parent=rig.parents[parent])if(roots.has(parent)){mask.add(i);break}}if(mask&&!mask.size)continue;mix(nodes,sample(layer.clip,layer.time||0,layer.loop!==false),Math.max(0,Math.min(1,Number(layer.weight)||0)),mask)}
  const world=new Array(nodes.length),visiting=new Set();
  const visit=i=>{if(world[i])return world[i];if(visiting.has(i))throw Error('Squelette glTF cyclique');visiting.add(i);const local=nodeMatrix(nodes[i]),parent=rig.parents[i];world[i]=parent<0?local:multiplyMatrices(visit(parent),local);visiting.delete(i);return world[i]};
  for(let i=0;i<nodes.length;i++)visit(i);
@@ -70,7 +73,7 @@ export function deformGlbParts(geometry,pose,{buffers=[]}={}){
   return out;
  });
 }
-const clipPatterns={idle:[/^idle_loop$/i,/^idle$/i,/idle/i],walk:[/^walk_loop$/i,/^walk$/i,/walking/i,/walk/i,/flying/i],run:[/^sprint_loop$/i,/sprint/i,/run/i,/jog/i,/walk/i,/fast_flying/i,/flying/i],jump:[/^jump_start$/i,/^jump$/i,/jump/i],fall:[/fall/i,/jump_loop/i],attack:[/sword_attack/i,/attack/i,/punch/i,/shoot/i,/bite/i,/headbutt/i],death:[/death/i,/die/i],hurt:[/hit_chest/i,/hurt/i,/hit/i],drive:[/driving/i,/drive/i]};
+const clipPatterns={idle:[/^idle_loop$/i,/^idle$/i,/idle/i],walk:[/^walk_loop$/i,/^walk$/i,/walking/i,/walk/i,/flying/i],run:[/^sprint_loop$/i,/sprint/i,/run/i,/jog/i,/walk/i,/fast_flying/i,/flying/i],jump:[/^jump_start$/i,/^jump$/i,/jump/i],fall:[/fall/i,/jump_loop/i],attack:[/sword_attack/i,/attack/i,/punch/i,/shoot/i,/bite/i,/headbutt/i],death:[/death/i,/die/i],fly:[/fly/i,/flying/i,/jump_loop/i],hurt:[/hit_chest/i,/hurt/i,/hit/i],drive:[/driving/i,/drive/i]};
 export function resolveAnimationClip(animations,state='idle',mapping={}){
  if(mapping[state]){const selected=animations.find(a=>a.name===mapping[state]);if(selected)return selected}
  const exact=animations.find(a=>a.name===state);if(exact)return exact;

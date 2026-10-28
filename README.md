@@ -27,6 +27,20 @@ Les composants restent utilisables séparément dans les autres genres : progres
 
 [Guide Hero Forge, contrôles et nœuds Blueprint](docs/hero-forge.md).
 
+## Animator, FX Studio et coop privée
+
+Le menu **Animation** ouvre un graphe Animator avec états déplaçables, transitions conditionnelles, mélange repos/marche/course, couches par os et événements FX, son ou Blueprint. Le graphe utilise les véritables clips du modèle ; son aperçu permet de régler les transitions avant Play. **FX Studio** ajoute des courbes de taille et d’opacité, des couleurs évolutives, une émission directionnelle, des traînées et des collisions de particules. Les effets peuvent être liés aux pouvoirs et aux états d’animation.
+
+La **coop locale accueille jusqu’à quatre joueurs**, en 2D ou 3D. Dans le dossier du moteur ou d’un jeu exporté, lancer **start-warlike-multi.cmd** sous Windows, ou `python3 python/warlike.py multiplayer` avec Python 3.10+. Ouvrir l’adresse affichée dans le terminal, puis **Game → Multijoueur local · Coop privée**. L’hôte saisit la clé du terminal ; les invités ouvrent l’adresse réseau de l’hôte et saisissent le code du salon. Le navigateur hôte calcule les déplacements, collisions, pouvoirs et progression ; le serveur Python relaie les commandes et états, sans service extérieur. Les sauvegardes et escouades restent gérées par l’hôte.
+
+Sur le site public, le panneau explique le lancement local. Pour jouer, tous utilisent l’adresse servie par votre Python. La coop est également accessible depuis le menu de démarrage des exports Web. [Guide Animator, FX Studio, LAN et limites](docs/creative-studios-and-lan.md).
+
+## Survival : construire un camp et passer la nuit
+
+Le template **Survival · Survie**, en 2D et 3D, propose satiété, hydratation, fatigue, froid, récolte de ressources limitées, recettes sur inventaire, feu alimenté en bois et abri pour se reposer. Les rôdeurs deviennent plus dangereux la nuit. **E** récolte ; le HUD permet de boire, manger, fabriquer, construire et entretenir le camp. Les vrais modèles Kenney et Quaternius sont intégrés ; sept sprites isométriques transparents sont rendus depuis les modèles Kenney pour la 2D.
+
+En coop LAN, chacun possède ses besoins et provisions ; stocks, constructions et horloge sont partagés. Les composants et nœuds Blueprint sont réutilisables dans les autres genres. [Guide Survival, recettes, contrôles et limites](docs/survival.md).
+
 ## Souris et navigation de logiciel
 
 Le clic droit ouvre un menu adapté à la Hiérarchie, à la scène, aux ressources ou aux composants. Les commandes de copie, collage, duplication, suppression et cadrage agissent sur la sélection. Les champs de texte conservent leur édition et leur presse-papiers natifs.
@@ -94,13 +108,14 @@ Le dépôt inclut les fichiers utilisables ; les liens officiels servent à l’
 | Langage | Utilisation |
 | --- | --- |
 | JavaScript / TypeScript | Interface, Blueprint, simulation et rendu principal dans le navigateur ; contrats TypeScript pour les systèmes |
-| Python | Validation des scènes, serveur local, inventaire, import de sources 3D, contrôle des archives et orchestration des builds |
+| Python | Serveur et relais LAN privé, validation des scènes, inventaire, import de sources 3D, contrôle des archives et orchestration des builds |
 | C++17 / WebAssembly | Navigation A*, intégration de gravité par lots et intersections 3D ; compilation automatique et binaire livré au navigateur, avec repli JavaScript si le module est indisponible |
 | C# / .NET 8 | Monde à composants et comportements natifs, simulation, véhicules et règles de jeu ; bridge local avec étapes manuelles ou aperçu continu, restauration de la scène et export des scripts |
 
 ```bash
 # Serveur et outils Python sans dépendances supplémentaires
 python3 python/warlike.py serve
+python3 python/warlike.py multiplayer
 python3 python/warlike.py validate mon-projet.json
 python3 python/warlike.py assets
 
@@ -146,6 +161,6 @@ Le site est statique, déployable sur Cloudflare Pages depuis `main` avec le dé
 
 ## Limites actuelles
 
-WarLike reste un moteur expérimental. L’IA utilise A* sur grille, sans NavMesh. Le rendu principal prend en charge une partie de glTF, avec animations squelettiques et textures, mais pas tous ses matériaux et extensions. La physique et les interactions demandent des tests dans le jeu construit. Les imports GLB temporaires doivent être rendus durables avant l’export ; les modèles externes non intégrés nécessitent Internet. Python sert aux outils locaux et C# s’exécute dans le processus .NET, indépendamment du Play Web.
+WarLike reste un moteur expérimental. L’IA utilise A* sur grille avec lissage des trajets, sans NavMesh. Le rendu principal prend en charge une partie de glTF, avec animations squelettiques et textures, mais pas tous ses matériaux et extensions. L’Animator ne propose pas encore d’IK ou de retargeting entre squelettes. La coop LAN est limitée à quatre joueurs et 256 objets, avec simulation dans le navigateur hôte ; elle n’est pas un serveur dédié ni un multijoueur Internet. La physique et les interactions demandent des tests dans le jeu construit. Les imports GLB temporaires doivent être rendus durables avant l’export ; les modèles externes non intégrés nécessitent Internet. C# s’exécute dans le processus .NET, indépendamment du Play Web.
 
 Les références Unity, Game Creator, Emerald AI ou Opsive décrivent des inspirations d’ergonomie et de fonctionnalités. Leurs plugins commerciaux ne sont pas inclus dans WarLike.

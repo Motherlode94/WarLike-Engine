@@ -35,3 +35,7 @@ Chaque template fournit aussi un composant préconfiguré dans `csharpComponents
 Pour tester un composant natif : démarrer le pont avec `start-warlike-csharp.cmd`, ouvrir **Window → C# Runtime**, se connecter, envoyer la scène, sélectionner le GameObject qui porte le composant, puis utiliser **Genres C# → Exécuter action C#**. Le résultat du composant (économie, progression, temps de course ou ressources de l'empire) s'affiche dans le panneau. `POST /genre/action` n'accepte que les actions prédéfinies.
 
 **Important :** les états natifs sont distincts des variables Blueprint du Play Web. Les commandes C# restent des appels au processus .NET local, sans synchronisation automatique du RPG, RP, 4X ou économie avec le Play navigateur. Les composants sont une base pour leur future unification.
+
+## Survival · Survie
+
+Le template Survival est désormais une boucle jouable avec besoins, récolte, recettes, feu alimenté et abri, en 2D/3D et en coop LAN. Voir le [guide Survival](survival.md). Les anciens presets basés sur des variables restent disponibles.

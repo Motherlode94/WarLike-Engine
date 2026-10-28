@@ -1,6 +1,6 @@
 // Optional C++17/WASM accelerator for WarLike 3D pathfinding.
 // The browser needs a precompiled native/dist bundle: never compile user C++ in-browser.
-import {findPath as jsPath} from './pathfinding.js';
+import {findPath as jsPath,smoothPath,smoothingPadding} from './pathfinding.js';
 let native=null;
 let loadState='idle',loadPromise=null;
 export const nativeStatus=()=>loadState;
@@ -33,7 +33,7 @@ export function findEnginePath(start,goal,obstacles=[],options={}){
   if(size===0)return [];
   const points=[];const base=outPtr>>>2;
   for(let i=0;i<size;i++)points.push({x:native.HEAPF32[base+2*i],y:native.HEAPF32[base+2*i+1]});
-  return points;
+  return options.smooth===false?points:smoothPath(start,points,obstacles,{padding:smoothingPadding(options)});
  }catch(err){console.warn('[WarLike Native] Pathfinding JS fallback:',err);return jsPath(start,goal,obstacles,options)}
  finally{if(rectPtr)native._free(rectPtr);if(outPtr)native._free(outPtr)}
 }

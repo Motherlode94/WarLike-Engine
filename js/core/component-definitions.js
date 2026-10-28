@@ -1,3 +1,6 @@
+import {defaultSurvival,defaultSurvivalNode,defaultSurvivalWorld} from './survival-runtime.js';
+import {survivalBuildTemplates} from './survival-scene.js';
+import {defaultAnimatorGraph} from './animator-graph.js';
 import {defaultSuperhero} from './superhero-runtime.js';
 import {defaultRpgProgression} from './rpg-progression.js';
 import {defaultFxEmitter} from './fx-runtime.js';
@@ -10,6 +13,10 @@ import {defaultRigidbody3d} from './physics-3d.js';
 import {newSequence} from './logic-sequences.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
+ {id:'animatorGraph',name:'Animator · Graphe d’états',category:'Animation',description:'États, transitions, mélange 1D, couches et événements.',create:defaultAnimatorGraph},
+ {id:'survival',name:'Survie · Besoins et fabrication',category:'Survie',description:'Satiété, hydratation, fatigue, froid et recettes sur inventaire.',create:()=>({...defaultSurvival(),buildTemplates:survivalBuildTemplates()})},
+ {id:'survivalNode',name:'Survie · Ressource ou campement',category:'Survie',description:'Récolte limitée, régénération, feu ou abri partagé.',create:defaultSurvivalNode},
+ {id:'survivalWorld',name:'Survie · Cycle jour / nuit',category:'Survie',description:'Heure, vitesse du temps et jours persistants.',create:defaultSurvivalWorld},
  {id:'superhero',name:'Super-héros · Pouvoirs',category:'Hero Forge',description:'Énergie, trait, onde de choc, ruée, bouclier, vol et ralliement.',create:defaultSuperhero},
  {id:'rpgProgression',name:'Progression RPG',category:'RPG',description:'Expérience, niveaux et compétences combat, défense et commandement.',create:defaultRpgProgression},
  {id:'fxEmitter',name:'Émetteur FX',category:'Effets visuels',description:'Énergie, feu, électricité, fumée, soin et portail en 2D/3D.',create:defaultFxEmitter},
@@ -37,10 +44,10 @@ export function addObjectComponent(object,id,mode){
  const definition=componentChoices(mode).find(d=>d.id===id);if(!definition)return false;
  if(id==='sequence'&&object.sequence){object.sequences??=[];if(object.sequences.length>=32)return false;object.sequences.push(definition.create());return true}
  if(hasObjectComponent(object,id))return false;
- object[id]=definition.create();if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.stats??=defaultStats()}if(id==='rigidbody2d')object.collider2d??=defaultCollider2d();return true;
+ object[id]=definition.create();if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='rigidbody2d')object.collider2d??=defaultCollider2d();return true;
 }
 export function resetObjectComponent(object,id){const definition=webComponentDefinitions.find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
-export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id))return false;delete object[id];if(id==='collider2d')object.collision3d=false;if(id==='superhero')delete object.heroState;return true}
+export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id))return false;delete object[id];if(id==='collider2d')object.collision3d=false;if(id==='superhero')delete object.heroState;if(id==='survival')delete object.survivalState;return true}
 export const webDataComponentKinds=new Set(['Weapon','Damageable','Health','Team','Respawn','DeathmatchRules']);
 export function inspectorComponentRank(title){
  if(title==='Transform')return 0;

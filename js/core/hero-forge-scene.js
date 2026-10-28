@@ -1,3 +1,4 @@
+import {defaultAnimatorGraph} from './animator-graph.js';
 import {get3dAsset,prefab3d} from '../assets/catalog-3d.js';
 import {getAsset} from '../assets/catalog.js';
 import {defaultController,defaultStats,defaultAi} from './gameplay-components.js';
@@ -14,7 +15,7 @@ export function createHeroForgeScene(mode='3d'){
   else{const asset=getAsset(id2d);if(!asset)throw Error('Sprite Hero Forge absent : '+id2d);o={id:entities.length+1,type:'prefab',assetId:id2d,x:420+x*64-asset.width/2,y:380+y*64-asset.height/2,w:asset.width,h:asset.height,color:'#78bcdd',animation:'idle',hp:100,behavior:'none'}}
   Object.assign(o,{name,hierarchyGroup:group},properties);o.x=(three?x*64:420+x*64)-o.w/2;o.y=(three?y*64:380+y*64)-(three?o.depth3d??o.h:o.h)/2;entities.push(o);return o;
  };
- const hero=spawn('quaternius-ultimatedanimatedcharacter-bluesoldier-male','free-platformer-art-deluxe-p1-stand','Hero · Gardien',0,4,1.8,'Héros',{team:1,tags:['player','hero'],superhero:defaultSuperhero(),rpgProgression:defaultRpgProgression(),stats:{...defaultStats(),health:140,maxHealth:140},rotation:three?180:0,cameraRig:{mode:'orbit',distance:7,height:.72,followSharpness:10,sensitivity:.0026,collision:true},...(three?{playable3d:true,controller3d:defaultController()}:{controller2d:{mode:'topDown',walkSpeed:190,sprintSpeed:300,jumpSpeed:430}})});
+ const hero=spawn('quaternius-ultimatedanimatedcharacter-bluesoldier-male','free-platformer-art-deluxe-p1-stand','Hero · Gardien',0,4,1.8,'Héros',{team:1,tags:['player','hero'],superhero:defaultSuperhero(),animatorGraph:defaultAnimatorGraph(),rpgProgression:defaultRpgProgression(),stats:{...defaultStats(),health:140,maxHealth:140},rotation:three?180:0,cameraRig:{mode:'orbit',distance:7,height:.72,followSharpness:10,sensitivity:.0026,collision:true},...(three?{playable3d:true,controller3d:defaultController()}:{controller2d:{mode:'topDown',walkSpeed:190,sprintSpeed:300,jumpSpeed:430}})});
  if(three)for(const z of [-8,8])spawn('free-nature-kit-ground-grass','free-tiny-dungeon-tile-0048','Terrain du quartier',0,z,32,'Environnement',{collision3d:false,elevation3d:-.12});
  else for(const [x,y] of [[-4,-3],[0,-3],[4,-3],[-4,2],[0,2],[4,2]])spawn('', 'free-tiny-dungeon-tile-0048','Sol',x,y,1,'Environnement',{w:250,h:250,collision3d:false});
  if(three)for(const [x,y] of [[-10,-6],[10,-7]])spawn('free-city-kit-commercial-building-a','free-tiny-dungeon-tile-0014','Bâtiment du quartier',x,y,5.5,'Environnement');

@@ -14,7 +14,7 @@ export function walkPlayer(player,dt,keys=state.keys){
  const y=Number(keys.has('arrowdown')||keys.has('s'))-Number(keys.has('arrowup')||keys.has('w')||keys.has('z'));
  const length=Math.hypot(x,y);const sprint=keys.has('shift')&&length>0;
  const configured=Number(sprint?player.controller2d?.sprintSpeed:player.controller2d?.walkSpeed);const speed=player.controller2d?Math.max(0,Number.isFinite(configured)?configured:motion.footSpeed):Math.max(10,Number(player.footSpeed)||motion.footSpeed)*(sprint?motion.sprintMultiplier:1);
- const dx=length?x/length*speed*dt:0,dy=length?y/length*speed*dt:0;if(length)playSound('step',{cooldown:sprint?.2:.34,gain:sprint?1:.7});
+ const fatigue=player.survival?.enabled!==false&&player.survival&&player.survivalState?.rest<15?.6:1,dx=length?x/length*speed*dt*fatigue:0,dy=length?y/length*speed*dt*fatigue:0;if(length)playSound('step',{cooldown:sprint?.2:.34,gain:sprint?1:.7});
  const beforeX=player.x,beforeY=player.y;moveBody2d(player,dx,dy,state.entities);
  faceMovement2d(player,player.x-beforeX,player.y-beforeY);
  if(player.type==='prefab'||player.type==='character'){

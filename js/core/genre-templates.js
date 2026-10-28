@@ -1,3 +1,4 @@
+import {createSurvivalScene} from './survival-scene.js';
 import {createHeroForgeScene} from './hero-forge-scene.js';
 import {default2dCharacterPng} from '../assets/real-starter-sprites-2d.js?v=fix-20261028';
 // Playable starting scenes for Hub game genres. All data remains ordinary WarLike
@@ -10,7 +11,7 @@ export const genreTemplates={
  sandbox:{label:'Projet vierge',description:'Scène minimale et bibliothèque libre',modes:['2d','3d']},
  tactical:{label:'FPS / TPS',description:'Capture et escouade de combat',modes:['2d','3d']},
  openworld:{label:'Monde ouvert',description:'Vehicule, PNJ et mission',modes:['2d','3d']},
- survival:{label:'Survival',description:'Ressources et refuges',modes:['2d','3d']},
+ survival:{label:'Survival · Survie',description:'Besoins vitaux, récolte, fabrication, campement et dangers nocturnes',modes:['2d','3d']},
  rts:{label:'RTS',description:'Unites et capture',modes:['2d','3d']},
  horror:{label:'Horror',description:'Traque, cachette et generatrice',modes:['2d','3d']},
  fieldlab:{label:'WarLike Field Lab',description:'Circuit de diagnostic : marche, interactions, véhicule et obstacles',modes:['2d','3d']},
@@ -32,6 +33,7 @@ const item=(key,value=1)=>({type:'giveItem',targetRole:'player',key,value});
 export function createGenreScene(genre,mode='3d'){
  const chosen=normalizeGenre(genre),threeD=mode==='3d';
  if(chosen==='superhero')return createHeroForgeScene(mode);
+ if(chosen==='survival')return createSurvivalScene(mode);
  if(!['2d','3d'].includes(mode))throw new Error('Invalid project type');
  const objects=[];
  const spawn=(assetId,name,x,y,props={})=>{
@@ -65,12 +67,6 @@ export function createGenreScene(genre,mode='3d'){
    object('vehicle-jeep','Jeep',260,360,{maxSpeed:210,acceleration:170,turnRate:120});
    object('character-civilian','Citoyen',460,330,{playable3d:false,sequence:interact([inc('reputation',1),msg('Bonjour !')])});
    mission('Livraison',980,520,[variable('delivered',1),inc('money',100),msg('Livraison terminee')]);
-  }
-  if(chosen==='survival'){
-   object('building-house','Refuge',920,230);
-   object('character-zombie','Rodeur',730,420,{playable3d:false,stats:defaultStats(),ai:{enabled:true,detection:250,speed:30,attackRange:65,attackDamage:5,attackCooldown:2}});
-   mission('Ressources',340,370,[inc('supplies',1),msg('Provisions obtenues')]);
-   mission('Refuge',930,410,[variable('shelter',1),msg('Refuge atteint')]);
   }
   if(chosen==='rts'){
    object('building-hangar','QG',220,150,{team:1});

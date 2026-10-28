@@ -1,3 +1,4 @@
+import {noteAnimatorAction,defaultAnimatorGraph} from './animator-graph.js';
 import {damage,ensureStats,setHealth} from './gameplay-components.js';
 import {healthOf,sameFaction,isHostileTo} from './ai-perception.js';
 import {defaultRpgProgression,awardExperience,upgradeHeroSkill,progressionDamageScale,skillRank} from './rpg-progression.js';
@@ -61,6 +62,7 @@ export function castHeroPower(source,power,context={}){
    const stats=ensureStats(ally);setHealth(ally,stats.health+25+skillRank(source,'command')*5);ally.heroState??={};ally.heroState.shield=Math.max(n(ally.heroState.shield),20);ally.heroState.shieldTime=5;ally.heroState.commandTime=6+skillRank(source,'command');if(ally.tacticalUnit?.enabled||ally.tags?.includes('rts-unit'))ally.rtsOrder={type:'follow',targetId:source.id};emitFx('heal',p,{mode:ctx.mode,count:12,ring:true});count++;
   }emitFx('heal',origin,{mode:ctx.mode,count:24,ring:true,scale:radius/64});notify('Ralliement · '+count+' allié(s) soutenu(s)');
  }
+ noteAnimatorAction(source,power,power==='dash'?.25:.55);const extra=cfg.fxOverrides?.[power];if(extra)emitFx(extra.kind||'energy',heroCenter(source,ctx.mode),{...extra,count:Math.max(8,Math.min(80,Number(extra.rate)||24)),mode:ctx.mode,ownerId:source.id});
  heroRuntime.onPower?.(power);if(power!=='rally')notify(definition.name);return {ok:true,power};
 }
 export function tickHeroRuntime(entities,player,dt,context={}){
@@ -70,7 +72,7 @@ export function tickHeroRuntime(entities,player,dt,context={}){
   if(!o.superhero||o.superhero.enabled===false){if(o.heroState)o.heroState.flight=false;continue}const s=ensureHeroState(o),cfg=o.superhero;for(const key of Object.keys(s.cooldowns))s.cooldowns[key]=Math.max(0,n(s.cooldowns[key])-frame);
   if(healthOf(o)<=0||o._hiddenInVehicle||o._hiddenInHouse){s.flight=false;if(healthOf(o)<=0)s.shield=0;continue}
   const origin=heroCenter(o,ctx.mode),station=entities.some(e=>e.simulationNode?.enabled&&e.simulationNode.kind==='consumer'&&e.simulationNode.powered&&Math.hypot(heroCenter(e,ctx.mode).x-origin.x,heroCenter(e,ctx.mode).y-origin.y)<160);
-  s.energy=clamp(s.energy+((s.flight?-10*(ctx.keys.has('shift')?1.5:1):Math.max(0,n(cfg.energyRegen,12)))+(station?8:0))*frame,0,Math.max(1,n(cfg.maxEnergy,100)));if(s.energy<=0&&s.flight){s.flight=false;notify('Énergie épuisée · vol interrompu')}
+  s.energy=clamp(s.energy+((s.flight?-10*((o._netKeys||ctx.keys).has('shift')?1.5:1):Math.max(0,n(cfg.energyRegen,12)))+(station?8:0))*frame,0,Math.max(1,n(cfg.maxEnergy,100)));if(s.energy<=0&&s.flight){s.flight=false;notify('Énergie épuisée · vol interrompu')}
   if(o._heroShieldImpact){emitFx('electric',origin,{mode:ctx.mode,color:'#e5faff',count:10,lifetime:.2});delete o._heroShieldImpact}
   if(s.flight||s.shield>0){o._heroAura=n(o._heroAura)+frame;if(o._heroAura>.12){o._heroAura=0;emitFx(s.flight?'fire':'energy',s.flight?{...origin,y:ctx.mode==='2d'?origin.y+n(o.h)*.4:origin.y,z:ctx.mode==='3d'?n(o.elevation3d)*64+3:origin.z}:origin,{mode:ctx.mode,color:cfg.color,count:3,scale:.6,lifetime:.3,speed:s.flight?15:35,ring:s.shield>0})}}
  }
@@ -88,4 +90,4 @@ export function tickHeroRuntime(entities,player,dt,context={}){
   Object.assign(bolt,to);bolt.remaining-=distance;emitFx('energy',to,{mode:ctx.mode,color:bolt.color,count:1,speed:0,lifetime:.15,scale:1.1});if(bolt.remaining>0&&bolt.z>=0)pending.push(bolt);
  }heroRuntime.bolts=pending;tickFxRuntime(entities,frame,ctx.mode);
 }
-export function attachHero(o,archetype='guardian'){o.superhero=defaultSuperhero(archetype);o.rpgProgression??=defaultRpgProgression();ensureStats(o);delete o.heroState;return o}
+export function attachHero(o,archetype='guardian'){o.superhero=defaultSuperhero(archetype);o.rpgProgression??=defaultRpgProgression();o.animatorGraph??=defaultAnimatorGraph();ensureStats(o);delete o.heroState;return o}

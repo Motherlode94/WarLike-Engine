@@ -1,3 +1,4 @@
+import {survivalSprites2d} from '../assets/survival-sprites-2d.js';
 import {nativeStatus} from '../core/native-3d.js';
 import {listProjects,hub} from '../core/project-hub.js';
 import {editorThemePresets,readableText} from './editor-palette.js';
@@ -26,7 +27,7 @@ export function initSimpleHub(){
  ]){systems.append(make('dt','',name));const value=make('dd','',description+' ');value.append(external(url,'Source officielle'));systems.append(value)}about.append(systems);
  about.append(make('h3','','Prefabs et ressources intégrés'),make('p','','Les ressources ci-dessous sont livrées avec le moteur. Les noms des auteurs, les licences et les liens vers chaque pack restent accessibles ici et dans l’Inspecteur.'));
  const resourceSearch=make('input');resourceSearch.type='search';resourceSearch.placeholder='Rechercher un auteur ou un pack…';resourceSearch.setAttribute('aria-label','Rechercher dans les sources');const sourceList=make('div','hub-source-pack-list');sourceList.id='hubSourcePacks';about.append(resourceSearch,sourceList);
- const all=[...freeModels3d,...quaterniusModels3d,...freeSprites2d,...freeAudioAssets,...freeUiAssets],packs=new Map();for(const asset of all){const key=asset.author+'/'+asset.pack;if(!packs.has(key))packs.set(key,{...asset,count:0});packs.get(key).count++}
+ const all=[...survivalSprites2d,...freeModels3d,...quaterniusModels3d,...freeSprites2d,...freeAudioAssets,...freeUiAssets],packs=new Map();for(const asset of all){const key=asset.author+'/'+asset.pack;if(!packs.has(key))packs.set(key,{...asset,count:0});packs.get(key).count++}
  const renderSources=()=>{const query=resourceSearch.value.trim().toLocaleLowerCase('fr');sourceList.replaceChildren();for(const asset of packs.values()){if(query&&!(asset.author+' '+asset.packName).toLocaleLowerCase('fr').includes(query))continue;const row=make('article','hub-source-pack');row.append(external(asset.author==='Kenney'?'https://kenney.nl/':'https://quaternius.com/',asset.author),external(asset.sourceUrl,asset.packName),make('small','',asset.count+' ressources · CC0-1.0'));sourceList.append(row)}};resourceSearch.oninput=renderSources;renderSources();
  const legacySources=make('details','hub-legacy-sources'),legacyTitle=make('summary','','Autres sources et compatibilité des anciens projets');legacySources.append(legacyTitle);about.append(legacySources);
  for(const panel of [document.getElementById('warlikeExternalAssets'),document.getElementById('legacyKenneySourcePanel'),document.getElementById('legacyExternalLibrariesPanel')])if(panel)legacySources.append(panel);

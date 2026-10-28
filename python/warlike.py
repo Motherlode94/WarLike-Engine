@@ -53,6 +53,10 @@ def main(argv=None):
     commands = parser.add_subparsers(dest='command', required=True)
     server = commands.add_parser('serve', help='Servir le moteur sur 127.0.0.1 (8000 par défaut).')
     server.add_argument('--port', type=int, default=8000)
+    multi = commands.add_parser('multiplayer', help='Serveur privé LAN (4 joueurs).')
+    multi.add_argument('--host', default='0.0.0.0')
+    multi.add_argument('--port', type=int, default=8765)
+    multi.add_argument('--key')
     check = commands.add_parser('validate', help='Valider une scène ou un projet JSON exporté.')
     check.add_argument('file', type=Path)
     commands.add_parser('assets', help='Compter les modèles et vérifier leurs fichiers locaux.')
@@ -61,6 +65,10 @@ def main(argv=None):
     commands.add_parser('csharp', help='Lancer le bridge .NET 8 local (SDK requis).')
     args = parser.parse_args(argv)
     try:
+        if args.command == 'multiplayer':
+            from lan_server import serve
+            serve(args.host, args.port, args.key)
+            return 0
         if args.command == 'validate':
             errors = validate(json.loads(args.file.read_text(encoding='utf-8')))
             print(json.dumps({'ok': not errors, 'errors': errors}, ensure_ascii=False, indent=2))

@@ -1,3 +1,4 @@
+import {noteAnimatorAction} from './animator-graph.js';
 import {moveBody3d,solidBody3d,supportBody3d} from './collision-3d.js';
 import {damageSimulationNode} from './simulation-nodes.js';
 import {skillRank,progressionDamageScale,awardExperience} from './rpg-progression.js';
@@ -105,7 +106,7 @@ export function updateAi(entities,player,dt){
    e.animation=ai.state==='chase'?'run':'walk';
   }else e.animation=ai.state==='attack'?'attack':'idle';
   if(ai.state==='attack'&&target&&ai.cooldown===0&&hasLineOfSight(e,target,entities)){
-   damage(target,n(ai.attackDamage,8));ai.cooldown=Math.max(.1,n(ai.attackCooldown,1.2));
+   damage(target,n(ai.attackDamage,8));noteAnimatorAction(e,'attack',.4);ai.cooldown=Math.max(.1,n(ai.attackCooldown,1.2));
   }
  }
 }
@@ -114,7 +115,7 @@ export function attack3d(attacker,entities,{range=120,damageAmount=20,arc=1.2}={
   e.sequenceEnabled!==false&&hasLineOfSight(attacker,e,entities))
   .sort((a,b)=>actorDistance(a,attacker)-actorDistance(b,attacker))[0];
  if(!target||actorDistance(target,attacker)>Math.max(0,n(range,120)))return null;
- const before=healthOf(target),amount=Math.max(0,n(damageAmount,20))*progressionDamageScale(attacker);if(target.simulationNode?.kind==='destructible')damageSimulationNode(target,amount,attacker,{mode:'3d'});else{damage(target,amount);if(before>0&&healthOf(target)<=0)awardExperience(attacker,40)}target.animation='hurt';return target;
+ const before=healthOf(target),amount=Math.max(0,n(damageAmount,20))*progressionDamageScale(attacker);if(target.simulationNode?.kind==='destructible')damageSimulationNode(target,amount,attacker,{mode:'3d'});else{damage(target,amount);if(before>0&&healthOf(target)<=0)awardExperience(attacker,40)}target.animation='hurt';noteAnimatorAction(attacker,'attack',.45);return target;
 }
 // 3D movement is camera-relative: forward must point where the camera looks,
 // not toward the orbit camera position. x/y here are WarLike's ground X/Z.
@@ -139,7 +140,7 @@ export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()
  const dodgeDown=keys.has('control');
  if(dodgeDown&&!p._dodgeHeld&&p._dodgeTimer<=0&&len&&stats.stamina>=n(cfg.staminaCost,20)){p._dodgeTimer=Math.max(.1,n(cfg.dodgeCooldown,.8));p._dodgeBoost=Math.max(0,n(cfg.dodgeDistance,1.8))*64/.18;stats.stamina=Math.max(0,stats.stamina-n(cfg.staminaCost,20))}
  p._dodgeHeld=dodgeDown;
- const dodge=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0,movement=cameraRelativeWalk3d(ax,az,yaw),speed=Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64+dodge;
+ const dodge=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0,movement=cameraRelativeWalk3d(ax,az,yaw),speed=Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64*(p.survival?.enabled!==false&&p.survival&&p.survivalState?.rest<15?.6:1)+dodge;
  if(Number.isFinite(yaw))p.rotation=cameraFacingDegrees(yaw);if(len&&sprint)stats.stamina=clamp(stats.stamina-18*frame,0,n(stats.maxStamina,100));
  const grounded=(p.elevation3d<=.0001||!!supportBody3d(p,entities))&&p._verticalVelocity<=0;
  p._coyote3d=grounded?clamp(n(cfg.coyoteTime,.1),0,.3):Math.max(0,n(p._coyote3d)-frame);

@@ -1,10 +1,11 @@
+import {survivalSprites2d} from '../assets/survival-sprites-2d.js';
 import {readPrefabs,instantiatePrefab} from '../core/prefab-library.js';
 import {importedModels3d} from '../assets/real-models-3d.js';
 import {captureGameScene,sceneDefinition} from '../core/game-project.js';
 import {quaterniusModels3d} from '../assets/quaternius-game-assets.js';
 import {catalog,urlFor} from '../assets/catalog.js';
 import {freeSprites2d,freeModels3d,freeUiAssets,freeAudioAssets} from '../assets/free-game-assets.js';
-import {allAssets3d,prefab3d,url3d} from '../assets/catalog-3d.js';
+import {allAssets3d,prefab3d,url3d,get3dAsset} from '../assets/catalog-3d.js';
 import {workspace} from '../core/workspaces.js';
 import {state,notify} from '../core/state.js';
 import {addPrefab} from '../core/scene.js';
@@ -26,6 +27,7 @@ const PACKS=[
  {id:'project-imports',mode:'3d',name:'Projet · GLB importés',type:'3d',assets:()=>[...importedModels3d.values()].filter(a=>a.file||a.sourcePath)},
  {id:'included-all-3d',mode:'3d',name:'Tous les modèles inclus',type:'3d',assets:()=>includedModels},
  {id:'kenney-platformer-2d',mode:'2d',name:'Kenney · Platformer Art Deluxe',type:'2d',assets:()=>freeSprites2d.filter(a=>a.pack==='platformer-art-deluxe')},
+ {id:'kenney-survival-isometric-2d',mode:'2d',name:'Kenney · Survie · Rendus isométriques',type:'2d',assets:()=>survivalSprites2d},
  {id:'kenney-dungeon-2d',mode:'2d',name:'Kenney · Tiny Dungeon',type:'2d',assets:()=>freeSprites2d.filter(a=>a.pack==='tiny-dungeon')},
  {id:'kenney-included-3d',mode:'3d',name:'Kenney · Modèles 3D inclus',type:'3d',assets:()=>freeModels3d},
  {id:'quaternius-monsters-3d',mode:'3d',name:'Quaternius · Ultimate Monsters',type:'3d',assets:()=>quaterniusModels3d.filter(a=>a.pack==='ultimate-monsters')},

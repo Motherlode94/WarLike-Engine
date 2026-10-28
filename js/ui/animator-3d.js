@@ -10,6 +10,7 @@ export function renderAnimator3d(root,owner){
  getModelGeometry(id).then(geometry=>{
   if(!card.isConnected)return;const clips=geometry.rig?.animations||[];body.replaceChildren();
   if(!clips.length){body.append(el('p','Ce modèle ne contient pas d’animation. Les modèles animés sont identifiés dans les packs Kenney et Quaternius.'));return}
+  const studio=el('button','Ouvrir le graphe Animator');studio.type='button';studio.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:owner.id}}));body.append(studio);
   const save=label=>{record('Animator 3D : '+label);notify()};
   body.append(el('p',clips.length+' clips originaux · squelette et poids du fichier GLB.'));
   const flag=(title,key,fallback)=>{const label=el('label'),input=el('input');label.className='logic-flag';input.type='checkbox';input.checked=owner[key]??fallback;input.disabled=state.playing;input.onchange=()=>{owner[key]=input.checked;save(title)};label.append(input,document.createTextNode(title));body.append(label)};

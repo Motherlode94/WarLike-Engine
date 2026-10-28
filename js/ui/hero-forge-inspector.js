@@ -20,6 +20,7 @@ export function renderHeroForgeInspector(root,o,{component,field,selectField,col
   note(body,'Prochain niveau : '+experienceForLevel(p.level)+' XP. Chaque niveau donne un point de compétence et +10 PV maximum. Combat renforce les attaques, Défense réduit les dégâts et Commandement renforce le ralliement.');
  });
  if(o.fxEmitter)component(root,'Émetteur FX',body=>{
+  const studio=document.createElement('button');studio.type='button';studio.textContent='Ouvrir FX Studio';studio.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:fx-open',{detail:{id:o.id}}));body.append(studio);
   const cfg=o.fxEmitter;flag(body,cfg,'enabled','Émission active');flag(body,cfg,'preview','Prévisualiser dans la scène');selectField(body,cfg,'kind','Effet',Object.keys(fxPresets).map(value=>({value,label:({energy:'Énergie',fire:'Feu',electric:'Électricité',smoke:'Fumée',heal:'Soin',portal:'Portail'})[value]})));colorPalette(body,cfg,'color','Couleur des particules');for(const [key,label] of [['rate','Particules / s · max 120'],['scale','Échelle'],['lifetime','Durée de vie · s'],['speed','Vitesse'],['gravity','Gravité des particules']])field(body,cfg,key,label);note(body,'Aperçu indépendant du Play. Le moteur limite les particules et regroupe le rendu 3D en deux lots GPU maximum. Les consommateurs du réseau émettent lorsque leur alimentation est active.');
  });
  if(o.simulationNode)component(root,'Simulation · Réseau et monde',body=>{

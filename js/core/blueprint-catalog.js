@@ -1,5 +1,7 @@
 // French authoring labels and parameter schemas. Runtime opcodes stay stable.
 const groups={
+ 'Survie · Fabrication':['survivalInteract','craftSurvivalItem','consumeSurvivalItem'],
+ 'Animation & FX':['playAnimatorState','setAnimatorParameter','emitOwnedFx'],
  'Hero Forge':['castHeroPower','restoreHeroEnergy','giveExperience','upgradeHeroSkill','emitFx','repairSimulationNode','rtsOrder'],
  'Logique':['branch','wait','emitSignal','enableObject'],
  'Variables':['setVariable','addVariable','setLocal','addLocal'],
@@ -13,6 +15,8 @@ const groups={
  'Intelligence artificielle':['setAiState','setAiFaction','setAiTarget','clearAiTarget','setAiEnabled','setAiDetection','setAiAttackRange','setAiPatrolPoint','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration']
 };
 export const instructionLabels={
+ survivalInteract:'Récolter une ressource de survie',craftSurvivalItem:'Fabriquer un objet de survie',consumeSurvivalItem:'Utiliser une provision ou un campement',
+ playAnimatorState:'Activer un état Animator',setAnimatorParameter:'Définir un paramètre Animator',emitOwnedFx:'Déclencher le FX de l’objet',
  castHeroPower:'Activer un pouvoir',restoreHeroEnergy:'Restaurer de l’énergie',giveExperience:'Donner de l’expérience',upgradeHeroSkill:'Améliorer une compétence',emitFx:'Émettre un effet visuel',repairSimulationNode:'Secourir / réparer une installation',rtsOrder:'Donner un ordre RTS',
  branch:'Si / Sinon',wait:'Attendre',emitSignal:'Envoyer un signal',enableObject:'Activer un objet',
  setVariable:'Définir une variable',addVariable:'Modifier une variable',setLocal:'Définir une variable locale',addLocal:'Modifier une variable locale',
@@ -25,7 +29,7 @@ export const instructionLabels={
  reloadWeapon:'Recharger l’arme',setWeaponAmmo:'Définir les munitions',addWeaponAmmo:'Ajouter des munitions',setWeaponDamage:'Définir les dégâts de l’arme',repairVehicle:'Réparer le véhicule',refuelVehicle:'Ravitailler le véhicule',setVehicleEngine:'Allumer le moteur',fireVehicleWeapon:'Tirer avec le véhicule',setVehicleGear:'Changer de rapport',setVehicleWeapon:'Armer le véhicule',
  setScore:'Définir le score',addScore:'Modifier le score',setTeam:'Changer d’équipe',setFuel:'Définir le carburant',addFuel:'Modifier le carburant',setHunger:'Définir la faim',addHunger:'Modifier la faim',setThirst:'Définir la soif',addThirst:'Modifier la soif',setStamina:'Définir l’endurance',addStamina:'Modifier l’endurance',setFear:'Définir la peur',setThreat:'Définir le niveau de menace',setLight:'Allumer / éteindre la lumière',setAudio:'Activer / couper le son',setVehicleState:'Définir l’état du véhicule'
 };
-export const conditionLabels={heroEnergyAbove:'Énergie du héros au moins égale à',heroPowerReady:'Pouvoir prêt',heroFlightActive:'Vol actif',rpgLevelAtLeast:'Niveau RPG au moins égal à',heroReputationAtLeast:'Réputation au moins égale à',simulationPowered:'Installation alimentée',simulationRescued:'Civil secouru',always:'Toujours vrai',variable:'Variable globale',localVariable:'Variable locale',distanceLess:'Joueur à proximité',distanceGreater:'Joueur éloigné',healthBelow:'Santé inférieure à',healthAbove:'Santé supérieure à',inventoryHas:'Possède un objet',inventoryMissing:'Objet manquant',hasTag:'Possède un tag',tagMissing:'Tag absent',objectEnabled:'Objet activé',playerInVehicle:'Joueur en véhicule',playerOnFoot:'Joueur à pied',randomChance:'Probabilité',aiStateIs:'État de l’IA',aiCanSeeTarget:'Cible visible',aiHasTarget:'Cible acquise',aiAwarenessAbove:'Niveau d’alerte supérieur à',sameFaction:'Même faction que le joueur',isHostile:'Hostile au joueur',entityExists:'Objet présent',objectiveActive:'Objectif en cours',objectiveComplete:'Objectif terminé',timerRunning:'Compte à rebours actif',timerExpired:'Temps écoulé',gamePhaseIs:'État de la partie',saveExists:'Sauvegarde disponible',speedAbove:'Vitesse supérieure à',speedBelow:'Vitesse inférieure à',distanceToPointLess:'Proche d’un point',distanceToPointGreater:'Éloigné d’un point',horrorThreatAbove:'Menace supérieure à',horrorFearAbove:'Peur supérieure à',gameTimeAbove:'Temps de jeu supérieur à',objectType:'Type d’objet',weaponAmmoAbove:'Munitions supérieures à',weaponReady:'Arme prête',vehicleDriveable:'Véhicule utilisable',vehicleFuelBelow:'Carburant inférieur à',vehicleHealthBelow:'Santé du véhicule inférieure à',vehicleHasDriver:'Véhicule conduit'};
+export const conditionLabels={survivalNeedBelow:'Besoin vital inférieur à',survivalBuilt:'Campement construit',survivalNightsAtLeast:'Nuits survécues au moins égales à',animatorStateIs:'État Animator actif',heroEnergyAbove:'Énergie du héros au moins égale à',heroPowerReady:'Pouvoir prêt',heroFlightActive:'Vol actif',rpgLevelAtLeast:'Niveau RPG au moins égal à',heroReputationAtLeast:'Réputation au moins égale à',simulationPowered:'Installation alimentée',simulationRescued:'Civil secouru',always:'Toujours vrai',variable:'Variable globale',localVariable:'Variable locale',distanceLess:'Joueur à proximité',distanceGreater:'Joueur éloigné',healthBelow:'Santé inférieure à',healthAbove:'Santé supérieure à',inventoryHas:'Possède un objet',inventoryMissing:'Objet manquant',hasTag:'Possède un tag',tagMissing:'Tag absent',objectEnabled:'Objet activé',playerInVehicle:'Joueur en véhicule',playerOnFoot:'Joueur à pied',randomChance:'Probabilité',aiStateIs:'État de l’IA',aiCanSeeTarget:'Cible visible',aiHasTarget:'Cible acquise',aiAwarenessAbove:'Niveau d’alerte supérieur à',sameFaction:'Même faction que le joueur',isHostile:'Hostile au joueur',entityExists:'Objet présent',objectiveActive:'Objectif en cours',objectiveComplete:'Objectif terminé',timerRunning:'Compte à rebours actif',timerExpired:'Temps écoulé',gamePhaseIs:'État de la partie',saveExists:'Sauvegarde disponible',speedAbove:'Vitesse supérieure à',speedBelow:'Vitesse inférieure à',distanceToPointLess:'Proche d’un point',distanceToPointGreater:'Éloigné d’un point',horrorThreatAbove:'Menace supérieure à',horrorFearAbove:'Peur supérieure à',gameTimeAbove:'Temps de jeu supérieur à',objectType:'Type d’objet',weaponAmmoAbove:'Munitions supérieures à',weaponReady:'Arme prête',vehicleDriveable:'Véhicule utilisable',vehicleFuelBelow:'Carburant inférieur à',vehicleHealthBelow:'Santé du véhicule inférieure à',vehicleHasDriver:'Véhicule conduit'};
 export const eventLabels={start:'Au démarrage',interact:'À l’interaction',enter:'À l’entrée dans la zone',exit:'À la sortie de la zone',keyDown:'À l’appui d’une touche',interval:'À intervalle régulier',signal:'À la réception d’un signal',healthChanged:'Quand la santé change',death:'À la mort de l’objet',variableChanged:'Quand une variable change',objectiveCompleted:'Quand un objectif est terminé',timerExpired:'Quand le temps est écoulé'};
 const words=value=>String(value).replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());
 export const labelFor=(type,kind='action')=>(kind==='event'?eventLabels:kind==='condition'?conditionLabels:instructionLabels)[type]||words(type);
@@ -37,6 +41,12 @@ const texts=new Set(['message','showDialogue','setVariable','setLocal','setAnima
 const noValue=new Set(['branch','destroyObject','equipItem','completeObjective','setCheckpoint','restoreCheckpoint','stopTimer','saveGame','loadGame','pauseGame','resumeGame','closeDialogue','clearAiTarget','reloadWeapon','fireVehicleWeapon']);
 export const targetable=type=>!['branch','wait','message','emitSignal','setVariable','addVariable','setLocal','addLocal','setObjective','completeObjective','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'].includes(type);
 export function actionFields(type){
+ if(type==='survivalInteract')return [];
+ if(type==='craftSurvivalItem')return [{key:'value',label:'Recette',type:'select',choices:['campfire','shelter','bandage','meal']}];
+ if(type==='consumeSurvivalItem')return [{key:'value',label:'Action',type:'select',choices:['drink','eat','rest','refuel']}];
+ if(type==='playAnimatorState')return [{key:'value',label:'Identifiant de l’état',type:'text',default:'motion'},{key:'duration',label:'Durée · s',type:'number',default:1}];
+ if(type==='setAnimatorParameter')return [{key:'key',label:'Nom du paramètre',type:'text'},{key:'value',label:'Valeur',type:'text'},{key:'valueType',label:'Type',type:'select',choices:['number','boolean','string']}];
+ if(type==='emitOwnedFx')return [{key:'value',label:'Nombre de particules',type:'number',default:24}];
  if(type==='castHeroPower')return [{key:'value',label:'Pouvoir',type:'select',choices:['bolt','nova','dash','shield','flight','rally']}];
  if(type==='upgradeHeroSkill')return [{key:'value',label:'Branche',type:'select',choices:['power','guard','command']}];
  if(type==='emitFx')return [{key:'value',label:'Effet',type:'select',choices:['energy','fire','electric','smoke','heal','portal']},{key:'color',label:'Couleur #RRGGBB',type:'text',default:'#64e9ff'},{key:'scale',label:'Échelle',type:'number',default:1}];
@@ -53,6 +63,10 @@ export function actionFields(type){
  return fields;
 }
 export function conditionFields(type){
+ if(type==='survivalNeedBelow')return [{key:'key',label:'Besoin',type:'select',choices:['food','water','rest','warmth']},{key:'value',label:'Seuil · %',type:'number',default:20}];
+ if(type==='survivalBuilt')return [{key:'key',label:'Construction',type:'select',choices:['campfire','shelter']}];
+ if(type==='survivalNightsAtLeast')return [{key:'value',label:'Nuits',type:'number',default:1}];
+ if(type==='animatorStateIs')return [{key:'value',label:'Identifiant de l’état',type:'text',default:'motion'}];
  if(type==='heroPowerReady')return [{key:'value',label:'Pouvoir',type:'select',choices:['bolt','nova','dash','shield','flight','rally']}];
  if(['heroFlightActive','simulationPowered','simulationRescued'].includes(type))return [];
  const fields=[];

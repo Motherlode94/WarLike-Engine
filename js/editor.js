@@ -1,3 +1,7 @@
+import {initSurvivalUi} from './ui/survival-ui.js';
+import {initCreativeStudios} from './ui/creative-studios.js';
+import {initCreativeRuntime} from './core/creative-runtime.js';
+import {initLanPanel} from './ui/lan-panel.js';
 import {initHeroForgeUi} from './ui/hero-forge-ui.js';
 import {initDesktopInteractions} from './ui/desktop-interactions.js';
 import {createBundledPhysicsScene2d} from './core/bundled-physics-scene.js';
@@ -293,3 +297,7 @@ initClipboardControls();
 initDesktopInteractions();
 
 initHeroForgeUi();
+
+initLanPanel();
+
+initCreativeStudios();initCreativeRuntime();initSurvivalUi();

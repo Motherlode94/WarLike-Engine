@@ -5,8 +5,8 @@ import {inventoryAdd,inventoryRemove,equipItem,damage,ensureStats} from './gamep
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
 export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal'];
-export const sequenceConditions=['always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance'];
-export const sequenceInstructions=['message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject'];
+export const sequenceConditions=['always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists'];
+export const sequenceInstructions=['message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
 export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[]};
 const number=(n,def=0)=>Number.isFinite(Number(n))?Number(n):def;
@@ -33,6 +33,18 @@ export function conditionPass(c,o,ctx){
  case 'playerOnFoot':pass=!!ctx.player&&!ctx.player._hiddenInVehicle;break;
  case 'randomChance':pass=Math.random()<Math.max(0,Math.min(1,number(c.value,.5)));break;
  case 'objectEnabled':pass=o.sequenceEnabled!==false;break;
+ case 'inventoryHas':pass=number(ctx.player?.inventory?.[c.key]??ctx.player?.inventory?.items?.[c.key])>=Math.max(1,number(c.value,1));break;
+ case 'inventoryMissing':pass=number(ctx.player?.inventory?.[c.key]??ctx.player?.inventory?.items?.[c.key])<Math.max(1,number(c.value,1));break;
+ case 'tagMissing':pass=!Array.isArray(o.tags)||!o.tags.includes(String(c.value??''));break;
+ case 'speedAbove':pass=number(o.aiSpeed??o.maxSpeed)>number(c.value);break;
+ case 'speedBelow':pass=number(o.aiSpeed??o.maxSpeed)<number(c.value);break;
+ case 'distanceToPointLess':pass=Math.hypot(number(o.x)-number(c.x),number(o.y)-number(c.y))<number(c.value,100);break;
+ case 'distanceToPointGreater':pass=Math.hypot(number(o.x)-number(c.x),number(o.y)-number(c.y))>number(c.value,100);break;
+ case 'horrorThreatAbove':pass=number(horror.threat)>number(c.value,.5);break;
+ case 'horrorFearAbove':pass=number(horror.fear)>number(c.value,50);break;
+ case 'gameTimeAbove':pass=number(sequenceRuntime.time)>number(c.value,10);break;
+ case 'objectType':pass=String(o.type)===String(c.value);break;
+ case 'entityExists':pass=(ctx.entities||[]).some(entity=>entity.id===number(c.value)||entity.name===String(c.value));break;
  default:pass=false;
  }
  return c.negate?!pass:pass;
@@ -73,6 +85,34 @@ function execute(job,ctx,actionsLeft){
   case 'enableObject':{const target=targetObject;target.sequenceEnabled=val!==false&&String(val)!=='false';break}
   case 'emitSignal':if(horror.enabled&&String(val||key)==='horror:jumpscare')triggerHorrorJumpscare();emitSequenceSignal(val||key);break;
   case 'destroyObject':entity._sequenceDestroyed=true;break;
+  case 'setTag':entity.tags=Array.from(new Set([...(Array.isArray(entity.tags)?entity.tags:[]),String(val??key).slice(0,60)]));break;
+  case 'removeTag':entity.tags=(entity.tags||[]).filter(tag=>tag!==String(val??key));break;
+  case 'setSpeed':targetObject.aiSpeed=Math.max(0,number(val,65));break;
+  case 'addSpeed':targetObject.aiSpeed=Math.max(0,number(targetObject.aiSpeed,65)+number(val));break;
+  case 'setPosition':targetObject.x=number(a.x,targetObject.x);targetObject.y=number(a.y,targetObject.y);break;
+  case 'setRotation':targetObject.rotation=number(val);break;
+  case 'setScale':targetObject.scale=Math.max(.01,number(val,1));break;
+  case 'setVisibility':targetObject.visible=val!==false&&String(val)!=='false';break;
+  case 'setCollision':targetObject.collision3d=val!==false&&String(val)!=='false';break;
+  case 'setObjective':rt.globals['objective:'+key]=0;rt.messages.push({text:String(val||key).slice(0,160),ttl:3});break;
+  case 'completeObjective':rt.globals['objective:'+key]=1;emitSequenceSignal('objective:'+key);break;
+  case 'setCheckpoint':rt.globals.checkpointX=number(targetObject.x);rt.globals.checkpointY=number(targetObject.y);break;
+  case 'setTeam':targetObject.team=Math.max(0,Math.trunc(number(val,1)));break;
+  case 'setScore':rt.globals.score=number(val);break;
+  case 'addScore':rt.globals.score=number(rt.globals.score)+number(val);break;
+  case 'setFuel':targetObject.fuel=Math.max(0,number(val));break;
+  case 'addFuel':targetObject.fuel=Math.max(0,number(targetObject.fuel)+number(val));break;
+  case 'setHunger':rt.globals.hunger=Math.max(0,Math.min(100,number(val)));break;
+  case 'addHunger':rt.globals.hunger=Math.max(0,Math.min(100,number(rt.globals.hunger,100)+number(val)));break;
+  case 'setThirst':rt.globals.thirst=Math.max(0,Math.min(100,number(val)));break;
+  case 'addThirst':rt.globals.thirst=Math.max(0,Math.min(100,number(rt.globals.thirst,100)+number(val)));break;
+  case 'setStamina':rt.globals.stamina=Math.max(0,Math.min(100,number(val)));break;
+  case 'addStamina':rt.globals.stamina=Math.max(0,Math.min(100,number(rt.globals.stamina,100)+number(val)));break;
+  case 'setFear':horror.fear=Math.max(0,Math.min(100,number(val)));break;
+  case 'setThreat':horror.threat=Math.max(0,Math.min(1,number(val)));break;
+  case 'setLight':targetObject.lightEnabled=val!==false&&String(val)!=='false';break;
+  case 'setAudio':targetObject.audioEnabled=val!==false&&String(val)!=='false';break;
+  case 'setVehicleState':targetObject.vehicleState=String(val??'parked').slice(0,60);break;
   case 'wait':job.wait=Math.min(120,Math.max(0,number(val,.5)));return count;
   }
  }

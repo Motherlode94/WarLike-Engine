@@ -5,6 +5,11 @@ import {defaultController,defaultInventory,defaultStats} from './gameplay-compon
 
 export const genreTemplates={
  sandbox:{label:'Projet vierge',description:'Scène minimale et bibliothèque libre',modes:['2d','3d']},
+ tactical:{label:'FPS / TPS',description:'Capture et escouade de combat',modes:['2d','3d']},
+ openworld:{label:'Monde ouvert',description:'Vehicule, PNJ et mission',modes:['2d','3d']},
+ survival:{label:'Survival',description:'Ressources et refuges',modes:['2d','3d']},
+ rts:{label:'RTS',description:'Unites et capture',modes:['2d','3d']},
+ horror:{label:'Horror',description:'Traque, cachette et generatrice',modes:['2d','3d']},
  fieldlab:{label:'WarLike Field Lab',description:'Circuit de diagnostic : marche, interactions, véhicule et obstacles',modes:['2d','3d']},
  rp:{label:'Roleplay (RP)',description:'Ville, PNJ, dialogue, boutique, réputation',modes:['2d','3d']},
  racing:{label:'Racing',description:'Véhicule pilotable, départ, checkpoints, arrivée',modes:['2d','3d']},
@@ -42,7 +47,43 @@ export function createGenreScene(genre,mode='3d'){
  const marker=(name,x,y,sequence,color='#e4c16e')=>object(threeD?'prop-cone':'primitive-cube',name,x,y,
   {type:threeD?'mesh3d':'object',w:threeD?55:60,h:threeD?80:60,depth3d:55,color,collision3d:false,solid3d:false,sequence});
  const player=actor();
- if(chosen==='fieldlab'){
+ if(['tactical','openworld','survival','rts','horror'].includes(chosen)){
+  const mission=(name,x,y,actions)=>marker(name,x,y,interact(actions,{radius:130,once:true}));
+  if(chosen==='tactical'){
+   object('building-wall','Couverture',400,260,{collision3d:true,solid3d:true});
+   object('character-soldier','Allie',240,370,{team:1,playable3d:false});
+   object('character-soldier','Opposant',760,390,{team:2,playable3d:false,stats:defaultStats(),ai:{enabled:true,detection:300,speed:35,attackRange:75,attackDamage:6,attackCooldown:2}});
+   mission('Capturer',900,190,[variable('captured',1),signal('fps:capture'),msg('Zone capturee')]);
+  }
+  if(chosen==='openworld'){
+   object('building-garage','Garage',590,160);
+   object('vehicle-jeep','Jeep',260,360,{maxSpeed:210,acceleration:170,turnRate:120});
+   object('character-civilian','Citoyen',460,330,{playable3d:false,sequence:interact([inc('reputation',1),msg('Bonjour !')])});
+   mission('Livraison',980,520,[variable('delivered',1),inc('money',100),msg('Livraison terminee')]);
+  }
+  if(chosen==='survival'){
+   object('building-house','Refuge',920,230);
+   object('character-zombie','Rodeur',730,420,{playable3d:false,stats:defaultStats(),ai:{enabled:true,detection:250,speed:30,attackRange:65,attackDamage:5,attackCooldown:2}});
+   mission('Ressources',340,370,[inc('supplies',1),msg('Provisions obtenues')]);
+   mission('Refuge',930,410,[variable('shelter',1),msg('Refuge atteint')]);
+  }
+  if(chosen==='rts'){
+   object('building-hangar','QG',220,150,{team:1});
+   object('character-soldier','Escouade A',370,320,{team:1,playable3d:false,tags:['rts-unit']});
+   object('character-soldier','Escouade B',450,320,{team:1,playable3d:false,tags:['rts-unit']});
+   object('building-tower','Poste adverse',930,230,{team:2});
+   mission('Mine',550,480,[inc('resources',20),msg('Ressources +20')]);
+   mission('Capture',910,370,[variable('outpostCaptured',1),signal('rts:capture'),msg('Avant-poste capture')]);
+  }
+  if(chosen==='horror'){
+   object('building-wall','Cloison',500,250,{w:50,h:320,collision3d:true,solid3d:true});
+   object('character-zombie','Traqueur',840,450,{playable3d:false,behavior:'none',horrorAiConfig:{enabled:true,visionRange:260,hearingRange:280,memorySeconds:8}});
+   object('prop-container','Cachette',320,540,{collision3d:false,horrorHideConfig:{enabled:true,radius:100}});
+   mission('Generatrice',950,140,[variable('powerOn',1),msg('Courant retabli')]);
+   mission('Evacuation',1070,560,[variable('escaped',1),msg('Sortie atteinte')]);
+  }
+  player.sequence={...interact([variable('resources',30),variable('money',0),variable('supplies',0),msg('WarLike : objectifs '+chosen)]),event:'start',once:true};
+ } else if(chosen==='fieldlab'){
   // Self-contained smoke-test course; no remote assets or external services required.
   // Interactions validate real player state; walking checkpoints require on-foot,
   // the driving checkpoint requires a mounted character.

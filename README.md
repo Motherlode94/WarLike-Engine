@@ -2,7 +2,7 @@
 
 **Moteur et éditeur de jeux 2D / 3D développé par Hardi Victor MBANVU — HardieBay.**
 
-[Ouvrir le moteur](https://warlike-engine.pages.dev/) · [Documentation française](https://warlike-engine.pages.dev/docs/) · [Créer un jeu de A à Z](docs/blueprint-game-builder.md) · [Sources et licences](SOURCES.md)
+[Ouvrir le moteur](https://warlike-engine.pages.dev/) · [Documentation française](https://warlike-engine.pages.dev/docs/) · [Débutant : mon premier jeu, de zéro à l’export](https://warlike-engine.pages.dev/docs/debuter-de-zero.html) · [Créer un jeu de A à Z](docs/blueprint-game-builder.md) · [Sources et licences](SOURCES.md)
 
 WarLike réunit un Hub de projets, une scène, une hiérarchie d’objets, un Inspecteur de composants, Blueprint Studio et un export de jeu Web. Le Hub et l’espace de travail reprennent l’organisation visuelle d’Unity, avec des thèmes personnalisables : graphite, clair, science-fiction, fantastique, nature et six autres palettes.
 
@@ -180,3 +180,4 @@ Les références Unity, Game Creator, Emerald AI ou Opsive décrivent des inspir
 ### Blueprint et physique des personnages
 
 Fonctions partagées avec paramètres et retours typés, points d’arrêt, pause et pas à pas : voir le [guide Blueprint](docs/blueprint-game-builder.md#fonctions-réutilisables-et-données-typées). Capsules, boîtes orientées, sphères, pentes, marches et articulations utilisent Rapier dans le navigateur et pour les personnages LAN sur l’hôte : [guide physique 3D](docs/RAPIER-PLAYMODE.md).
+

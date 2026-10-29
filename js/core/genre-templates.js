@@ -1,6 +1,7 @@
 import {createAdventureCampaign} from './adventure-campaign.js';
 import {createSurvivalScene} from './survival-scene.js';
 import {createHeroForgeScene} from './hero-forge-scene.js';
+import {createBattlefieldScene} from './battlefield-scene.js';
 import {default2dCharacterPng} from '../assets/real-starter-sprites-2d.js?v=fix-20261028';
 // Playable starting scenes for Hub game genres. All data remains ordinary WarLike
 // entities / Blueprint Sequences, so projects can be saved, reopened and edited.
@@ -22,6 +23,7 @@ export function createGenreScene(genre,mode='3d'){
  if(!['2d','3d'].includes(mode))throw new Error('Type de projet invalide.');
  if(!genreCompatible(genre,mode))throw new Error('Ce type de jeu est incompatible avec le projet '+mode.toUpperCase()+'.');
  const chosen=normalizeGenre(genre),threeD=mode==='3d';
+ if(chosen==='battlefield')return createBattlefieldScene();
  if(chosen==='adventure')return createAdventureCampaign(mode);
  if(chosen==='platformer')return createBundledPhysicsScene2d();
  if(chosen==='superhero')return createHeroForgeScene(mode);

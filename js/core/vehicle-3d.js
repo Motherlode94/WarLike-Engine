@@ -37,6 +37,7 @@ export function updateDriving3d(entities,player,keys,dt){
    const nearest=candidates[0];
    if(nearest&&Math.abs((Number(nearest.o.elevation3d)||0)-(Number(player.elevation3d)||0))<1.8&&nearest.d<Math.max(150,(nearest.o.w||64)*.85)&&canDriveVehicle(nearest.o)){
     vehicleComponents(nearest.o).seats.driverId=player.id;
+    if(player.battlefield?.enabled)nearest.o.team=player.team;
     player._vehicleInputConsumed=true;recordEngineEvent('vehicle-enter',nearest.o.name);driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;player._hiddenInVehicle=true;player.animation='drive';
    }
   }

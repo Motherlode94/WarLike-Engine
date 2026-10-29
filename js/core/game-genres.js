@@ -1,5 +1,6 @@
 // Shared project metadata. This module has no engine, DOM or scene-factory imports.
 export const genreTemplates={
+ battlefield:{label:'WarLike Front · FPS Conquête',description:'Infanterie, blindés pilotables, trois secteurs et renforts · prototype solo avec bots',modes:['3d']},
  superhero:{label:'Hero Forge · Super-héros',description:'Pouvoirs, FX, progression RPG, monde réactif et escouade RTS',modes:['2d','3d']},
  sandbox:{label:'Projet vierge',description:'Scène minimale et bibliothèque libre',modes:['2d','3d']},
  tactical:{label:'FPS / TPS',description:'Capture et escouade de combat',modes:['2d','3d']},
@@ -18,6 +19,7 @@ export const genreTemplates={
 };
 
 const details={
+ battlefield:{stage:'playable',features:['FPS : viser, tirer, recharger et réapparaître','Deux équipes, secteurs A/B/C et réserves de renforts','Soldats et blindés Quaternius, décors Kenney intégrés']},
  superhero:{stage:'playable',features:['Six pouvoirs, animations et effets visuels','Progression RPG et escouade','Mission, secours et destruction']},
  survival:{stage:'playable',features:['Première aube : camp, repas, nuit et victoire','Placement avec aperçu, rotation et grille','Sauvegarde et coop avec secours des alliés']},
  adventure:{stage:'playable',features:['Deux chapitres : phare et vallée des échos','Dialogues, pont à réparer et mélodie à résoudre','Voyages, inventaires et scènes persistants']},
@@ -46,6 +48,7 @@ export function resolveGameGenre(value,entities=[]){
  if(Object.hasOwn(genreTemplates,value))return value;
  if(!Array.isArray(entities))return 'sandbox';
  entities=entities.filter(o=>o&&typeof o==='object');
+ if(entities.some(o=>o.battlefield?.enabled))return 'battlefield';
  if(entities.some(o=>o.adventure))return 'adventure';
  if(entities.some(o=>o.survival))return 'survival';
  if(entities.some(o=>o.superhero))return 'superhero';

@@ -1,5 +1,7 @@
 // Optional mounted vehicle weapons. Uses existing 3D scene entities and stats.
 // No weapon system is created for civilian vehicles unless configured.
+import {raycastScene3d,collisionBox3d} from './collision-3d.js';
+import {damage} from './gameplay-components.js';
 const limit=(n,min,max,def)=>Number.isFinite(Number(n))?Math.min(max,Math.max(min,Number(n))):def;
 export function vehicleWeaponConfig(car){
  const config=car?.vehicleWeapon;
@@ -10,7 +12,7 @@ export function vehicleWeaponConfig(car){
 }
 export function fireVehicleWeapon(car,entities,elapsed=0){
  const weapon=vehicleWeaponConfig(car);
- if(!weapon||!car)return {fired:false,reason:'weapon-disabled'};
+ if(!weapon||!car||(car.stats?.health??car.hp??100)<=0)return {fired:false,reason:'weapon-disabled'};
  if((car._weaponCooldown||0)>0)return {fired:false,reason:'cooldown'};
  car._weaponCooldown=weapon.cooldown;
  const angle=(Number(car.rotation)||0)*Math.PI/180;
@@ -18,7 +20,7 @@ export function fireVehicleWeapon(car,entities,elapsed=0){
  let target=null,closest=Infinity;
  for(const entity of entities){
   if(entity===car||entity._hiddenInVehicle||entity._modeEliminated||entity.collision3d===false)continue;
-  if(entity.type!=='character'&&entity.type!=='player'&&entity.ai?.enabled!==true&&entity.type!=='mesh3d')continue;
+  if(entity.type!=='character'&&entity.type!=='player'&&entity.ai?.enabled!==true&&!(entity.type==='mesh3d'&&(entity.stats||Number.isFinite(entity.hp)||entity.tacticalUnit)))continue;
   if((entity.stats?.health??entity.hp??100)<=0)continue;
   if(entity.team!=null&&car.team!=null&&entity.team===car.team)continue;
   const dx=(entity.x+(entity.w||0)/2)-(car.x+(car.w||0)/2),dy=(entity.y+(entity.depth3d||entity.h||0)/2)-(car.y+(car.depth3d||car.h||0)/2);
@@ -26,12 +28,15 @@ export function fireVehicleWeapon(car,entities,elapsed=0){
   if(distance<20||distance>weapon.range||distance>=closest)continue;
   const dot=(dx*fx+dy*fy)/distance;
   if(dot<Math.cos(weapon.arc*Math.PI/360))continue;
+  const a=collisionBox3d(car),b=collisionBox3d(entity),from=[(a.x+a.w/2)/64,(a.z+a.h*.8)/64,(a.y+a.d/2)/64],to=[(b.x+b.w/2)/64,(b.z+b.h*.6)/64,(b.y+b.d/2)/64],ray=to.map((v,i)=>v-from[i]);
+  const hit=raycastScene3d(from,ray,entities,{exclude:car,maxDistance:Math.hypot(...ray)+.01,target:o=>o===entity});
+  if(hit?.entity!==entity)continue;
   closest=distance;target=entity;
  }
  car._weaponFlash=.16;
  if(!target)return {fired:true,hit:false};
- if(target.stats){target.stats.health=Math.max(0,(Number(target.stats.health)||0)-weapon.damage)}
- else target.hp=Math.max(0,(Number(target.hp)||100)-weapon.damage);
+ damage(target,weapon.damage);
+ target._battlefieldThreat=car.vehicleSystems?.seats?.driverId??car.id;
  target._hit=.2;
  return {fired:true,hit:true,target:target.name||String(target.id),damage:weapon.damage};
 }

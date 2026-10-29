@@ -22,10 +22,10 @@ export function updateRtsOrders(entities,dt,playing,{mode='2d'}={}){
   if(!isRtsUnit(o)||healthOf(o)<=0||o.sequenceEnabled===false)continue;const cfg=o.tacticalUnit||{},origin=heroCenter(o,mode);o._rtsCooldown=Math.max(0,n(o._rtsCooldown)-frame);
   let order=o.rtsOrder,enemy=null,goal=null,stop=3;
   if(order?.type==='attack'){enemy=entities.find(t=>t.id===order.targetId&&healthOf(t)>0&&!sameFaction(o,t));if(!enemy){delete o.rtsOrder;order=null}}
-  if(!enemy&&cfg.autoAttack!==false&&o.tacticalUnit)enemy=entities.filter(t=>t!==o&&(t.ai?.enabled||t.tags?.includes('enemy'))&&healthOf(t)>0&&!sameFaction(o,t)&&t.sequenceEnabled!==false).map(t=>({t,d:Math.hypot(heroCenter(t,mode).x-origin.x,heroCenter(t,mode).y-origin.y)})).filter(t=>t.d<=Math.max(1,n(cfg.attackRange,190))).sort((a,b)=>a.d-b.d)[0]?.t;
+  if(!enemy&&cfg.autoAttack!==false&&o.tacticalUnit)enemy=entities.filter(t=>t!==o&&(t.ai?.enabled||t.tags?.includes('enemy')||t.tags?.includes('battlefield-soldier'))&&healthOf(t)>0&&!sameFaction(o,t)&&t.sequenceEnabled!==false).map(t=>({t,d:Math.hypot(heroCenter(t,mode).x-origin.x,heroCenter(t,mode).y-origin.y)})).filter(t=>t.d<=Math.max(1,n(cfg.attackRange,190))).sort((a,b)=>a.d-b.d)[0]?.t;
   if(enemy){const at=heroCenter(enemy,mode),distance=Math.hypot(at.x-origin.x,at.y-origin.y,at.z-origin.z),range=Math.max(1,n(cfg.attackRange,190));
    if(distance<=range&&hasLineOfSight(o,enemy,entities)){
-    if(o._rtsCooldown===0){const before=healthOf(enemy);damage(enemy,Math.max(0,n(cfg.damage,9))*progressionDamageScale(o)*(o.heroState?.commandTime>0?1.25:1));o._rtsCooldown=Math.max(.1,n(cfg.attackInterval,.8));o.animation='attack';for(let i=0;i<6;i++)emitFx('electric',{x:origin.x+(at.x-origin.x)*i/6,y:origin.y+(at.y-origin.y)*i/6,z:origin.z+(at.z-origin.z)*i/6},{mode,count:1,color:'#ffdb88',speed:0,lifetime:.15});if(before>0&&healthOf(enemy)<=0){awardExperience(o,30);enemy.animation='death'}}
+    if(o._rtsCooldown===0){const before=healthOf(enemy);if(enemy.tags?.includes('battlefield-soldier'))enemy._battlefieldThreat=o.id;damage(enemy,Math.max(0,n(cfg.damage,9))*progressionDamageScale(o)*(o.heroState?.commandTime>0?1.25:1));o._rtsCooldown=Math.max(.1,n(cfg.attackInterval,.8));o.animation='attack';for(let i=0;i<6;i++)emitFx('electric',{x:origin.x+(at.x-origin.x)*i/6,y:origin.y+(at.y-origin.y)*i/6,z:origin.z+(at.z-origin.z)*i/6},{mode,count:1,color:'#ffdb88',speed:0,lifetime:.15});if(before>0&&healthOf(enemy)<=0){awardExperience(o,30);enemy.animation='death'}}
     continue;
    }if(order?.type==='attack'){goal=at;stop=range*.8}
   }

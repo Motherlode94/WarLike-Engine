@@ -9,7 +9,7 @@ const genres=['rp','racing','simulation','rpg','fourx'];
 
 test('five genres and sandbox are supported in both WarLike workspaces',()=>{
  for(const genre of ['sandbox','fieldlab','tactical','openworld','survival','rts','horror',...genres])assert.ok(genreTemplates[genre],genre);
- for(const [id,template] of Object.entries(genreTemplates))assert.deepEqual(template.modes,id==='platformer'?['2d']:['2d','3d']);
+ for(const [id,template] of Object.entries(genreTemplates))assert.deepEqual(template.modes,id==='platformer'?['2d']:id==='battlefield'?['3d']:['2d','3d']);
  assert.equal(normalizeGenre('__invalid__'),'sandbox');
  for(const mode of ['2d','3d'])for(const genre of genres){
   const scene=createGenreScene(genre,mode);

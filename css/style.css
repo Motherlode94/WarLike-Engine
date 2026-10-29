@@ -1174,6 +1174,17 @@ body:not(.hub-open) .workspace :is(.side-splitter,.project-splitter){background:
 .csharp-squad-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;border-top:1px solid var(--wl-theme-border,#535a62);padding-top:12px}
 .csharp-squad-controls :is(strong,small){grid-column:1/-1}
 .csharp-squad-controls small{line-height:1.6}
+.warlike-battlefield-hud{position:absolute;z-index:12;top:12px;left:50%;transform:translateX(-50%);width:min(690px,calc(100% - 24px));box-sizing:border-box;padding:12px;background:#0c1424ed;border:1px solid #61768c;border-radius:6px;color:#fff;font:600 12px/1.6 system-ui;pointer-events:none;box-shadow:0 7px 28px #0006}
+.warlike-battlefield-hud[hidden],.warlike-battlefield-markers[hidden]{display:none}
+.battlefield-score{display:flex;align-items:center;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
+.battlefield-score strong{font-size:17px}.battlefield-score>span{font-size:11px;letter-spacing:.08em}
+.battlefield-sectors{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:7px 0}
+.battlefield-sectors span{padding:3px 7px;border:1px solid #53627a;border-radius:4px;font-size:10px}
+.battlefield-status{text-align:center;font-size:13px}.warlike-battlefield-hud small{display:block;text-align:center;color:#d4deed;font-size:10px}
+.warlike-battlefield-hud .blue,.warlike-battlefield-markers .blue{color:#81d0ff}.warlike-battlefield-hud .orange,.warlike-battlefield-markers .orange{color:#ffb088}
+.warlike-battlefield-markers{position:absolute;inset:0;pointer-events:none;z-index:10;overflow:hidden}
+.battlefield-marker{position:absolute;transform:translate(-50%,-100%);padding:4px 7px;background:#0c1424db;border:1px solid currentColor;border-radius:4px;color:#fff;font:700 12px system-ui;white-space:nowrap}
+@media(max-width:600px){.warlike-battlefield-hud{top:5px;padding:7px;font-size:10px}.battlefield-score strong{font-size:13px}.battlefield-score>span{font-size:9px}.battlefield-sectors span{font-size:9px;padding:2px 4px}.warlike-battlefield-hud small{display:none}}
 #csharpRuntimeStatus{padding:9px;border-left:3px solid #a7adba;background:#111b2633}
 #csharpRuntimeStatus[data-ok="true"]{border-left-color:#48cba9}
 .csharp-runtime-content small{opacity:.75}

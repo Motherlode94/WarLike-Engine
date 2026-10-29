@@ -183,3 +183,15 @@ Les références Unity, Game Creator, Emerald AI ou Opsive décrivent des inspir
 
 Fonctions partagées avec paramètres et retours typés, points d’arrêt, pause et pas à pas : voir le [guide Blueprint](docs/blueprint-game-builder.md#fonctions-réutilisables-et-données-typées). Capsules, boîtes orientées, sphères, pentes, marches et articulations utilisent Rapier dans le navigateur et pour les personnages LAN sur l’hôte : [guide physique 3D](docs/RAPIER-PLAYMODE.md).
 
+
+## WarLike Front · FPS Conquête
+
+Dans le Hub, créer un projet **3D → WarLike Front · FPS Conquête**, puis lancer **Play**. Cette première scène solo oppose deux équipes de six soldats (joueur inclus) autour des secteurs A/B/C. Capturer les secteurs réduit les renforts adverses ; les morts coûtent également un renfort. Réapparition, chargeur de 30 coups, rechargement et fin de match sont fonctionnels.
+
+ZQSD/WASD pour marcher, souris pour viser, clic gauche ou F pour tirer, R pour recharger, Maj pour courir. E permet de monter ou descendre d’un véhicule ; F tire au canon du blindé. Échap libère la souris. Le HUD affiche les renforts, les captures, les points de vie et les munitions.
+
+Soldats : Quaternius Ultimate Animated Character Pack ; chars : Animated Tanks ; fusil : Ultimate Guns ; couvertures : Toon Shooter Game Kit. Terrain, camion et entrepôts : Kenney. Ces modèles CC0 sont déjà inclus ; leurs crédits et liens de packs restent dans le Hub et l’Inspector. L’inspiration de conception est le mode [Conquête de Battlefield](https://www.ea.com/fr/games/battlefield/battlefield-6/news/modes), sans reprendre ses ressources propriétaires.
+
+Le prototype tourne dans le Play Web avec les systèmes JS/C++ existants. Les composants de conduite C# sont aussi présents pour le bridge local ; ils n’exécutent pas automatiquement le match Web. Il ne comprend pas encore de serveur multijoueur autoritaire, d’aviation, de destruction structurelle des bâtiments ou des quatre classes complètes.
+
+Validation : `node --test tests/battlefield.test.mjs`.

@@ -1,4 +1,5 @@
 import {assetCredits} from './asset-credits.js';
+import {bindPanelSplitter,projectPanelRange} from './resizable-window.js';
 import {readPrefabs,savePrefab,instantiatePrefab,applyPrefabChanges,updatePrefab} from '../core/prefab-library.js';
 import {hub,sanitizeAssetPack} from '../core/project-hub.js';
 import {persistLocalModel,restoreLocalModels,clearLocalModels} from '../core/local-asset-library.js';
@@ -266,28 +267,21 @@ $('#assetGridMode').onclick=()=>{view='grid';localStorage.setItem('warlike.asset
 $('#assetListMode').onclick=()=>{view='list';localStorage.setItem('warlike.assetView',view);render()};
 size.oninput=()=>{localStorage.setItem('warlike.assetSize',size.value);grid.style.setProperty('--asset-card-size',size.value+'px')};
 const center=document.querySelector('.center-stack'),splitter=$('#projectSplitter');
-let dragHeight=null;
+const projectLimits=()=>{const chrome=[...center.children].filter(el=>el.classList.contains('scene-tools')||el.classList.contains('scene-header')||el===splitter).reduce((height,el)=>height+el.offsetHeight,0);return projectPanelRange(center.clientHeight,chrome)};
 const clampProjectHeight=(height,persist=true)=>{
- const available=Math.max(0,center.clientHeight-73);
- const min=Math.min(150,Math.floor(available*0.4));
- const max=Math.max(min,Math.floor(available*0.5));
+ const {min,max}=projectLimits();
  const value=Math.round(Math.min(max,Math.max(min,Number.isFinite(height)?height:260)));
  center.style.setProperty('--project-height',value+'px');
  if(persist)try{localStorage.setItem('warlike.projectHeight',String(value))}catch{}
  return value;
 };
-const applyHeight=h=>clampProjectHeight(h);
 let storedHeight=0;
 try{storedHeight=Number(localStorage.getItem('warlike.projectHeight'))}catch{}
 clampProjectHeight(storedHeight>0?storedHeight:260,false);
 if(typeof ResizeObserver!=='undefined'){
- new ResizeObserver(()=>{if(!dragHeight)clampProjectHeight(parseFloat(getComputedStyle(center).getPropertyValue('--project-height')),false)}).observe(center);
+ new ResizeObserver(()=>{if(!projectResize.isDragging()){clampProjectHeight(parseFloat(getComputedStyle(center).getPropertyValue('--project-height')),false);projectResize.refresh()}}).observe(center);
 }
-
-splitter.addEventListener('pointerdown',e=>{if(e.button!==0)return;dragHeight={y:e.clientY,h:document.querySelector('.project-panel').getBoundingClientRect().height};splitter.setPointerCapture(e.pointerId);e.preventDefault()});
-splitter.addEventListener('pointermove',e=>{if(dragHeight)applyHeight(dragHeight.h+dragHeight.y-e.clientY)});
-splitter.addEventListener('pointerup',()=>dragHeight=null);splitter.addEventListener('pointercancel',()=>dragHeight=null);
-splitter.addEventListener('keydown',e=>{if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();applyHeight(document.querySelector('.project-panel').getBoundingClientRect().height+(e.key==='ArrowUp'?30:-30))}});
+const projectResize=bindPanelSplitter(splitter,{axis:'y',direction:-1,getValue:()=>parseFloat(getComputedStyle(center).getPropertyValue('--project-height'))||260,setValue:height=>clampProjectHeight(height,false),getLimits:projectLimits,defaultValue:260,onEnd:()=>clampProjectHeight(parseFloat(getComputedStyle(center).getPropertyValue('--project-height')))});
 render();
 const canvas=$('#canvas');canvas.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('application/x-warlike-asset'))e.preventDefault()});canvas.addEventListener('drop',e=>{e.preventDefault();const id=e.dataTransfer.getData('application/x-warlike-asset');if(state.playing)return; if(workspace.mode==='3d'){if(!get3dAsset(id))return;add3d(id);return}if(!catalog.some(a=>a.id===id))return;addPrefab(id);const item=state.entities.find(o=>o.id===state.selected.at(-1));if(item){const rect=canvas.getBoundingClientRect(),p={x:(e.clientX-rect.left)*canvas.clientWidth/rect.width,y:(e.clientY-rect.top)*canvas.clientHeight/rect.height};item.x=Math.round((p.x-state.camera.x)/state.camera.zoom-item.w/2);item.y=Math.round((p.y-state.camera.y)/state.camera.zoom-item.h/2);record('Positionner prefab 2D');notify()}log('Déposé : '+id)});
 const canvas3d=$('#canvas3d');

@@ -1,4 +1,4 @@
-import {makeWindowResizable} from './resizable-window.js';
+import {makeWindowResizable,bindPanelSplitter,dockedPanelWidths} from './resizable-window.js';
 // WarLike Studio dockable and resizable editor windows.
 const storageKey='warlike.workspace.layout.v1';
 const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
@@ -19,11 +19,9 @@ const $=id=>document.getElementById(id);
 const uiScale=()=>Number.parseFloat(getComputedStyle(document.body).zoom)||1;
 const viewportSize=()=>({width:innerWidth/uiScale(),height:innerHeight/uiScale()});
 const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify(layout))}catch{}};
-function applyWidths(){
- const available=Math.max(420,viewportSize().width-220);
- const maxSide=Math.max(170,Math.floor(available*0.36));
- const left=layout.float.hierarchy?0:clamp(layout.leftWidth,160,Math.min(440,maxSide));
- const right=layout.float.inspector?0:clamp(layout.rightWidth,170,Math.min(480,maxSide));
+function widths(prefer='right',values={}){return dockedPanelWidths({width:document.querySelector('.workspace')?.clientWidth||viewportSize().width,left:layout.leftWidth,right:layout.rightWidth,leftFloating:!!layout.float.hierarchy,rightFloating:!!layout.float.inspector,prefer,...values})}
+function applyWidths(prefer){
+ const {left,right}=widths(prefer);
  document.documentElement.style.setProperty('--left-pane-width',left+'px');
  document.documentElement.style.setProperty('--right-pane-width',right+'px');
  document.body.classList.toggle('hierarchy-floating',!!layout.float.hierarchy);
@@ -43,20 +41,17 @@ function applyLayout(){
   const el=$(id),f=layout.float[kind],button=document.querySelector('[data-dock-toggle="'+kind+'"]');
   if(!el)continue;
   el.classList.toggle('floating-panel',!!f);if(f&&Number(el.style.zIndex||0)<1000)bringToFront(el);
-  if(f){const viewport=viewportSize(),width=Math.min(viewport.width,Math.max(260,f.width)),height=Math.min(viewport.height-35,Math.max(210,f.height));Object.assign(f,{x:clamp(f.x,0,Math.max(0,viewport.width-width)),y:clamp(f.y,35,Math.max(35,viewport.height-height)),width,height});el.style.left=f.x+'px';el.style.top=f.y+'px';el.style.width=width+'px';el.style.height=height+'px'}
-  else{el.style.removeProperty('left');el.style.removeProperty('top');el.style.removeProperty('width');el.style.removeProperty('height')}
+  if(f&&!el.hasAttribute('data-window-maximized')){const viewport=viewportSize(),width=Math.min(viewport.width,Math.max(260,f.width)),height=Math.min(viewport.height-35,Math.max(210,f.height));Object.assign(f,{x:clamp(f.x,0,Math.max(0,viewport.width-width)),y:clamp(f.y,35,Math.max(35,viewport.height-height)),width,height});el.style.left=f.x+'px';el.style.top=f.y+'px';el.style.width=width+'px';el.style.height=height+'px'}
+  else if(!f){for(const property of ['left','top','width','height','min-width','min-height','max-width','max-height','right','bottom'])el.style.removeProperty(property)}
   if(button){button.textContent=f?'↧':'▣';button.title=f?'Ancrer '+kind:'Détacher '+kind}
  }
 }
 function bindColumnSplitter(splitterId,side){
- const handle=$(splitterId);if(!handle)return;let dragging=null;
- function setWidth(v){layout[side==='left'?'leftWidth':'rightWidth']=clamp(Math.round(v),side==='left'?160:190,side==='left'?440:480);applyWidths();save()}
- handle.addEventListener('pointerdown',e=>{if(e.button!==0)return;dragging={start:e.clientX,value:layout[side==='left'?'leftWidth':'rightWidth']};handle.setPointerCapture(e.pointerId);document.body.classList.add('resizing-panels');e.preventDefault()});
- handle.addEventListener('pointermove',e=>{if(!dragging)return;setWidth(dragging.value+(e.clientX-dragging.start)/uiScale()*(side==='left'?1:-1))});
- const stop=()=>{dragging=null;document.body.classList.remove('resizing-panels')};
- handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);
- handle.addEventListener('keydown',e=>{if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;e.preventDefault();const delta=(e.key==='ArrowRight'?1:-1)*(side==='left'?1:-1)*24;setWidth(layout[side==='left'?'leftWidth':'rightWidth']+delta)});
- handle.addEventListener('dblclick',()=>setWidth(side==='left'?220:275));
+ const handle=$(splitterId);if(!handle)return;
+ const property=side==='left'?'leftWidth':'rightWidth';
+ let startingWidths;
+ const splitter=bindPanelSplitter(handle,{direction:side==='left'?1:-1,getValue:()=>parseFloat(document.documentElement.style.getPropertyValue(side==='left'?'--left-pane-width':'--right-pane-width'))||layout[property],setValue:value=>{const next=widths(side,{[side]:Math.round(value)});if(!layout.float.hierarchy)layout.leftWidth=next.left;if(!layout.float.inspector)layout.rightWidth=next.right;applyWidths(side)},getLimits:()=>({min:widths(side,{[side]:0})[side],max:widths(side,{[side]:10000})[side]}),defaultValue:defaults[property],onStart:()=>startingWidths={leftWidth:layout.leftWidth,rightWidth:layout.rightWidth},onCancel:()=>{Object.assign(layout,startingWidths);applyWidths()},onEnd:save});
+ window.addEventListener('resize',splitter.refresh);
 }
 let frontZ=1000;
 function bringToFront(panel){
@@ -67,7 +62,10 @@ function bindFloating(kind){
  const handle=document.querySelector('[data-dock-handle="'+kind+'"]');
  const button=document.querySelector('[data-dock-toggle="'+kind+'"]');
  if(!panel||!handle||!button)return;
- makeWindowResizable(panel,{enabled:()=>!!layout.float[kind],minWidth:260,minHeight:210,onResize:rect=>{if(layout.float[kind])Object.assign(layout.float[kind],rect)},onEnd:save});
+ const resizer=makeWindowResizable(panel,{enabled:()=>!!layout.float[kind],minWidth:260,minHeight:210,controls:false,onResize:rect=>{if(layout.float[kind])Object.assign(layout.float[kind],rect)},onEnd:save});
+ const maximize=document.createElement('button');maximize.type='button';maximize.className='window-size-button dock-size-button';maximize.textContent='⛶';maximize.setAttribute('aria-label','Agrandir '+kind);maximize.title='Agrandir / restaurer '+kind;maximize.setAttribute('aria-pressed','false');(handle.querySelector('.dock-title-actions')||handle).append(maximize);
+ maximize.onclick=e=>{e.stopPropagation();if(!layout.float[kind])floatPanel(kind);bringToFront(panel);resizer.toggleMaximize()};
+ new MutationObserver(()=>{const active=panel.hasAttribute('data-window-maximized');maximize.textContent=active?'❐':'⛶';maximize.setAttribute('aria-pressed',String(active));maximize.setAttribute('aria-label',(active?'Restaurer ':'Agrandir ')+kind)}).observe(panel,{attributes:true,attributeFilter:['data-window-maximized']});
  button.addEventListener('click',e=>{e.stopPropagation();layout.float[kind]?dockPanel(kind):floatPanel(kind);if(layout.float[kind])bringToFront(panel)});
  panel.addEventListener('pointerdown',()=>{if(layout.float[kind])bringToFront(panel)},true);
  handle.addEventListener('dblclick',e=>{if(e.target.closest('button,input,select,a'))return;layout.float[kind]?dockPanel(kind):floatPanel(kind)});
@@ -110,7 +108,7 @@ function bindFloating(kind){
  if(typeof ResizeObserver!=='undefined'){
   let pending=false;
   new ResizeObserver(()=>{
-   if(!layout.float[kind]||panel.classList.contains('moving-panel')||pending)return;
+   if(!layout.float[kind]||panel.hasAttribute('data-window-maximized')||panel.classList.contains('moving-panel')||pending)return;
    const rect=panel.getBoundingClientRect();
    if(rect.width>0&&rect.height>0){
     layout.float[kind].width=Math.round(rect.width/uiScale());
@@ -155,7 +153,7 @@ export function loadCustomLayout(){
    if(panel&&['x','y','width','height'].every(key=>Number.isFinite(panel[key])))safeFloat[kind]=panel;
   }
  }
- layout={leftWidth:clamp(saved.leftWidth,160,440),rightWidth:clamp(saved.rightWidth,190,480),float:safeFloat};
+ layout={leftWidth:clamp(saved.leftWidth,160,640),rightWidth:clamp(saved.rightWidth,190,880),float:safeFloat};
  const center=document.querySelector('.center-stack');
  if(center&&Number.isFinite(saved.projectHeight))center.style.setProperty('--project-height',clamp(saved.projectHeight,120,650)+'px');
  applyLayout();save();window.dispatchEvent(new Event('resize'));return true;
@@ -164,6 +162,7 @@ let maximizedScene=false;
 export function toggleMaximizeScene(force){
  maximizedScene=typeof force==='boolean'?force:!maximizedScene;
  document.body.classList.toggle('scene-maximized',maximizedScene);
+ for(const button of document.querySelectorAll('[data-maximize-scene],#layoutMaximizeScene')){button.textContent=maximizedScene?'❐ Restaurer':'⛶ Agrandir la scène';button.setAttribute('aria-pressed',String(maximizedScene))}
  window.dispatchEvent(new Event('resize'));
  return maximizedScene;
 }
@@ -171,8 +170,10 @@ export function initDocking(){
  const saveButton=document.querySelector('#layoutSaveCustom'),loadButton=document.querySelector('#layoutLoadCustom'),maxButton=document.querySelector('#layoutMaximizeScene');
  if(saveButton)saveButton.onclick=()=>{saveButton.textContent=saveCustomLayout()?'✓ Disposition enregistrée':'Enregistrement impossible'};
  if(loadButton)loadButton.onclick=()=>{loadButton.textContent=loadCustomLayout()?'✓ Disposition restaurée':'Aucune disposition enregistrée'};
- if(maxButton)maxButton.onclick=()=>{maxButton.textContent=toggleMaximizeScene()?'Restaurer la scène':'Maximiser la scène'};
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&maximizedScene)toggleMaximizeScene(false)});
+ if(maxButton)maxButton.onclick=()=>toggleMaximizeScene();
+ const sceneSize=document.createElement('button');sceneSize.type='button';sceneSize.className='scene-size-button';sceneSize.dataset.maximizeScene='';sceneSize.textContent='⛶ Agrandir la scène';sceneSize.title='Agrandir / restaurer la scène · Double-clic sur Scene ou Game';sceneSize.setAttribute('aria-pressed','false');sceneSize.onclick=()=>toggleMaximizeScene();document.querySelector('.scene-actions')?.append(sceneSize);
+ for(const tab of ['sceneTab','gameTab'])$(tab)?.addEventListener('dblclick',()=>toggleMaximizeScene());
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&maximizedScene){e.preventDefault();e.stopImmediatePropagation();toggleMaximizeScene(false)}},true);
  document.querySelectorAll('[data-warlike-layout]').forEach(button=>{
   button.addEventListener('click',()=>{
    applyLayoutPreset(button.dataset.warlikeLayout);

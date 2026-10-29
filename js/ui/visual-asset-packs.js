@@ -56,8 +56,8 @@ export function initVisualAssetPacks(){
  const oldContent=[...parent.children],advanced=element('details','unity-project-advanced'),advancedTitle=element('summary','','Importer des fichiers et gérer mes prefabs');advanced.id='projectAdvancedFiles';advanced.append(advancedTitle,...oldContent);parent.append(root,advanced);advanced.addEventListener('toggle',()=>{root.hidden=advanced.open;if(!advanced.open)render()});
  const folderFolds={};
  let expanded=false,mode=workspace.mode,observer=null,page=1;const pageSize=48;
- const setExpanded=value=>{expanded=value;root.classList.toggle('warlike-asset-library-maximized',expanded);if(!expanded)for(const prop of ['left','top','right','bottom','width','height','min-width','min-height'])root.style.removeProperty(prop);expand.textContent=expanded?'Réduire':'Agrandir';expand.setAttribute('aria-pressed',String(expanded))};expand.onclick=()=>setExpanded(!expanded);root.addEventListener('keydown',event=>{if(event.key==='Escape'&&expanded){setExpanded(false);event.stopPropagation()}});
- makeWindowResizable(root,{enabled:()=>expanded,minWidth:400,minHeight:280,storageKey:'warlike.window.bounds.asset-library',moveHandle:toolbar});
+ const setExpanded=value=>{expanded=value;root.classList.toggle('warlike-asset-library-maximized',expanded);if(!expanded)for(const prop of ['left','top','right','bottom','width','height','min-width','min-height','max-width','max-height'])root.style.removeProperty(prop);expand.textContent=expanded?'Réduire':'Agrandir';expand.setAttribute('aria-pressed',String(expanded))};expand.onclick=()=>setExpanded(!expanded);root.addEventListener('keydown',event=>{if(event.key==='Escape'&&expanded){setExpanded(false);event.stopPropagation()}});
+ makeWindowResizable(root,{enabled:()=>expanded,minWidth:400,minHeight:280,controls:false,storageKey:'warlike.window.bounds.asset-library',moveHandle:toolbar});
  const button=(parent,label,action)=>{const b=element('button','',label);b.type='button';b.disabled=state.playing;b.onclick=action;parent.append(b);return b};
  const add=asset=>{
   if(state.playing)return;

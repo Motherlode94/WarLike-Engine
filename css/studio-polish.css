@@ -110,3 +110,11 @@ body:not(.hub-open) .scene-size-button{display:inline-flex!important;align-items
 @media(pointer:coarse){.side-splitter::before{inset:0 -10px}.project-splitter::before{inset:-10px 0}.window-resize-handle:is(.resize-e,.resize-w){width:20px}.window-resize-handle:is(.resize-n,.resize-s){height:20px}}
 /* Keep every separator inside the browser when the editor is zoomed. */
 body:not(.hub-open):not(.warlike-game-build) .workspace{height:calc(100dvh / var(--editor-ui-scale,1) - var(--warlike-menubar-height,60px) - var(--warlike-toolbar-height,0px) - var(--warlike-footer-height,26px))!important;max-height:calc(100dvh / var(--editor-ui-scale,1) - var(--warlike-menubar-height,60px) - var(--warlike-toolbar-height,0px) - var(--warlike-footer-height,26px))!important;min-height:0!important}
+
+/* Blueprint functions, typed inputs and the paused instruction. */
+.bp-debug-controls{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--panel-bg,#172332);border-bottom:1px solid #3c5266;flex-wrap:wrap}
+.bp-debug-status{color:#c8e4ed;font-size:12px;overflow-wrap:anywhere;flex:1;min-width:180px}
+.bp-function-selector{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:0 0 16px}.bp-function-selector .bp-field{flex:1;min-width:200px}
+.bp-function-parameter{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;border-top:1px solid #3c5266;padding:14px 0;align-items:end}
+.bp-node-v2.has-breakpoint .bp-node-drag:before{content:'●';color:#ff717b;margin-right:7px}.bp-node-v2.is-debug-current{outline:3px solid #ffd166;box-shadow:0 0 0 6px #ffd16630}.bp-breakpoint-button{margin-top:14px;color:#ffb7bb!important;white-space:normal}.bp-debug-controls button{min-height:32px}
+.bp-function-signature>summary{cursor:pointer;color:#d4e9f1;font-weight:600;padding:6px 0}.bp-function-signature[open]>summary{margin-bottom:12px}

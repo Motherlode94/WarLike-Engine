@@ -1,3 +1,4 @@
+import {defaultCollider3d,defaultJoint3d} from './collider-3d.js';
 import {defaultSurvival,defaultSurvivalNode,defaultSurvivalWorld} from './survival-runtime.js';
 import {survivalBuildTemplates} from './survival-scene.js';
 import {defaultAnimatorGraph} from './animator-graph.js';
@@ -32,6 +33,8 @@ export const webComponentDefinitions=[
  {id:'inventory',name:'Inventaire',category:'Personnage',description:'Objets, capacité et équipement.',create:defaultInventory},
  {id:'ai',name:'IA · Perception et navigation',category:'Intelligence artificielle',description:'Vision, mémoire, patrouille, poursuite et combat.',create:defaultAi},
  {id:'controller3d',name:'Contrôleur de personnage 3D',category:'Personnage',description:'Marche, sprint, saut et gravité.',modes:['3d'],create:defaultController},
+ {id:'collider3d',name:'Collider 3D',category:'Physique',description:'Boîte orientée, capsule ou sphère, dimensions et décalage en mètres.',modes:['3d'],create:defaultCollider3d},
+ {id:'joint3d',name:'Articulation 3D',category:'Physique',description:'Charnière, rotule ou liaison fixe entre deux corps Rapier.',modes:['3d'],create:defaultJoint3d},
  {id:'rigidbody3d',name:'Rigidbody 3D',category:'Physique',description:'Masse, gravité, friction et rebond.',modes:['3d'],create:defaultRigidbody3d},
  {id:'sequence',name:'Déclencheur · Blueprint',category:'Comportements',description:'Événement → conditions → instructions. Ouvrir le graphe dans Blueprint.',multiple:true,create:newSequence},
  {id:'horrorAiConfig',name:'IA · Survival Horror',category:'Intelligence artificielle',description:'Vision, audition, poursuite et recherche.',create:()=>({enabled:true,visionRange:230,hearingRange:220,chaseSpeed:75,searchSpeed:33,memorySeconds:5})},
@@ -46,7 +49,7 @@ export function addObjectComponent(object,id,mode){
  const definition=componentChoices(mode).find(d=>d.id===id);if(!definition)return false;
  if(id==='sequence'&&object.sequence){object.sequences??=[];if(object.sequences.length>=32)return false;object.sequences.push(definition.create());return true}
  if(hasObjectComponent(object,id))return false;
- object[id]=definition.create();if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='rigidbody2d')object.collider2d??=defaultCollider2d();return true;
+ object[id]=definition.create();if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='controller3d')object.collider3d??={...defaultCollider3d(),shape:'capsule'};if(['rigidbody3d','joint3d'].includes(id)){object.collider3d??=defaultCollider3d();object.collision3d=true;if(id==='joint3d')object.rigidbody3d??={...defaultRigidbody3d(),lockRotations:false}}if(id==='rigidbody2d')object.collider2d??=defaultCollider2d();return true;
 }
 export function resetObjectComponent(object,id){const definition=webComponentDefinitions.find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
 export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id))return false;delete object[id];if(id==='collider2d')object.collision3d=false;if(id==='superhero')delete object.heroState;if(id==='survival')delete object.survivalState;return true}
@@ -55,7 +58,7 @@ export function inspectorComponentRank(title){
  if(title==='Transform')return 0;
  if(/Renderer|Material|Sprite/.test(title))return 10;
  if(/Animator/.test(title))return 15;
- if(/Collider|Rigidbody|Collision/.test(title))return 20;
+ if(/Collider|Rigidbody|Collision|Articulation/.test(title))return 20;
  if(/Super-héros|Progression RPG/.test(title))return 25;
  if(/Stats|Health|Inventaire|Controller|Contrôleur/.test(title))return 30;
  if(/Enemy Intelligence|^IA|AI|Horror|Monde ouvert/.test(title))return 40;

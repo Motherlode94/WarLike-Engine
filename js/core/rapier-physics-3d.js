@@ -1,101 +1,89 @@
-// Optional high-quality third-party 3D rigidbody engine.
-// Rapier (Apache-2.0) is loaded as an external module, not copied into WarLike.
-// Loading must be explicitly initiated; WarLike's own physics remains the fallback.
-import {solidBody3d} from './collision-3d.js';
+import {solidBody3d,activeBody3d} from './collision-3d.js';
+import {characterBody3d,colliderGeometry3d,colliderPosition3d,rotationQuaternion3d,quaternionEuler3d} from './collider-3d.js';
+let activeScene=null;
+export const activeRapierScene3d=()=>activeScene;
 let rapier=null,initPromise=null,loadError=null;
 export const rapierStatus=()=>({ready:!!rapier,error:loadError});
 export async function loadRapier3d(){
- if(rapier)return rapier;
- if(initPromise)return initPromise;
- initPromise=(async()=>{
-  try{
-   const module=await import('@dimforge/rapier3d-compat');
-   const api=module.default||module;
-   await api.init();
-   rapier=api;loadError=null;return api;
-  }catch(error){loadError=String(error?.message||error);return null}
-  finally{initPromise=null}
- })();
- return initPromise;
+ if(rapier)return rapier;if(initPromise)return initPromise;
+ initPromise=(async()=>{try{const module=await import('@dimforge/rapier3d-compat');const api=module.default||module;await api.init();rapier=api;loadError=null;return api}catch(error){loadError=String(error?.message||error);return null}finally{initPromise=null}})();return initPromise;
 }
-/** Independent Rapier simulation; local scene coordinates use 64 px per meter. */
+const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,n(v)));
+const included=o=>activeBody3d(o)&&o.collision3d!==false&&(solidBody3d(o)||characterBody3d(o));
+const dynamic=o=>!!o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!characterBody3d(o)&&!o.ai?.enabled;
+const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,o.collider3d,o.controller3d,o.joint3d].map((v,i)=>i===2&&v?Object.fromEntries(Object.entries(v).filter(([k])=>!['vx','vy','vz'].includes(k))):v));
+const scenePosition=o=>({x:n(o.x),y:n(o.y),z:n(o.elevation3d)});
+const velocity=o=>({x:n(o.rigidbody3d?.vx),y:n(o.rigidbody3d?.vy),z:n(o.rigidbody3d?.vz)});
+const changed=(a,b)=>Object.keys(a).some(k=>Math.abs(a[k]-n(b?.[k]))>1e-5);
+function controllerFor(world,o){
+ if(!world.createCharacterController)return null;
+ const c=o.controller3d||{},controller=world.createCharacterController(clamp(c.skinWidth??.01,.001,.1));
+ controller.setMaxSlopeClimbAngle(clamp(c.slopeLimit??45,0,85)*Math.PI/180);controller.setMinSlopeSlideAngle(clamp(c.slideAngle??50,0,89)*Math.PI/180);
+ controller.setSlideEnabled(true);if(n(c.stepHeight,.28)>0)controller.enableAutostep(clamp(c.stepHeight??.28,0,.6),clamp(c.stepMinWidth??.12,.01,1),false);
+ if(n(c.snapToGround,.2)>0)controller.enableSnapToGround(clamp(c.snapToGround??.2,0,1));
+ controller.setApplyImpulsesToDynamicBodies(c.pushBodies!==false);controller.setCharacterMass(Math.max(.1,n(c.mass,70)));return controller;
+}
 export function createRapierScene(RAPIER,entities,gravity=15){
  if(!RAPIER?.World)throw Error('Rapier 3D not initialized');
- const world=new RAPIER.World({x:0,y:-Math.max(0,gravity),z:0});
- const actors=new Map();
- // Keep the same implicit floor as the built-in runtime.
- const floor=world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,-.5,0));
- world.createCollider(RAPIER.ColliderDesc.cuboid(20000,.5,20000),floor);
- const toMeters=v=>Number(v||0)/64;
+ const world=new RAPIER.World({x:0,y:-Math.max(0,gravity),z:0}),actors=new Map(),joints=new Map(),errors=[];
+ const floor=world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,-.5,0));world.createCollider(RAPIER.ColliderDesc.cuboid(20000,.5,20000),floor);
  for(const o of entities){
-  if(!solidBody3d(o))continue;
-  const isDynamic=!!o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!o.playable3d&&!o.ai?.enabled&&o.type!=='player';
-  const width=Math.max(.01,toMeters(o.w||32)),depth=Math.max(.01,toMeters(o.depth3d||o.h||32)),height=Math.max(.01,toMeters(o.h||32));
-  const pos={x:toMeters(o.x||0)+width/2,y:Number(o.elevation3d||0)+height/2,z:toMeters(o.y||0)+depth/2};
-  const desc=(isDynamic?RAPIER.RigidBodyDesc.dynamic():RAPIER.RigidBodyDesc.fixed()).setTranslation(pos.x,pos.y,pos.z);
-  if(isDynamic){desc.setLinvel(Number(o.rigidbody3d.vx||0)/64,Number(o.rigidbody3d.vy||0),Number(o.rigidbody3d.vz||0)/64);desc.setCcdEnabled?.(true);desc.setGravityScale?.(Math.max(0,Number(o.rigidbody3d.gravity??15))/Math.max(.001,gravity));desc.lockRotations?.()}
+  if(!included(o))continue;
+  const g=colliderGeometry3d(o),pos=colliderPosition3d(o,g),isCharacter=characterBody3d(o),isDynamic=dynamic(o),isKinematic=isCharacter||o.rigidbody3d?.kinematic===true;
+  const desc=(isDynamic?RAPIER.RigidBodyDesc.dynamic():isKinematic&&RAPIER.RigidBodyDesc.kinematicPositionBased?RAPIER.RigidBodyDesc.kinematicPositionBased():RAPIER.RigidBodyDesc.fixed()).setTranslation(pos.x,pos.y,pos.z);
+  const rotation=rotationQuaternion3d(o);desc.setRotation?.(rotation);
+  if(isDynamic){const v=velocity(o);desc.setLinvel(v.x/64,v.y,v.z/64);desc.setCcdEnabled?.(o.rigidbody3d.ccd!==false);desc.setGravityScale?.(Math.max(0,n(o.rigidbody3d.gravity,15))/Math.max(.001,gravity));if(o.rigidbody3d.lockRotations!==false)desc.lockRotations?.()}
   const body=world.createRigidBody(desc);
-  const collider=RAPIER.ColliderDesc.cuboid(width/2,height/2,depth/2);
-  if(isDynamic){
-   collider.setRestitution(Math.max(0,Math.min(1,Number(o.rigidbody3d.restitution??.2))));
-   collider.setFriction(Math.max(0,Math.min(1,Number(o.rigidbody3d.friction??.82))));
-   collider.setMass?.(Math.max(.01,Number(o.rigidbody3d.mass)||1));
-  }
-  world.createCollider(collider,body);
-  actors.set(o.id,{body,entity:o,width,depth,height,isDynamic,config:bodyConfig(o),lastPosition:scenePosition(o),lastVelocity:{x:Number(o.rigidbody3d?.vx||0),y:Number(o.rigidbody3d?.vy||0),z:Number(o.rigidbody3d?.vz||0)}});
+  const colliderDesc=g.shape==='capsule'?RAPIER.ColliderDesc.capsule(g.halfHeight,g.radius):g.shape==='sphere'?RAPIER.ColliderDesc.ball(g.radius):RAPIER.ColliderDesc.cuboid(g.w/2,g.h/2,g.d/2);
+  colliderDesc.setTranslation?.(g.offset.x,g.offset.y,g.offset.z);colliderDesc.setRestitution?.(clamp(o.rigidbody3d?.restitution??.2,0,1));colliderDesc.setFriction?.(clamp(o.rigidbody3d?.friction??.82,0,2));if(isDynamic)colliderDesc.setMass?.(Math.max(.01,n(o.rigidbody3d.mass,1)));
+  const collider=world.createCollider(colliderDesc,body),controller=isCharacter?controllerFor(world,o):null;
+  actors.set(o.id,{body,collider,controller,entity:o,geometry:g,width:n(o.w,32)/64,depth:n(o.depth3d,o.h||32)/64,height:n(o.h,32)/64,isDynamic,isKinematic,isCharacter,config:bodyConfig(o),lastPosition:scenePosition(o),lastVelocity:velocity(o),lastRotation:rotation});
  }
- return {world,actors,api:RAPIER,entityCount:entities.length};
+ for(const o of entities){const j=o.joint3d;if(!j||j.enabled===false)continue;const a=actors.get(o.id),b=actors.get(Number(j.targetId));if(!a||!b||a===b){errors.push(o.name+' : cible d’articulation invalide.');continue}
+  try{
+   const anchor={x:n(j.anchorX),y:n(j.anchorY),z:n(j.anchorZ)},target={x:n(j.targetAnchorX),y:n(j.targetAnchorY),z:n(j.targetAnchorZ)},q={x:0,y:0,z:0,w:1};let desc;
+   if(j.kind==='fixed')desc=RAPIER.JointData.fixed(anchor,q,target,q);
+   else if(j.kind==='ball')desc=RAPIER.JointData.spherical(anchor,target);
+   else{const axis={x:n(j.axisX),y:n(j.axisY,1),z:n(j.axisZ)},length=Math.hypot(axis.x,axis.y,axis.z);if(!length)throw Error('Axe nul.');for(const key of ['x','y','z'])axis[key]/=length;desc=RAPIER.JointData.revolute(anchor,target,axis)}
+   const joint=world.createImpulseJoint(desc,a.body,b.body,true);joint.setContactsEnabled?.(false);
+   if(j.kind==='hinge'&&j.limitsEnabled)joint.setLimits(Math.min(n(j.minAngle,-90),n(j.maxAngle,90))*Math.PI/180,Math.max(n(j.minAngle,-90),n(j.maxAngle,90))*Math.PI/180);joints.set(o.id,joint);
+  }catch(error){errors.push(o.name+' : '+error.message)}
+ }
+ world.propagateModifiedBodyPositionsToColliders?.();
+ activeScene={world,actors,joints,errors,api:RAPIER,entityCount:entities.length};return activeScene;
 }
-/** Sync external edits and impulses from gameplay components to Rapier before stepping. */
 export function synchronizeRapierScene(scene,entities){
- const current=new Map(entities.map(o=>[o.id,o]));
- // Topology or dimensions changed: caller should rebuild the Rapier world.
- if(current.size!==scene.entityCount && scene.entityCount!==undefined)return false;
- if(entities.filter(solidBody3d).length!==scene.actors.size)return false;
- for(const [id,record] of scene.actors){
-  const o=current.get(id);
-  if(!o||o!==record.entity||!solidBody3d(o)||bodyConfig(o)!==record.config)return false;
-  const {body,width,depth,height,isDynamic,lastVelocity}=record;
-  if(Math.abs(Math.max(.01,Number(o.w||32)/64)-width)>1e-5||
-     Math.abs(Math.max(.01,Number(o.depth3d||o.h||32)/64)-depth)>1e-5||
-     Math.abs(Math.max(.01,Number(o.h||32)/64)-height)>1e-5)return false;
-  const px=Number(o.x||0)/64+width/2,pz=Number(o.y||0)/64+depth/2,py=Number(o.elevation3d||0)+height/2;
-  if(!isDynamic){
-   const p=body.translation();
-   if(Math.abs(p.x-px)+Math.abs(p.y-py)+Math.abs(p.z-pz)>1e-5)body.setTranslation({x:px,y:py,z:pz},true);
-  }else if(o.rigidbody3d){
-   const previous=record.lastPosition;
-   if(Math.abs(o.x-previous.x)+Math.abs(o.y-previous.y)+Math.abs((o.elevation3d||0)-previous.z)>1e-5)body.setTranslation({x:px,y:py,z:pz},true);
-   const rb=o.rigidbody3d;
-   const proposed={x:Number(rb.vx||0),y:Number(rb.vy||0),z:Number(rb.vz||0)};
-   if(Math.abs(proposed.x-lastVelocity.x)+Math.abs(proposed.y-lastVelocity.y)+Math.abs(proposed.z-lastVelocity.z)>1e-5){
-    body.setLinvel({x:proposed.x/64,y:proposed.y,z:proposed.z/64},true);
-   }
+ const current=new Map(entities.map(o=>[o.id,o]));if(current.size!==scene.entityCount||entities.filter(included).length!==scene.actors.size)return false;
+ for(const [id,r] of scene.actors){const o=current.get(id);if(o!==r.entity||!included(o)||bodyConfig(o)!==r.config)return false;
+  if(Math.abs(n(o.w,32)/64-r.width)+Math.abs(n(o.h,32)/64-r.height)+Math.abs(n(o.depth3d,o.h||32)/64-r.depth)>1e-5)return false;
+  const pos=colliderPosition3d(o),rotation=rotationQuaternion3d(o);
+  if(!r.isDynamic||changed(scenePosition(o),r.lastPosition)){
+   if(changed(pos,r.body.translation())){r.body.setTranslation(pos,true);if(r.isKinematic)r.body.setNextKinematicTranslation?.(pos)}
   }
-  record.lastPosition=scenePosition(o);
+  if(changed(rotation,r.lastRotation)){r.body.setRotation?.(rotation,true);r.body.setNextKinematicRotation?.(rotation);r.lastRotation=rotation}
+  if(r.isDynamic&&changed(velocity(o),r.lastVelocity)){const v=velocity(o);r.body.setLinvel({x:v.x/64,y:v.y,z:v.z/64},true);r.lastVelocity=v}
+  r.lastPosition=scenePosition(o);
  }
- return true;
+ scene.world.propagateModifiedBodyPositionsToColliders?.();return true;
+}
+export function moveRapierCharacter3d(scene,o,dx,dy,dz,{ignore=null}={}){
+ const r=scene?.actors.get(o.id);if(!r?.controller||!r.collider)return null;
+ const requested={x:n(dx)/64,y:n(dz)/64,z:n(dy)/64},position=colliderPosition3d(o);
+ r.body.setTranslation(position,true);scene.world.propagateModifiedBodyPositionsToColliders?.();
+ r.controller.computeColliderMovement(r.collider,requested,scene.api.QueryFilterFlags?.EXCLUDE_SENSORS,undefined,ignore?collider=>collider.handle!==scene.actors.get(ignore.id)?.collider?.handle:undefined);
+ const v=r.controller.computedMovement(),p={x:position.x+v.x,y:position.y+v.y,z:position.z+v.z};
+ r.body.setTranslation(p,true);r.body.setNextKinematicTranslation?.(p);
+ o.x+=v.x*64;o.y+=v.z*64;o.elevation3d=Math.max(0,n(o.elevation3d)+v.y);o.grounded3d=r.controller.computedGrounded();r.lastPosition=scenePosition(o);
+ scene.world.propagateModifiedBodyPositionsToColliders?.();
+ return {blockedX:Math.abs(v.x-requested.x)>.001,blockedY:Math.abs(v.z-requested.z)>.001,blockedZ:Math.abs(v.y-requested.y)>.001,grounded:o.grounded3d,ceiling:requested.y>0&&v.y<requested.y-.001};
 }
 export function stepRapierScene(scene,dt){
- const t=Math.min(.05,Math.max(0,Number(dt)||0));if(!t)return;
- scene.world.timestep=t;
- scene.world.step();
- for(const record of scene.actors.values()){
-  const {body,entity,width,depth,height,isDynamic}=record;
-  if(!isDynamic)continue;
-  const p=body.translation(),v=body.linvel();
-  entity.x=(p.x-width/2)*64;
-  entity.y=(p.z-depth/2)*64;
-  entity.elevation3d=Math.max(0,p.y-height/2);
-  if(entity.rigidbody3d){
-   entity.rigidbody3d.vx=v.x*64;
-   entity.rigidbody3d.vz=v.z*64;
-   entity.rigidbody3d.vy=v.y;
-   record.lastVelocity={x:v.x*64,y:v.y,z:v.z*64};
-  }
-  record.lastPosition=scenePosition(entity);
+ const t=Math.min(.05,Math.max(0,n(dt)));if(!t)return;scene.world.timestep=t;scene.world.step();
+ for(const r of scene.actors.values()){if(!r.isDynamic)continue;const {body,entity:o,width,depth,height}=r,p=body.translation(),v=body.linvel();o.x=(p.x-width/2)*64;o.y=(p.z-depth/2)*64;o.elevation3d=Math.max(0,p.y-height/2);
+  if(o.rigidbody3d){o.rigidbody3d.vx=v.x*64;o.rigidbody3d.vy=v.y;o.rigidbody3d.vz=v.z*64;r.lastVelocity=velocity(o)}
+  if(o.rigidbody3d?.lockRotations===false&&body.rotation){const rotation=body.rotation();Object.assign(o,quaternionEuler3d(rotation));r.lastRotation=rotation}
+  r.lastPosition=scenePosition(o);
  }
 }
-export function disposeRapierScene(scene){scene?.world?.free?.();scene?.actors?.clear?.()}
-const scenePosition=o=>({x:Number(o.x)||0,y:Number(o.y)||0,z:Number(o.elevation3d)||0});
-const bodyConfig=o=>JSON.stringify([!!o.rigidbody3d?.enabled,!!o.rigidbody3d?.kinematic,!!o.playable3d,!!o.ai?.enabled,o.rigidbody3d?.mass??1,o.rigidbody3d?.gravity??15,o.rigidbody3d?.friction??.82,o.rigidbody3d?.restitution??.2]);
+export function disposeRapierScene(scene){if(activeScene===scene)activeScene=null;scene?.world?.free?.();scene?.actors?.clear?.();scene?.joints?.clear?.()}

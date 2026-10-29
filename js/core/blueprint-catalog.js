@@ -3,6 +3,7 @@ const groups={
  'Survie · Fabrication':['survivalInteract','craftSurvivalItem','consumeSurvivalItem','repairSurvivalTool'],
  'Animation & FX':['playAnimatorState','setAnimatorParameter','emitOwnedFx'],
  'Hero Forge':['castHeroPower','restoreHeroEnergy','giveExperience','upgradeHeroSkill','emitFx','repairSimulationNode','rtsOrder'],
+ 'Fonctions':['callFunction','returnFunction'],
  'Logique':['branch','wait','emitSignal','enableObject'],
  'Variables':['setVariable','addVariable','setLocal','addLocal'],
  'Partie & sauvegarde':['winGame','loseGame','pauseGame','resumeGame','saveGame','loadGame','setCheckpoint','restoreCheckpoint','loadScene'],
@@ -15,6 +16,7 @@ const groups={
  'Intelligence artificielle':['setAiState','setAiFaction','setAiTarget','clearAiTarget','setAiEnabled','setAiDetection','setAiAttackRange','setAiPatrolPoint','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration']
 };
 export const instructionLabels={
+ callFunction:'Appeler une fonction',returnFunction:'Retourner de la fonction',
  consumeQuestItem:'Consommer un objet de quête partagé',repairSurvivalTool:'Réparer un outil de survie',survivalInteract:'Récolter une ressource de survie',craftSurvivalItem:'Fabriquer un objet de survie',consumeSurvivalItem:'Utiliser une provision ou un campement',
  playAnimatorState:'Activer un état Animator',setAnimatorParameter:'Définir un paramètre Animator',emitOwnedFx:'Déclencher le FX de l’objet',
  castHeroPower:'Activer un pouvoir',restoreHeroEnergy:'Restaurer de l’énergie',giveExperience:'Donner de l’expérience',upgradeHeroSkill:'Améliorer une compétence',emitFx:'Émettre un effet visuel',repairSimulationNode:'Secourir / réparer une installation',rtsOrder:'Donner un ordre RTS',
@@ -39,7 +41,7 @@ const keyConditions=new Set(['variable','localVariable','inventoryHas','inventor
 const bools=new Set(['enableObject','setVisibility','setCollision','setLight','setAudio','setVehicleEngine','setVehicleWeapon','setAiEnabled','setAiLineOfSight']);
 const texts=new Set(['message','showDialogue','setVariable','setLocal','setAnimation','setBehavior','emitSignal','setTag','removeTag','setObjective','setAiState','setAiFaction','loadScene','winGame','loseGame','setVehicleState']);
 const noValue=new Set(['branch','destroyObject','equipItem','completeObjective','setCheckpoint','restoreCheckpoint','stopTimer','saveGame','loadGame','pauseGame','resumeGame','closeDialogue','clearAiTarget','reloadWeapon','fireVehicleWeapon']);
-export const targetable=type=>!['consumeQuestItem','branch','wait','message','emitSignal','setVariable','addVariable','setLocal','addLocal','setObjective','completeObjective','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'].includes(type);
+export const targetable=type=>!['callFunction','returnFunction','consumeQuestItem','branch','wait','message','emitSignal','setVariable','addVariable','setLocal','addLocal','setObjective','completeObjective','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'].includes(type);
 export function actionFields(type){
  if(type==='loadScene')return [{key:'value',label:'Identifiant de la scène',type:'text'},{key:'preserveProgress',label:'Conserver le groupe et l’état des scènes visitées',type:'boolean'},{key:'entryX',label:'Entrée X · optionnel',type:'number'},{key:'entryY',label:'Entrée Y · optionnel',type:'number'}];
  if(type==='consumeQuestItem')return [{key:'key',label:'Objet de quête',type:'text',default:'adventure-key'},{key:'value',label:'Quantité',type:'number',default:1}];

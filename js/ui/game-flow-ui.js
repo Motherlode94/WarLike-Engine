@@ -1,3 +1,4 @@
+import {blueprintDebugger} from '../core/blueprint-debugger.js';
 import {lanState,lanCommands,isLanGuest} from '../core/lan-state.js';
 import {playSound,unlockAudio} from '../core/audio.js';
 import {state} from '../core/state.js';
@@ -34,7 +35,7 @@ export function initGameFlowUi(){
    root.append(box);if(lastDialogueId!==d.id&&canAnswer(d)){controls.querySelector('button')?.focus();lastDialogueId=d.id}
   }else lastDialogueId=null;
   if(gameSession.notice&&active)root.append(element('div','game-session-notice',gameSession.notice));
-  if(!active||!gameIsRunning()){
+  if(!active||gameSession.phase!=='playing'){
    const veil=element('div','game-menu-veil'),menu=element('section','game-menu-card');menu.setAttribute('role','dialog');menu.setAttribute('aria-label','Menu de la partie');
    const phase=!active?'menu':gameSession.phase;menu.append(element('span','bp-eyebrow',phase==='menu'?'WARLIKE GAME':phase==='paused'?'PRENDS UNE PAUSE':'FIN DE LA PARTIE'),element('h1','',phase==='menu'?gameProject.title:phase==='paused'?'Partie en pause':phase==='won'?'Mission accomplie':'Partie terminée'));
    menu.append(element('p','',phase==='menu'?'Ton aventure commence ici.':gameSession.notice||'Ton aventure t’attend.'));
@@ -56,6 +57,7 @@ export function initGameFlowUi(){
   if(event.key==='Escape')answer(-1,d);else if(event.key==='Enter')answer(Number(document.activeElement?.dataset.dialogueChoice)||0,d);else answer(Number(event.key)-1,d);
  },{capture:true});
  window.addEventListener('keydown',event=>{
+  if(event.target?.closest?.('#blueprintDialog')||blueprintDebugger.paused)return;
   if(event.repeat||!state.playing||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
   if(['F5','F9'].includes(event.key)){event.preventDefault();if(!isLanGuest()&&state.entities.some(o=>o.survivalWorld?.enabled||o.adventure)){try{if(event.key==='F5')saveGameSlot(context());else{queueLoadGame(context());setGamePhase('playing')}}catch(error){gameSession.notice=error.message}signature=''}return}
   if(event.key==='Escape'&&!isLanGuest()&&['playing','paused'].includes(gameSession.phase)){event.preventDefault();document.exitPointerLock?.();setGamePhase(gameSession.phase==='paused'?'playing':'paused');state.keys.clear();signature=''}

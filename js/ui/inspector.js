@@ -143,7 +143,7 @@ component(root,'Transform',body=>{
   row.append(group);body.append(row);
  };
  vector('Position',workspace.mode==='3d'?[['X','x'],['Y','elevation3d'],['Z','y']]:[['X','x'],['Y','y']]);
- field(body,o,'rotation','Rotation (°)');
+ field(body,o,'rotation',workspace.mode==='3d'?'Rotation Y (°)':'Rotation (°)');if(workspace.mode==='3d'){field(body,o,'rotationX3d','Inclinaison X (°)');field(body,o,'rotationZ3d','Inclinaison Z (°)')}
  vector('Dimensions',workspace.mode==='3d'?[['X','w'],['Y','h'],['Z','depth3d']]:[['X','w'],['Y','h']]);
 });
 // Unity-style Inspector: component properties first, optional gameplay templates in one closed drawer.
@@ -169,14 +169,30 @@ component(advancedContent,'Quick Start • Gameplay Recipes',body=>{
  body.append(picker);
  const apply=document.createElement('button');apply.textContent='＋ Appliquer le modèle';apply.disabled=state.playing;apply.onclick=()=>{if(!confirm('Appliquer ce modèle à '+o.name+' ? Les composants concernés seront remplacés.'))return;if((picker.value.startsWith('community:')?applyCommunityRecipe(o,picker.value,workspace.mode):applyRecipe(o,picker.value))){record('Gameplay Recipe : '+picker.value);notify()}};body.append(apply);
 });
+if(workspace.mode==='3d'){
+ component(root,'Collider 3D',body=>{
+  if(!o.collider3d){const note=document.createElement('p');note.textContent=o.controller3d||o.playable3d?'Capsule automatique du personnage. Ajoute Collider 3D pour personnaliser ses dimensions.':'Boîte automatique à la taille de l’objet. Ajoute Collider 3D pour choisir une autre forme.';body.append(note);return}
+  selectField(body,o.collider3d,'shape','Forme',[{value:'box',label:'Boîte orientée'},{value:'capsule',label:'Capsule verticale'},{value:'sphere',label:'Sphère'}]);
+  for(const [key,label] of [['width','Largeur (m, 0 = auto)'],['height','Hauteur (m, 0 = auto)'],['depth','Profondeur (m, 0 = auto)'],['radius','Rayon (m, 0 = auto)'],['offsetX','Décalage X (m)'],['offsetY','Décalage vertical (m)'],['offsetZ','Décalage Z (m)']])field(body,o.collider3d,key,label);
+  const note=document.createElement('p');note.textContent='Rapier utilise la rotation de Transform. En moteur interne, les formes avancées utilisent une boîte de secours.';body.append(note);
+ });
+
+ if(o.joint3d)component(root,'Articulation 3D',body=>{
+  const j=o.joint3d;selectField(body,j,'kind','Type',[{value:'hinge',label:'Charnière'},{value:'ball',label:'Rotule'},{value:'fixed',label:'Liaison fixe'}]);
+  selectField(body,j,'targetId','Corps relié',[{value:'0',label:'Choisir un corps'},...state.entities.filter(e=>e!==o).map(e=>({value:String(e.id),label:e.name}))]);
+  for(const [key,label] of [['anchorX','Ancrage local X (m)'],['anchorY','Ancrage local Y (m)'],['anchorZ','Ancrage local Z (m)'],['targetAnchorX','Ancrage cible X (m)'],['targetAnchorY','Ancrage cible Y (m)'],['targetAnchorZ','Ancrage cible Z (m)']])field(body,j,key,label);
+  if(j.kind==='hinge'){for(const [key,label] of [['axisX','Axe X'],['axisY','Axe Y'],['axisZ','Axe Z'],['minAngle','Angle minimum (°)'],['maxAngle','Angle maximum (°)']])field(body,j,key,label);j.limitMode??=j.limitsEnabled?'on':'off';selectField(body,j,'limitMode','Limiter la rotation',[{value:'off',label:'Non'},{value:'on',label:'Oui'}]);j.limitsEnabled=j.limitMode==='on'}
+  const note=document.createElement('p');note.textContent='Les ancrages sont relatifs au centre des corps, en mètres. Active Rapier ; libère les rotations du Rigidbody pour une charnière ou une rotule.';body.append(note);
+ });
+}
 if(workspace.mode==='3d'&&o.rigidbody3d)component(root,'Physics 3D • Rigidbody',body=>{
  if(!o.rigidbody3d){const add=document.createElement('button');add.textContent='＋ Add Rigidbody 3D';add.disabled=state.playing;add.onclick=()=>{o.rigidbody3d=defaultRigidbody3d();record('Add Rigidbody 3D');notify()};body.append(add);return}
  const rb=o.rigidbody3d;
  for(const [key,label] of [['mass','Mass'],['gravity','Gravity'],['restitution','Bounciness (0-1)'],['friction','Friction (0-1)'],['vx','Velocity X'],['vy','Velocity Y'],['vz','Velocity Z']])field(body,rb,key,label);
- for(const [key,label] of [['enabled','Enabled'],['kinematic','Kinematic (no physics)']]){
+ for(const [key,label] of [['enabled','Enabled'],['kinematic','Cinématique'],['lockRotations','Verrouiller les rotations'],['ccd','Collision continue (CCD)']]){
   const row=document.createElement('label');row.className='logic-flag';const input=document.createElement('input');input.type='checkbox';input.checked=rb[key]===true;input.disabled=state.playing;input.onchange=()=>{rb[key]=input.checked;record('Rigidbody '+key);notify()};row.append(input,document.createTextNode(label));body.append(row);
  }
- const info=document.createElement('p');info.textContent='Prototype physique 3D : gravité, rebond au sol et collisions AABB simples. Le joueur et les agents IA utilisent leur propre contrôleur.';body.append(info);
+ const info=document.createElement('p');info.textContent='Rapier : corps dynamiques, colliders orientés, masse, impulsions, CCD et articulations. Le contrôleur du joueur partage le même monde physique.';body.append(info);
 
 });
 if(['horrorAiConfig','horrorHideConfig','horrorFearConfig'].some(key=>o[key]))component(root,'Survival Horror',body=>{
@@ -259,7 +275,7 @@ renderObjectBehaviors(root,o);
   const pathLabel=document.createElement('label');const pathCb=document.createElement('input');pathCb.type='checkbox';pathCb.checked=ai.pathfinding!==false;pathCb.disabled=state.playing;pathCb.onchange=()=>{ai.pathfinding=pathCb.checked;record('Navigation A*');notify()};pathLabel.append(pathCb,document.createTextNode(' Navigation A*'));body.append(pathLabel);
  });
  if(workspace.mode==='3d'&&o.controller3d)component(root,'Contrôleur de personnage 3D',body=>{
-  for(const [key,label] of [['walkSpeed','Marche'],['sprintSpeed','Sprint'],['jumpForce','Saut'],['gravity','Gravité'],['stepHeight','Hauteur de marche (m)'],['coyoteTime','Tolérance après rebord (s)'],['jumpBuffer','Mémorisation du saut (s)'],['dodgeDistance','Distance esquive (m)'],['dodgeCooldown','Recharge esquive (s)'],['staminaCost','Coût endurance']])field(body,o.controller3d,key,label);
+  for(const [key,label] of [['walkSpeed','Marche'],['sprintSpeed','Sprint'],['jumpForce','Saut'],['gravity','Gravité'],['slopeLimit','Pente maximale (°)'],['slideAngle','Glisser au-delà de (°)'],['snapToGround','Accroche au sol (m)'],['skinWidth','Marge de contact (m)'],['stepMinWidth','Largeur minimale de marche (m)'],['mass','Masse pour pousser (kg)'],['stepHeight','Hauteur de marche (m)'],['coyoteTime','Tolérance après rebord (s)'],['jumpBuffer','Mémorisation du saut (s)'],['dodgeDistance','Distance esquive (m)'],['dodgeCooldown','Recharge esquive (s)'],['staminaCost','Coût endurance']])field(body,o.controller3d,key,label);
  });
 if(o.playable3d||o.type==='player'||o.type==='character'||getAsset(o.assetId)?.category==='Characters'||o.cameraRig){
  component(root,'Caméra de jeu',body=>{

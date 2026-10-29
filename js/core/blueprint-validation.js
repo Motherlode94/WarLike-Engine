@@ -1,3 +1,4 @@
+import {validateFunctionDefinitions} from './blueprint-data.js';
 import {sequenceEntries,sequenceEvents,sequenceInstructions} from './logic-sequences.js';
 import {inspectGraph,compileGraph} from './blueprint-graph.js';
 const requiredKey=new Set(['setVariable','addVariable','setLocal','addLocal','setObjective','addObjectiveProgress','completeObjective','startTimer','stopTimer','giveItem','removeItem','consumeQuestItem','equipItem']);
@@ -6,10 +7,12 @@ import {gameProject,validEntities,safeKey} from './game-project.js';
 export function inspectBlueprintGame(entities,{project=gameProject,requirePlayer=true}={}){
  const issues=[],add=(severity,message,entityId=null)=>issues.push({severity,message,entityId});
  if(!validEntities(entities))return [{severity:'error',message:'Scène invalide : vérifie les identifiants et les dimensions.'}];
+ for(const message of validateFunctionDefinitions(project.functions||[]))add('error',message);
  const names=new Set();for(const v of project.variables||[]){if(!safeKey(v.name)||names.has(v.name))add('error','Nom de variable globale invalide ou dupliqué : '+String(v.name));names.add(v.name)}
  const ids=new Set(entities.map(o=>o.id)),knownScenes=new Set([project.activeSceneId,...project.scenes.map(s=>s.id)]);
  if(!knownScenes.has(project.startupSceneId))add('error','La scène de démarrage est absente.');
  if(requirePlayer&&!entities.some(o=>o.type==='player'||o.type==='character'||o.playable3d||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters'))add('error','Ajoute un personnage jouable.');
+ for(const o of entities)if(o.joint3d?.enabled!==false&&o.joint3d){if(!ids.has(Number(o.joint3d.targetId))||Number(o.joint3d.targetId)===o.id)add('error','Articulation : choisis un autre corps existant pour '+o.name,o.id);if(project.physics3d==='builtin')add('warning','Les articulations nécessitent Rapier.',o.id)}
  let hasWin=false;const emitted=new Set(),listened=new Map();
  const scan=(steps,owner,depth=0)=>{
   if(depth>8){add('error','Trop de branches imbriquées.',owner.id);return}
@@ -17,6 +20,7 @@ export function inspectBlueprintGame(entities,{project=gameProject,requirePlayer
   for(const a of steps.slice(0,1024)){
    if(!a||a.disabled)continue;
    if(!sequenceInstructions.includes(a.type))add('error','Instruction inconnue : '+String(a.type),owner.id);
+   if(a.type==='callFunction'&&!project.functions?.some(f=>f.id===a.functionId))add('error','Fonction absente : '+String(a.functionId),owner.id);
    if(a.type==='winGame')hasWin=true;
    if(a.type==='emitSignal'&&String(a.value||a.key||''))emitted.add(String(a.value||a.key));
    if(requiredKey.has(a.type)&&!String(a.key??'').trim())add('warning','« '+a.type+' » n’a pas d’identifiant : renseigne le champ clé.',owner.id);
@@ -27,6 +31,7 @@ export function inspectBlueprintGame(entities,{project=gameProject,requirePlayer
    if(a.type==='branch'){scan(a.thenInstructions,owner,depth+1);scan(a.elseInstructions,owner,depth+1)}
   }
  };
+ for(const f of project.functions||[]){if(!f||typeof f!=='object')continue;if(f.graph){try{scan(compileGraph(f.graph).instructions,{id:null})}catch(error){add('error',error.message)}}else scan(f.instructions,{id:null})}
  for(const o of entities)for(const {sequence:s} of sequenceEntries(o)){
   if(s.enabled===false)continue;
   if(!sequenceEvents.includes(s.event))add('error','Déclencheur inconnu : '+String(s.event),o.id);

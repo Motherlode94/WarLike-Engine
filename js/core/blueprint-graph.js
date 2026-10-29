@@ -65,9 +65,9 @@ export function compileGraph(graph,{nodeIds=false}={}){
    const node=byId.get(id);
    if(node.kind==='condition'){
     const branch={type:'branch',conditions:structuredClone(node.conditions||[]),conditionMode:node.conditionMode||'all',thenInstructions:compile(next(id,'true')),elseInstructions:compile(next(id,'false'))};
-    if(nodeIds)branch._nodeId=id;steps.push(branch);return steps;
+    if(node.breakpoint)branch.breakpoint=true;if(nodeIds)branch._nodeId=id;steps.push(branch);return steps;
    }
-   const action=structuredClone(node.action||{type:'message',value:'Action'});if(nodeIds)action._nodeId=id;steps.push(action);id=next(id);
+   const action=structuredClone(node.action||{type:'message',value:'Action'});if(node.breakpoint)action.breakpoint=true;if(nodeIds)action._nodeId=id;steps.push(action);id=next(id);
   }
   return steps;
  };

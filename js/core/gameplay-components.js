@@ -12,7 +12,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const defaultStats=()=>({maxHealth:100,health:100,maxStamina:100,stamina:100,staminaRegen:14});
 export const defaultInventory=()=>({capacity:16,items:[],equipment:{weapon:null,armor:null}});
 export const defaultAi=()=>({enabled:true,state:'idle',detection:450,attackRange:65,attackDamage:8,attackCooldown:1.2,speed:75,homeX:null,homeY:null,patrolRadius:130,pathfinding:true,requireLineOfSight:false,fieldOfView:360,memoryDuration:4,searchDuration:2,pathCellSize:48,repathInterval:.75});
-export const defaultController=()=>({walkSpeed:4.2,sprintSpeed:7,jumpForce:5.6,gravity:15,dodgeDistance:1.8,dodgeCooldown:.8,staminaCost:20,stepHeight:.28,coyoteTime:.1,jumpBuffer:.12});
+export const defaultController=()=>({walkSpeed:4.2,sprintSpeed:7,jumpForce:5.6,gravity:15,dodgeDistance:1.8,dodgeCooldown:.8,staminaCost:20,stepHeight:.28,coyoteTime:.1,jumpBuffer:.12,slopeLimit:45,slideAngle:50,snapToGround:.2,stepMinWidth:.12,skinWidth:.01,mass:70,pushBodies:true});
 export function ensureStats(o){o.stats??={...defaultStats(),maxHealth:Math.max(100,healthOf(o)),health:Math.max(0,healthOf(o))};return o.stats}
 export function ensureAi(o){o.ai={...defaultAi(),...o.ai};return o.ai}
 export function setHealth(o,value){const s=ensureStats(o);s.health=clamp(n(value),0,Math.max(1,n(s.maxHealth,100)));o.hp=s.health;return s.health}
@@ -126,13 +126,13 @@ export function cameraRelativeWalk3d(right,forward,yaw){
  const z=(-right*Math.sin(yaw)-forward*Math.cos(yaw))/length;
  return {x,z,length};
 }
-export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()}={}){
+export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set(),moveCharacter=null}={}){
  const cfg=p.controller3d||defaultController(),stats=ensureStats(p),frame=clamp(n(dt),0,.1);if(!frame)return;
  if(p.superhero?.enabled!==false&&p.heroState?.flight){delete p._support3d;stepHeroFlight(p,keys,frame,entities,'3d',yaw);return}
  // A moving support carries its passenger, while walls and ceilings still block it.
  const prior=p._support3d,support=prior&&entities.find(o=>o.id===prior.id&&solidBody3d(o));
- if(support&&p.grounded3d&&n(p._verticalVelocity)<=0){const dx=n(support.x)-prior.x,dy=n(support.y)-prior.y,dz=(n(support.elevation3d)-prior.z)*64;if(Math.hypot(dx,dy,dz)<256)moveBody3d(p,dx,dy,dz,entities,{ignore:support,recover:false})}
- moveBody3d(p,0,0,0,entities);
+ if(support&&p.grounded3d&&n(p._verticalVelocity)<=0){const dx=n(support.x)-prior.x,dy=n(support.y)-prior.y,dz=(n(support.elevation3d)-prior.z)*64;if(Math.hypot(dx,dy,dz)<256){if(moveCharacter)moveCharacter(p,dx,dy,dz,{ignore:support});else moveBody3d(p,dx,dy,dz,entities,{ignore:support,recover:false})}}
+ if(!moveCharacter)moveBody3d(p,0,0,0,entities);
  const ax=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const az=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
  const len=Math.hypot(ax,az),sprint=keys.has('shift')&&stats.stamina>0,jump=keys.has(' ')||keys.has('space');
@@ -142,13 +142,14 @@ export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()
  p._dodgeHeld=dodgeDown;
  const dodge=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0,movement=cameraRelativeWalk3d(ax,az,yaw),speed=Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64*(p.survival?.enabled!==false&&p.survival&&p.survivalState?.rest<15?.6:1)+dodge;
  if(Number.isFinite(yaw))p.rotation=cameraFacingDegrees(yaw);if(len&&sprint)stats.stamina=clamp(stats.stamina-18*frame,0,n(stats.maxStamina,100));
- const grounded=(p.elevation3d<=.0001||!!supportBody3d(p,entities))&&p._verticalVelocity<=0;
+ const grounded=(moveCharacter?p.grounded3d||p.elevation3d<=.015:p.elevation3d<=.0001||!!supportBody3d(p,entities))&&p._verticalVelocity<=0;
  p._coyote3d=grounded?clamp(n(cfg.coyoteTime,.1),0,.3):Math.max(0,n(p._coyote3d)-frame);
  p._jumpBuffer3d=Math.max(0,n(p._jumpBuffer3d)-frame);
  if(jump&&!p._jumpHeld||pressedKeys.has(' ')||pressedKeys.has('space'))p._jumpBuffer3d=Math.max(.001,clamp(n(cfg.jumpBuffer,.12),0,.3));p._jumpHeld=jump;
  if(p._jumpBuffer3d>0&&(grounded||p._coyote3d>0)){p._verticalVelocity=Math.max(0,n(cfg.jumpForce,5.6));p._jumpBuffer3d=0;p._coyote3d=0;p.grounded3d=false;delete p._support3d}
  const steps=Math.max(1,Math.ceil(frame/(1/90))),t=frame/steps,stepHeight=clamp(n(cfg.stepHeight,.28),0,.6),gravity=Math.max(0,n(cfg.gravity,15));
  for(let i=0;i<steps;i++){
+  if(moveCharacter){p._verticalVelocity-=gravity*t;const hit=moveCharacter(p,movement.x*speed*t,movement.z*speed*t,p._verticalVelocity*t*64);if(hit){if(hit.grounded&&p._verticalVelocity<0||hit.ceiling)p._verticalVelocity=0;continue}}
   const supported=(p.elevation3d<=.0001||!!supportBody3d(p,entities))&&p._verticalVelocity<=0;
   for(const [axis,delta] of [['x',movement.x*speed*t],['y',movement.z*speed*t]]){
    if(!delta)continue;const before={x:p.x,y:p.y,z:p.elevation3d},result=moveBody3d(p,axis==='x'?delta:0,axis==='y'?delta:0,0,entities,{recover:false});
@@ -161,7 +162,7 @@ export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()
   }
   p._verticalVelocity-=gravity*t;const contact=moveBody3d(p,0,0,p._verticalVelocity*t*64,entities,{recover:false});if(contact.blockedZ)p._verticalVelocity=0;
  }
- const standing=supportBody3d(p,entities);p.grounded3d=(p.elevation3d<=.0001||!!standing)&&p._verticalVelocity<=0;
+ const standing=supportBody3d(p,entities);p.grounded3d=(moveCharacter?p.grounded3d:p.elevation3d<=.0001||!!standing)&&p._verticalVelocity<=0;
  p._support3d=p.grounded3d&&standing?{id:standing.id,x:n(standing.x),y:n(standing.y),z:n(standing.elevation3d)}:null;
  p.animation=p.grounded3d?(len?(sprint?'run':'walk'):'idle'):(p._verticalVelocity>0?'jump':'fall');
 }

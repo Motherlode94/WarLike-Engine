@@ -1,3 +1,5 @@
+import {validateFunctionDefinitions} from '../core/blueprint-data.js';
+import {blueprintDebugger,pauseBlueprint,resumeBlueprint,stepBlueprint} from '../core/blueprint-debugger.js';
 import {workspace} from '../core/workspaces.js';
 import {presetsForWorkspace,createBlueprintPreset} from '../core/blueprint-presets.js';
 import {active,state,notify} from '../core/state.js';
@@ -11,8 +13,8 @@ import {record} from '../core/history.js';
 import {saveProject} from '../core/project-hub.js';
 import {renderSequenceEditor} from './logic-sequence-editor.js';
 import {renderBlueprintGraph} from './blueprint-graph-editor.js';
-import {element,button,field,select} from './blueprint-controls.js';
-const ui={tab:'graph',sequenceKey:null,nodeId:null,zoom:.85,search:'',category:'Toutes',objectSearch:''};
+import {element,button,field,select,editActions,editTypedValue} from './blueprint-controls.js';
+const ui={tab:'graph',sequenceKey:null,nodeId:null,zoom:.85,search:'',category:'Toutes',objectSearch:'',functionId:null};
 export function initBlueprintWorkspace(){
  const open=document.getElementById('openBlueprint'),dialog=document.getElementById('blueprintDialog'),content=document.getElementById('blueprintContent');
  if(!open||!dialog||!content)return;
@@ -40,7 +42,8 @@ export function initBlueprintWorkspace(){
   }
   const foot=element('div','bp-sidebar-foot');foot.append(element('strong','','Une idée → un jeu'),element('p','','Crée ta logique, teste-la, puis exporte ton jeu Web.'));button(foot,'Voir le parcours complet →',()=>{ui.tab='project';render()},'bp-text-button');sidebar.append(foot);
   const tabs=element('nav','bp-tabs');tabs.setAttribute('aria-label','Espaces Blueprint');
-  for(const [id,label] of [['graph','⬡ Graphe'],['instructions','☷ Instructions'],['library','▦ Bibliothèque'],['project','◇ Projet & export'],['debug','⌁ Débogage']]){const b=button(tabs,label,()=>{ui.tab=id;render()},'bp-tab');b.disabled=false;b.classList.toggle('is-active',ui.tab===id);b.setAttribute('aria-current',ui.tab===id?'page':'false')}
+  for(const [id,label] of [['graph','⬡ Graphe'],['instructions','☷ Instructions'],['functions','ƒ Fonctions'],['library','▦ Bibliothèque'],['project','◇ Projet & export'],['debug','⌁ Débogage']]){const b=button(tabs,label,()=>{ui.tab=id;render()},'bp-tab');b.disabled=false;b.classList.toggle('is-active',ui.tab===id);b.setAttribute('aria-current',ui.tab===id?'page':'false')}
+  const debugBar=element('div','bp-debug-controls');for(const [label,fn] of [['Ⅱ Pause',pauseBlueprint],['▷ Pas à pas',stepBlueprint],['▶ Continuer',resumeBlueprint]]){const b=button(debugBar,label,()=>{state.keys.clear();state.keyPresses?.clear();document.exitPointerLock?.();fn();updateDebug()},'bp-secondary');b.disabled=!state.playing;b.dataset.debugAction=label}const status=element('span','bp-debug-status');status.id='bpDebugStatus';debugBar.append(status);main.append(debugBar);
   const page=element('div','bp-tab-content');main.append(tabs,page);content.append(sidebar,main);
   if(['graph','instructions'].includes(ui.tab)){
    if(!owner||!sequence){const empty=element('div','bp-empty-state');empty.append(element('span','bp-empty-icon','⬡'),element('h2','',owner?'Ton objet attend son premier comportement':'Choisis un objet pour commencer'),element('p','',owner?'Ajoute un déclencheur ou pars d’un modèle prêt à configurer.':'Les objets de ta scène apparaissent à gauche. Chaque objet peut porter plusieurs événements et actions.'));button(empty,'Explorer les modèles',()=>{ui.tab='library';render()},'bp-primary');page.append(empty);return}
@@ -50,8 +53,28 @@ export function initBlueprintWorkspace(){
     renderBlueprintGraph(page,sequence,change,{selectedNodeId:ui.nodeId,zoom:ui.zoom,onSelect:id=>ui.nodeId=id,onZoom:value=>ui.zoom=value});
    }else renderSequenceEditor(page,owner,{sequence,expanded:true,onChange(next,label){if(next){if(entry.key===owner.id)owner.sequence=next;else owner.sequences[Number(String(entry.key).split(':').at(-1))]=next}else{if(entry.key===owner.id)delete owner.sequence;else owner.sequences.splice(Number(String(entry.key).split(':').at(-1)),1);ui.sequenceKey=null}change(label)}});
   }else if(ui.tab==='library')renderLibrary(page,owner,sequence);
+  else if(ui.tab==='functions')renderFunctions(page);
   else if(ui.tab==='project')renderProject(page);
   else renderDebug(page);
+ }
+ function renderFunctions(page){
+  const heading=element('div','bp-page-heading');heading.append(element('h2','','Fonctions réutilisables'),element('p','','Partage une fonction entre les objets et les scènes. Les paramètres sont isolés à chaque appel ; le résultat revient dans une variable locale.'));page.append(heading);
+  gameProject.functions??=[];const bar=element('div','bp-function-selector');
+  const browse=select(bar,'Fonction du projet',ui.functionId,[{value:'',label:'Choisir une fonction'},...gameProject.functions.map(f=>({value:f.id,label:f.name||f.id}))],id=>{ui.functionId=id;render()});browse.disabled=false;
+  button(bar,'＋ Nouvelle fonction',()=>{if(gameProject.functions.length>=64)return;const id='function-'+Date.now().toString(36);gameProject.functions.push({id,name:'Nouvelle fonction',parameters:[{name:'quantite',type:'number',value:1}],returnType:'number',instructions:[{type:'returnFunction',value:{$ref:'parameter',name:'quantite',type:'number'}}]});ui.functionId=id;change('Créer une fonction')},'bp-secondary');page.append(bar);
+  const f=gameProject.functions.find(f=>f.id===ui.functionId);if(!f)return;
+  const card=element('details','bp-project-card bp-function-signature');card.open=!f.graph;card.append(element('summary','','Signature · '+f.parameters.length+' paramètre(s) → '+f.returnType));field(card,{key:'name',label:'Nom de la fonction',type:'text'},f,()=>change('Renommer la fonction'));
+  select(card,'Type de retour',f.returnType,['void',...variableTypes],v=>{f.returnType=v;change('Type de retour')});
+  for(const [i,p] of f.parameters.entries()){
+   const row=element('div','bp-function-parameter');field(row,{key:'name',label:'Paramètre '+(i+1),type:'text'},p,()=>change('Paramètre'));
+   select(row,'Type de '+p.name,p.type,variableTypes,v=>{p.type=v;p.value=coerceVariable(v,p.value);change('Type du paramètre')});
+   editTypedValue(row,'Valeur par défaut',p,'value',p.type,()=>change('Valeur par défaut'),{literalOnly:true});
+   button(row,'Retirer le paramètre',()=>{f.parameters.splice(i,1);change('Retirer un paramètre')},'bp-text-button');card.append(row);
+  }
+  if(f.parameters.length<16)button(card,'＋ Paramètre',()=>{let i=1;while(f.parameters.some(p=>p.name==='param'+i))i++;f.parameters.push({name:'param'+i,type:'number',value:0});change('Ajouter un paramètre')},'bp-secondary');
+  button(card,'Supprimer cette fonction',()=>{gameProject.functions=gameProject.functions.filter(other=>other!==f);ui.functionId=null;change('Supprimer la fonction')},'bp-text-button bp-danger');page.append(card);
+  if(f.graph)renderBlueprintGraph(page,f,change,{parameters:f.parameters,returnType:f.returnType,selectedNodeId:ui.nodeId,onSelect:id=>ui.nodeId=id});
+  else{const actions=element('section','bp-project-card');editActions(actions,f.instructions,()=>change('Instructions de fonction'),0,{parameters:f.parameters,returnType:f.returnType});button(actions,'⬡ Ouvrir en graphe',()=>{f.graph=createGraph({event:'start',instructions:f.instructions});change('Graphe de fonction')},'bp-secondary');page.append(actions)}
  }
  function renderLibrary(page,owner,sequence){
   const heading=element('div','bp-page-heading');heading.append(element('span','bp-eyebrow','COMPOSER SANS CODER'),element('h2','','Une bibliothèque pour donner vie au jeu'),element('p','','Ajoute des comportements indépendants à l’objet sélectionné. Tes comportements existants sont conservés.'));page.append(heading);
@@ -64,8 +87,8 @@ export function initBlueprintWorkspace(){
   }
   search.oninput=()=>{ui.search=search.value;draw()};page.append(controls,grid);draw();
   const files=element('div','bp-transfer-bar');
-  button(files,'↓ Exporter le comportement',()=>{if(!sequence)return;const blob=new Blob([JSON.stringify({format:'warlike.blueprint.v1',sequence},null,2)],{type:'application/json'});download(blob,'warlike-blueprint.json')},'bp-text-button').disabled=!sequence;
-  const input=element('input');input.type='file';input.accept='.json';input.hidden=true;input.onchange=async()=>{try{const file=input.files[0];if(!file)return;if(file.size>512*1024)throw Error('512 Ko maximum.');const data=JSON.parse(await file.text());if(data.format!=='warlike.blueprint.v1'||!data.sequence||typeof data.sequence!=='object'||Array.isArray(data.sequence))throw Error('Blueprint invalide.');if(data.sequence.graph)applyGraph(data.sequence);addSequence(owner,data.sequence);ui.tab='instructions';change('Importer un comportement')}catch(e){alert(e.message)}finally{input.value=''}};
+  button(files,'↓ Exporter le comportement',()=>{if(!sequence)return;const blob=new Blob([JSON.stringify({format:'warlike.blueprint.v1',sequence,functions:gameProject.functions||[]},null,2)],{type:'application/json'});download(blob,'warlike-blueprint.json')},'bp-text-button').disabled=!sequence;
+  const input=element('input');input.type='file';input.accept='.json';input.hidden=true;input.onchange=async()=>{try{const file=input.files[0];if(!file)return;if(file.size>512*1024)throw Error('512 Ko maximum.');const data=JSON.parse(await file.text());if(data.format!=='warlike.blueprint.v1'||!data.sequence||typeof data.sequence!=='object'||Array.isArray(data.sequence))throw Error('Blueprint invalide.');if(data.sequence.graph)applyGraph(data.sequence);const imported=data.functions||[],errors=validateFunctionDefinitions(imported);if(errors.length)throw Error(errors[0]);for(const f of imported){const existing=gameProject.functions?.find(other=>other.id===f.id);if(existing&&JSON.stringify(existing)!==JSON.stringify(f))throw Error('Une fonction différente possède déjà cet identifiant : '+f.id)}const merged=[...(gameProject.functions||[]),...imported.filter(f=>!gameProject.functions?.some(other=>other.id===f.id))];if(merged.length>64)throw Error('64 fonctions maximum.');addSequence(owner,data.sequence);gameProject.functions=merged;ui.tab='instructions';change('Importer un comportement')}catch(e){alert(e.message)}finally{input.value=''}};
   button(files,'↑ Importer un comportement',()=>input.click(),'bp-text-button').disabled=!owner||state.playing;files.append(input);page.append(files);
  }
  function renderProject(page){
@@ -75,6 +98,7 @@ export function initBlueprintWorkspace(){
   const settings=element('section','bp-project-card');settings.append(element('h3','','01 · Paramètres du jeu'));field(settings,{key:'title',label:'Titre du jeu',type:'text'},gameProject,()=>change('Titre du jeu'));
   const sceneChoices=gameProject.scenes.map(s=>({value:s.id,label:s.name}));if(!sceneChoices.some(s=>s.value===gameProject.activeSceneId))sceneChoices.unshift({value:gameProject.activeSceneId,label:'Scène actuelle'});
   select(settings,'Scène de démarrage',gameProject.startupSceneId,sceneChoices,v=>{gameProject.startupSceneId=v;change('Scène de démarrage')});
+  if(workspace.mode==='3d'){select(settings,'Moteur physique 3D',gameProject.physics3d||'rapier',[{value:'rapier',label:'Rapier · capsules, pentes, articulations'},{value:'builtin',label:'Interne · collisions simples'}],value=>{gameProject.physics3d=value;change('Moteur physique')});settings.append(element('p','bp-hint','Rapier est chargé au démarrage de Play. Ce choix est conservé dans le projet et dans le jeu exporté.'))}
   settings.append(element('p','bp-hint','L’exemple crée une nouvelle scène de mission. Ta scène actuelle est conservée dans le projet.'));
   button(settings,'Créer un exemple de jeu complet',()=>{
    captureGameScene(state.entities,state.camera);const sample=createBlueprintGameStarter(workspace.mode),id='mission-'+Date.now().toString(36);
@@ -95,15 +119,17 @@ export function initBlueprintWorkspace(){
   const exportButton=button(delivery,'↓ Exporter le jeu Web (.zip)',async()=>{exportButton.disabled=true;try{const {exportGamePackage}=await import('../core/game-build.js');const result=await exportGamePackage({entities:state.entities,camera:state.camera,mode:workspace.mode},{onProgress:(done,total)=>status.textContent='Préparation du jeu… '+Math.round(done/total*100)+' %'});download(result.blob,result.filename);status.textContent='✓ Archive créée : '+result.files+' fichiers. Décompresse-la puis ouvre-la avec un serveur statique.'}catch(error){status.textContent='Export impossible : '+error.message}finally{exportButton.disabled=false}},'bp-primary');delivery.append(status,element('small','bp-hint','Build Web expérimental : runtime inclus, modèles distants accessibles avec Internet. Les scripts C#/.NET ne sont pas exécutés dans ce build.'));grid.append(delivery);page.append(grid);
  }
  function renderDebug(page){
-  const heading=element('div','bp-page-heading');heading.append(element('span','bp-eyebrow','COMPRENDRE CE QUI SE PASSE'),element('h2','','Un débogueur lisible, au plus près du jeu.'),element('p','','Lance Play pour observer les variables, les instructions et les erreurs. Le dernier nœud exécuté est surligné dans le graphe.'));page.append(heading);
+  const heading=element('div','bp-page-heading');heading.append(element('span','bp-eyebrow','COMPRENDRE CE QUI SE PASSE'),element('h2','','Un débogueur lisible, au plus près du jeu.'),element('p','','F8 : pause · F10 : une instruction · F6 : continuer. Lance Play pour observer les variables, les instructions et les erreurs. Le dernier nœud exécuté est surligné dans le graphe.'));page.append(heading);
   const issues=inspectBlueprintGame(state.entities);for(const issue of issues)page.append(element('p','bp-issue is-'+issue.severity,issue.message));
   const grid=element('div','bp-debug-grid'),vars=element('section','bp-project-card'),trace=element('section','bp-project-card');vars.append(element('h3','','Variables en direct'));vars.id='bpDebugVariables';trace.append(element('h3','','Exécution récente'));trace.id='bpDebugTrace';grid.append(vars,trace);page.append(grid);updateDebug();
  }
  function updateDebug(){
+  const d=blueprintDebugger,status=document.getElementById('bpDebugStatus');if(status)status.textContent=!state.playing?'Hors Play':d.paused?'● '+d.reason+' · objet #'+(d.current?.objectId||'—')+' · '+(d.current?.functionId||d.current?.nodeId||d.current?.type||'en attente'):'Simulation en cours';
+  dialog.querySelectorAll('[data-debug-action]').forEach(b=>b.disabled=!state.playing||b.dataset.debugAction.includes('Pas à pas')&&!d.paused);
   const vars=document.getElementById('bpDebugVariables'),trace=document.getElementById('bpDebugTrace');
-  if(vars){vars.querySelectorAll('.bp-debug-row').forEach(el=>el.remove());for(const [key,value] of Object.entries(sequenceRuntime.globals)){const row=element('div','bp-debug-row');row.append(element('code','',key),element('strong','',JSON.stringify(value)));vars.append(row)}}
-  if(trace){trace.querySelectorAll('.bp-trace-row').forEach(el=>el.remove());for(const item of sequenceRuntime.trace.slice(-50).reverse()){const row=element('div','bp-trace-row '+(item.status==='error'?'has-error':''));row.append(element('code','',item.time.toFixed(2)+' s'),element('strong','',labelFor(item.type)),element('span','','Objet #'+item.objectId+(item.message?' · '+item.message:'')));trace.append(row)}}
-  const recent=sequenceRuntime.trace.at(-1),owner=active(),entry=selected(owner);const last=recent?.objectId===owner?.id&&recent?.sequenceKey===entry?.key?recent:null;dialog.querySelectorAll('.bp-node-v2').forEach(el=>{el.classList.toggle('was-executed',el.dataset.nodeId===last?.nodeId&&last.status==='ok');el.classList.toggle('has-runtime-error',el.dataset.nodeId===last?.nodeId&&last.status==='error')});
+  if(vars){vars.querySelectorAll('.bp-debug-row').forEach(el=>el.remove());for(const [key,value] of Object.entries(sequenceRuntime.globals)){const row=element('div','bp-debug-row');row.append(element('code','',key),element('strong','',JSON.stringify(value)));vars.append(row)}for(const [key,value] of Object.entries(d.current?.locals||{})){const row=element('div','bp-debug-row');row.append(element('code','','local.'+key),element('strong','',JSON.stringify(value)));vars.append(row)}for(const frame of d.current?.stack||[]){const row=element('div','bp-debug-row');row.append(element('code','','ƒ '+frame.id),element('strong','',JSON.stringify(frame.parameters)));vars.append(row)}}
+  if(trace){trace.querySelectorAll('.bp-trace-row').forEach(el=>el.remove());for(const item of sequenceRuntime.trace.slice(-50).reverse()){const row=element('div','bp-trace-row '+(item.status==='error'?'has-error':''));row.append(element('code','',item.time.toFixed(2)+' s'),element('strong','',labelFor(item.type)),element('span','','Objet #'+item.objectId+(item.functionId?' · ƒ '+item.functionId:'')+(item.message?' · '+item.message:'')));trace.append(row)}}
+  const recent=sequenceRuntime.trace.at(-1),owner=active(),entry=selected(owner);const last=recent?.objectId===owner?.id&&recent?.sequenceKey===entry?.key?recent:null;dialog.querySelectorAll('.bp-node-v2').forEach(el=>{el.classList.toggle('is-debug-current',d.paused&&el.dataset.nodeId===d.current?.nodeId&&(ui.tab==='functions'?ui.functionId===d.current?.functionId:owner?.id===d.current?.objectId&&entry?.key===d.current?.sequenceKey));el.classList.toggle('was-executed',el.dataset.nodeId===last?.nodeId&&last.status==='ok');el.classList.toggle('has-runtime-error',el.dataset.nodeId===last?.nodeId&&last.status==='error')});
  }
  const show=()=>{render();dialog.hidden=false;open.setAttribute('aria-expanded','true');dialog.querySelector('.bp-tab.is-active')?.focus()};
  const hide=()=>{dialog.hidden=true;open.setAttribute('aria-expanded','false');open.focus()};
@@ -111,8 +137,8 @@ export function initBlueprintWorkspace(){
  open.addEventListener('click',()=>dialog.hidden?show():hide());document.getElementById('blueprintClose').addEventListener('click',hide);
  document.getElementById('blueprintAdd').addEventListener('click',()=>{const owner=active();if(owner&&!state.playing){addSequence(owner,{...newSequence(),name:'Nouveau comportement'});ui.tab='instructions';change('Ajouter comportement')}});
  document.addEventListener('warlike:change',()=>{if(!dialog.hidden)render()});document.addEventListener('warlike:workspace',()=>{if(!dialog.hidden)render()});
- dialog.addEventListener('keydown',event=>{event.stopPropagation();if(event.key==='Escape'){event.preventDefault();hide();return}if(event.key==='Tab'){const controls=[...dialog.querySelectorAll('button,input,select,textarea,a[href]')].filter(el=>!el.disabled&&el.getClientRects().length);if(!controls.length){event.preventDefault();dialog.focus();return}const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}}});
- setInterval(()=>{if(!dialog.hidden)updateDebug()},250);
+ dialog.addEventListener('keydown',event=>{event.stopPropagation();if(state.playing&&['F6','F8','F10'].includes(event.key)){event.preventDefault();state.keys.clear();state.keyPresses?.clear();if(event.key==='F10')stepBlueprint();else if(event.key==='F6')resumeBlueprint();else pauseBlueprint();updateDebug();return}if(event.key==='Escape'){event.preventDefault();hide();return}if(event.key==='Tab'){const controls=[...dialog.querySelectorAll('button,input,select,textarea,a[href]')].filter(el=>!el.disabled&&el.getClientRects().length);if(!controls.length){event.preventDefault();dialog.focus();return}const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}}});
+ let lastPauseRevision=0;setInterval(()=>{const d=blueprintDebugger;if(state.playing&&d.paused&&d.reason==='Point d’arrêt'&&d.revision!==lastPauseRevision){lastPauseRevision=d.revision;ui.tab='debug';show()}if(!dialog.hidden)updateDebug()},250);
  document.addEventListener('warlike:open-game-project',()=>{ui.tab='project';show()});
  document.addEventListener('warlike:open-behavior',event=>{const owner=state.entities.find(o=>o.id===event.detail?.ownerId);if(!owner)return;state.selected=[owner.id];ui.sequenceKey=event.detail.sequenceKey;ui.tab='graph';ui.nodeId=null;dialog.hidden=false;render();dialog.focus()});
 }

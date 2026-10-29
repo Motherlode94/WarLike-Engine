@@ -1,3 +1,5 @@
+import {rotationQuaternion3d} from './collider-3d.js';
+import {gameProject} from './game-project.js';
 import {survivalPlacement} from './survival-building.js';
 import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';
 import {lanActor,isLanGuest} from './lan-state.js';
@@ -23,7 +25,7 @@ import {sequenceRuntime} from './logic-sequences.js';
 import {updateHorror,updateHorrorPerception,horror} from './horror-survival.js';
 import {renderQuality} from './render-quality.js';
 import {stepPhysics3d} from './physics-3d.js';
-import {loadRapier3d,createRapierScene,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
+import {rapierStatus,loadRapier3d,createRapierScene,moveRapierCharacter3d,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
 import {getModelGeometry,getTextureImage,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences} from './logic-sequences.js';
@@ -87,14 +89,14 @@ const program3d=gl=>{
  const vs=`precision highp float;
  attribute vec3 aPosition;attribute vec3 aNormal;attribute vec2 aTexcoord;varying vec2 vTexcoord;
  uniform vec3 uEye,uRight,uUp,uForward,uPosition,uScale;
- uniform float uAngle,uAspect;
+ uniform vec4 uRotation;uniform float uAspect;
+ vec3 rotateQ(vec3 v){return v+2.0*cross(uRotation.xyz,cross(uRotation.xyz,v)+uRotation.w*v);}
  varying vec3 vNormal,vWorld;
  void main(){
  vTexcoord=aTexcoord;vec3 q=aPosition*uScale;
- float cs=cos(uAngle),sn=sin(uAngle);
- q=vec3(q.x*cs-q.z*sn,q.y,q.x*sn+q.z*cs);
+ q=rotateQ(q);
  vec3 rel=q+uPosition-uEye;
- vWorld=q+uPosition;vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vNormal=normalize(vec3(scaledNormal.x*cs-scaledNormal.z*sn,scaledNormal.y,scaledNormal.x*sn+scaledNormal.z*cs));
+ vWorld=q+uPosition;vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vNormal=normalize(rotateQ(scaledNormal));
  float d=max(0.01,dot(rel,uForward));
  float f=1.7320508;
  float clipZ=d*1.00066689-0.20006669;
@@ -236,7 +238,7 @@ export function init3d(canvas,host,buttons){
  let program;
  try{program=program3d(gl)}catch(err){renderFailure('Compilation shader : '+String(err.message||err));return {setEnabled:()=>false,focus:()=>{},syncToWorkspace:()=>renderFailure(view3d.error)}}
  const loc=n=>gl.getUniformLocation(program,n);
- const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),angle:loc('uAngle'),aspect:loc('uAspect'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
+ const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal'),aTexcoord=gl.getAttribLocation(program,'aTexcoord');
  const textureUniform=loc('uBaseColorTexture'),useTexture=loc('uUseTexture'),alphaCutoff=loc('uAlphaCutoff');
  const makeBuffer=(data,dynamic=false)=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,dynamic?gl.DYNAMIC_DRAW:gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
@@ -282,7 +284,7 @@ export function init3d(canvas,host,buttons){
   else{gl.disableVertexAttribArray(aTexcoord);gl.vertexAttrib2f(aTexcoord,0,0)}
   if(mesh.alphaMode==='BLEND'){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA)}else gl.disable(gl.BLEND);
  };
- const model=(pos,scale,color,angle=0)=>{gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform1f(u.angle,angle);gl.uniform4fv(u.color,color)};
+ const model=(pos,scale,color,angle=0,object=null)=>{const q=object?rotationQuaternion3d(object):{x:0,y:-Math.sin(angle/2),z:0,w:Math.cos(angle/2)};gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform4fv(u.rotation,[q.x,q.y,q.z,q.w]);gl.uniform4fv(u.color,color)};
  view3d.enabled=workspace.mode==='3d';
  const resize=()=>{const d=Math.min(2,window.devicePixelRatio||1),w=Math.round(host.clientWidth*d),h=Math.round(host.clientHeight*d);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h)};
  const focusScene=()=>{
@@ -336,7 +338,7 @@ export function init3d(canvas,host,buttons){
   if(!p)return;
   updateHorror(dt,p,state.entities,input);updateHorrorPerception(dt,p,state.entities,input);updateHorrorAudio(dt,p,state.entities,input,horror);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
   const inVehicle=updateDriving3d(state.entities,p,input,dt);
-  if(!inVehicle)updateController3d(p,input,dt,view3d.yaw,state.entities,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses});
+  if(!inVehicle)updateController3d(p,input,dt,view3d.yaw,state.entities,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,moveCharacter:physicsSession?.actors.get(p.id)?.controller?(actor,dx,dy,dz,options)=>moveRapierCharacter3d(physicsSession,actor,dx,dy,dz,options):null});
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);
   if(p.adventure?.combatEnabled!==false&&!inVehicle&&healthOf(p)>0&&(input.has('f')||!gameplayInputBlocked()&&state.keyPresses?.has('f'))&&p._attackCooldown===0){if(isFps()){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit){p.animation='attack';emitFx('electric',heroCenter(hit,'3d'),{mode:'3d',color:'#ffd899',count:16,ring:true,lifetime:.3,scale:.7})}}
@@ -375,11 +377,11 @@ export function init3d(canvas,host,buttons){
  const enterPlay=()=>{
   editorCamera={yaw:view3d.yaw,pitch:view3d.pitch,radius:view3d.radius,target:view3d.target.slice()};view3d.drag=null;boomDistance=null;resetDriving3d();
   const p=playableActor(state.entities),pt=playerTarget(),rig=cameraRigFor(p);view3d.followPlayer=!!pt;if(pt){view3d.target=pt.slice();view3d.radius=rig.distance;view3d.yaw=Math.PI-(Number(p.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18}
-  if(localStorage.getItem('warlike.rapier3d')!=='enabled')return;
+  if(gameProject.physics3d==='builtin')return;
   const token=++physicsGeneration;
   loadRapier3d().then(api=>{
    if(!api||token!==physicsGeneration||!state.playing||workspace.mode!=='3d')return;
-   try{physicsSession=createRapierScene(api,state.entities)}
+   try{physicsSession=createRapierScene(api,state.entities);for(const error of physicsSession.errors)console.warn('[WarLike] Articulation : '+error)}
    catch(error){console.warn('[WarLike] Rapier unavailable, using built-in physics',error);physicsSession=null}
   });
  };
@@ -481,7 +483,7 @@ export function init3d(canvas,host,buttons){
    horrorHud.hidden=!(state.playing&&horror.enabled);
    if(!horrorHud.hidden)horrorHud.textContent=(horror.jumpscare>0?'⚠ DANGER !  |  ':'☾ SURVIVAL HORROR  |  ')+'L : lampe '+(horror.flashlight?'ON':'OFF')+'  |  Batterie '+Math.round(horror.battery)+'%  |  Peur '+Math.round(horror.fear)+'%';
   }
-  if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent='3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}
+  if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent='3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}if(state.playing)buttons.status.textContent+=' · Physique : '+(physicsSession?'Rapier':gameProject.physics3d==='builtin'?'interne':rapierStatus().error?'interne (Rapier indisponible)':'chargement Rapier');
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
   const solar=sunAt();gl.clearColor(...solar.sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   if(state.playing&&!isFps()){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities)),desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);boomDistance=rig.collision?resolveCameraBoom(view3d.target,desired.eye,state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(collisionWorldBounds3d),{previousDistance:boomDistance,dt:cameraFrame}).distance:view3d.radius}
@@ -514,7 +516,7 @@ export function init3d(canvas,host,buttons){
    gl.uniform1f(u.roughness,Math.max(.04,Math.min(1,Number(o.materialRoughness??.7))));
    gl.uniform1f(u.metallic,Math.max(0,Math.min(1,Number(o.materialMetallic??0))));
    const shape=o.model3dId?'glb':get3dAsset(o.assetId)?.shape;
-   const drawShape=(mesh,p,scale,shade)=>{bind(mesh);if(o._survivalPreview){gl.uniform1f(alphaCutoff,.01);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}model(p,scale,o._survivalPreview?[...shade.slice(0,3),.5]:shade,angle);gl.drawArrays(gl.TRIANGLES,0,mesh.count);if(o._survivalPreview)gl.depthMask(true)};
+   const drawShape=(mesh,p,scale,shade)=>{bind(mesh);if(o._survivalPreview){gl.uniform1f(alphaCutoff,.01);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}model(p,scale,o._survivalPreview?[...shade.slice(0,3),.5]:shade,angle,o);gl.drawArrays(gl.TRIANGLES,0,mesh.count);if(o._survivalPreview)gl.depthMask(true)};
    const cube=(p,scale,shade)=>drawShape(cubes,p,scale,shade);
    const round=(p,scale,shade)=>drawShape(sphere,p,scale,shade);
    const cyl=(p,scale,shade)=>drawShape(cylinder,p,scale,shade);
@@ -634,7 +636,7 @@ export function init3d(canvas,host,buttons){
   }
   if(!state.playing)tickFxRuntime(state.entities.filter(o=>o.fxEmitter?.preview),dt,'3d');
   fxRenderer.draw(cam,w,h,state.playing?state.entities:[]);
-  if(!state.playing){gl.useProgram(program);bind(outline);for(const o of objects.filter(o=>state.selected.includes(o.id))){const b=objectBounds3d(o);model([b.x,b.y,b.z],[b.w*1.03,b.h*1.03,b.d*1.03],[.32,1,.8,1],(o.rotation||0)*Math.PI/180);gl.drawArrays(gl.LINES,0,outline.count)}}
+  if(!state.playing){gl.useProgram(program);bind(outline);for(const o of objects.filter(o=>state.selected.includes(o.id))){const b=objectBounds3d(o);model([b.x,b.y,b.z],[b.w*1.03,b.h*1.03,b.d*1.03],[.32,1,.8,1],(o.rotation||0)*Math.PI/180,o);gl.drawArrays(gl.LINES,0,outline.count)}}
  }
  requestAnimationFrame(draw);
  return {setEnabled:change,focus:focusScene,syncToWorkspace:()=>{view3d.enabled=workspace.mode==='3d';focusScene();sync()}};

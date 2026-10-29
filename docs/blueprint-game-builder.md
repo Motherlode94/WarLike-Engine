@@ -118,3 +118,27 @@ les tests vérifient qu’aucun module JavaScript n’a été oublié dans le bu
 Ces scénarios vérifient la logique 3D. Les téléchargements de modèles GLB distants
 ont été indisponibles dans l’environnement de test ; leur affichage sur plusieurs
 réseaux, navigateurs et GPU reste à vérifier.
+
+## Fonctions réutilisables et données typées
+
+**Blueprint → Fonctions → Nouvelle fonction** crée une définition commune à tous les objets et scènes du projet. Choisir un nom, des paramètres et un type de retour : `void`, `number`, `boolean`, `string`, `vector2` ou `vector3`. Les paramètres peuvent avoir une valeur par défaut constante. La fonction s’édite en instructions ou en graphe.
+
+Dans un comportement, choisir **Appeler une fonction**, sélectionner la fonction et renseigner ses arguments. Chaque entrée propose une source : constante, variable globale, variable locale ou paramètre de la fonction actuelle. Les menus de données globales et de paramètres filtrent par type. Une référence est une donnée sérialisable, jamais du JavaScript à évaluer.
+
+**Retourner de la fonction** termine l’appel. Pour un retour non `void`, renseigner la valeur retournée et, sur l’appel, le nom de la variable locale qui recevra le résultat. Une fonction non `void` doit effectivement retourner une valeur du type annoncé. Les variables locales et paramètres sont isolés entre appels ; `Attendre` conserve cette pile jusqu’à la reprise. Les variables globales déclarées et les variables locales typées refusent les affectations incompatibles ; le débogueur affiche l’erreur.
+
+Exemple : une fonction reçoit `points : number`, fait **Modifier une variable** sur `score` avec la source **Paramètre → points**, puis retourne `points`. Une porte et un coffre peuvent appeler cette même fonction avec des quantités différentes.
+
+Les fonctions sont sauvegardées avec le projet, incorporées au jeu Web et incluses dans l’export d’un comportement. L’import fusionne les définitions et refuse une collision d’identifiant avec une fonction différente. Limites : 64 fonctions, 16 paramètres, 16 niveaux d’appel ; récursion interdite. Il ne s’agit pas encore d’un éditeur de classes ou de connexions de données entre broches : les données se lient dans les champs de paramètres.
+
+## Pause et exécution pas à pas
+
+Sélectionner un nœud d’action ou de condition dans le graphe, puis **Ajouter un point d’arrêt** avant Play. La compilation conserve ce point d’arrêt. À son passage, la simulation s’immobilise **avant** l’instruction et ouvre l’onglet Débogage. Ce gel ne change ni l’état de victoire/défaite, ni le menu de pause du jeu.
+
+Les commandes sont présentes sur tous les onglets de Blueprint :
+
+- **Pause / F8** : geler la simulation.
+- **Pas à pas / F10** : exécuter une instruction du comportement suspendu, puis rester en pause. Un appel entre dans la fonction ; un retour revient à l’appelant. Le temps du jeu et la physique restent gelés. Au pas à pas, une attente peut être franchie sans faire avancer le monde.
+- **Continuer / F6** : reprendre les jobs et la simulation.
+
+Les raccourcis s’utilisent lorsque la fenêtre Blueprint a le focus. Débogage montre les variables globales, les variables locales de la pause, les paramètres et la pile des fonctions, ainsi que la trace des instructions et les erreurs. Le nœud suspendu est encadré en jaune dans son graphe. Stop remet le débogueur à zéro. Le débogage est local à l’éditeur ; il ne constitue pas un débogueur distant pour les invités LAN.

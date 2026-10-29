@@ -1,3 +1,4 @@
+import {activeRapierScene3d,moveRapierCharacter3d} from './rapier-physics-3d.js';
 import {adventureTarget} from './adventure-runtime.js';
 import {validGameDialogue} from './game-dialogue.js';
 import {reconcileLanSurvivors} from './lan-survivors.js';
@@ -61,7 +62,7 @@ function remoteStep(dt){
  if(!gameIsRunning())return;
  for(const o of state.entities){if(!o._netRemote||o.survivalDormant)continue;const input=peers.get(o._netPeerId),stale=!input||performance.now()-input.at>500,keys=new Set(!stale&&gameIsRunning()&&!gameSession.dialogue?input.keys:[]),pressed=new Set(!stale&&gameIsRunning()&&!gameSession.dialogue?input.pressed:[]);const actions=stale?[]:input.actions||[];if(input){input.pressed=[];input.actions=[];}
   o._netKeys=keys;if(healthOf(o)<=0)continue;const yaw=input?.yaw??0;
-  if(workspace.mode==='3d')updateController3d(o,keys,dt,yaw,state.entities,{pressedKeys:pressed});else walkPlayer(o,dt,keys,{pressedKeys:pressed});
+  if(workspace.mode==='3d')updateController3d(o,keys,dt,yaw,state.entities,{pressedKeys:pressed,moveCharacter:activeRapierScene3d()?.actors.get(o.id)?.controller?(actor,x,y,z,options)=>moveRapierCharacter3d(activeRapierScene3d(),actor,x,y,z,options):null});else walkPlayer(o,dt,keys,{pressedKeys:pressed});
   if(!gameIsRunning())continue;
   for(let i=0;i<6;i++)if(pressed.has(String(i+1)))castHeroPower(o,o.superhero?.slots?.[i]||Object.keys(heroAbilities)[i],{mode:workspace.mode,entities:state.entities,yaw});
   for(const action of actions){if(action?.type==='dialogue'){chooseSequenceDialogue(action.index,{id:action.dialogueId,actorId:o.id});continue}if(gameSession.dialogue)continue;if(action?.type==='interact'&&o.adventure){queueSequenceInteraction(o.id,action.targetId);continue}survivalAction(o,action,state.entities,{mode:workspace.mode,allocateId:()=>state.nextId++})}

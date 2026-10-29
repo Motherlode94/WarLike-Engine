@@ -1,9 +1,11 @@
+import {gameProject} from '../core/game-project.js';
 import {createGraph,applyGraph,inspectGraph,inspectGraphDetailed,graphPort} from '../core/blueprint-graph.js';
 import {sequenceEvents,sequenceRuntime} from '../core/logic-sequences.js';
 import {labelFor,eventFields} from '../core/blueprint-catalog.js';
 import {state} from '../core/state.js';
 import {element,button,select,field,editAction,editConditions} from './blueprint-controls.js';
 const width=240,height=136;
+const summaryValue=v=>v?.$ref?v.$ref+'.'+v.name+(v.type?' : '+v.type:''):Array.isArray(v)?v.join(', '):String(v??'Configurer les paramètres');
 export function renderBlueprintGraph(host,sequence,save,options={}){
  const root=element('section','bp-graph-editor'),toolbar=element('div','bp-graph-toolbar');
  if(!sequence.graph){
@@ -43,17 +45,18 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
    field(inspector,{key:'runWhenPaused',label:'Actif pendant la pause / fin',type:'boolean',default:false},sequence,change);
   }else if(n.kind==='condition'){
    select(inspector,'Combinaison',n.conditionMode||'all',[{value:'all',label:'Toutes les conditions (ET)'},{value:'any',label:'Au moins une (OU)'}],v=>{n.conditionMode=v;change()});
-   n.conditions??=[];editConditions(inspector,n.conditions,change);
+   n.conditions??=[];editConditions(inspector,n.conditions,change,{parameters:options.parameters||[]});
    inspector.append(element('p','bp-hint','Oui : les conditions sont remplies. Non : elles ne le sont pas. Une sortie vide termine ce chemin.'));
-  }else editAction(inspector,n.action,change);
+  }else editAction(inspector,n.action,change,{parameters:options.parameters||[],returnType:options.returnType||'void'});
+  if(n.kind!=='event'){const bp=button(inspector,n.breakpoint?'● Retirer le point d’arrêt':'○ Ajouter un point d’arrêt',()=>{n.breakpoint=!n.breakpoint;if(state.playing){const compiled=sequence.instructions;const mark=steps=>{for(const a of steps||[]){if(a._nodeId===n.id)a.breakpoint=n.breakpoint;mark(a.thenInstructions);mark(a.elseInstructions)}};mark(compiled);boxForBreakpoint()}else change()},'bp-breakpoint-button');bp.disabled=false;function boxForBreakpoint(){boxes.get(n.id)?.classList.toggle('has-breakpoint',n.breakpoint);details()}}
   if(n.kind!=='event')button(inspector,'Supprimer le nœud',removeSelected,'bp-text-button bp-danger');
   inspector.append(element('small','bp-node-id','Nœud '+n.id));
  }
  function selectNode(id){selected=id;options.onSelect?.(id);for(const [key,box] of boxes)box.classList.toggle('is-selected',id===key);details()}
  function removeSelected(){const n=node(selected);if(!n||n.kind==='event'||state.playing)return;graph.nodes=graph.nodes.filter(v=>v!==n);graph.links=graph.links.filter(e=>e.from!==n.id&&e.to!==n.id);options.onSelect?.(graph.nodes[0]?.id);update('Supprimer le nœud')}
  for(const n of graph.nodes){
-  const box=element('article','bp-node-v2'),header=element('div','bp-node-drag'),kind=element('span','bp-node-kind',n.kind==='event'?'ÉVÉNEMENT':n.kind==='condition'?'CONDITION':'ACTION');box.dataset.nodeId=n.id;box.dataset.kind=n.kind;box.style.left=n.x+'px';box.style.top=n.y+'px';header.append(kind,element('span','bp-node-menu','⠿'));box.append(header);
-  box.append(element('strong','bp-node-label',n.kind==='condition'?'Si / Sinon':labelFor(n.kind==='event'?n.event:n.action?.type,n.kind)),element('span','bp-node-description',n.kind==='condition'?(n.conditions?.length||0)+' condition(s)':n.kind==='event'?(sequence.signal||sequence.key||'Début du comportement'):String(n.action?.key||n.action?.value||'Configurer les paramètres').slice(0,60)));
+  const box=element('article','bp-node-v2'),header=element('div','bp-node-drag'),kind=element('span','bp-node-kind',n.kind==='event'?'ÉVÉNEMENT':n.kind==='condition'?'CONDITION':'ACTION');box.classList.toggle('has-breakpoint',!!n.breakpoint);box.dataset.nodeId=n.id;box.dataset.kind=n.kind;box.style.left=n.x+'px';box.style.top=n.y+'px';header.append(kind,element('span','bp-node-menu','⠿'));box.append(header);
+  box.append(element('strong','bp-node-label',n.kind==='condition'?'Si / Sinon':labelFor(n.kind==='event'?n.event:n.action?.type,n.kind)),element('span','bp-node-description',n.kind==='condition'?(n.conditions?.length||0)+' condition(s)':n.kind==='event'?(sequence.signal||sequence.key||'Début du comportement'):summaryValue((n.action?.functionId?gameProject.functions?.find(f=>f.id===n.action.functionId)?.name||n.action.functionId:null)||n.action?.key||n.action?.value).slice(0,60)));
   box.classList.toggle('is-selected',n.id===selected);box.onclick=e=>{if(!e.target.closest('button'))selectNode(n.id)};
   if(n.kind!=='event'){
    const input=button(box,'●',()=>{if(!pending){selectNode(n.id);return}if(pending.from===n.id)return;graph.links=graph.links.filter(e=>!(e.from===pending.from&&graphPort(e)===pending.port));graph.links.push({from:pending.from,to:n.id,port:pending.port});pending=null;update('Connecter les nœuds')},'bp-node-port bp-input-port');input.title='Entrée : cliquer après une sortie';input.setAttribute('aria-label','Entrée du nœud '+n.id);

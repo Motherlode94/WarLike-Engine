@@ -172,3 +172,7 @@ Le site est statique, déployable sur Cloudflare Pages depuis `main` avec le dé
 WarLike reste un moteur expérimental. L’IA utilise A* sur grille avec lissage des trajets, sans NavMesh. Le rendu principal prend en charge une partie de glTF, avec animations squelettiques et textures, mais pas tous ses matériaux et extensions. L’Animator ne propose pas encore d’IK ou de retargeting entre squelettes. La coop LAN est limitée à quatre joueurs et 256 objets, avec simulation dans le navigateur hôte ; elle n’est pas un serveur dédié ni un multijoueur Internet. La physique et les interactions demandent des tests dans le jeu construit. Les imports GLB temporaires doivent être rendus durables avant l’export ; les modèles externes non intégrés nécessitent Internet. C# s’exécute dans le processus .NET, indépendamment du Play Web.
 
 Les références Unity, Game Creator, Emerald AI ou Opsive décrivent des inspirations d’ergonomie et de fonctionnalités. Leurs plugins commerciaux ne sont pas inclus dans WarLike.
+
+### Blueprint et physique des personnages
+
+Fonctions partagées avec paramètres et retours typés, points d’arrêt, pause et pas à pas : voir le [guide Blueprint](docs/blueprint-game-builder.md#fonctions-réutilisables-et-données-typées). Capsules, boîtes orientées, sphères, pentes, marches et articulations utilisent Rapier dans le navigateur et pour les personnages LAN sur l’hôte : [guide physique 3D](docs/RAPIER-PLAYMODE.md).

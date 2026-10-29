@@ -1,3 +1,6 @@
+import {compileGraph} from './blueprint-graph.js';
+import {typedValue,resolveBlueprintValue,resolveBlueprintAction} from './blueprint-data.js';
+import {blueprintDebugger,resetBlueprintDebugger,beforeBlueprintAction,afterBlueprintAction} from './blueprint-debugger.js';
 import {questItemCount,consumeQuestItem} from './quest-inventory.js';
 import {adventureTarget} from './adventure-runtime.js';
 import {survivalToolStatus} from './survival-tools.js';
@@ -22,7 +25,7 @@ import {healthOf,sameFaction,isHostileTo} from './ai-perception.js';
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
 export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal','healthChanged','death','variableChanged','objectiveCompleted','timerExpired'];
 export const sequenceConditions=['inventoryHasRoom','questItemAtLeast','survivalToolUsable','survivalToolDurabilityBelow','survivalMilestone','survivalPartyDefeated','survivalNeedBelow','survivalBuilt','survivalNightsAtLeast','animatorStateIs','heroEnergyAbove','heroPowerReady','heroFlightActive','rpgLevelAtLeast','heroReputationAtLeast','simulationPowered','simulationRescued','always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists','aiStateIs','aiAwarenessAbove','aiCanSeeTarget','aiHasTarget','sameFaction','isHostile','weaponAmmoAbove','weaponReady','vehicleDriveable','vehicleFuelBelow','vehicleHealthBelow','vehicleHasDriver','objectiveActive','objectiveComplete','timerRunning','timerExpired','gamePhaseIs','saveExists'];
-export const sequenceInstructions=['consumeQuestItem','repairSurvivalTool','survivalInteract','craftSurvivalItem','consumeSurvivalItem','playAnimatorState','setAnimatorParameter','emitOwnedFx','castHeroPower','restoreHeroEnergy','giveExperience','upgradeHeroSkill','emitFx','repairSimulationNode','rtsOrder','message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState','setAiState','setAiFaction','setAiTarget','setAiDetection','setAiAttackRange','setAiPatrolPoint','setWeaponAmmo','addWeaponAmmo','reloadWeapon','setWeaponDamage','fireVehicleWeapon','repairVehicle','refuelVehicle','setVehicleEngine','setVehicleGear','setVehicleWeapon','clearAiTarget','setAiEnabled','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration','branch','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'];
+export const sequenceInstructions=['callFunction','returnFunction','consumeQuestItem','repairSurvivalTool','survivalInteract','craftSurvivalItem','consumeSurvivalItem','playAnimatorState','setAnimatorParameter','emitOwnedFx','castHeroPower','restoreHeroEnergy','giveExperience','upgradeHeroSkill','emitFx','repairSimulationNode','rtsOrder','message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState','setAiState','setAiFaction','setAiTarget','setAiDetection','setAiAttackRange','setAiPatrolPoint','setWeaponAmmo','addWeaponAmmo','reloadWeapon','setWeaponDamage','fireVehicleWeapon','repairVehicle','refuelVehicle','setVehicleEngine','setVehicleGear','setVehicleWeapon','clearAiTarget','setAiEnabled','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration','branch','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
 export const sequenceRuntime={globals:{},messages:[],time:0,pressed:new Set(),inside:new Set(),fired:new Set(),cooldowns:new Map(),jobs:[],signals:[],trace:[],errors:[],observed:new Map(),interactions:[],signalActors:new Map()};
 const number=(n,def=0)=>Number.isFinite(Number(n))?Number(n):def;
@@ -30,7 +33,7 @@ const MAX_ACTIONS=256,MAX_SIGNALS=64,MAX_JOBS=100;
 const distance=(a,b)=>Math.hypot((number(a.x)+number(a.w)/2)-(number(b.x)+number(b.w)/2),(number(a.y)+number(a.h)/2)-(number(b.y)+number(b.h)/2));
 const safeSteps=steps=>Array.isArray(steps)?steps.slice(0,MAX_ACTIONS):[];
 const safeConditions=conditions=>Array.isArray(conditions)?conditions.slice(0,MAX_ACTIONS):[];
-export function resetSequences(){sequenceRuntime.globals={};sequenceRuntime.messages=[];sequenceRuntime.time=0;sequenceRuntime.pressed.clear();sequenceRuntime.inside.clear();sequenceRuntime.fired.clear();sequenceRuntime.cooldowns.clear();sequenceRuntime.jobs=[];sequenceRuntime.signals=[];sequenceRuntime.trace=[];sequenceRuntime.errors=[];sequenceRuntime.observed.clear();sequenceRuntime.interactions=[];sequenceRuntime.signalActors.clear();resetGameSession();for(const v of gameProject.variables)if(safeKey(v.name))sequenceRuntime.globals[v.name]=coerceVariable(v.type,v.value)}
+export function resetSequences(){resetBlueprintDebugger();sequenceRuntime.globals={};sequenceRuntime.messages=[];sequenceRuntime.time=0;sequenceRuntime.pressed.clear();sequenceRuntime.inside.clear();sequenceRuntime.fired.clear();sequenceRuntime.cooldowns.clear();sequenceRuntime.jobs=[];sequenceRuntime.signals=[];sequenceRuntime.trace=[];sequenceRuntime.errors=[];sequenceRuntime.observed.clear();sequenceRuntime.interactions=[];sequenceRuntime.signalActors.clear();resetGameSession();for(const v of gameProject.variables)if(safeKey(v.name))sequenceRuntime.globals[v.name]=coerceVariable(v.type,v.value)}
 export const emitSequenceSignal=(name,actorId=null)=>{const key=String(name||'').slice(0,60);if(sequenceRuntime.signals.length<MAX_SIGNALS){sequenceRuntime.signals.push(key);if(Number.isSafeInteger(actorId))sequenceRuntime.signalActors.set(key,actorId)}};
 export function queueSequenceInteraction(actorId,targetId){if(![actorId,targetId].every(id=>Number.isSafeInteger(id)&&id>0)||sequenceRuntime.interactions.length>=8)return false;sequenceRuntime.interactions.push({actorId,targetId});return true}
 export function chooseSequenceDialogue(index,options={}){if(!gameIsRunning())return false;const owner=gameSession.dialogue?.actorId,signals=chooseGameDialogue(index,options);if(!signals)return false;for(const signal of signals)emitSequenceSignal(signal,owner);return true}
@@ -42,7 +45,7 @@ export function sequenceEntries(owner){
 const jobSequence=(owner,job)=>sequenceEntries(owner).find(entry=>entry.key===(job.sequenceKey??owner.id))?.sequence;
 export const conditionsPass=(conditions,owner,ctx,mode='all')=>mode==='any'?safeConditions(conditions).some(c=>c&&conditionPass(c,owner,ctx)):safeConditions(conditions).every(c=>c&&conditionPass(c,owner,ctx));
 function traceAction(job,action,status='ok',message=''){
- const rt=sequenceRuntime;rt.trace.push({time:rt.time,objectId:job.objectId,sequenceKey:job.sequenceKey,type:action.type,nodeId:action._nodeId||null,status,message});
+ const rt=sequenceRuntime;rt.trace.push({time:rt.time,objectId:job.objectId,sequenceKey:job.sequenceKey,functionId:job.frames?.at(-1)?.id||null,type:action.type,nodeId:action._nodeId||null,status,message});
  if(rt.trace.length>160)rt.trace.shift();
  if(status==='error'){rt.errors.push(rt.trace.at(-1));if(rt.errors.length>40)rt.errors.shift();gameSession.notice=message;gameSession.revision++}
 }
@@ -52,6 +55,7 @@ export function resolveSequenceTarget(step,owner,ctx){
  return owner;
 }
 export function conditionPass(c,o,ctx){
+ try{c=resolveBlueprintAction(c,{globals:sequenceRuntime.globals,locals:o.sequenceLocal||{},parameters:ctx.parameters||{}})}catch(error){if(!sequenceRuntime.errors.some(e=>e.objectId===o.id&&e.message===error.message))traceAction({objectId:o.id,sequenceKey:o.id},c,'error',error.message);return false}
  const target=resolveSequenceTarget(c,o,ctx);
  const inventoryTarget=c.targetRole||c.targetId?target:ctx.player;
  const compare=(a,b,op)=>op==='>'?number(a)>number(b):op==='<'?number(a)<number(b):op==='>='?number(a)>=number(b):op==='<='?number(a)<=number(b):op==='!='?String(a)!==String(b):String(a)===String(b);
@@ -125,14 +129,30 @@ export function chooseSequenceBranch(sequence,obj,ctx){
  for(const branch of sequence.branches.slice(0,MAX_ACTIONS)){if(!branch||typeof branch!=='object')continue;if(conditionsPass(branch.conditions,obj,ctx,branch.conditionMode))return safeSteps(branch.instructions)}
  return safeSteps(sequence.elseInstructions);
 }
+const scopeFor=(job,owner)=>({globals:sequenceRuntime.globals,locals:job.frames?.at(-1)?.locals||owner.sequenceLocal||{},parameters:job.frames?.at(-1)?.parameters||{}});
+function writeVariable(store,key,value,definitions,add=false){
+ const type=definitions?.find(v=>v.name===key)?.type;
+ if(add){if(type&&type!=='number')throw Error(key+' : addition réservée aux nombres.');value=number(store[key])+number(type?typedValue('number',value,key):value)}
+ store[key]=type?typedValue(type,value,key):structuredClone(value);
+}
+function finishFunction(job,value,owner){
+ const frame=job.frames?.at(-1);if(!frame)throw Error('Retour en dehors d’une fonction.');
+ const result=frame.returnType==='void'?undefined:typedValue(frame.returnType,value,'Retour de '+frame.id);
+ job.frames.pop();job.steps=frame.steps;job.index=frame.index;
+ if(frame.resultKey&&frame.returnType!=='void'){if(!safeKey(frame.resultKey))throw Error('Nom de résultat invalide.');const local=job.frames?.at(-1)?.locals||(owner.sequenceLocal??={});const types=job.frames?.at(-1)?.localTypes||(owner.sequenceLocalTypes??={});writeVariable(local,frame.resultKey,result,types[frame.resultKey]?[{name:frame.resultKey,type:types[frame.resultKey]}]:[]);types[frame.resultKey]=frame.returnType}
+}
 function execute(job,ctx,actionsLeft){
  if(job.playerId!=null){const player=ctx.entities.find(o=>o.id===job.playerId);if(!player){job.index=job.steps.length;return 0}ctx={...ctx,player}}
  const rt=sequenceRuntime,entity=ctx.entities.find(o=>o.id===job.objectId);
  if(!entity||!jobSequence(entity,job)||jobSequence(entity,job)?.enabled===false||entity.sequenceEnabled===false||entity._sequenceDestroyed){job.index=job.steps.length;return 0}
  let count=0;
  while(job.index<job.steps.length&&count<actionsLeft){
-  if(!gameIsRunning()&&!job.runWhenPaused)return count;
-  const a=job.steps[job.index++];count++;if(!a||a.disabled||typeof a.type!=='string')continue;
+  if(gameSession.phase!=='playing'&&!job.runWhenPaused)return count;
+  const raw=job.steps[job.index];
+  if(raw?.type==='_functionEnd'){job.index++;try{finishFunction(job,undefined,entity)}catch(error){traceAction(job,raw,'error',error.message);job.steps=[];job.index=0}continue}
+  if(beforeBlueprintAction(job,raw,entity))return count;
+  job.index++;count++;let a;try{a=resolveBlueprintAction(raw,scopeFor(job,entity))}catch(error){traceAction(job,raw,'error',error.message);if(afterBlueprintAction(job,entity))return count;continue}
+  if(!a||a.disabled||typeof a.type!=='string')continue;
   recordEngineEvent('blueprint',String(a.type)+' · '+String(entity.name||entity.id));
   const key=String(a.key||'score').slice(0,60),val=a.value;
   if(!safeKey(key)){traceAction(job,a,'error','Nom de variable réservé ou invalide');continue}
@@ -140,6 +160,15 @@ function execute(job,ctx,actionsLeft){
   if(!targetObject){traceAction(job,a,'error','Objet cible introuvable');continue}
   traceAction(job,a);
   try{switch(a.type){
+  case 'callFunction':{
+   const f=gameProject.functions?.find(f=>f.id===a.functionId);if(!f)throw Error('Fonction introuvable : '+String(a.functionId));
+   job.frames??=[];if(job.frames.length>=16)throw Error('16 appels imbriqués maximum.');
+   if(job.frames.some(frame=>frame.id===f.id))throw Error('Appel récursif interdit : '+f.id);
+   const parameters={},scope=scopeFor(job,entity);for(const p of f.parameters||[]){if(!safeKey(p.name))throw Error('Paramètre invalide.');parameters[p.name]=typedValue(p.type,resolveBlueprintValue(Object.hasOwn(a.arguments||{},p.name)?a.arguments[p.name]:p.value,scope),p.name)}
+   const steps=f.graph?compileGraph(f.graph,{nodeIds:true}).instructions:structuredClone(f.instructions||[]);if(steps.length>256)throw Error('Fonction trop longue.');
+   job.frames.push({id:f.id,parameters,locals:{},localTypes:{},returnType:f.returnType||'void',resultKey:a.resultKey,steps:job.steps,index:job.index});job.steps=[...steps,{type:'_functionEnd'}];job.index=0;break;
+  }
+  case 'returnFunction':finishFunction(job,val,entity);break;
   case 'consumeQuestItem':if(!consumeQuestItem(ctx.entities,key,number(val,1))){traceAction(job,a,'error','Objet de quête manquant.');job.index=job.steps.length;return count}break;
   case 'repairSurvivalTool':survivalAction(targetObject,'repair:'+String(val||'axe'),ctx.entities,{mode:ctx.mode||'2d'});break;
   case 'survivalInteract':survivalAction(targetObject,'gather',ctx.entities,{mode:ctx.mode||'2d'});break;
@@ -156,10 +185,10 @@ function execute(job,ctx,actionsLeft){
   case 'repairSimulationNode':{const result=interactSimulationNode(ctx.player,targetObject,{mode:ctx.mode||'2d'});rt.messages.push({text:result.reason,ttl:2});break}
   case 'rtsOrder':if(val==='move')orderRtsMove(ctx.entities,[targetObject.id],{x:number(a.x),y:number(a.y)});else orderRtsGroup(ctx.entities,[targetObject.id],String(val||'follow'),a.key&&a.key!=='player'?number(a.key):ctx.player?.id);break;
   case 'message':rt.messages.push({text:String(val||'Action exécutée').slice(0,160),ttl:3});break;
-  case 'setVariable':rt.globals[key]=val??0;break;
-  case 'addVariable':rt.globals[key]=number(rt.globals[key])+number(val);break;
-  case 'setLocal':entity.sequenceLocal??={};entity.sequenceLocal[key]=val??0;break;
-  case 'addLocal':entity.sequenceLocal??={};entity.sequenceLocal[key]=number(entity.sequenceLocal[key])+number(val);break;
+  case 'setVariable':writeVariable(rt.globals,key,val??0,[...gameProject.variables,...(jobSequence(entity,job)?.graph?.variables||[])]);break;
+  case 'addVariable':writeVariable(rt.globals,key,val,[...gameProject.variables,...(jobSequence(entity,job)?.graph?.variables||[])],true);break;
+  case 'setLocal':{const frame=job.frames?.at(-1),locals=frame?.locals||(entity.sequenceLocal??={}),types=frame?.localTypes||(entity.sequenceLocalTypes??={});const type=types[key]||a.valueType;writeVariable(locals,key,val??0,type?[{name:key,type}]:[]);if(type)types[key]=type;break}
+  case 'addLocal':{const frame=job.frames?.at(-1),locals=frame?.locals||(entity.sequenceLocal??={}),types=frame?.localTypes||entity.sequenceLocalTypes||{};writeVariable(locals,key,val,types[key]?[{name:key,type:types[key]}]:[],true);break}
   case 'moveObject':{const target=targetObject;target.x+=number(a.x);target.y+=number(a.y);break}
   case 'teleportObject':{const target=targetObject;target.x=number(a.x,target.x);target.y=number(a.y,target.y);break}
   case 'giveItem':{const target=targetObject;inventoryAdd(target,key,Math.max(1,number(val,1)));break}
@@ -225,7 +254,7 @@ function execute(job,ctx,actionsLeft){
   case 'setVehicleEngine':setVehicleEngine(targetObject,val!==false&&String(val)!=='false'&&String(val)!=='0');break;
   case 'setVehicleGear':setVehicleGear(targetObject,number(val,1));break;
   case 'setVehicleWeapon':targetObject.vehicleWeapon??={};targetObject.vehicleWeapon.enabled=val!==false&&String(val)!=='false'&&String(val)!=='0';break;
-  case 'branch':{const yes=conditionsPass(a.conditions,entity,ctx,a.conditionMode);const steps=safeSteps(yes?a.thenInstructions:a.elseInstructions);if(job.steps.length+steps.length>1024)throw Error('Branche trop volumineuse');job.steps.splice(job.index,0,...structuredClone(steps));break}
+  case 'branch':{const yes=conditionsPass((a.conditions||[]).map(c=>resolveBlueprintAction(c,scopeFor(job,entity))),{...entity,sequenceLocal:scopeFor(job,entity).locals},ctx,a.conditionMode);const steps=safeSteps(yes?a.thenInstructions:a.elseInstructions);if(job.steps.length+steps.length>1024)throw Error('Branche trop volumineuse');job.steps.splice(job.index,0,...structuredClone(steps));break}
   case 'addObjectiveProgress':{const was=gameSession.objectives[key]?.status;advanceObjective(key,number(val,1));if(was==='active'&&gameSession.objectives[key]?.status==='complete'){rt.globals['objective:'+key]=1;emitSequenceSignal('objective:'+key)}break}
   case 'startTimer':startTimer(key,number(val,10));break;
   case 'stopTimer':delete gameSession.timers[key];break;
@@ -240,15 +269,20 @@ function execute(job,ctx,actionsLeft){
   case 'showDialogue':openGameDialogue(a,ctx.player?.id,entity.name||'');break;
   case 'closeDialogue':gameSession.dialogue=null;gameSession.revision++;break;
   case 'spawnObject':{const template=ctx.entities.find(o=>o.id===number(val));if(!template)throw Error('Objet modèle introuvable');if(ctx.entities.length>=10000)throw Error('Limite de 10000 objets atteinte');const copy=structuredClone(template);copy.id=ctx.allocateId?ctx.allocateId():Math.max(0,...ctx.entities.map(o=>o.id))+1;copy.name=String(a.name||template.name+' · instance');copy.x=number(a.x,template.x+40);copy.y=number(a.y,template.y);copy.playable3d=false;delete copy._sequenceDestroyed;ctx.entities.push(copy);break}
-  case 'wait':job.wait=Math.min(120,Math.max(0,number(val,.5)));return count;
+  case 'wait':job.wait=Math.min(120,Math.max(0,number(val,.5)));afterBlueprintAction(job,entity);return count;
   default:traceAction(job,a,'error','Instruction inconnue : '+a.type);
   }}catch(error){traceAction(job,a,'error',String(error.message||error))}
+  if(afterBlueprintAction(job,entity)||blueprintDebugger.paused)return count;
  }
  return count;
 }
 export function updateSequences(dt,ctx){
  if(!ctx?.playing)return;
  const rt=sequenceRuntime;
+ if(blueprintDebugger.paused){
+  if(blueprintDebugger.step){const job=blueprintDebugger.current?.job||rt.jobs[0];if(job&&rt.jobs.includes(job)){execute(job,ctx,1);if(blueprintDebugger.step)afterBlueprintAction(job,ctx.entities.find(o=>o.id===job.objectId));rt.jobs=rt.jobs.filter(j=>j.index<j.steps.length)}else{blueprintDebugger.paused=false;updateSequences(0,ctx);blueprintDebugger.paused=true;blueprintDebugger.step=false}}
+  return;
+ }
  ctx={...ctx,globals:rt.globals,fired:rt.fired};
  const change=applySessionChange(ctx);
  if(change){rt.interactions=[];rt.signals=[];rt.signalActors.clear();rt.time=gameSession.elapsed;rt.jobs=[];rt.inside.clear();rt.cooldowns.clear();rt.observed.clear();rt.fired=new Set(change.fired||[]);if(change.kind==='restore')for(const o of ctx.entities)for(const entry of sequenceEntries(o))if(entry.sequence.event==='start')rt.cooldowns.set('start:'+entry.key,Infinity);emitSequenceSignal(change.kind==='restore'?'game:loaded':'scene:loaded');ctx.onSceneChange?.(change);ctx.pressedKeys?.clear();return}
@@ -265,12 +299,12 @@ export function updateSequences(dt,ctx){
   const owner=objects.find(o=>o.id===job.objectId);
   if(!owner||!jobSequence(owner,job)||jobSequence(owner,job)?.enabled===false||owner.sequenceEnabled===false||owner._sequenceDestroyed)continue;
   job.wait=Math.max(0,job.wait-dt);
-  if(job.wait<=1e-9&&budget>0)budget-=execute(job,ctx,budget)||0;
+  if(!blueprintDebugger.paused&&job.wait<=1e-9&&budget>0)budget-=execute(job,ctx,budget)||0;
   if(job.index<job.steps.length)rt.jobs.push(job);
  }
  const start=(o,s,id,actor=player)=>{
   const eventCtx={...ctx,player:actor};
-  if(!gameIsRunning()&&!s.runWhenPaused)return;
+  if(gameSession.phase!=='playing'&&!s.runWhenPaused)return;
   if(rt.jobs.length>=MAX_JOBS||budget<=0)return;
   if(s.once&&rt.fired.has(id))return;
   if(Array.isArray(s.graph?.variables))for(const v of s.graph.variables.slice(0,128)){if(v&&safeKey(v.name)&&!(v.name in rt.globals))rt.globals[v.name]=coerceVariable(v.type,v.value)}
@@ -278,7 +312,7 @@ export function updateSequences(dt,ctx){
   if(!basePassed&&!Array.isArray(s.elseInstructions)){if(o.adventureInteractable?.lockedHint)rt.messages.push({text:String(o.adventureInteractable.lockedHint).slice(0,160),ttl:3});return;}
   rt.fired.add(id);const steps=safeSteps(basePassed?chooseSequenceBranch(s,o,eventCtx):s.elseInstructions);
   const job={objectId:o.id,playerId:objects.some(o=>o===actor)?actor.id:undefined,sequenceKey:id,runWhenPaused:s.runWhenPaused===true,steps:structuredClone(steps),index:0,wait:0};
-  budget-=execute(job,ctx,budget)||0;
+  if(!blueprintDebugger.paused)budget-=execute(job,ctx,budget)||0;
   if(job.index<job.steps.length)rt.jobs.push(job);
  };
  for(const o of objects){

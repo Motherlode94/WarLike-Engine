@@ -41,6 +41,7 @@ const texts=new Set(['message','showDialogue','setVariable','setLocal','setAnima
 const noValue=new Set(['branch','destroyObject','equipItem','completeObjective','setCheckpoint','restoreCheckpoint','stopTimer','saveGame','loadGame','pauseGame','resumeGame','closeDialogue','clearAiTarget','reloadWeapon','fireVehicleWeapon']);
 export const targetable=type=>!['consumeQuestItem','branch','wait','message','emitSignal','setVariable','addVariable','setLocal','addLocal','setObjective','completeObjective','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'].includes(type);
 export function actionFields(type){
+ if(type==='loadScene')return [{key:'value',label:'Identifiant de la scène',type:'text'},{key:'preserveProgress',label:'Conserver le groupe et l’état des scènes visitées',type:'boolean'},{key:'entryX',label:'Entrée X · optionnel',type:'number'},{key:'entryY',label:'Entrée Y · optionnel',type:'number'}];
  if(type==='consumeQuestItem')return [{key:'key',label:'Objet de quête',type:'text',default:'adventure-key'},{key:'value',label:'Quantité',type:'number',default:1}];
  if(type==='repairSurvivalTool')return [{key:'value',label:'Outil',type:'select',choices:['axe','pickaxe']}];
  if(type==='survivalInteract')return [];

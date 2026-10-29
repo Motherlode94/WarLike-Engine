@@ -48,9 +48,9 @@ function receiveWorld(data){
  lanState.genre=genreForMode(resolveGameGenre(incoming.genre,incoming.entities),incoming.mode);lanState.variables=incoming.globals&&typeof incoming.globals==='object'&&!Array.isArray(incoming.globals)?incoming.globals:{};
  sequenceRuntime.messages=Array.isArray(incoming.messages)?incoming.messages.slice(-3).filter(m=>m&&typeof m.text==='string'&&Number.isFinite(m.ttl)).map(m=>({text:m.text.slice(0,160),ttl:Math.max(0,Math.min(5,m.ttl))})):[];
  received=data.sequence;lanState.lastSnapshot=performance.now();snapshot=incoming;
- const previousActor=lanState.actorId,existing=new Map(state.entities.map(o=>[o.id,o]));state.entities=incoming.entities.map(o=>{const previous=existing.get(o.id);if(!previous)return o;const before={x:previous.x,y:previous.y,elevation3d:previous.elevation3d||0,rotation:previous.rotation||0};for(const key of Object.keys(previous))if(!key.startsWith('_')&&!(key in o)||networkFields.includes(key)&&!(key in o))delete previous[key];Object.assign(previous,o);previous._netFrom=before;previous._netTo={x:o.x,y:o.y,elevation3d:o.elevation3d||0,rotation:o.rotation||0};previous._netAt=performance.now();return previous});
+ const changedScene=incoming.sceneId!==gameSession.currentSceneId,previousActor=lanState.actorId,existing=new Map(changedScene?[]:state.entities.map(o=>[o.id,o]));state.entities=incoming.entities.map(o=>{const previous=existing.get(o.id);if(!previous)return o;const before={x:previous.x,y:previous.y,elevation3d:previous.elevation3d||0,rotation:previous.rotation||0};for(const key of Object.keys(previous))if(!key.startsWith('_')&&!(key in o)||networkFields.includes(key)&&!(key in o))delete previous[key];Object.assign(previous,o);previous._netFrom=before;previous._netTo={x:o.x,y:o.y,elevation3d:o.elevation3d||0,rotation:o.rotation||0};previous._netAt=performance.now();return previous});
  state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1;lanState.actorId=state.entities.find(o=>o._netPeerId===lanState.peerId)?.id??null;
- const own=ownActor();if(own&&previousActor!==own.id){const rig=cameraRigFor(own);view3d.yaw=Math.PI-(Number(own.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18;view3d.radius=rig.distance}if(incoming.lighting)Object.assign(lighting,incoming.lighting);
+ const own=ownActor();if(own&&(changedScene||previousActor!==own.id)){const rig=cameraRigFor(own);view3d.yaw=Math.PI-(Number(own.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18;view3d.radius=rig.distance}if(incoming.lighting)Object.assign(lighting,incoming.lighting);
  Object.assign(gameSession,{phase:incoming.phase,dialogue:validGameDialogue(incoming.dialogue)?incoming.dialogue:null,objectives:incoming.objectives||{},timers:incoming.timers||{},elapsed:incoming.elapsed||0,currentSceneId:incoming.sceneId,notice:incoming.notice||''});gameSession.revision++;
  heroRuntime.bolts=incoming.bolts||[];if(incoming.fx){fxRuntime.particles=incoming.fx.particles||[];fxRuntime.rings=incoming.fx.rings||[];fxRuntime.clock=incoming.fx.clock||0}lanState.status='Connecté · '+lanState.players.length+'/4 joueurs';changed();
 }
@@ -79,6 +79,7 @@ async function pump(){
  try{
   if(lanState.role==='host'){
    const actor=ownActor();if(!actor)throw Error('La scène doit contenir un personnage jouable.');
+   lanState.actorId=actor.id;
    if(actor._netPeerId!==lanState.peerId||lanState.players.some(p=>!state.entities.some(o=>o._netPeerId===p.id))){actor._netPeerId=lanState.peerId;lanState.actorId=actor.id;roster(lanState.players)}
    await request('snapshot',{snapshot:makeLanSnapshot()});
   }

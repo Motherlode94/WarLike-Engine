@@ -20,7 +20,7 @@ export const genreTemplates={
 const details={
  superhero:{stage:'playable',features:['Six pouvoirs, animations et effets visuels','Progression RPG et escouade','Mission, secours et destruction']},
  survival:{stage:'playable',features:['Première aube : camp, repas, nuit et victoire','Placement avec aperçu, rotation et grille','Sauvegarde et coop avec secours des alliés']},
- adventure:{stage:'playable',features:['Le phare oublié : exploration et énigmes','Dialogues à choix, clé et grille physique','Journal, objectifs et sauvegardes']},
+ adventure:{stage:'playable',features:['Deux chapitres : phare et vallée des échos','Dialogues, pont à réparer et mélodie à résoudre','Voyages, inventaires et scènes persistants']},
  platformer:{stage:'playable',features:['Sprites Kenney et contrôleur plateforme','Gravité, saut et course','Sols solides, plateformes et caisses physiques']},
  sandbox:{stage:'blank',features:['Une scène minimale à construire librement']},
  fieldlab:{stage:'tool',features:['Circuit de diagnostic des contrôles, interactions et véhicules']},

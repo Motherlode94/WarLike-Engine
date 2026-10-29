@@ -5,7 +5,7 @@ Depuis **WarLike Hub → Nouveau projet**, choisir **2D ou 3D**, puis **Type de 
 | Type de jeu | 2D | 3D | Base fournie |
 | --- | --- | --- | --- |
 | Hero Forge · Super-héros | Oui | Oui | Mission jouable : pouvoirs, FX, progression, secours, destruction et escouade |
-| Aventure | Oui | Oui | Scène jouable : dialogues à choix, journal, clé, deux stèles, grille et victoire |
+| Aventure | Oui | Oui | Deux chapitres jouables : dialogues, journal, énigmes, pont à réparer et progression persistante |
 | Survival · Survie | Oui | Oui | Scène jouable : besoins, récolte, fabrication, feu, abri et nuit |
 | Plateforme | Oui | — | Scène jouable : sprites Kenney, saut, gravité, plateformes et colliders |
 | Action | Vue du dessus | FPS / TPS | Base à compléter : couverture, adversaire, véhicule armé et capture |
@@ -22,7 +22,7 @@ Depuis **WarLike Hub → Nouveau projet**, choisir **2D ou 3D**, puis **Type de 
 
 Le genre fait partie de la configuration du jeu : il est conservé dans les sauvegardes du projet, les espaces 2D/3D et les exports Web. Les anciens projets utilisent leur métadonnée de genre ; sans cette information, certains composants caractéristiques permettent de reconnaître Survival, Hero Forge, Plateforme et les templates C#. Un choix de genre explicite reste prioritaire.
 
-Dans la liste des projets, ouvrir **⋮ → Type de jeu** pour changer le classement et le HUD d’un projet existant. Ses objets et ses scènes sont conservés ; ce réglage n’installe pas une nouvelle scène de template. Pour obtenir une scène complète de départ, créer un nouveau projet avec le type souhaité, ou utiliser les commandes de scène Hero Forge / Survival.
+Dans la liste des projets, ouvrir **⋮ → Type de jeu** pour changer le classement et le HUD d’un projet existant. Ses objets et ses scènes sont conservés ; ce réglage n’installe pas une nouvelle scène de template. Pour obtenir une scène complète de départ, créer un nouveau projet avec le type souhaité, ou utiliser les commandes de scène Hero Forge / Aventure / Survival.
 
 ## Utilisation
 
@@ -53,6 +53,6 @@ Pour tester un composant natif : démarrer le pont avec `start-warlike-csharp.cm
 
 Le template Survival est désormais une boucle jouable avec besoins, récolte, recettes, feu alimenté et abri, en 2D/3D et en coop LAN. Voir le [guide Survival](survival.md). Les anciens presets basés sur des variables restent disponibles.
 
-## Aventure · Le phare oublié
+## Aventure · Le phare et la vallée
 
-Le template 2D/3D contient une quête complète et des dialogues à réponses éditables, un journal et des objets de quête partagés. Les interactions sont ciblées et contrôlent les obstacles. Voir le [guide Aventure](adventure.md) pour le parcours, les composants, les sauvegardes et la coop LAN.
+Le template 2D/3D contient deux chapitres jouables et onze objectifs, un pont à réparer et une mélodie à résoudre. Les voyages et sauvegardes conservent les objets des deux scènes et les inventaires du groupe. Il contient une quête complète et des dialogues à réponses éditables, un journal et des objets de quête partagés. Les interactions sont ciblées et contrôlent les obstacles. Voir le [guide Aventure](adventure.md) pour le parcours, les composants, les sauvegardes et la coop LAN.

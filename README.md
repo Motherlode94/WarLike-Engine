@@ -37,9 +37,9 @@ La **coop locale accueille jusqu’à quatre joueurs**, en 2D ou 3D. Dans le dos
 
 Sur le site public, le panneau explique le lancement local. Pour jouer, tous utilisent l’adresse servie par votre Python. La coop est également accessible depuis le menu de démarrage des exports Web. [Guide Animator, FX Studio, LAN et limites](docs/creative-studios-and-lan.md).
 
-## Aventure : Le phare oublié
+## Aventure : Le phare et la vallée
 
-Créer un projet **Aventure** en 2D ou 3D, ou charger **Game → Aventure · Le phare oublié**. L’expédition relie Mira, un indice à lire, une clé, deux stèles à résoudre, une grille avec collision et le cristal à rallumer. **E** cible une seule interaction accessible ; **J / I** ouvre le journal commun. Les dialogues proposent des réponses à la souris ou au clavier, modifiables dans Blueprint. **F5 / F9** conserve aussi une conversation ouverte. En LAN, le joueur qui ouvre le dialogue choisit ses réponses ; la clé et les objectifs sont communs, y compris lorsque son porteur quitte la partie. Le template privilégie l’exploration ; le combat se règle dans son composant. [Guide Aventure et création de dialogues](docs/adventure.md).
+Créer un projet **Aventure** en 2D ou 3D, ou charger **Game → Aventure · Le phare et la vallée** dans un projet existant. Deux chapitres et onze objectifs relient le phare de Mira à la vallée d’Orin : dialogues à choix, indices, stèles, clé et grille physique, pont à réparer et mélodie à résoudre. **E** interagit ; **J / I** ouvre un journal qui sépare objectifs en cours et terminés. Les voyages conservent les objets des scènes, les inventaires personnels et les compagnons LAN. **F5 / F9** conserve les deux zones et une conversation ouverte. Les scénarios et transitions sont éditables dans Blueprint ; les modèles Kenney et Quaternius utilisés sont inclus dans l’export. Les projets existants gardent leur contenu ; utiliser le menu Game installe la nouvelle campagne avec Annuler disponible. [Guide Aventure](docs/adventure.md).
 
 ## Survival : construire un camp et passer la nuit
 

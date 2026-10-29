@@ -1,8 +1,9 @@
 import {makeGameDialogue,validGameDialogue} from './game-dialogue.js';
 import {gameProject,safeKey,validEntities,sceneDefinition} from './game-project.js';
+import {savedSceneEntities,carrySceneParty} from './scene-progress.js';
 const clone=value=>structuredClone(value);
 const finite=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
-export const freshSession=()=>({phase:'playing',elapsed:0,currentSceneId:gameProject.activeSceneId,objectives:{},timers:{},dialogue:null,checkpoint:null,pending:null,notice:'',revision:0});
+export const freshSession=()=>({phase:'playing',elapsed:0,currentSceneId:gameProject.activeSceneId,sceneProgress:{},objectives:{},timers:{},dialogue:null,checkpoint:null,pending:null,notice:'',revision:0});
 export const gameSession=freshSession();
 export function resetGameSession(){Object.assign(gameSession,freshSession())}
 export const gameIsRunning=()=>gameSession.phase==='playing';
@@ -40,11 +41,12 @@ function saveKey(slot){if(!safeKey(slot))throw Error('Nom de sauvegarde invalide
 export function captureGameSave(ctx){
  if(!validEntities(ctx.entities))throw Error('La scène ne peut pas être sauvegardée.');
  return {format:'warlike.save.v1',projectId:gameProject.id,sceneId:gameSession.currentSceneId,
-  entities:ctx.entities.map(entity=>{const copy=clone(entity);for(const key of ['_netKeys','_netFrom','_netTo','_netAt','_animatorFrame','_support3d'])delete copy[key];return copy}),globals:clone(ctx.globals||{}),fired:[...(ctx.fired||[])],
+  entities:savedSceneEntities(ctx.entities),sceneProgress:clone(gameSession.sceneProgress),globals:clone(ctx.globals||{}),fired:[...(ctx.fired||[])],
   session:clone({phase:gameSession.phase,elapsed:gameSession.elapsed,objectives:gameSession.objectives,timers:gameSession.timers,dialogue:gameSession.dialogue})};
 }
 export function validateGameSave(data,{checkpoint=false}={}){
  if(data?.format!=='warlike.save.v1'||data.projectId!==gameProject.id||!validEntities(data.entities))throw Error('Sauvegarde incompatible avec ce jeu.');
+ if(!safeKey(data.sceneId))throw Error('Identifiant de scène sauvegardée invalide.');
  if(!data.globals||typeof data.globals!=='object'||Array.isArray(data.globals)||!data.session||typeof data.session!=='object')throw Error('Données de sauvegarde invalides.');
  for(const key of Object.keys(data.globals))if(!safeKey(key))throw Error('Variable de sauvegarde invalide.');
  for(const collection of ['objectives','timers']){
@@ -55,6 +57,10 @@ export function validateGameSave(data,{checkpoint=false}={}){
  for(const timer of Object.values(data.session.timers))if(!Number.isFinite(timer.remaining)||timer.remaining<0||typeof timer.expired!=='boolean')throw Error('Chronomètre de sauvegarde invalide.');
  if(!Number.isFinite(data.session.elapsed)||data.session.elapsed<0)throw Error('Durée de partie invalide.');
  if(!Array.isArray(data.fired)||data.fired.length>20000||data.fired.some(key=>typeof key!=='string'&&!Number.isSafeInteger(key)))throw Error('État des déclencheurs invalide.');
+ if(data.sceneProgress!=null){
+  if(typeof data.sceneProgress!=='object'||Array.isArray(data.sceneProgress)||Object.keys(data.sceneProgress).length>40)throw Error('Scènes sauvegardées invalides.');
+  for(const [id,scene] of Object.entries(data.sceneProgress))if(!safeKey(id)||!scene||!validEntities(scene.entities)||!Array.isArray(scene.fired)||scene.fired.length>20000||scene.fired.some(key=>typeof key!=='string'&&!Number.isSafeInteger(key)))throw Error('Scène sauvegardée invalide.');
+ }
  if(data.session.dialogue!=null&&!validGameDialogue(data.session.dialogue))throw Error('Dialogue de sauvegarde invalide.');
  if(data.checkpoint!=null){if(checkpoint)throw Error('Checkpoints imbriqués invalides.');validateGameSave(data.checkpoint,{checkpoint:true})}
  return data;
@@ -72,17 +78,23 @@ export function readGameSlot(ctx,slot='quick'){
 }
 export function hasGameSlot(ctx,slot='quick'){try{readGameSlot(ctx,slot);return true}catch{return false}}
 export function queueLoadGame(ctx,slot='quick'){gameSession.pending={kind:'restore',data:readGameSlot(ctx,slot)};return true}
-export function queueScene(id){if(!sceneDefinition(id))throw Error('Scène introuvable : '+id);gameSession.pending={kind:'scene',id};return true}
+export function queueScene(id,{preserveProgress=false,entryX,entryY}={}){if(!sceneDefinition(id))throw Error('Scène introuvable : '+id);gameSession.pending={kind:'scene',id,preserveProgress:preserveProgress===true,entryX,entryY};return true}
 export function applySessionChange(ctx){
  const pending=gameSession.pending;if(!pending)return null;gameSession.pending=null;
  if(pending.kind==='scene'){
   const scene=sceneDefinition(pending.id);if(!scene)throw Error('La scène demandée a disparu.');
-  ctx.entities.splice(0,ctx.entities.length,...clone(scene.entities));gameSession.currentSceneId=scene.id;
-  gameSession.phase='playing';gameSession.dialogue=null;gameSession.revision++;return {kind:'scene',camera:clone(scene.camera)};
+  const remembered=pending.preserveProgress?(scene.id===gameSession.currentSceneId?{entities:savedSceneEntities(ctx.entities.filter(o=>!o._netRemote)),fired:[...(ctx.fired||[])]}:Object.hasOwn(gameSession.sceneProgress,scene.id)?gameSession.sceneProgress[scene.id]:null):null;
+  let entities=clone(remembered?.entities||scene.entities);
+  if(pending.preserveProgress){
+   entities=carrySceneParty(entities,ctx.entities,pending);
+   gameSession.sceneProgress[gameSession.currentSceneId]={entities:savedSceneEntities(ctx.entities.filter(o=>!o._netRemote)),fired:[...(ctx.fired||[])]};
+  }
+  ctx.entities.splice(0,ctx.entities.length,...entities);gameSession.currentSceneId=scene.id;
+  gameSession.phase='playing';gameSession.dialogue=null;gameSession.notice='';gameSession.revision++;return {kind:'scene',camera:clone(scene.camera),fired:remembered?.fired||[]};
  }
  const data=validateGameSave(pending.data);
  ctx.entities.splice(0,ctx.entities.length,...clone(data.entities));
  for(const key of Object.keys(ctx.globals))delete ctx.globals[key];Object.assign(ctx.globals,clone(data.globals));
- Object.assign(gameSession,{elapsed:data.session.elapsed,objectives:clone(data.session.objectives),timers:clone(data.session.timers),checkpoint:Object.hasOwn(data,'checkpoint')?clone(data.checkpoint):gameSession.checkpoint,phase:'playing',currentSceneId:data.sceneId,pending:null,dialogue:data.session.dialogue?makeGameDialogue(data.session.dialogue,{actorId:data.session.dialogue.actorId}):null,revision:gameSession.revision+1});
+ Object.assign(gameSession,{elapsed:data.session.elapsed,sceneProgress:clone(data.sceneProgress||{}),objectives:clone(data.session.objectives),timers:clone(data.session.timers),checkpoint:Object.hasOwn(data,'checkpoint')?clone(data.checkpoint):gameSession.checkpoint,phase:'playing',currentSceneId:data.sceneId,pending:null,dialogue:data.session.dialogue?makeGameDialogue(data.session.dialogue,{actorId:data.session.dialogue.actorId}):null,revision:gameSession.revision+1});
  return {kind:'restore',fired:data.fired};
 }

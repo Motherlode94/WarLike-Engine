@@ -2,3 +2,5 @@
 
 .adventure-hud{max-height:calc(100% - 70px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}.adventure-hud>header{display:flex;align-items:center;justify-content:space-between;gap:10px}.adventure-hud>header strong{font-size:13px;color:#f5dba0}.adventure-hud-body>div{display:flex;gap:8px;flex-wrap:wrap}.adventure-hud.minimized .adventure-hud-body,.adventure-hud.compact:not(.expanded) .adventure-hud-body{display:none}
 .adventure-hud>.adventure-hud-body{display:block}.adventure-playing #gameHint,.adventure-playing .rpg-shortcuts{display:none!important}
+
+.adventure-chapter{display:block;color:#e8ce96;font-size:10px;font-weight:700;letter-spacing:.1em}.adventure-hud .adventure-next-goal{padding:7px 9px;border-left:2px solid #dbba74;background:#d6b57712;color:#fff1cf;font-size:12px}.adventure-playing .game-objective-hud{display:none}.adventure-completed{margin:15px 0;padding:9px 12px;border:1px solid #537161;border-radius:4px;background:#19392d55}.adventure-completed summary{cursor:pointer;color:#ade0c4;font-weight:600}.adventure-completed summary:focus-visible{outline:2px solid #e8ce96;outline-offset:3px}

@@ -24,7 +24,7 @@ export function initGameFlowUi(){
   for(const [id,timer] of Object.entries(gameSession.timers)){const row=element('div','game-timer-row');row.append(element('span','',id),element('strong','',Math.floor(Math.ceil(timer.remaining)/60)+':'+String(Math.ceil(timer.remaining)%60).padStart(2,'0')));hud.append(row)}
   if(active&&hud.childNodes.length){objectiveHud=hud;(document.getElementById('viewport')||root).append(hud);}
   if(active&&gameSession.dialogue){
-   const d=gameSession.dialogue,box=element('section','game-dialogue');box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label','Dialogue · '+d.speaker);box.append(element('strong','',d.speaker),element('p','',d.text));
+   const d=gameSession.dialogue,box=element('section','game-dialogue');box.dataset.dialogueId=d.id;box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label','Dialogue · '+d.speaker);box.append(element('strong','',d.speaker),element('p','',d.text));
    if(pendingDialogue!==d.id)pendingDialogue=null;
    const choices=d.choices?.length?d.choices:[{label:'Continuer →'}],controls=element('div','game-dialogue-choices');
    choices.forEach((choice,index)=>{const b=action(controls,(d.choices?.length?(index+1)+'. ':'')+choice.label,()=>answer(index,d),'bp-primary');b.dataset.dialogueChoice=index;b.disabled=!canAnswer(d)||pendingDialogue===d.id});box.append(controls);

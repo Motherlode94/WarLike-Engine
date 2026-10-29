@@ -1,4 +1,5 @@
 import {ensureSurvival} from './survival-runtime.js';
+import {sceneCompanion} from './scene-progress.js';
 
 // A private LAN reclaims saved survivors by displayed name, without accounts.
 // Offline companions live in the host's save, outside the simulated scene.
@@ -17,6 +18,7 @@ export function reconcileLanSurvivors(entities,players,host,{hostId,allocateId})
   const seat=[1,2,3].find(value=>!entities.some(o=>o.coopSeat===value));if(!seat||entities.length>=256)continue;
   const index=host.survivalCompanions.findIndex(o=>o.coopName===peer.name);
   let survivor=index>=0?host.survivalCompanions.splice(index,1)[0]:null;
+  if(survivor&&host.adventure){survivor=sceneCompanion(host,survivor);survivor.x=host.x+65*seat;survivor.y=host.y+45*seat}
   if(!survivor){
    survivor=cleanCompanion(host);
    for(const key of Object.keys(survivor))if(key.startsWith('_')||['sequence','sequences','ai','heroState','survivalState','survivalWorld'].includes(key))delete survivor[key];

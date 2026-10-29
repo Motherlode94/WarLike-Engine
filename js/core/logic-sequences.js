@@ -232,7 +232,7 @@ function execute(job,ctx,actionsLeft){
   case 'saveGame':saveGameSlot({...ctx,globals:rt.globals,fired:rt.fired},a.key?key:'quick');emitSequenceSignal('game:saved');break;
   case 'loadGame':queueLoadGame(ctx,a.key?key:'quick');return count;
   case 'restoreCheckpoint':if(!gameSession.checkpoint)throw Error('Aucun checkpoint actif');gameSession.pending={kind:'restore',data:structuredClone(gameSession.checkpoint)};return count;
-  case 'loadScene':queueScene(String(val||key));return count;
+  case 'loadScene':queueScene(String(val||key),a);return count;
   case 'winGame':setGamePhase('won',String(val||'Victoire !'));return count;
   case 'loseGame':setGamePhase('lost',String(val||'Partie terminée'));return count;
   case 'pauseGame':setGamePhase('paused');return count;
@@ -251,7 +251,7 @@ export function updateSequences(dt,ctx){
  const rt=sequenceRuntime;
  ctx={...ctx,globals:rt.globals,fired:rt.fired};
  const change=applySessionChange(ctx);
- if(change){rt.interactions=[];rt.signalActors.clear();rt.time=gameSession.elapsed;rt.jobs=[];rt.inside.clear();rt.cooldowns.clear();rt.observed.clear();rt.fired=new Set(change.fired||[]);if(change.kind==='restore')for(const o of ctx.entities)for(const entry of sequenceEntries(o))if(entry.sequence.event==='start')rt.cooldowns.set('start:'+entry.key,Infinity);emitSequenceSignal(change.kind==='restore'?'game:loaded':'scene:loaded');ctx.onSceneChange?.(change);ctx.pressedKeys?.clear();return}
+ if(change){rt.interactions=[];rt.signals=[];rt.signalActors.clear();rt.time=gameSession.elapsed;rt.jobs=[];rt.inside.clear();rt.cooldowns.clear();rt.observed.clear();rt.fired=new Set(change.fired||[]);if(change.kind==='restore')for(const o of ctx.entities)for(const entry of sequenceEntries(o))if(entry.sequence.event==='start')rt.cooldowns.set('start:'+entry.key,Infinity);emitSequenceSignal(change.kind==='restore'?'game:loaded':'scene:loaded');ctx.onSceneChange?.(change);ctx.pressedKeys?.clear();return}
  const running=gameIsRunning();dt=running?Math.min(.1,Math.max(0,number(dt))):0;rt.time+=dt;
  for(const signal of tickGameSession(dt))emitSequenceSignal(signal);
  // Shared race clock for racing Blueprints; advances only while a race is active.

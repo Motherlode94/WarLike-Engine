@@ -62,7 +62,7 @@ export function createProject(name,type,assetPack='starter',genre='sandbox'){
  if(hub.projectId)saveProject();
  name=assertName(name);if(!['2d','3d'].includes(type))throw Error('Type de projet invalide.');
  const chosenGenre=normalizeGenre(genre);if(!genreCompatible(genre,type))throw Error('Ce type de jeu est incompatible avec un projet '+type.toUpperCase()+'.');
- const id=uniqueId(),slots={};for(const mode of ['2d','3d']){const selected=genreForMode(chosenGenre,mode);slots[mode]=selected==='sandbox'?entry(mode==='2d'?defaults2d():defaults3d()):createGenreScene(selected,mode);slots[mode].game={...freshGameProject(),id,title:name,genre:selected}}
+ const id=uniqueId(),slots={};for(const mode of ['2d','3d']){const selected=genreForMode(chosenGenre,mode);slots[mode]=selected==='sandbox'?entry(mode==='2d'?defaults2d():defaults3d()):createGenreScene(selected,mode);slots[mode].game={...freshGameProject(),...slots[mode].game,id,title:name,genre:selected}}
  const data={workspaceMode:type,workspaces:slots};
  if(!restoreWorkspaces(data))throw Error('Impossible de créer le projet.');
  gameProject.id=id;gameProject.title=name;

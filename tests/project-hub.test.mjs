@@ -44,6 +44,9 @@ test('Hub preserves custom game title, scenes and initial variables independentl
  assert.equal(saveProject(),true);createProject('Autre projet','3d');openProject(id);
  assert.equal(gameProject.title,'Les Trois Lanternes');assert.equal(gameProject.startupSceneId,'chapter-one');assert.equal(gameProject.scenes[0].name,'Chapitre 1');assert.equal(gameProject.variables[0].value,7);assert.equal(gameProject.id,id);
 });
+test('Adventure Hub installs and reopens both chapters in each independent workspace',()=>{
+ state.playing=false;const id=createProject('Le phare et la vallée','2d','starter','adventure');assert.deepEqual(gameProject.scenes.map(s=>s.id),['main','echo-valley']);assert.equal(saveProject(),true);switchWorkspace('3d');assert.equal(gameProject.scenes.length,2);assert.ok(gameProject.scenes[1].entities.some(o=>o.name==='Pont à réparer'));createProject('Autre projet témoin','2d');openProject(id);assert.equal(gameProject.genre,'adventure');assert.equal(gameProject.scenes.length,2);assert.ok(gameProject.scenes[1].entities.some(o=>o.name==='Orin · archiviste'));
+});
 
 test('genre survives project reopen and independent workspace switches',()=>{
  state.playing=false;const id=createProject('Mon survival','3d','starter','survival');assert.equal(gameProject.genre,'survival');assert.equal(hub.genre,'survival');switchWorkspace('2d');assert.equal(gameProject.genre,'survival');assert.equal(gameProject.id,id);saveProject();assert.equal(listProjects().find(p=>p.id===id).type,'2d');createProject('RPG séparé','3d','starter','rpg');openProject(id);assert.equal(gameProject.genre,'survival');assert.equal(workspace.mode,'2d');assert.equal(gameProject.title,'Mon survival');

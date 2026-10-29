@@ -1,4 +1,4 @@
-import {createAdventureScene} from './adventure-scene.js';
+import {createAdventureCampaign} from './adventure-campaign.js';
 import {createSurvivalScene} from './survival-scene.js';
 import {createHeroForgeScene} from './hero-forge-scene.js';
 import {default2dCharacterPng} from '../assets/real-starter-sprites-2d.js?v=fix-20261028';
@@ -22,7 +22,7 @@ export function createGenreScene(genre,mode='3d'){
  if(!['2d','3d'].includes(mode))throw new Error('Type de projet invalide.');
  if(!genreCompatible(genre,mode))throw new Error('Ce type de jeu est incompatible avec le projet '+mode.toUpperCase()+'.');
  const chosen=normalizeGenre(genre),threeD=mode==='3d';
- if(chosen==='adventure')return createAdventureScene(mode);
+ if(chosen==='adventure')return createAdventureCampaign(mode);
  if(chosen==='platformer')return createBundledPhysicsScene2d();
  if(chosen==='superhero')return createHeroForgeScene(mode);
  if(chosen==='survival')return createSurvivalScene(mode);

@@ -1,4 +1,5 @@
 import {compileGraph} from './blueprint-graph.js';
+import {initializeBlueprintVariables} from './blueprint-variables.js';
 import {typedValue,resolveBlueprintValue,resolveBlueprintAction} from './blueprint-data.js';
 import {blueprintDebugger,resetBlueprintDebugger,beforeBlueprintAction,afterBlueprintAction} from './blueprint-debugger.js';
 import {questItemCount,consumeQuestItem} from './quest-inventory.js';
@@ -33,7 +34,8 @@ const MAX_ACTIONS=256,MAX_SIGNALS=64,MAX_JOBS=100;
 const distance=(a,b)=>Math.hypot((number(a.x)+number(a.w)/2)-(number(b.x)+number(b.w)/2),(number(a.y)+number(a.h)/2)-(number(b.y)+number(b.h)/2));
 const safeSteps=steps=>Array.isArray(steps)?steps.slice(0,MAX_ACTIONS):[];
 const safeConditions=conditions=>Array.isArray(conditions)?conditions.slice(0,MAX_ACTIONS):[];
-export function resetSequences(){resetBlueprintDebugger();sequenceRuntime.globals={};sequenceRuntime.messages=[];sequenceRuntime.time=0;sequenceRuntime.pressed.clear();sequenceRuntime.inside.clear();sequenceRuntime.fired.clear();sequenceRuntime.cooldowns.clear();sequenceRuntime.jobs=[];sequenceRuntime.signals=[];sequenceRuntime.trace=[];sequenceRuntime.errors=[];sequenceRuntime.observed.clear();sequenceRuntime.interactions=[];sequenceRuntime.signalActors.clear();resetGameSession();for(const v of gameProject.variables)if(safeKey(v.name))sequenceRuntime.globals[v.name]=coerceVariable(v.type,v.value)}
+let initializedBlueprints=new WeakSet();
+export function resetSequences(){initializedBlueprints=new WeakSet();resetBlueprintDebugger();sequenceRuntime.globals={};sequenceRuntime.messages=[];sequenceRuntime.time=0;sequenceRuntime.pressed.clear();sequenceRuntime.inside.clear();sequenceRuntime.fired.clear();sequenceRuntime.cooldowns.clear();sequenceRuntime.jobs=[];sequenceRuntime.signals=[];sequenceRuntime.trace=[];sequenceRuntime.errors=[];sequenceRuntime.observed.clear();sequenceRuntime.interactions=[];sequenceRuntime.signalActors.clear();resetGameSession();for(const v of gameProject.variables)if(safeKey(v.name))sequenceRuntime.globals[v.name]=coerceVariable(v.type,v.value)}
 export const emitSequenceSignal=(name,actorId=null)=>{const key=String(name||'').slice(0,60);if(sequenceRuntime.signals.length<MAX_SIGNALS){sequenceRuntime.signals.push(key);if(Number.isSafeInteger(actorId))sequenceRuntime.signalActors.set(key,actorId)}};
 export function queueSequenceInteraction(actorId,targetId){if(![actorId,targetId].every(id=>Number.isSafeInteger(id)&&id>0)||sequenceRuntime.interactions.length>=8)return false;sequenceRuntime.interactions.push({actorId,targetId});return true}
 export function chooseSequenceDialogue(index,options={}){if(!gameIsRunning())return false;const owner=gameSession.dialogue?.actorId,signals=chooseGameDialogue(index,options);if(!signals)return false;for(const signal of signals)emitSequenceSignal(signal,owner);return true}
@@ -268,7 +270,7 @@ function execute(job,ctx,actionsLeft){
   case 'resumeGame':setGamePhase('playing');break;
   case 'showDialogue':openGameDialogue(a,ctx.player?.id,entity.name||'');break;
   case 'closeDialogue':gameSession.dialogue=null;gameSession.revision++;break;
-  case 'spawnObject':{const template=ctx.entities.find(o=>o.id===number(val));if(!template)throw Error('Objet modèle introuvable');if(ctx.entities.length>=10000)throw Error('Limite de 10000 objets atteinte');const copy=structuredClone(template);copy.id=ctx.allocateId?ctx.allocateId():Math.max(0,...ctx.entities.map(o=>o.id))+1;copy.name=String(a.name||template.name+' · instance');copy.x=number(a.x,template.x+40);copy.y=number(a.y,template.y);copy.playable3d=false;delete copy._sequenceDestroyed;ctx.entities.push(copy);break}
+  case 'spawnObject':{const template=ctx.entities.find(o=>o.id===number(val));if(!template)throw Error('Objet modèle introuvable');if(ctx.entities.length>=10000)throw Error('Limite de 10000 objets atteinte');const copy=structuredClone(template);copy.id=ctx.allocateId?ctx.allocateId():Math.max(0,...ctx.entities.map(o=>o.id))+1;copy.name=String(a.name||template.name+' · instance');copy.x=number(a.x,template.x+40);copy.y=number(a.y,template.y);copy.playable3d=false;delete copy._sequenceDestroyed;delete copy.sequenceLocal;delete copy.sequenceLocalTypes;ctx.entities.push(copy);break}
   case 'wait':job.wait=Math.min(120,Math.max(0,number(val,.5)));afterBlueprintAction(job,entity);return count;
   default:traceAction(job,a,'error','Instruction inconnue : '+a.type);
   }}catch(error){traceAction(job,a,'error',String(error.message||error))}
@@ -292,6 +294,7 @@ export function updateSequences(dt,ctx){
  if(number(rt.globals.raceStarted)===1&&number(rt.globals.raceFinished)!==1)rt.globals.raceElapsed=Math.round((number(rt.globals.raceElapsed)+dt)*1000)/1000;
  const keys=ctx.keys instanceof Set?ctx.keys:new Set(),player=ctx.player||null,objects=Array.isArray(ctx.entities)?ctx.entities:[];
  const signals=rt.signals.splice(0,MAX_SIGNALS),signalActors=new Map(rt.signalActors),interactions=rt.interactions.splice(0,8);rt.signalActors.clear();let budget=MAX_ACTIONS;
+ for(const owner of objects)if(!initializedBlueprints.has(owner)){initializeBlueprintVariables(owner,{preserveRuntime:true});initializedBlueprints.add(owner)}
  // Only jobs suspended before this frame spend dt. Newly started Wait actions
  // must receive their full requested delay, even on the first frame.
  const pendingJobs=running?rt.jobs.splice(0):[];

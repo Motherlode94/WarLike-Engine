@@ -6,6 +6,8 @@
 
 WarLike réunit un Hub de projets, une scène, une hiérarchie d’objets, un Inspecteur de composants, Blueprint Studio et un export de jeu Web. Le Hub et l’espace de travail reprennent l’organisation visuelle d’Unity, avec des thèmes personnalisables : graphite, clair, science-fiction, fantastique, nature et six autres palettes.
 
+Le Hub propose aussi cartes de projets, tri, favoris, duplication et modèles de départ. **Mon Blueprint** regroupe événements, fonctions et variables ; le panneau **Détails** règle la sélection. Les variables typées exposées possèdent une valeur par défaut et un remplacement propre à l’objet dans l’Inspecteur. **Compiler** affiche les diagnostics avant Play. [Guide Hub, Blueprint et valeurs d’instance](docs/blueprint-inspector.md).
+
 ## Commencer un jeu
 
 1. Dans le Hub, cliquer sur **Nouveau projet**, choisir 2D ou 3D, puis un **type de jeu compatible**. La fiche précise les systèmes présents et si la scène est jouable ou constitue une base à compléter. **Plateforme** est disponible en 2D.

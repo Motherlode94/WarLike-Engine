@@ -1,4 +1,6 @@
 import {validateFunctionDefinitions} from '../core/blueprint-data.js';
+import {objectBlueprintVariables,addBlueprintVariable} from '../core/blueprint-variables.js';
+import {renderBlueprintVariableDetails,blueprintTypeLabels} from './blueprint-variable-details.js';
 import {blueprintDebugger,pauseBlueprint,resumeBlueprint,stepBlueprint} from '../core/blueprint-debugger.js';
 import {workspace} from '../core/workspaces.js';
 import {presetsForWorkspace,createBlueprintPreset} from '../core/blueprint-presets.js';
@@ -7,20 +9,20 @@ import {sequenceEntries,newSequence,sequenceRuntime} from '../core/logic-sequenc
 import {gameProject,captureGameScene,sceneDefinition} from '../core/game-project.js';
 import {createBlueprintGameStarter} from '../core/blueprint-game-starter.js';
 import {inspectBlueprintGame} from '../core/blueprint-validation.js';
-import {createGraph,applyGraph,variableTypes,coerceVariable} from '../core/blueprint-graph.js';
+import {createGraph,applyGraph,inspectGraphDetailed,variableTypes,coerceVariable} from '../core/blueprint-graph.js';
 import {labelFor} from '../core/blueprint-catalog.js';
 import {record} from '../core/history.js';
 import {saveProject} from '../core/project-hub.js';
 import {renderSequenceEditor} from './logic-sequence-editor.js';
 import {renderBlueprintGraph} from './blueprint-graph-editor.js';
 import {element,button,field,select,editActions,editTypedValue} from './blueprint-controls.js';
-const ui={tab:'graph',sequenceKey:null,nodeId:null,zoom:.85,search:'',category:'Toutes',objectSearch:'',functionId:null};
+const ui={tab:'graph',sequenceKey:null,nodeId:null,zoom:.85,search:'',category:'Toutes',objectSearch:'',functionId:null,variableName:null,memberSearch:'',compileMessages:[],compiled:false};
 export function initBlueprintWorkspace(){
  const open=document.getElementById('openBlueprint'),dialog=document.getElementById('blueprintDialog'),content=document.getElementById('blueprintContent');
  if(!open||!dialog||!content)return;
  dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.tabIndex=-1;
- const change=label=>{record('Blueprint : '+label);saveProject();notify()};
- const addSequence=(owner,sequence)=>{if(!owner.sequence){owner.sequence=sequence;ui.sequenceKey=owner.id}else{owner.sequences??=[];if(owner.sequences.length>=32)throw Error('32 comportements supplémentaires maximum.');owner.sequences.push(sequence);ui.sequenceKey=owner.id+':extra:'+(owner.sequences.length-1)}ui.nodeId=null;return sequence};
+ const change=label=>{ui.compiled=false;record('Blueprint : '+label);saveProject();notify()};
+ const addSequence=(owner,sequence)=>{sequence.graph??=createGraph(sequence);if(!owner.sequence){owner.sequence=sequence;ui.sequenceKey=owner.id}else{owner.sequences??=[];if(owner.sequences.length>=32)throw Error('32 comportements supplémentaires maximum.');owner.sequences.push(sequence);ui.sequenceKey=owner.id+':extra:'+(owner.sequences.length-1)}ui.nodeId=null;return sequence};
  const selected=owner=>{const entries=owner?sequenceEntries(owner):[];return entries.find(e=>e.key===ui.sequenceKey)||entries[0]||null};
  function render(){
   const owner=active(),entry=selected(owner),sequence=entry?.sequence;
@@ -29,22 +31,31 @@ export function initBlueprintWorkspace(){
   document.getElementById('blueprintTarget').textContent=(workspace.mode==='3d'?'3D':'2D')+' / '+(owner?.name||'Projet');
   document.getElementById('blueprintAdd').textContent='＋ Comportement';document.getElementById('blueprintAdd').disabled=!owner||state.playing;
   const sidebar=element('aside','bp-sidebar'),main=element('div','bp-main');
-  sidebar.append(element('div','bp-sidebar-title','SCÈNE & COMPORTEMENTS'));
+  sidebar.append(element('div','bp-sidebar-title','OBJET DU BLUEPRINT'));
   const search=element('input','bp-object-search');search.type='search';search.placeholder='Rechercher un objet…';search.value=ui.objectSearch;search.setAttribute('aria-label','Rechercher un objet');sidebar.append(search);
   const objects=element('div','bp-object-list');sidebar.append(objects);
   const drawObjects=()=>{objects.replaceChildren();for(const o of state.entities.filter(o=>o.name?.toLowerCase().includes(ui.objectSearch.toLowerCase()))){const b=button(objects,(o.sequence||o.sequences?.length?'⬡ ':'◇ ')+o.name,()=>{state.selected=[o.id];ui.sequenceKey=null;ui.nodeId=null;notify()},'bp-object-row');b.disabled=false;b.classList.toggle('is-active',o===owner);b.title='ID '+o.id}}
   search.oninput=()=>{ui.objectSearch=search.value;drawObjects()};drawObjects();
   if(owner){
-   sidebar.append(element('div','bp-sidebar-title bp-behavior-title','COMPORTEMENTS DE L’OBJET'));
-   for(const item of sequenceEntries(owner)){const s=item.sequence,b=button(sidebar,(s.enabled===false?'○ ':'● ')+(s.name||labelFor(s.event,'event')),()=>{ui.sequenceKey=item.key;ui.nodeId=null;render()},'bp-behavior-row');b.disabled=false;b.classList.toggle('is-active',item.key===entry?.key);b.append(element('small','',labelFor(s.event,'event')))}
+   const memberSearch=element('input','bp-member-search');memberSearch.type='search';memberSearch.placeholder='Rechercher dans Mon Blueprint…';memberSearch.value=ui.memberSearch;memberSearch.setAttribute('aria-label','Rechercher dans Mon Blueprint');memberSearch.oninput=()=>{ui.memberSearch=memberSearch.value;for(const row of sidebar.querySelectorAll('.bp-member-row,.bp-behavior-row'))row.hidden=!row.textContent.toLocaleLowerCase('fr').includes(ui.memberSearch.toLocaleLowerCase('fr'))};sidebar.append(element('h2','bp-my-title','Mon Blueprint'),memberSearch,element('div','bp-sidebar-title bp-behavior-title','GRAPHES D’ÉVÉNEMENTS'));
+   for(const item of sequenceEntries(owner)){const s=item.sequence,b=button(sidebar,(s.enabled===false?'○ ':'● ')+(s.name||labelFor(s.event,'event')),()=>{ui.sequenceKey=item.key;ui.nodeId=null;ui.tab='graph';render()},'bp-behavior-row');b.disabled=false;b.classList.toggle('is-active',item.key===entry?.key);b.append(element('small','',labelFor(s.event,'event')))}
    if(!sequence)sidebar.append(element('p','bp-hint','Ajoute un premier comportement ou choisis un modèle dans la bibliothèque.'));
-   button(sidebar,'＋ Nouveau déclencheur',()=>{addSequence(owner,{...newSequence(),name:'Nouveau comportement'});ui.tab='instructions';change('Ajouter un comportement')},'bp-secondary');
+   button(sidebar,'＋ Nouveau déclencheur',()=>{addSequence(owner,{...newSequence(),name:'Nouveau comportement'});ui.tab='graph';change('Ajouter un comportement')},'bp-secondary');
   }
-  const foot=element('div','bp-sidebar-foot');foot.append(element('strong','','Une idée → un jeu'),element('p','','Crée ta logique, teste-la, puis exporte ton jeu Web.'));button(foot,'Voir le parcours complet →',()=>{ui.tab='project';render()},'bp-text-button');sidebar.append(foot);
+  sidebar.append(element('div','bp-sidebar-title','FONCTIONS DU PROJET'));
+  for(const f of gameProject.functions||[]){const b=button(sidebar,'ƒ '+(f.name||f.id),()=>{ui.functionId=f.id;ui.nodeId=null;ui.tab='functions';render()},'bp-member-row');b.disabled=false;b.classList.toggle('is-active',ui.tab==='functions'&&ui.functionId===f.id)}
+  button(sidebar,'＋ Fonction',newFunction,'bp-text-button');
+  sidebar.append(element('div','bp-sidebar-title','VARIABLES DE L’OBJET'));
+  for(const v of objectBlueprintVariables(owner)){const b=button(sidebar,(v.exposed?'◉ ':'● ')+v.name,()=>{ui.variableName=v.name;ui.tab='variables';render()},'bp-member-row');b.disabled=false;b.dataset.variableType=v.type;b.append(element('small','',blueprintTypeLabels[v.type]));b.classList.toggle('is-active',ui.tab==='variables'&&ui.variableName===v.name)}
+  button(sidebar,'＋ Variable',()=>{if(!owner)return;ui.variableName=addBlueprintVariable(owner).name;ui.tab='variables';change('Créer une variable')},'bp-text-button').disabled=!owner||state.playing;
+  sidebar.append(element('div','bp-sidebar-title','VARIABLES GLOBALES'));
+  for(const v of gameProject.variables){const b=button(sidebar,'◈ '+v.name,()=>{ui.tab='project';render();content.querySelector('.bp-project-variable')?.scrollIntoView({block:'nearest'})},'bp-member-row');b.disabled=false;b.dataset.variableType=v.type}
+  for(const row of sidebar.querySelectorAll('.bp-member-row,.bp-behavior-row'))row.hidden=!row.textContent.toLocaleLowerCase('fr').includes(ui.memberSearch.toLocaleLowerCase('fr'));
   const tabs=element('nav','bp-tabs');tabs.setAttribute('aria-label','Espaces Blueprint');
-  for(const [id,label] of [['graph','⬡ Graphe'],['instructions','☷ Instructions'],['functions','ƒ Fonctions'],['library','▦ Bibliothèque'],['project','◇ Projet & export'],['debug','⌁ Débogage']]){const b=button(tabs,label,()=>{ui.tab=id;render()},'bp-tab');b.disabled=false;b.classList.toggle('is-active',ui.tab===id);b.setAttribute('aria-current',ui.tab===id?'page':'false')}
+  for(const [id,label] of [['graph','⬡ Graphe'],['instructions','☷ Instructions'],['functions','ƒ Fonctions'],['variables','◉ Variables'],['library','▦ Bibliothèque'],['project','◇ Projet & export'],['debug','⌁ Débogage']]){const b=button(tabs,label,()=>{ui.tab=id;render()},'bp-tab');b.disabled=false;b.classList.toggle('is-active',ui.tab===id);b.setAttribute('aria-current',ui.tab===id?'page':'false')}
+  const workbar=element('div','bp-workspace-toolbar');const identity=element('div','bp-workspace-identity');identity.append(element('strong','','⬡ '+(owner?.name||'Projet')),element('small','',ui.tab==='functions'?'Fonction du projet':ui.tab==='variables'?'Définition et valeurs par défaut':'Event Graph · '+(sequence?.name||'Événements')));workbar.append(identity);button(workbar,ui.compiled?'✓ Compilé':'⚙ Compiler',compileCurrent,'bp-compile-button');const save=button(workbar,'Enregistrer',()=>{ui.compileMessages=[saveProject()?'Projet enregistré.':'Crée un projet nommé dans le Hub pour l’enregistrer.'];render()},'bp-text-button');save.disabled=state.playing;button(workbar,'Valeurs par défaut',()=>{ui.tab='variables';render()},'bp-text-button').disabled=false;main.append(workbar);
   const debugBar=element('div','bp-debug-controls');for(const [label,fn] of [['Ⅱ Pause',pauseBlueprint],['▷ Pas à pas',stepBlueprint],['▶ Continuer',resumeBlueprint]]){const b=button(debugBar,label,()=>{state.keys.clear();state.keyPresses?.clear();document.exitPointerLock?.();fn();updateDebug()},'bp-secondary');b.disabled=!state.playing;b.dataset.debugAction=label}const status=element('span','bp-debug-status');status.id='bpDebugStatus';debugBar.append(status);main.append(debugBar);
-  const page=element('div','bp-tab-content');main.append(tabs,page);content.append(sidebar,main);
+  const page=element('div','bp-tab-content');main.append(tabs,page);content.append(sidebar,main);if(ui.compileMessages.length){const results=element('details','bp-compiler-results');results.open=true;results.append(element('summary','','Résultats du compilateur · '+ui.compileMessages.length));for(const message of ui.compileMessages)results.append(element('p','',message));main.append(results)}
   if(['graph','instructions'].includes(ui.tab)){
    if(!owner||!sequence){const empty=element('div','bp-empty-state');empty.append(element('span','bp-empty-icon','⬡'),element('h2','',owner?'Ton objet attend son premier comportement':'Choisis un objet pour commencer'),element('p','',owner?'Ajoute un déclencheur ou pars d’un modèle prêt à configurer.':'Les objets de ta scène apparaissent à gauche. Chaque objet peut porter plusieurs événements et actions.'));button(empty,'Explorer les modèles',()=>{ui.tab='library';render()},'bp-primary');page.append(empty);return}
    const meta=element('div','bp-sequence-meta');field(meta,{key:'name',label:'Nom du comportement',type:'text'},sequence,()=>change('Renommer'));
@@ -54,14 +65,31 @@ export function initBlueprintWorkspace(){
    }else renderSequenceEditor(page,owner,{sequence,expanded:true,onChange(next,label){if(next){if(entry.key===owner.id)owner.sequence=next;else owner.sequences[Number(String(entry.key).split(':').at(-1))]=next}else{if(entry.key===owner.id)delete owner.sequence;else owner.sequences.splice(Number(String(entry.key).split(':').at(-1)),1);ui.sequenceKey=null}change(label)}});
   }else if(ui.tab==='library')renderLibrary(page,owner,sequence);
   else if(ui.tab==='functions')renderFunctions(page);
+  else if(ui.tab==='variables')renderVariables(page,owner);
   else if(ui.tab==='project')renderProject(page);
   else renderDebug(page);
+ }
+ function newFunction(){if((gameProject.functions||[]).length>=64)return;gameProject.functions??=[];const id='function-'+Date.now().toString(36);gameProject.functions.push({id,name:'Nouvelle fonction',parameters:[{name:'quantite',type:'number',value:1}],returnType:'number',instructions:[{type:'returnFunction',value:{$ref:'parameter',name:'quantite',type:'number'}}]});ui.functionId=id;ui.nodeId=null;ui.tab='functions';change('Créer une fonction')}
+ function compileCurrent(){
+  const messages=validateFunctionDefinitions(gameProject.functions||[]);const owner=active(),sources=[...sequenceEntries(owner||{}).map(e=>({label:e.sequence.name||e.sequence.event,sequence:e.sequence})),...(gameProject.functions||[]).map(f=>({label:f.name||f.id,sequence:f}))];
+  for(const source of sources)if(source.sequence.graph){const errors=inspectGraphDetailed(source.sequence.graph);if(errors.length)messages.push(...errors.map(e=>source.label+' : '+e.message));else applyGraph(source.sequence)}
+  for(const issue of inspectBlueprintGame(state.entities,{requirePlayer:false}))if(issue.entityId===owner?.id||issue.severity==='error'&&issue.entityId==null)if(!messages.includes(issue.message))messages.push(issue.message);
+  ui.compiled=!messages.length;ui.compileMessages=messages.length?messages:['✓ Compilation réussie · '+sources.length+' graphe(s) / fonction(s) vérifiés.'];if(ui.compiled){record('Compiler le Blueprint');saveProject()}render();
+ }
+ function renderVariables(page,owner){
+  if(!owner){page.append(element('p','bp-hint','Sélectionne un objet dans la liste.'));return}
+  const layout=element('div','bp-variable-workbench'),defaults=element('section','bp-class-defaults'),details=element('aside','bp-variable-details');defaults.append(element('span','bp-eyebrow','VALEURS PAR DÉFAUT'),element('h2','',owner.name),element('p','bp-hint','Déclare les données de cet objet. Les variables exposées se règlent aussi dans l’Inspecteur de la scène.'));
+  const variables=objectBlueprintVariables(owner),selectedVariable=variables.find(v=>v.name===ui.variableName)||variables[0];if(selectedVariable)ui.variableName=selectedVariable.name;
+  button(defaults,'＋ Nouvelle variable',()=>{ui.variableName=addBlueprintVariable(owner).name;change('Créer une variable')},'bp-secondary');
+  for(const category of new Set(variables.map(v=>v.category?.trim()||'Gameplay'))){defaults.append(element('h3','bp-variable-category',category));for(const v of variables.filter(v=>(v.category?.trim()||'Gameplay')===category)){const row=button(defaults,v.name,()=>{ui.variableName=v.name;render()},'bp-default-row');row.disabled=false;row.dataset.variableType=v.type;row.classList.toggle('is-active',v===selectedVariable);row.append(element('code','',JSON.stringify(v.value)),element('small','',v.exposed?'◉ Inspecteur':'Privée'))}}
+  if(selectedVariable)renderBlueprintVariableDetails(details,owner,selectedVariable,(label,name)=>{ui.variableName=name;change(label)});else details.append(element('h2','','Détails'),element('p','bp-hint','Crée une variable pour choisir son type, sa catégorie et sa valeur.'));
+  layout.append(defaults,details);page.append(layout);
  }
  function renderFunctions(page){
   const heading=element('div','bp-page-heading');heading.append(element('h2','','Fonctions réutilisables'),element('p','','Partage une fonction entre les objets et les scènes. Les paramètres sont isolés à chaque appel ; le résultat revient dans une variable locale.'));page.append(heading);
   gameProject.functions??=[];const bar=element('div','bp-function-selector');
   const browse=select(bar,'Fonction du projet',ui.functionId,[{value:'',label:'Choisir une fonction'},...gameProject.functions.map(f=>({value:f.id,label:f.name||f.id}))],id=>{ui.functionId=id;render()});browse.disabled=false;
-  button(bar,'＋ Nouvelle fonction',()=>{if(gameProject.functions.length>=64)return;const id='function-'+Date.now().toString(36);gameProject.functions.push({id,name:'Nouvelle fonction',parameters:[{name:'quantite',type:'number',value:1}],returnType:'number',instructions:[{type:'returnFunction',value:{$ref:'parameter',name:'quantite',type:'number'}}]});ui.functionId=id;change('Créer une fonction')},'bp-secondary');page.append(bar);
+  button(bar,'＋ Nouvelle fonction',newFunction,'bp-secondary');page.append(bar);
   const f=gameProject.functions.find(f=>f.id===ui.functionId);if(!f)return;
   const card=element('details','bp-project-card bp-function-signature');card.open=!f.graph;card.append(element('summary','','Signature · '+f.parameters.length+' paramètre(s) → '+f.returnType));field(card,{key:'name',label:'Nom de la fonction',type:'text'},f,()=>change('Renommer la fonction'));
   select(card,'Type de retour',f.returnType,['void',...variableTypes],v=>{f.returnType=v;change('Type de retour')});
@@ -82,7 +110,7 @@ export function initBlueprintWorkspace(){
   const available=presetsForWorkspace(workspace.mode);const category=select(controls,'Catégorie',ui.category,['Toutes',...new Set(available.map(p=>p.category))],v=>{ui.category=v;draw()});
   const grid=element('div','bp-template-grid');
   function draw(){grid.replaceChildren();const results=available.filter(p=>(ui.category==='Toutes'||p.category===ui.category)&&[p.label,p.description,p.category].join(' ').toLowerCase().includes(ui.search.toLowerCase()));
-   for(const preset of results){const card=element('article','bp-template-card');card.append(element('span','bp-template-category',preset.category),element('h3','',preset.label),element('p','',preset.description));const add=button(card,'＋ Ajouter à cet objet',()=>{if(!owner)return;const s=createBlueprintPreset(preset.id,workspace.mode);s.name=preset.label;addSequence(owner,s);ui.tab='instructions';change('Ajouter '+preset.label)},'bp-secondary');add.disabled=state.playing||!owner;grid.append(card)}
+   for(const preset of results){const card=element('article','bp-template-card');card.append(element('span','bp-template-category',preset.category),element('h3','',preset.label),element('p','',preset.description));const add=button(card,'＋ Ajouter à cet objet',()=>{if(!owner)return;const s=createBlueprintPreset(preset.id,workspace.mode);s.name=preset.label;addSequence(owner,s);ui.tab='graph';change('Ajouter '+preset.label)},'bp-secondary');add.disabled=state.playing||!owner;grid.append(card)}
    if(!results.length)grid.append(element('p','bp-hint','Aucun modèle ne correspond à cette recherche.'));
   }
   search.oninput=()=>{ui.search=search.value;draw()};page.append(controls,grid);draw();
@@ -139,6 +167,7 @@ export function initBlueprintWorkspace(){
  document.addEventListener('warlike:change',()=>{if(!dialog.hidden)render()});document.addEventListener('warlike:workspace',()=>{if(!dialog.hidden)render()});
  dialog.addEventListener('keydown',event=>{event.stopPropagation();if(state.playing&&['F6','F8','F10'].includes(event.key)){event.preventDefault();state.keys.clear();state.keyPresses?.clear();if(event.key==='F10')stepBlueprint();else if(event.key==='F6')resumeBlueprint();else pauseBlueprint();updateDebug();return}if(event.key==='Escape'){event.preventDefault();hide();return}if(event.key==='Tab'){const controls=[...dialog.querySelectorAll('button,input,select,textarea,a[href]')].filter(el=>!el.disabled&&el.getClientRects().length);if(!controls.length){event.preventDefault();dialog.focus();return}const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}}});
  let lastPauseRevision=0;setInterval(()=>{const d=blueprintDebugger;if(state.playing&&d.paused&&d.reason==='Point d’arrêt'&&d.revision!==lastPauseRevision){lastPauseRevision=d.revision;ui.tab='debug';show()}if(!dialog.hidden)updateDebug()},250);
+ document.addEventListener('warlike:open-blueprint-defaults',event=>{const owner=state.entities.find(o=>o.id===event.detail?.ownerId);if(!owner)return;state.selected=[owner.id];ui.tab='variables';ui.variableName=null;show()});
  document.addEventListener('warlike:open-game-project',()=>{ui.tab='project';show()});
  document.addEventListener('warlike:open-behavior',event=>{const owner=state.entities.find(o=>o.id===event.detail?.ownerId);if(!owner)return;state.selected=[owner.id];ui.sequenceKey=event.detail.sequenceKey;ui.tab='graph';ui.nodeId=null;dialog.hidden=false;render();dialog.focus()});
 }

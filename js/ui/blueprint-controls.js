@@ -1,7 +1,8 @@
 import {variableTypes,coerceVariable} from '../core/blueprint-graph.js';
 import {valueType} from '../core/blueprint-data.js';
 import {gameProject} from '../core/game-project.js';
-import {state} from '../core/state.js';
+import {objectBlueprintVariables} from '../core/blueprint-variables.js';
+import {state,active} from '../core/state.js';
 import {labelFor,actionGroup,actionFields,conditionFields,targetable} from '../core/blueprint-catalog.js';
 import {sequenceInstructions,sequenceConditions} from '../core/logic-sequences.js';
 export function element(tag,className,text){const el=document.createElement(tag);if(className)el.className=className;if(text!=null)el.textContent=text;return el}
@@ -31,7 +32,7 @@ export function editConditions(parent,conditions,onChange,{parameters=[]}={}){
  for(const [i,condition] of conditions.entries()){
   const card=element('div','bp-condition-card');
   select(card,'Condition',condition.type,sequenceConditions,v=>{condition.type=v;onChange()},{kind:'condition'});
-  for(const schema of conditionFields(condition.type)){if(schema.key==='value'||schema.type==='number')editTypedValue(card,schema.label,condition,schema.key,schema.type==='number'?'number':gameProject.variables.find(v=>v.name===condition.key)?.type||'string',onChange,{parameters});else field(card,schema,condition,onChange)}
+  for(const schema of conditionFields(condition.type)){if(schema.key==='value'||schema.type==='number')editTypedValue(card,schema.label,condition,schema.key,schema.type==='number'?'number':(condition.type==='localVariable'?objectBlueprintVariables(active()):gameProject.variables).find(v=>v.name===condition.key)?.type||'string',onChange,{parameters});else field(card,schema,condition,onChange)}
   if(['heroEnergyAbove','heroPowerReady','heroFlightActive','rpgLevelAtLeast','heroReputationAtLeast','simulationPowered','simulationRescued','healthBelow','healthAbove','inventoryHas','inventoryMissing','inventoryHasRoom','aiStateIs','aiCanSeeTarget','aiHasTarget'].includes(condition.type))targetFields(card,condition,onChange,{defaultRole:/inventory/.test(condition.type)?'player':'self'});
   field(card,{key:'negate',label:'Inverser le résultat',type:'boolean',default:false},condition,onChange);
   button(card,'Retirer la condition',()=>{conditions.splice(i,1);onChange()},'bp-text-button bp-danger');parent.append(card);
@@ -43,7 +44,7 @@ export function editTypedValue(parent,label,data,key,type,onChange,{parameters=[
  if(!literalOnly)select(parent,label+' · source',source,[{value:'literal',label:'Valeur '+type},{value:'global',label:'Variable globale'},{value:'local',label:'Variable locale'},{value:'parameter',label:'Paramètre de fonction'}],v=>{data[key]=v==='literal'?coerceVariable(type,0):{$ref:v,name:'',type};onChange()});
  if(source!=='literal'){
   const choices=source==='global'?gameProject.variables.filter(v=>v.type===type):source==='parameter'?parameters.filter(v=>v.type===type):[];
-  if(source==='local')field(parent,{key:'name',label:label+' · nom local',type:'text'},current,onChange);
+  if(source==='local'){const variables=objectBlueprintVariables(active()).filter(v=>v.type===type);if(variables.length)select(parent,label+' · variable de l’objet',current.name,[{value:current.name||'',label:current.name||'Choisir une variable'},...variables.filter(v=>v.name!==current.name).map(v=>({value:v.name,label:v.name}))],v=>{current.name=v;onChange()});field(parent,{key:'name',label:label+' · nom local',type:'text'},current,onChange);}
   else select(parent,label+' · donnée',current.name,[{value:'',label:'Choisir une donnée '+type},...choices.map(p=>({value:p.name,label:p.name+' : '+p.type}))],v=>{current.name=v;onChange()});
  }else if(type==='boolean')field(parent,{key,label,type:'boolean',default:false},data,onChange);
  else if(type.startsWith('vector')){
@@ -62,9 +63,9 @@ export function editAction(parent,action,onChange,{typeField=true,depth=0,parame
  if(action.type==='returnFunction'){if(returnType!=='void')editTypedValue(parent,'Valeur retournée',action,'value',returnType,onChange,{parameters});else parent.append(element('p','bp-hint','Termine la fonction actuelle.'));return}
  for(const schema of actionFields(action.type)){
   if(schema.key==='value'&&['setVariable','addVariable','setLocal','addLocal'].includes(action.type)){
-   const declared=gameProject.variables.find(v=>v.name===action.key)?.type;
-   if(action.type==='setLocal')select(parent,'Type de la donnée',action.valueType||valueType(action.value)||'number',variableTypes,v=>{action.valueType=v;action.value=coerceVariable(v,action.value);onChange()});
-   const type=action.type==='setLocal'?action.valueType||'number':declared||(action.type==='setVariable'?valueType(action.value)==='number'?'number':'string':'number');
+   const declared=(['setLocal','addLocal'].includes(action.type)?objectBlueprintVariables(active()):gameProject.variables).find(v=>v.name===action.key)?.type;
+   if(action.type==='setLocal'&&!declared)select(parent,'Type de la donnée',action.valueType||(variableTypes.includes(valueType(action.value))?valueType(action.value):'number'),variableTypes,v=>{action.valueType=v;action.value=coerceVariable(v,action.value);onChange()});
+   const type=declared||(action.type==='setLocal'?action.valueType||'number':null)||(action.type==='setVariable'?valueType(action.value)==='number'?'number':'string':'number');
    editTypedValue(parent,schema.label,action,'value',type,onChange,{parameters});continue;
   }
   if(schema.key==='value'&&schema.type==='text'){editTypedValue(parent,schema.label,action,schema.key,'string',onChange,{parameters});continue}

@@ -49,6 +49,16 @@ export function chooseProjectAssets(id,assetPack){
  return true;
 }
 export const listProjects=()=>indexed().sort((a,b)=>(b.updated||0)-(a.updated||0));
+export function projectSummary(id){
+ const meta=indexed().find(p=>p.id===id);if(!meta)return null;const data=hub.projectId===id?null:safeRead(PREFIX+id,null),slot=hub.projectId===id?{entities:state.entities,game:gameProject}:data?.workspaces?.[data.workspaceMode||meta.type];
+ if(!slot)return {...meta,objects:0,scenes:0,blueprints:0,functions:0,available:false};const objects=Array.isArray(slot.entities)?slot.entities:[];return {...meta,objects:objects.length,scenes:Math.max(1,slot.game?.scenes?.length||0),blueprints:objects.reduce((n,o)=>n+Number(!!o.sequence)+(o.sequences?.length||0),0),functions:slot.game?.functions?.length||0,available:true};
+}
+export function duplicateProject(id,name){
+ if(state.playing)throw Error('Arrête Play avant de dupliquer un projet.');if(hub.projectId===id&&!saveProject())throw Error('Enregistre le projet avant de le dupliquer.');
+ const meta=indexed().find(p=>p.id===id),data=safeRead(PREFIX+id,null);if(!meta||!data)throw Error('Projet introuvable.');const next=uniqueId(),title=assertName(name||meta.name+' · copie'),copy=structuredClone(data);copy.name=title;
+ for(const slot of Object.values(copy.workspaces||{}))if(slot.game){slot.game.id=next;if(slot.game.title===meta.name)slot.game.title=title}
+ try{localStorage.setItem(PREFIX+next,JSON.stringify(copy));saveMeta({...meta,id:next,name:title,updated:Date.now()})}catch(error){localStorage.removeItem(PREFIX+next);throw error}return next;
+}
 const assertName=name=>{const n=String(name||'').trim().slice(0,64);if(!n)throw Error('Choisis un nom de projet.');return n};
 function saveMeta(meta){const all=indexed().filter(p=>p.id!==meta.id);all.unshift(meta);localStorage.setItem(INDEX,JSON.stringify(all))}
 export function saveProject(){
@@ -240,6 +250,7 @@ export function initHub(){
    message.textContent=projects.length+' projet(s) exporté(s) en archive JSON. Conserve ce fichier en sécurité.';
   }catch(error){message.textContent='Export impossible : '+error.message}
  });
+ document.addEventListener('warlike:hub-refresh',render);
  projectSearch.addEventListener('input',render);
  projectFilter.addEventListener('change',render);
  type.addEventListener('change',()=>{assetPackSelect.disabled=type.value!=='3d'});

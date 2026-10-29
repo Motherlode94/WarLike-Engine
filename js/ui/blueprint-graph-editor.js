@@ -1,3 +1,4 @@
+import {installBlueprintGraphMenu} from './blueprint-graph-menu.js';
 import {gameProject} from '../core/game-project.js';
 import {createGraph,applyGraph,inspectGraph,inspectGraphDetailed,graphPort} from '../core/blueprint-graph.js';
 import {sequenceEvents,sequenceRuntime} from '../core/logic-sequences.js';
@@ -18,16 +19,16 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('bp-connections');world.append(svg);board.append(world);layout.append(board,inspector);
  const update=label=>{const errors=inspectGraph(graph);if(!errors.length)applyGraph(sequence);save(label)};
  const node=id=>graph.nodes.find(n=>n.id===id);
- const add=kind=>{
+ const add=(kind,actionType='message')=>{
   const source=node(pending?.from||selected)||graph.nodes.at(-1),port=pending?.port||(source.kind==='condition'?'true':'next');
   const id='node-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),next={id,kind,x:source.x+310,y:source.y+(port==='false'?220:0)};
-  if(kind==='action')next.action={type:'message',value:'Nouvelle action'};else next.conditions=[{type:'variable',key:'score',operator:'>=',value:1}];
+  if(kind==='action')next.action={type:actionType,...(actionType==='message'?{value:'Nouvelle action'}:{})};else next.conditions=[{type:'variable',key:'score',operator:'>=',value:1}];
   const old=graph.links.find(edge=>edge.from===source.id&&graphPort(edge)===port);
   graph.links=graph.links.filter(edge=>edge!==old);graph.nodes.push(next);graph.links.push({from:source.id,to:id,port});
   if(old)graph.links.push({from:id,to:old.to,port:kind==='condition'?'true':'next'});
   options.onSelect?.(id);selected=id;update('Ajouter un nœud');
  };
- button(toolbar,'＋ Action',()=>add('action'),'bp-secondary');button(toolbar,'◇ Condition',()=>add('condition'),'bp-secondary');
+ const palette=installBlueprintGraphMenu(board,type=>{if(!state.playing)add('action',type)});button(toolbar,'＋ Ajouter un nœud',()=>palette.show(),'bp-secondary');button(toolbar,'＋ Action',()=>add('action'),'bp-text-button');button(toolbar,'◇ Condition',()=>add('condition'),'bp-secondary');
  button(toolbar,'Réorganiser',()=>{const visited=new Set();let row=0;const place=(id,column)=>{if(visited.has(id))return;visited.add(id);const n=node(id);n.x=56+column*310;n.y=70+row*205;const edges=graph.links.filter(e=>e.from===id).sort((a,b)=>graphPort(a)==='false'?1:-1);for(const [i,edge] of edges.entries()){if(i)row++;place(edge.to,column+1)}};place(graph.nodes.find(n=>n.kind==='event').id,0);update('Réorganiser le graphe')},'bp-text-button');
  const zoomLabel=element('label','bp-zoom'),slider=element('input');slider.type='range';slider.min='40';slider.max='150';slider.value=String(zoom*100);slider.setAttribute('aria-label','Zoom du graphe');const zoomValue=element('span','',Math.round(zoom*100)+' %');zoomLabel.append(slider,zoomValue);toolbar.append(zoomLabel,validation);
  const boxes=new Map();
@@ -36,8 +37,8 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
  function wires(){svg.replaceChildren();for(const edge of graph.links){const a=node(edge.from),b=node(edge.to);if(!a||!b)continue;const port=graphPort(edge),x=a.x+width,y=a.y+(port==='false'?107:port==='true'?72:87),xx=b.x,yy=b.y+72;const path=document.createElementNS(svg.namespaceURI,'path');const bend=Math.max(20,Math.min(105,Math.abs(xx-x)*.45));path.setAttribute('d',`M${x} ${y} C${x+bend} ${y}, ${xx-bend} ${yy}, ${xx} ${yy}`);path.setAttribute('class','bp-wire '+(port==='false'?'is-false':port==='true'?'is-true':''));path.addEventListener('dblclick',()=>{if(state.playing)return;graph.links=graph.links.filter(e=>e!==edge);update('Retirer une connexion')});svg.append(path)}}
  function details(){
   inspector.replaceChildren();const n=node(selected);if(!n)return;
-  inspector.append(element('span','bp-eyebrow',n.kind==='condition'?'CONDITION':n.kind==='event'?'DÉCLENCHEUR':'INSTRUCTION'),element('h2','',n.kind==='condition'?'Si / Sinon':labelFor(n.kind==='event'?n.event:n.action?.type,n.kind)));
-  const change=()=>update('Modifier le nœud');
+  inspector.append(element('div','bp-details-heading','Détails'));inspector.append(element('span','bp-eyebrow',n.kind==='condition'?'CONDITION':n.kind==='event'?'DÉCLENCHEUR':'INSTRUCTION'),element('h2','',n.kind==='condition'?'Si / Sinon':labelFor(n.kind==='event'?n.event:n.action?.type,n.kind)));
+  const search=element('input','bp-details-search');search.type='search';search.placeholder='Rechercher une propriété…';search.setAttribute('aria-label','Rechercher dans les détails du nœud');inspector.append(search);search.oninput=()=>{for(const row of inspector.querySelectorAll('.bp-field'))row.hidden=!row.textContent.toLocaleLowerCase('fr').includes(search.value.toLocaleLowerCase('fr'))};const change=()=>update('Modifier le nœud');
   if(n.kind==='event'){
    select(inspector,'Événement',n.event,sequenceEvents,v=>{n.event=v;sequence.event=v;change()},{kind:'event'});
    for(const schema of eventFields(n.event))field(inspector,schema,sequence,change);
@@ -50,7 +51,7 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
   }else editAction(inspector,n.action,change,{parameters:options.parameters||[],returnType:options.returnType||'void'});
   if(n.kind!=='event'){const bp=button(inspector,n.breakpoint?'● Retirer le point d’arrêt':'○ Ajouter un point d’arrêt',()=>{n.breakpoint=!n.breakpoint;if(state.playing){const compiled=sequence.instructions;const mark=steps=>{for(const a of steps||[]){if(a._nodeId===n.id)a.breakpoint=n.breakpoint;mark(a.thenInstructions);mark(a.elseInstructions)}};mark(compiled);boxForBreakpoint()}else change()},'bp-breakpoint-button');bp.disabled=false;function boxForBreakpoint(){boxes.get(n.id)?.classList.toggle('has-breakpoint',n.breakpoint);details()}}
   if(n.kind!=='event')button(inspector,'Supprimer le nœud',removeSelected,'bp-text-button bp-danger');
-  inspector.append(element('small','bp-node-id','Nœud '+n.id));
+  field(inspector,{key:'comment',label:'Commentaire du nœud',type:'text'},n,change);inspector.append(element('small','bp-node-id','Nœud '+n.id));
  }
  function selectNode(id){selected=id;options.onSelect?.(id);for(const [key,box] of boxes)box.classList.toggle('is-selected',id===key);details()}
  function removeSelected(){const n=node(selected);if(!n||n.kind==='event'||state.playing)return;graph.nodes=graph.nodes.filter(v=>v!==n);graph.links=graph.links.filter(e=>e.from!==n.id&&e.to!==n.id);options.onSelect?.(graph.nodes[0]?.id);update('Supprimer le nœud')}
@@ -64,10 +65,10 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
   for(const port of n.kind==='condition'?['true','false']:['next']){
    const output=button(box,port==='true'?'Oui ●':port==='false'?'Non ●':'●',()=>{pending={from:n.id,port};selectNode(n.id);validation.textContent='Choisis une entrée ● ou ajoute une action.'},'bp-node-port bp-output-port port-'+port);output.title='Connecter cette sortie à une entrée';output.setAttribute('aria-label','Sortie '+(port==='true'?'Oui':port==='false'?'Non':'suivante')+' du nœud '+n.id);
   }
-  header.addEventListener('pointerdown',event=>{if(state.playing||event.button!==0)return;event.preventDefault();selectNode(n.id);const sx=event.clientX,sy=event.clientY,x=n.x,y=n.y;header.setPointerCapture(event.pointerId);const move=e=>{n.x=Math.max(20,x+(e.clientX-sx)/zoom);n.y=Math.max(20,y+(e.clientY-sy)/zoom);box.style.left=n.x+'px';box.style.top=n.y+'px';wires();size()};const done=()=>{header.removeEventListener('pointermove',move);header.removeEventListener('pointerup',done);header.removeEventListener('pointercancel',done);update('Déplacer le nœud')};header.addEventListener('pointermove',move);header.addEventListener('pointerup',done);header.addEventListener('pointercancel',done)});
+  header.addEventListener('pointerdown',event=>{if(state.playing||event.button!==0)return;event.preventDefault();selectNode(n.id);const sx=event.clientX,sy=event.clientY,x=n.x,y=n.y,displayScale=zoom*board.getBoundingClientRect().width/Math.max(1,board.offsetWidth);header.setPointerCapture(event.pointerId);const move=e=>{n.x=Math.max(20,x+(e.clientX-sx)/displayScale);n.y=Math.max(20,y+(e.clientY-sy)/displayScale);box.style.left=n.x+'px';box.style.top=n.y+'px';wires();size()};const done=()=>{header.removeEventListener('pointermove',move);header.removeEventListener('pointerup',done);header.removeEventListener('pointercancel',done);update('Déplacer le nœud')};header.addEventListener('pointermove',move);header.addEventListener('pointerup',done);header.addEventListener('pointercancel',done)});
   world.append(box);boxes.set(n.id,box);
  }
- board.addEventListener('keydown',event=>{if(event.key==='Delete'&&!['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName)){event.preventDefault();removeSelected()}});
+ const frameSelection=()=>{const n=node(selected);if(n){board.scrollLeft=Math.max(0,(n.x+width/2)*zoom-board.clientWidth/2);board.scrollTop=Math.max(0,(n.y+height/2)*zoom-board.clientHeight/2)}};button(toolbar,'Cadrer · F',frameSelection,'bp-text-button').disabled=false;board.addEventListener('keydown',event=>{if(event.key.toLowerCase()==='f'&&!event.target.closest('input,textarea,select')){event.preventDefault();frameSelection()}if(event.key==='Delete'&&!['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName)){event.preventDefault();removeSelected()}});
  const issues=inspectGraphDetailed(graph);validation.textContent=issues[0]?issues[0].message+(issues.length>1?' (+'+(issues.length-1)+')':''):'✓ Graphe valide';validation.classList.toggle('has-error',!!issues.length);
  for(const issue of issues)boxes.get(issue.nodeId)?.classList.add('has-graph-error');
  const firstBad=issues.find(issue=>boxes.has(issue.nodeId));if(firstBad){const focusIssue=()=>{selectNode(firstBad.nodeId);boxes.get(firstBad.nodeId)?.scrollIntoView({block:'nearest',inline:'center'})};validation.style.cursor='pointer';validation.title='Sélectionner le nœud concerné';validation.setAttribute('role','button');validation.tabIndex=0;validation.onclick=focusIssue;validation.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();focusIssue()}}}

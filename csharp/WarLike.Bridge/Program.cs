@@ -8,6 +8,8 @@ builder.Prefixes.Add("http://127.0.0.1:8765/");
 builder.Start();
 Console.WriteLine("WarLike C# bridge listening on http://127.0.0.1:8765/");
 var world = new GameWorld();
+long revision = 0;
+var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 var gate = new SemaphoreSlim(1,1);
 const int MaxSceneBytes = 2*1024*1024;
 var permittedOrigins = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "http://localhost:8000", "http://127.0.0.1:8000", "http://localhost:8765", "http://127.0.0.1:8765", "https://warlike-engine.pages.dev" };
@@ -26,17 +28,48 @@ async Task Handle(HttpListenerContext ctx) {
     res.Headers["Cache-Control"]="no-store";
     try {
         if (req.HttpMethod=="OPTIONS"){res.StatusCode=204;return;}
-        if (req.Url?.AbsolutePath=="/health"&&req.HttpMethod=="GET"){await Reply(new {ready=true,engine="WarLike C# .NET 8"});return;}
+        if (req.Url?.AbsolutePath=="/health"&&req.HttpMethod=="GET"){await Reply(new {ready=true,engine="WarLike C# .NET 8",protocol=2,capabilities=new[]{"component-inspector","tactical-squads","component-lifecycle"}});return;}
         if (req.Url?.AbsolutePath=="/scene"&&req.HttpMethod=="POST"){
             if(req.ContentLength64>MaxSceneBytes){res.StatusCode=413;await Reply(new {error="Scene too large"});return;}
-            using var reader=new StreamReader(req.InputStream);
-            var json=await reader.ReadToEndAsync();
-            if(Encoding.UTF8.GetByteCount(json)>MaxSceneBytes){res.StatusCode=413;await Reply(new {error="Scene too large"});return;}
+            var json=await ReadBody(MaxSceneBytes);
             var incoming=GameWorld.FromWarLikeJson(json);
-            await gate.WaitAsync();try{world=incoming;await Reply(new {ok=true,count=world.Actors.Count});}finally{gate.Release();}return;
+            await gate.WaitAsync();try{world=incoming;revision++;await Reply(new {ok=true,count=world.Actors.Count,revision});}finally{gate.Release();}return;
+        }
+        if (req.HttpMethod=="POST" && req.Url?.AbsolutePath is "/components/inspect" or "/components/set" or "/squad/command") {
+            using var doc=await ReadJson(); var input=doc.RootElement;
+            int actorId=RequiredInt(input,"id");
+            await gate.WaitAsync();try {
+                if (!input.TryGetProperty("revision",out var expected) || !expected.TryGetInt64(out long expectedRevision) || expectedRevision!=revision) {
+                    res.StatusCode=409;await Reply(new {error="Scene changed in .NET. Send the scene again."});return;
+                }
+                if(req.Url.AbsolutePath=="/components/inspect") {
+                    await Reply(new {ok=true,revision,actor=RuntimeInspector.Inspect(world,actorId)});return;
+                }
+                if(req.Url.AbsolutePath=="/components/set") {
+                    int index=RequiredInt(input,"index");
+                    string property=input.GetProperty("property").GetString() ?? throw new ArgumentException("Property is required.");
+                    var actor=RuntimeInspector.Set(world,actorId,index,property,input.GetProperty("value"));
+                    await Reply(new {ok=true,revision,actor});return;
+                }
+                var owner=world.Actors.FirstOrDefault(a=>a.Id==actorId) ?? throw new KeyNotFoundException("Squad actor not found.");
+                var squad=owner.GetComponent<TacticalSquadComponent>() ?? throw new ArgumentException("TacticalSquad component not found.");
+                string action=input.GetProperty("action").GetString() ?? "";
+                switch(action) {
+                    case "members":
+                        var ids=input.GetProperty("memberIds").EnumerateArray().Select(id=>id.GetInt32()).ToArray();
+                        squad.SetMembers(ids);break;
+                    case "move":
+                        float x=input.GetProperty("x").GetSingle(), y=input.GetProperty("y").GetSingle();
+                        squad.MoveTo(new System.Numerics.Vector3(x/64f,owner.Position.Y,y/64f));break;
+                    case "hold": squad.Hold();break;
+                    case "follow": squad.Follow(RequiredInt(input,"targetId"));break;
+                    default: throw new ArgumentException("Unsupported squad order.");
+                }
+                await Reply(new {ok=true,revision,order=squad.Order.ToString(),memberIds=squad.MemberIds,actor=RuntimeInspector.Inspect(world,actorId)});
+            }finally{gate.Release();}return;
         }
         if (req.Url?.AbsolutePath=="/genre/action"&&req.HttpMethod=="POST"){
-            using var doc=await JsonDocument.ParseAsync(req.InputStream);
+            using var doc=await ReadJson();
             var input=doc.RootElement;
             if(!input.TryGetProperty("id",out var id) || !id.TryGetInt32(out int actorId) ||
                !input.TryGetProperty("action",out var actionValue) || actionValue.ValueKind!=JsonValueKind.String){
@@ -85,7 +118,7 @@ async Task Handle(HttpListenerContext ctx) {
             }finally{gate.Release();}return;
         }
         if (req.Url?.AbsolutePath=="/vehicle/input"&&req.HttpMethod=="POST"){
-            using var doc=await JsonDocument.ParseAsync(req.InputStream);
+            using var doc=await ReadJson();
             var input=doc.RootElement;
             if(!input.TryGetProperty("id",out var id) || !id.TryGetInt32(out int actorId) ||
                !input.TryGetProperty("throttle",out var throttleJson) ||
@@ -106,7 +139,7 @@ async Task Handle(HttpListenerContext ctx) {
             }finally{gate.Release();}return;
         }
         if (req.Url?.AbsolutePath=="/tick"&&req.HttpMethod=="POST"){
-            using var doc=await JsonDocument.ParseAsync(req.InputStream);
+            using var doc=await ReadJson();
             var root=doc.RootElement;
             var dt=root.TryGetProperty("dt",out var time)?time.GetSingle():1f/60f;
             if(!float.IsFinite(dt)||dt<0||dt>0.25f)throw new ArgumentOutOfRangeException(nameof(dt),"Expected 0 <= dt <= 0.25");
@@ -116,7 +149,20 @@ async Task Handle(HttpListenerContext ctx) {
             }finally{gate.Release();}return;
         }
         res.StatusCode=404;await Reply(new {error="Not found"});
-    }catch(Exception e){res.StatusCode=400;await Reply(new {error=e.Message});}
+    }catch(InvalidDataException e){res.StatusCode=413;await Reply(new {error=e.Message});}
+    catch(KeyNotFoundException e){res.StatusCode=404;await Reply(new {error=e.Message});}
+    catch(Exception e){res.StatusCode=400;await Reply(new {error=e.Message});}
     finally{res.Close();}
-    async Task Reply(object payload){var data=Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload));res.ContentType="application/json; charset=utf-8";res.ContentLength64=data.Length;await res.OutputStream.WriteAsync(data);}
+    async Task<string> ReadBody(int limit) {
+        if(req.ContentLength64>limit) throw new InvalidDataException("Request too large.");
+        using var buffer=new MemoryStream();var bytes=new byte[8192];int count;
+        while((count=await req.InputStream.ReadAsync(bytes))>0) {
+            if(buffer.Length+count>limit) throw new InvalidDataException("Request too large.");
+            buffer.Write(bytes,0,count);
+        }
+        return Encoding.UTF8.GetString(buffer.ToArray());
+    }
+    async Task<JsonDocument> ReadJson() => JsonDocument.Parse(await ReadBody(32768));
+    static int RequiredInt(JsonElement input,string key) => input.TryGetProperty(key,out var value) && value.TryGetInt32(out int number) ? number : throw new ArgumentException($"Expected integer {key}.");
+    async Task Reply(object payload){var data=Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload,jsonOptions));res.ContentType="application/json; charset=utf-8";res.ContentLength64=data.Length;await res.OutputStream.WriteAsync(data);}
 }

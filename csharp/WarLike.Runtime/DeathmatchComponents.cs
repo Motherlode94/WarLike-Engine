@@ -4,7 +4,9 @@ namespace WarLike.Runtime;
 
 // Standalone .NET gameplay components. Network replication is not implemented.
 public sealed class TeamComponent : WarLikeBehaviour {
+    [InspectorField("Équipe", SceneKeys = "teamId", Min = 0, Max = 1000)]
     public int TeamId { get; set; }
+    [InspectorField("Tir allié", SceneKeys = "friendlyFire")]
     public bool FriendlyFire { get; set; }
     public bool IsFriendly(Actor other) {
         var team = other.GetComponent<TeamComponent>();
@@ -12,8 +14,11 @@ public sealed class TeamComponent : WarLikeBehaviour {
     }
 }
 public sealed class DamageableComponent : WarLikeBehaviour {
+    [InspectorField("Armure", SceneKeys = "armor", Min = 0, Max = 10000)]
     public float Armor { get; set; }
+    [InspectorField("Invulnérable", SceneKeys = "invulnerable")]
     public bool Invulnerable { get; set; }
+    [InspectorField("Mort")]
     public bool IsDead => Actor.Health <= 0;
     public float ApplyDamage(float damage, Actor? source = null) {
         if (!float.IsFinite(damage) || damage < 0) throw new ArgumentOutOfRangeException(nameof(damage));
@@ -35,9 +40,13 @@ public sealed class ScoreComponent : WarLikeBehaviour {
     public void RegisterAssist() => Assists++;
 }
 public sealed class WeaponComponent : WarLikeBehaviour {
+    [InspectorField("Dégâts", SceneKeys = "damage", Min = 0, Max = 100000)]
     public float Damage { get; set; } = 25;
+    [InspectorField("Tirs / seconde", SceneKeys = "fireRate", Min = .01, Max = 1000)]
     public float FireRate { get; set; } = 8;
+    [InspectorField("Capacité du chargeur", SceneKeys = "magazineSize", Min = 0, Max = 10000)]
     public int MagazineSize { get; set; } = 30;
+    [InspectorField("Munitions")]
     public int Ammo { get; private set; } = 30;
     private float _cooldown;
     public override void Update(float dt) => _cooldown = MathF.Max(0, _cooldown - dt);
@@ -54,6 +63,7 @@ public sealed class WeaponComponent : WarLikeBehaviour {
     public void Reload() => Ammo = Math.Max(0, MagazineSize);
 }
 public sealed class RespawnComponent : WarLikeBehaviour {
+    [InspectorField("Délai (s)", SceneKeys = "delay", Min = 0, Max = 3600)]
     public float Delay { get; set; } = 5;
     public Vector3 SpawnPosition { get; set; }
     private float _remaining = -1;

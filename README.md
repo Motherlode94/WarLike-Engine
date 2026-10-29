@@ -124,7 +124,7 @@ Le dépôt inclut les fichiers utilisables ; les liens officiels servent à l’
 | JavaScript / TypeScript | Interface, Blueprint, simulation et rendu principal dans le navigateur ; contrats TypeScript pour les systèmes |
 | Python | Serveur et relais LAN privé, validation des scènes, inventaire, import de sources 3D, contrôle des archives et orchestration des builds |
 | C++17 / WebAssembly | Navigation A*, gravité par lots, intersections 3D, tirs et vision IA avec recherche du premier obstacle ; buffers réutilisés, compilation automatique et binaire livré au navigateur, avec repli JavaScript si le module est indisponible |
-| C# / .NET 8 | Monde à composants et comportements natifs, simulation, véhicules et règles de jeu ; bridge local avec étapes manuelles ou aperçu continu, restauration de la scène et export des scripts |
+| C# / .NET 8 | Monde à composants et comportements natifs, simulation, véhicules et règles de jeu ; bridge local avec Inspector typé, escouades en formation (déplacer / maintenir / suivre), étapes manuelles ou aperçu continu et restauration de la scène |
 
 ```bash
 # Serveur et outils Python sans dépendances supplémentaires

@@ -33,3 +33,12 @@ jobs:
       - run: dotnet build csharp/WarLike.Bridge/WarLike.Bridge.csproj --configuration Release
       - run: dotnet build csharp/WarLike.Demo/WarLike.Demo.csproj --configuration Release
       - run: dotnet run --project csharp/WarLike.Demo/WarLike.Demo.csproj --configuration Release --no-build
+      - name: Verify C# lifecycle, typed Inspector and tactical squads
+        run: dotnet run --project csharp/WarLike.Tests --configuration Release
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify the real local .NET bridge API
+        run: node --test tests/csharp-bridge-live.mjs
+        env:
+          WARLIKE_DOTNET_BRIDGE: '1'

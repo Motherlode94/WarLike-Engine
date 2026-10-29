@@ -3,14 +3,19 @@ namespace WarLike.Runtime;
 // Genre behaviours are deterministic native prototypes. The browser's Blueprint
 // system handles the same gameplay ideas independently during Web Play.
 public sealed class RoleplayComponent : WarLikeBehaviour {
+    [InspectorField("Argent", SceneKeys = "money", Min = 0)]
     public int Money { get; set; } = 50;
+    [InspectorField("Réputation", SceneKeys = "reputation", Min = 0, Max = 1000)]
     public int Reputation { get; set; }
     public void Work() { Money = Math.Min(1_000_000, Money + 20); Reputation = Math.Min(1000, Reputation + 1); }
     public bool BuySupplies() { if (Money < 10) return false; Money -= 10; return true; }
 }
 public sealed class RacingRulesComponent : WarLikeBehaviour {
+    [InspectorField("Temps (s)")]
     public float Elapsed { get; private set; }
+    [InspectorField("Checkpoints")]
     public int Checkpoints { get; private set; }
+    [InspectorField("Course commencée")]
     public bool Started { get; private set; }
     public bool Finished { get; private set; }
     public void StartRace() { Elapsed = 0; Checkpoints = 0; Started = true; Finished = false; }

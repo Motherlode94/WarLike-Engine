@@ -1,10 +1,13 @@
 import {applyCsharpFrame} from '../core/csharp-frame.js';
+import {mountCsharpInspector} from './csharp-inspector.js';
+import {createCsharpSquadDemo} from '../core/csharp-tactical-scene.js';
+import {workspace} from '../core/workspaces.js';
 // WarLike C# local bridge controls. C# executes only in a separately started .NET process.
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 const base='http://127.0.0.1:8765';
 const timeout=4500;
-const ui={connected:false,ready:false};
+const ui={connected:false,ready:false,inspector:false,revision:null};
 async function request(path,method='GET',payload){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
  try{
@@ -22,44 +25,63 @@ export function initCSharpBridge(){
  const connect=document.getElementById('csharpRuntimeConnect'),sync=document.getElementById('csharpRuntimeSync');
  const tick=document.getElementById('csharpRuntimeTick'),second=document.getElementById('csharpRuntimeSecond'),template=document.getElementById('csharpRuntimeTemplate');
  if(!dialog||!button||!close||!status||!connect||!sync||!tick||!second||!template)return;
+ dialog.querySelector('.csharp-runtime-actions').after(status);
  const announce=(message,ok=false)=>{status.textContent=message;status.dataset.ok=String(ok)};
  let busy=false,streaming=false,streamToken=0,streamTimer=null,streamBefore=null,streamApplied=false;
+ let inspector=null,sceneToken=0,syncedScene=null;
+ const fingerprint=()=>JSON.stringify(currentScene());
+ const markSynced=()=>{syncedScene=fingerprint()};
+ const nativeChanged=label=>{markSynced();record(label);notify()};
+ const canInspect=()=>ui.inspector&&ui.ready&&!busy&&!streaming&&!state.playing;
  const live=document.createElement('button');live.type='button';live.id='csharpRuntimeLive';live.textContent='▶ Aperçu C# continu';second.after(live);
  const restore=document.createElement('button');restore.type='button';restore.id='csharpRuntimeRestore';restore.textContent='Restaurer avant aperçu';restore.disabled=true;live.after(restore);
- const buttons=()=>{connect.disabled=busy||streaming;sync.disabled=busy||streaming||!ui.connected||state.playing;tick.disabled=busy||streaming||!ui.connected||!ui.ready||state.playing;second.disabled=tick.disabled;live.disabled=!streaming&&(busy||!ui.connected||!ui.ready||state.playing);live.textContent=streaming?'■ Arrêter l’aperçu C#':'▶ Aperçu C# continu';restore.disabled=streaming||!streamBefore||state.playing};
+ const demo=document.createElement('button');demo.type='button';demo.id='csharpTacticalDemo';demo.textContent='＋ Exemple escouade 3D';restore.after(demo);
+ demo.addEventListener('click',()=>{
+  if(busy||streaming||state.playing)return;
+  if(workspace.mode!=='3d'){announce('Ouvre un projet 3D pour ajouter cet exemple.');return}
+  const firstId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));
+  const actors=createCsharpSquadDemo(firstId);state.entities.push(...actors);state.nextId=firstId+actors.length;state.selected=[firstId];
+  ui.ready=false;sceneToken++;inspector?.clear('Exemple ajouté : envoie la scène puis inspecte le chef.');
+  record('Ajouter escouade C# et véhicule Kenney');notify();buttons();
+  announce('Chef ID '+firstId+' · 4 soldats · véhicule ID '+(firstId+5)+'. Envoie la scène, inspecte le chef puis choisis Déplacer ou Suivre.',true);
+ });
+ const buttons=()=>{connect.disabled=busy||streaming;sync.disabled=busy||streaming||!ui.connected||state.playing;tick.disabled=busy||streaming||!ui.connected||!ui.ready||state.playing;second.disabled=tick.disabled;live.disabled=!streaming&&(busy||!ui.connected||!ui.ready||state.playing);live.textContent=streaming?'■ Arrêter l’aperçu C#':'▶ Aperçu C# continu';restore.disabled=busy||streaming||!streamBefore||state.playing;demo.disabled=busy||streaming||state.playing;inspector?.update();for(const control of dialog.querySelectorAll('.csharp-vehicle-controls button,#csharpGenreExecute'))control.disabled=busy||streaming||!ui.ready||state.playing};
  const show=()=>{button.closest('details')?.removeAttribute('open');dialog.hidden=false;buttons()};
  button.addEventListener('click',show);
  close.addEventListener('click',()=>{stopStream();dialog.hidden=true;button.focus()});
  connect.addEventListener('click',async()=>{
+  if(busy||streaming)return;busy=true;ui.inspector=false;buttons();sceneToken++;syncedScene=null;
   announce('Recherche du runtime C# local…');
-  try{const health=await request('/health');ui.connected=health.ready===true;ui.ready=false;announce(ui.connected?'Connecté : '+(health.engine||'.NET 8'):'Runtime non prêt',ui.connected)}
+  try{const health=await request('/health');ui.connected=health.ready===true;ui.ready=false;ui.inspector=health.protocol>=2&&health.capabilities?.includes('component-inspector');announce(ui.connected?'Connecté : '+(health.engine||'.NET 8'):'Runtime non prêt',ui.connected)}
   catch(error){ui.connected=false;ui.ready=false;announce('Runtime inaccessible. Démarre : dotnet run --project csharp/WarLike.Bridge — '+error.message)}
-  buttons();
+  busy=false;buttons();inspector?.clear(ui.inspector?'Connecté. Envoie la scène pour inspecter les composants.':'Bridge ancien : mets à jour le dépôt et redémarre .NET pour l’Inspector et les escouades.');
  });
  sync.addEventListener('click',async()=>{
-  if(state.playing)return;
+  if(state.playing||busy||streaming)return;busy=true;ui.ready=false;buttons();const token=++sceneToken,before=fingerprint();
   announce('Chargement de la scène dans .NET…');
   try{
    const response=await request('/scene','POST',currentScene());
-   ui.ready=response.ok===true;
+   if(token!==sceneToken||state.playing||before!==fingerprint())throw Error('La scène a changé pendant l’envoi. Envoie-la à nouveau.');
+   ui.revision=response.revision;ui.ready=response.ok===true;markSynced();
    announce(ui.ready?'Scène synchronisée : '+response.count+' acteurs. Le runtime C# est prêt.':'Import C# refusé',ui.ready);
   }catch(error){ui.ready=false;announce('Import C# : '+error.message)}
-  buttons();
+  busy=false;buttons();if(canInspect())await inspector?.refresh();
  });
  const simulate=async(duration)=>{
   if(busy||state.playing||!ui.ready)return;
-  busy=true;buttons();announce('Simulation C# : '+duration+' seconde(s)…');
+  busy=true;const token=sceneToken;buttons();announce('Simulation C# : '+duration+' seconde(s)…');
   try{
    let result;
    const count=duration===1?4:1,dt=duration===1?.25:1/60;
    for(let i=0;i<count;i++)result=await request('/tick','POST',{dt});
    if(!result?.ok||!Array.isArray(result.actors))throw Error('Réponse invalide du runtime');
+   if(token!==sceneToken)throw Error('La scène a changé pendant la simulation. Renvoie-la avant de continuer.');
    if(state.playing)throw Error('Play activé entre-temps. Arrête Play pour appliquer les résultats C#.');
    const applied=applyCsharpFrame(state.entities,result.actors);
-   if(applied)record('C# Runtime : '+duration+' s');
+   markSynced();if(applied)record('C# Runtime : '+duration+' s');
    notify();announce('C# .NET : '+applied+' acteurs mis à jour après '+duration+' s.',true);
   }catch(error){announce('Erreur C# : '+error.message)}
-  finally{busy=false;buttons()}
+  finally{busy=false;buttons();if(canInspect())await inspector?.refresh()}
  };
  function stopStream(){
   if(!streaming)return;streaming=false;streamToken++;clearTimeout(streamTimer);busy=false;
@@ -75,13 +97,24 @@ export function initCSharpBridge(){
    const now=performance.now(),dt=Math.min(.1,Math.max(1/240,(now-previous)/1000));previous=now;
    try{const result=await request('/tick','POST',{dt});if(!streaming||token!==streamToken||state.playing)return;
     if(!result.ok)throw Error('Tick refusé.');streamApplied=applyCsharpFrame(state.entities,result.actors)>0||streamApplied;
-    if(now-lastNotify>250){lastNotify=now;notify()}
+    markSynced();if(now-lastNotify>250){lastNotify=now;notify()}
     streamTimer=setTimeout(frame,Math.max(0,1000/30-(performance.now()-now)));
    }catch(error){stopStream();ui.ready=false;buttons();announce('Aperçu C# : '+error.message)}
   };frame();
  });
- restore.addEventListener('click',()=>{if(streaming||state.playing||!streamBefore)return;applyCsharpFrame(state.entities,streamBefore);record('Restaurer avant aperçu C#');notify();ui.ready=false;streamBefore=null;buttons();announce('Scène restaurée. Synchronise à nouveau avant le prochain aperçu.',true)});
- document.addEventListener('warlike:change',()=>{if(state.playing)stopStream();buttons()});
+ restore.addEventListener('click',()=>{if(busy||streaming||state.playing||!streamBefore)return;applyCsharpFrame(state.entities,streamBefore);ui.ready=false;sceneToken++;record('Restaurer avant aperçu C#');notify();streamBefore=null;buttons();announce('Scène restaurée. Synchronise à nouveau avant le prochain aperçu.',true)});
+ document.addEventListener('warlike:change',()=>{
+  if(state.playing)stopStream();
+  if(ui.ready&&syncedScene!==fingerprint()){ui.ready=false;sceneToken++;stopStream();inspector?.clear('Scène modifiée. Envoie-la à nouveau pour continuer.');announce('Scène modifiée : synchronise à nouveau le runtime C#.')}
+  buttons();
+ });
+ inspector=mountCsharpInspector({host:dialog.querySelector('.csharp-runtime-content'),selected:()=>state.entities.find(o=>o.id===state.selected.at(-1)),entities:()=>state.entities,ready:canInspect,announce,changed:nativeChanged,request:async(path,payload)=>{
+  if(!canInspect())throw Error('Connecte et synchronise le bridge C# à jour.');
+  busy=true;const token=sceneToken;buttons();
+  try{const result=await request(path,'POST',{...payload,revision:ui.revision});if(token!==sceneToken||state.playing)throw Error('Scène modifiée pendant la requête.');return result}
+  catch(error){if(error.message.includes('Scene changed')){ui.ready=false;sceneToken++}throw error}
+  finally{busy=false;buttons()}
+ }});
  tick.addEventListener('click',()=>simulate(1/60));
  second.addEventListener('click',()=>simulate(1));
  template.addEventListener('click',()=>{
@@ -115,7 +148,7 @@ public sealed class MyMovement : WarLikeBehaviour
  for(const [id,controls] of Object.entries(vehicleInputs)){
   const control=document.getElementById(id);
   control?.addEventListener('click',async()=>{
-   if(busy||state.playing||!ui.ready){announce('Connecte et synchronise le runtime .NET avant de commander un véhicule.');return}
+   if(busy||streaming||state.playing||!ui.ready){announce('Connecte et synchronise le runtime .NET avant de commander un véhicule.');return}
    const vehicle=state.entities.find(o=>o.id===state.selected.at(-1));
    if(!vehicle){announce('Sélectionne le véhicule dans la Hierarchy.');return}
    busy=true;buttons();
@@ -132,7 +165,7 @@ public sealed class MyMovement : WarLikeBehaviour
  const allowedGenreActions=new Set(['rp-work','rp-buy','race-start','race-checkpoint','race-finish','sim-produce','sim-deliver','sim-service','rpg-start','rpg-complete','4x-explore','4x-expand','4x-exploit','4x-conquer','4x-next-turn']);
  genreExecute?.addEventListener('click',async()=>{
   const target=state.entities.find(o=>o.id===state.selected.at(-1));
-  if(!target||!ui.ready||busy||state.playing){announce('Sélectionne un GameObject, synchronise la scène C# et arrête le Play Web.');return}
+  if(!target||!ui.ready||busy||streaming||state.playing){announce('Sélectionne un GameObject, synchronise la scène C# et arrête le Play Web.');return}
   const action=genreAction?.value;
   if(!allowedGenreActions.has(action))return;
   busy=true;buttons();genreExecute.disabled=true;
@@ -180,7 +213,7 @@ public sealed class ${name} : WarLikeBehaviour
  scriptLoad?.addEventListener('click',loadScript);
  scriptSave?.addEventListener('click',()=>{
   const object=selectedObject();
-  if(!object||state.playing){announce('Sélectionne un objet et arrête Play avant de modifier un script.');return}
+  if(!object||state.playing||busy||streaming){announce('Sélectionne un objet et arrête Play avant de modifier un script.');return}
   if(scriptSource.value.length>30000){announce('Script limité à 30 000 caractères.');return}
   object.csharpScript={name:safeName(scriptName.value),source:scriptSource.value};
   record('C# : enregistrer script '+object.csharpScript.name);notify();

@@ -4,7 +4,7 @@
 
 - **WebGL / JavaScript:** browser editor, scene authoring, visual scripting and rendering.
 - **C++17 / WebAssembly:** optional accelerated pathfinding, AABB collision, gravity integration, *batched* gravity integration and nearest-hit segment queries used by aimed fire and AI line of sight.
-- **C# / .NET 8:** independent gameplay runtime using components with Awake, Start, Update, FixedUpdate, OnDestroy. A localhost HTTP bridge handles scene import and tick.
+- **C# / .NET 8:** independent gameplay runtime using components with Awake, Start, Update, FixedUpdate, OnDestroy. A localhost HTTP bridge handles scene import, tick, typed component inspection and tactical squad orders.
 
 ## Build the native WASM module
 
@@ -34,7 +34,7 @@ dotnet build csharp/WarLike.Runtime
 dotnet run --project csharp/WarLike.Bridge
 ```
 
-The bridge listens only on `127.0.0.1:8765`, with `GET /health`, `POST /scene`, `POST /tick`. Supported browser origins are explicitly constrained; `POST /scene` is capped at 2 MiB. It does **not** execute untrusted arbitrary C# scripts. It is not yet wired into every browser Play Mode path. Never expose the bridge to the public Internet.
+The bridge listens only on `127.0.0.1:8765`, with `GET /health`, `POST /scene`, `POST /tick`, `POST /components/inspect`, `POST /components/set` and `POST /squad/command`. Inspector and squad mutations carry a scene revision. Annotated properties expose typed, validated values; scene-backed parameters persist to JSON. See [C# controls and limitations](../csharp/README.md). Supported browser origins are explicitly constrained; `POST /scene` is capped at 2 MiB. It does **not** execute untrusted arbitrary C# scripts. It is not yet wired into every browser Play Mode path. Never expose the bridge to the public Internet.
 
 ## Required validation
 

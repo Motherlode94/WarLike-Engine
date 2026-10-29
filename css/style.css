@@ -1156,6 +1156,24 @@ body:not(.hub-open) .workspace :is(.side-splitter,.project-splitter){background:
 .csharp-runtime-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .csharp-runtime-actions button{min-height:35px;border:1px solid var(--warlike-palette-border,#455363);border-radius:4px;background:var(--warlike-palette-button,#354251);color:inherit;cursor:pointer}
 .csharp-runtime-actions button:disabled{opacity:.5;cursor:not-allowed}
+.csharp-native-inspector{display:grid;gap:10px;margin:0;padding:12px;border:1px solid var(--wl-theme-border,#535a62);border-radius:6px}
+.csharp-native-inspector legend{padding:0 5px;font-weight:700}
+.csharp-native-inspector :is(button,input){box-sizing:border-box;min-height:36px;min-width:0;max-width:100%;padding:7px;border:1px solid var(--wl-theme-border,#535a62);border-radius:4px;color:inherit}
+.csharp-native-inspector input[type=checkbox]{min-height:22px;width:22px;accent-color:var(--editor-accent,#6c9dc8)}
+.csharp-native-inspector button{cursor:pointer;background:var(--wl-theme-button,#354251)}
+.csharp-native-inspector button:disabled{opacity:.5;cursor:not-allowed}
+.csharp-native-components{display:grid;gap:10px;min-width:0}
+.csharp-native-components details{padding:10px;border:1px solid var(--wl-theme-border,#535a62);border-radius:4px;min-width:0}
+.csharp-native-components summary{cursor:pointer;overflow-wrap:anywhere;font-weight:650;line-height:1.6}
+.csharp-native-field{display:flex;flex-wrap:wrap;align-items:end;gap:7px;margin:12px 0}
+.csharp-native-field label{display:flex;flex-wrap:wrap;gap:5px;flex:1 1 170px;min-width:0}
+.csharp-native-field label span{flex-basis:100%}
+.csharp-native-field input{flex:1 1 50px;width:50px}
+.csharp-native-field input[type=checkbox]{flex:0 0 22px}
+.csharp-native-readonly{padding:5px 0;font-variant-numeric:tabular-nums}
+.csharp-squad-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;border-top:1px solid var(--wl-theme-border,#535a62);padding-top:12px}
+.csharp-squad-controls :is(strong,small){grid-column:1/-1}
+.csharp-squad-controls small{line-height:1.6}
 #csharpRuntimeStatus{padding:9px;border-left:3px solid #a7adba;background:#111b2633}
 #csharpRuntimeStatus[data-ok="true"]{border-left-color:#48cba9}
 .csharp-runtime-content small{opacity:.75}

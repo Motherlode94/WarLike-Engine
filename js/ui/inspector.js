@@ -66,12 +66,13 @@ const nativeComponentCatalog={
  'Gameplay / Deathmatch':{Team:{teamId:0,friendlyFire:false},Score:{},Respawn:{delay:5},DeathmatchRules:{matchDuration:600,scoreLimit:25,countdown:3},SpawnPoint:{teamId:-1,radius:1},AmmoPickup:{amount:30},HealthPickup:{healAmount:35},KillZone:{damage:10000},ObjectiveZone:{teamId:-1,captureTime:10}},
  'Movement / AI':{AutoRotate:{speed:90},LinearMotion:{vx:0,vy:0,vz:0},FollowActor:{targetId:1,speed:3,stopDistance:1}},
  'Vehicles / C#':{VehicleController:{maxSpeed:310,acceleration:225,brakeForce:310,turnRate:145,drag:1.15,reverseRatio:.45}},
+ 'Tactical / C#':{TacticalSquad:{memberIds:[],speed:3,spacing:1.5,followDistance:4}},
  'Genres / C#':{Roleplay:{money:50,reputation:0},RacingRules:{},SimulationEconomy:{money:100,materials:5},RpgProgression:{gold:100},FourXEmpire:{}}
  };
 
 function renderNativeComponents(root,o){
  const definitions=Array.isArray(o.csharpComponents)?o.csharpComponents:[];
- const labels={damage:'Dégâts',fireRate:'Tirs / seconde',magazineSize:'Taille du chargeur',armor:'Armure',invulnerable:'Invulnérable',regen:'Régénération / s',speed:'Vitesse',lifetime:'Durée de vie',gravity:'Gravité',restitution:'Rebond',friction:'Friction',teamId:'Équipe ID',friendlyFire:'Tirs alliés',delay:'Délai (s)',matchDuration:'Durée du match (s)',scoreLimit:'Limite de kills',countdown:'Compte à rebours',radius:'Rayon',amount:'Quantité',healAmount:'Soin',captureTime:'Temps de capture',vx:'Vitesse X',vy:'Vitesse Y',vz:'Vitesse Z',targetId:'ID de la cible',stopDistance:'Distance d’arrêt',maxSpeed:'Vitesse max',acceleration:'Accélération',brakeForce:'Freinage',turnRate:'Direction (°/s)',drag:'Résistance',reverseRatio:'Rapport marche arrière',money:'Crédits',reputation:'Réputation',materials:'Matériaux',gold:'Or'};
+ const labels={memberIds:'ID des membres',spacing:'Espacement (m)',followDistance:'Distance de suivi (m)',damage:'Dégâts',fireRate:'Tirs / seconde',magazineSize:'Taille du chargeur',armor:'Armure',invulnerable:'Invulnérable',regen:'Régénération / s',speed:'Vitesse',lifetime:'Durée de vie',gravity:'Gravité',restitution:'Rebond',friction:'Friction',teamId:'Équipe ID',friendlyFire:'Tirs alliés',delay:'Délai (s)',matchDuration:'Durée du match (s)',scoreLimit:'Limite de kills',countdown:'Compte à rebours',radius:'Rayon',amount:'Quantité',healAmount:'Soin',captureTime:'Temps de capture',vx:'Vitesse X',vy:'Vitesse Y',vz:'Vitesse Z',targetId:'ID de la cible',stopDistance:'Distance d’arrêt',maxSpeed:'Vitesse max',acceleration:'Accélération',brakeForce:'Freinage',turnRate:'Direction (°/s)',drag:'Résistance',reverseRatio:'Rapport marche arrière',money:'Crédits',reputation:'Réputation',materials:'Matériaux',gold:'Or'};
  const defaults=Object.assign({},...Object.values(nativeComponentCatalog));
  definitions.forEach((definition,index)=>{
  const card=document.createElement('details');card.className='inspector-component warlike-component-card';card.dataset.componentTitle=definition.kind;card.dataset.runtime=webDataComponentKinds.has(definition.kind)?'web':'dotnet';card.open=true;
@@ -83,6 +84,7 @@ function renderNativeComponents(root,o){
  const value=definition[key]??defaults[definition.kind]?.[key];
  const input=document.createElement('input');input.disabled=state.playing;
  if(typeof value==='boolean'){input.type='checkbox';input.checked=value;input.onchange=()=>{definition[key]=input.checked;record('Composant '+definition.kind+' : '+key);notify()}}
+ else if(Array.isArray(value)){input.type='text';input.value=value.join(', ');input.placeholder='ID séparés par des virgules';input.onchange=()=>{const ids=input.value.trim()?input.value.trim().split(/[\s,;]+/).map(Number):[];if(ids.length>64||ids.some(id=>!Number.isSafeInteger(id)||id<=0)||new Set(ids).size!==ids.length){input.value=(definition[key]??value).join(', ');return}definition[key]=ids;record('Composant '+definition.kind+' : '+key);notify()}}
  else if(typeof value==='number'){input.type='number';input.step='any';input.value=String(value);input.onchange=()=>{if(!input.value.trim()||!Number.isFinite(Number(input.value))){input.value=String(definition[key]??value);return}definition[key]=Number(input.value);record('Composant '+definition.kind+' : '+key);notify()}}
  else {input.type='text';input.value=String(value??'');input.onchange=()=>{definition[key]=input.value;record('Composant '+definition.kind+' : '+key);notify()}}
  row.append(input);fields.append(row);

@@ -8,16 +8,25 @@ namespace WarLike.Runtime;
 /// Rotation 0 faces world -Z. Physics is intentionally arcade, not wheel simulation.
 /// </summary>
 public sealed class VehicleControllerComponent : WarLikeBehaviour {
+    [InspectorField("Vitesse maximale (unités/s)", SceneKeys = "maxSpeed", Min = 1, Max = 10000)]
     public float MaxSpeed { get; set; } = 300;
+    [InspectorField("Accélération", SceneKeys = "acceleration", Min = 1, Max = 10000)]
     public float Acceleration { get; set; } = 190;
+    [InspectorField("Freinage", SceneKeys = "brakeForce", Min = 1, Max = 10000)]
     public float BrakeForce { get; set; } = 330;
+    [InspectorField("Direction (°/s)", SceneKeys = "turnRate", Min = 1, Max = 1000)]
     public float TurnRate { get; set; } = 135;
+    [InspectorField("Résistance", SceneKeys = "drag", Min = .01, Max = 100, Step = .05)]
     public float Drag { get; set; } = 1.35f;
+    [InspectorField("Rapport marche arrière", SceneKeys = "reverseRatio", Min = .15, Max = .8, Step = .05)]
     public float ReverseRatio { get; set; } = .45f;
+    [InspectorField("Vitesse actuelle")]
     public float Speed { get; private set; }
+    [InspectorField("Direction actuelle")]
     public float Steering { get; private set; }
     public float ThrottleInput { get; private set; }
     public float SteeringInput { get; private set; }
+    [InspectorField("Frein à main")]
     public bool Handbrake { get; private set; }
 
     public void SetInput(float throttle, float steer, bool handbrake = false) {

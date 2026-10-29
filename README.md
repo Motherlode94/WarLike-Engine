@@ -19,6 +19,10 @@ Le type de jeu est conservé dans le projet et l’export Web. Dans la liste des
 
 Les fenêtres flottantes se déplacent par leur en-tête et se redimensionnent par leurs huit bords et coins. Les dimensions sont mémorisées. Les panneaux conservent leur défilement, même à 140 % de zoom.
 
+Sur **mobile et tablette**, la barre inférieure donne accès à Scène, Hiérarchie, Inspecteur, Assets et Console, un panneau à la fois. **Menus** conserve les commandes du studio ; **Dossiers** affiche l’arborescence des ressources. En Play, les boutons tactiles permettent de se déplacer, courir, sauter, interagir et attaquer. En 3D, glisser sur la scène oriente la caméra ; en édition, activer **Caméra tactile**. Les graphes complexes restent plus confortables sur ordinateur.
+
+Le bouton **✎ Annoter** fige une capture de l’éditeur : entourer une zone, dessiner une flèche ou au crayon, puis choisir **Note**, écrire le texte et toucher l’image pour le placer. Couleur, épaisseur, annuler/rétablir et effacer sont disponibles. **Exporter PNG** télécharge l’image annotée, à joindre manuellement au chat ; **Copier l’image** fonctionne si le navigateur le permet. La capture reste sur l’appareil. **Nouvelle capture** remplace l’image ; **Importer une capture** sert de solution de repli si un contenu externe bloque la capture. Fermer conserve les annotations en mémoire jusqu’au rechargement. Pendant l’annotation, Play et les commandes du joueur sont suspendus.
+
 ## Hero Forge : super-héros, action, RPG, simulation et RTS
 
 Dans le Hub, choisir le template **Hero Forge · Super-héros** en 2D ou 3D. Dans un projet existant, **Game → Hero Forge · Scène super-héros** installe une mission avec modèles et sprites Kenney / Quaternius déjà intégrés ; Annuler restaure la scène précédente.

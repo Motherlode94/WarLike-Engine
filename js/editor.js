@@ -1,3 +1,5 @@
+import {initResponsiveEditor} from './ui/responsive-editor.js';
+import {initAnnotationEditor} from './ui/annotation-editor.js';
 import {initAdventureUi} from './ui/adventure-ui.js';
 import {initSurvivalUi} from './ui/survival-ui.js';
 import {initCreativeStudios} from './ui/creative-studios.js';
@@ -283,6 +285,9 @@ document.getElementById('play')?.addEventListener('click',()=>{unlockHorrorAudio
 
 initGameFlowUi();
 initStudioPolish();
+initAnnotationEditor();
+initResponsiveEditor();
+for(const event of ['warlike:annotation-open','warlike:annotation-close'])document.addEventListener(event,()=>{state.keys.clear();state.keyPresses?.clear()});
 
 document.addEventListener('warlike:load-asset-test',()=>{
  if(state.playing)return;

@@ -451,6 +451,7 @@ export function init3d(canvas,host,buttons){
  canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);canvas.addEventListener('lostpointercapture',stop);
  canvas.addEventListener('wheel',e=>{if(!view3d.enabled||e.defaultPrevented)return;e.preventDefault();if(state.playing&&(isFps()||!gameIsRunning()))return;view3d.radius=clamp(view3d.radius*Math.exp(e.deltaY*.001),state.playing?1.2:3,state.playing?16:150)},{passive:false});
 
+ let captureFrame=null;document.addEventListener('warlike:capture-frame',event=>{captureFrame=event.detail?.resolve});
  let previousTime=performance.now();
  function draw(now=performance.now()){
   requestAnimationFrame(draw);
@@ -637,6 +638,7 @@ export function init3d(canvas,host,buttons){
   if(!state.playing)tickFxRuntime(state.entities.filter(o=>o.fxEmitter?.preview),dt,'3d');
   fxRenderer.draw(cam,w,h,state.playing?state.entities:[]);
   if(!state.playing){gl.useProgram(program);bind(outline);for(const o of objects.filter(o=>state.selected.includes(o.id))){const b=objectBounds3d(o);model([b.x,b.y,b.z],[b.w*1.03,b.h*1.03,b.d*1.03],[.32,1,.8,1],(o.rotation||0)*Math.PI/180,o);gl.drawArrays(gl.LINES,0,outline.count)}}
+  if(captureFrame){const resolve=captureFrame;captureFrame=null;try{resolve(canvas.toDataURL('image/png'))}catch{resolve(null)}}
  }
  requestAnimationFrame(draw);
  return {setEnabled:change,focus:focusScene,syncToWorkspace:()=>{view3d.enabled=workspace.mode==='3d';focusScene();sync()}};

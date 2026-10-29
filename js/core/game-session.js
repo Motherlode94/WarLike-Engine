@@ -1,3 +1,4 @@
+import {annotationState} from './annotations.js';
 import {blueprintDebugger} from './blueprint-debugger.js';
 import {makeGameDialogue,validGameDialogue} from './game-dialogue.js';
 import {gameProject,safeKey,validEntities,sceneDefinition} from './game-project.js';
@@ -7,7 +8,7 @@ const finite=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 export const freshSession=()=>({phase:'playing',elapsed:0,currentSceneId:gameProject.activeSceneId,sceneProgress:{},objectives:{},timers:{},dialogue:null,checkpoint:null,pending:null,notice:'',revision:0});
 export const gameSession=freshSession();
 export function resetGameSession(){Object.assign(gameSession,freshSession())}
-export const gameIsRunning=()=>gameSession.phase==='playing'&&!blueprintDebugger.paused;
+export const gameIsRunning=()=>gameSession.phase==='playing'&&!blueprintDebugger.paused&&!annotationState.open;
 export function setGamePhase(phase,message=''){
  if(!['playing','paused','won','lost'].includes(phase))return false;
  gameSession.phase=phase;gameSession.notice=String(message).slice(0,240);gameSession.revision++;return true;

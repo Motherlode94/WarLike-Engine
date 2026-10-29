@@ -39,3 +39,8 @@ Les versions des dépendances JavaScript sont déclarées dans `package.json`. L
 Les anciens modèles de démonstration Khronos et catalogues réseau restent identifiés comme externes et conservent leurs licences propres. Ils ne font pas partie du décompte des 7 626 modèles intégrés. L’importateur de fichiers personnels ne transfère aucun droit sur ces fichiers.
 
 Les crédits de la bibliothèque intégrée sont consultables dans **Hub → À propos / Sources** et dans l’Inspecteur des ressources. Project / Assets se concentre sur les fichiers utilisables et leur organisation.
+
+## Capture annotée de l’éditeur
+
+- Interface, géométrie des annotations, historique et export PNG : code WarLike, Hardi Victor MBANVU.
+- Capture DOM : [dom-to-image-more 3.11.0](https://github.com/IDisposable/dom-to-image-more), licence MIT, distribution npm conservée dans `vendor/dom-to-image-more/`, licence jointe dans `LICENSE.txt`. Le traitement s’effectue dans le navigateur, sans service de capture externe.

@@ -3,7 +3,7 @@
 ## Architecture
 
 - **WebGL / JavaScript:** browser editor, scene authoring, visual scripting and rendering.
-- **C++17 / WebAssembly:** optional accelerated pathfinding, AABB collision, gravity integration and *batched* gravity integration.
+- **C++17 / WebAssembly:** optional accelerated pathfinding, AABB collision, gravity integration, *batched* gravity integration and nearest-hit segment queries used by aimed fire and AI line of sight.
 - **C# / .NET 8:** independent gameplay runtime using components with Awake, Start, Update, FixedUpdate, OnDestroy. A localhost HTTP bridge handles scene import and tick.
 
 ## Build the native WASM module
@@ -14,9 +14,16 @@ Prerequisite: Emscripten `emcc`.
 sh native/build-wasm.sh
 ```
 
-Publish both `native/dist/warlike_pathfinding.mjs` and `.wasm` with the web app. Without these artifacts, WarLike intentionally falls back to JS. Exported C symbols: `wl_find_path`, `wl_overlap_aabb3d`, `wl_integrate_gravity`, and `wl_integrate_gravity_batch`.
+Publish both `native/dist/warlike_pathfinding.mjs` and `.wasm` with the web app. Without these artifacts, WarLike intentionally falls back to JS. Exported C symbols: `wl_find_path`, `wl_overlap_aabb3d`, `wl_integrate_gravity`, `wl_integrate_gravity_batch` and `wl_segment_aabb3d_batch`.
 
 Batch ABI: a Float32 buffer with groups of **four** elements `[elevation, verticalVelocity, gravity, restitution]`. The first two elements are overwritten per body. Returning the body count indicates success. This reduces JS→WASM call overhead; actual speedup must be benchmarked.
+
+The segment-query ABI, limits and reproducible benchmark are documented in
+[`native/README.md`](../native/README.md#tirs-et-vision-ia-en-c).
+Query and gravity scratch buffers are reused. `nativeDiagnostics()` reports
+the loaded capabilities and actual call counts; it does not invent timing or
+frame-rate measurements. JavaScript fallback and compiled-WASM integration
+tests cover the same scene obstacle filtering and nearest-hit behaviour.
 
 ## Run the C# runtime locally
 

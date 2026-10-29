@@ -5,6 +5,10 @@ on:
     paths:
       - 'native/*.cpp'
       - 'native/build-wasm.sh'
+      - 'native/tests/**'
+      - 'js/core/native-3d.js'
+      - 'tests/native-3d-wasm.test.mjs'
+      - 'scripts/bench-native-queries.mjs'
       - '.github/workflows/native-wasm.yml'
   workflow_dispatch:
 permissions:
@@ -34,6 +38,14 @@ jobs:
           sh native/tests/run-smoke.sh
           sh native/build-wasm.sh
           node --check native/dist/warlike_pathfinding.mjs
+      - name: Test the compiled WebAssembly in actual gameplay queries
+        env:
+          WARLIKE_REQUIRE_NATIVE_QUERIES: '1'
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+          npm run typecheck
+          node scripts/bench-native-queries.mjs
       - name: Publish the compiled runtime on main
         run: |
           git config user.name 'WarLike build'

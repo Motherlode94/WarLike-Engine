@@ -7,6 +7,48 @@
 #define WL_API
 #endif
 extern "C" {
+// Segments and boxes use scene pixels: X/Z ground plane, then elevation.
+// One segment = [fromX,fromZ,fromHeight,toX,toZ,toHeight].
+// One box = [x,z,height,width,depth,sizeY]. Hits = [boxIndex,fraction].
+// First equal-distance box wins, matching the JavaScript scene query.
+// Returns segment count, or -1 for an invalid request (no output is written).
+WL_API int wl_segment_aabb3d_batch(const float* segments,int segmentCount,
+                                  const float* boxes,int boxCount,float* hits) {
+ if(segmentCount<0||segmentCount>4096||boxCount<0||boxCount>100000||
+    static_cast<long long>(segmentCount)*boxCount>20000000)return -1;
+ if(segmentCount==0)return 0;
+ if(!segments||!hits||(boxCount>0&&!boxes))return -1;
+ // Validate the entire request before touching caller-owned output.
+ for(int i=0;i<segmentCount*6;i++)if(!std::isfinite(segments[i]))return -1;
+ for(int i=0;i<segmentCount;i++)for(int axis=0;axis<3;axis++)
+  if(!std::isfinite(segments[6*i+axis+3]-segments[6*i+axis]))return -1;
+ for(int i=0;i<boxCount;i++){
+  const float* box=boxes+6*i;
+  for(int axis=0;axis<6;axis++)if(!std::isfinite(box[axis]))return -1;
+  for(int axis=0;axis<3;axis++)if(box[axis+3]<=0||!std::isfinite(box[axis]+box[axis+3]))return -1;
+ }
+ for(int i=0;i<segmentCount;i++){
+  const float* segment=segments+6*i;
+  int closest=-1;float fraction=2.f;
+  for(int j=0;j<boxCount;j++){
+   const float* box=boxes+6*j;
+   float near=0.f,far=1.f;bool intersects=true;
+   for(int axis=0;axis<3;axis++){
+    const float start=segment[axis],delta=segment[axis+3]-start;
+    const float low=box[axis],high=box[axis]+box[axis+3];
+    if(std::abs(delta)<1e-8f){if(start<low||start>high){intersects=false;break;}continue;}
+    const float a=(low-start)/delta,b=(high-start)/delta;
+    near=std::max(near,std::min(a,b));far=std::min(far,std::max(a,b));
+    if(near>far){intersects=false;break;}
+   }
+   if(intersects&&near<fraction){closest=j;fraction=near;}
+  }
+  hits[2*i]=static_cast<float>(closest);
+  hits[2*i+1]=closest<0?-1.f:fraction;
+ }
+ return segmentCount;
+}
+
 // Forward declaration required by the batched integrator below.
 WL_API void wl_integrate_gravity(float* inOut,float gravity,float restitution,float delta);
 // Packed boxes: x, z, elevation, width, depth, height (height uses scene pixel units).

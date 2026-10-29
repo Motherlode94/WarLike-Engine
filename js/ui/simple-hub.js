@@ -1,6 +1,6 @@
 import {genreLabel,genreStage,compatibleGenres,normalizeGenre} from '../core/game-genres.js';
 import {survivalSprites2d} from '../assets/survival-sprites-2d.js';
-import {nativeStatus} from '../core/native-3d.js';
+import {nativeStatus,nativeDiagnostics} from '../core/native-3d.js';
 import {listProjects,hub,chooseProjectGenre,projectSummary,duplicateProject} from '../core/project-hub.js';
 import {editorThemePresets,readableText} from './editor-palette.js';
 import {freeModels3d,freeSprites2d,freeAudioAssets,freeUiAssets} from '../assets/free-game-assets.js';
@@ -21,7 +21,7 @@ export function initSimpleHub(){
  const projectActions=make('div','simple-hub-list-actions');projectActions.append(count,backup);projectPanel.append(tableHead,projects,projectActions);
  const about=make('section','simple-hub-about');about.id='hubAboutSources';about.append(make('h2','','WarLike Studio'),make('p','hub-developer-credit','Conception et développement : Hardi Victor MBANVU · HardieBay'),make('p','','Moteur et éditeur de jeux 2D / 3D. Les projets sont conservés dans ce navigateur ; les sauvegardes JSON permettent de les transférer.'));
  const links=make('div','hub-about-links');links.append(external('https://github.com/Motherlode94/WarLike-Engine','Dépôt du moteur'),external('https://github.com/Motherlode94/WarLike-Engine#readme','README'),external('https://github.com/Motherlode94/WarLike-Engine/blob/main/SOURCES.md','Provenance des systèmes'),external('https://github.com/Motherlode94/WarLike-Engine/tree/main/docs','Documentation'));about.append(links);
- const runtimeStatus=make('p','hub-runtime-capabilities');runtimeStatus.id='hubRuntimeCapabilities';const updateRuntimeStatus=()=>runtimeStatus.textContent='Python : outils locaux · C++ / WASM : '+(nativeStatus()==='ready'?'actif':nativeStatus()==='loading'?'chargement en cours':'repli JavaScript')+' · C# : bridge .NET local, connexion dans Window → C# Runtime';updateRuntimeStatus();about.append(runtimeStatus);
+ const runtimeStatus=make('p','hub-runtime-capabilities');runtimeStatus.id='hubRuntimeCapabilities';const updateRuntimeStatus=()=>runtimeStatus.textContent='Python : outils locaux · C++ / WASM : '+(nativeStatus()==='ready'?'actif · navigation et gravité'+(nativeDiagnostics().capabilities.raycasts3d?' · tirs et vision IA':''):nativeStatus()==='loading'?'chargement en cours':'repli JavaScript')+' · C# : bridge .NET local, connexion dans Window → C# Runtime';updateRuntimeStatus();about.append(runtimeStatus);
  const systemTitle=make('h3','','Code et systèmes');about.append(systemTitle);
  const systems=make('dl','hub-source-systems');
  for(const [name,description,url] of [

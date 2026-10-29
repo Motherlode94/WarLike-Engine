@@ -24,3 +24,39 @@ Le C++ exporte `wl_find_path` via une interface C vers WASM ; les obstacles sont
 
 
 Le module est livré au navigateur et aux exports Web. Il accélère A*, la gravité par lots et les intersections 3D. Les appels simultanés à son initialisation partagent le même chargement. Le repli JavaScript reste disponible en cas d’échec.
+
+## Tirs et vision IA en C++
+
+`wl_segment_aabb3d_batch` recherche le premier obstacle touché pour un ou plusieurs
+segments 3D. Le moteur l’utilise dans `raycastScene3d` (tir visé du viewport) et
+`hasLineOfSight` (perception IA et conditions Blueprint). Les mêmes objets actifs,
+exclusions et boîtes de collision sont utilisés par les deux chemins d’exécution.
+Les obstacles masquent les cibles derrière eux ; en cas d’égalité, le premier
+objet conserve la priorité. Si le module ou l’export est indisponible, le
+calcul JavaScript reste utilisable.
+
+Les buffers de requêtes et de gravité sont réutilisés entre appels. Chaque
+buffer est borné à 8 Mio ; les requêtes acceptent au plus 4 096 segments,
+100 000 boîtes et 20 millions de couples segment/boîte. Une requête invalide
+ne modifie pas les résultats précédents. Un lot ne constitue pas un index
+spatial : sa complexité reste proportionnelle aux couples testés.
+
+ABI : segments `[fromX, fromZ, fromHeight, toX, toZ, toHeight]`, boîtes
+`[x, z, height, width, depth, sizeY]`, toutes les mesures en pixels de scène.
+Les résultats sont `[indexBoîte, fractionDuSegment]`, `[-1, -1]` pour un
+segment libre. Ces requêtes restent **axis-aligned** ; elles ne remplacent
+pas les capsules, rotations et articulations du solveur Rapier.
+
+Après compilation :
+
+```sh
+sh native/tests/run-smoke.sh
+WARLIKE_REQUIRE_NATIVE_QUERIES=1 node --test tests/native-3d-wasm.test.mjs
+node scripts/bench-native-queries.mjs
+```
+
+Le workflow compile les binaires puis exige les tests sur le vrai WASM avant
+de les publier. Le benchmark inclut le coût de préparation et de copie JS →
+WASM, sans annoncer de gain de FPS. `nativeDiagnostics()` expose les capacités,
+les appels effectués et la mémoire réservée ; le Hub affiche si les requêtes
+de tir et de vision sont disponibles.

@@ -1,4 +1,5 @@
 import {collisionBox3d,segmentBox3d,activeBody3d} from './collision-3d.js';
+import {traceNativeSegments3d} from './native-3d.js';
 // Shared ground-plane perception for AI, combat and Blueprint conditions.
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 export const spatialActor3d=o=>o?.type==='mesh3d'||o?.playable3d===true||Number.isFinite(o?.depth3d);
@@ -23,7 +24,13 @@ export function isAiObstacle(entity,actor,target){
 }
 export function hasLineOfSight(actor,target,entities){
  if(!actor||!target)return false;
- if(spatialActor3d(actor)||spatialActor3d(target)){const center=o=>{const b=collisionBox3d(o);return {x:b.x+b.w/2,y:b.y+b.d/2,z:b.z+b.h*.6}},from=center(actor),to=center(target);return !entities.some(o=>isAiObstacle(o,actor,target)&&segmentBox3d(from,to,collisionBox3d(o))!==null)}
+ if(spatialActor3d(actor)||spatialActor3d(target)){
+  const center=o=>{const b=collisionBox3d(o);return {x:b.x+b.w/2,y:b.y+b.d/2,z:b.z+b.h*.6}},from=center(actor),to=center(target);
+  const boxes=entities.filter(o=>isAiObstacle(o,actor,target)).map(collisionBox3d);
+  if(!boxes.length)return true;
+  const accelerated=traceNativeSegments3d([{from,to}],boxes);
+  return accelerated!==null?accelerated[0].index<0:!boxes.some(box=>segmentBox3d(from,to,box)!==null);
+ }
  const x0=finite(actor.x)+finite(actor.w)*.5,y0=finite(actor.y)+finite(actor.depth3d,finite(actor.h))*.5;
  const x1=finite(target.x)+finite(target.w)*.5,y1=finite(target.y)+finite(target.depth3d,finite(target.h))*.5;
  return !entities.some(obstacle=>{

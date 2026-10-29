@@ -1,5 +1,6 @@
 // Shared axis-aligned collision geometry. Ground X/Z and sizes are scene pixels;
 // elevation is meters on entities and pixels in these boxes (64 pixels = 1 m).
+import {traceNativeSegments3d} from './native-3d.js';
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const epsilon=.00001;
 const axes=[['x','w'],['y','d'],['z','h']];
@@ -43,7 +44,12 @@ export function segmentBox3d(from,to,box,padding=0){
 }
 // World-space ray, used by aimed fire. The nearest solid blocks targets behind it.
 export function raycastScene3d(origin,direction,entities,{exclude=null,maxDistance=45,target=()=>false}={}){
+ if(![origin?.[0],origin?.[1],origin?.[2],direction?.[0],direction?.[1],direction?.[2],maxDistance].every(Number.isFinite)||maxDistance<0)return null;
  const length=Math.hypot(...direction);if(!length||!Number.isFinite(length))return null;const from={x:origin[0]*64,y:origin[2]*64,z:origin[1]*64},to={x:from.x+direction[0]/length*maxDistance*64,y:from.y+direction[2]/length*maxDistance*64,z:from.z+direction[1]/length*maxDistance*64};let nearest=null,distance=Infinity;
- for(const o of entities){if(o===exclude||!activeBody3d(o)||!solidBody3d(o)&&!target(o))continue;const t=segmentBox3d(from,to,collisionBox3d(o));if(t!==null&&t<distance){distance=t;nearest=o}}
+ const candidates=entities.filter(o=>o!==exclude&&activeBody3d(o)&&(solidBody3d(o)||target(o)));
+ if(!candidates.length)return null;
+ const boxes=candidates.map(collisionBox3d),accelerated=traceNativeSegments3d([{from,to}],boxes);
+ if(accelerated!==null){const hit=accelerated[0];if(hit.index<0)return null;nearest=candidates[hit.index];distance=hit.fraction}
+ else for(let i=0;i<candidates.length;i++){const t=segmentBox3d(from,to,boxes[i]);if(t!==null&&t<distance){distance=t;nearest=candidates[i]}}
  return nearest?{entity:nearest,distance:distance*maxDistance,point:{x:from.x+(to.x-from.x)*distance,y:from.y+(to.y-from.y)*distance,z:from.z+(to.z-from.z)*distance}}:null;
 }

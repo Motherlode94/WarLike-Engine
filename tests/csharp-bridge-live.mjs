@@ -16,7 +16,10 @@ test('real .NET bridge: typed parameters, tactical orders, revisions, origin and
  let spawnError;child.on('error',error=>{spawnError=error});
  let healthy=false;
  for(let i=0;i<120;i++){
-  if(spawnError||child.exitCode!==null)throw Error('Bridge failed: '+(spawnError?.message||logs));
+  if(spawnError||child.exitCode!==null||child.signalCode!==null)throw Error('Bridge failed: '+(spawnError?.message||logs));
+  // .NET 8 HttpListener must finish Start() before the first client connects.
+  // Its listener-ready message is emitted only after the endpoint is initialized.
+  if(!logs.includes('WarLike C# bridge listening on')){await delay(50);continue}
   try{const response=await fetch(base+'/health',{signal:AbortSignal.timeout(300)});if(response.ok){healthy=true;break}}catch{}
   await delay(50);
  }

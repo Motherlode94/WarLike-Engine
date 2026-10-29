@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {projectPanelRange} from '../js/ui/resizable-window.js';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../css/style.css',import.meta.url),'utf8');
@@ -22,8 +23,10 @@ test('menus close when another menu opens and on Escape',()=>{
  assert.match(editor,/event\.key==='Escape'/);
 });
 
-test('Project panel cannot consume most of the Scene viewport',()=>{
- assert.match(workspace,/available\*0\.5/);
+test('Project can grow past half height while keeping a usable Scene viewport',()=>{
+ for(const height of [500,600,800,1200]){const {min,max}=projectPanelRange(height,60);assert.ok(min>=0&&max>=(height-60)/2);assert.ok(height-60-max>=160)}
+ const small=projectPanelRange(180,60);assert.ok(small.max>0&&small.max<120);
+ assert.match(workspace,/projectPanelRange\(center\.clientHeight,chrome\)/);
  assert.match(workspace,/ResizeObserver/);
 });
 

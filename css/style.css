@@ -189,7 +189,8 @@ body.project-floating #projectPanel{min-height:210px!important}
 
 /* WarLike RPG / dialogue layer v1.3 */
 #viewport{position:relative}
-.rpg-shortcuts{position:absolute;top:10px;right:12px;z-index:5;pointer-events:none;padding:7px 11px;background:#142432d9;border:1px solid #4d6578;border-radius:4px;color:#a7eacb;font:11px system-ui}
+.rpg-shortcuts{position:absolute;top:10px;right:12px;z-index:5;pointer-events:none;padding:7px 11px;background:#142432d9;border:1px solid #4d6578;border-radius:4px;color:#d8f4e8;font:12px/1.5 system-ui}
+.rpg-shortcuts[hidden]{display:none!important}
 .rpg-overlay,.rpg-dialogue{position:absolute;z-index:15;background:#182432f2;border:1px solid #5b8d8b;box-shadow:0 12px 35px #000a;border-radius:8px;padding:16px;color:#e7f2f6}
 .rpg-overlay[hidden],.rpg-dialogue[hidden]{display:none}
 .rpg-overlay{right:12px;top:50px;width:min(265px,45%);max-height:65%;overflow-y:auto}

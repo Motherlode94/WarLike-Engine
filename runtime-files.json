@@ -15967,6 +15967,7 @@
     "js/core/animation-studio.js",
     "js/core/animator-graph.js",
     "js/core/arcade-driving.js",
+    "js/core/asset-browser.js",
     "js/core/audio-sources.js",
     "js/core/audio.js",
     "js/core/blueprint-catalog.js",

@@ -118,3 +118,5 @@ body:not(.hub-open):not(.warlike-game-build) .workspace{height:calc(100dvh / var
 .bp-function-parameter{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;border-top:1px solid #3c5266;padding:14px 0;align-items:end}
 .bp-node-v2.has-breakpoint .bp-node-drag:before{content:'●';color:#ff717b;margin-right:7px}.bp-node-v2.is-debug-current{outline:3px solid #ffd166;box-shadow:0 0 0 6px #ffd16630}.bp-breakpoint-button{margin-top:14px;color:#ffb7bb!important;white-space:normal}.bp-debug-controls button{min-height:32px}
 .bp-function-signature>summary{cursor:pointer;color:#d4e9f1;font-weight:600;padding:6px 0}.bp-function-signature[open]>summary{margin-bottom:12px}
+
+.free-asset-pager{flex-wrap:wrap}.free-asset-pager select{width:auto!important;max-width:150px;min-height:30px}.free-asset-empty{padding:24px;line-height:1.6;grid-column:1/-1;color:var(--wl-text-muted,#bdc9d5)}

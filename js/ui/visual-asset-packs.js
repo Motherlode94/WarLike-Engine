@@ -1,5 +1,6 @@
+import {uniqueAssets,filterAssetRecords,paginateAssets} from '../core/asset-browser.js';
 import {survivalSprites2d} from '../assets/survival-sprites-2d.js';
-import {readPrefabs,instantiatePrefab} from '../core/prefab-library.js';
+import {prefabsForMode,readPrefabs,instantiatePrefab} from '../core/prefab-library.js';
 import {importedModels3d} from '../assets/real-models-3d.js';
 import {captureGameScene,sceneDefinition} from '../core/game-project.js';
 import {quaterniusModels3d} from '../assets/quaternius-game-assets.js';
@@ -23,7 +24,7 @@ const packGroups=[...groupedPacks.values()];
 const PACKS=[
  {id:'project-scenes',mode:'any',name:'Projet · Scènes',type:'scene',assets:()=>gameProject.scenes.length?gameProject.scenes.map(a=>({...a,sceneId:a.id,id:'scene-file-'+a.id,filename:a.id+'.scene.json'})):[{id:'scene-file-'+gameProject.activeSceneId,sceneId:gameProject.activeSceneId,name:'Scène actuelle',filename:gameProject.activeSceneId+'.scene.json'}]},
  {id:'project-scripts',mode:'any',name:'Projet · Scripts C#',type:'script',assets:()=>state.entities.filter(o=>o.csharpScript).map(o=>({id:'script-file-'+o.id,name:o.csharpScript.name||o.name+'.cs',filename:o.csharpScript.name||o.name+'.cs',ownerId:o.id}))},
- {id:'project-prefabs',mode:'any',name:'Projet · Mes prefabs',type:'prefab',assets:()=>readPrefabs().filter(p=>workspace.mode==='3d'?p.components?.type==='mesh3d':p.components?.type!=='mesh3d').map(p=>{const asset=get3dAsset(p.components?.model3dId||p.components?.assetId);return {...asset,id:p.id,name:p.name,prefabRecord:p,previewModelId:asset?.id,filename:p.name+'.prefab.json'}})},
+ {id:'project-prefabs',mode:'any',name:'Projet · Prefabs enregistrés',type:'prefab',assets:()=>prefabsForMode(readPrefabs(),workspace.mode).map(p=>{const asset=get3dAsset(p.components?.model3dId||p.components?.assetId);return {...asset,id:p.id,name:p.name,prefabRecord:p,previewModelId:asset?.id,filename:p.name+'.prefab.json'}})},
  {id:'project-imports',mode:'3d',name:'Projet · GLB importés',type:'3d',assets:()=>[...importedModels3d.values()].filter(a=>a.file||a.sourcePath)},
  {id:'included-all-3d',mode:'3d',name:'Tous les modèles inclus',type:'3d',assets:()=>includedModels},
  {id:'kenney-platformer-2d',mode:'2d',name:'Kenney · Platformer Art Deluxe',type:'2d',assets:()=>freeSprites2d.filter(a=>a.pack==='platformer-art-deluxe')},
@@ -32,7 +33,7 @@ const PACKS=[
  {id:'kenney-included-3d',mode:'3d',name:'Kenney · Modèles 3D inclus',type:'3d',assets:()=>freeModels3d},
  {id:'quaternius-monsters-3d',mode:'3d',name:'Quaternius · Ultimate Monsters',type:'3d',assets:()=>quaterniusModels3d.filter(a=>a.pack==='ultimate-monsters')},
  {id:'quaternius-animations-3d',mode:'3d',name:'Quaternius · Animations Standard',type:'animation',assets:()=>universal().animationClips.map((name,index)=>({...universal(),id:'ual1-clip-'+index,name,clipName:name}))},
- ...packGroups.map(assets=>({id:'pack-'+assets[0].author.toLowerCase()+'-'+assets[0].pack,mode:'3d',name:assets[0].author+' · '+assets[0].packName+' ('+assets.length+')',type:'3d',assets:()=>assets})),
+ ...packGroups.map(assets=>({id:'pack-'+assets[0].author.toLowerCase()+'-'+assets[0].pack,mode:'3d',name:assets[0].author+' · '+assets[0].packName,type:'3d',assets:()=>assets})),
  {id:'kenney-ui',mode:'any',name:'Kenney · UI Pack',type:'ui',assets:()=>freeUiAssets},
  {id:'kenney-audio',mode:'any',name:'Kenney · Sons d’interface et RPG',type:'audio',assets:()=>freeAudioAssets},
  {id:'legacy-2d',mode:'2d',name:'Prototypage · SVG historiques',type:'2d',assets:()=>catalog.filter(a=>!a.spriteUrl)},
@@ -51,11 +52,11 @@ export function initVisualAssetPacks(){
  for(const [value,name] of [['','Toutes les catégories'],...Object.entries(categoryNames)]){const option=element('option','',name);option.value=value;category.append(option)}
  animatedInput.type='checkbox';animatedInput.id='visualPackAnimated';animated.append(animatedInput,document.createTextNode('Avec animations'));filters.append(author,category,animated);
  const info=element('p');info.id='visualPackInfo';const actions=element('div','free-asset-actions'),grid=element('div','free-asset-grid');grid.id='visualPackItems';
- const pager=element('nav','free-asset-pager'),previousPage=element('button','','← Précédent'),pageLabel=element('span'),nextPage=element('button','','Suivant →');pager.setAttribute('aria-label','Pages de ressources');previousPage.type=nextPage.type='button';pageLabel.id='visualPackPage';pageLabel.setAttribute('aria-live','polite');pager.append(previousPage,pageLabel,nextPage);
+ const pager=element('nav','free-asset-pager'),previousPage=element('button','','← Précédent'),pageLabel=element('span'),nextPage=element('button','','Suivant →');pager.setAttribute('aria-label','Pages de ressources');previousPage.type=nextPage.type='button';pageLabel.id='visualPackPage';pageLabel.setAttribute('aria-live','polite');const jump=element('select'),sizeChoice=element('select');jump.id='visualPackPageJump';jump.setAttribute('aria-label','Aller à la page');sizeChoice.setAttribute('aria-label','Ressources par page');for(const n of [24,48,96,192]){const o=element('option','',n+' par page');o.value=n;sizeChoice.append(o)}sizeChoice.value='48';jump.onchange=()=>{page=Number(jump.value);render();grid.scrollTop=0};sizeChoice.onchange=()=>{pageSize=Number(sizeChoice.value);page=1;render();grid.scrollTop=0};pager.append(previousPage,pageLabel,jump,nextPage,sizeChoice);
  const folders=element('nav','visual-pack-folders');folders.id='visualPackFolders';folders.setAttribute('aria-label','Dossiers du projet et des ressources');const results=element('div','visual-pack-results'),browser=element('div','unity-project-browser'),viewToggle=element('button','','☷ Liste');viewToggle.type='button';viewToggle.id='visualPackView';viewToggle.setAttribute('aria-pressed','false');toolbar.append(viewToggle);let listView=false;viewToggle.onclick=()=>{listView=!listView;grid.classList.toggle('free-asset-list',listView);viewToggle.textContent=listView?'▦ Grille':'☷ Liste';viewToggle.setAttribute('aria-pressed',String(listView))};results.append(info,actions,pager,grid);browser.append(folders,results);root.append(toolbar,filters,browser);
  const oldContent=[...parent.children],advanced=element('details','unity-project-advanced'),advancedTitle=element('summary','','Importer des fichiers et gérer mes prefabs');advanced.id='projectAdvancedFiles';advanced.append(advancedTitle,...oldContent);parent.append(root,advanced);advanced.addEventListener('toggle',()=>{root.hidden=advanced.open;if(!advanced.open)render()});
  const folderFolds={};
- let expanded=false,mode=workspace.mode,observer=null,page=1;const pageSize=48;
+ let expanded=false,mode=workspace.mode,observer=null,page=1,pageSize=48,lastProjectSignature='';
  const setExpanded=value=>{expanded=value;root.classList.toggle('warlike-asset-library-maximized',expanded);if(!expanded)for(const prop of ['left','top','right','bottom','width','height','min-width','min-height','max-width','max-height'])root.style.removeProperty(prop);expand.textContent=expanded?'Réduire':'Agrandir';expand.setAttribute('aria-pressed',String(expanded))};expand.onclick=()=>setExpanded(!expanded);root.addEventListener('keydown',event=>{if(event.key==='Escape'&&expanded){setExpanded(false);event.stopPropagation()}});
  makeWindowResizable(root,{enabled:()=>expanded,minWidth:400,minHeight:280,controls:false,storageKey:'warlike.window.bounds.asset-library',moveHandle:toolbar});
  const button=(parent,label,action)=>{const b=element('button','',label);b.type='button';b.disabled=state.playing;b.onclick=action;parent.append(b);return b};
@@ -64,31 +65,34 @@ export function initVisualAssetPacks(){
   if(workspace.mode==='3d'){const entity=prefab3d(asset.id,state.nextId,120+(state.nextId%8)*45,120+(state.nextId%5)*40);if(!entity)return;state.nextId++;state.entities.push(entity);state.selected=[entity.id];record('Ajouter '+asset.name);notify()}
   else addPrefab(asset.id);
  };
+ const projectSignature=()=>JSON.stringify([gameProject.activeSceneId,gameProject.scenes.map(s=>[s.id,s.name]),state.entities.filter(o=>o.csharpScript).map(o=>[o.id,o.name,o.csharpScript.name]),[...importedModels3d.keys()],readPrefabs().map(p=>[p.id,p.name,p.mode,p.components?.type])]);
  function render(){
   observer?.disconnect();const packs=PACKS.filter(p=>p.mode===workspace.mode||p.mode==='any').sort((a,b)=>Number(a.id.startsWith('project-'))-Number(b.id.startsWith('project-'))),previous=select.value;
-  select.replaceChildren(...packs.map(p=>{const o=element('option','',p.name);o.value=p.id;return o}));select.value=packs.some(p=>p.id===previous)?previous:packs[0].id;
-  const pack=packs.find(p=>p.id===select.value),normalize=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),terms=normalize(search.value.trim()).split(/\s+/).filter(Boolean),modelPack=pack.type==='3d';
+  select.replaceChildren(...packs.map(p=>{const o=element('option','',p.name+' · '+uniqueAssets(p.assets()).length);o.value=p.id;return o}));select.value=packs.some(p=>p.id===previous)?previous:packs[0].id;
+  const pack=packs.find(p=>p.id===select.value),modelPack=pack.type==='3d';
   filters.hidden=!modelPack;
-  const assets=pack.assets().filter(a=>(!modelPack||(!author.value||a.author===author.value)&&(!category.value||a.category===category.value)&&(!animatedInput.checked||a.animationClips?.length))&&terms.every(t=>normalize([a.name,a.category,categoryNames[a.category]||'',a.packName||'',a.author||'',a.id,a.url||'',a.filename||''].join(' ')).includes(t)));
-  const pages=Math.max(1,Math.ceil(assets.length/pageSize));page=Math.min(page,pages);
-  previousPage.disabled=page===1;nextPage.disabled=page===pages;pageLabel.textContent='Page '+page+' / '+pages;pager.hidden=pages===1;
-  info.textContent=assets.length+' '+(pack.type==='scene'?'scènes · Cliquer pour ouvrir':pack.type==='script'?'scripts C# · Cliquer pour éditer':pack.type==='prefab'?'prefabs · Cliquer pour instancier':pack.id==='external-3d'?'modèles externes · Connexion requise':'ressources intégrées · '+pack.name);actions.replaceChildren();
+  const packAssets=uniqueAssets(pack.assets()),assets=filterAssetRecords(packAssets,{query:search.value,author:modelPack?author.value:'',category:modelPack?category.value:'',animated:modelPack&&animatedInput.checked,categoryNames}),result=paginateAssets(assets,{page,size:pageSize});page=result.page;
+  previousPage.disabled=page===1;nextPage.disabled=page===result.pages;pageLabel.textContent='Page '+page+' / '+result.pages;pager.hidden=result.pages===1&&packAssets.length<=24;
+  jump.replaceChildren(...Array.from({length:result.pages},(_,i)=>{const o=element('option','','Page '+(i+1));o.value=i+1;return o}));jump.value=String(page);
+  const noun={scene:'scènes',script:'scripts C#',prefab:'prefabs enregistrés','3d':'modèles 3D','2d':'sprites',animation:'animations',ui:'images UI',audio:'sons'}[pack.type];
+  info.textContent=result.start+'–'+result.end+' affichés · '+result.total+' résultats / '+packAssets.length+' '+noun+' dans '+pack.name;
+  Object.assign(info.dataset,{visible:String(result.visible),total:String(packAssets.length),filtered:String(result.total),start:String(result.start),end:String(result.end)});actions.replaceChildren();
   folders.replaceChildren();const folderButton=(label,action,active=false,count=null)=>{const button=element('button');button.type='button';button.classList.toggle('active',active);button.append(element('span','','▱ '+label));if(count!==null)button.append(element('small','',String(count)));button.onclick=action;return button};
   const choose=id=>{select.value=id;search.value='';author.value='';category.value='';animatedInput.checked=false;page=1;render();grid.scrollTop=0};
   folders.append(element('strong','','Assets'));
-  for(const [id,label] of [['project-scenes','Scènes'],['project-scripts','Scripts'],['project-prefabs','Prefabs'],['project-imports','Imports']]){const filePack=packs.find(p=>p.id===id);if(filePack)folders.append(folderButton(label,()=>choose(id),pack.id===id,filePack.assets().length))}
+  for(const [id,label] of [['project-scenes','Scènes'],['project-scripts','Scripts'],['project-prefabs','Prefabs enregistrés'],['project-imports','Imports']]){const filePack=packs.find(p=>p.id===id);if(filePack)folders.append(folderButton(label,()=>choose(id),pack.id===id,uniqueAssets(filePack.assets()).length))}
   folders.append(element('hr'));
   if(workspace.mode==='3d'){
-   folders.append(folderButton('Tous les modèles',()=>choose('included-all-3d'),pack.id==='included-all-3d'&&!category.value,includedModels.length));
-   for(const [value,label] of Object.entries(categoryNames))folders.append(folderButton(label,()=>{select.value='included-all-3d';category.value=value;author.value='';search.value='';page=1;render();grid.scrollTop=0},pack.id==='included-all-3d'&&category.value===value,includedModels.filter(a=>a.category===value).length));
+   folders.append(folderButton('Tous les modèles',()=>choose('included-all-3d'),pack.id==='included-all-3d'&&!category.value,pack.id==='included-all-3d'&&!category.value?result.total:uniqueAssets(includedModels).length));
+   for(const [value,label] of Object.entries(categoryNames))folders.append(folderButton(label,()=>{select.value='included-all-3d';category.value=value;author.value='';search.value='';animatedInput.checked=false;page=1;render();grid.scrollTop=0},pack.id==='included-all-3d'&&category.value===value,pack.id==='included-all-3d'&&category.value===value?result.total:filterAssetRecords(includedModels,{category:value}).length));
   }
-  for(const authorName of ['Kenney','Quaternius']){const group=element('details'),heading=element('summary','','▱ '+authorName);group.open=folderFolds[authorName]??false;group.append(heading);group.addEventListener('toggle',()=>folderFolds[authorName]=group.open);for(const p of packs.filter(p=>!p.id.startsWith('project-')&&p.name.startsWith(authorName)&&!['kenney-included-3d','quaternius-monsters-3d','quaternius-animations-3d'].includes(p.id)))group.append(folderButton(p.name.replace(authorName+' · ',''),()=>choose(p.id),pack.id===p.id));folders.append(group)}
+  for(const authorName of ['Kenney','Quaternius']){const group=element('details'),heading=element('summary','','▱ '+authorName);group.open=folderFolds[authorName]??false;group.append(heading);group.addEventListener('toggle',()=>folderFolds[authorName]=group.open);for(const p of packs.filter(p=>!p.id.startsWith('project-')&&p.name.startsWith(authorName)&&!['kenney-included-3d','quaternius-monsters-3d','quaternius-animations-3d'].includes(p.id)))group.append(folderButton(p.name.replace(authorName+' · ',''),()=>choose(p.id),pack.id===p.id,pack.id===p.id?result.total:uniqueAssets(p.assets()).length));folders.append(group)}
   folders.append(folderButton('Mes fichiers / Importer',()=>advanced.open=true));
   if(pack.type==='ui'){
    for(const [skin,label] of [['kenney-blue','Habillage bleu des menus'],['kenney-grey','Habillage gris des menus']])button(actions,label,()=>{gameProject.uiSkin=skin;record('Interface du jeu : '+skin);notify();info.textContent='Habillage appliqué aux menus de pause et de démarrage du jeu. Kenney · UI Pack · CC0-1.0'});
   }
   const fragment=document.createDocumentFragment();
-  for(const asset of assets.slice((page-1)*pageSize,page*pageSize)){
+  for(const asset of result.items){
    const card=element('article','free-asset-card'),preview=element('button','free-asset-preview');preview.type='button';preview.dataset.assetId=asset.id;preview.disabled=state.playing;preview.title=pack.type==='audio'?'Écouter '+asset.name:pack.type==='ui'?'Sélectionner '+asset.name:'Ajouter '+asset.name;
    if(['scene','script'].includes(pack.type))preview.append(element('span','free-file-icon',pack.type==='scene'?'◫':'C#'));
    else if(pack.type==='prefab'&&!asset.previewModelId)preview.append(element('span','free-file-icon','◇'));
@@ -115,7 +119,7 @@ export function initVisualAssetPacks(){
    if(pack.type==='audio')button(card,'Ajouter une Audio Source',()=>{if(state.playing)return;const object={id:state.nextId++,name:asset.name,type:'object',x:160,y:140,w:28,h:28,color:'#78aebf',collision3d:false,visible:false,audioEnabled:true,audioClip:asset.id,audioGain:.6,audioRange:18,audioInterval:3,audioLoop:false,audioSpatial:true};state.entities.push(object);state.selected=[object.id];record('Ajouter Audio Source Kenney');notify()});
    fragment.append(card);
   }
-  grid.replaceChildren(fragment);
+  grid.replaceChildren(fragment);if(!result.total)grid.append(element('p','free-asset-empty','Aucune ressource ne correspond aux filtres. Efface la recherche ou change de catégorie.'));lastProjectSignature=projectSignature();
   observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){observer.unobserve(entry.target);if(entry.target.isConnected)assignModelThumbnail(entry.target,entry.target.dataset.glbId)}},{root:expanded?root:null,rootMargin:'120px'});
   grid.querySelectorAll('img[data-glb-id]').forEach(image=>observer.observe(image));
  }
@@ -125,5 +129,5 @@ export function initVisualAssetPacks(){
  const upload=element('details','free-sprite-import'),summary=element('summary','','Importer mes sprites PNG'),input=element('input'),status=element('small');input.type='file';input.accept='image/png';input.multiple=true;input.setAttribute('aria-label','Importer de vrais sprites PNG');upload.append(summary,input,status);results.append(upload);
  input.onchange=async()=>{if(state.playing||workspace.mode!=='2d'){status.textContent='Ouvre un projet 2D en édition.';return}let count=0;for(const file of [...input.files].slice(0,24)){if(file.type!=='image/png'||file.size>1024*1024)continue;const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});state.entities.push({id:state.nextId++,name:file.name.replace(/\.png$/i,''),type:'object',x:120+count*30,y:100,w:64,h:64,color:'#96a5b8',spriteDataUrl:data});count++}if(count){state.selected=[state.entities.at(-1).id];record('Importer '+count+' PNG');notify()}status.textContent=count+' PNG ajoutés et intégrés au projet.';input.value=''};
  document.querySelectorAll('[data-warlike-open-pack]').forEach(b=>b.addEventListener('click',()=>{const requested=b.dataset.warlikeOpenPack;if(workspace.mode!==requested){const switcher=document.getElementById(requested==='3d'?'workspace3d':'workspace2d');if(!switcher?.disabled)switcher?.click();if(workspace.mode!==requested){document.getElementById('hubOpen')?.click();return}}document.getElementById('projectTab')?.click();document.querySelectorAll('.studio-menubar details[open]').forEach(d=>d.open=false);search.value='';render();root.scrollIntoView({block:'nearest'});select.focus()}));
- document.addEventListener('warlike:workspace',()=>{if(mode!==workspace.mode)select.value='';mode=workspace.mode;search.value='';render()});document.addEventListener('warlike:change',()=>{if(mode!==workspace.mode){select.value='';mode=workspace.mode;search.value='';render()}});render();
+ document.addEventListener('warlike:workspace',()=>{if(mode!==workspace.mode)select.value='';mode=workspace.mode;search.value='';render()});document.addEventListener('warlike:change',()=>{if(mode!==workspace.mode){select.value='';mode=workspace.mode;search.value='';render()}else if(projectSignature()!==lastProjectSignature)render()});document.addEventListener('warlike:project',render);document.addEventListener('warlike:prefabs',render);window.addEventListener('storage',event=>{if(event.key==='warlike.prefabs.library.v1')render()});render();
 }

@@ -13,7 +13,7 @@ Dans le **Hub → Nouveau projet**, choisir **2D → Liens de vie · Simulation*
 - **Clic sur un nom ou une fiche** : carnet de ce voisin. L’action choisie fait rejoindre le voisin avant d’être exécutée.
 - **Activités** : manger au café ou cuisiner, se reposer, prendre une douche, travailler et profiter du jardin.
 - **P** : pause de la simulation ; **×1 / ×2 / ×4** : vitesse. Les ordres peuvent être préparés en pause.
-- **Échap** : menu de la partie. **F5 / F9** : sauvegarde rapide du moteur. Le bouton **Sauvegarder** du jeu utilise un emplacement séparé nommé `life`, repris avec son bouton **Reprendre**.
+- **Échap** : menu de la partie. **F5 / F9** : sauvegarder / charger. Les boutons du jeu, du menu et les raccourcis partagent le même emplacement `life` pour ce jeu.
 - **Moi** : prénom et trois apparences Kenney au choix.
 
 ## Besoins et économie

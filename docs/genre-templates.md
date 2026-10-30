@@ -4,6 +4,8 @@ Depuis **WarLike Hub → Nouveau projet**, choisir **2D ou 3D**, puis **Type de 
 
 | Type de jeu | 2D | 3D | Base fournie |
 | --- | --- | --- | --- |
+| WarLike Company | — | Oui | Escarmouche RTS : escouades, couvertures, suppression, retraite, économie reliée aux secteurs et recrutement |
+| WarLike Front | — | Oui | FPS Conquête : deux équipes de six, secteurs, blindés, munitions et réapparition |
 | Hero Forge · Super-héros | Oui | Oui | Mission jouable : pouvoirs, FX, progression, secours, destruction et escouade |
 | Aventure | Oui | Oui | Deux chapitres jouables : dialogues, journal, énigmes, pont à réparer et progression persistante |
 | Survival · Survie | Oui | Oui | Scène jouable : besoins, récolte, fabrication, feu, abri et nuit |

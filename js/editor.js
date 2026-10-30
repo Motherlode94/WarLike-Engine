@@ -1,3 +1,4 @@
+import {initCompanyUi} from './ui/company-ui.js';
 import {initResponsiveEditor} from './ui/responsive-editor.js';
 import {initAnnotationEditor} from './ui/annotation-editor.js';
 import {initAdventureUi} from './ui/adventure-ui.js';
@@ -302,7 +303,7 @@ initClipboardControls();
 
 initDesktopInteractions();
 
-initHeroForgeUi();
+initHeroForgeUi();initCompanyUi();
 
 initLanPanel();
 

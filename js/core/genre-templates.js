@@ -1,3 +1,4 @@
+import {createCompanyScene} from './company-scene.js';
 import {createAdventureCampaign} from './adventure-campaign.js';
 import {createSurvivalScene} from './survival-scene.js';
 import {createHeroForgeScene} from './hero-forge-scene.js';
@@ -23,6 +24,7 @@ export function createGenreScene(genre,mode='3d'){
  if(!['2d','3d'].includes(mode))throw new Error('Type de projet invalide.');
  if(!genreCompatible(genre,mode))throw new Error('Ce type de jeu est incompatible avec le projet '+mode.toUpperCase()+'.');
  const chosen=normalizeGenre(genre),threeD=mode==='3d';
+ if(chosen==='company')return createCompanyScene();
  if(chosen==='battlefield')return createBattlefieldScene();
  if(chosen==='adventure')return createAdventureCampaign(mode);
  if(chosen==='platformer')return createBundledPhysicsScene2d();

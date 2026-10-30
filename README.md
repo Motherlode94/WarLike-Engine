@@ -195,3 +195,21 @@ Soldats : Quaternius Ultimate Animated Character Pack ; chars : Animated Tanks ;
 Le prototype tourne dans le Play Web avec les systèmes JS/C++ existants. Les composants de conduite C# sont aussi présents pour le bridge local ; ils n’exécutent pas automatiquement le match Web. Il ne comprend pas encore de serveur multijoueur autoritaire, d’aviation, de destruction structurelle des bâtiments ou des quatre classes complètes.
 
 Validation : `node --test tests/battlefield.test.mjs`.
+
+## WarLike Company · RTS tactique
+
+**Hub → Nouveau projet → 3D → WarLike Company** crée une escarmouche solo inspirée de Company of Heroes. Les deux camps commencent avec deux escouades de fusiliers, une mitrailleuse, le génie et un blindé. Les modèles Quaternius et Kenney sont intégrés, avec leurs crédits dans le Hub.
+
+- Clic gauche : sélectionner une escouade ; Maj : ajouter à la sélection ; glisser : sélection multiple.
+- Clic droit : déplacer ou attaquer. Les cartes d'escouades et boutons de secteurs permettent aussi de commander les unités, notamment sur écran tactile.
+- R : retraite au QG ; H : tenir ; Renforcer : remplacer les soldats perdus pour 25 effectifs chacun, avec au moins un survivant près du QG.
+- Le génie répare les blindés alliés proches pour 10 munitions. Les couvertures protègent dans la direction du tireur ; les tirs de mitrailleuse réduisent la mobilité et l'efficacité par suppression.
+- A/B/C sont des points de victoire. Les secteurs M/F fournissent munitions et carburant s'ils sont reliés au QG par des territoires alliés. Déconnecter une ligne de ravitaillement interrompt ce revenu.
+- Effectifs et carburant paient les recrutements, préparés dans une file de trois places. Huit escouades vivantes maximum par camp. Un QG encombré attend une place libre avant de déployer.
+- Espace : pause tactique avec préparation des ordres ; Ctrl+1–9 : mémoriser des groupes, 1–9 : les sélectionner. Flèches/ZQSD : caméra ; molette : zoom ; molette maintenue : déplacer la vue.
+
+La carte tactique interactive reste utilisable si WebGL est indisponible, avec une indication explicite ; ce plan schématique ne remplace pas les vrais modèles du rendu 3D. La simulation et les commandes sont également présentes dans l'export Web.
+
+La conception s'appuie sur le [manuel officiel Company of Heroes 2](https://www.feralinteractive.com/en/manuals/companyofheroes2/latest/steam/) pour les principes de couvertures, retraite, production et territoires. Le code et l'équilibrage restent ceux de WarLike. Ce prototype ne reproduit pas encore les campagnes, le brouillard de guerre, les garnisons, la destruction avancée, les blindages directionnels ou le multijoueur complet de la référence.
+
+Validation : `node --test tests/company.test.mjs`.

@@ -16,6 +16,7 @@ export function updateGenreHud(state){
  if(!hud){const host=document.getElementById('viewport');if(!host)return;hud=document.createElement('div');hud.className='warlike-genre-hud';hud.setAttribute('aria-live','off');host.append(hud)}
  if(!state.playing){hud.hidden=true;return}
  const globals=isLanGuest()?lanState.variables||{}:sequenceRuntime.globals;
+ if(state.entities.some(o=>o.company?.enabled)){hud.hidden=true;return}
  const racing=Number(globals.raceStarted)===1;
  const units=state.entities.filter(o=>state.selected.includes(o.id)&&isRtsUnit(o)).length;
  const genre=(isLanGuest()?lanState.genre:gameProject.genre)||'sandbox';

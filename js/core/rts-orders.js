@@ -38,8 +38,11 @@ export function updateRtsOrders(entities,dt,playing,{mode='2d',passFriendlyUnits
   const collisionEntities=passFriendlyUnits?entities.filter(t=>!t.companyUnit||!sameFaction(o,t)):entities;
   const obstacles=collisionEntities.filter(t=>t!==o&&t.id!==order?.targetId&&(passFriendlyUnits||!sameFaction(o,t))&&(mode==='3d'?solidHero3d(t):solidCollider2d(t)));
   let target=goal;
-  if(obstacles.length){o._rtsRepath=n(o._rtsRepath)-frame;if(o._rtsRepath<=0||!Array.isArray(o._rtsPath)){o._rtsPath=findEnginePath({x:o.x,y:o.y},{x:goal.x-o.w/2,y:goal.y-(o.depth3d??o.h)/2},obstacles.map(t=>({...t,h:mode==='3d'?t.depth3d??t.h:t.h})),{cellSize:32,padding:Math.max(o.w,o.depth3d??o.h)*.3,maxNodes:1200});o._rtsRepath=.65}
-   while(o._rtsPath?.length&&Math.hypot(o._rtsPath[0].x-o.x,o._rtsPath[0].y-o.y)<8)o._rtsPath.shift();if(o._rtsPath?.length){const p=o._rtsPath[0];target={x:p.x+o.w/2,y:p.y+(mode==='3d'?o.depth3d??o.h:o.h)/2}}else continue;
+  if(obstacles.length){o._rtsRepath=n(o._rtsRepath)-frame;if(o._rtsRepath<=0||!Array.isArray(o._rtsPath)){
+    const start=passFriendlyUnits?origin:{x:o.x,y:o.y},end=passFriendlyUnits?goal:{x:goal.x-o.w/2,y:goal.y-(o.depth3d??o.h)/2};
+    o._rtsPath=findEnginePath(start,end,obstacles.map(t=>({...t,h:mode==='3d'?t.depth3d??t.h:t.h})),{cellSize:32,padding:Math.max(o.w,o.depth3d??o.h)*(passFriendlyUnits?.5:.3)+(passFriendlyUnits?4:0),maxNodes:1200});o._rtsRepath=.65}
+   const at=passFriendlyUnits?origin:o;
+   while(o._rtsPath?.length&&Math.hypot(o._rtsPath[0].x-at.x,o._rtsPath[0].y-at.y)<8)o._rtsPath.shift();if(o._rtsPath?.length){const p=o._rtsPath[0];target=passFriendlyUnits?p:{x:p.x+o.w/2,y:p.y+(mode==='3d'?o.depth3d??o.h:o.h)/2}}else continue;
   }
   const dx=target.x-origin.x,dy=target.y-origin.y,length=Math.hypot(dx,dy)||1,step=Math.min(distance,Math.max(1,n(cfg.speed,n(o.rtsSpeed,n(o.ai?.speed,70))))*frame);moveHero(o,dx/length*step,dy/length*step,0,collisionEntities,mode);o.animation='walk';if(mode==='3d')o.rotation=Math.atan2(-dx,dy)*180/Math.PI;else if(Math.abs(dx)>.01)o.flipX=dx<0;
  }

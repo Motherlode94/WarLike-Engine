@@ -52,6 +52,13 @@ test('moving squads cross friendly infantry without becoming trapped behind thei
  assert.ok(allies.every(o=>o.y>1400),'all members must cross the stationary allied screen');
  assert.equal(screen[0].y,1100,'stationary allies keep their order');
 });
+test('the complete starting squad clears sector cover and reaches the munitions objective',()=>{
+ const {entities}=createCompanyScene();resetCompany(entities);match.aiTimer=match.trainTimer=Infinity;
+ const members=entities.filter(o=>o.companyUnit?.squadId===18);
+ commandCompany(entities,members.map(o=>o.id),'move',{x:900,y:1430});advance(entities,22);
+ assert.ok(members.every(o=>Math.hypot(o.x+o.w/2-900,o.y+o.depth3d/2-1430)<150),'each soldier clears the solid cover');
+ assert.equal(match.sectors.find(o=>o.id==='M').owner,1);
+});
 test('sustained machine-gun fire suppresses infantry and slows its movement',()=>{
  const {entities,allies,enemies}=fixture('mg');for(const [i,unit] of enemies.entries()){unit.x=1000+i*120;unit.y=900}
  for(const unit of allies)unit.companyUnit.cooldown=0;

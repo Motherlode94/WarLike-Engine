@@ -45,6 +45,13 @@ test('directional cover protects the front and can be bypassed by flanking',()=>
  assert.equal(companyCoverProtection(attacker,defender,[cover]),.55);
  attacker.x=300;assert.equal(companyCoverProtection(attacker,defender,[cover]),0);
 });
+test('moving squads cross friendly infantry without becoming trapped behind their own line',()=>{
+ const {entities,allies}=fixture();
+ const screen=makeCompanySquad('mg',1,40,600,1100);entities.push(...screen);resetCompany(entities);match.aiTimer=match.trainTimer=Infinity;
+ commandCompany(entities,allies.map(o=>o.id),'move',{x:720,y:1500});advance(entities,9);
+ assert.ok(allies.every(o=>o.y>1400),'all members must cross the stationary allied screen');
+ assert.equal(screen[0].y,1100,'stationary allies keep their order');
+});
 test('sustained machine-gun fire suppresses infantry and slows its movement',()=>{
  const {entities,allies,enemies}=fixture('mg');for(const [i,unit] of enemies.entries()){unit.x=1000+i*120;unit.y=900}
  for(const unit of allies)unit.companyUnit.cooldown=0;

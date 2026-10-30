@@ -16,7 +16,7 @@ export function orderRtsGroup(entities,ids,type,targetId=null){
  if(!['follow','hold','attack'].includes(type))return 0;const target=entities.find(o=>o.id===targetId);let count=0;
  for(const o of entities){if(!ids.includes(o.id)||!isRtsUnit(o)||healthOf(o)<=0)continue;if(type!=='hold'&&(!target||target===o||healthOf(target)<=0)||type==='attack'&&sameFaction(o,target))continue;o.rtsOrder={type,...(type!=='hold'?{targetId}: {})};delete o._rtsPath;count++}return count;
 }
-export function updateRtsOrders(entities,dt,playing,{mode='2d'}={}){
+export function updateRtsOrders(entities,dt,playing,{mode='2d',passFriendlyUnits=false}={}){
  if(!playing||!Number.isFinite(dt)||dt<=0)return;const frame=Math.min(dt,.1);
  for(const o of entities){
   if(!isRtsUnit(o)||healthOf(o)<=0||o.sequenceEnabled===false)continue;const cfg=o.tacticalUnit||{},origin=heroCenter(o,mode);o._rtsCooldown=Math.max(0,n(o._rtsCooldown)-frame);
@@ -33,11 +33,14 @@ export function updateRtsOrders(entities,dt,playing,{mode='2d'}={}){
   if(!goal&&order?.type==='follow'){const target=entities.find(t=>t.id===order.targetId&&healthOf(t)>0);if(!target){delete o.rtsOrder;continue}goal=heroCenter(target,mode);stop=Math.max(32,n(cfg.followDistance,95))}
   if(!goal){if(o.animation==='walk'||o.animation==='run')o.animation='idle';continue}
   const distance=Math.hypot(goal.x-origin.x,goal.y-origin.y);if(distance<stop){if(order?.type==='move')delete o.rtsOrder;o.animation='idle';continue}
-  const obstacles=entities.filter(t=>t!==o&&t.id!==order?.targetId&&!sameFaction(o,t)&&(mode==='3d'?solidHero3d(t):solidCollider2d(t)));
+  // Company squads can pass allied soldiers, while friendly buildings remain solid.
+  // Use the same collision set for pathfinding and movement to avoid deadlocks.
+  const collisionEntities=passFriendlyUnits?entities.filter(t=>!t.companyUnit||!sameFaction(o,t)):entities;
+  const obstacles=collisionEntities.filter(t=>t!==o&&t.id!==order?.targetId&&(passFriendlyUnits||!sameFaction(o,t))&&(mode==='3d'?solidHero3d(t):solidCollider2d(t)));
   let target=goal;
   if(obstacles.length){o._rtsRepath=n(o._rtsRepath)-frame;if(o._rtsRepath<=0||!Array.isArray(o._rtsPath)){o._rtsPath=findEnginePath({x:o.x,y:o.y},{x:goal.x-o.w/2,y:goal.y-(o.depth3d??o.h)/2},obstacles.map(t=>({...t,h:mode==='3d'?t.depth3d??t.h:t.h})),{cellSize:32,padding:Math.max(o.w,o.depth3d??o.h)*.3,maxNodes:1200});o._rtsRepath=.65}
    while(o._rtsPath?.length&&Math.hypot(o._rtsPath[0].x-o.x,o._rtsPath[0].y-o.y)<8)o._rtsPath.shift();if(o._rtsPath?.length){const p=o._rtsPath[0];target={x:p.x+o.w/2,y:p.y+(mode==='3d'?o.depth3d??o.h:o.h)/2}}else continue;
   }
-  const dx=target.x-origin.x,dy=target.y-origin.y,length=Math.hypot(dx,dy)||1,step=Math.min(distance,Math.max(1,n(cfg.speed,n(o.rtsSpeed,n(o.ai?.speed,70))))*frame);moveHero(o,dx/length*step,dy/length*step,0,entities,mode);o.animation='walk';if(mode==='3d')o.rotation=Math.atan2(-dx,dy)*180/Math.PI;else if(Math.abs(dx)>.01)o.flipX=dx<0;
+  const dx=target.x-origin.x,dy=target.y-origin.y,length=Math.hypot(dx,dy)||1,step=Math.min(distance,Math.max(1,n(cfg.speed,n(o.rtsSpeed,n(o.ai?.speed,70))))*frame);moveHero(o,dx/length*step,dy/length*step,0,collisionEntities,mode);o.animation='walk';if(mode==='3d')o.rotation=Math.atan2(-dx,dy)*180/Math.PI;else if(Math.abs(dx)>.01)o.flipX=dx<0;
  }
 }

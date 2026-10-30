@@ -146,7 +146,7 @@ export function tickCompany(entities,dt){
   const base=entities.find(o=>o.companyBase?.team===squad.team);
   if(base&&members.some(o=>distance(o,base)<360)&&!squad.retreating)for(const member of members)setHealth(member,healthOf(member)+frame*5);
  }
- updateRtsOrders(entities,frame,true,{mode:'3d'});
+ updateRtsOrders(entities,frame,true,{mode:'3d',passFriendlyUnits:true});
  for(const unit of units)unit.elevation3d=0;
  // Directional cover and suppression apply only to this prototype's combat.
  for(const unit of units){

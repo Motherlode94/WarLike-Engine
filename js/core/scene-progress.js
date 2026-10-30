@@ -1,7 +1,7 @@
 // Personal progress travels with the party; level objects belong to their scene.
 // Authoring data (controllers, quests, sequences and appearance) comes from the
 // destination's player template, so a chapter can introduce new behaviours.
-const personalFields=['inventory','stats','hp','rpgProgression','heroState','survivalState','survivalCompanions','coopSeat','coopName','_netPeerId','_netRemote'];
+const personalFields=['lifeState','inventory','stats','hp','rpgProgression','heroState','survivalState','survivalCompanions','coopSeat','coopName','_netPeerId','_netRemote'];
 export const scenePlayer=entities=>entities.find(o=>!o._netRemote&&(o.playable3d===true||o.controller2d||o.type==='player'||o.adventure))||null;
 export function savedSceneEntities(entities){
  return entities.map(entity=>{const copy=structuredClone(entity);for(const key of ['_netKeys','_netFrom','_netTo','_netAt','_animatorFrame','_support3d'])delete copy[key];return copy});

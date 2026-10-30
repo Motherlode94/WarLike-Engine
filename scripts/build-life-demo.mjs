@@ -1,0 +1,11 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+import {createLifeScene} from '../js/core/life-scene.js';
+import {freshGameProject} from '../js/core/game-project.js';
+import {prepareGameDefinition,gameBuildHtml} from '../js/core/game-build.js';
+const root=new URL('../',import.meta.url),scene=createLifeScene(),project={...freshGameProject(),id:'liens-de-vie',title:'Liens de vie · Les Tilleuls',genre:'lifesim'};
+project.scenes=[{id:project.startupSceneId,name:'Les Tilleuls',entities:scene.entities,camera:scene.camera}];project.activeSceneId=project.startupSceneId;
+const data=prepareGameDefinition({...scene,mode:'2d',project});
+const html=gameBuildHtml(readFileSync(new URL('index.html',root),'utf8'),data).replace('</head>','<meta name="description" content="Liens de vie : une simulation de vie WarLike. Explore le quartier, prends soin de ton personnage et construis des relations."></head>');
+writeFileSync(new URL('liens-de-vie.html',root),html);
+console.log('Jeu autonome : '+fileURLToPath(new URL('liens-de-vie.html',root)));

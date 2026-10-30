@@ -1,5 +1,6 @@
 // Shared project metadata. This module has no engine, DOM or scene-factory imports.
 export const genreTemplates={
+ lifesim:{label:'Liens de vie · Simulation',description:'Un personnage, un quartier et des relations qui évoluent',modes:['2d']},
  company:{label:'WarLike Company · RTS tactique',description:'Escarmouche solo : escouades, couvertures, retraite et secteurs reliés au QG',modes:['3d']},
  battlefield:{label:'WarLike Front · FPS Conquête',description:'Infanterie, blindés pilotables, trois secteurs et renforts · prototype solo avec bots',modes:['3d']},
  superhero:{label:'Hero Forge · Super-héros',description:'Pouvoirs, FX, progression RPG, monde réactif et escouade RTS',modes:['2d','3d']},
@@ -20,6 +21,7 @@ export const genreTemplates={
 };
 
 const details={
+ lifesim:{stage:'playable',features:['Déplacements, cinq besoins et activités du quotidien','Quatre voisins, confiance, amitié et attirance réciproque','Travail, argent, habitudes, journal et sauvegarde']},
  company:{stage:'playable',features:['Escouades de fusiliers, mitrailleuse, génie et blindé','Couvertures directionnelles, suppression et retraite','Secteurs, ravitaillement, recrutement et pause tactique']},
  battlefield:{stage:'playable',features:['FPS : viser, tirer, recharger et réapparaître','Deux équipes, secteurs A/B/C et réserves de renforts','Soldats et blindés Quaternius, décors Kenney intégrés']},
  superhero:{stage:'playable',features:['Six pouvoirs, animations et effets visuels','Progression RPG et escouade','Mission, secours et destruction']},
@@ -50,6 +52,7 @@ export function resolveGameGenre(value,entities=[]){
  if(Object.hasOwn(genreTemplates,value))return value;
  if(!Array.isArray(entities))return 'sandbox';
  entities=entities.filter(o=>o&&typeof o==='object');
+ if(entities.some(o=>o.lifeSim?.enabled))return 'lifesim';
  if(entities.some(o=>o.company?.enabled))return 'company';
  if(entities.some(o=>o.battlefield?.enabled))return 'battlefield';
  if(entities.some(o=>o.adventure))return 'adventure';

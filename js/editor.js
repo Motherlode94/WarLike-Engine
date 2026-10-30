@@ -1,3 +1,4 @@
+import {initLifeUi} from './ui/life-ui.js';
 import {initCompanyUi} from './ui/company-ui.js';
 import {initResponsiveEditor} from './ui/responsive-editor.js';
 import {initAnnotationEditor} from './ui/annotation-editor.js';
@@ -303,7 +304,7 @@ initClipboardControls();
 
 initDesktopInteractions();
 
-initHeroForgeUi();initCompanyUi();
+initHeroForgeUi();initCompanyUi();initLifeUi();
 
 initLanPanel();
 

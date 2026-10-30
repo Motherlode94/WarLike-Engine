@@ -44,3 +44,7 @@ Les crédits de la bibliothèque intégrée sont consultables dans **Hub → À 
 
 - Interface, géométrie des annotations, historique et export PNG : code WarLike, Hardi Victor MBANVU.
 - Capture DOM : [dom-to-image-more 3.11.0](https://github.com/IDisposable/dom-to-image-more), licence MIT, distribution npm conservée dans `vendor/dom-to-image-more/`, licence jointe dans `LICENSE.txt`. Le traitement s’effectue dans le navigateur, sans service de capture externe.
+
+## Liens de vie · Tiny Town
+
+Kenney · **Tiny Town** · 132 tuiles 2D intégrées · **CC0-1.0**. [Pack original](https://kenney.nl/assets/tiny-town) · [licence incluse](docs/licenses/kenney-tiny-town.txt). Copie des PNG : [GeorgeQLe/assets-2d-city](https://github.com/GeorgeQLe/assets-2d-city). Assemblage du quartier par WarLike ; personnages Kenney Tiny Dungeon déjà inclus. [Détails](docs/liens-de-vie.md).

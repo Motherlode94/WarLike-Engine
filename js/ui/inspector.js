@@ -1,3 +1,4 @@
+import {renderLifeInspector} from './life-inspector.js';
 import {renderAdventureInspector} from './adventure-inspector.js';
 import {enhanceInspectorDetails} from './inspector-details.js';
 import {renderBlueprintInstance} from './blueprint-variable-details.js';
@@ -104,7 +105,7 @@ function openCSharpEditor(){
  document.getElementById('csharpScriptLoad')?.click();
  document.getElementById('csharpScriptSource')?.focus();
 }
-function finishInspector(root,o,templates){renderBlueprintInstance(root,o,component);if(o.animatorGraph)component(root,'Animator · Graphe d’états',body=>{const info=document.createElement('p');info.textContent=o.animatorGraph.states.length+' états · transitions, mélange de locomotion et événements.';const b=document.createElement('button');b.type='button';b.textContent='Ouvrir Animator';b.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:o.id}}));body.append(info,b)});renderAdventureInspector(root,o,{component,field});renderSurvivalInspector(root,o,{component,field,selectField});renderHeroForgeInspector(root,o,{component,field,selectField,colorPalette});finishComponentInspector(root,o,templates,nativeComponentCatalog,renderNativeComponents,openCSharpEditor);enhanceInspectorDetails(root,o)}
+function finishInspector(root,o,templates){renderBlueprintInstance(root,o,component);if(o.animatorGraph)component(root,'Animator · Graphe d’états',body=>{const info=document.createElement('p');info.textContent=o.animatorGraph.states.length+' états · transitions, mélange de locomotion et événements.';const b=document.createElement('button');b.type='button';b.textContent='Ouvrir Animator';b.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:o.id}}));body.append(info,b)});renderLifeInspector(root,o,{component,field,selectField});renderAdventureInspector(root,o,{component,field});renderSurvivalInspector(root,o,{component,field,selectField});renderHeroForgeInspector(root,o,{component,field,selectField,colorPalette});finishComponentInspector(root,o,templates,nativeComponentCatalog,renderNativeComponents,openCSharpEditor);enhanceInspectorDetails(root,o)}
 function renderObjectBehaviors(root,owner){
  const entries=[...(owner.sequence?[{index:-1,sequence:owner.sequence}]:[]),...(owner.sequences||[]).map((sequence,index)=>({index,sequence}))];
  for(const entry of entries){

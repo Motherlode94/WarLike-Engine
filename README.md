@@ -25,6 +25,12 @@ Sur **mobile et tablette**, la barre inférieure donne accès à Scène, Hiérar
 
 Le bouton **✎ Annoter** fige une capture de l’éditeur : entourer une zone, dessiner une flèche ou au crayon, puis choisir **Note**, écrire le texte et toucher l’image pour le placer. Couleur, épaisseur, annuler/rétablir et effacer sont disponibles. **Exporter PNG** télécharge l’image annotée, à joindre manuellement au chat ; **Copier l’image** fonctionne si le navigateur le permet. La capture reste sur l’appareil. **Nouvelle capture** remplace l’image ; **Importer une capture** sert de solution de repli si un contenu externe bloque la capture. Fermer conserve les annotations en mémoire jusqu’au rechargement. Pendant l’annotation, Play et les commandes du joueur sont suspendus.
 
+## Liens de vie : simulation et relations
+
+[Jouer directement à Liens de vie](https://warlike-engine.pages.dev/liens-de-vie.html) · **Hub → Nouveau projet → 2D → Liens de vie · Simulation → Play.** Un personnage personnalisable explore le quartier des Tilleuls : cinq besoins, repas, repos, douche, missions rémunérées et jardin. Quatre voisins adultes ont leurs goûts, leurs habitudes et leurs réponses ; les échanges font évoluer amitié, confiance et affection. Une déclaration peut être acceptée ou refusée.
+
+Clic au sol ou ZQSD / WASD pour marcher, carnet **Relations / Activités / Journal / Moi**, pause et vitesse réglable. La sauvegarde garde la progression ; les 132 tuiles Kenney Tiny Town sont livrées dans la bibliothèque 2D, avec crédits et licence CC0. [Guide, contrôles, sources et limites du prototype solo](docs/liens-de-vie.md).
+
 ## Hero Forge : super-héros, action, RPG, simulation et RTS
 
 Dans le Hub, choisir le template **Hero Forge · Super-héros** en 2D ou 3D. Dans un projet existant, **Game → Hero Forge · Scène super-héros** installe une mission avec modèles et sprites Kenney / Quaternius déjà intégrés ; Annuler restaure la scène précédente.

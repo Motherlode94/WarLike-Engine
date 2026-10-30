@@ -1,3 +1,4 @@
+import {lifeTownSprites} from '../assets/life-sprites-2d.js';
 import {uniqueAssets,filterAssetRecords,paginateAssets} from '../core/asset-browser.js';
 import {survivalSprites2d} from '../assets/survival-sprites-2d.js';
 import {prefabsForMode,readPrefabs,instantiatePrefab} from '../core/prefab-library.js';
@@ -27,6 +28,7 @@ const PACKS=[
  {id:'project-prefabs',mode:'any',name:'Projet · Prefabs enregistrés',type:'prefab',assets:()=>prefabsForMode(readPrefabs(),workspace.mode).map(p=>{const asset=get3dAsset(p.components?.model3dId||p.components?.assetId);return {...asset,id:p.id,name:p.name,prefabRecord:p,previewModelId:asset?.id,filename:p.name+'.prefab.json'}})},
  {id:'project-imports',mode:'3d',name:'Projet · GLB importés',type:'3d',assets:()=>[...importedModels3d.values()].filter(a=>a.file||a.sourcePath)},
  {id:'included-all-3d',mode:'3d',name:'Tous les modèles inclus',type:'3d',assets:()=>includedModels},
+ {id:'kenney-tiny-town-2d',mode:'2d',name:'Kenney · Tiny Town',type:'2d',assets:()=>lifeTownSprites},
  {id:'kenney-platformer-2d',mode:'2d',name:'Kenney · Platformer Art Deluxe',type:'2d',assets:()=>freeSprites2d.filter(a=>a.pack==='platformer-art-deluxe')},
  {id:'kenney-survival-isometric-2d',mode:'2d',name:'Kenney · Survie · Rendus isométriques',type:'2d',assets:()=>survivalSprites2d},
  {id:'kenney-dungeon-2d',mode:'2d',name:'Kenney · Tiny Dungeon',type:'2d',assets:()=>freeSprites2d.filter(a=>a.pack==='tiny-dungeon')},

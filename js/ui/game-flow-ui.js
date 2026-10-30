@@ -16,7 +16,7 @@ export function initGameFlowUi(){
  const answer=(index,d=gameSession.dialogue)=>{if(!d||!gameIsRunning()||!canAnswer(d))return;state.keys.clear();state.keyPresses?.clear();if(isLanGuest()){if(pendingDialogue===d.id||lanCommands.length>=8)return;lanCommands.push({type:'dialogue',dialogueId:d.id,index});pendingDialogue=d.id}else chooseSequenceDialogue(index,{id:d.id,actorId:lanState.connected?ownId():null});signature=''};
  const start=()=>{if(isLanGuest())return;if(state.playing)togglePlay();togglePlay();state.keys.clear()};
  function draw(){
-  const build=globalThis.__WARLIKE_BUILD__===true,active=state.playing;root.dataset.uiSkin=gameProject.uiSkin||'classic';
+  const build=globalThis.__WARLIKE_BUILD__===true,active=state.playing,isLife=state.entities.some(o=>o.lifeSim?.enabled);root.dataset.uiSkin=gameProject.uiSkin||'classic';
   root.hidden=!active&&!build;root.replaceChildren();objectiveHud?.remove();objectiveHud=null;if(root.hidden)return;
   const hud=element('section','game-objective-hud');
   for(const objective of Object.values(gameSession.objectives)){
@@ -43,9 +43,9 @@ export function initGameFlowUi(){
    else if(phase==='paused'){action(menu,'Reprendre la partie',()=>setGamePhase('playing'),'bp-primary');action(menu,'Sauvegarder',()=>saveGameSlot(context()),'bp-secondary')}
    else action(menu,phase==='menu'?'Jouer':'Recommencer',start,'bp-primary');
    if(!isLanGuest()){const load=action(menu,'Continuer la sauvegarde',()=>{if(!state.playing)start();queueLoadGame(context());setGamePhase('playing')},'bp-secondary');load.disabled=!hasGameSlot(context());}
-   if(!active&&build)action(menu,'Coop locale · Héberger / Rejoindre',()=>document.dispatchEvent(new Event('warlike:lan-open')),'bp-secondary');
+   if(!active&&build&&!isLife)action(menu,'Coop locale · Héberger / Rejoindre',()=>document.dispatchEvent(new Event('warlike:lan-open')),'bp-secondary');
    if(active&&!isLanGuest())action(menu,build?'Retour au menu':'Retour à l’éditeur',()=>togglePlay(),'bp-text-button');
-   if(gameSession.notice&&phase==='menu')menu.append(element('small','',gameSession.notice));const credits=element('a','game-asset-credit','Ressources : Kenney · CC0');credits.href='https://kenney.nl/assets';credits.target='_blank';credits.rel='noopener noreferrer';menu.append(credits);const quaternius=element('a','game-asset-credit','Modèles et animations : Quaternius · CC0');quaternius.href='https://quaternius.com/';quaternius.target='_blank';quaternius.rel='noopener noreferrer';menu.append(quaternius);veil.append(menu);root.append(veil);
+   if(gameSession.notice&&phase==='menu')menu.append(element('small','',gameSession.notice));const credits=element('a','game-asset-credit',isLife?'Sprites : Kenney · Tiny Town / Tiny Dungeon · CC0':'Ressources : Kenney · CC0');credits.href=isLife?'https://kenney.nl/assets/tiny-town':'https://kenney.nl/assets';credits.target='_blank';credits.rel='noopener noreferrer';menu.append(credits);const quaternius=element('a','game-asset-credit','Modèles et animations : Quaternius · CC0');quaternius.href='https://quaternius.com/';quaternius.target='_blank';quaternius.rel='noopener noreferrer';if(!isLife)menu.append(quaternius);veil.append(menu);root.append(veil);
   }
  }
  window.addEventListener('keydown',event=>{
@@ -59,7 +59,7 @@ export function initGameFlowUi(){
  window.addEventListener('keydown',event=>{
   if(event.target?.closest?.('#blueprintDialog')||blueprintDebugger.paused)return;
   if(event.repeat||!state.playing||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
-  if(['F5','F9'].includes(event.key)){event.preventDefault();if(!isLanGuest()&&state.entities.some(o=>o.survivalWorld?.enabled||o.adventure)){try{if(event.key==='F5')saveGameSlot(context());else{queueLoadGame(context());setGamePhase('playing')}}catch(error){gameSession.notice=error.message}signature=''}return}
+  if(['F5','F9'].includes(event.key)){event.preventDefault();if(!isLanGuest()&&state.entities.some(o=>o.survivalWorld?.enabled||o.adventure||o.lifeSim?.enabled)){try{if(event.key==='F5')saveGameSlot(context());else{queueLoadGame(context());setGamePhase('playing')}}catch(error){gameSession.notice=error.message}signature=''}return}
   if(event.key==='Escape'&&!isLanGuest()&&['playing','paused'].includes(gameSession.phase)){event.preventDefault();document.exitPointerLock?.();setGamePhase(gameSession.phase==='paused'?'playing':'paused');state.keys.clear();signature=''}
  });
  const frame=now=>{requestAnimationFrame(frame);if(now-last<100)return;last=now;

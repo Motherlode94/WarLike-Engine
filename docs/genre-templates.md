@@ -4,6 +4,7 @@ Depuis **WarLike Hub → Nouveau projet**, choisir **2D ou 3D**, puis **Type de 
 
 | Type de jeu | 2D | 3D | Base fournie |
 | --- | --- | --- | --- |
+| Liens de vie · Simulation | Oui | — | Quartier jouable : besoins, activités, travail, amitié, confiance, affection et sauvegarde |
 | WarLike Company | — | Oui | Escarmouche RTS : escouades, couvertures, suppression, retraite, économie reliée aux secteurs et recrutement |
 | WarLike Front | — | Oui | FPS Conquête : deux équipes de six, secteurs, blindés, munitions et réapparition |
 | Hero Forge · Super-héros | Oui | Oui | Mission jouable : pouvoirs, FX, progression, secours, destruction et escouade |

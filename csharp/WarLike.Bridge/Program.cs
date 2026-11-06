@@ -9,6 +9,7 @@ builder.Start();
 Console.WriteLine("WarLike C# bridge listening on http://127.0.0.1:8765/");
 var world = new GameWorld();
 long revision = 0;
+long lastPlayFrame = 0;
 var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 var gate = new SemaphoreSlim(1,1);
 const int MaxSceneBytes = 2*1024*1024;
@@ -28,12 +29,23 @@ async Task Handle(HttpListenerContext ctx) {
     res.Headers["Cache-Control"]="no-store";
     try {
         if (req.HttpMethod=="OPTIONS"){res.StatusCode=204;return;}
-        if (req.Url?.AbsolutePath=="/health"&&req.HttpMethod=="GET"){await Reply(new {ready=true,engine="WarLike C# .NET 8",protocol=2,capabilities=new[]{"component-inspector","tactical-squads","component-lifecycle"}});return;}
+        if (req.Url?.AbsolutePath=="/health"&&req.HttpMethod=="GET"){await Reply(new {ready=true,engine="WarLike C# .NET 8",protocol=3,capabilities=new[]{"component-inspector","tactical-squads","component-lifecycle","shared-play-frame"}});return;}
         if (req.Url?.AbsolutePath=="/scene"&&req.HttpMethod=="POST"){
             if(req.ContentLength64>MaxSceneBytes){res.StatusCode=413;await Reply(new {error="Scene too large"});return;}
             var json=await ReadBody(MaxSceneBytes);
             var incoming=GameWorld.FromWarLikeJson(json);
-            await gate.WaitAsync();try{world=incoming;revision++;await Reply(new {ok=true,count=world.Actors.Count,revision});}finally{gate.Release();}return;
+            await gate.WaitAsync();try{world=incoming;revision++;lastPlayFrame=0;await Reply(new {ok=true,count=world.Actors.Count,revision});}finally{gate.Release();}return;
+        }
+        if (req.Url?.AbsolutePath=="/frame"&&req.HttpMethod=="POST"){
+            using var doc=JsonDocument.Parse(await ReadBody(MaxSceneBytes));var input=doc.RootElement;
+            long expected=input.GetProperty("revision").GetInt64(),frame=input.GetProperty("frame").GetInt64();
+            float dt=input.GetProperty("dt").GetSingle();
+            if(!float.IsFinite(dt)||dt<0||dt>.1f)throw new ArgumentOutOfRangeException(nameof(dt));
+            await gate.WaitAsync();try{
+                if(expected!=revision||frame<=lastPlayFrame){res.StatusCode=409;await Reply(new {error="Stale Play frame or scene revision."});return;}
+                world.ApplySharedFrame(input.GetProperty("actors"));world.Tick(dt);lastPlayFrame=frame;
+                await Reply(new {ok=true,revision,frame,actors=world.Actors.Select(a=>new {id=a.Id,x=a.Position.X*64,y=a.Position.Z*64,elevation3d=a.Position.Y,rotation=a.Rotation,hp=a.Health,enabled=a.Enabled}).ToArray()});
+            }finally{gate.Release();}return;
         }
         if (req.HttpMethod=="POST" && req.Url?.AbsolutePath is "/components/inspect" or "/components/set" or "/squad/command") {
             using var doc=await ReadJson(); var input=doc.RootElement;

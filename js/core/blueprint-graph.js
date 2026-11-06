@@ -1,12 +1,6 @@
 // A bounded execution graph compiled into the shared sequence runtime.
-export const variableTypes=['number','boolean','string','vector2','vector3'];
-const finite=(n,d=0)=>Number.isFinite(Number(n))?Number(n):d;
-export function coerceVariable(type,value){
- if(type==='number')return finite(value);
- if(type==='boolean')return value===true||value==='true'||value===1;
- if(type==='vector2'||type==='vector3'){const count=type==='vector2'?2:3;return Array.from({length:count},(_,i)=>finite(Array.isArray(value)?value[i]:0))}
- return String(value??'').slice(0,512);
-}
+export {variableTypes,coerceVariable} from './blueprint-types.js';
+import {inspectDataGraph,compileDataInputs} from './blueprint-ports.js';
 export const graphPort=edge=>edge.port||'next';
 export function createGraph(sequence={}){
  const nodes=[{id:'event',kind:'event',x:48,y:150,event:sequence.event||'interact'}],links=[];
@@ -33,30 +27,31 @@ export function inspectGraphDetailed(graph){
  if(graph.nodes.length>128||graph.links.length>256)return [{message:'Graphe trop volumineux (128 nœuds maximum)',nodeId:null}];
  const ids=new Set(),byId=new Map();
  for(const node of graph.nodes){
-  if(!node||typeof node.id!=='string'||ids.has(node.id)||!['event','action','condition'].includes(node.kind)){add('Nœud invalide ou ID dupliqué',typeof node?.id==='string'?node.id:null);continue}
+  if(!node||typeof node.id!=='string'||ids.has(node.id)||!['event','action','condition','data'].includes(node.kind)){add('Nœud invalide ou ID dupliqué',typeof node?.id==='string'?node.id:null);continue}
   ids.add(node.id);byId.set(node.id,node);
  }
  const events=graph.nodes.filter(n=>n?.kind==='event');if(events.length!==1)add('Un seul nœud Event est nécessaire',events[1]?.id??null);
  const outputs=new Set(),inbound=new Map(),edges=new Map();
- for(const edge of graph.links){
+ for(const edge of graph.links.filter(e=>e?.kind!=='data')){
   const node=byId.get(edge?.from),port=graphPort(edge||{}),key=edge?.from+':'+port;
-  if(!ids.has(edge?.from)||!ids.has(edge?.to)||edge.from===edge.to||outputs.has(key)||!(node?.kind==='condition'?['true','false']:['next']).includes(port)){add('Connexion invalide ou sortie déjà utilisée',ids.has(edge?.from)?edge.from:null);continue}
+  if(node?.kind==='data'||byId.get(edge?.to)?.kind==='data'||!ids.has(edge?.from)||!ids.has(edge?.to)||edge.from===edge.to||outputs.has(key)||!(node?.kind==='condition'?['true','false']:['next']).includes(port)){add('Connexion invalide ou sortie déjà utilisée',ids.has(edge?.from)?edge.from:null);continue}
   if(byId.get(edge.to)?.kind==='event'){add('Event ne peut pas recevoir de connexion',edge.from);continue}
   outputs.add(key);inbound.set(edge.to,(inbound.get(edge.to)||0)+1);
   const list=edges.get(edge.from)||[];list.push(edge.to);edges.set(edge.from,list);
  }
- for(const node of graph.nodes)if(node?.kind!=='event'&&!inbound.has(node?.id))add('Graphe déconnecté : relie toutes les actions et conditions à Event',node?.id??null);
+ for(const node of graph.nodes)if(node?.kind!=='event'&&node?.kind!=='data'&&!inbound.has(node?.id))add('Graphe déconnecté : relie toutes les actions et conditions à Event',node?.id??null);
  const visiting=new Set(),visited=new Set();
  const visit=id=>{if(visiting.has(id)){add('Boucle de connexion détectée',id);return}if(visited.has(id))return;visiting.add(id);for(const next of edges.get(id)||[])visit(next);visiting.delete(id);visited.add(id)};
  if(events[0])visit(events[0].id);
- if(visited.size!==ids.size)for(const id of ids)if(!visited.has(id))add('Graphe déconnecté : certains nœuds ne sont pas exécutables',id);
+ for(const id of ids)if(byId.get(id)?.kind!=='data'&&!visited.has(id))add('Graphe déconnecté : certains nœuds ne sont pas exécutables',id);
+ issues.push(...inspectDataGraph(graph));
  return issues;
 }
 export function inspectGraph(graph){return [...new Set(inspectGraphDetailed(graph).map(issue=>issue.message))]}
 export function compileGraph(graph,{nodeIds=false}={}){
  const errors=inspectGraph(graph);if(errors.length)throw Error(errors.join(' · '));
  const byId=new Map(graph.nodes.map(node=>[node.id,node]));
- const next=(id,port='next')=>graph.links.find(edge=>edge.from===id&&graphPort(edge)===port)?.to;
+ const next=(id,port='next')=>graph.links.find(edge=>edge.kind!=='data'&&edge.from===id&&graphPort(edge)===port)?.to;
  let expanded=0;
  const compile=id=>{
   const steps=[];
@@ -64,10 +59,10 @@ export function compileGraph(graph,{nodeIds=false}={}){
    if(++expanded>1024)throw Error('Graphe trop complexe après compilation ; sépare les comportements.');
    const node=byId.get(id);
    if(node.kind==='condition'){
-    const branch={type:'branch',conditions:structuredClone(node.conditions||[]),conditionMode:node.conditionMode||'all',thenInstructions:compile(next(id,'true')),elseInstructions:compile(next(id,'false'))};
+    const branch={type:'branch',conditions:[...structuredClone(node.conditions||[]),...compileDataInputs(graph,node).conditions],conditionMode:node.conditionMode||'all',thenInstructions:compile(next(id,'true')),elseInstructions:compile(next(id,'false'))};
     if(node.breakpoint)branch.breakpoint=true;if(nodeIds)branch._nodeId=id;steps.push(branch);return steps;
    }
-   const action=structuredClone(node.action||{type:'message',value:'Action'});if(node.breakpoint)action.breakpoint=true;if(nodeIds)action._nodeId=id;steps.push(action);id=next(id);
+   const action={...structuredClone(node.action||{type:'message',value:'Action'}),...compileDataInputs(graph,node).action};if(node.breakpoint)action.breakpoint=true;if(nodeIds)action._nodeId=id;steps.push(action);id=next(id);
   }
   return steps;
  };

@@ -130,18 +130,33 @@ public sealed class GameWorld {
         var frame = _behaviours.ToArray();
         float dt = MathF.Min(deltaTime, 0.25f);
         foreach (var b in frame) Ready(b);
-        foreach (var b in frame) if (Ready(b)) b.Update(dt);
         _accumulator += dt;
         int steps = 0;
         while (_accumulator >= FixedDeltaTime && steps++ < 20) {
             foreach (var b in frame) if (Ready(b)) b.FixedUpdate(FixedDeltaTime);
             _accumulator -= FixedDeltaTime;
         }
+        foreach (var b in frame) if (Ready(b)) b.Update(dt);
         foreach (var b in frame) if (Ready(b)) b.LateUpdate(dt);
         while (_pending.TryDequeue(out var change)) change();
     }
+    public void ApplySharedFrame(JsonElement actors) {
+        if (actors.ValueKind != JsonValueKind.Array || actors.GetArrayLength() != _actors.Count)
+            throw new ArgumentException("Scene structure changed. Restart Play to synchronize native components.");
+        var seen=new HashSet<int>();
+        var changes=new List<(Actor actor,Vector3 position,float rotation,float health,bool enabled)>();
+        foreach(var item in actors.EnumerateArray()) {
+            int id=item.GetProperty("id").GetInt32();
+            var actor=_actors.FirstOrDefault(a=>a.Id==id);
+            if(actor is null || !seen.Add(id))throw new ArgumentException("Unknown or duplicate actor ID.");
+            float Number(string key) { float value=item.GetProperty(key).GetSingle();if(!float.IsFinite(value))throw new ArgumentException("Non-finite actor field.");return value; }
+            changes.Add((actor,new Vector3(Number("x")/64f,Number("elevation3d"),Number("y")/64f),Number("rotation"),Number("hp"),item.GetProperty("enabled").GetBoolean()));
+        }
+        // Validate the entire frame before mutating any actor or invoking callbacks.
+        foreach(var c in changes){c.actor.Position=c.position;c.actor.Rotation=c.rotation;c.actor.Health=c.health;c.actor.Enabled=c.enabled;}
+    }
     public static GameWorld FromWarLikeJson(string json) {
-        using var doc = JsonDocument.Parse(json);
+        using var doc = JsonDocument.Parse(SceneContract.RuntimeJson(json));
         var world = new GameWorld { _importing = true };
         if (!doc.RootElement.TryGetProperty("entities", out var entities) || entities.ValueKind != JsonValueKind.Array)
             throw new JsonException("Expected a WarLike scene with entities array.");

@@ -1,3 +1,5 @@
+import {inspectRuntimeCompatibility} from './runtime-capabilities.js';
+import {canonicalScene} from './scene-contract.js';
 import {survivalTools} from './survival-tools.js';
 import {resolveGameGenre,genreCompatible} from './game-genres.js';
 import {gameProject,validEntities} from './game-project.js';
@@ -24,14 +26,14 @@ export function prepareGameDefinition({entities,camera,mode='2d',project=gamePro
  const definition=structuredClone(project),scene={id:definition.activeSceneId,name:definition.scenes.find(s=>s.id===definition.activeSceneId)?.name||'Scène principale',entities:structuredClone(entities),camera:structuredClone(camera||{x:0,y:0,zoom:1})};
  definition.genre=resolveGameGenre(definition.genre,entities);if(!genreCompatible(definition.genre,mode))throw Error('Le type de jeu '+definition.genre+' est incompatible avec le projet '+mode.toUpperCase()+'.');
  const index=definition.scenes.findIndex(s=>s.id===scene.id);if(index<0)definition.scenes.push(scene);else definition.scenes[index]=scene;
- const issues=definition.scenes.flatMap(s=>inspectBlueprintGame(s.entities,{project:definition}).map(i=>({...i,message:s.name+' : '+i.message})));
+ const issues=definition.scenes.flatMap(s=>[...inspectBlueprintGame(s.entities,{project:definition}),...inspectRuntimeCompatibility(s.entities,{target:'web',backend:definition.runtimeBackend})].map(i=>({...i,message:s.name+' : '+i.message})));
  for(const s of definition.scenes)for(const o of s.entities)if(mode==='3d'&&(o.model3dId||o.assetId)){
   const id=o.model3dId||o.assetId,asset=get3dAsset(id);
   if(!asset)issues.push({severity:'error',message:'Modèle introuvable : '+id});
   else if(asset.url?.startsWith('blob:')||asset.file)issues.push({severity:'error',message:'Le modèle local '+asset.name+' doit avoir une ressource durable avant l’export Web.'});
  }
  const errors=issues.filter(i=>i.severity==='error');if(errors.length)throw Error(errors.slice(0,5).map(i=>i.message).join('\n'));
- return {format:'warlike.game.v1',mode,project:definition,issues};
+ return {format:'warlike.game.v1',mode,project:definition,sceneContracts:definition.scenes.map(s=>canonicalScene(s.entities,{id:s.id,name:s.name})),runtime:{version:1,backend:'web',nativeScripts:false},issues};
 }
 export function gameBuildHtml(template,data){
  const json=JSON.stringify(data).replace(/</g,'\\u003c'),title=String(data.project.title||'WarLike Game').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

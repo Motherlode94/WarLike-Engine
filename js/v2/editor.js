@@ -1,3 +1,4 @@
+import {canonicalScene} from '../core/scene-contract.js';
 import {createComponent} from '../core/components-v2.js';
 import {createScene,createGameObject,addGameObject,duplicateGameObject,removeGameObject,deserializeScene,serializeScene} from '../core/scene-graph-v2.js';
 import {createSceneHistory,setComponentProperty,renameGameObject} from '../core/scene-commands-v2.js';
@@ -91,7 +92,7 @@ $('undo').onclick=()=>{scene=history.undo();selected=scene.objects.some(o=>o.id=
 $('redo').onclick=()=>{scene=history.redo();selected=scene.objects.some(o=>o.id===selected)?selected:scene.objects[0]?.id;refresh()};
 $('save').onclick=()=>{try{const blob=new Blob([serializeScene(scene)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='warlike-v2-scene.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status('Scène exportée')}catch(error){status(error.message)}};
 $('load').onclick=()=>$('file').click();
-$('file').onchange=async event=>{try{scene=deserializeScene(await event.target.files[0].text());history=createSceneHistory(scene);selected=scene.objects[0]?.id||null;refresh();status('Scène importée')}catch(error){status('Import : '+error.message)}finally{event.target.value=''}};
+$('file').onchange=async event=>{try{const input=JSON.parse(await event.target.files[0].text());scene=input.schema==='warlike.scene.v2'?deserializeScene(JSON.stringify(input)):canonicalScene(input.entities);history=createSceneHistory(scene);selected=scene.objects[0]?.id||null;refresh();status('Scène importée')}catch(error){status('Import : '+error.message)}finally{event.target.value=''}};
 function mousePoint(event){const rect=canvas.getBoundingClientRect();return [event.clientX-rect.left,event.clientY-rect.top]}
 canvas.addEventListener('pointerdown',event=>{const [x,y]=mousePoint(event),width=canvas.clientWidth,height=canvas.clientHeight;let closest=null,distance=Infinity;for(const o of scene.objects){const [a,b]=project(position(o),width,height),dist=Math.hypot(x-a,y-b);if(dist<distance&&dist<40){distance=dist;closest=o}}if(!closest)return;selected=closest.id;drag={x,y,id:closest.id,start:position(closest)};drag.pointerId=event.pointerId;canvas.setPointerCapture(event.pointerId);refresh()});
 canvas.addEventListener('pointermove',event=>{if(!drag)return;const [x,y]=mousePoint(event);const dx=x-drag.x,dy=y-drag.y;const shiftX=(dx+dy*2)/53.7,shiftZ=(dy*2-dx)/53.7;status('Déplacement : '+shiftX.toFixed(2)+' / '+shiftZ.toFixed(2))});

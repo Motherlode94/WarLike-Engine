@@ -40,6 +40,7 @@ export function editConditions(parent,conditions,onChange,{parameters=[]}={}){
  button(parent,'＋ Ajouter une condition',()=>{conditions.push({type:'variable',key:'score',operator:'>=',value:1});onChange()},'bp-secondary');
 }
 export function editTypedValue(parent,label,data,key,type,onChange,{parameters=[],literalOnly=false}={}){
+ if(data[key]?.$expr){parent.append(element('p','bp-hint',label+' · relié à un port de données ('+data[key].type+')'));return}
  const current=data[key],source=current?.$ref||'literal';
  if(!literalOnly)select(parent,label+' · source',source,[{value:'literal',label:'Valeur '+type},{value:'global',label:'Variable globale'},{value:'local',label:'Variable locale'},{value:'parameter',label:'Paramètre de fonction'}],v=>{data[key]=v==='literal'?coerceVariable(type,0):{$ref:v,name:'',type};onChange()});
  if(source!=='literal'){
@@ -49,6 +50,9 @@ export function editTypedValue(parent,label,data,key,type,onChange,{parameters=[
  }else if(type==='boolean')field(parent,{key,label,type:'boolean',default:false},data,onChange);
  else if(type.startsWith('vector')){
   const row={text:Array.isArray(current)?current.join(', '):''};field(parent,{key:'text',label:label+' · '+(type==='vector2'?'X, Y':'X, Y, Z'),type:'text'},row,()=>{const values=row.text.split(',').map(Number);if(values.length!==Number(type.slice(-1))||!values.every(Number.isFinite))return;data[key]=values;onChange()});
+ }else if(type==='object'||type==='component'){
+  select(parent,label+' · objet',String(current?.entityId||0),[{value:'0',label:'Choisir un objet'},...state.entities.map(o=>({value:String(o.id),label:o.name}))],v=>{data[key]={entityId:Number(v),...(type==='component'?{kind:current?.kind||'stats'}:{})};onChange()});
+  if(type==='component'&&current&&typeof current==='object')field(parent,{key:'kind',label:label+' · composant',type:'text'},current,onChange);
  }else field(parent,{key,label,type:type==='number'?'number':'text'},data,onChange);
 }
 export function editAction(parent,action,onChange,{typeField=true,depth=0,parameters=[],returnType='void'}={}){

@@ -20,6 +20,6 @@ export function makeCompanySquad(role,team,firstId,x,y){
    companyUnit:{squadId:firstId,role,suppression:0},tags:['company-unit'],hierarchyGroup:team===1?'Compagnie bleue':'Compagnie orange',
    animationMap:Object.fromEntries(Object.entries({idle:clip(/^Idle$/i),walk:clip(tank?/Forward/:/^Walk$/i),run:clip(tank?/Forward/:/^Run$/i),attack:clip(/Shoot_OneHanded/i),death:clip(/^Death$/i)}).filter(([,value])=>value)),
    tacticalUnit:{enabled:true,speed:type.speed,autoAttack:false,attackRange:type.range,damage:0},
-   ...(tank?{csharpComponents:[{kind:'VehicleController',maxSpeed:180,acceleration:130,brakeForce:250,turnRate:80}]}:{})};
+   ...(tank?{csharpComponents:[{kind:'VehicleController',runtime:'web',maxSpeed:180,acceleration:130,brakeForce:250,turnRate:80}]}:{})};
  });
 }

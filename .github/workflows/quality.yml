@@ -16,3 +16,8 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run typecheck
       - run: npm test
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet run --project csharp/WarLike.Tests
+      - run: dotnet build csharp/WarLike.Bridge

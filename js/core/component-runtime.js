@@ -2,7 +2,10 @@
 // Data-driven and isolated from the standalone .NET execution layer.
 import {state} from './state.js';
 export const runtime={elapsed:0,phase:'waiting',remaining:0,scores:new Map(),events:[],running:false};
-const components=(entity,kind)=>Array.isArray(entity.csharpComponents)?entity.csharpComponents.filter(c=>c.kind===kind):[];
+const components=(entity,kind)=>[...(Array.isArray(entity.csharpComponents)?entity.csharpComponents:[]),...(entity.csharpComponent?[entity.csharpComponent]:[])].filter(c=>c&&c.kind===kind&&c.enabled!==false);
+const health=entity=>Number.isFinite(entity.stats?.health)?entity.stats.health:Number.isFinite(entity.hp)?entity.hp:100;
+const setHealth=(entity,value)=>{entity.hp=value;if(entity.stats)entity.stats.health=value};
+const maxHealth=entity=>Math.max(1,num(entity.stats?.maxHealth, num(entity.maxHp,100)));
 const first=(entity,kind)=>components(entity,kind)[0];
 const num=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 export function emitGameplayEvent(type,payload={}){const event={type,payload,time:runtime.elapsed};runtime.events.push(event);if(runtime.events.length>100)runtime.events.shift();document.dispatchEvent(new CustomEvent('warlike:gameplay',{detail:event}));return event}
@@ -17,12 +20,12 @@ export function startComponentRuntime(){
  else runtime.phase='playing';
 }
 export function applyComponentDamage(target,amount,source=null){
- if(!runtime.running||!target||target._componentDead)return 0;
+ if(!runtime.running||!target||target.enabled===false||target._componentDead)return 0;
  const damageable=first(target,'Damageable');if(!damageable||damageable.invulnerable)return 0;
  const ownTeam=first(target,'Team'),sourceTeam=source&&first(source,'Team');
  if(source&&source!==target&&ownTeam&&sourceTeam&&num(ownTeam.teamId)===num(sourceTeam.teamId)&&!ownTeam.friendlyFire)return 0;
  const damage=Math.max(0,num(amount));const dealt=damage*100/(100+Math.max(0,num(damageable.armor)));
- target.hp=Math.max(0,num(target.hp,100)-dealt);
+ setHealth(target,Math.max(0,health(target)-dealt));
  emitGameplayEvent('actor:damaged',{targetId:target.id,sourceId:source?.id??null,damage:dealt});
  if(target.hp<=0){target._componentDead=true;target._respawnTimer=Math.max(0,num(first(target,'Respawn')?.delay,5));
  const victim=runtime.scores.get(target.id)||{kills:0,deaths:0};victim.deaths++;runtime.scores.set(target.id,victim);
@@ -41,11 +44,12 @@ export function updateComponentRuntime(dt){
  if(runtime.phase==='playing'&&num(rules.scoreLimit,25)>0&&[...runtime.scores.values()].some(s=>s.kills>=num(rules.scoreLimit,25))){runtime.phase='finished';emitGameplayEvent('match:end',{reason:'score'})}
  }
  for(const entity of state.entities){
+ if(entity.enabled===false)continue;
  if(entity._componentDead&&first(entity,'Respawn')){
  entity._respawnTimer-=delta;
- if(entity._respawnTimer<=0){entity._componentDead=false;entity.hp=Math.max(1,num(entity.maxHp,100));emitGameplayEvent('actor:respawn',{actorId:entity.id})}
+ if(entity._respawnTimer<=0){entity._componentDead=false;setHealth(entity,maxHealth(entity));emitGameplayEvent('actor:respawn',{actorId:entity.id})}
  }
- if(!entity._componentDead&&first(entity,'Health')){const regen=Math.max(0,num(first(entity,'Health').regen));if(regen)entity.hp=Math.min(Math.max(1,num(entity.maxHp,100)),num(entity.hp,100)+regen*delta)}
+ if(!entity._componentDead&&first(entity,'Health')){const regen=Math.max(0,num(first(entity,'Health').regen));if(regen)setHealth(entity,Math.min(maxHealth(entity),health(entity)+regen*delta))}
  if(entity._weaponCooldown>0)entity._weaponCooldown=Math.max(0,entity._weaponCooldown-delta);
  }
 }

@@ -28,7 +28,8 @@ test('real .NET bridge: typed parameters, tactical orders, revisions, origin and
   const response=await fetch(base+path,{method:data===undefined?'GET':'POST',headers:{Origin:origin,...(data===undefined?{}:{'Content-Type':'application/json'})},...(data===undefined?{}:{body:JSON.stringify(data)}),signal:AbortSignal.timeout(3000)});
   const body=await response.json();assert.equal(response.status,expected,JSON.stringify(body));return body;
  };
- const health=await call('/health');assert.equal(health.protocol,2);assert.ok(health.capabilities.includes('tactical-squads'));
+ const health=await call('/health');assert.equal(health.protocol,3);
+ for(const capability of ['tactical-squads','component-inspector','component-lifecycle','shared-play-frame'])assert.ok(health.capabilities.includes(capability),capability);
  const scene={entities:[
   {id:1,name:'Escouade',x:0,y:0,csharpComponents:[{kind:'TacticalSquad',memberIds:[2,3],speed:3,spacing:1.5}]},
   {id:2,name:'A',x:0,y:0},{id:3,name:'B',x:0,y:0},
@@ -72,4 +73,26 @@ test('real .NET bridge: typed parameters, tactical orders, revisions, origin and
  await call('/squad/command',{id:20,revision:demo.revision,action:'move',x:700,y:250});
  for(let i=0;i<4;i++)frame=await call('/tick',{dt:.25});
  assert.ok(frame.actors.find(a=>a.id===21).x>202,'The actual Studio example did not move.');
+ // Protocol 3 shares the browser state before ticking native components. Validate
+ // its real HTTP endpoint, including rejection without partial scene mutation.
+ const shared=await call('/scene',{entities:[
+  {id:90,name:'Shared actor',x:64,y:128,elevation3d:2,csharpComponents:[{kind:'AutoRotate',speed:90}]},
+  {id:91,name:'Shared target',x:320,y:192,elevation3d:1}
+ ]});
+ const actors=[{id:90,x:128,y:192,elevation3d:3,rotation:30,hp:80,enabled:true},{id:91,x:320,y:256,elevation3d:1,rotation:0,hp:100,enabled:true}];
+ const first=await call('/frame',{revision:shared.revision,frame:1,dt:.1,actors});
+ assert.equal(first.revision,shared.revision);assert.equal(first.frame,1);
+ const moved=first.actors.find(actor=>actor.id===90);
+ assert.equal(moved.x,128);assert.equal(moved.y,192);assert.equal(moved.elevation3d,3);assert.equal(moved.hp,80);assert.ok(Math.abs(moved.rotation-39)<.001);
+ await call('/frame',{revision:shared.revision,frame:1,dt:.1,actors},409);
+ await call('/frame',{revision:shared.revision-1,frame:2,dt:.1,actors},409);
+ await call('/frame',{revision:shared.revision,frame:2,dt:.2,actors},400);
+ await call('/frame',{revision:shared.revision,frame:2,dt:.1,actors:[{...actors[0],x:999},{...actors[1],id:999}]},400);
+ const unchanged=await call('/tick',{dt:0});assert.equal(unchanged.actors.find(actor=>actor.id===90).x,128);
+ const disabled=actors.map(actor=>({...actor,enabled:false}));
+ const second=await call('/frame',{revision:shared.revision,frame:2,dt:.1,actors:disabled});
+ assert.equal(second.frame,2);assert.equal(second.actors.find(actor=>actor.id===90).rotation,30);assert.ok(second.actors.every(actor=>actor.enabled===false));
+ const reset=await call('/scene',{entities:[{id:90}]});
+ await call('/frame',{revision:shared.revision,frame:3,dt:.1,actors},409);
+ const restarted=await call('/frame',{revision:reset.revision,frame:1,dt:0,actors:[actors[0]]});assert.equal(restarted.frame,1);
 });

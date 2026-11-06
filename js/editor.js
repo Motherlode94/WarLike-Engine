@@ -1,3 +1,4 @@
+import {initScriptStudio} from './ui/script-studio.js';
 import {initLifeUi} from './ui/life-ui.js';
 import {initCompanyUi} from './ui/company-ui.js';
 import {initResponsiveEditor} from './ui/responsive-editor.js';
@@ -257,6 +258,7 @@ if(primaryActions&&secondaryToolbar&&toolbarToggle){
 }
 
 initCSharpBridge();
+initScriptStudio();
 
 initExternalAssetLibrary();
 

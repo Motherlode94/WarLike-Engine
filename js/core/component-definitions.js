@@ -53,7 +53,7 @@ export function addObjectComponent(object,id,mode){
 }
 export function resetObjectComponent(object,id){const definition=webComponentDefinitions.find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
 export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id))return false;delete object[id];if(id==='collider2d')object.collision3d=false;if(id==='superhero')delete object.heroState;if(id==='survival')delete object.survivalState;return true}
-export const webDataComponentKinds=new Set(['Weapon','Damageable','Health','Team','Respawn','DeathmatchRules']);
+export {webComponentKinds as webDataComponentKinds} from './runtime-capabilities.js';
 export function inspectorComponentRank(title){
  if(title==='Transform')return 0;
  if(/Renderer|Material|Sprite/.test(title))return 10;

@@ -55,7 +55,7 @@ export function finishInspector(root,owner,templates,nativeCatalog,renderNative,
   return rank(a)-rank(b);
  });
  const header=root.querySelector('.inspector-object');if(header){
-  const actions=make('div','inspector-object-actions'),blueprint=make('button','','⬡ Blueprint');blueprint.type='button';blueprint.onclick=()=>document.getElementById('openBlueprint')?.click();actions.append(blueprint);header.append(actions);
+  const actions=make('div','inspector-object-actions'),blueprint=make('button','','⬡ Blueprint');blueprint.type='button';blueprint.onclick=()=>{state.selected=[owner.id];document.getElementById('openBlueprint')?.click()};const ping=make('button','','Repérer');ping.type='button';ping.title='Repérer cet objet dans Hierarchy';ping.onclick=()=>{const row=[...document.querySelectorAll('#objects [data-object-id]')].find(row=>row.dataset.objectId===String(owner.id));if(!row)return;for(const group of [row.parentElement,row.parentElement?.parentElement])if(group?.tagName==='DETAILS')group.open=true;row.scrollIntoView({block:'nearest'});row.classList.remove('inspector-ping');requestAnimationFrame(()=>row.classList.add('inspector-ping'))};actions.append(ping,blueprint);header.append(actions);
   const meta=header.querySelector('small');if(meta)meta.textContent=(workspace.mode==='3d'?'GameObject 3D':'GameObject 2D')+' · '+cards.length+' composants';
  }
  root.append(...cards);

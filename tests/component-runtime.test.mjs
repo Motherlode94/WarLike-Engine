@@ -23,3 +23,7 @@ test('Deathmatch runtime: teams, score, match timer and respawn',()=>{
  assert.equal(victim._componentDead,false);assert.equal(victim.hp,100);
  }finally{resetComponentRuntime();state.entities=before.entities;state.playing=before.playing}
 });
+
+test('browser component damage and regeneration share Stats health and respect component activation',()=>{
+ const entity={id:1,hp:100,stats:{health:60,maxHealth:150},csharpComponents:[{kind:'Health',regen:10},{kind:'Damageable'}]};state.entities=[entity];state.playing=true;startComponentRuntime();applyComponentDamage(entity,10);assert.equal(entity.hp,50);assert.equal(entity.stats.health,50);updateComponentRuntime(.1);assert.equal(entity.hp,51);assert.equal(entity.stats.health,51);entity.csharpComponents[0].enabled=false;updateComponentRuntime(.1);assert.equal(entity.hp,51);entity.enabled=false;assert.equal(applyComponentDamage(entity,10),0);resetComponentRuntime();state.playing=false;
+});

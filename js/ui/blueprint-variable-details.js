@@ -4,8 +4,10 @@ import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 import {saveProject} from '../core/project-hub.js';
 import {element,button,field,select} from './blueprint-controls.js';
-export const blueprintTypeLabels={number:'Nombre',boolean:'Booléen',string:'Texte',vector2:'Vecteur 2D',vector3:'Vecteur 3D'};
+export const blueprintTypeLabels={number:'Nombre',boolean:'Booléen',string:'Texte',vector2:'Vecteur 2D',vector3:'Vecteur 3D',object:'Objet',component:'Composant'};
 export function blueprintValueField(host,label,type,value,onChange){
+ if(type==='object'||type==='component'){const input=select(host,label,String(value?.entityId||0),[{value:'0',label:'Choisir un objet'},...state.entities.map(e=>({value:String(e.id),label:e.name+' (#'+e.id+')'}))],id=>{if(Number(id)>0)onChange({entityId:Number(id),...(type==='component'?{kind:value?.kind||'stats'}:{})})});if(type==='component'){const data={kind:value?.kind||'stats'};field(host,{key:'kind',label:label+' · composant',type:'text'},data,()=>{if(value?.entityId)onChange({...value,kind:data.kind})})}return input}
+
  const row=element('label','bp-field bp-variable-value'),input=element('input');row.append(element('span','',label));input.setAttribute('aria-label',label);input.disabled=state.playing;
  if(type==='boolean'){input.type='checkbox';input.checked=value===true;input.onchange=()=>onChange(input.checked)}
  else{input.type=type==='number'?'number':'text';if(type==='number')input.step='any';input.value=Array.isArray(value)?value.join(', '):String(value??'');input.onchange=()=>{const raw=input.value;if(type==='number'&&!Number.isFinite(Number(raw)))return;const parts=type.startsWith('vector')?raw.split(',').map(Number):null;if(parts&&(parts.length!==Number(type.at(-1))||parts.some(n=>!Number.isFinite(n)))){input.setCustomValidity('Indique '+type.at(-1)+' nombres séparés par des virgules.');input.reportValidity();return}input.setCustomValidity('');onChange(coerceVariable(type,parts||raw))}}

@@ -50,7 +50,7 @@ export function serializeScene(scene){const errors=validateScene(scene);if(error
 export function deserializeScene(json){const scene=JSON.parse(json);const errors=validateScene(scene);if(errors.length)throw Error(errors.join('; '));return clone(scene)}
 export function duplicateGameObject(scene,id){
  const original=scene.objects.find(o=>o.id===id);if(!original)throw Error('GameObject introuvable');
- const copy=clone(original);copy.id=crypto.randomUUID();copy.name+=' Copy';scene.objects.push(copy);return copy;
+ const copy=clone(original);copy.id=crypto.randomUUID();copy.name+=' Copy';if(copy.sourceEntityId!==undefined){copy.sourceEntityId=Math.max(0,...scene.objects.map(o=>o.sourceEntityId||0))+1;const legacy=copy.components.find(c=>c.type==='LegacyEntity');if(legacy?.data)legacy.data.id=copy.sourceEntityId;}scene.objects.push(copy);return copy;
 }
 export function removeGameObject(scene,id){
  const removed=new Set([id]);let size;

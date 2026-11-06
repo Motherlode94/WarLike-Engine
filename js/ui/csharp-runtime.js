@@ -1,3 +1,5 @@
+import {runtimeSession} from '../core/runtime-session.js';
+import {bridgeScene} from '../core/scene-contract.js';
 import {applyCsharpFrame} from '../core/csharp-frame.js';
 import {mountCsharpInspector} from './csharp-inspector.js';
 import {createCsharpSquadDemo} from '../core/csharp-tactical-scene.js';
@@ -18,7 +20,7 @@ async function request(path,method='GET',payload){
   return data;
  }finally{clearTimeout(timer)}
 }
-const currentScene=()=>({version:5,entities:state.entities.map(o=>structuredClone(o))});
+const currentScene=()=>bridgeScene(state.entities);
 export function initCSharpBridge(){
  const dialog=document.getElementById('csharpRuntimePanel'),button=document.getElementById('openCsharpRuntime');
  const close=document.getElementById('csharpRuntimeClose'),status=document.getElementById('csharpRuntimeStatus');
@@ -26,6 +28,8 @@ export function initCSharpBridge(){
  const tick=document.getElementById('csharpRuntimeTick'),second=document.getElementById('csharpRuntimeSecond'),template=document.getElementById('csharpRuntimeTemplate');
  if(!dialog||!button||!close||!status||!connect||!sync||!tick||!second||!template)return;
  dialog.querySelector('.csharp-runtime-actions').after(status);
+ const runtimeNotice=document.createElement('div');runtimeNotice.className='warlike-runtime-notice';runtimeNotice.hidden=true;runtimeNotice.setAttribute('role','status');document.body.append(runtimeNotice);
+ document.addEventListener('warlike:runtime',()=>{const r=runtimeSession;runtimeNotice.hidden=r.backend!=='native'||!state.playing;runtimeNotice.classList.toggle('has-error',r.phase==='error');runtimeNotice.textContent=r.phase==='error'?r.error+' · Arrête Play pour corriger.':r.phase==='connecting'?'Connexion du Play au runtime C# local…':'Play C# local · composants et blueprints synchronisés';});
  const announce=(message,ok=false)=>{status.textContent=message;status.dataset.ok=String(ok)};
  let busy=false,streaming=false,streamToken=0,streamTimer=null,streamBefore=null,streamApplied=false;
  let inspector=null,sceneToken=0,syncedScene=null;
@@ -215,7 +219,9 @@ public sealed class ${name} : WarLikeBehaviour
   const object=selectedObject();
   if(!object||state.playing||busy||streaming){announce('Sélectionne un objet et arrête Play avant de modifier un script.');return}
   if(scriptSource.value.length>30000){announce('Script limité à 30 000 caractères.');return}
+  const scriptId=object.csharpScript?.scriptId;
   object.csharpScript={name:safeName(scriptName.value),source:scriptSource.value};
+  if(scriptId)object.csharpScript.scriptId=scriptId;
   record('C# : enregistrer script '+object.csharpScript.name);notify();
   ui.ready=false;buttons();
   announce('Code C# enregistré dans '+object.name+'. Le runtime doit être recompilé pour l’exécuter.',true);

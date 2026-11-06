@@ -12,7 +12,7 @@ Test("lifecycle order and repeated activation", () => {
     var world = new GameWorld(); var actor = world.CreateActor("Actor", Vector3.Zero);
     var events = new List<string>(); var behaviour = world.AddComponent(actor, new Probe(events));
     world.Tick(1f / 60);
-    Check(string.Join(',', events) == "Awake,Enable,Start,Update,Fixed,Late", "Incorrect lifecycle order.");
+    Check(string.Join(',', events) == "Awake,Enable,Start,Fixed,Update,Late", "Incorrect lifecycle order.");
     actor.Enabled = false; world.Tick(1f / 60); actor.Enabled = true; actor.Enabled = true; world.Tick(1f / 60);
     Check(events.Count(e => e == "Start") == 1 && events.Count(e => e == "Enable") == 2, "Start or OnEnable repeated.");
     behaviour.Enabled = false; int count = events.Count; world.Tick(1f / 60);
@@ -95,6 +95,26 @@ Test("squad follows outside its group and stops when target dies", () => {
     Check(Math.Abs(Vector3.Distance(root.Position, target.Position) - squad.FollowDistance) < .01f, "Follow distance incorrect.");
     target.Health = 0; world.Tick(.1f); Check(squad.Order == SquadOrder.Hold, "Dead follow target still pursued.");
     Reject(() => squad.Follow(member.Id)); Reject(() => squad.Follow(999));
+});
+Test("canonical scene uses the same axes IDs and native components as browser Play", () => {
+    var world=GameWorld.FromWarLikeJson("""
+    {"schema":"warlike.scene.v2","objects":[{"id":"hero","sourceEntityId":9,"name":"Hero","parentId":null,"active":true,"components":[
+      {"type":"Transform","position":[1,2,3],"rotation":[0,40,0],"scale":[1,1,1]},
+      {"type":"LegacyEntity","data":{"id":9,"w":32,"h":64,"hp":80}},
+      {"type":"NativeBehaviour","data":{"kind":"AutoRotate","speed":90}}
+    ]}]}
+    """);
+    var actor=world.Actors.Single();Check(actor.Id==9&&actor.Position==new Vector3(1,2,3),"Canonical identity or axes lost.");
+    var component=actor.GetComponent<AutoRotateBehaviour>();world.Tick(.1f);
+    Check(Math.Abs(actor.Rotation-49)<.001f&&component is not null,"Canonical native behaviour missing.");
+    world.ApplySharedFrame(Json("""[{"id":9,"x":128,"y":256,"elevation3d":5,"rotation":10,"hp":77,"enabled":true}]"""));world.Tick(.1f);
+    Check(actor.Position==new Vector3(2,5,4)&&Math.Abs(actor.Rotation-19)<.001f&&actor.Health==77,"Shared frame did not execute.");
+    Check(ReferenceEquals(component,actor.GetComponent<AutoRotateBehaviour>()),"Frame recreated native components.");
+});
+Test("shared frames validate all IDs before mutating any actor", () => {
+    var world=new GameWorld();var a=world.CreateActor("A",Vector3.Zero);world.CreateActor("B",Vector3.One);
+    Reject(()=>world.ApplySharedFrame(Json("""[{"id":1,"x":99,"y":0,"elevation3d":0,"rotation":0,"hp":10,"enabled":true},{"id":99,"x":0,"y":0,"elevation3d":0,"rotation":0,"hp":10,"enabled":true}]""")));
+    Check(a.Position==Vector3.Zero&&a.Health==100,"Invalid shared frame partially applied.");
 });
 Console.WriteLine($"{passed} native C# tests passed.");
 

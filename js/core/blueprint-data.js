@@ -1,12 +1,11 @@
 // Serializable typed Blueprint values. No eval or executable expressions in projects.
-import {variableTypes} from './blueprint-graph.js';
+import {variableTypes,typedValue} from './blueprint-types.js';
+import {evaluateDataExpression} from './blueprint-ports.js';
+export {valueType,typedValue} from './blueprint-types.js';
 const safe=name=>typeof name==='string'&&name.length>0&&name.length<=80&&!['__proto__','prototype','constructor'].includes(name);
-export const valueType=value=>Array.isArray(value)&&[2,3].includes(value.length)&&value.every(Number.isFinite)?'vector'+value.length:typeof value;
-export function typedValue(type,value,label='Valeur'){
- if(!variableTypes.includes(type)||valueType(value)!==type||type==='number'&&!Number.isFinite(value))throw Error(label+' : '+type+' attendu.');
- return structuredClone(value);
-}
-export function resolveBlueprintValue(value,{globals={},locals={},parameters={}}={},depth=0){
+export function resolveBlueprintValue(value,scope={},depth=0){
+ const {globals={},locals={},parameters={}}=scope;
+ if(value?.$expr)return evaluateDataExpression(value,scope,depth);
  if(depth>12)throw Error('Expression Blueprint trop profonde.');
  if(!value||typeof value!=='object'||Array.isArray(value))return structuredClone(value);
  if(!value.$ref)return structuredClone(value);
@@ -17,7 +16,7 @@ export function resolveBlueprintValue(value,{globals={},locals={},parameters={}}
 export function resolveBlueprintAction(action,scope){
  const result={...action};
  // Branch bodies and function arguments are resolved only when entered.
- for(const [key,value] of Object.entries(result))if(!['thenInstructions','elseInstructions','conditions','arguments'].includes(key)&&value&&typeof value==='object'&&value.$ref)result[key]=resolveBlueprintValue(value,scope);
+ for(const [key,value] of Object.entries(result))if(!['thenInstructions','elseInstructions','conditions','arguments'].includes(key)&&value&&typeof value==='object'&&(value.$ref||value.$expr))result[key]=resolveBlueprintValue(value,scope);
  return result;
 }
 export function validateFunctionDefinitions(functions){

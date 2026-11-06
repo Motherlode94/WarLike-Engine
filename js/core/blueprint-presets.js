@@ -1,8 +1,10 @@
+import {healthDataSequence} from './blueprint-data-samples.js';
 import {newSequence} from './logic-sequences.js';
 
 // Both workspace types store the same sequence data; geometry is expressed
 // in editor-plane coordinates (X/Y in 2D, ground X/Z in the 3D workspace).
 export const blueprintPresets=[
+ {id:'typed-health',label:'Santé − dégâts · ports typés',category:'Données & calculs',modes:['2d','3d'],description:'Objet → santé → soustraction → appliquer. Les données circulent dans les câbles colorés.',create:healthDataSequence},
  {id:'interact',label:'Interagir',modes:['2d','3d'],description:'Touche E près de l’objet',create:()=>({...newSequence(),event:'interact',radius:110,instructions:[{type:'message',value:'Interaction WarLike !'}]})},
  {id:'trigger',label:'Zone de détection',modes:['2d','3d'],description:'Déclenché à l’entrée dans une zone',create:()=>({...newSequence(),event:'enter',radius:140,instructions:[{type:'message',value:'Zone détectée !'},{type:'setColor',value:'#e0af55'}]})},
  {id:'timer',label:'Événement temporisé',modes:['2d','3d'],description:'Attendre puis envoyer un signal',create:()=>({...newSequence(),event:'start',once:true,instructions:[{type:'wait',value:2},{type:'emitSignal',value:'warlike:ready'}]})},

@@ -219,7 +219,9 @@ public sealed class ${name} : WarLikeBehaviour
   const object=selectedObject();
   if(!object||state.playing||busy||streaming){announce('Sélectionne un objet et arrête Play avant de modifier un script.');return}
   if(scriptSource.value.length>30000){announce('Script limité à 30 000 caractères.');return}
+  const scriptId=object.csharpScript?.scriptId;
   object.csharpScript={name:safeName(scriptName.value),source:scriptSource.value};
+  if(scriptId)object.csharpScript.scriptId=scriptId;
   record('C# : enregistrer script '+object.csharpScript.name);notify();
   ui.ready=false;buttons();
   announce('Code C# enregistré dans '+object.name+'. Le runtime doit être recompilé pour l’exécuter.',true);

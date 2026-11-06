@@ -1,7 +1,8 @@
+import {validateScript} from '../../script-editor/core.js';
 import {variableTypes} from './blueprint-types.js';
 import {resolveGameGenre} from './game-genres.js';
 // Serializable game configuration, shared by the Hub, Blueprint and exported builds.
-export const freshGameProject=()=>({version:1,id:'untitled',title:'Mon jeu',genre:'sandbox',activeSceneId:'main',startupSceneId:'main',scenes:[],variables:[],functions:[],runtimeBackend:'web',physics3d:'rapier',uiSkin:'kenney-blue'});
+export const freshGameProject=()=>({version:1,id:'untitled',title:'Mon jeu',genre:'sandbox',activeSceneId:'main',startupSceneId:'main',scenes:[],variables:[],functions:[],scripts:[],runtimeBackend:'web',physics3d:'rapier',uiSkin:'kenney-blue'});
 export const gameProject=freshGameProject();
 const clone=value=>structuredClone(value);
 export const safeKey=key=>typeof key==='string'&&key.length>0&&key.length<=80&&!['__proto__','prototype','constructor'].includes(key);
@@ -19,6 +20,7 @@ export function restoreGameProject(value,{entities=null,genre=null}={}){
   if(typeof value.title==='string')next.title=value.title.slice(0,120);
   if(Array.isArray(value.scenes))next.scenes=value.scenes.filter(s=>s&&safeKey(s.id)&&validEntities(s.entities)).slice(0,40).map(s=>({id:s.id,name:String(s.name||s.id).slice(0,80),entities:clone(s.entities),camera:clone(s.camera||{x:0,y:0,zoom:1})}));
   next.scenes=next.scenes.filter((s,i,a)=>a.findIndex(other=>other.id===s.id)===i);
+  if(Array.isArray(value.scripts))next.scripts=value.scripts.slice(0,64).flatMap(s=>{try{return [validateScript(s)]}catch{return []}}).filter((s,i,a)=>a.findIndex(x=>x.id===s.id)===i);
   if(Array.isArray(value.functions))next.functions=clone(value.functions.filter(f=>f&&typeof f==='object'&&Array.isArray(f.parameters)).slice(0,64));
   if(['web','native'].includes(value.runtimeBackend))next.runtimeBackend=value.runtimeBackend;
   if(['rapier','builtin'].includes(value.physics3d))next.physics3d=value.physics3d;

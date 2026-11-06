@@ -1,6 +1,12 @@
 import {renderLifeInspector} from './life-inspector.js';
 import {renderAdventureInspector} from './adventure-inspector.js';
 import {enhanceInspectorDetails} from './inspector-details.js';
+import {decorateInspectorComponents} from './inspector-components.js';
+import {inspectedObjects,inspectorContext} from './inspector-context.js';
+import {inspectorWindowHeader,inspectorDebug,renderInspectorDebug,renderMultipleInspector} from './inspector-window.js';
+import {renderInspectorPrefab} from './inspector-prefabs.js';
+import {inspectorNumber} from '../core/inspector-model.js';
+import {renderAssetInspector,inspectedAsset,initAssetInspection,assetInspectorLock} from './inspector-assets.js';
 import {renderBlueprintInstance} from './blueprint-variable-details.js';
 import {renderSurvivalInspector} from './survival-inspector.js';
 import {renderHeroForgeInspector} from './hero-forge-inspector.js';
@@ -31,9 +37,9 @@ import {defaultLogic,eventTypes,actionTypes,conditionTypes} from '../core/visual
 import {getAsset} from '../assets/catalog.js';
 import {state,active,notify} from '../core/state.js';
 import {record} from '../core/history.js';
-import {deleteSelected} from '../core/scene.js';
 let inspectorFieldSerial=0;
-function field(parent,o,key,label,type='number'){const line=document.createElement('div');line.className='property-row';const name=document.createElement('label');name.textContent=label;const input=document.createElement('input');input.id='inspector-field-'+(++inspectorFieldSerial);name.htmlFor=input.id;input.type=type;input.value=o[key]??(type==='number'?0:'');input.disabled=state.playing;input.onchange=()=>{const v=type==='number'?Number(input.value):input.value;if(type==='number'&&!Number.isFinite(v))return;if(['w','h'].includes(key)&&v<=0)return;o[key]=v;record('Inspector : '+label);notify()};line.append(name,input);parent.append(line)}
+function deleteInspectedObject(object){if(state.playing)return;state.entities=state.entities.filter(entity=>entity.id!==object.id);state.selected=state.selected.filter(id=>id!==object.id);record('Supprimer '+object.name);notify()}
+function field(parent,o,key,label,type='number'){const line=document.createElement('div');line.className='property-row';const name=document.createElement('label');name.textContent=label;const input=document.createElement('input');input.id='inspector-field-'+(++inspectorFieldSerial);name.htmlFor=input.id;input.type=type==='number'?'text':type;if(type==='number')input.inputMode='decimal';input.value=o[key]??(type==='number'?0:'');input.disabled=state.playing;input.onchange=()=>{let v;try{v=type==='number'?inspectorNumber(input.value):input.value;if(['w','h'].includes(key)&&v<=0)throw Error('La dimension doit être positive.');input.setCustomValidity('')}catch(error){input.setCustomValidity(error.message);input.reportValidity();return}o[key]=v;record('Inspector : '+label);notify()};input.oninput=()=>input.setCustomValidity('');line.append(name,input);parent.append(line)}
 const colorsPreset=['#41cdb5','#ffffff','#1b2535','#ef5350','#ff9f43','#ffd166','#74c96c','#4f9ce9','#9b78ef','#e667b4','#926b4c','#9daab5'];
 const normalizedHex=value=>/^#[0-9a-f]{6}$/i.test(String(value||''))?String(value).toLowerCase():'#8195ef';
 function colorPalette(parent,o,key,label='Couleur'){
@@ -52,15 +58,13 @@ function colorPalette(parent,o,key,label='Couleur'){
  root.append(palette);parent.append(root);
 }
 function selectField(parent,o,key,label,opts){const line=document.createElement('div');line.className='property-row';const title=document.createElement('label');title.textContent=label;const select=document.createElement('select');select.id='inspector-select-'+(++inspectorFieldSerial);title.htmlFor=select.id;select.disabled=state.playing;for(const value of opts){const option=document.createElement('option');option.value=typeof value==='object'?value.value:value;option.textContent=typeof value==='object'?value.label:value;select.append(option)}select.value=o[key]||(typeof opts[0]==='object'?opts[0].value:opts[0]);select.onchange=()=>{o[key]=select.value;record('Inspector : '+label);notify()};line.append(title,select);parent.append(line)}
-const INSPECTOR_FOLDS_KEY='warlike.inspector.folds.v1';
-function readFolds(){try{return JSON.parse(localStorage.getItem(INSPECTOR_FOLDS_KEY)||'{}')||{}}catch{return {}}}
 function component(parent,title,build){
  const details=document.createElement('details');details.className='inspector-component';details.dataset.componentTitle=title;
- const folds=readFolds();details.open=folds[title]??title==='Transform';
+ details.open=title==='Transform';
  const summary=document.createElement('summary');const icon=document.createElement('span');icon.className='unity-component-icon';icon.textContent=title==='Transform'?'✥':title.includes('Collider')?'◇':title.includes('Animator')?'▷':title.includes('Renderer')?'▧':title.includes('Audio')?'♫':'▣';summary.append(icon,document.createTextNode(title));
  const body=document.createElement('div');body.className='component-content';
  details.append(summary,body);build(body);parent.append(details);
- details.addEventListener('toggle',()=>{const saved=readFolds();saved[title]=details.open;try{localStorage.setItem(INSPECTOR_FOLDS_KEY,JSON.stringify(saved))}catch{}});
+
 }
 const nativeComponentCatalog={
  'Gameplay / Combat':{Weapon:{damage:25,fireRate:8,magazineSize:30},Damageable:{armor:0,invulnerable:false},Health:{regen:0},Projectile:{speed:30,damage:20,lifetime:5},Rigidbody:{gravity:9.81,restitution:0,friction:.5}},
@@ -76,15 +80,16 @@ function renderNativeComponents(root,o){
  const labels={memberIds:'ID des membres',spacing:'Espacement (m)',followDistance:'Distance de suivi (m)',damage:'Dégâts',fireRate:'Tirs / seconde',magazineSize:'Taille du chargeur',armor:'Armure',invulnerable:'Invulnérable',regen:'Régénération / s',speed:'Vitesse',lifetime:'Durée de vie',gravity:'Gravité',restitution:'Rebond',friction:'Friction',teamId:'Équipe ID',friendlyFire:'Tirs alliés',delay:'Délai (s)',matchDuration:'Durée du match (s)',scoreLimit:'Limite de kills',countdown:'Compte à rebours',radius:'Rayon',amount:'Quantité',healAmount:'Soin',captureTime:'Temps de capture',vx:'Vitesse X',vy:'Vitesse Y',vz:'Vitesse Z',targetId:'ID de la cible',stopDistance:'Distance d’arrêt',maxSpeed:'Vitesse max',acceleration:'Accélération',brakeForce:'Freinage',turnRate:'Direction (°/s)',drag:'Résistance',reverseRatio:'Rapport marche arrière',money:'Crédits',reputation:'Réputation',materials:'Matériaux',gold:'Or'};
  const defaults=Object.assign({},...Object.values(nativeComponentCatalog));
  definitions.forEach((definition,index)=>{
- const card=document.createElement('details');card.className='inspector-component warlike-component-card';card.dataset.componentTitle=definition.kind;card.dataset.runtime=webDataComponentKinds.has(definition.kind)?'web':'dotnet';card.open=true;
+ const card=document.createElement('details');card.className='inspector-component warlike-component-card';card.dataset.componentTitle=definition.kind;card.dataset.nativeIndex=String(index);card._resetNative=()=>{definitions[index]={kind:definition.kind,...structuredClone(defaults[definition.kind]||{})}};card.dataset.runtime=webDataComponentKinds.has(definition.kind)?'web':'dotnet';card.open=true;
  const heading=document.createElement('summary');heading.textContent=definition.kind||'Composant';const badge=document.createElement('small');badge.className='component-runtime-badge';badge.textContent=webDataComponentKinds.has(definition.kind)?'Web':'C# local';heading.append(badge);card.append(heading);
  const fields=document.createElement('div');fields.className='warlike-component-fields';
  const keys=Object.keys(defaults[definition.kind]||{});for(const key of Object.keys(definition)){if(!['kind','enabled'].includes(key)&&!keys.includes(key))keys.push(key)}
  for(const key of keys){const row=document.createElement('label');row.className='warlike-component-field';
  const label=document.createElement('span');label.textContent=labels[key]||key;row.append(label);
  const value=definition[key]??defaults[definition.kind]?.[key];
- const input=document.createElement('input');input.disabled=state.playing;
- if(typeof value==='boolean'){input.type='checkbox';input.checked=value;input.onchange=()=>{definition[key]=input.checked;record('Composant '+definition.kind+' : '+key);notify()}}
+ const reference=['targetId','ownerId','actorId','entityId'].includes(key),input=document.createElement(reference?'select':'input');input.disabled=state.playing;input.setAttribute('aria-label',labels[key]||key);
+ if(reference){const objects=[{id:0,name:'Aucun'},...state.entities];if(value&&!objects.some(object=>object.id===value))objects.push({id:value,name:'Référence manquante'});for(const object of objects){const option=document.createElement('option');option.value=String(object.id);option.textContent=object.name+' · #'+object.id;input.append(option)}input.value=String(value||0);input.onchange=()=>{definition[key]=Number(input.value);record('Référence '+definition.kind+' : '+key);notify()}}
+ else if(typeof value==='boolean'){input.type='checkbox';input.checked=value;input.onchange=()=>{definition[key]=input.checked;record('Composant '+definition.kind+' : '+key);notify()}}
  else if(Array.isArray(value)){input.type='text';input.value=value.join(', ');input.placeholder='ID séparés par des virgules';input.onchange=()=>{const ids=input.value.trim()?input.value.trim().split(/[\s,;]+/).map(Number):[];if(ids.length>64||ids.some(id=>!Number.isSafeInteger(id)||id<=0)||new Set(ids).size!==ids.length){input.value=(definition[key]??value).join(', ');return}definition[key]=ids;record('Composant '+definition.kind+' : '+key);notify()}}
  else if(typeof value==='number'){input.type='number';input.step='any';input.value=String(value);input.onchange=()=>{if(!input.value.trim()||!Number.isFinite(Number(input.value))){input.value=String(definition[key]??value);return}definition[key]=Number(input.value);record('Composant '+definition.kind+' : '+key);notify()}}
  else {input.type='text';input.value=String(value??'');input.onchange=()=>{definition[key]=input.value;record('Composant '+definition.kind+' : '+key);notify()}}
@@ -99,10 +104,10 @@ function renderNativeComponents(root,o){
  })
 }
 function openCSharpEditor(){
- document.dispatchEvent(new CustomEvent('warlike:script-open',{detail:{language:'csharp',entityId:state.selected.at(-1)}}));
+ document.dispatchEvent(new CustomEvent('warlike:script-open',{detail:{language:'csharp',entityId:inspectedObjects().at(-1)?.id}}));
 }
 
-function finishInspector(root,o,templates){renderBlueprintInstance(root,o,component);if(o.animatorGraph)component(root,'Animator · Graphe d’états',body=>{const info=document.createElement('p');info.textContent=o.animatorGraph.states.length+' états · transitions, mélange de locomotion et événements.';const b=document.createElement('button');b.type='button';b.textContent='Ouvrir Animator';b.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:o.id}}));body.append(info,b)});renderLifeInspector(root,o,{component,field,selectField});renderAdventureInspector(root,o,{component,field});renderSurvivalInspector(root,o,{component,field,selectField});renderHeroForgeInspector(root,o,{component,field,selectField,colorPalette});finishComponentInspector(root,o,templates,nativeComponentCatalog,renderNativeComponents,openCSharpEditor);enhanceInspectorDetails(root,o)}
+function finishInspector(root,o,templates){if(o.csharpScript)component(root,'Script C#',body=>{const reference=document.createElement('p');reference.textContent=o.csharpScript.name||'Script C#';const open=document.createElement('button');open.type='button';open.textContent='Ouvrir dans Script Studio';open.onclick=openCSharpEditor;body.append(reference,open)});renderBlueprintInstance(root,o,component);if(o.animatorGraph)component(root,'Animator · Graphe d’états',body=>{const info=document.createElement('p');info.textContent=o.animatorGraph.states.length+' états · transitions, mélange de locomotion et événements.';const b=document.createElement('button');b.type='button';b.textContent='Ouvrir Animator';b.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:o.id}}));body.append(info,b)});renderLifeInspector(root,o,{component,field,selectField});renderAdventureInspector(root,o,{component,field});renderSurvivalInspector(root,o,{component,field,selectField});renderHeroForgeInspector(root,o,{component,field,selectField,colorPalette});finishComponentInspector(root,o,templates,nativeComponentCatalog,renderNativeComponents,openCSharpEditor);decorateInspectorComponents(root,o);enhanceInspectorDetails(root,o)}
 function renderObjectBehaviors(root,owner){
  const entries=[...(owner.sequence?[{index:-1,sequence:owner.sequence}]:[]),...(owner.sequences||[]).map((sequence,index)=>({index,sequence}))];
  for(const entry of entries){
@@ -111,7 +116,7 @@ function renderObjectBehaviors(root,owner){
    else if(sequence)owner.sequences[entry.index]=sequence;else owner.sequences.splice(entry.index,1);
    record('Blueprint : '+label);notify();
   }});
-  const card=root.lastElementChild;card.dataset.componentTitle='Déclencheur · '+(entry.sequence.name||entry.sequence.event);card.dataset.componentKey='sequence';
+  const card=root.lastElementChild;card.dataset.componentTitle='Déclencheur · '+(entry.sequence.name||entry.sequence.event);card.dataset.componentKey='sequence';card.dataset.sequenceIndex=String(entry.index);
   const summary=card.querySelector('summary');summary.textContent=card.dataset.componentTitle;
   const overview=document.createElement('p');overview.className='inspector-behavior-flow';overview.textContent='Événement → Conditions → Instructions';
   const open=document.createElement('button');open.type='button';open.textContent='Ouvrir ce comportement dans Blueprint';open.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:open-behavior',{detail:{ownerId:owner.id,sequenceKey:entry.index<0?owner.id:owner.id+':extra:'+entry.index}}));
@@ -119,7 +124,7 @@ function renderObjectBehaviors(root,owner){
  }
 }
 export function renderHierarchy(){renderSceneHierarchy()}
-export function renderInspector(){const root=document.querySelector('#properties');root.replaceChildren();const o=active();if(!o){root.textContent='Sélectionne un objet dans la scène';return}
+export function renderInspector(){initAssetInspection();const root=document.querySelector('#properties');const objects=inspectedObjects(),o=objects.at(-1),asset=inspectedAsset();const signature=inspectorContext()+':'+(asset?'asset:'+asset.id:objects.map(object=>object.id).join(','));const scroll=root.dataset.inspection===signature?root.scrollTop:0;root.dataset.inspection=signature;root.replaceChildren();inspectorWindowHeader(root,asset?[asset]:objects,asset?assetInspectorLock():{});requestAnimationFrame(()=>{root.scrollTop=scroll});if(asset){if(inspectorDebug())renderInspectorDebug(root,[asset]);else renderAssetInspector(root,asset);return}if(!o){const empty=document.createElement('p');empty.className='inspector-empty';empty.textContent='Sélectionne un GameObject dans Hierarchy ou une ressource dans Project pour afficher ses propriétés.';root.append(empty);return}if(inspectorDebug()){renderInspectorDebug(root,objects);return}if(objects.length>1){renderMultipleInspector(root,objects);return}
 
 const header=document.createElement('div');header.className='inspector-object';
 const identity=document.createElement('div');identity.className='unity-object-identity';
@@ -129,7 +134,7 @@ const name=document.createElement('input');name.className='inspector-object-name
 const meta=document.createElement('small');meta.className='unity-object-meta';meta.textContent=o.type+' · #'+o.id;
 const labels=document.createElement('div');labels.className='unity-object-labels';
 for(const [key,label,value] of [['tags','Tag',o.tags?.[0]||''],['hierarchyGroup','Groupe',o.hierarchyGroup||'']]){const field=document.createElement('label');field.append(document.createTextNode(label));const input=document.createElement('input');input.type='text';input.value=value;input.placeholder=key==='tags'?'Untagged':'Aucun';input.disabled=state.playing;input.setAttribute('aria-label',label+' du GameObject');input.onchange=()=>{const v=input.value.trim().slice(0,80);if(key==='tags')o.tags=[...(v?[v]:[]),...(o.tags||[]).slice(1)];else if(v)o.hierarchyGroup=v;else delete o.hierarchyGroup;record(label+' du GameObject');notify()};field.append(input);labels.append(field)}
-header.append(identity,labels,meta);root.append(header);
+header.append(identity,labels,meta);root.append(header);renderInspectorPrefab(root,o);
 component(root,'Transform',body=>{
  const vector=(title,axes)=>{
   const row=document.createElement('div');row.className='inspector-vector-row';
@@ -138,9 +143,9 @@ component(root,'Transform',body=>{
   for(const [axis,key] of axes){
    const item=document.createElement('label');item.className='inspector-axis';
    const tag=document.createElement('span');tag.textContent=axis;tag.dataset.axis=axis;
-   const input=document.createElement('input');input.type='number';input.step='any';const divisor=workspace.mode==='3d'&&key!=='elevation3d'?64:1;input.value=String(Number(((o[key]??(key==='depth3d'?o.w:0))/divisor).toFixed(3)));input.disabled=state.playing;input.setAttribute('aria-label',title+' '+axis);input.title=workspace.mode==='3d'?'Mètres':'Unités de scène';
-   input.onchange=()=>{const value=Number(input.value)*divisor;if(!Number.isFinite(value)||(title==='Dimensions'&&value<=0)){input.value=String(o[key]??0);return}o[key]=value;record('Transform '+title+' '+axis);notify()};
-   item.append(tag,input);group.append(item);
+   const input=document.createElement('input');input.type='text';input.inputMode='decimal';const divisor=workspace.mode==='3d'&&key!=='elevation3d'?64:1;input.value=String(Number(((o[key]??(key==='depth3d'?o.w:0))/divisor).toFixed(3)));input.disabled=state.playing;input.setAttribute('aria-label',title+' '+axis);input.title=workspace.mode==='3d'?'Mètres':'Unités de scène';
+   input.onchange=()=>{let value;try{value=inspectorNumber(input.value)*divisor;if(title==='Dimensions'&&value<=0)throw Error('La dimension doit être positive.');input.setCustomValidity('')}catch(error){input.setCustomValidity(error.message);input.reportValidity();return}o[key]=value;record('Transform '+title+' '+axis);notify()};
+   input.oninput=()=>input.setCustomValidity('');item.append(tag,input);group.append(item);
   }
   row.append(group);body.append(row);
  };
@@ -350,7 +355,7 @@ if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Box Collider 3D',bod
 });
 if(o.model3dId||get3dAsset(o.assetId)?.shape==='glb')renderAnimator3d(root,o);
 if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Mesh Renderer · Matériau',body=>{const isGlb=!!o.model3dId||get3dAsset(o.assetId)?.shape==='glb';if(isGlb){const label=document.createElement('label'),check=document.createElement('input');label.className='logic-flag';check.type='checkbox';check.checked=o.colorCustomized===true;check.disabled=state.playing;check.onchange=()=>{o.colorCustomized=check.checked;o.color??='#ffffff';record('Teinte personnalisée');notify()};label.append(check,document.createTextNode('Teinte personnalisée'));body.append(label)}if(!isGlb||o.colorCustomized)colorPalette(body,o,'color','Couleur du matériau');field(body,o,'materialRoughness','Rugosité 0–1');field(body,o,'materialMetallic','Métal 0–1');const hint=document.createElement('p');hint.textContent='Les GLB conservent leurs textures et couleurs. Une couleur personnalisée teinte le matériau.';body.append(hint);const asset=get3dAsset(o.model3dId||o.assetId);if(asset?.author)body.append(assetCredits(asset));for(const [i,key] of ['materialRoughness','materialMetallic'].entries()){const input=body.querySelectorAll('.property-row input')[i];if(o[key]===undefined){input.value='';input.placeholder='Matériau du GLB'}input.addEventListener('change',()=>{if(!input.value.trim()){delete o[key];record('Matériau d’origine');notify()}})}});
-const del3d=document.createElement('button');del3d.className='delete-object';del3d.textContent='Supprimer objet 3D';del3d.disabled=state.playing;del3d.onclick=deleteSelected;root.append(del3d);finishInspector(root,o,advancedTools);
+const del3d=document.createElement('button');del3d.className='delete-object';del3d.textContent='Supprimer objet 3D';del3d.disabled=state.playing;del3d.onclick=()=>deleteInspectedObject(o);root.append(del3d);finishInspector(root,o,advancedTools);
 return;
 }
 if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Sprite Renderer',body=>{if(!getAsset(o.assetId)?.spriteUrl)colorPalette(body,o,'color','Couleur de l’objet');if(o.type==='prefab'){const label=document.createElement('p');label.textContent='Source : '+(getAsset(o.assetId)?.name||o.assetId);body.append(label);const asset=getAsset(o.assetId);if(asset?.author)body.append(assetCredits(asset))}if(o.type==='character')selectField(body,o,'skin','Character',['scout','soldier'])});
@@ -429,6 +434,6 @@ const removeLogic=document.createElement('button');removeLogic.textContent='Remo
 }
 root.append(advancedTools);
 renderPhysics2d(root,o,{component,field,selectField});
-const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=deleteSelected;root.append(del);finishInspector(root,o,advancedTools)}
+const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=()=>deleteInspectedObject(o);root.append(del);finishInspector(root,o,advancedTools)}
 export function renderUI(){renderHierarchy();renderInspector()}
 document.addEventListener('warlike:change',renderUI);

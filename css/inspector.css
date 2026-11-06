@@ -1,0 +1,51 @@
+/* Inspector controls stay in document flow at every dock width. */
+body:not(.hub-open) #inspectorPanel{display:flex;flex-direction:column;overflow:hidden!important}
+body:not(.hub-open) #inspectorPanel #properties{padding:0!important;gap:0!important;width:100%;max-width:100%;box-sizing:border-box;flex:1;container-type:inline-size;overflow-x:hidden}
+#properties [hidden]{display:none!important}
+#properties .inspector-window-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:7px 8px;border-bottom:1px solid var(--wl-theme-border);background:var(--wl-theme-header);position:sticky;top:0;z-index:3}
+#properties .inspector-window-toolbar strong{flex:1;font-size:11px}
+#properties .inspector-window-toolbar :is(button,select){width:auto!important;min-width:0;min-height:25px!important;font-size:10px!important;padding:2px 5px!important;flex:none;margin:0!important}
+#properties .inspector-lock[aria-pressed=true]{box-shadow:inset 0 -2px var(--editor-accent,#51b2c6)}
+body:not(.hub-open) #properties .inspector-object{gap:8px;margin:0!important;padding:10px!important}
+#properties .inspector-object :is(button,input,select){margin:0!important}
+#properties .inspector-object>small{margin:0!important;padding:0!important}
+#properties .inspector-object-actions{position:static!important;display:flex;flex-wrap:wrap;gap:5px;width:100%}
+#properties .inspector-object-actions button{flex:1;min-height:26px!important;font-size:10px!important;padding:3px 7px!important}
+#properties .inspector-details-tools{margin-top:0;padding-top:8px;display:grid;gap:6px;min-width:0}
+#properties .inspector-details-tools>input{width:100%;min-width:0;height:27px!important;font-size:11px!important;font-weight:400}
+#properties .inspector-details-tabs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.85fr);gap:5px;margin:0;min-width:0}
+#properties .inspector-details-tabs select{width:100%;min-width:0;min-height:26px!important;padding:3px!important;font-size:10px!important}
+#properties .unity-object-labels{padding-left:0;gap:8px;flex-wrap:wrap}
+#properties .unity-object-labels label{flex:1 1 110px}
+#properties .inspector-component>summary{position:relative;display:flex;align-items:center;min-width:0;overflow-wrap:anywhere;padding-right:5px!important}
+#properties .component-menu-toggle{position:static!important;flex:none;align-self:center;margin:0 0 0 auto!important;min-width:24px;width:24px;min-height:23px!important;padding:1px!important}
+#properties .inspector-component-enabled{width:13px!important;height:13px!important;min-height:13px!important;flex:none;margin:0 2px}
+#properties .inspector-component-actions{position:absolute!important;right:0;top:100%;z-index:8;max-width:230px;display:flex;flex-direction:column;gap:2px;padding:6px!important;margin:0!important;border-top:1px solid var(--wl-theme-border);background:var(--wl-theme-header);width:100%;box-sizing:border-box}
+#properties .inspector-component-actions button{display:block;text-align:left;white-space:normal;min-height:27px!important;width:100%;margin:0!important}
+#properties :is(.property-row,.warlike-component-field){min-width:0;grid-template-columns:minmax(72px,.8fr) minmax(0,1fr)}
+#properties :is(.property-row,.warlike-component-field)>:is(input,select){min-width:0;width:100%;box-sizing:border-box}
+body:not(.hub-open) #properties .inspector-vector-row{grid-template-columns:minmax(55px,.55fr) minmax(0,1fr)!important}
+#properties .inspector-vector-fields{min-width:0;gap:3px}
+#properties .inspector-axis{min-width:0}
+#properties .inspector-axis input{width:100%;min-width:0!important}
+#properties :is(.inspector-lock-note,.inspector-play-note,.inspector-empty,.inspector-debug-note,.inspector-multi-note,.inspector-search-empty){padding:9px 10px;margin:0;font-size:11px;line-height:1.5;color:var(--wl-text-muted);overflow-wrap:anywhere}
+#properties .inspector-play-note{border-left:2px solid var(--editor-accent,#51b2c6)}
+#properties .inspector-debug-data{white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.6 monospace;padding:10px;margin:0;user-select:text}
+#properties .inspector-mixed>span:after{content:' · —';color:var(--editor-accent,#51b2c6)}
+#properties .inspector-value-source{grid-column:2;max-width:100%;font-size:10px!important}
+#properties .inspector-add-component{margin:10px!important;min-width:0}
+#properties .inspector-add-component>summary{padding:9px;cursor:pointer;text-align:center}
+#properties .component-browser-results{max-height:300px;overflow:auto}
+#properties .inspector-asset-preview{object-fit:contain;width:100%;height:170px;padding:12px;box-sizing:border-box;background:var(--wl-theme-header)}
+#properties .inspector-asset-metadata{padding:10px;margin:0;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+#properties .inspector-asset-metadata dt{font-weight:600;margin-top:6px}
+#properties .inspector-asset-metadata dd{margin:0;color:var(--wl-text-muted)}
+#properties .inspector-asset-add{margin:10px;white-space:normal}
+.inspector-ping{animation:inspector-ping 1.2s ease-out}
+@keyframes inspector-ping{from{outline:2px solid var(--editor-accent,#51b2c6);background:var(--wl-theme-header)}to{outline:2px solid transparent}}
+@container (max-width:270px){#properties .inspector-details-tabs{grid-template-columns:minmax(0,1fr)}#properties .inspector-window-toolbar strong{flex-basis:100%}body:not(.hub-open) #properties .inspector-vector-row{grid-template-columns:1fr!important}#properties .unity-object-labels label{flex-basis:100%}}
+
+#properties .inspector-prefab{margin:8px 10px;border:1px solid var(--wl-theme-border);padding:8px;font-size:11px;overflow-wrap:anywhere}
+#properties .inspector-prefab summary{cursor:pointer}
+#properties .inspector-prefab button{white-space:normal;width:100%}
+#visualPackItems .free-asset-preview[aria-pressed=true]{outline:2px solid var(--editor-accent)}

@@ -95,7 +95,7 @@ export function initVisualAssetPacks(){
   }
   const fragment=document.createDocumentFragment();
   for(const asset of result.items){
-   const card=element('article','free-asset-card'),preview=element('button','free-asset-preview');preview.type='button';preview.dataset.assetId=asset.id;preview.disabled=state.playing;preview.title=pack.type==='audio'?'Écouter '+asset.name:pack.type==='ui'?'Sélectionner '+asset.name:'Ajouter '+asset.name;
+   const card=element('article','free-asset-card'),preview=element('button','free-asset-preview');preview.type='button';preview.dataset.assetId=asset.id;preview.disabled=state.playing;preview.title='Sélectionner '+asset.name+' · double-clic pour ouvrir ou ajouter';
    if(['scene','script'].includes(pack.type))preview.append(element('span','free-file-icon',pack.type==='scene'?'◫':'C#'));
    else if(pack.type==='prefab'&&!asset.previewModelId)preview.append(element('span','free-file-icon','◇'));
    else if(pack.type==='audio')preview.append(element('span','free-audio-symbol','▶'));
@@ -107,7 +107,7 @@ export function initVisualAssetPacks(){
    preview.append(element('strong','free-asset-name',asset.name));
    if(modelPack)preview.append(element('small','free-asset-meta',(categoryNames[asset.category]||asset.category)+(asset.animationClips?.length?' · '+asset.animationClips.length+' animations':'')));
    if(asset.filename||asset.url)preview.append(element('small','free-asset-file',asset.filename||asset.url.split('/').pop()));
-   preview.onclick=async()=>{
+   const openAsset=async()=>{
     if(state.playing)return;
     if(pack.type==='scene'){captureGameScene(state.entities,state.camera,{name:sceneDefinition(gameProject.activeSceneId)?.name||'Scène principale'});const scene=sceneDefinition(asset.sceneId);if(scene){gameProject.activeSceneId=scene.id;state.entities=structuredClone(scene.entities);state.camera=structuredClone(scene.camera);state.selected=[];state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1;record('Ouvrir la scène '+scene.name);notify();document.dispatchEvent(new Event('warlike:project'))}return}
     if(pack.type==='script'){if(asset.ownerId)state.selected=[asset.ownerId];notify();document.dispatchEvent(new CustomEvent('warlike:script-open',{detail:{scriptId:asset.scriptId,entityId:asset.ownerId}}));return}
@@ -117,6 +117,8 @@ export function initVisualAssetPacks(){
     if(pack.type==='ui'&&workspace.mode==='3d'){info.textContent=asset.name+' · Image UI. Les boutons ci-dessus appliquent l’habillage aux menus du jeu.';return}
     add(asset);
    };
+   preview.onclick=()=>{grid.querySelectorAll('.free-asset-preview').forEach(node=>node.setAttribute('aria-pressed',String(node===preview)));document.dispatchEvent(new CustomEvent('warlike:inspect-asset',{detail:{id:asset.id,asset,kind:pack.type,open:openAsset}}))};
+   preview.ondblclick=openAsset;preview.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();openAsset()}};
    card.append(preview);if(asset.author)preview.append(element('small','free-asset-meta',asset.author+' · CC0'));
    if(pack.type==='audio')button(card,'Ajouter une Audio Source',()=>{if(state.playing)return;const object={id:state.nextId++,name:asset.name,type:'object',x:160,y:140,w:28,h:28,color:'#78aebf',collision3d:false,visible:false,audioEnabled:true,audioClip:asset.id,audioGain:.6,audioRange:18,audioInterval:3,audioLoop:false,audioSpatial:true};state.entities.push(object);state.selected=[object.id];record('Ajouter Audio Source Kenney');notify()});
    fragment.append(card);

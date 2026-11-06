@@ -27,9 +27,13 @@ export function sampleChannel(channel,time){
  }
  const a=value(left),b=value(right);return channel.path==='rotation'?slerpQuaternion(a,b,fraction):a.map((v,i)=>v+(b[i]-v)*fraction);
 }
+export function decomposeNodeMatrix(m){
+ const scale=[Math.hypot(m[0],m[1],m[2]),Math.hypot(m[4],m[5],m[6]),Math.hypot(m[8],m[9],m[10])];const det=m[0]*(m[5]*m[10]-m[6]*m[9])-m[4]*(m[1]*m[10]-m[2]*m[9])+m[8]*(m[1]*m[6]-m[2]*m[5]);if(det<0)scale[0]*=-1;const a=m[0]/(scale[0]||1),b=m[4]/(scale[1]||1),c=m[8]/(scale[2]||1),d=m[1]/(scale[0]||1),e=m[5]/(scale[1]||1),f=m[9]/(scale[2]||1),g=m[2]/(scale[0]||1),h=m[6]/(scale[1]||1),i=m[10]/(scale[2]||1);let q;
+ const trace=a+e+i;if(trace>0){const s=2*Math.sqrt(trace+1);q=[(h-f)/s,(c-g)/s,(d-b)/s,s/4];}else if(a>e&&a>i){const s=2*Math.sqrt(1+a-e-i);q=[s/4,(b+d)/s,(c+g)/s,(h-f)/s];}else if(e>i){const s=2*Math.sqrt(1+e-a-i);q=[(b+d)/s,s/4,(f+h)/s,(c-g)/s];}else{const s=2*Math.sqrt(1+i-a-e);q=[(c+g)/s,(f+h)/s,s/4,(d-b)/s];}const length=Math.hypot(...q)||1;return {translation:Array.from(m.slice(12,15)),rotation:q.map(v=>v/length),scale};
+}
 export function readAnimationRig(json,accessor){
  if(!json.skins?.length&&!json.animations?.length)return null;
- const nodes=(json.nodes||[]).map(n=>({name:n.name||'',translation:n.translation||[0,0,0],rotation:n.rotation||[0,0,0,1],scale:n.scale||[1,1,1],...(n.matrix?{matrix:n.matrix}:{}),children:n.children||[]}));
+ const nodes=(json.nodes||[]).map(n=>({name:n.name||'',...(n.matrix?decomposeNodeMatrix(n.matrix):{translation:n.translation||[0,0,0],rotation:n.rotation||[0,0,0,1],scale:n.scale||[1,1,1]}),...(n.matrix?{matrix:n.matrix}:{}),children:n.children||[]}));
  const parents=new Int32Array(nodes.length).fill(-1);for(let i=0;i<nodes.length;i++)for(const child of nodes[i].children)parents[child]=i;
  const skins=(json.skins||[]).map(s=>({joints:s.joints,inverseBinds:s.inverseBindMatrices===undefined?s.joints.map(identityMatrix):Array.from({length:s.joints.length},(_,i)=>new Float32Array(accessor(s.inverseBindMatrices).data.slice(i*16,i*16+16)))}));
  const animations=(json.animations||[]).map((a,i)=>{
@@ -42,7 +46,7 @@ export function readAnimationRig(json,accessor){
 export function sampleRigPose(rig,clip,time,{loop=true,previous=null,blend=1,samples=null,layers=[]}={}){
  const sample=(animation,seconds,repeat=loop)=>{
   const nodes=rig.nodes.map(n=>({...n,translation:n.translation.slice(),rotation:n.rotation.slice(),scale:n.scale.slice()}));
-  if(animation){const t=repeat&&animation.duration>0?((seconds%animation.duration)+animation.duration)%animation.duration:Math.min(Math.max(0,seconds),animation.duration);for(const channel of animation.channels){const value=sampleChannel(channel,t);if(value)nodes[channel.node][channel.path]=value}}
+  if(animation){const t=repeat&&animation.duration>0?((seconds%animation.duration)+animation.duration)%animation.duration:Math.min(Math.max(0,seconds),animation.duration);for(const channel of animation.channels){const value=sampleChannel(channel,t);if(value){nodes[channel.node][channel.path]=value;delete nodes[channel.node].matrix}}}
   return nodes;
  };
  const mix=(a,b,weight,mask=null)=>{for(let i=0;i<a.length;i++){if(mask&&!mask.has(i))continue;for(const key of ['translation','scale'])a[i][key]=a[i][key].map((v,k)=>v+(b[i][key][k]-v)*weight);a[i].rotation=slerpQuaternion(a[i].rotation,b[i].rotation,weight)}return a};
@@ -53,7 +57,7 @@ export function sampleRigPose(rig,clip,time,{loop=true,previous=null,blend=1,sam
  const world=new Array(nodes.length),visiting=new Set();
  const visit=i=>{if(world[i])return world[i];if(visiting.has(i))throw Error('Squelette glTF cyclique');visiting.add(i);const local=nodeMatrix(nodes[i]),parent=rig.parents[i];world[i]=parent<0?local:multiplyMatrices(visit(parent),local);visiting.delete(i);return world[i]};
  for(let i=0;i<nodes.length;i++)visit(i);
- return {world,joints:rig.skins.map(s=>s.joints.map((joint,i)=>multiplyMatrices(world[joint],s.inverseBinds[i])))};
+ return {nodes,world,joints:rig.skins.map(s=>s.joints.map((joint,i)=>multiplyMatrices(world[joint],s.inverseBinds[i])))};
 }
 const vertexScratch=new WeakMap();
 export function deformGlbParts(geometry,pose,{buffers=[]}={}){

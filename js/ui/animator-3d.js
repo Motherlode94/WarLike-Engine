@@ -9,6 +9,7 @@ export function renderAnimator3d(root,owner){
  card.append(el('summary','Animator 3D · clips du modèle'));const body=el('div');body.className='component-content';body.append(el('small','Lecture des animations du fichier…'));card.append(body);root.append(card);
  getModelGeometry(id).then(geometry=>{
   if(!card.isConnected)return;const clips=geometry.rig?.animations||[];body.replaceChildren();
+  const bones=el('button','Éditer le squelette, les courbes et l’IK');bones.type='button';bones.onclick=()=>document.dispatchEvent(new Event('warlike:skeleton-open'));body.append(bones);
   if(!clips.length){body.append(el('p','Ce modèle ne contient pas d’animation. Les modèles animés sont identifiés dans les packs Kenney et Quaternius.'));return}
   const studio=el('button','Ouvrir le graphe Animator');studio.type='button';studio.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:owner.id}}));body.append(studio);
   const save=label=>{record('Animator 3D : '+label);notify()};

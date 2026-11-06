@@ -1,3 +1,4 @@
+import {prepareSkeletalAssets} from './skeletal-animation.js';
 import {stepEntityAnimations,resetAnimationRuntime} from './animation-runtime.js';
 import {emitFx} from './fx-runtime.js';
 import {playSound} from './audio.js';
@@ -27,7 +28,7 @@ async function defaultRequest(path,payload){
 export function setRuntimeTransport(transport=defaultRequest){requestNative=transport}
 const sameEntities=(snapshot,entities)=>snapshot?.length===entities.length&&entities.every((entity,index)=>entity===snapshot[index]);
 // Filtering a collection does not replace its surviving objects or their scripts.
-const sameWebScene=entities=>webScene!==null&&entities.filter(entity=>entity.webScripts?.length).every(entity=>webScene.includes(entity));
+const sameWebScene=entities=>webScene!==null&&entities.filter(entity=>entity.webScripts?.length||entity.animationRig).every(entity=>webScene.includes(entity));
 const announce=()=>globalThis.document?.dispatchEvent(new Event('warlike:runtime'));
 export function startRuntimeSession(){
  stopRuntimeSession();Object.assign(runtimeSession,{backend:gameProject.runtimeBackend||'web',phase:'ready',error:'',frame:0});
@@ -47,9 +48,9 @@ export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
  if(runtimeSession.phase==='stopped'){update?.(dt);return true} // standalone tools/tests
  if(!sameWebScene(state.entities)&&!isLanGuest()){
   if(webLoading)return false;webScene=[...state.entities];
-  if(state.entities.some(e=>e.webScripts?.length)){
+  if(state.entities.some(e=>e.webScripts?.length||e.animationRig)){
    const generation=runtimeSession.generation,entities=state.entities;webLoading=true;runtimeSession.phase='connecting';announce();
-   runtimeSession.completion=webScriptRuntime.prepare(scriptContext()).then(()=>{if(generation===runtimeSession.generation){webLoading=false;if(!sameWebScene(state.entities)){webScene=null;webScriptRuntime.stop()}runtimeSession.phase='ready';announce()}}).catch(error=>{if(generation===runtimeSession.generation){webLoading=false;runtimeSession.phase='error';runtimeSession.error='JS/TS : '+error.message;announce()}});return false;
+   runtimeSession.completion=Promise.all([webScriptRuntime.prepare(scriptContext()),prepareSkeletalAssets(state.entities)]).then(()=>{if(generation===runtimeSession.generation){webLoading=false;if(!sameWebScene(state.entities)){webScene=null;webScriptRuntime.stop()}runtimeSession.phase='ready';announce()}}).catch(error=>{if(generation===runtimeSession.generation){webLoading=false;runtimeSession.phase='error';runtimeSession.error='Scripts / animation : '+error.message;announce()}});return false;
   }else webScriptRuntime.stop();
  }
  if(webLoading)return false;

@@ -1,3 +1,4 @@
+import {initSkeletalStudio} from './ui/skeletal-studio.js';
 import {initDemoBrowser} from './ui/demo-browser.js';
 import {initScriptStudio} from './ui/script-studio.js';
 import {initLifeUi} from './ui/life-ui.js';
@@ -306,6 +307,6 @@ initHeroForgeUi();initCompanyUi();initLifeUi();
 
 initLanPanel();
 
-initCreativeStudios();initCreativeRuntime();initSurvivalUi();initAdventureUi();
+initCreativeStudios();initSkeletalStudio();initCreativeRuntime();initSurvivalUi();initAdventureUi();
 
 document.addEventListener('warlike:script-log',event=>log(event.detail.message,event.detail.level));

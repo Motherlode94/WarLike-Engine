@@ -170,6 +170,9 @@ public sealed class GameWorld : IDisposable {
             float Number(string key) { float value=item.GetProperty(key).GetSingle();if(!float.IsFinite(value))throw new ArgumentException("Non-finite actor field.");return value; }
             changes.Add((actor,new Vector3(Number("x")/64f,Number("elevation3d"),Number("y")/64f),Number("rotation"),Number("hp"),item.GetProperty("enabled").GetBoolean()));
         }
+        // Validate Animator snapshots on temporary instances before mutating actors.
+        foreach(var item in actors.EnumerateArray()) if(item.TryGetProperty("animator",out var animator)) new Animator().ApplySnapshot(animator);
+        foreach(var item in actors.EnumerateArray()) if(item.TryGetProperty("animator",out var animator)) _actors.First(a=>a.Id==item.GetProperty("id").GetInt32()).GetComponent<Animator>()?.ApplySnapshot(animator);
         // Validate the entire frame before mutating any actor or invoking callbacks.
         foreach(var c in changes){c.actor.Position=c.position;c.actor.Rotation=c.rotation;c.actor.Health=c.health;c.actor.Enabled=c.enabled;}
     }
@@ -190,6 +193,7 @@ public sealed class GameWorld : IDisposable {
                     throw new JsonException("Actor IDs must be unique positive integers.");
                 actor.Id = value;
             }
+            if (obj.TryGetProperty("animatorGraph", out var animatorGraph) && animatorGraph.ValueKind == JsonValueKind.Object) world.AddComponent(actor, new Animator(animatorGraph));
             if (obj.TryGetProperty("rotation", out var rot) && rot.TryGetSingle(out float degrees)) actor.Rotation = degrees;
             if (obj.TryGetProperty("csharpComponent", out var component) && component.ValueKind == JsonValueKind.Object && component.TryGetProperty("kind", out var kind) && kind.GetString() == "AutoRotate") {
                 actor.SpinSpeed = Number(component,"speed");

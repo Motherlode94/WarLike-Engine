@@ -14,7 +14,7 @@ export function inspectorWindowHeader(root,objects,{locked=inspectorSelection.lo
  for(const [value,label] of [['normal','Normal'],['debug','Debug']]){const option=make('option','',label);option.value=value;mode.append(option)}mode.value=debug?'debug':'normal';mode.onchange=()=>{debug=mode.value==='debug';notify()};
  const lock=make('button','inspector-lock',locked?'Verrouillé':'Verrouiller');lock.type='button';lock.disabled=!objects.length;lock.setAttribute('aria-pressed',String(locked));lock.setAttribute('aria-label','Verrouiller l’Inspector sur la sélection');lock.onclick=()=>{toggle();notify()};bar.append(title,mode,lock);root.append(bar);
  if(locked)root.append(make('p','inspector-lock-note','Sélection verrouillée · '+objects.map(object=>object.name).join(', ')));
- if(state.playing)root.append(make('p','inspector-play-note','Play · propriétés en lecture seule. Arrête le jeu pour modifier la scène.'));
+ if(state.playing)root.append(make('p','inspector-play-note','Play · activation des scripts Web modifiable. Les changements de simulation sont rétablis à Stop.'));
 }
 export function renderInspectorDebug(root,objects){
  const note=make('p','inspector-debug-note','Données sérialisées · lecture seule'),code=make('pre','inspector-debug-data');code.textContent=JSON.stringify(objects.length===1?objects[0]:objects,null,2);root.append(note,code);

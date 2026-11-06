@@ -40,7 +40,8 @@ export function decorateInspectorComponents(root,owner){
   card.querySelectorAll('.unity-component-menu').forEach(node=>node.remove());
   const value=descriptor?.get?.();
   if(value&&typeof value.enabled==='boolean'){
-   const enabled=make('input','inspector-component-enabled');enabled.type='checkbox';enabled.checked=value.enabled;enabled.disabled=state.playing;enabled.setAttribute('aria-label','Activer '+title);enabled.onclick=event=>event.stopPropagation();enabled.onchange=()=>{descriptor.attach?.();value.enabled=enabled.checked;record('Activer '+title);notify()};summary.prepend(enabled);
+   const scriptToggle=descriptor.family==='warscript'||descriptor.family==='webscript';
+   const enabled=make('input','inspector-component-enabled');enabled.type='checkbox';enabled.checked=value.enabled;enabled.disabled=state.playing&&!scriptToggle;enabled.setAttribute('aria-label','Activer '+title);enabled.onclick=event=>event.stopPropagation();enabled.onchange=()=>{if(state.playing&&!scriptToggle)return;descriptor.attach?.();value.enabled=enabled.checked;if(!state.playing)record('Activer '+title);notify()};summary.prepend(enabled);
   }
   const menu=make('div','unity-component-menu inspector-component-actions');menu.hidden=true;
   const action=(label,run,disabled=false)=>{const button=make('button','',label);button.type='button';button.disabled=disabled;button.onclick=()=>{run();menu.hidden=true};menu.append(button);return button};

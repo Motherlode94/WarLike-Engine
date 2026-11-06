@@ -65,3 +65,16 @@ test('native scene initialization survives a fresh collection containing the sam
  setup();let scenes=0;setRuntimeTransport(async(path,input)=>{if(path==='/health')return {protocol:3,capabilities:['shared-play-frame']};if(path==='/scene'){scenes++;return {revision:4}}return {revision:4,frame:input.frame,actors:input.actors}});
  try{for(let i=0;i<3;i++){runRuntimeFrame(.02,{canRun:()=>true,update(){state.entities=[...state.entities]}});await runtimeSession.completion;}assert.equal(scenes,1);assert.equal(runtimeSession.phase,'ready');}finally{finish()}
 });
+
+test('animation and WarScript LateUpdate share one accepted frame and pause freezes both',()=>{
+ setup('web');const actor=state.entities[0];actor.csharpComponents=[];
+ actor.animationStudio={playOnStart:true,clips:[{name:'Move',duration:1,speed:1,keys:[{time:0,x:0},{time:1,x:100}],events:[]}]};
+ actor.warScripts=[{scriptId:'animation-observer',name:'Observer.wls',source:'LateUpdate(){ transform.rotation.z = transform.position.x * 64; }',values:{}}];
+ try{runRuntimeFrame(.1,{canRun:()=>true});assert.equal(actor.x,10);assert.equal(actor.rotation,10);runRuntimeFrame(.1,{canRun:()=>false});assert.equal(actor.x,10);runRuntimeFrame(.1,{canRun:()=>true});assert.equal(actor.x,20);assert.equal(actor.rotation,20);stopRuntimeSession();startRuntimeSession();runRuntimeFrame(.1,{canRun:()=>true});assert.equal(actor.x,10);}finally{finish()}
+});
+
+test('native animation waits for accepted responses and never advances for an in-flight frame',async()=>{
+ setup();const actor=state.entities[0];actor.csharpComponents=[];actor.animationStudio={playOnStart:true,clips:[{name:'Move',duration:1,keys:[{time:0,x:0},{time:1,x:100}],events:[]}]};let resolveFrame;
+ setRuntimeTransport(transport(input=>new Promise(resolve=>{resolveFrame=()=>resolve({revision:4,frame:input.frame,actors:input.actors})})));
+ try{runRuntimeFrame(.1,{canRun:()=>true});await new Promise(resolve=>setImmediate(resolve));runRuntimeFrame(.1,{canRun:()=>true});assert.equal(actor.x,0);resolveFrame();await runtimeSession.completion;assert.equal(actor.x,10);}finally{finish()}
+});

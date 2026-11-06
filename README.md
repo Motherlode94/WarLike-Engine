@@ -220,3 +220,7 @@ La carte tactique interactive reste utilisable si WebGL est indisponible, avec u
 La conception s'appuie sur le [manuel officiel Company of Heroes 2](https://www.feralinteractive.com/en/manuals/companyofheroes2/latest/steam/) pour les principes de couvertures, retraite, production et territoires. Le code et l'équilibrage restent ceux de WarLike. Ce prototype ne reproduit pas encore les campagnes, le brouillard de guerre, les garnisons, la destruction avancée, les blindages directionnels ou le multijoueur complet de la référence.
 
 Validation : `node --test tests/company.test.mjs`.
+
+## Animation et Animator
+
+[Clips de transformation, timeline, transitions, paramètres et API Animator](docs/animation-studio.md).

@@ -1,38 +1,56 @@
-// WarLike Animation Studio: keyframe authoring on the selected scene entity.
-// Clips live on entities and therefore travel with existing scene/project saves.
 import {state,active,notify} from './state.js';
-const finite=(n,f=0)=>Number.isFinite(Number(n))?Number(n):f;
-export function sampleClip(clip,time){
- const keys=[...(clip?.keys||[])].filter(k=>Number.isFinite(k.time)).sort((a,b)=>a.time-b.time);
- if(!keys.length)return null;
- const t=Math.max(0,finite(time)),right=keys.find(k=>k.time>=t)||keys.at(-1),left=[...keys].reverse().find(k=>k.time<=t)||keys[0];
- if(left===right)return {...left};
- const u=Math.max(0,Math.min(1,(t-left.time)/(right.time-left.time||1)));
- return Object.fromEntries(['x','y','rotation','elevation3d'].map(k=>[k,finite(left[k])+(finite(right[k])-finite(left[k]))*u]));
-}
-export function createClip(name='New Clip',duration=2){return {name:String(name).slice(0,60),duration:Math.max(.1,finite(duration,2)),keys:[],events:[],transitions:[]}}
-export function openAnimationStudio(){
- let panel=document.getElementById('warlikeAnimationStudio');
- if(!panel){
-  panel=document.createElement('section');panel.id='warlikeAnimationStudio';panel.className='warlike-animation-studio';
-  panel.innerHTML='<header><strong>◈ Animation Studio</strong><button data-a="close">✕</button></header><div class="anim-controls"><label>Clip <select id="animClip"></select></label><button data-a="new">＋ Clip</button><button data-a="key">◆ Keyframe</button><button data-a="event">＋ Event</button><button data-a="play">▶ Preview</button><button data-a="stop">■ Stop</button></div><label>Timeline <output id="animTimeLabel">0.00 s</output><input id="animTime" type="range" min="0" max="2" step=".01" value="0"></label><div id="animKeys"></div><p id="animHint">Sélectionne un objet pour animer sa position et sa rotation.</p>';
-  document.body.append(panel);
+import {record} from './history.js';
+import {animationEditorPreview,animationFields,animationEasings,sampleClip,createClip,putAnimationKey,inspectAnimationStudio} from './animation-clips.js';
+export {sampleClip,createClip} from './animation-clips.js';
+const preview=animationEditorPreview;let panel=null,displayOwner=null,clipIndex=0,raf=0,playing=false,playStart=0,lastPlaying=false;
+const el=(tag,text)=>{const node=document.createElement(tag);if(text!=null)node.textContent=text;return node};
+const at=selector=>panel.querySelector(selector),clip=()=>displayOwner?.animationStudio?.clips?.[clipIndex];
+const time=()=>Number(at('#animTime').value)||0;
+const tell=message=>{at('#animHint').textContent=message;};
+export const isAnimationStudioPreviewing=()=>preview.owner!==null;
+export function stopAnimationStudioPreview(){playing=false;if(raf)globalThis.cancelAnimationFrame?.(raf);raf=0;preview.stop();}
+function stop(){const had=isAnimationStudioPreviewing();stopAnimationStudioPreview();if(had)notify();}
+function save(label){record(label);notify();render();}
+function seek(value){if(state.playing||!clip()||!displayOwner)return;preview.seek(displayOwner,clip(),value);at('#animTimeLabel').textContent=Number(value).toFixed(2)+' s';notify();}
+function mutate(label,fn){if(state.playing)return;stop();try{fn();save(label)}catch(error){tell(error.message)}}
+function render(){
+ if(!panel)return;const owner=active();if(owner!==displayOwner){stopAnimationStudioPreview();displayOwner=owner;clipIndex=0;}
+ const clips=owner?.animationStudio?.clips||[],select=at('#animClip');clipIndex=Math.max(0,Math.min(clipIndex,clips.length-1));select.replaceChildren(...clips.map((item,index)=>{const option=el('option',item.name);option.value=index;return option}));select.value=String(clipIndex);const current=clip();
+ for(const control of panel.querySelectorAll('[data-edit]'))control.disabled=state.playing||!owner||(control.dataset.edit==='clip'&&!current);
+ select.disabled=state.playing||!current;at('#animName').value=current?.name||'';at('#animDuration').value=current?.duration??2;at('#animSpeed').value=current?.speed??1;at('#animLoop').checked=current?.loop===true;at('#animAutoplay').checked=owner?.animationStudio?.playOnStart===true&&(owner.animationStudio.defaultClip??0)===clipIndex;
+ const slider=at('#animTime');slider.max=String(current?.duration||2);slider.value=String(Math.min(time(),current?.duration||2));at('#animTimeLabel').textContent=time().toFixed(2)+' s';
+ const markers=at('#animMarkers');markers.replaceChildren();for(const [index,key] of (current?.keys||[]).entries()){const b=el('button','◆');b.type='button';b.title='Image clé '+key.time.toFixed(2)+' s';b.setAttribute('aria-label',b.title);b.style.left=(key.time/current.duration*100)+'%';b.disabled=state.playing;b.onclick=()=>{stop();slider.value=String(key.time);seek(key.time);at('#animEasing').value=key.easing||'linear'};markers.append(b)}
+ const keys=at('#animKeys');keys.replaceChildren();if(current){
+  const table=el('table'),head=el('tr');for(const text of ['Temps · s','Interpolation','Transformations',''])head.append(el('th',text));table.append(head);
+  for(const [index,key] of current.keys.entries()){
+   const row=el('tr'),stamp=el('input');stamp.type='number';stamp.min='0';stamp.max=current.duration;stamp.step='.01';stamp.value=key.time;stamp.disabled=state.playing;stamp.setAttribute('aria-label','Temps de l’image clé '+(index+1));stamp.onchange=()=>mutate('Déplacer une image clé',()=>{const t=Number(stamp.value);if(!Number.isFinite(t)||t<0||t>current.duration||current.keys.some(k=>k!==key&&Math.abs(k.time-t)<.00001))throw Error('Instant hors du clip ou déjà occupé.');key.time=t;current.keys.sort((a,b)=>a.time-b.time)});const cell=el('td');cell.append(stamp);row.append(cell);
+   const choices=el('select');for(const easing of animationEasings){const option=el('option',easing);option.value=easing;choices.append(option)}choices.value=key.easing||'linear';choices.disabled=state.playing;choices.setAttribute('aria-label','Interpolation de l’image clé '+(index+1));choices.onchange=()=>mutate('Interpolation de l’image clé',()=>key.easing=choices.value);const type=el('td');type.append(choices);row.append(type);
+   row.append(el('td',animationFields.filter(field=>Number.isFinite(key[field])).map(field=>field+' '+Number(key[field].toFixed(2))).join(' · ')));const remove=el('button','Retirer');remove.type='button';remove.disabled=state.playing;remove.setAttribute('aria-label','Retirer l’image clé '+(index+1));remove.onclick=()=>mutate('Retirer une image clé',()=>current.keys.splice(index,1));const action=el('td');action.append(remove);row.append(action);table.append(row);
+  }keys.append(table);
+  for(const [index,event] of current.events.entries()){const row=el('div');row.className='anim-event-row';row.append(el('span','Signal '+event.name+' · '+event.time.toFixed(2)+' s'));const b=el('button','Retirer le signal');b.type='button';b.disabled=state.playing;b.onclick=()=>mutate('Retirer un événement animation',()=>current.events.splice(index,1));row.append(b);keys.append(row)}
  }
- let original=null,previewId=null,raf=0,playing=false,start=0;
- const selectedClip=()=>{const entity=active();return entity?.animationStudio?.clips?.[Number(panel.querySelector('#animClip').value)||0]};
- const stop=()=>{playing=false;cancelAnimationFrame(raf);if(original){const entity=state.entities.find(e=>e.id===previewId);if(entity)Object.assign(entity,original);notify()}original=null;previewId=null};
- const render=()=>{const entity=active(),clips=entity?.animationStudio?.clips||[],select=panel.querySelector('#animClip'),old=Number(select.value)||0;select.replaceChildren(...clips.map((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.name;return o}));select.value=String(Math.min(old,clips.length-1));const clip=selectedClip(),slider=panel.querySelector('#animTime');slider.max=String(clip?.duration||2);panel.querySelector('#animKeys').textContent=clip?'Keys: '+clip.keys.map(k=>k.time.toFixed(2)+'s').join(' ◆ ')+' | Events: '+clip.events.map(e=>e.name+'@'+e.time.toFixed(2)).join(', '):'Aucun clip';panel.querySelector('#animHint').textContent=entity?'Objet : '+entity.name+' · '+(clip?.keys.length||0)+' keyframes':'Sélectionne un objet dans la hiérarchie.'};
- const seek=t=>{const clip=selectedClip(),entity=active();if(!clip||!entity)return;const pose=sampleClip(clip,t);if(pose){if(!original){original=Object.fromEntries(['x','y','rotation','elevation3d'].map(k=>[k,entity[k]]));previewId=entity.id}Object.assign(entity,pose);notify()}panel.querySelector('#animTimeLabel').textContent=Number(t).toFixed(2)+' s'};
- panel.onclick=e=>{const action=e.target.closest('[data-a]')?.dataset.a;if(!action)return;
-  if(action==='close'){stop();panel.hidden=true;return}
-  if(action==='stop'){stop();render();return}
-  if(action==='new'){stop();const entity=active();if(!entity)return;entity.animationStudio??={clips:[]};entity.animationStudio.clips.push(createClip('Clip '+(entity.animationStudio.clips.length+1)));notify();render();panel.querySelector('#animClip').value=String(entity.animationStudio.clips.length-1);render();return}
-  const clip=selectedClip();if(!clip)return;
-  if(action==='key'){stop();const entity=active(),time=finite(panel.querySelector('#animTime').value);clip.keys=clip.keys.filter(k=>Math.abs(k.time-time)>.005);clip.keys.push({time,...Object.fromEntries(['x','y','rotation','elevation3d'].map(k=>[k,finite(entity[k])]))});clip.keys.sort((a,b)=>a.time-b.time);notify();render()}
-  if(action==='event'){const name=prompt('Nom de l’événement animation');if(name?.trim()){clip.events.push({time:finite(panel.querySelector('#animTime').value),name:name.trim().slice(0,80)});notify();render()}}
-  if(action==='play'){stop();playing=true;start=performance.now()-finite(panel.querySelector('#animTime').value)*1000;const tick=now=>{if(!playing)return;const t=(now-start)/1000;if(t>clip.duration){stop();return}panel.querySelector('#animTime').value=String(t);seek(t);raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)}
- };
- panel.querySelector('#animClip').onchange=()=>{stop();render()};
- panel.querySelector('#animTime').oninput=e=>{stop();seek(e.target.value)};
- panel.hidden=false;render();
+ const problems=owner?.animationStudio?inspectAnimationStudio(owner.animationStudio):[];tell(problems.join(' · ')||(owner?'Objet : '+owner.name+' · '+(current?.keys.length||0)+' images clés · aperçu temporaire, Stop restaure la pose.':'Sélectionne un objet dans la Hiérarchie.'));
 }
+function init(){
+ panel=el('section');panel.id='warlikeAnimationStudio';panel.className='warlike-animation-studio';panel.setAttribute('aria-label','Animation Studio');
+ panel.innerHTML='<header><strong>◈ Animation Studio · Clips et images clés</strong><button data-a="close" aria-label="Fermer Animation Studio">✕</button></header><div class="anim-controls"><label>Clip <select id="animClip" aria-label="Clip Animation Studio"></select></label><button data-edit="owner" data-a="new">＋ Clip</button><button data-edit="clip" data-a="duplicate">Dupliquer</button><button data-edit="clip" data-a="delete">Supprimer le clip</button><button data-edit="clip" data-a="key">◆ Enregistrer la pose</button><button data-edit="clip" data-a="play">▶ Aperçu</button><button data-a="stop">■ Stop</button></div><div class="anim-settings"><label>Nom <input id="animName" data-edit="clip" maxlength="60"></label><label>Durée · s <input id="animDuration" data-edit="clip" type="number" min=".1" max="3600" step=".1"></label><label>Vitesse <input id="animSpeed" data-edit="clip" type="number" min=".05" max="4" step=".05"></label><label><input id="animLoop" data-edit="clip" type="checkbox"> Boucle</label><label><input id="animAutoplay" data-edit="clip" type="checkbox"> Lire ce clip dans Play</label><label>Interpolation <select id="animEasing" data-edit="clip" aria-label="Interpolation des nouvelles clés"></select></label></div><label>Timeline <output id="animTimeLabel">0.00 s</output><input id="animTime" data-edit="clip" aria-label="Temps Animation Studio" type="range" min="0" max="2" step=".01" value="0"></label><div id="animMarkers" aria-label="Images clés du clip"></div><div class="anim-controls"><label>Signal Blueprint <input id="animEventName" data-edit="clip" maxlength="80" placeholder="porte:ouverte"></label><button data-edit="clip" data-a="event">＋ Signal à cet instant</button><button data-a="animator">Ouvrir Animator</button></div><div id="animKeys"></div><p id="animHint" role="status"></p>';
+ document.body.append(panel);for(const value of animationEasings){const option=el('option',value);option.value=value;at('#animEasing').append(option)}
+ panel.onclick=event=>{const action=event.target.closest('[data-a]')?.dataset.a;if(!action)return;
+  if(action==='close'){stop();panel.hidden=true;return}if(action==='stop'){stop();render();return}if(action==='animator'){document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:displayOwner?.id}}));return}if(state.playing)return;
+  const owner=displayOwner,current=clip();if(!owner)return;
+  if(action==='new'||action==='duplicate'){mutate('Créer un clip animation',()=>{owner.animationStudio??={clips:[],defaultClip:0,playOnStart:false};if(owner.animationStudio.clips.length>=32)throw Error('32 clips maximum par objet.');const next=action==='duplicate'&&current?{...structuredClone(current),name:(current.name+' copie').slice(0,60)}:createClip('Clip '+(owner.animationStudio.clips.length+1));owner.animationStudio.clips.push(next);clipIndex=owner.animationStudio.clips.length-1;at('#animTime').value='0';});return}if(!current)return;
+  if(action==='delete'){mutate('Supprimer un clip animation',()=>{const studio=owner.animationStudio;studio.clips.splice(clipIndex,1);if((studio.defaultClip??0)===clipIndex)studio.playOnStart=false;if(studio.defaultClip>=clipIndex)studio.defaultClip=Math.max(0,studio.defaultClip-1);clipIndex=Math.max(0,clipIndex-1)});return}
+  if(action==='key'){const pose=Object.fromEntries(animationFields.filter(field=>Number.isFinite(owner[field])).map(field=>[field,owner[field]])),stamp=time();mutate('Enregistrer une image clé',()=>putAnimationKey(current,stamp,pose,{easing:at('#animEasing').value}));return}
+  if(action==='event'){const name=at('#animEventName').value.trim(),stamp=time();mutate('Ajouter un signal animation',()=>{if(!name)throw Error('Saisis un nom de signal Blueprint.');if(current.events.length>=64)throw Error('64 événements maximum.');current.events.push({time:stamp,name});current.events.sort((a,b)=>a.time-b.time)});return}
+  if(action==='play'){if(!current.keys.length){tell('Enregistre au moins une image clé pour lancer l’aperçu.');return}const stamp=time();stop();playing=true;preview.seek(owner,current,stamp);playStart=performance.now()-stamp*1000/(current.speed||1);const tick=now=>{if(!playing||active()!==owner||preview.owner!==owner||state.playing){stop();render();return}const elapsed=(now-playStart)/1000*(current.speed||1);if(elapsed>current.duration&&!current.loop){stop();at('#animTime').value='0';render();return}const t=current.loop?elapsed%current.duration:elapsed;at('#animTime').value=String(t);seek(t);raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick);}
+ };
+ at('#animClip').onchange=()=>{stop();clipIndex=Number(at('#animClip').value)||0;at('#animTime').value='0';render()};
+ at('#animTime').oninput=()=>{const stamp=time();stop();seek(stamp)};
+ at('#animName').onchange=()=>{const name=at('#animName').value.trim();mutate('Renommer un clip',()=>{if(!name)throw Error('Le clip doit avoir un nom.');clip().name=name})};
+ at('#animDuration').onchange=()=>{const value=Number(at('#animDuration').value);mutate('Durée du clip',()=>{const current=clip();if(!Number.isFinite(value)||value<.1||value>3600||[...current.keys,...current.events].some(item=>item.time>value))throw Error('La durée doit inclure toutes les clés et tous les événements.');current.duration=value})};
+ at('#animSpeed').onchange=()=>{const value=Number(at('#animSpeed').value);mutate('Vitesse du clip',()=>{if(!Number.isFinite(value)||value<.05||value>4)throw Error('Vitesse entre 0,05 et 4 attendue.');clip().speed=value})};
+ at('#animLoop').onchange=()=>{const value=at('#animLoop').checked;mutate('Boucle du clip',()=>clip().loop=value)};
+ at('#animAutoplay').onchange=()=>{const value=at('#animAutoplay').checked;mutate('Lecture du clip dans Play',()=>{displayOwner.animationStudio.playOnStart=value;displayOwner.animationStudio.defaultClip=clipIndex})};
+ document.addEventListener('warlike:change',()=>{if(panel.hidden)return;if(active()!==displayOwner||state.playing!==lastPlaying){stopAnimationStudioPreview();lastPlaying=state.playing;render()}});
+}
+export function openAnimationStudio(){if(!panel)init();else stop();panel.hidden=false;lastPlaying=state.playing;render()}

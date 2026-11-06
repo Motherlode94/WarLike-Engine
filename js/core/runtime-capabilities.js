@@ -1,3 +1,5 @@
+import {inspectAnimationStudio} from './animation-clips.js';
+import {inspectAnimatorGraph} from './animator-graph.js';
 import {inspectWebScripts} from './web-script-runtime.js';
 import {inspectWarScripts} from './war-script-runtime.js';
 // One ownership table is used by Play, the Inspector and the Web exporter.
@@ -9,6 +11,8 @@ export function inspectRuntimeCompatibility(entities,{target='web',backend='web'
  const issues=[],add=(message,entityId=null)=>issues.push({severity:'error',message,entityId,target});
  if(target==='web'&&backend==='native')add('Ce projet utilise le runtime C# local. Choisis Play Web et remplace les composants natifs avant l’export Web.');
  for(const e of entities||[]){
+  if(e.animatorGraph&&e.animatorGraph.enabled!==false)for(const error of inspectAnimatorGraph(e.animatorGraph))add((e.name||'#'+e.id)+' · '+error,e.id);
+  if(e.animationStudio&&e.animationStudio.enabled!==false&&e.animationStudio.playOnStart)for(const error of inspectAnimationStudio(e.animationStudio))add((e.name||'#'+e.id)+' · '+error,e.id);
   const components=[...(e.csharpComponents||[]),...(e.csharpComponent?[e.csharpComponent]:[])];
   for(const c of components){
    if(!c||c.enabled===false)continue;

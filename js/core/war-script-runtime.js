@@ -1,3 +1,4 @@
+import {setAnimatorParameter,setAnimatorTrigger,resetAnimatorTrigger,playAnimatorState} from './animator-graph.js';
 import {compileWarScript,createWarScriptInstance,warScriptBuiltin,warScriptValue} from '../../script-editor/warscript.js';
 import {ScriptLifecycle} from './script-lifecycle.js';
 import {moveBody2d} from './physics-2d.js';
@@ -52,6 +53,7 @@ export function createScriptApi(entity,ctx,clock,component){
   throw Error('Propriété non modifiable : '+name);
  };
  const call=(name,args)=>{
+  if(name.startsWith('Animator.')){const method=name.slice(9);if(!entity.animatorGraph)throw Error('Composant Animator absent.');if(method==='Play'){if(args.length<1||args.length>2||typeof args[0]!=='string'||args.length===2&&!Number.isFinite(args[1]))throw Error('Animator.Play attend un état et une durée facultative.');if(!playAnimatorState(entity,args[0],args[1]))throw Error('État Animator absent : '+args[0]);return null;}if(['SetTrigger','ResetTrigger'].includes(method)){if(args.length!==1)throw Error(method+' attend un nom de paramètre.');const accepted=(method==='SetTrigger'?setAnimatorTrigger:resetAnimatorTrigger)(entity,key(args[0]));if(!accepted)throw Error('Trigger Animator invalide.');return null;}const valid=method==='SetBool'?typeof args[1]==='boolean':method==='SetInteger'?Number.isInteger(args[1]):method==='SetFloat'&&typeof args[1]==='number'&&Number.isFinite(args[1]);if(args.length!==2||!valid||!setAnimatorParameter(entity,key(args[0]),args[1]))throw Error('Paramètre Animator ou type incompatible.');return null;}
   if(name==='gameObject.SetActive'){if(args.length!==1)throw Error('SetActive attend un booléen.');write('gameObject.active',args[0]);return null}
   if(name==='Log'||name==='Debug.Log'){if(args.length!==1)throw Error('Log attend une valeur.');ctx.log?.(String(args[0]),'info',entity);return null}
   if(name==='Get'){if(args.length!==1)throw Error('Get attend un nom.');return ctx.globals[key(args[0])]??0}

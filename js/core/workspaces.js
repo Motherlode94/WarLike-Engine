@@ -1,3 +1,4 @@
+import {animationEditorPreview} from './animation-clips.js';
 import {genreForMode} from './game-genres.js';
 import {gameProject,restoreGameProject} from './game-project.js';
 import {prefab3d} from '../assets/catalog-3d.js';
@@ -17,7 +18,7 @@ export function switchWorkspace(mode){
  if(!['2d','3d'].includes(mode))return false;
  if(state.playing)return false;
  if(workspace.mode===mode)return true;
- captureWorkspace();state.keys.clear();const slot=workspace.scenes[mode];
+ animationEditorPreview.stop();captureWorkspace();state.keys.clear();const slot=workspace.scenes[mode];
  workspace.mode=mode;
  restoreGameProject(slot.game,{entities:slot.entities});gameProject.genre=genreForMode(gameProject.genre,mode);
  state.entities=clone(slot.entities||[]);state.selected=clone(slot.selected||[]);

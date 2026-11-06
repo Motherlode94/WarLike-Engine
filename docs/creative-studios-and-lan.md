@@ -84,3 +84,5 @@ Le [template Survival](survival.md) possède un protocole dédié pour les provi
 ## Navigation A*
 
 La navigation utilise une file de priorité déterministe et simplifie les trajets par visibilité avec une marge autour des obstacles. Le lissage s’applique aux trajets JavaScript et à ceux issus du module C++/WASM. L’option `smooth:false` conserve les points de grille pour diagnostic. `node scripts/bench-pathfinding.mjs` compare les deux sorties sur des scènes reproductibles ; ce système reste une grille A*, sans NavMesh.
+
+Voir aussi : [Animation Studio et API Animator](animation-studio.md).

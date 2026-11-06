@@ -29,7 +29,7 @@ export function initAdventureUi(){
   if(hud.hidden||!gameIsRunning()){adventureView.journalOpen=false;journal.hidden=true;if(hud.hidden)return}
   const cfg=actor.adventure,globals=isLanGuest()?lanState.variables||{}:sequenceRuntime.globals,target=adventureTarget(actor,state.entities,{mode:workspace.mode});
   hud.classList.toggle('compact',host.clientHeight<300);const expanded=!(hud.classList.contains('minimized')||hud.classList.contains('compact')&&!hud.classList.contains('expanded'));toggleHint.textContent=expanded?'−':'＋';toggleHint.setAttribute('aria-expanded',String(expanded));
-  title.textContent=cfg.title||'AVENTURE';hint.textContent=gameSession.dialogue?'Conversation en cours…':target?target.adventureInteractable.label||target.name:'Explore les lieux · parle aux habitants et lis les indices.';
+  title.textContent=cfg.title||'AVENTURE';hint.textContent=gameSession.dialogue?'Conversation en cours…':target?target.adventureInteractable.label||target.name:cfg.hint||'Explore les lieux · parle aux habitants et lis les indices.';
   chapter.hidden=!cfg.chapter;chapter.textContent=cfg.chapter?'CHAPITRE '+cfg.chapter.index+' / '+cfg.chapter.total:'';
   const goals=Object.values(gameSession.objectives),activeGoals=goals.filter(o=>o.status==='active'),finishedGoals=goals.filter(o=>o.status==='complete');nextGoal.textContent=activeGoals[0]?'◇ '+activeGoals[0].label:'';nextGoal.hidden=!activeGoals.length;
   interact.disabled=!target||!gameIsRunning()||!!gameSession.dialogue||adventureView.journalOpen;journalButton.disabled=!gameIsRunning()||!!gameSession.dialogue;journalButton.setAttribute('aria-expanded',String(adventureView.journalOpen));journal.hidden=!adventureView.journalOpen;

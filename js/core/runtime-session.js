@@ -21,6 +21,9 @@ async function defaultRequest(path,payload){
  try{const response=await fetch(base+path,{method:payload===undefined?'GET':'POST',headers:payload===undefined?{}:{'Content-Type':'application/json'},...(payload===undefined?{}:{body:JSON.stringify(payload)}),signal:controller.signal,cache:'no-store'});const data=await response.json();if(!response.ok||data.ok===false)throw Error(data.error||'HTTP '+response.status);return data}finally{clearTimeout(timer)}
 }
 export function setRuntimeTransport(transport=defaultRequest){requestNative=transport}
+const sameEntities=(snapshot,entities)=>snapshot?.length===entities.length&&entities.every((entity,index)=>entity===snapshot[index]);
+// Filtering a collection does not replace its surviving objects or their scripts.
+const sameWebScene=entities=>webScene!==null&&entities.filter(entity=>entity.webScripts?.length).every(entity=>webScene.includes(entity));
 const announce=()=>globalThis.document?.dispatchEvent(new Event('warlike:runtime'));
 export function startRuntimeSession(){
  stopRuntimeSession();Object.assign(runtimeSession,{backend:gameProject.runtimeBackend||'web',phase:'ready',error:'',frame:0});
@@ -37,11 +40,11 @@ function browserFrame(dt,update,run){if(run){if(!isLanGuest()){webScriptRuntime.
 export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
  if(!state.playing||runtimeSession.phase==='error')return false;
  if(runtimeSession.phase==='stopped'){update?.(dt);return true} // standalone tools/tests
- if(webScene!==state.entities&&!isLanGuest()){
-  if(webLoading)return false;webScene=state.entities;
+ if(!sameWebScene(state.entities)&&!isLanGuest()){
+  if(webLoading)return false;webScene=[...state.entities];
   if(state.entities.some(e=>e.webScripts?.length)){
    const generation=runtimeSession.generation,entities=state.entities;webLoading=true;runtimeSession.phase='connecting';announce();
-   runtimeSession.completion=webScriptRuntime.prepare(scriptContext()).then(()=>{if(generation===runtimeSession.generation){webLoading=false;if(state.entities!==entities){webScene=null;webScriptRuntime.stop()}runtimeSession.phase='ready';announce()}}).catch(error=>{if(generation===runtimeSession.generation){webLoading=false;runtimeSession.phase='error';runtimeSession.error='JS/TS : '+error.message;announce()}});return false;
+   runtimeSession.completion=webScriptRuntime.prepare(scriptContext()).then(()=>{if(generation===runtimeSession.generation){webLoading=false;if(!sameWebScene(state.entities)){webScene=null;webScriptRuntime.stop()}runtimeSession.phase='ready';announce()}}).catch(error=>{if(generation===runtimeSession.generation){webLoading=false;runtimeSession.phase='error';runtimeSession.error='JS/TS : '+error.message;announce()}});return false;
   }else webScriptRuntime.stop();
  }
  if(webLoading)return false;
@@ -53,7 +56,7 @@ export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
  runtimeSession.busy=true;
  const execute=async()=>{
   if(pending){const ready=pending;pending=null;return ready}
-  if(initializedScene!==entities){
+  if(!sameEntities(initializedScene,entities)){
    runtimeSession.phase='connecting';announce();
    const health=await requestNative('/health');
    nativeCanStop=health.capabilities?.includes('mono-behaviour')===true;
@@ -62,7 +65,7 @@ export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
    const scripts=nativeScriptSources(entities,gameProject);if(scripts.length){if(!health.capabilities?.includes('native-script-compiler'))throw Error('Redémarre le bridge C# à jour pour compiler MonoBehaviour.');await requestNative('/scripts/compile',{scripts});if(generation!==runtimeSession.generation)return null;}
    const response=await requestNative('/scene',bridgeScene(nativeScriptEntities(nativePlayEntities(entities),gameProject),{id:gameProject.activeSceneId}));
    if(generation!==runtimeSession.generation){await requestNative('/stop',{revision:response.revision}).catch(()=>{});return null;}
-   revision=response.revision;initializedScene=entities;
+   revision=response.revision;initializedScene=[...entities];
   }
   const submitted=runtimeFrame(entities);
   const response=await requestNative('/frame',{revision,frame,dt:delta,actors:submitted,keys:[...gameplayKeys(state.keys)],pressedKeys:gameplayInputBlocked()?[]:[...(state.keyPresses||[])]});

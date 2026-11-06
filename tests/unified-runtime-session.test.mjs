@@ -48,3 +48,20 @@ test('a scene containing only disabled Web scripts can activate them during Play
  const previous=webScriptRuntime.load;webScriptRuntime.load=source=>import('data:text/javascript,'+encodeURIComponent(source));
  try{runRuntimeFrame(.02,{canRun:()=>true});await runtimeSession.completion;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,undefined);entity.webScripts[0].enabled=true;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,11);entity.webScripts[0].enabled=false;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,11);}finally{finish();webScriptRuntime.load=previous}
 });
+
+test('gameplay filtering does not reload surviving Web modules or repeat activation',async()=>{
+ setup('web');state.entities[0].csharpComponents=[];const component={scriptId:'stable',name:'Stable.js',language:'javascript',source:'export const fields={enabled:0,steps:0,destroyed:0}; export function OnEnable(ctx){ctx.fields.enabled++;} export function Update(ctx){ctx.fields.steps++;} export function OnDestroy(ctx){ctx.fields.destroyed++;}',values:{}};state.entities[0].webScripts=[component];
+ const previous=webScriptRuntime.load;let loads=0;webScriptRuntime.load=source=>{loads++;return import('data:text/javascript,'+encodeURIComponent(source))};
+ try{runRuntimeFrame(.02,{canRun:()=>true});await runtimeSession.completion;for(let i=0;i<6;i++)assert.equal(runRuntimeFrame(.02,{canRun:()=>true,update(){state.entities=state.entities.filter(e=>!e._logicDestroyed)}}),true);assert.equal(loads,1);assert.deepEqual(component.runtime.fields,{enabled:1,steps:6,destroyed:0});}finally{finish();webScriptRuntime.load=previous}
+});
+
+test('removing an object cleans only its module while other scripts keep their instance',async()=>{
+ setup('web');const first=state.entities[0];first.csharpComponents=[];first.webScripts=[{scriptId:'a',name:'A.js',language:'javascript',source:'export const fields={destroyed:0}; export function Update(ctx){ctx.Rotate(1)} export function OnDestroy(ctx){ctx.fields.destroyed++;}',values:{}}];const second=structuredClone(first);second.id=2;second.webScripts[0].scriptId='b';state.entities.push(second);
+ const previous=webScriptRuntime.load;let loads=0;webScriptRuntime.load=source=>{loads++;return import('data:text/javascript,'+encodeURIComponent(source))};
+ try{runRuntimeFrame(.02,{canRun:()=>true});await runtimeSession.completion;runRuntimeFrame(.02,{canRun:()=>true,update(){state.entities=state.entities.filter(e=>e!==first)}});runRuntimeFrame(.02,{canRun:()=>true});assert.equal(loads,1);assert.equal(first.webScripts[0].runtime.fields.destroyed,1);assert.equal(second.webScripts[0].runtime.fields.destroyed,0);assert.equal(second.rotation,2);}finally{finish();webScriptRuntime.load=previous}
+});
+
+test('native scene initialization survives a fresh collection containing the same actors',async()=>{
+ setup();let scenes=0;setRuntimeTransport(async(path,input)=>{if(path==='/health')return {protocol:3,capabilities:['shared-play-frame']};if(path==='/scene'){scenes++;return {revision:4}}return {revision:4,frame:input.frame,actors:input.actors}});
+ try{for(let i=0;i<3;i++){runRuntimeFrame(.02,{canRun:()=>true,update(){state.entities=[...state.entities]}});await runtimeSession.completion;}assert.equal(scenes,1);assert.equal(runtimeSession.phase,'ready');}finally{finish()}
+});

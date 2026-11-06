@@ -1,4 +1,4 @@
-# WarLike Studio
+# WarLike Engine
 
 **Moteur et éditeur de jeux 2D / 3D développé par Hardi Victor MBANVU — HardieBay.**
 

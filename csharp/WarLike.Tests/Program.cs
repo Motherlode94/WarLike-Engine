@@ -179,6 +179,12 @@ Test("invalid Animator snapshots do not partially change a native scene", () => 
     Check(world.Actors[0].Position.X == 0, "Invalid Animator frame changed the actor.");
 });
 
+Test("MonoBehaviour callbacks use the actor Animator instance", () => {
+    using var world = GameWorld.FromWarLikeJson("""{"entities":[{"id":1,"x":0,"y":0,"animatorGraph":{"states":[{"id":"idle"}],"parameters":[{"name":"pace","type":"float","default":0}]}}]}""");
+    var actor = world.Actors[0]; world.AddComponent(actor, new AnimatorCallbackProbe()); world.Tick(.05f);
+    var animator = actor.GetComponent<Animator>()!; Check(animator.GetFloat("pace") == 3, "MonoBehaviour did not use its actor Animator.");
+    Check(animator.DrainCommands().Any(c=>c.Method=="SetFloat"), "Callback commands were not retained for the shared frame.");
+});
 Console.WriteLine($"{passed} native C# tests passed.");
 
 sealed class Probe(List<string> events) : WarLikeBehaviour {
@@ -225,4 +231,10 @@ public sealed class SerializedMono : MonoBehaviour {
 sealed class InputProbe : MonoBehaviour {
     public bool Held, Pressed;
     void Update() { Held=Input.GetKey(KeyCode.W);Pressed=Input.GetKeyDown("e"); }
+}
+
+sealed class AnimatorCallbackProbe : MonoBehaviour {
+    private Animator animator = null!;
+    void Awake() => animator = GetComponent<Animator>()!;
+    void Update() => animator.SetFloat("pace", 3);
 }

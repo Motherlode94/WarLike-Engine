@@ -1,3 +1,4 @@
+import {newId,templates} from '../../script-editor/core.js';
 import {defaultCollider3d,defaultJoint3d} from './collider-3d.js';
 import {defaultSurvival,defaultSurvivalNode,defaultSurvivalWorld} from './survival-runtime.js';
 import {survivalBuildTemplates} from './survival-scene.js';
@@ -14,6 +15,8 @@ import {defaultRigidbody3d} from './physics-3d.js';
 import {newSequence} from './logic-sequences.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
+ {id:'webScripts',name:'JavaScript / TypeScript',category:'Scripts',description:'Modules JS natifs ou TS compilés, exécutés dans Play et l’export Web.',create:()=>[{scriptId:newId(),name:'script.js',source:templates.javascript,language:'javascript',enabled:true,values:{}}]},
+ {id:'warScripts',name:'WarScript · C# simplifié',category:'Scripts',description:'Comportement .wls exécuté dans Play Web et le jeu exporté.',create:()=>[{scriptId:newId(),name:'Rotation.wls',source:templates.warscript,enabled:true,values:{}}]},
  {id:'adventure',name:'Aventure · Journal et quête',category:'Aventure',description:'Journal, indices révélés et objets de quête communs à l’équipe.',create:()=>({combatEnabled:false,title:'Mon aventure',items:[],notes:[]})},
  {id:'adventureInteractable',name:'Aventure · Interaction ciblée',category:'Aventure',description:'Interaction E ciblée avec portée et contrôle des obstacles.',create:()=>({enabled:true,label:'Interagir',radius:150})},
  {id:'animatorGraph',name:'Animator · Graphe d’états',category:'Animation',description:'États, transitions, mélange 1D, couches et événements.',create:defaultAnimatorGraph},

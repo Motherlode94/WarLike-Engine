@@ -1,3 +1,4 @@
+import {webScriptRuntime} from '../js/core/web-script-runtime.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {state} from '../js/core/state.js';
@@ -28,4 +29,16 @@ test('debugger pause holds completed native frames and preserves actions perform
 });
 test('Web 2D and 3D frames run shared data components exactly once without contacting .NET',()=>{
  for(const mode of ['2d','3d']){setup('web');setRuntimeTransport(()=>{throw Error('Unexpected .NET request')});let updates=0;runRuntimeFrame(.1,{canRun:()=>true,update(){updates++}});assert.equal(updates,1,mode);assert.equal(state.entities[0].hp,90.5);finish()}
+});
+
+test('native source compilation precedes scene load and WarScript shares the completed frame',async()=>{
+ setup();state.entities[0].csharpComponents=[];state.entities[0].csharpScript={name:'Spinner',source:'public class Spinner : MonoBehaviour {}'};state.entities[0].warScripts=[{scriptId:'wls',name:'Test.wls',source:'Update(){ Rotate(1); } LateUpdate(){ Set("after",transform.rotation.y); }',values:{}}];
+ const paths=[];setRuntimeTransport(async(path,input)=>{paths.push(path);if(path==='/health')return {protocol:3,capabilities:['shared-play-frame','native-script-compiler','mono-behaviour']};if(path==='/scripts/compile')return {ok:true};if(path==='/scene')return {revision:4};if(path==='/stop')return {ok:true};return {revision:4,frame:input.frame,actors:input.actors.map(a=>({...a,rotation:20}))}});
+ runRuntimeFrame(.02,{canRun:()=>true});await runtimeSession.completion;assert.deepEqual(paths.slice(0,4),['/health','/scripts/compile','/scene','/frame']);assert.equal(state.entities[0].rotation,21);finish();
+});
+
+test('Web modules load before a frame and JS, WarScript and gameplay share one writer',async()=>{
+ setup('web');state.entities[0].csharpComponents=[];state.entities[0].webScripts=[{scriptId:'js',name:'Test.js',language:'javascript',source:'export function Update(ctx){ctx.Rotate(2)}',values:{}}];state.entities[0].warScripts=[{scriptId:'wls',name:'Test.wls',source:'Update(){Rotate(1);}',values:{}}];
+ const previous=webScriptRuntime.load;webScriptRuntime.load=source=>import('data:text/javascript,'+encodeURIComponent(source));let seen;
+ try{runRuntimeFrame(.02,{canRun:()=>true,update(){seen=state.entities[0].rotation}});assert.equal(seen,undefined);await runtimeSession.completion;runRuntimeFrame(.02,{canRun:()=>true,update(){seen=state.entities[0].rotation}});assert.equal(seen,3);runRuntimeFrame(.02,{canRun:()=>false});assert.equal(state.entities[0].rotation,3);}finally{finish();webScriptRuntime.load=previous}
 });

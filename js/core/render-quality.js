@@ -24,7 +24,7 @@ export function drawLighting2d(ctx,entities,camera,width,height){
  ctx.fillStyle='rgba(7,12,23,'+((1-renderQuality.ambient2d)*.76).toFixed(3)+')';ctx.fillRect(0,0,width,height);
  ctx.globalCompositeOperation='screen';
  for(const o of entities){
-  if(!o||o.lightEnabled===false||!['point','spot'].includes(o.lightType))continue;
+  if(!o||o.enabled===false||o.lightEnabled===false||!['point','spot'].includes(o.lightType))continue;
   const intensity=clamp(o.lightIntensity,0,10,1),radius=clamp(o.lightRange,1,120,10)*renderQuality.lightRadius2d/10;
   const x=(Number(o.x||0)+Number(o.w||0)/2)*camera.zoom+camera.x;
   const y=(Number(o.y||0)+Number(o.h||0)/2)*camera.zoom+camera.y;

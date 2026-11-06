@@ -4,7 +4,7 @@ import {traceNativeSegments3d} from './native-3d.js';
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const epsilon=.00001;
 const axes=[['x','w'],['y','d'],['z','h']];
-export const activeBody3d=o=>!!o&&o.sequenceEnabled!==false&&!o._sequenceDestroyed&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated;
+export const activeBody3d=o=>!!o&&o.enabled!==false&&o.sequenceEnabled!==false&&!o._sequenceDestroyed&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated;
 export const solidBody3d=o=>activeBody3d(o)&&o.collision3d!==false&&!o.lightType&&!o.audioEnabled&&(o.solid3d===true||o.type==='object'||o.type==='mesh3d'||!!o.collider3d);
 export const collisionBox3d=o=>({x:n(o.x),y:n(o.y),z:n(o.elevation3d)*64,w:Math.max(1,n(o.w,32)),d:Math.max(1,n(o.depth3d,o.h||32)),h:Math.max(1,n(o.h,32))});
 export const collisionWorldBounds3d=o=>{const b=collisionBox3d(o);return {x:(b.x+b.w/2)/64,y:(b.z+b.h/2)/64,z:(b.y+b.d/2)/64,w:b.w/64,h:b.h/64,d:b.d/64}};
@@ -17,6 +17,7 @@ export function supportBody3d(o,entities,tolerance=2.3){
 // Axis sweeps prevent tunnelling independently of frame time or obstacle thickness.
 export function moveBody3d(body,dx,dy,dz,entities,{recover=true,ignore=null}={}){
  const result={blockedX:false,blockedY:false,blockedZ:false,grounded:false,ceiling:false,hits:[]};
+ if(body.enabled===false)return result;
  const obstacles=body.collision3d===false?[]:entities.filter(o=>o!==body&&o!==ignore&&solidBody3d(o));
  body.x=n(body.x);body.y=n(body.y);body.elevation3d=Math.max(0,n(body.elevation3d));
  if(recover)for(let i=0;i<8;i++){

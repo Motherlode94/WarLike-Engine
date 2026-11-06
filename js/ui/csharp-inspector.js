@@ -24,10 +24,10 @@ export function mountCsharpInspector({host,selected,entities,ready,request,chang
     const group=el('label');group.append(el('span',property.label));
     const inputs={};
     for(const axis of property.type==='vector3'?['x','y','z']:['value']) {
-     const input=el('input');input.type=property.type==='bool'?'checkbox':'number';
+     const input=el('input');input.type=property.type==='bool'?'checkbox':property.type==='string'?'text':'number';
      input.setAttribute('aria-label',property.label+(axis==='value'?'':' '+axis.toUpperCase()));
      if(property.type==='bool')input.checked=property.value;
-     else {input.value=String(axis==='value'?property.value:property.value[axis]);input.min=property.min;input.max=property.max;input.step='any';input.required=true}
+     else {input.value=String(axis==='value'?property.value:property.value[axis]);if(property.type!=='string'){input.min=property.min;input.max=property.max;input.step='any';input.required=true}else input.maxLength=4096}
      inputs[axis]=input;group.append(input);
     }
     const apply=el('button','Appliquer');apply.type='submit';form.append(group,apply);

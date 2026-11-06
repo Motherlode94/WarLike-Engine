@@ -14,6 +14,8 @@ const flatComponents={
 };
 function binding(card,owner){
  const title=card.dataset.componentTitle,key=card.dataset.componentKey;
+ if(card.dataset.webScriptIndex!==undefined){const index=Number(card.dataset.webScriptIndex),get=()=>owner.webScripts?.[index];return {id:'webscript:'+index,family:'webscript',get,set:v=>{delete v.runtime;owner.webScripts[index]=v},remove:()=>{owner.webScripts.splice(index,1);if(!owner.webScripts.length)delete owner.webScripts},reset:()=>{get().values={};delete get().runtime}}}
+ if(card.dataset.warScriptIndex!==undefined){const index=Number(card.dataset.warScriptIndex),get=()=>owner.warScripts?.[index];return {id:'warscript:'+index,family:'warscript',get,set:v=>{delete v.runtime;owner.warScripts[index]=v},remove:()=>{owner.warScripts.splice(index,1);if(!owner.warScripts.length)delete owner.warScripts},reset:()=>{get().values={};delete get().runtime}}}
  if(card.dataset.nativeIndex!==undefined){const index=Number(card.dataset.nativeIndex),value=owner.csharpComponents?.[index];if(!value)return null;return {id:'native:'+index,keys:null,get:()=>value,set:v=>owner.csharpComponents[index]=v,family:'native:'+value.kind,remove:()=>owner.csharpComponents.splice(index,1),reset:card._resetNative}}
  if(key==='sequence'){
   const index=Number(card.dataset.sequenceIndex??-1),get=()=>index<0?owner.sequence:owner.sequences?.[index];

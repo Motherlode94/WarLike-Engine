@@ -116,6 +116,48 @@ Test("shared frames validate all IDs before mutating any actor", () => {
     Reject(()=>world.ApplySharedFrame(Json("""[{"id":1,"x":99,"y":0,"elevation3d":0,"rotation":0,"hp":10,"enabled":true},{"id":99,"x":0,"y":0,"elevation3d":0,"rotation":0,"hp":10,"enabled":true}]""")));
     Check(a.Position==Vector3.Zero&&a.Health==100,"Invalid shared frame partially applied.");
 });
+Test("MonoBehaviour private Unity messages use the right clock and defer inactive Awake", () => {
+    var world = new GameWorld { FixedDeltaTime = .02f }; var actor = world.CreateActor("Unity style", Vector3.Zero); actor.Enabled = false;
+    var calls = new List<string>(); var script = world.AddComponent(actor, new MonoProbe(calls));
+    world.Tick(.04f); Check(calls.Count == 0, "Inactive MonoBehaviour awakened.");
+    actor.Enabled = true; world.Tick(.04f);
+    Check(string.Join(',',calls) == "Awake,Enable,Start,Fixed,Fixed,Update,Late", "Unity message order failed: " + string.Join(',', calls));
+    Check(Math.Abs(script.FrameDelta-.04f)<.00001f && Math.Abs(script.FixedDelta-.02f)<.00001f, "Incorrect Time.deltaTime.");
+    Check(Math.Abs(actor.Rotation-3.6f)<.0001f, "Native transform did not rotate.");
+    script.enabled = false; world.Tick(.04f); script.enabled = true; world.Tick(.02f);
+    Check(calls.Count(e=>e=="Start")==1 && calls.Count(e=>e=="Awake")==1, "MonoBehaviour restarted.");
+    script.DestroySelf(); script.DestroySelf(); world.Tick(0);
+    Check(calls.Count(e=>e=="Destroy")==1 && actor.GetComponent<MonoProbe>() is null, "Deferred component destruction failed.");
+});
+Test("MonoBehaviour component access, activation and scene disposal preserve identity", () => {
+    var world = new GameWorld(); var actor = world.CreateActor("Object", Vector3.Zero);
+    var calls = new List<string>(); var script=world.AddComponent(actor,new MonoProbe(calls));
+    var health=script.gameObject.AddComponent<HealthComponent>();
+    Check(ReferenceEquals(script.GetComponent<HealthComponent>(),health) && script.TryGetComponent<HealthComponent>(out var found) && ReferenceEquals(found,health), "Component references differ.");
+    Check(script.GetComponents<MonoBehaviour>().Length==2 && script.gameObject.name=="Object", "GameObject access failed.");
+    script.gameObject.SetActive(false); Check(!script.isActiveAndEnabled && !script.gameObject.activeSelf, "GameObject stayed active.");
+    script.gameObject.SetActive(true); world.Tick(0); world.Dispose(); world.Dispose();
+    Check(calls.Count(e=>e=="Destroy")==1 && world.Actors.Count==0, "Scene disposal repeated destruction.");
+});
+Test("native script fields serialize before Awake and edit through the Inspector", () => {
+    var types=new Dictionary<string,Type>{{"SerializedMono",typeof(SerializedMono)}};
+    var world=GameWorld.FromWarLikeJson("""{"entities":[{"id":1,"name":"Native","csharpScript":{"name":"SerializedMono","source":"compiled","values":{"Speed":12,"Label":"test","Offset":{"x":1,"y":2,"z":3},"privateValue":7}}}]}""",types);
+    var script=world.Actors[0].GetComponent<SerializedMono>()!;
+    Check(script.CapturedSpeed==12 && script.Offset==new Vector3(1,2,3) && script.PrivateValue==7, "Script values applied after Awake.");
+    var component=RuntimeInspector.Inspect(world,1).Components.Single();
+    Check(component.SourceIndex==-1 && component.Properties.Any(p=>p.Name=="Label" && p.Type=="string"), "Script fields absent from Inspector.");
+    RuntimeInspector.Set(world,1,0,"Speed",Json("4")); RuntimeInspector.Set(world,1,0,"Label",Json("\"new\""));
+    Check(script.Speed==4 && script.Label=="new", "Native field update failed.");
+    Reject(()=>RuntimeInspector.Set(world,1,0,"Speed",Json("\"bad\"")));
+    Reject(()=>RuntimeInspector.Set(world,1,0,"World",Json("0")));
+});
+Test("native input belongs to a frame and Time does not leak between worlds", () => {
+    var world=new GameWorld();var actor=world.CreateActor("Input",Vector3.Zero);var script=world.AddComponent(actor,new InputProbe());
+    world.SetInput(["w"],["e"]);world.Tick(.1f);Check(script.Held && script.Pressed,"Input frame not visible in Update.");
+    world.Tick(.1f);Check(!script.Pressed && script.Held,"GetKeyDown persisted beyond one frame.");
+    Check(Time.deltaTime==0 && Time.time==0,"Time leaked outside a callback.");
+});
+
 Console.WriteLine($"{passed} native C# tests passed.");
 
 sealed class Probe(List<string> events) : WarLikeBehaviour {
@@ -136,4 +178,30 @@ sealed class DisableInAwake : WarLikeBehaviour {
 sealed class SpawnProbe(List<string> events) : WarLikeBehaviour {
     private bool _spawned;
     public override void Update(float dt) { if (!_spawned) { _spawned = true; AddComponent(new Probe(events)); } }
+}
+
+sealed class MonoProbe(List<string> calls) : MonoBehaviour {
+    public float FrameDelta, FixedDelta;
+    void Awake() => calls.Add("Awake");
+    void OnEnable() => calls.Add("Enable");
+    void Start() => calls.Add("Start");
+    void FixedUpdate() { calls.Add("Fixed"); FixedDelta=Time.deltaTime; }
+    void Update() { calls.Add("Update");FrameDelta=Time.deltaTime;transform.Rotate(0,90*Time.deltaTime,0); }
+    void LateUpdate() => calls.Add("Late");
+    void OnDisable() => calls.Add("Disable");
+    void OnDestroy() => calls.Add("Destroy");
+    public void DestroySelf() => Destroy(this);
+}
+public sealed class SerializedMono : MonoBehaviour {
+    public float Speed=2;
+    public string Label="default";
+    public Vector3 Offset=Vector3.Zero;
+    [SerializeField] private float privateValue=1;
+    public float CapturedSpeed { get; private set; }
+    public float PrivateValue => privateValue;
+    void Awake() => CapturedSpeed=Speed;
+}
+sealed class InputProbe : MonoBehaviour {
+    public bool Held, Pressed;
+    void Update() { Held=Input.GetKey(KeyCode.W);Pressed=Input.GetKeyDown("e"); }
 }

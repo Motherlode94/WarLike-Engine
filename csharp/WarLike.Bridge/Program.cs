@@ -8,6 +8,7 @@ builder.Prefixes.Add("http://127.0.0.1:8765/");
 builder.Start();
 Console.WriteLine("WarLike C# bridge listening on http://127.0.0.1:8765/");
 var world = new GameWorld();
+using var scriptCompiler = new NativeScriptCompiler();
 long revision = 0;
 long lastPlayFrame = 0;
 var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -29,12 +30,26 @@ async Task Handle(HttpListenerContext ctx) {
     res.Headers["Cache-Control"]="no-store";
     try {
         if (req.HttpMethod=="OPTIONS"){res.StatusCode=204;return;}
-        if (req.Url?.AbsolutePath=="/health"&&req.HttpMethod=="GET"){await Reply(new {ready=true,engine="WarLike C# .NET 8",protocol=3,capabilities=new[]{"component-inspector","tactical-squads","component-lifecycle","shared-play-frame"}});return;}
+        if (req.Url?.AbsolutePath=="/health"&&req.HttpMethod=="GET"){await Reply(new {ready=true,engine="WarLike C# .NET 8",protocol=3,capabilities=new[]{"component-inspector","tactical-squads","component-lifecycle","shared-play-frame","native-script-compiler","mono-behaviour"}});return;}
+        if(req.Url?.AbsolutePath=="/stop" && req.HttpMethod=="POST") {
+            using var doc=await ReadJson();long expected=doc.RootElement.GetProperty("revision").GetInt64();
+            await gate.WaitAsync();try{if(expected!=revision){res.StatusCode=409;await Reply(new {error="Stale stop revision."});return;}world.Dispose();var logs=world.DrainMessages();world=new GameWorld();revision++;lastPlayFrame=0;await Reply(new {ok=true,revision,logs});}finally{gate.Release();}return;
+        }
+        if (req.Url?.AbsolutePath=="/scripts/compile" && req.HttpMethod=="POST") {
+            using var doc=JsonDocument.Parse(await ReadBody(MaxSceneBytes));
+            var scripts=doc.RootElement.GetProperty("scripts").EnumerateArray().Select(s=>new NativeScriptSource(
+                s.GetProperty("name").GetString() ?? "", s.GetProperty("source").GetString() ?? "")).ToArray();
+            await gate.WaitAsync(); try {
+                var result=scriptCompiler.Compile(scripts);
+                if (!result.Ok) res.StatusCode=400;
+                await Reply(new {ok=result.Ok,classes=result.Classes,diagnostics=result.Diagnostics,error=result.Ok?null:string.Join("\n",result.Diagnostics.Where(d=>d.Severity=="error").Take(5).Select(d=>$"{d.File}:{d.Line}:{d.Column} · {d.Message}"))});
+            } finally { gate.Release(); } return;
+        }
         if (req.Url?.AbsolutePath=="/scene"&&req.HttpMethod=="POST"){
             if(req.ContentLength64>MaxSceneBytes){res.StatusCode=413;await Reply(new {error="Scene too large"});return;}
             var json=await ReadBody(MaxSceneBytes);
-            var incoming=GameWorld.FromWarLikeJson(json);
-            await gate.WaitAsync();try{world=incoming;revision++;lastPlayFrame=0;await Reply(new {ok=true,count=world.Actors.Count,revision});}finally{gate.Release();}return;
+            var incoming=GameWorld.FromWarLikeJson(json,scriptCompiler.Types);
+            await gate.WaitAsync();try{world.Dispose();world=incoming;revision++;lastPlayFrame=0;await Reply(new {ok=true,count=world.Actors.Count,revision});}finally{gate.Release();}return;
         }
         if (req.Url?.AbsolutePath=="/frame"&&req.HttpMethod=="POST"){
             using var doc=JsonDocument.Parse(await ReadBody(MaxSceneBytes));var input=doc.RootElement;
@@ -43,8 +58,10 @@ async Task Handle(HttpListenerContext ctx) {
             if(!float.IsFinite(dt)||dt<0||dt>.1f)throw new ArgumentOutOfRangeException(nameof(dt));
             await gate.WaitAsync();try{
                 if(expected!=revision||frame<=lastPlayFrame){res.StatusCode=409;await Reply(new {error="Stale Play frame or scene revision."});return;}
-                world.ApplySharedFrame(input.GetProperty("actors"));world.Tick(dt);lastPlayFrame=frame;
-                await Reply(new {ok=true,revision,frame,actors=world.Actors.Select(a=>new {id=a.Id,x=a.Position.X*64,y=a.Position.Z*64,elevation3d=a.Position.Y,rotation=a.Rotation,hp=a.Health,enabled=a.Enabled}).ToArray()});
+                var keys=input.TryGetProperty("keys",out var keysValue)?keysValue.EnumerateArray().Select(k=>k.GetString()??"").ToArray():Array.Empty<string>();
+                var pressed=input.TryGetProperty("pressedKeys",out var pressedValue)?pressedValue.EnumerateArray().Select(k=>k.GetString()??"").ToArray():Array.Empty<string>();
+                world.SetInput(keys,pressed);world.ApplySharedFrame(input.GetProperty("actors"));world.Tick(dt);lastPlayFrame=frame;
+                await Reply(new {ok=true,revision,frame,logs=world.DrainMessages(),actors=world.Actors.Select(a=>new {id=a.Id,x=a.Position.X*64,y=a.Position.Z*64,elevation3d=a.Position.Y,rotation=a.Rotation,hp=a.Health,enabled=a.Enabled}).ToArray()});
             }finally{gate.Release();}return;
         }
         if (req.HttpMethod=="POST" && req.Url?.AbsolutePath is "/components/inspect" or "/components/set" or "/squad/command") {

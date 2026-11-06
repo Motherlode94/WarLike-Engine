@@ -123,14 +123,15 @@ Le dépôt inclut les fichiers utilisables ; les liens officiels servent à l’
 
 **Périmètre :** les 50 packs 3D Kenney recensés sont intégrés. 27 autres anciens packs Quaternius n’ont pas pu être récupérés à cause des quotas de leurs hébergements ; ils sont recensés dans l’inventaire. Les packs soumis à une licence interdisant la redistribution d’assets, dont certaines éditions récentes QAL, ne sont pas inclus.
 
-## Python, C++ et C# : rôles réels
+## WarScript, Python, C++ et C# : rôles réels
 
 | Langage | Utilisation |
 | --- | --- |
-| JavaScript / TypeScript | Interface, Blueprint, simulation et rendu principal dans le navigateur ; contrats TypeScript pour les systèmes |
+| WarScript `.wls` | Langage C# simplifié : champs publics, méthodes sans classe obligatoire, événements du cycle de vie, transformations et variables/signaux Blueprint ; exécution dans Play Web et export Web. [Guide](docs/warscript.md) |
+| JavaScript / TypeScript | Noyau Web, Blueprint, simulation et rendu ; composants de scripts JS natifs et TS compilés dans Script Studio, inclus dans l’export. [Langages de scripts](docs/script-languages.md) |
 | Python | Serveur et relais LAN privé, validation des scènes, inventaire, import de sources 3D, contrôle des archives et orchestration des builds |
 | C++17 / WebAssembly | Navigation A*, gravité par lots, intersections 3D, tirs et vision IA avec recherche du premier obstacle ; buffers réutilisés, compilation automatique et binaire livré au navigateur, avec repli JavaScript si le module est indisponible |
-| C# / .NET 8 | Monde à composants et comportements natifs, simulation, véhicules et règles de jeu ; bridge local avec Inspector typé, escouades en formation (déplacer / maintenir / suivre), étapes manuelles ou aperçu continu et restauration de la scène |
+| C# / .NET 8 | Compilation native des `.cs` par Roslyn dans le bridge local ; `MonoBehaviour`, `gameObject`, `transform`, `Time`, `Input` et champs sérialisés. Monde à composants et comportements natifs, simulation, véhicules et règles de jeu ; bridge local avec Inspector typé, escouades en formation (déplacer / maintenir / suivre), étapes manuelles ou aperçu continu et restauration de la scène |
 
 ```bash
 # Serveur et outils Python sans dépendances supplémentaires

@@ -1,3 +1,4 @@
+import {demoWarScripts} from './demo-war-scripts.js';
 import {prefab3d,get3dAsset} from '../assets/catalog-3d.js';
 import {getAsset} from '../assets/catalog.js';
 import {lifeArt} from '../assets/life-sprites-2d.js';
@@ -51,6 +52,7 @@ export function createTownDemo(mode='3d'){
  const mara=person('Mara · responsable du quartier',540,740,{adventureInteractable:{label:'Parler à Mara',radius:150},ai:{...defaultAi(),speed:14,patrolRadius:18,detection:80,attackDamage:0}});
  const fuse=place('life-town-tile-0106','free-survival-kit-box-open','Caisse de maintenance',820,850,three?65:46,{hierarchyGroup:'Atelier',adventureInteractable:{label:'Prendre le fusible',radius:135,lockedHint:'Parle à Mara et garde une place dans ton inventaire.'}});
  const relay=place('life-town-tile-0095','free-furniture-kit-radio','Tableau du relais',540,360,three?95:58,{hierarchyGroup:'Relais',adventureInteractable:{label:'Réparer le relais',radius:140,lockedHint:'Il manque le fusible de maintenance de l’atelier.'},lightType:'point',lightEnabled:false,lightColor:'#6edeb1',lightIntensity:2,lightRange:8,audioEnabled:false,audioClip:'kenney-interface-sounds-confirmation_001',audioLoop:false,audioGain:.3,fxEmitter:{enabled:false,kind:'electric',rate:8,lifetime:.35,speed:24,color:'#8be0ee'}});
+ relay.warScripts=[demoWarScripts.town()];
  const scout=person('Éclaireur · accès bloqué',1470,720,{stats:{...defaultStats(),health:30},adventureInteractable:{label:'Secourir l’éclaireur',radius:140,lockedHint:'Rétablis le courant avant de sécuriser le passage.'}});
  s.light(390,700);s.light(1350,650);
  if(three){const car=place(null,'free-car-kit-delivery','Fourgon de l’atelier',310,1010,225,{collision3d:true,vehicleConfig:{driveable:true},maxSpeed:200,acceleration:155,brakeForce:280,turnRate:115,drag:1.4,hierarchyGroup:'Véhicules',tags:['vehicle']});car.rotation=90;}
@@ -73,6 +75,7 @@ export function createTownDemo(mode='3d'){
 export function createGarageDemo(mode='3d'){
  const s=layout(mode,'Piste d’essais','demo-garage-ground'),{three,player,place,solid}=s;s.background('demo-garage-ground');player.x=190;player.y=1030;
  const car=place('jeep','free-car-kit-race','Prototype · véhicule d’essai',360,900,three?215:100,{...(!three?{w:100,h:62}:{}),rotation:90,collision3d:true,vehicleConfig:{driveable:true},maxSpeed:270,acceleration:175,brakeForce:300,turnRate:130,drag:1.45,reverseRatio:.45,tags:['vehicle','race-vehicle'],csharpComponents:[{kind:'RacingRules',runtime:'web'}],hierarchyGroup:'Véhicule'});
+ car.warScripts=[demoWarScripts.garage()];
  const console=place('life-town-tile-0115','free-survival-kit-signpost','Briefing · piste',250,1040,three?100:52,{adventureInteractable:{label:'Démarrer l’essai',radius:140},hierarchyGroup:'Départ'});
  const points=[[1370,900,'Virage est'],[1370,300,'Ligne du nord'],[350,300,'Virage ouest'],[350,900,'Ligne d’arrivée']];
  for(const [i,[x,y,label]] of points.entries()){

@@ -1,3 +1,4 @@
+import {demoWarScripts} from './demo-war-scripts.js';
 import {getAsset} from '../assets/catalog.js';
 import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
 export function createBundledPhysicsScene2d(){
@@ -5,6 +6,7 @@ export function createBundledPhysicsScene2d(){
  const sprite=(id,x,y,options={})=>{const asset=getAsset(id);if(!asset)throw Error('Sprite intégré absent : '+id);const e={id:entities.length+1,name:asset.name,type:'prefab',assetId:id,x,y,w:asset.width,h:asset.height,color:'#83bdd2',animation:'idle',hp:100,hideLabelInPlay:true,collision3d:false,...options};entities.push(e);return e};
  sprite('demo-platformer-backdrop',-70,-100,{w:2380,h:900,name:'Courrier des toits · horizon',hierarchyGroup:'Arrière-plan'});
  const player=sprite('free-platformer-art-deluxe-p1-stand',70,440,{name:'Le coursier',hierarchyGroup:'Joueur',adventure:{title:'Courrier des toits',combatEnabled:false,hint:'Trois colis sur les toits · gemmes : points de reprise · E au bureau pour livrer.',items:[],notes:[]},controller2d:{...defaultController2d(),mode:'platformer',jumpSpeed:470,demo:{id:'platformer',title:'Courrier des toits',description:'Trois colis sur un parcours de sauts, des caisses physiques et des points de reprise avant la livraison.',features:['Gravité et saut','Colliders et corps physiques','Collecte et objectifs','Points de reprise','Livraison et victoire']}},rigidbody2d:defaultRigidbody2d(),collider2d:defaultCollider2d()});
+ player.warScripts=[demoWarScripts.platformer()];
  const platform=(x,y,length,group='Parcours')=>{for(let i=0;i<length;i++)sprite(i===0?'free-platformer-art-deluxe-grassleft':i===length-1?'free-platformer-art-deluxe-grassright':'free-platformer-art-deluxe-grassmid',x+i*70,y,{name:group,hierarchyGroup:group,collision3d:true,collider2d:defaultCollider2d()})};
  platform(0,560,12,'Départ · apprendre à sauter');platform(910,560,10,'Secteur des caisses');platform(1680,560,8,'Approche de la livraison');
  for(const [x,y,count] of [[280,490,3],[420,420,3],[1050,490,3],[1190,420,3],[1260,350,2],[1750,490,3],[1820,420,3]])platform(x,y,count,'Toits · itinéraire des colis');

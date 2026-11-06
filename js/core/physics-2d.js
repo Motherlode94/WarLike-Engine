@@ -13,7 +13,7 @@ export function controllerMode2d(player,entities){
 // Axis-aligned boxes, in 2D scene pixels. A zero size follows the sprite's dimensions.
 export function colliderRect2d(o){const c=o.collider2d||{};return {x:n(o.x)+n(c.offsetX),y:n(o.y)+n(c.offsetY),w:Math.max(.01,n(c.width)>0?n(c.width):n(o.w,32)),h:Math.max(.01,n(c.height)>0?n(c.height):n(o.h,32))}}
 export function solidCollider2d(o){
- if(!o||o._sequenceDestroyed||o.sequenceEnabled===false||o.lightType||o.audioEnabled)return false;
+ if(!o||o.enabled===false||o._sequenceDestroyed||o.sequenceEnabled===false||o.lightType||o.audioEnabled)return false;
  if(o.collider2d)return o.collider2d.enabled!==false&&!o.collider2d.isTrigger;
  if(o.collision3d===false)return false;
  if(o.collision3d===true||o.solid2d===true||o.type==='object')return true;
@@ -26,6 +26,7 @@ const overlapAxis=(a,b,axis)=>a[axis]<b[axis]+b[axis==='x'?'w':'h']-.000001&&a[a
 export function moveBody2d(body,dx,dy,entities){
  const result={blockedX:false,blockedY:false,grounded:false,ceiling:false,hits:[]};
  if(body.collider2d?.enabled===false||!body.collider2d&&body.collision3d===false||body.collider2d?.isTrigger){body.x+=n(dx);body.y+=n(dy);body.grounded2d=false;return result}
+ if(body.enabled===false)return result;
  const obstacles=entities.filter(o=>o!==body&&solidCollider2d(o));
  // Recover an object placed partly inside a collider before Play.
  for(let iteration=0;iteration<8;iteration++){
@@ -49,7 +50,7 @@ export function stepPhysics2d(entities,dt,{exclude=null,only=null}={}){
  const frame=clamp(n(dt),0,.1);if(!frame)return;
  const count=Math.max(1,Math.ceil(frame/(1/120))),step=frame/count;
  for(let i=0;i<count;i++)for(const o of entities){
-  const rb=o.rigidbody2d;if(o===exclude||o._netRemote&&!only||only&&o!==only||!rb?.enabled||rb.bodyType==='static')continue;
+  const rb=o.rigidbody2d;if(o.enabled===false||o===exclude||o._netRemote&&!only||only&&o!==only||!rb?.enabled||rb.bodyType==='static')continue;
   rb.vx=clamp(n(rb.vx),-100000,100000);rb.vy=clamp(n(rb.vy),-100000,100000);
   if(rb.bodyType!=='kinematic')rb.vy+=clamp(n(rb.gravity,980),-10000,10000)*clamp(n(rb.gravityScale,1),-10,10)*step;
   const result=moveBody2d(o,rb.vx*step,rb.vy*step,entities),bounce=clamp(n(rb.restitution),0,1);

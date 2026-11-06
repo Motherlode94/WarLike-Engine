@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {ScriptDocument,readLinkedFile,saveLinkedFile,applyScriptSave,validateScript,languageFor,MAX_SOURCE} from '../script-editor/core.js';
+import {ScriptDocument,readLinkedFile,saveLinkedFile,applyScriptSave,validateScript,languageFor,MAX_SOURCE,templateFor} from '../script-editor/core.js';
 import {restoreGameProject,gameProject} from '../js/core/game-project.js';
 const doc=(text='before')=>new ScriptDocument({id:'one',name:'movement.cs',source:text,revision:0});
 function linked(document,text){
@@ -48,4 +48,8 @@ test('standalone entry and editor modules are included in the playable export ma
  const manifest=JSON.parse(readFileSync(new URL('../runtime-files.json',import.meta.url),'utf8')).files;
  for(const name of ['script-editor/index.html','script-editor/app.js','script-editor/core.js','script-editor/style.css','js/ui/script-studio.js'])assert.ok(manifest.includes(name),name);
  const app=readFileSync(new URL('../script-editor/app.js',import.meta.url),'utf8');assert.doesNotMatch(app,/\beval\s*\(|new Function\s*\(/);
+});
+
+test('new C# files use their own MonoBehaviour class name and optional namespace',()=>{
+ assert.match(templateFor('Player.cs'),/class Player : MonoBehaviour/);assert.match(templateFor('Game.Player.cs'),/namespace Game;/);assert.match(templateFor('Game.Player.cs'),/class Player : MonoBehaviour/);assert.throws(()=>templateFor('Bad Name.cs'),/classe C#/);
 });

@@ -43,13 +43,15 @@ export function initScriptStudio(){
   answered.set(message.requestId,response);if(answered.size>128)answered.delete(answered.keys().next().value);send(response);
  }
  window.addEventListener('message',event=>{if(event.origin===location.origin&&event.source===frame.contentWindow)receive(event.data)});
- function open({scriptId=null,entityId=state.selected.at(-1),language='csharp',autonomous=false}={}){
+ function open({scriptId=null,entityId=state.selected.at(-1),language='warscript',autonomous=false}={}){
   if(state.playing){alert('Arrête Play avant de modifier un script.');return}
   gameProject.scripts??=[];restoreSources();
   selectedEntity=entityId;const entity=state.entities.find(e=>e.id===entityId);
-  let script=gameProject.scripts.find(s=>s.id===scriptId)||gameProject.scripts.find(s=>entity?.scripts?.includes(s.id));
-  if(!script&&entity?.csharpScript?.source){script={id:entity.csharpScript.scriptId||newId(),name:(entity.csharpScript.name||'MyBehaviour').replace(/\.cs$/i,'')+'.cs',source:entity.csharpScript.source,language:'csharp',revision:0};gameProject.scripts.push(script)}
-  if(!script){const name={csharp:'MyBehaviour.cs',javascript:'script.js',typescript:'script.ts',python:'script.py',cpp:'script.cpp'}[language]||'script.txt';script={id:newId(),name,source:templates[language]||'',language:languageFor(name),revision:0};gameProject.scripts.push(script)}
+  let script=gameProject.scripts.find(s=>s.id===scriptId)||gameProject.scripts.find(s=>entity?.scripts?.includes(s.id)&&s.language===language);
+  if(!script&&['javascript','typescript'].includes(language)){const attached=entity?.webScripts?.find(s=>s.scriptId===scriptId)||entity?.webScripts?.find(s=>s.language===language);if(attached){script={id:attached.scriptId,name:attached.name,source:attached.source,language:attached.language,compiledFrom:attached.compiledFrom,compiledSource:attached.compiledSource,revision:0};gameProject.scripts.push(script)}}
+  if(!script&&language==='warscript'){const attached=entity?.warScripts?.find(s=>s.scriptId===scriptId)||entity?.warScripts?.[0];if(attached){script={id:attached.scriptId,name:attached.name,source:attached.source,language:'warscript',revision:0};gameProject.scripts.push(script)}}
+  if(!script&&language==='csharp'&&entity?.csharpScript?.source){script={id:entity.csharpScript.scriptId||newId(),name:(entity.csharpScript.name||'MyBehaviour').replace(/\.cs$/i,'')+'.cs',source:entity.csharpScript.source,language:'csharp',revision:0};gameProject.scripts.push(script)}
+  if(!script){const name={warscript:'Rotation.wls',csharp:'MyBehaviour.cs',javascript:'script.js',typescript:'script.ts',python:'script.py',cpp:'script.cpp'}[language]||'script.txt';script={id:newId(),name,source:templates[language]||'',language:languageFor(name),revision:0};gameProject.scripts.push(script)}
   selectedScript=script.id;context=currentContext();answered.clear();channel?.close();session=newId();
   if(typeof BroadcastChannel!=='undefined'){channel=new BroadcastChannel('warlike.script-studio.'+session);channel.onmessage=e=>receive(e.data)}
   const url=new URL('./script-editor/index.html',location.href);url.searchParams.set('session',session);url.searchParams.set('project',gameProject.id);url.searchParams.set('mode',workspace.mode);

@@ -27,7 +27,7 @@ export function updateAudioSources(now=performance.now()/1000){
  if(!state.playing||!audio.enabled||!audio.context||audio.context.state!=='running'){if(active.size)stopSources();return}
  const listener=listenerPoint(),liveIds=new Set();
  for(const o of state.entities){
-  if(!o.audioEnabled||o.audioClip==='none')continue;
+  if(o.enabled===false||!o.audioEnabled||o.audioClip==='none')continue;
   liveIds.add(o.id);
   const x=o.x+o.w/2,y=o.y+o.h/2,dist=Math.hypot(x-listener[0],y-listener[1])/64;
   const radius=Math.max(1,Number(o.audioRange)||18),level=Math.min(1,Math.max(0,Number.isFinite(Number(o.audioGain))?Number(o.audioGain):.7));

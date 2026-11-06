@@ -158,6 +158,27 @@ Test("native input belongs to a frame and Time does not leak between worlds", ()
     Check(Time.deltaTime==0 && Time.time==0,"Time leaked outside a callback.");
 });
 
+Test("native Animator typed values, triggers and command consumption", () => {
+    var animator = new Animator(Json("""{"states":[{"id":"idle"},{"id":"attack"}],"parameters":[{"name":"pace","type":"float","default":0},{"name":"attackRequest","type":"trigger","default":false}]}"""));
+    animator.SetFloat("pace", 2.5f); animator.SetTrigger("attackRequest"); animator.Play("attack", 0, .25f);
+    Check(animator.GetFloat("pace") == 2.5f && animator.GetBool("attackRequest"), "Native Animator values were not shared.");
+    var commands = animator.DrainCommands(); Check(commands.Length == 3 && commands[2].Method == "Play", "Commands missing or reordered.");
+    Check(animator.DrainCommands().Length == 0, "Commands replayed.");
+    Reject(() => animator.SetFloat("pace", float.NaN)); Reject(() => animator.SetBool("pace", true)); Reject(() => animator.Play("missing"));
+});
+Test("Animator receives browser state and is available to native components", () => {
+    using var world = GameWorld.FromWarLikeJson("""{"entities":[{"id":1,"name":"Hero","x":0,"y":0,"animatorGraph":{"states":[{"id":"idle"}],"parameters":[]}}]}""");
+    var animator = world.Actors[0].GetComponent<Animator>(); Check(animator is not null, "Animator was not imported as a component.");
+    world.ApplySharedFrame(Json("""[{"id":1,"x":0,"y":0,"elevation3d":0,"rotation":0,"hp":100,"enabled":true,"animator":{"stateId":"idle","normalizedTime":0.5,"transition":true,"parameters":{"speed":2}}}]"""));
+    Check(animator!.GetCurrentAnimatorStateInfo().IsName("idle") && animator.IsInTransition() && animator.GetFloat("speed") == 2, "Shared Animator snapshot missing.");
+    animator.CrossFade("idle", .2f); Check(animator.DrainCommands()[0].Method == "CrossFade", "CrossFade missing.");
+});
+Test("invalid Animator snapshots do not partially change a native scene", () => {
+    using var world = GameWorld.FromWarLikeJson("""{"entities":[{"id":1,"x":0,"y":0}]}""");
+    Reject(() => world.ApplySharedFrame(Json("""[{"id":1,"x":64,"y":0,"elevation3d":0,"rotation":0,"hp":100,"enabled":true,"animator":{"parameters":{"speed":{}}}}]""")));
+    Check(world.Actors[0].Position.X == 0, "Invalid Animator frame changed the actor.");
+});
+
 Console.WriteLine($"{passed} native C# tests passed.");
 
 sealed class Probe(List<string> events) : WarLikeBehaviour {

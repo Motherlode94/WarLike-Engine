@@ -1,3 +1,4 @@
+import {blendSamples2d,machineAncestors,resolveMachineState,inspectMachines,transitionOrigins} from './animator-advanced.js';
 import {animationEventsBetween} from './animation-clips.js';
 import {resolveAnimationClip} from './gltf-animation.js';
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -19,12 +20,15 @@ export function inspectAnimatorGraph(graph){
   if(typeof s.clip!=='string'||!s.clip||s.clip.length>160)errors.push('Clip d’état absent.');
   if(s.duration!=null&&(!Number.isFinite(s.duration)||s.duration<.05||s.duration>3600)||s.speed!=null&&(!Number.isFinite(s.speed)||s.speed<.05||s.speed>4))errors.push('Durée ou vitesse d’état invalide.');
   if(s.events!=null&&(!Array.isArray(s.events)||s.events.length>32||s.events.some(e=>!e||!Number.isFinite(e.time)||e.time<0||e.time>1||!['signal','fx','sound'].includes(e.type)||typeof e.value!=='string'||e.value.length>100)))errors.push('Événements Animator invalides.');
+  if(s.blend2d!=null&&(!Array.isArray(s.blend2d)||s.blend2d.length<1||s.blend2d.length>16||s.blend2d.some(p=>!p||typeof p.clip!=='string'||!p.clip||!Number.isFinite(p.x)||!Number.isFinite(p.y))||new Set(s.blend2d.map(p=>p?.x+':'+p?.y)).size!==s.blend2d.length||!safeParameter(s.parameterX)||!safeParameter(s.parameterY)))errors.push('Mélange 2D invalide.');
   if(s.blend!=null){if(!Array.isArray(s.blend)||s.blend.length>16||s.blend.some(p=>!p||typeof p.clip!=='string'||!p.clip||!Number.isFinite(p.threshold))||new Set(s.blend.map(p=>p?.threshold)).size!==s.blend.length||s.parameter!=null&&!safeParameter(s.parameter))errors.push('Mélange 1D invalide : clips, seuils distincts et paramètre attendus.');}
  }
- if(!ids.has(graph.entry))errors.push('État d’entrée absent.');
+ const machineErrors=inspectMachines(graph);errors.push(...machineErrors);if(!resolveMachineState(graph,graph.entry))errors.push('État d’entrée absent.');
+ const known=id=>ids.has(id)||typeof id==='string'&&id.startsWith('@')&&!!resolveMachineState(graph,id);
  for(const t of graph.transitions){
-  if(!t||!ids.has(t.to)||t.from!=='*'&&!ids.has(t.from))errors.push('Transition vers un état absent.');
+  if(!t||!known(t.to)||t.from!=='*'&&!known(t.from))errors.push('Transition vers un état absent.');
   if(!Array.isArray(t?.conditions)||t.conditions.length>12||t.conditions.some(c=>!c||!safeParameter(c.parameter)||!['==','!=','>','>=','<','<=','trigger'].includes(c.operator||'==')||c.operator!=='trigger'&&!['number','string','boolean'].includes(typeof c.value)||typeof c.value==='number'&&!Number.isFinite(c.value)))errors.push('Conditions de transition invalides.');
+  if(t?.interruptionSource!=null&&!transitionOrigins.includes(t.interruptionSource))errors.push('Source d’interruption invalide.');
   if(t?.blend!=null&&(!Number.isFinite(t.blend)||t.blend<0||t.blend>3)||t?.hasExitTime&&(!Number.isFinite(t.exitTime)||t.exitTime<0||t.exitTime>100)||t?.offset!=null&&(!Number.isFinite(t.offset)||t.offset<0||t.offset>1))errors.push('Fondu, temps de sortie ou décalage invalide.');
  }
  if(graph.layers!=null&&(!Array.isArray(graph.layers)||graph.layers.length>4||graph.layers.some(l=>!l||typeof l.clip!=='string'||!Number.isFinite(l.weight)||l.weight<0||l.weight>1||l.bones!=null&&(!Array.isArray(l.bones)||l.bones.length>32||l.bones.some(b=>typeof b!=='string'||b.length>160)))))errors.push('Couches Animator invalides.');
@@ -32,6 +36,7 @@ export function inspectAnimatorGraph(graph){
  return [...new Set(errors)];
 }
 export function animatorBlendSamples(state,parameters){
+ if(state.blend2d?.length)return blendSamples2d(state.blend2d,n(parameters[state.parameterX]),n(parameters[state.parameterY]));
  const points=(state.blend||[]).filter(p=>p&&typeof p.clip==='string'&&Number.isFinite(Number(p.threshold))).sort((a,b)=>a.threshold-b.threshold).slice(0,16);
  if(!points.length)return [{clip:state.clip||'idle',weight:1}];const value=n(parameters[state.parameter||'speed']);if(value<=points[0].threshold)return [{clip:points[0].clip,weight:1}];if(value>=points.at(-1).threshold)return [{clip:points.at(-1).clip,weight:1}];
  const upper=points.findIndex(p=>p.threshold>=value),a=points[upper-1],b=points[upper],weight=(value-a.threshold)/Math.max(.001,b.threshold-a.threshold);return [{clip:a.clip,weight:1-weight},{clip:b.clip,weight}];
@@ -41,38 +46,46 @@ let tracks=new WeakMap();
 export function resetAnimators(){tracks=new WeakMap()}
 export function noteAnimatorAction(owner,action='attack',duration=.45){owner._animatorAction={action:String(action).slice(0,40),remaining:clamp(n(duration,.45),.05,10)}}
 export function stepAnimator(owner,dt,{mode='3d',preview=false,parameters={},onEvent=()=>{}}={}){
- const graph=owner.animatorGraph;if(owner.enabled===false||!graph||graph.enabled===false||inspectAnimatorGraph(graph).length)return null;const frame=clamp(n(dt),0,.1);let track=tracks.get(owner);if(!track||!graph.states.some(s=>s.id===track.id)){track={id:graph.entry,time:0,blend:1,lastX:n(owner.x),lastY:n(owner.y),lastZ:n(owner.elevation3d),previous:null,serial:0};tracks.set(owner,track);onEvent({type:'signal',value:'animation:'+graph.entry+':enter'},owner)}
+ const graph=owner.animatorGraph;if(owner.enabled===false||!graph||graph.enabled===false||inspectAnimatorGraph(graph).length)return null;const frame=clamp(n(dt),0,.1);let track=tracks.get(owner);if(!track||!graph.states.some(s=>s.id===track.id)){track={id:resolveMachineState(graph,graph.entry),time:0,blend:1,lastX:n(owner.x),lastY:n(owner.y),lastZ:n(owner.elevation3d),previous:null,serial:0};tracks.set(owner,track);onEvent({type:'signal',value:'animation:'+track.id+':enter'},owner);for(const id of machineAncestors(graph,track.id).reverse())onEvent({type:'signal',value:'animation:machine:'+id+':enter'},owner)}
  const action=owner._animatorAction;const speed=frame?Math.hypot(n(owner.x)-track.lastX,n(owner.y)-track.lastY)/(64*frame):0,vertical=frame?(n(owner.elevation3d)-track.lastZ)/frame:0;
  const declared=Object.fromEntries((graph.parameters||[]).map(p=>[p.name,p.default]));
- const p={...declared,speed:Math.min(60,speed),vertical,grounded:mode==='2d'?owner.controller2d?.mode==='topDown'||owner.grounded2d!==false:owner.grounded3d!==false,flight:!!owner.heroState?.flight,dead:n(owner.stats?.health??owner.hp,100)<=0,casting:!!action&&action.remaining>0&&action.action!=='attack',attacking:!!action&&action.remaining>0&&action.action==='attack',action:action?.action||'',...owner.animatorParameters,...parameters};
+ const localYaw=n(owner.rotation)*Math.PI/180,vx=frame?(n(owner.x)-track.lastX)/(64*frame):0,vz=frame?(n(owner.y)-track.lastY)/(64*frame):0;
+ const p={...declared,moveX:vx*Math.cos(localYaw)-vz*Math.sin(localYaw),moveY:vx*Math.sin(localYaw)+vz*Math.cos(localYaw),speed:Math.min(60,speed),vertical,grounded:mode==='2d'?owner.controller2d?.mode==='topDown'||owner.grounded2d!==false:owner.grounded3d!==false,flight:!!owner.heroState?.flight,dead:n(owner.stats?.health??owner.hp,100)<=0,casting:!!action&&action.remaining>0&&action.action!=='attack',attacking:!!action&&action.remaining>0&&action.action==='attack',action:action?.action||'',...owner.animatorParameters,...parameters};
  if(preview){p.speed=n(graph.previewSpeed,4.2);p.grounded=true;p.vertical=0}
  const forced=owner._animatorForced;let current=graph.states.find(s=>s.id===track.id)||graph.states[0];
  const durationOf=s=>Math.max(.05,n(s.duration,1)),projected=track.time+frame*clamp(n(current.speed,1),.05,4);
- const exitReady=t=>{if(!t.hasExitTime)return true;const duration=durationOf(current),at=t.exitTime;if(current.loop!==false&&at<1)return animationEventsBetween([{time:at}],track.time,projected,duration,{loop:true,normalized:true}).length>0;return projected/duration+1e-9>=at;};
- const transition=graph.transitions.find(t=>(t.from==='*'||t.from===track.id)&&exitReady(t)&&t.conditions.every(c=>matches(c,p)));
- const forcing=!p.dead&&forced?.remaining>0&&graph.states.some(s=>s.id===forced.stateId),next=forcing?forced.stateId:transition?.to||track.id;
+ const exitReady=t=>{if(!t.hasExitTime)return true;const prior=track.previous,source=prior&&(t.from===prior.state.id||t.from?.startsWith('@')&&machineAncestors(graph,prior.state.id).includes(t.from.slice(1)))?prior.state:current,elapsed=source===current?track.time:prior.time,duration=durationOf(source),after=elapsed+frame*clamp(n(source.speed,1),.05,4),at=t.exitTime;if(source.loop!==false&&at<1)return animationEventsBetween([{time:at}],elapsed,after,duration,{loop:true,normalized:true}).length>0;return after/duration+1e-9>=at;};
+ const active=track.previous&&track.blend<1?track.transition:null,source=active?.interruptionSource??'current';
+ const sourceIds=!active?[track.id]:source==='none'?[]:source==='current'?[active.from]:source==='next'?[track.id]:source==='nextThenCurrent'?[track.id,active.from]:[active.from,track.id];
+ const fromMatches=(t,id)=>t.from===id||t.from?.startsWith('@')&&machineAncestors(graph,id).includes(t.from.slice(1));
+ const candidates=[...graph.transitions.filter(t=>t.from==='*'),...sourceIds.flatMap(id=>graph.transitions.filter(t=>t.from!=='*'&&fromMatches(t,id)))];
+ const transition=candidates.find(t=>{const index=graph.transitions.indexOf(t);return (!active||t.from==='*'||!active.orderedInterruption||index<active.index)&&exitReady(t)&&t.conditions.every(c=>matches(c,p))&&(resolveMachineState(graph,t.to)!==track.id||t.canTransitionToSelf)});
+ const forcing=!p.dead&&forced?.remaining>0&&graph.states.some(s=>s.id===forced.stateId),next=forcing?forced.stateId:resolveMachineState(graph,transition?.to)||track.id;
  if(next!==track.id||forcing&&forced.restart||!forcing&&transition?.canTransitionToSelf){
-  track.previous={state:current,time:track.time,parameters:track.parameters||p};track.id=next;current=graph.states.find(s=>s.id===next);
-  track.time=forcing?0:clamp(n(transition?.offset),0,1)*durationOf(current);track.blend=0;track.duration=clamp(n(transition?.blend,.18),0,3)*(transition?.fixedDuration===false?durationOf(track.previous.state):1);track.serial++;
+  const oldMachines=machineAncestors(graph,track.id),newMachines=machineAncestors(graph,next);for(const id of oldMachines.filter(id=>!newMachines.includes(id)))onEvent({type:'signal',value:'animation:machine:'+id+':exit'},owner);for(const id of newMachines.filter(id=>!oldMachines.includes(id)).reverse())onEvent({type:'signal',value:'animation:machine:'+id+':enter'},owner);
+  const composite=track.previous&&track.blend<1?[...(track.previous.composite||animatorBlendSamples(track.previous.state,track.previous.parameters).map(s=>({...s,time:track.previous.time,loop:track.previous.state.loop!==false}))).map(s=>({...s,weight:s.weight*(1-track.blend)})),...animatorBlendSamples(current,p).map(s=>({...s,time:track.time,loop:current.loop!==false,weight:s.weight*track.blend}))]:null;
+  track.transition={from:track.id,index:graph.transitions.indexOf(transition),interruptionSource:transition?.interruptionSource??'current',orderedInterruption:transition?.orderedInterruption===true};
+  track.previous={state:current,time:track.time,parameters:track.parameters||p,composite};track.id=next;current=graph.states.find(s=>s.id===next);
+  track.time=forcing?(forced.offset||0)*durationOf(current):clamp(n(transition?.offset),0,1)*durationOf(current);track.blend=0;track.duration=clamp(n(forcing?forced.fade??transition?.blend:transition?.blend,.18),0,3)*(transition?.fixedDuration===false?durationOf(track.previous.state):1);track.serial++;
   if(forcing)forced.restart=false;else for(const c of transition?.conditions||[])if(c.operator==='trigger'){owner.animatorParameters??={};owner.animatorParameters[c.parameter]=false;}
   onEvent({type:'signal',value:'animation:'+next+':enter'},owner);
  }
  const before=track.time;track.time+=frame*clamp(n(current.speed,1),.05,4);track.blend=track.duration?Math.min(1,track.blend+frame/track.duration):1;const duration=durationOf(current);
- if(track.previous){track.previous.time+=frame*clamp(n(track.previous.state.speed,1),.05,4);if(track.blend>=1)track.previous=null;}
+ if(track.previous){track.previous.time+=frame*clamp(n(track.previous.state.speed,1),.05,4);for(const sample of track.previous.composite||[])sample.time+=frame;if(track.blend>=1)track.previous=null;}
  for(const event of animationEventsBetween(current.events,before,track.time,duration,{loop:current.loop!==false,normalized:true}))onEvent(event,owner);
  if(forced){forced.remaining=Math.max(0,forced.remaining-frame);if(!forced.remaining)delete owner._animatorForced;}
- const samples=animatorBlendSamples(current,p);owner._animatorFrame={stateId:current.id,name:current.name,clip:current.clip,samples,time:track.time,normalizedTime:track.time/duration,duration,loop:current.loop!==false,blend:track.blend,previous:track.previous,parameters:p,layers:(graph.layers||[]).slice(0,4)};
+ const samples=animatorBlendSamples(current,p);owner._animatorFrame={stateId:current.id,name:current.name,clip:current.clip,samples,time:track.time,delta:frame*clamp(n(current.speed,1),.05,4),machinePath:machineAncestors(graph,current.id),normalizedTime:track.time/duration,duration,loop:current.loop!==false,blend:track.blend,previous:track.previous,parameters:p,layers:(graph.layers||[]).slice(0,4)};
  if(mode==='2d'&&!preview)owner.animation=samples.reduce((a,b)=>a.weight>b.weight?a:b).clip;
  if(action&&!preview){action.remaining=Math.max(0,action.remaining-frame);if(!action.remaining)delete owner._animatorAction}
  track.lastX=n(owner.x);track.lastY=n(owner.y);track.lastZ=n(owner.elevation3d);track.parameters=p;return owner._animatorFrame;
 }
 export function animatorPoseOptions(frame,clips,mapping={}){
  const convert=(samples,time,loop)=>samples.map(s=>({clip:resolveAnimationClip(clips,s.clip,mapping),weight:s.weight,time,loop})).filter(s=>s.clip);
- const samples=convert(frame.samples,frame.time,frame.loop),previous=frame.previous?{samples:convert(animatorBlendSamples(frame.previous.state,frame.previous.parameters),frame.previous.time,frame.previous.state.loop!==false)}:null;
+ const samples=convert(frame.samples,frame.time,frame.loop),previous=frame.previous?{samples:frame.previous.composite?frame.previous.composite.flatMap(s=>convert([s],s.time,s.loop)):convert(animatorBlendSamples(frame.previous.state,frame.previous.parameters),frame.previous.time,frame.previous.state.loop!==false)}:null;
  const layers=(frame.layers||[]).filter(l=>l.enabled!==false).map(l=>({...l,clip:resolveAnimationClip(clips,l.clip,mapping),time:frame.time})).filter(l=>l.clip);return {samples,previous,blend:frame.blend,layers,loop:frame.loop};
 }
 
-export function playAnimatorState(owner,stateId,duration=null){const state=owner.animatorGraph?.states.find(s=>s.id===stateId);if(!state)return false;owner._animatorForced={stateId,restart:true,remaining:Math.max(.05,Math.min(10,n(duration??state.duration??1,1)))};return true}
+export function playAnimatorState(owner,stateId,duration=null,{fade=null,offset=0}={}){const state=owner.animatorGraph?.states.find(s=>s.id===stateId);if(!state)return false;owner._animatorForced={stateId,restart:true,fade,offset:clamp(n(offset),0,1),remaining:Math.max(.05,Math.min(10,n(duration??state.duration??1,1)))};return true}
 export function setAnimatorParameter(owner,key,value){if(!safeParameter(key)||!['string','number','boolean'].includes(typeof value)||typeof value==='number'&&!Number.isFinite(value))return false;const declaration=owner.animatorGraph?.parameters?.find(p=>p.name===key);if(declaration&&(['float','int'].includes(declaration.type)?typeof value!=='number'||declaration.type==='int'&&!Number.isInteger(value):['bool','trigger'].includes(declaration.type)?typeof value!=='boolean':typeof value!=='string'))return false;owner.animatorParameters??={};owner.animatorParameters[key]=value;return true}
 
 export const setAnimatorTrigger=(owner,key)=>setAnimatorParameter(owner,key,true);

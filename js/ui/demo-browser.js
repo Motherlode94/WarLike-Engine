@@ -4,6 +4,7 @@ import {view3d} from '../core/viewport-3d.js';
 import {loadAuthoredDemo} from '../core/scene.js';
 const make=(tag,cls,text)=>{const node=document.createElement(tag);node.className=cls;if(text)node.textContent=text;return node};
 const scenes=[
+ {id:'animation',name:'Atelier du mouvement',type:'Personnages et animation · 3D',description:'Contrôle Alex puis explore trois stations : poses et courbes, cibles IK, root motion avec collisions.',features:'Marche · course · saut · attaque · squelette · IK · root motion',mode:'3d'},
  {id:'town',name:'Quartier du Canal',type:'Exploration et mission',description:'Parle à Mara, retrouve le fusible de l’atelier, rétablis le courant et rouvre le passage.',features:'Dialogue · inventaire · barrière · lumière · effets · victoire'},
  {id:'nature',name:'Première aube',type:'Survie et construction',description:'Prépare ton camp dans une clairière, récolte sur les sentiers et survis aux dangers de la lisière.',features:'Besoins · récolte · fabrication · placement libre · nuit · sauvegarde'},
  {id:'garage',name:'Piste d’essais',type:'Conduite et chronométrage',description:'Lance l’essai depuis les stands, prends le véhicule et franchis les quatre points dans l’ordre.',features:'Véhicule pilotable · freinage · collisions · checkpoints · temps'},

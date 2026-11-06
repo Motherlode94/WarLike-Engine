@@ -18,3 +18,7 @@ Pour tester l’export, enregistrer le projet puis **Exporter le jeu**, décompr
 ## WarScript dans les quatre scènes
 
 Le relais du quartier possède `Relais.wls` : après le signal de quête Blueprint, le script fait varier la lumière. `Prototype.wls` applique vitesse et freinage au véhicule du garage. `PremiereAube.wls` règle la vitesse du cycle de survie. `Coursier.wls` règle saut et sprint du contrôleur 2D. Sélectionner l’objet, déplier **WarScript**, modifier un champ public ou ouvrir **Modifier le WarScript**, enregistrer puis relancer Play. Ces sources et valeurs sont incluses dans l’export Web.
+
+## Atelier du mouvement · 3D
+
+Personnage Kenney contrôlable avec marche/course, saut et attaque déclenchée par WarScript. Trois stations organisées montrent le montage de poses et de courbes, une main et un regard IK sur mannequin Quaternius, et un déplacement par root motion. E lit les panneaux ; Window → Squelette et Animator ouvrent les outils d’édition. Tous les modèles sont intégrés et les données de la scène sont exportables.

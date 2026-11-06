@@ -30,7 +30,7 @@ async Task Handle(HttpListenerContext ctx) {
     res.Headers["Cache-Control"]="no-store";
     try {
         if (req.HttpMethod=="OPTIONS"){res.StatusCode=204;return;}
-        if (req.Url?.AbsolutePath=="/health"&&req.HttpMethod=="GET"){await Reply(new {ready=true,engine="WarLike C# .NET 8",protocol=3,capabilities=new[]{"component-inspector","tactical-squads","component-lifecycle","shared-play-frame","native-script-compiler","mono-behaviour"}});return;}
+        if (req.Url?.AbsolutePath=="/health"&&req.HttpMethod=="GET"){await Reply(new {ready=true,engine="WarLike C# .NET 8",protocol=3,capabilities=new[]{"component-inspector","tactical-squads","component-lifecycle","shared-play-frame","native-script-compiler","mono-behaviour","animator-commands"}});return;}
         if(req.Url?.AbsolutePath=="/stop" && req.HttpMethod=="POST") {
             using var doc=await ReadJson();long expected=doc.RootElement.GetProperty("revision").GetInt64();
             await gate.WaitAsync();try{if(expected!=revision){res.StatusCode=409;await Reply(new {error="Stale stop revision."});return;}world.Dispose();var logs=world.DrainMessages();world=new GameWorld();revision++;lastPlayFrame=0;await Reply(new {ok=true,revision,logs});}finally{gate.Release();}return;
@@ -61,7 +61,7 @@ async Task Handle(HttpListenerContext ctx) {
                 var keys=input.TryGetProperty("keys",out var keysValue)?keysValue.EnumerateArray().Select(k=>k.GetString()??"").ToArray():Array.Empty<string>();
                 var pressed=input.TryGetProperty("pressedKeys",out var pressedValue)?pressedValue.EnumerateArray().Select(k=>k.GetString()??"").ToArray():Array.Empty<string>();
                 world.SetInput(keys,pressed);world.ApplySharedFrame(input.GetProperty("actors"));world.Tick(dt);lastPlayFrame=frame;
-                await Reply(new {ok=true,revision,frame,logs=world.DrainMessages(),actors=world.Actors.Select(a=>new {id=a.Id,x=a.Position.X*64,y=a.Position.Z*64,elevation3d=a.Position.Y,rotation=a.Rotation,hp=a.Health,enabled=a.Enabled}).ToArray()});
+                await Reply(new {ok=true,revision,frame,logs=world.DrainMessages(),actors=world.Actors.Select(a=>new {id=a.Id,x=a.Position.X*64,y=a.Position.Z*64,elevation3d=a.Position.Y,rotation=a.Rotation,hp=a.Health,enabled=a.Enabled,animatorCommands=a.GetComponent<Animator>()?.DrainCommands()}).ToArray()});
             }finally{gate.Release();}return;
         }
         if (req.HttpMethod=="POST" && req.Url?.AbsolutePath is "/components/inspect" or "/components/set" or "/squad/command") {

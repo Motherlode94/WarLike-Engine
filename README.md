@@ -182,7 +182,7 @@ Le site est statique, déployable sur Cloudflare Pages depuis `main` avec le dé
 
 ## Limites actuelles
 
-WarLike reste un moteur expérimental. L’IA utilise A* sur grille avec lissage des trajets, sans NavMesh. Le rendu principal prend en charge une partie de glTF, avec animations squelettiques et textures, mais pas tous ses matériaux et extensions. L’Animator ne propose pas encore d’IK ou de retargeting entre squelettes. La coop LAN est limitée à quatre joueurs et 256 objets, avec simulation dans le navigateur hôte ; elle n’est pas un serveur dédié ni un multijoueur Internet. La physique et les interactions demandent des tests dans le jeu construit. Les imports GLB temporaires doivent être rendus durables avant l’export ; les modèles externes non intégrés nécessitent Internet. C# s’exécute dans le processus .NET, indépendamment du Play Web.
+WarLike reste un moteur expérimental. L’IA utilise A* sur grille avec lissage des trajets, sans NavMesh. Le rendu principal prend en charge une partie de glTF, avec animations squelettiques et textures, mais pas tous ses matériaux et extensions. L’Animator inclut un studio de poses, des courbes, le mélange 2D, l’IK de chaînes/regard, un transfert par correspondance d’os et le root motion de translation ; les avatars humanoïdes automatiques et l’IK de corps entier restent hors périmètre. La coop LAN est limitée à quatre joueurs et 256 objets, avec simulation dans le navigateur hôte ; elle n’est pas un serveur dédié ni un multijoueur Internet. La physique et les interactions demandent des tests dans le jeu construit. Les imports GLB temporaires doivent être rendus durables avant l’export ; les modèles externes non intégrés nécessitent Internet. C# s’exécute dans le processus .NET, indépendamment du Play Web.
 
 Les références Unity, Game Creator, Emerald AI ou Opsive décrivent des inspirations d’ergonomie et de fonctionnalités. Leurs plugins commerciaux ne sont pas inclus dans WarLike.
 
@@ -224,3 +224,5 @@ Validation : `node --test tests/company.test.mjs`.
 ## Animation et Animator
 
 [Clips de transformation, timeline, transitions, paramètres et API Animator](docs/animation-studio.md).
+
+Le projet 3D propose **Atelier du mouvement** dans Scènes démo : personnage contrôlable et stations de poses/courbes, IK et root motion. Le studio Squelette est accessible dans Window et l’Animator. [Fonctionnement et limites de l’animation avancée](docs/animation-studio.md).

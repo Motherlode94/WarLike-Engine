@@ -1,3 +1,4 @@
+import {cacheAnimationGeometry,skeletalClips,sampleEntityRigPose,hasSkeletalPreview,skeletalFrame} from './skeletal-animation.js';
 import {runRuntimeFrame} from './runtime-session.js';
 import {companyController,commandCompany,selectCompanySquad} from './company-runtime.js';
 import {moveCompanyCamera} from './company-camera.js';
@@ -563,9 +564,9 @@ export function init3d(canvas,host,buttons){
     const id=o.model3dId||o.assetId;ensureModel(id);
     const cached=realGlbBuffers.get(id);
     if(cached?.status==='ready'){
-     let posed=null;const rig=cached.geometry.rig;
-     if(rig?.animations.length&&(state.playing||o.animationPreview||o.animatorPreview)){
-      if(o.animatorGraph&&o.animatorGraph.enabled!==false&&o._animatorFrame){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}track.graph=true;const options=animatorPoseOptions(o._animatorFrame,rig.animations,o.animationMap||{});posed=deformGlbParts(cached.geometry,sampleRigPose(rig,null,0,options),{buffers:track.buffers})}else{
+     let posed=null;const rig=cached.geometry.rig;if(rig)cacheAnimationGeometry(id,cached.geometry);
+     if(rig&&(rig.animations.length||o.animationRig?.clips?.length)&&(state.playing||o.animationPreview||o.animatorPreview||o.animationRig?.playOnStart||hasSkeletalPreview(o))){
+      if(o.animatorGraph&&o.animatorGraph.enabled!==false&&o._animatorFrame){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}track.graph=true;const options=animatorPoseOptions(o._animatorFrame,skeletalClips(o,rig),o.animationMap||{});posed=deformGlbParts(cached.geometry,sampleEntityRigPose(o,cached.geometry,options,state.entities),{buffers:track.buffers})}else{
       if(animationStates.get(o)?.graph)animationStates.delete(o);
       const desired=o.animationAuto===false?o.animation3dClip||'idle':(o.animation==='dead'?'death':o.animation||'idle');
       const clip=animationClipForState(rig.animations,desired,o.animationMap||{},animationStates.get(o),{automatic:o.animationAuto!==false});
@@ -574,10 +575,11 @@ export function init3d(canvas,host,buttons){
        if(track.clip!==clip){track.previous={clip:track.clip,time:track.time};track.clip=clip;track.time=0;track.transition=0;track.oneShot=o.animationAuto!==false&&['attack','hurt'].includes(desired)}else if(track.oneShot&&track.time>=clip.duration&&desired==='attack'){track.time=0}
        const step=state.playing&&!gameIsRunning()?0:dt*Math.max(.05,Math.min(4,Number(o.animationSpeed)||1));track.time+=step;track.transition=Math.min(1,track.transition+step/.18);
        const loop=!track.oneShot&&o.animationLoop!==false&&!/death|die|jump_start|jump_land/i.test(clip.name);
-       posed=deformGlbParts(cached.geometry,sampleRigPose(rig,clip,track.time,{loop,previous:track.previous,blend:track.transition}),{buffers:track.buffers});
+       posed=deformGlbParts(cached.geometry,sampleEntityRigPose(o,cached.geometry,{samples:[{clip,time:track.time,weight:1,loop}],previous:track.previous,blend:track.transition},state.entities),{buffers:track.buffers});
       }
       }
      }
+     if(rig&&(hasSkeletalPreview(o)||skeletalFrame(o)?.clip&&!o.animatorGraph)){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,sampleEntityRigPose(o,cached.geometry,{},state.entities),{buffers:track.buffers})}
      for(const [partIndex,part] of cached.parts.entries()){
       if(posed){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,posed[partIndex])}
       else if(rig){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,cached.geometry.parts[partIndex].vertices)}

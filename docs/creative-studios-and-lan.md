@@ -15,7 +15,7 @@ Ces systèmes sont du code WarLike Studio, développé pour le projet de **Hardi
 
 Blueprint expose **Jouer un état Animator**, **Définir un paramètre Animator**, **Émettre le FX de l’objet** et la condition **État Animator actif**. Les paramètres personnalisés peuvent être numériques, booléens ou textuels. Le graphe, ses événements et ses couches sont conservés dans le projet et les exports.
 
-La 2D utilise les noms d’animations des sprites ; les mélanges squelettiques et masques d’os concernent la 3D. Il n’y a pas encore d’IK, de retargeting entre squelettes différents ni de blend tree 2D. Un état de vol peut utiliser un clip existant si le modèle ne possède pas d’animation de vol.
+La 2D utilise les noms d’animations des sprites ; les mélanges squelettiques et masques d’os concernent la 3D. Le studio Squelette et le graphe proposent désormais IK, transfert par correspondance d’os et blend trees 2D ; voir le guide d’animation pour leur fonctionnement et leurs limites. Un état de vol peut utiliser un clip existant si le modèle ne possède pas d’animation de vol.
 
 ## FX Studio : modifier et synchroniser les effets
 

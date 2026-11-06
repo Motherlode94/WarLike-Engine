@@ -53,7 +53,7 @@ export function sampleRigPose(rig,clip,time,{loop=true,previous=null,blend=1,sam
  const world=new Array(nodes.length),visiting=new Set();
  const visit=i=>{if(world[i])return world[i];if(visiting.has(i))throw Error('Squelette glTF cyclique');visiting.add(i);const local=nodeMatrix(nodes[i]),parent=rig.parents[i];world[i]=parent<0?local:multiplyMatrices(visit(parent),local);visiting.delete(i);return world[i]};
  for(let i=0;i<nodes.length;i++)visit(i);
- return {world,joints:rig.skins.map(s=>s.joints.map((joint,i)=>multiplyMatrices(world[joint],s.inverseBinds[i])))};
+ return {nodes,world,joints:rig.skins.map(s=>s.joints.map((joint,i)=>multiplyMatrices(world[joint],s.inverseBinds[i])))};
 }
 const vertexScratch=new WeakMap();
 export function deformGlbParts(geometry,pose,{buffers=[]}={}){

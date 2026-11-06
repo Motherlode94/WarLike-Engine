@@ -5,7 +5,7 @@ export const UNITS_PER_METRE=64;
 const clone=value=>structuredClone(value);
 const finite=(value,fallback=0)=>Number.isFinite(value)?value:fallback;
 const validId=id=>Number.isSafeInteger(id)&&id>0;
-const webKeys=['webScripts','warScripts','stats','inventory','ai','controller2d','controller3d','collider2d','collider3d','rigidbody2d','rigidbody3d','joint3d','sequence','animatorGraph','animationStudio','superhero','rpgProgression','survival','simulationNode'];
+const webKeys=['webScripts','warScripts','stats','inventory','ai','controller2d','controller3d','collider2d','collider3d','rigidbody2d','rigidbody3d','joint3d','sequence','animatorGraph','animationStudio','animationRig','superhero','rpgProgression','survival','simulationNode'];
 
 // Canonical transforms use metres, degrees and X/Y/Z. Legacy x/y are the
 // ground-plane X/Z in pixels; elevation3d is vertical Y in metres.
@@ -46,4 +46,4 @@ export function runtimeEntities(scene){
  });
 }
 export function bridgeScene(entities,options){const scene=canonicalScene(entities,options);return {...scene,version:6,entities:runtimeEntities(scene)}}
-export function runtimeFrame(entities){return entities.map(e=>({id:e.id,x:finite(e.x),y:finite(e.y),elevation3d:finite(e.elevation3d),rotation:finite(e.rotation),hp:finite(e.stats?.health,finite(e.hp,100)),enabled:e.enabled!==false}))}
+export function runtimeFrame(entities){return entities.map(e=>({id:e.id,x:finite(e.x),y:finite(e.y),elevation3d:finite(e.elevation3d),rotation:finite(e.rotation),hp:finite(e.stats?.health,finite(e.hp,100)),enabled:e.enabled!==false,...(e.animatorGraph?{animator:{stateId:e._animatorFrame?.stateId||'',normalizedTime:e._animatorFrame?.normalizedTime||0,transition:(e._animatorFrame?.blend??1)<1,parameters:{...(e._animatorFrame?.parameters||{}),...(e.animatorParameters||{})}}}:{})}))}

@@ -127,7 +127,7 @@ Le dépôt inclut les fichiers utilisables ; les liens officiels servent à l’
 
 | Langage | Utilisation |
 | --- | --- |
-| WarScript `.wls` | Langage C# simplifié : champs publics, méthodes sans classe obligatoire, événements du cycle de vie, transformations et variables/signaux Blueprint ; exécution dans Play Web et export Web. [Guide](docs/warscript.md) |
+| WarScript `.wls` | Langage C# simplifié : champs publics, méthodes sans classe obligatoire, `Awake`, `OnEnable/OnDisable`, `Start`, mises à jour et nettoyage, transformations et variables/signaux Blueprint ; exécution dans Play Web et export Web. [Guide](docs/warscript.md) |
 | JavaScript / TypeScript | Noyau Web, Blueprint, simulation et rendu ; composants de scripts JS natifs et TS compilés dans Script Studio, inclus dans l’export. [Langages de scripts](docs/script-languages.md) |
 | Python | Serveur et relais LAN privé, validation des scènes, inventaire, import de sources 3D, contrôle des archives et orchestration des builds |
 | C++17 / WebAssembly | Navigation A*, gravité par lots, intersections 3D, tirs et vision IA avec recherche du premier obstacle ; buffers réutilisés, compilation automatique et binaire livré au navigateur, avec repli JavaScript si le module est indisponible |

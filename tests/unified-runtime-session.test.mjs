@@ -42,3 +42,9 @@ test('Web modules load before a frame and JS, WarScript and gameplay share one w
  const previous=webScriptRuntime.load;webScriptRuntime.load=source=>import('data:text/javascript,'+encodeURIComponent(source));let seen;
  try{runRuntimeFrame(.02,{canRun:()=>true,update(){seen=state.entities[0].rotation}});assert.equal(seen,undefined);await runtimeSession.completion;runRuntimeFrame(.02,{canRun:()=>true,update(){seen=state.entities[0].rotation}});assert.equal(seen,3);runRuntimeFrame(.02,{canRun:()=>false});assert.equal(state.entities[0].rotation,3);}finally{finish();webScriptRuntime.load=previous}
 });
+
+test('a scene containing only disabled Web scripts can activate them during Play',async()=>{
+ setup('web');const entity=state.entities[0];entity.csharpComponents=[];entity.webScripts=[{scriptId:'disabled',name:'Disabled.js',language:'javascript',enabled:false,source:'export function OnEnable(ctx){ctx.Rotate(10)} export function Update(ctx){ctx.Rotate(1)}',values:{}}];
+ const previous=webScriptRuntime.load;webScriptRuntime.load=source=>import('data:text/javascript,'+encodeURIComponent(source));
+ try{runRuntimeFrame(.02,{canRun:()=>true});await runtimeSession.completion;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,undefined);entity.webScripts[0].enabled=true;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,11);entity.webScripts[0].enabled=false;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,11);}finally{finish();webScriptRuntime.load=previous}
+});

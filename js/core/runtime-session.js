@@ -39,7 +39,7 @@ export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
  if(runtimeSession.phase==='stopped'){update?.(dt);return true} // standalone tools/tests
  if(webScene!==state.entities&&!isLanGuest()){
   if(webLoading)return false;webScene=state.entities;
-  if(state.entities.some(e=>e.webScripts?.some(s=>s.enabled!==false))){
+  if(state.entities.some(e=>e.webScripts?.length)){
    const generation=runtimeSession.generation,entities=state.entities;webLoading=true;runtimeSession.phase='connecting';announce();
    runtimeSession.completion=webScriptRuntime.prepare(scriptContext()).then(()=>{if(generation===runtimeSession.generation){webLoading=false;if(state.entities!==entities){webScene=null;webScriptRuntime.stop()}runtimeSession.phase='ready';announce()}}).catch(error=>{if(generation===runtimeSession.generation){webLoading=false;runtimeSession.phase='error';runtimeSession.error='JS/TS : '+error.message;announce()}});return false;
   }else webScriptRuntime.stop();

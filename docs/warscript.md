@@ -38,12 +38,16 @@ Les conditions `if` / `else`, `return`, affectations `=`, `+=`, `-=`, `*=`, `/=`
 
 | Méthode | Appel par le moteur |
 | --- | --- |
-| `Awake()` | Initialisation de l’instance lors de son premier traitement actif |
+| `Awake()` | Une fois quand l’objet devient actif, même si le composant est désactivé |
+| `OnEnable()` | À chaque activation du composant sur un objet actif |
+| `OnDisable()` | À chaque désactivation, avant le nettoyage final |
 | `Start()` | Une fois avant les mises à jour |
 | `FixedUpdate()` | Pas de simulation de 0,02 s |
 | `Update()` | Une fois par image de simulation active |
 | `LateUpdate()` | Après les composants et le gameplay de cette image |
 | `OnDestroy()` | À la suppression du composant, au remplacement de scène ou à Stop |
+
+`Awake` et `Start` ne se répètent pas lors d’une réactivation. `enabled = false` suspend uniquement ce script ; `gameObject.SetActive(false)` suspend l’objet et tous ses scripts. Le moteur observe ces changements aux frontières des callbacks. Un changement dans `Awake`, `OnEnable` ou `Start` peut donc empêcher les callbacks suivants de cette image. `OnDestroy` est appelé une seule fois pour les instances déjà éveillées, même si elles ont été désactivées ou mises en erreur. Un objet resté inactif depuis le chargement n’est pas éveillé et ne reçoit pas `OnDestroy`.
 
 Un composant désactivé ne reçoit plus les mises à jour. Pause suspend le traitement ; les menus et journaux filtrent les touches lorsque l’interface accapare les entrées. Les champs d’instance sont sérialisés dans la sauvegarde de partie, et Stop restaure la scène d’édition. En coop, seul l’hôte exécute les WarScripts.
 
@@ -62,6 +66,8 @@ Un composant désactivé ne reçoit plus les mises à jour. Pause suspend le tra
 | `Signal("nom")` | Déclenche les comportements Blueprint qui écoutent ce signal |
 | `Log(valeur)`, `Debug.Log(valeur)` | Console du moteur |
 | `SetVisible(bool)`, `SetLight(bool)`, `SetHealth(nombre)` | Rendu, activation de la lumière et santé |
+| `enabled`, `isActiveAndEnabled` | Activation du script courant (booléen modifiable) et état combiné script/objet en lecture seule |
+| `gameObject.activeSelf`, `gameObject.SetActive(bool)` | État et activation de l’objet ; le choix de visibilité du Renderer est conservé |
 | `light.intensity`, `light.enabled`, `health`, `gameObject.active` | Propriétés modifiables de l’objet courant |
 | `vehicle.maxSpeed/acceleration/brakeForce/turnRate` | Paramètres du véhicule, en unités de scène/s et degrés/s selon le champ |
 | `controller.walkSpeed/sprintSpeed/jumpSpeed` | Contrôleur 2D existant, en unités de scène/s |

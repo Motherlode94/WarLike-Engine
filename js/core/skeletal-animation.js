@@ -15,6 +15,7 @@ const vector=(v,count=3)=>Array.isArray(v)&&v.length===count&&v.every(x=>Number.
 export function inspectAnimationRig(config){
  if(!config||!Array.isArray(config.clips)||config.clips.length>32)return ['Rig : 32 clips maximum.'];const errors=[];
  for(const clip of config.clips){
+  if(clip?.fps!=null&&(!Number.isInteger(clip.fps)||clip.fps<1||clip.fps>120))errors.push('Cadence du clip entre 1 et 120 attendue.');
   if(!clip||typeof clip.name!=='string'||!clip.name||clip.name.length>160||!Number.isFinite(clip.duration)||clip.duration<=0||clip.duration>3600||!Array.isArray(clip.channels)||clip.channels.length>256){errors.push('Clip squelettique invalide.');continue}
   const channels=new Set();for(const channel of clip.channels){if(!channel||typeof channel.bone!=='string'||!channel.bone||channel.bone.length>160||!['translation','rotation','scale'].includes(channel.path)||!Array.isArray(channel.keys)||!channel.keys.length||channel.keys.length>512){errors.push('Piste squelettique invalide.');continue}const id=channel.bone+':'+channel.path;if(channels.has(id))errors.push('Piste os/propriété dupliquée.');channels.add(id);let previous=-1;
    if(!['LINEAR','STEP','CUBICSPLINE'].includes(channel.interpolation||'LINEAR')||channel.path==='rotation'&&channel.interpolation==='CUBICSPLINE')errors.push('Interpolation squelettique invalide.');

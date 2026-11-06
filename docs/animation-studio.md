@@ -107,3 +107,17 @@ Le processus .NET exécute le script et renvoie ses commandes dans l’image nat
 Dans le projet 3D, ouvre **Scènes démo → Atelier du mouvement**. Le personnage utilise les vraies animations Kenney : ZQSD/flèches, Maj pour courir, Espace pour sauter et F pour déclencher l’attaque par WarScript. Trois stations expliquent les poses/courbes, la main et le regard IK sur un mannequin Quaternius et un acteur déplacé par son os root. Les composants et les scripts restent modifiables et l’ensemble est exportable.
 
 Les limites indiquées plus haut remplacent l’ancienne liste de fonctions non disponibles : édition des os, courbes, mélange 2D, IK, transfert et root motion de translation sont maintenant intégrés. L’IK de corps entier, la reconnaissance automatique d’avatars et l’import de contrôleurs Unity restent hors du modèle proposé.
+
+## Aperçu du personnage et montage image par image
+
+Le studio Squelette affiche maintenant le **vrai maillage déformé et ses os** dans une vue de pose intégrée. Cette vue utilise les mêmes poses et contraintes que le lecteur d’animation, avec un dessin Canvas indépendant de WebGL. Elle reste utilisable pour monter les poses lorsque la scène principale ne peut pas démarrer son rendu WebGL.
+
+- Glisse dans l’aperçu pour tourner la vue, utilise la molette pour zoomer et **Cadrer le personnage** pour réinitialiser la caméra. Les flèches, `+`, `−` et `Home` fonctionnent lorsque l’aperçu a le focus.
+- Clique un os visible pour le sélectionner, ou filtre la liste par son nom. Les options **Maillage** et **Os** règlent l’affichage.
+- L’aperçu affiche les couleurs des matériaux, sans textures ni effets de la scène. Il est limité en fréquence et à 24 000 triangles dessinés par image pour les modèles lourds ; il ne remplace pas le rendu final du jeu.
+
+La timeline possède une cadence de **1 à 120 images/seconde**, un alignement sur les images et un instant numérique. Les boutons **Image précédente/suivante** avancent d’une image. **Clé précédente/suivante** parcourent les instants de toutes les pistes, en conservant exactement les temps des clips importés. Les instants des clés d’une piste sont aussi modifiables numériquement ; une collision avec une autre clé est refusée.
+
+**Copier/Coller la valeur de pose** transfère la valeur locale de la propriété sélectionnée entre os compatibles. **Pose de repos de cet os** remet cette propriété à sa valeur de repos. Ces actions restent temporaires jusqu’à l’enregistrement d’une clé. **Enregistrer toute la pose** capture les transformations locales de tous les nœuds du modèle en une opération annulable ; la capture concerne le montage avant contraintes IK. Les limites de pistes et les noms d’os ambigus sont contrôlés avant modification.
+
+Renommer un clip met à jour ses références dans les états Animator, mélanges 1D/2D, couches, correspondances d’animations et lecture automatique. La suppression d’un clip encore référencé est refusée avec la liste des usages. Annuler/rétablir conserve le clip, l’os et l’instant sélectionnés lorsque le même objet est restauré. Les chargements asynchrones d’anciens objets ou anciennes sources de transfert ne peuvent plus remplacer la sélection courante.

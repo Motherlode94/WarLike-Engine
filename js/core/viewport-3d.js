@@ -579,7 +579,7 @@ export function init3d(canvas,host,buttons){
       }
       }
      }
-     if(rig&&(hasSkeletalPreview(o)||skeletalFrame(o)?.clip&&!o.animatorGraph)){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,sampleEntityRigPose(o,cached.geometry,{},state.entities),{buffers:track.buffers})}
+     if(rig&&(hasSkeletalPreview(o)||skeletalFrame(o)?.clip&&(!o.animatorGraph||o.animatorGraph.enabled===false))){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,sampleEntityRigPose(o,cached.geometry,{},state.entities),{buffers:track.buffers})}
      for(const [partIndex,part] of cached.parts.entries()){
       if(posed){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,posed[partIndex])}
       else if(rig){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,cached.geometry.parts[partIndex].vertices)}

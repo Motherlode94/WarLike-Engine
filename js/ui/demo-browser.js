@@ -1,0 +1,27 @@
+import {state,notify} from '../core/state.js';
+import {workspace} from '../core/workspaces.js';
+import {view3d} from '../core/viewport-3d.js';
+import {loadAuthoredDemo} from '../core/scene.js';
+const make=(tag,cls,text)=>{const node=document.createElement(tag);node.className=cls;if(text)node.textContent=text;return node};
+const scenes=[
+ {id:'town',name:'Quartier du Canal',type:'Exploration et mission',description:'Parle à Mara, retrouve le fusible de l’atelier, rétablis le courant et rouvre le passage.',features:'Dialogue · inventaire · barrière · lumière · effets · victoire'},
+ {id:'nature',name:'Première aube',type:'Survie et construction',description:'Prépare ton camp dans une clairière, récolte sur les sentiers et survis aux dangers de la lisière.',features:'Besoins · récolte · fabrication · placement libre · nuit · sauvegarde'},
+ {id:'garage',name:'Piste d’essais',type:'Conduite et chronométrage',description:'Lance l’essai depuis les stands, prends le véhicule et franchis les quatre points dans l’ordre.',features:'Véhicule pilotable · freinage · collisions · checkpoints · temps'},
+ {id:'platformer',name:'Courrier des toits',type:'Plateforme et physique · 2D',description:'Récupère trois colis sur les plateformes, passe les points de reprise et termine la tournée.',features:'Saut · gravité · caisses dynamiques · collecte · reprise après chute',mode:'2d'}
+];
+const demoOf=()=>state.entities.map(object=>({object,demo:object.adventure?.demo||object.survival?.demo||object.controller2d?.demo})).find(entry=>entry.demo);
+export function initDemoBrowser(){
+ const dialog=make('dialog','demo-browser');dialog.id='demoSceneBrowser';dialog.setAttribute('aria-labelledby','demoSceneBrowserTitle');
+ const header=make('header',''),title=make('h2','','Scènes démo jouables');title.id='demoSceneBrowserTitle';const close=make('button','','Fermer');close.type='button';close.onclick=()=>dialog.close();header.append(title,close);
+ const intro=make('p','','Chaque scène présente un parcours complet et des systèmes modifiables dans l’Inspector et Blueprint. Le chargement remplace la scène actuelle ; Ctrl+Z permet de revenir en arrière.'),grid=make('div','demo-browser-grid'),status=make('p','demo-browser-status');status.setAttribute('role','status');dialog.append(header,intro,grid,status);document.body.append(dialog);
+ dialog.addEventListener('keydown',event=>event.stopPropagation());dialog.addEventListener('close',()=>state.keys.clear());
+ const render=()=>{grid.replaceChildren();status.textContent='Projet '+workspace.mode.toUpperCase()+' · données de scène éditables et exportables';for(const scene of scenes.filter(scene=>!scene.mode||scene.mode===workspace.mode)){
+  const card=make('article','demo-browser-card');card.dataset.demoScene=scene.id;card.append(make('small','',scene.type),make('h3','',scene.name),make('p','',scene.description),make('p','demo-browser-features',scene.features));const load=make('button','','Charger cette scène');load.type='button';load.disabled=state.playing;
+  load.onclick=()=>{if(state.playing)return;if(!confirm('Charger « '+scene.name+' » à la place de la scène actuelle ? Ctrl+Z permet de revenir en arrière.'))return;try{if(!loadAuthoredDemo(scene.id))return;if(workspace.mode==='3d'){const actor=state.entities.find(object=>object.id===state.selected[0]);Object.assign(view3d,{target:[(actor.x+actor.w/2)/64,1,(actor.y+(actor.depth3d||actor.h)/2)/64],radius:18,yaw:-.65,pitch:.65})}dialog.close();document.getElementById('sceneTab')?.click()}catch(error){status.textContent=error.message}};card.append(load);grid.append(card);
+ }};
+ document.addEventListener('warlike:demo-browser-open',()=>{if(state.playing)return;state.keys.clear();render();if(!dialog.open)dialog.showModal()});
+ const menu=[...document.querySelectorAll('#studioMenus>details')].find(details=>details.querySelector('summary')?.textContent.trim()==='Game')?.querySelector('.studio-dropdown');if(menu){const open=make('button','','Scènes démo jouables…');open.type='button';open.id='openDemoScenes';open.onclick=()=>{open.closest('details').open=false;document.dispatchEvent(new Event('warlike:demo-browser-open'))};menu.prepend(open)}
+ const brief=make('details','demo-scene-brief'),summary=make('summary',''),body=make('div','demo-scene-brief-body');brief.hidden=true;brief.append(summary,body);document.getElementById('viewport')?.append(brief);let signature='';
+ const update=()=>{const entry=demoOf();brief.hidden=state.playing||!entry||dialog.open;if(!entry)return;const key=workspace.mode+':'+entry.demo.id+':'+entry.object.id;if(key===signature)return;signature=key;summary.textContent='Scène démo · '+entry.demo.title;body.replaceChildren(make('p','',entry.demo.description),make('small','',entry.demo.features.join(' · ')));const actions=make('div','demo-brief-actions'),play=make('button','','Tester la scène');play.type='button';play.onclick=()=>document.getElementById('play').click();const inspect=make('button','','Voir un comportement');inspect.type='button';inspect.onclick=()=>{const owner=state.entities.find(object=>object.adventureInteractable&&object.sequence)||entry.object;state.selected=[owner.id];notify();document.dispatchEvent(new CustomEvent('warlike:open-behavior',{detail:{ownerId:owner.id,sequenceKey:owner.id}}))};actions.append(play,inspect);body.append(actions)};
+ document.addEventListener('warlike:change',update);document.addEventListener('warlike:workspace',update);dialog.addEventListener('close',update);update();
+}

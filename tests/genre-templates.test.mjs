@@ -16,7 +16,7 @@ test('five genres and sandbox are supported in both WarLike workspaces',()=>{
   assert.ok(scene.entities.length>=4,genre+' '+mode);
   assert.equal(scene.nextId,scene.entities.length+1);
   assert.deepEqual(scene.entities.map(e=>e.id),scene.entities.map((_,i)=>i+1));
-  assert.ok(scene.entities.some(e=>e.type==='player'||e.playable3d===true));
+  assert.ok(scene.entities.some(e=>e.type==='player'||e.playable3d===true||e.controller2d));
   assert.ok(scene.entities.some(e=>e.sequence?.enabled),'expected Blueprint sequence');
   assert.ok(scene.entities.every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)));
  }
@@ -27,8 +27,8 @@ test('Racing templates provide a driveable car and race gates',()=>{
   const car=scene.entities.find(e=>e.tags?.includes('race-vehicle'));
   assert.ok(car);
   assert.equal(car.type,mode==='3d'?'mesh3d':'prefab');
-  assert.ok(scene.entities.some(e=>e.name==='Checkpoint 1'&&e.sequence?.event==='enter'));
-  assert.ok(scene.entities.some(e=>e.name==='Arrivée'&&e.sequence?.branches?.length));
+  const gates=scene.entities.filter(e=>e.tags?.includes('checkpoint'));assert.equal(gates.length,4);assert.ok(gates.every(e=>e.sequence?.event==='enter'&&e.sequence.branches?.length));
+  assert.ok(gates.some(e=>e.sequence.branches.some(branch=>branch.instructions.some(action=>action.type==='winGame'))));
  }
 });
 test('4X starter supplies exploration expansion economy and turn signals',()=>{

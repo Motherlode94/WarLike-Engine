@@ -1,3 +1,4 @@
+import {createGarageDemo} from './authored-demo-scenes.js';
 import {createLifeScene} from './life-scene.js';
 import {createCompanyScene} from './company-scene.js';
 import {createAdventureCampaign} from './adventure-campaign.js';
@@ -30,6 +31,7 @@ export function createGenreScene(genre,mode='3d'){
  if(chosen==='battlefield')return createBattlefieldScene();
  if(chosen==='adventure')return createAdventureCampaign(mode);
  if(chosen==='platformer')return createBundledPhysicsScene2d();
+ if(chosen==='racing')return createGarageDemo(mode);
  if(chosen==='superhero')return createHeroForgeScene(mode);
  if(chosen==='survival')return createSurvivalScene(mode);
  const objects=[];
@@ -141,15 +143,6 @@ export function createGenreScene(genre,mode='3d'){
   marker('Boutique',505,300,interact([inc('money',-10),item('supplies'),msg('Achat : provisions, -10 crédits')]),'#73bda2');
   marker('Travail',480,110,interact([inc('money',20),msg('Mission de travail terminée : +20 crédits')]),'#eac57f');
   player.sequence={...interact([variable('money',50),variable('reputation',0),msg('RP : travail, commerce, réputation et PNJ')]),event:'start',once:true};
- } else if(chosen==='racing'){
-  const car=object('vehicle-sports','Voiture de course',245,160,{tags:['race-vehicle'],maxSpeed:310,acceleration:225,brakeForce:310,turnRate:145,drag:1.15,reverseRatio:.45,rotation:0,
-   ...(threeD?{collision3d:true}:{type:'prefab',assetId:'vehicle-jeep'})});
-  car.csharpComponents=[{kind:'RacingRules',runtime:'web'}];
-  if(!threeD){car.type='prefab';car.assetId='jeep';car.w=115;car.h=72;}
-  marker('Départ',180,360,interact([variable('raceStarted',1),variable('raceFinished',0),variable('raceElapsed',0),variable('raceCheckpoint',0),signal('race:start'),msg('Course lancée !')]));
-  marker('Checkpoint 1',500,340,enter([inc('raceCheckpoint',1),signal('race:checkpoint'),msg('Checkpoint 1')],{once:true,radius:105}));
-  marker('Arrivée',640,155,{...enter([],{once:false,radius:110}),branches:[{conditions:[{type:'variable',key:'raceCheckpoint',operator:'>=',value:1}],instructions:[variable('raceFinished',1),signal('race:finish'),msg('Arrivée !')]}],elseInstructions:[msg('Passe le checkpoint avant l’arrivée.')]});
-  if(threeD)object('environment-road','Circuit',350,450,{collision3d:false,solid3d:false});
  } else if(chosen==='simulation'){
   player.csharpComponents=[{kind:'SimulationEconomy',runtime:'web',money:100,materials:5}];
   object('building-garage','Atelier',340,135);

@@ -13,7 +13,7 @@ Le Hub propose aussi cartes de projets, tri, favoris, duplication et modèles de
 1. Dans le Hub, cliquer sur **Nouveau projet**, choisir 2D ou 3D, puis un **type de jeu compatible**. La fiche précise les systèmes présents et si la scène est jouable ou constitue une base à compléter. **Plateforme** est disponible en 2D.
 2. Parcourir **Project / Assets** : dossiers Scènes, Scripts, Prefabs et Imports, puis ressources classées par auteur et par pack. Les modèles et leurs aperçus sont livrés dans le dépôt.
 3. Cliquer sur une ressource ou la glisser dans la scène. Sélectionner l’objet dans la Hiérarchie, puis régler ses composants dans l’Inspecteur. **Ajouter un composant** se trouve en bas ; le menu `⋮` de chaque composant propose ses commandes.
-4. En 3D, **Scène test 3D** installe un terrain et des décors Kenney, un soldat animé, des véhicules, deux monstres et six armes Quaternius Ultimate Guns. La scène précédente reste récupérable avec Annuler.
+4. **Scènes démo** ouvre quatre parcours : **Quartier du Canal** (mission et relais), **Première aube** (survie et camp), **Piste d’essais** (conduite et checkpoints) et **Courrier des toits** (plateforme 2D). Les trois premiers existent en 2D et 3D. Le chargement reste annulable avec Ctrl+Z ; leurs comportements se modifient dans Inspector et Blueprint. [Guide des scènes démo](docs/scenes-demo.md).
 5. Ouvrir **Blueprint Studio** pour construire les événements, conditions, dialogues, inventaires, objectifs, checkpoints et changements de scène. **Projet & export** permet de créer un exemple de jeu complet.
 6. Tester avec **Play**, puis **Exporter le jeu**. Décompresser le ZIP et le servir en HTTP. Sauvegarder aussi le projet en JSON : le Hub conserve ses projets dans le navigateur utilisé.
 

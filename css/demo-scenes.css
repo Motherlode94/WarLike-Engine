@@ -1,0 +1,21 @@
+.demo-browser{width:min(920px,92vw);max-height:86vh;box-sizing:border-box;border:1px solid var(--wl-theme-border,#4c6571);border-radius:8px;padding:22px;background:var(--wl-theme-panel,#202b34);color:var(--wl-text-panel,#e8f0f4);overflow:auto}
+.demo-browser::backdrop{background:#081016c9}
+.demo-browser header{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.demo-browser h2{font-size:22px;margin:0}
+.demo-browser>p{max-width:75ch;font-size:13px;line-height:1.6;color:var(--wl-text-muted,#a9b9c1)}
+.demo-browser-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}
+.demo-browser-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:20px;border:1px solid var(--wl-theme-border,#40525f);border-radius:6px;background:var(--wl-theme-header,#263844)}
+.demo-browser-card>small{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--editor-accent,#65d2b8)}
+.demo-browser-card h3{font-size:19px;margin:0}
+.demo-browser-card p{margin:0;font-size:13px;line-height:1.6}
+.demo-browser-card .demo-browser-features{font-size:11px;color:var(--wl-text-muted,#a9b9c1);margin-bottom:8px}
+.demo-browser-card button{margin-top:auto;padding:8px 14px!important;min-height:34px!important}
+.demo-scene-brief{position:absolute;top:10px;left:12px;z-index:8;max-width:min(350px,calc(100% - 24px));border:1px solid var(--wl-theme-border,#40525f);background:var(--wl-theme-panel,#202b34);color:var(--wl-text-panel,#e8f0f4);border-radius:5px;font-size:12px;box-shadow:0 4px 15px #0003}
+.demo-scene-brief[hidden]{display:none!important}
+.demo-scene-brief summary{padding:8px 12px;cursor:pointer;font-weight:600}
+.demo-scene-brief-body{padding:0 12px 12px;line-height:1.55}
+.demo-scene-brief-body p{margin:4px 0 8px}
+.demo-scene-brief-body small{display:block;color:var(--wl-text-muted,#a9b9c1)}
+.demo-brief-actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.demo-brief-actions button{font-size:11px!important;padding:5px!important;min-height:28px!important}
+@media(max-width:640px){.demo-browser{padding:14px}.demo-browser-grid{grid-template-columns:1fr}.demo-browser-card{padding:15px}}

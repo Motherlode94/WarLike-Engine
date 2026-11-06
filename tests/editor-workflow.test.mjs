@@ -28,9 +28,9 @@ test('scene clipboard preserves components and remaps internal references withou
  const data=JSON.parse(text);data.entities[1].id=1;assert.equal(readEntitiesPayload(JSON.stringify(data)),null);
  assert.equal(isTypingTarget({tagName:'TEXTAREA'}),true);assert.equal(isTypingTarget({isContentEditable:true}),true);assert.equal(isTypingTarget({tagName:'CANVAS'}),false);
 });
-test('the bundled 3D scene uses real included models, six Ultimate Guns and exactly one playable actor',()=>{
+test('the bundled 3D scenes use included models, one playable actor and authored mission systems',()=>{
  const available=new Set([...freeModels3d,...quaterniusModels3d].map(o=>o.id));
- for(const kind of ['town','nature']){const scene=createBundledTestScene(kind);const entities=Array.isArray(scene)?scene:scene.entities;assert.equal(entities.filter(o=>o.playable3d).length,1);for(const o of entities.filter(o=>o.model3dId))assert.ok(available.has(o.model3dId),o.model3dId);assert.equal(entities.filter(o=>o.model3dId?.includes('ultimate-guns')||o.model3dId?.includes('ultimategun')).length,6);assert.ok(entities.some(o=>o.ai?.enabled));}
+ for(const kind of ['town','nature']){const scene=createBundledTestScene(kind);const entities=Array.isArray(scene)?scene:scene.entities;assert.equal(entities.filter(o=>o.playable3d).length,1);for(const o of entities.filter(o=>o.model3dId))assert.ok(available.has(o.model3dId),o.model3dId);assert.equal(entities.filter(o=>o.model3dId?.includes('ultimategun')).length,0);assert.ok(entities.some(o=>o.sequence));assert.ok(entities.some(o=>o.adventure||o.survival));}
 });
 test('C# snapshots apply valid finite values only to known actors',()=>{
  const entities=[{...actor(1),stats:{health:100}}];assert.equal(applyCsharpFrame(entities,[{id:1,x:12,y:34,elevation3d:2,rotation:90,hp:80},{id:2,x:99,y:9,elevation3d:0,rotation:0}]),1);assert.equal(entities[0].stats.health,80);assert.equal(entities[0].x,12);

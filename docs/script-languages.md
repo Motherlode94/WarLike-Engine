@@ -37,10 +37,12 @@ export function Update(ctx) {
 
 L’Inspector affiche les **remplacements des champs en JSON** : par exemple `{"speed":120}` remplace la valeur déclarée par `fields`. Le module est chargé au lancement de Play ; les valeurs ne sont pas obtenues en exécutant le code pendant l’édition.
 
-Les exports `Awake`, `Start`, `FixedUpdate`, `Update`, `LateUpdate` et `OnDestroy` sont reconnus, ainsi que leur forme commençant par une minuscule (`update`, `fixedUpdate`, etc.). Les callbacks doivent être synchrones ; les fonctions `async` sont refusées. Pour stocker une progression sauvegardable, utiliser `ctx.fields` et des données JSON finies, sans fonctions ni références cycliques. Des variables au niveau du module restent communes aux objets qui partagent le fichier ; elles ne constituent pas une sauvegarde de partie.
+Les exports `Awake`, `Start`, `FixedUpdate`, `Update`, `LateUpdate`, `OnEnable`, `OnDisable` et `OnDestroy` sont reconnus, ainsi que leur forme commençant par une minuscule (`update`, `fixedUpdate`, `onEnable`, etc.). Les callbacks doivent être synchrones ; les fonctions `async` sont refusées. Pour stocker une progression sauvegardable, utiliser `ctx.fields` et des données JSON finies, sans fonctions ni références cycliques. Des variables au niveau du module restent communes aux objets qui partagent le fichier ; elles ne constituent pas une sauvegarde de partie.
 
 | Contexte | Rôle |
 | --- | --- |
+| `ctx.enabled`, `ctx.isActiveAndEnabled` | Activer le composant courant et lire son état combiné avec celui de l’objet |
+| `ctx.gameObject.activeSelf`, `.SetActive(bool)` | Lire ou changer l’activation de l’objet, sans changer sa préférence de rendu |
 | `ctx.entity`, `ctx.entities` | Objets réellement utilisés par le moteur et Blueprint |
 | `ctx.fields` | Données propres à ce composant, issues de `fields` puis des remplacements Inspector |
 | `ctx.Time.deltaTime/time/fixedDeltaTime` | Horloges en secondes |
@@ -64,5 +66,7 @@ Le JavaScript produit et la source exacte correspondante sont conservés dans le
 ## Un état de scène partagé
 
 Sur chaque image autorisée de simulation, le moteur applique d’abord les écritures C# natives éventuelles, puis les callbacks JS/TS, WarScript, composants et gameplay/Blueprint Web. Les callbacks tardifs Web passent après le gameplay. La pause suspend ces mises à jour. En coop, l’hôte exécute les scripts Web. Stop restaure la copie de scène d’édition.
+
+WarScript et JS/TS utilisent le même cycle d’activation. `Awake` s’exécute une fois quand l’objet est actif, puis `OnEnable` à chaque activation du composant ; `Start` ne s’exécute qu’une fois avant ses premières mises à jour. Les instances d’un même runtime sont éveillées avant sa première passe de `Start`. `OnDisable` précède `OnDestroy` au retrait ou à Stop pour un composant encore actif. Le nettoyage reste possible après une erreur de mise à jour. Un script désactivé au chargement reste disponible pour une activation ultérieure. Dans l’Inspector, la case d’activation de chaque WarScript ou script JS/TS reste utilisable pendant Play ; les autres propriétés restent protégées. Ces changements de simulation sont rétablis à Stop. Pause suspend ces callbacks. L’ajout d’un nouveau module JS/TS après le chargement nécessite de relancer Play.
 
 Les détails des API et de leurs limites figurent dans [WarScript](warscript.md) et [C# MonoBehaviour natif](../csharp/README.md). L’objectif est un workflow familier ; le runtime ne distribue pas `UnityEngine` et ne rend pas automatiquement compatibles tous les packages Unity.

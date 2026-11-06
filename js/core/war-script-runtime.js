@@ -1,4 +1,5 @@
 import {compileWarScript,createWarScriptInstance,warScriptBuiltin,warScriptValue} from '../../script-editor/warscript.js';
+import {ScriptLifecycle} from './script-lifecycle.js';
 import {moveBody2d} from './physics-2d.js';
 import {moveBody3d} from './collision-3d.js';
 export const warScriptSource=(component,project)=>project?.scripts?.find(s=>s.id===component.scriptId&&s.language==='warscript')?.source??component.source;
@@ -19,7 +20,7 @@ export function inspectWarScripts(entities,project){
 const numeric=value=>{if(typeof value!=='number'||!Number.isFinite(value)||Math.abs(value)>1e8)throw Error('Nombre fini entre −100 000 000 et 100 000 000 attendu.');return value};
 const key=value=>{if(typeof value!=='string'||!value||value.length>80||['constructor','prototype','__proto__'].includes(value))throw Error('Nom de variable ou de signal invalide.');return value};
 const bounded=(value,min,max)=>Math.min(max,Math.max(min,numeric(value)));
-export function createScriptApi(entity,ctx,clock){
+export function createScriptApi(entity,ctx,clock,component){
  const three=ctx.mode==='3d',position=()=>({x:entity.x/64,y:three?Number(entity.elevation3d||0):entity.y/64,z:three?entity.y/64:0});
  const config={
   'vehicle.maxSpeed':['maxSpeed',0,10000],'vehicle.acceleration':['acceleration',0,10000],'vehicle.brakeForce':['brakeForce',0,10000],'vehicle.turnRate':['turnRate',0,2000],
@@ -30,6 +31,8 @@ export function createScriptApi(entity,ctx,clock){
   if(name==='Time.deltaTime')return clock.delta;if(name==='Time.fixedDeltaTime')return .02;if(name==='Time.time')return clock.elapsed;
   if(name==='transform.position')return position();if(name.startsWith('transform.position.'))return position()[name.at(-1)];
   if(name.startsWith('transform.rotation.'))return Number(entity[{x:'rotationX3d',y:three?'rotation':'rotationY3d',z:three?'rotationZ3d':'rotation'}[name.at(-1)]]||0);
+  if(name==='enabled')return component?.enabled!==false;if(name==='isActiveAndEnabled')return component?.enabled!==false&&entity.enabled!==false;
+  if(name==='gameObject.activeSelf')return entity.enabled!==false;
   if(name==='gameObject.name')return String(entity.name||'');if(name==='gameObject.active')return entity.enabled!==false;
   if(name==='health')return Number(entity.stats?.health??entity.hp??100);
   if(name==='light.intensity')return Number(entity.lightIntensity??1);if(name==='light.enabled')return entity.lightEnabled!==false;
@@ -40,7 +43,8 @@ export function createScriptApi(entity,ctx,clock){
   if(name==='transform.position'){warScriptValue('Vector3',value);entity.x=numeric(value.x)*64;if(three){entity.elevation3d=numeric(value.y);entity.y=numeric(value.z)*64}else entity.y=numeric(value.y)*64;return}
   if(name.startsWith('transform.position.')){const p=position();p[name.at(-1)]=numeric(value);write('transform.position',p);return}
   if(name.startsWith('transform.rotation.')){entity[{x:'rotationX3d',y:three?'rotation':'rotationY3d',z:three?'rotationZ3d':'rotation'}[name.at(-1)]]=numeric(value);return}
-  if(name==='gameObject.active'){warScriptValue('bool',value);entity.enabled=value;entity.visible=value;return}
+  if(name==='enabled'){warScriptValue('bool',value);if(!component)throw Error('Composant de script absent.');component.enabled=value;return}
+  if(name==='gameObject.active'||name==='gameObject.activeSelf'){warScriptValue('bool',value);entity.enabled=value;return}
   if(name==='health'){const hp=bounded(value,0,Number(entity.stats?.maxHealth??100));entity.hp=hp;if(entity.stats)entity.stats.health=hp;return}
   if(name==='light.intensity'){entity.lightIntensity=bounded(value,0,50);return}
   if(name==='light.enabled'){warScriptValue('bool',value);entity.lightEnabled=value;return}
@@ -48,6 +52,7 @@ export function createScriptApi(entity,ctx,clock){
   throw Error('Propriété non modifiable : '+name);
  };
  const call=(name,args)=>{
+  if(name==='gameObject.SetActive'){if(args.length!==1)throw Error('SetActive attend un booléen.');write('gameObject.active',args[0]);return null}
   if(name==='Log'||name==='Debug.Log'){if(args.length!==1)throw Error('Log attend une valeur.');ctx.log?.(String(args[0]),'info',entity);return null}
   if(name==='Get'){if(args.length!==1)throw Error('Get attend un nom.');return ctx.globals[key(args[0])]??0}
   if(name==='Set'){if(args.length!==2||!['number','string','boolean'].includes(typeof args[1]))throw Error('Set attend un nom et une valeur simple.');ctx.globals[key(args[0])]=args[1];return null}
@@ -64,26 +69,25 @@ export function createScriptApi(entity,ctx,clock){
 export class WarScriptRuntime {
  constructor(){this.instances=new Map();this.elapsed=0;this.fixed=0;this.context=null;this.errors=[]}
  report(entry,error){entry.failed=true;entry.component.runtime.error=(entry.component.name||'WarScript')+':'+(error.line||1)+':'+(error.column||1)+' · '+error.message;this.errors.push(entry.component.runtime.error);if(this.errors.length>64)this.errors.shift();this.context?.log?.(entry.component.runtime.error,'error',entry.entity)}
- invoke(entry,method){if(entry.failed)return;try{entry.instance.run(method);entry.component.runtime.fields=structuredClone(entry.instance.fields)}catch(error){this.report(entry,error)}}
+ invoke(entry,method,cleanup=false){if(entry.failed&&!cleanup)return;try{entry.instance.run(method);entry.component.runtime.fields=structuredClone(entry.instance.fields)}catch(error){this.report(entry,error)}}
+ phase(entry,method){try{if(method==='activation')entry.lifecycle.refresh();else if(method)entry.lifecycle.run(method);else entry.lifecycle.start()}catch(error){this.report(entry,error)}}
  sync(ctx){
   this.context=ctx;const live=new Set();let total=0;
-  for(const entity of ctx.entities)for(const component of entity.warScripts||[]){live.add(component);let entry=this.instances.get(component);if(component.enabled===false&&!entry)continue;if(component.enabled!==false&&++total>64)break;if(entry){Object.assign(entry.context,ctx);continue;}
-   const clock={delta:0,elapsed:this.elapsed};entry={entity,component,clock,context:{...ctx},failed:false};component.runtime??={started:false,fields:{},error:''};component.runtime.error='';
-   try{const program=compileWarScript(warScriptSource(component,ctx.project));entry.instance=createWarScriptInstance(program,createScriptApi(entity,entry.context,clock),{values:component.values||{},saved:component.runtime.started?component.runtime.fields:null});this.instances.set(component,entry);
-    if(component.enabled!==false&&entity.enabled!==false&&!component.runtime.started){this.invoke(entry,'Awake');this.invoke(entry,'Start');component.runtime.started=!entry.failed}
+  for(const entity of ctx.entities)for(const component of entity.warScripts||[]){live.add(component);let entry=this.instances.get(component);if(component.enabled!==false&&++total>64)break;if(entry){Object.assign(entry.context,ctx);continue;}
+   const clock={delta:0,elapsed:this.elapsed};entry={entity,component,clock,context:{...ctx},failed:false};entry.attached=()=>entry.context.entities.includes(entity)&&entity.warScripts?.includes(component);component.runtime??={started:false,fields:{},error:''};component.runtime.error='';
+   try{const program=compileWarScript(warScriptSource(component,ctx.project));entry.instance=createWarScriptInstance(program,createScriptApi(entity,entry.context,clock,component),{values:component.values||{},saved:component.runtime.started||component.runtime.awakened?component.runtime.fields:null});entry.lifecycle=new ScriptLifecycle(entry,(hook,cleanup)=>this.invoke(entry,hook,cleanup));this.instances.set(component,entry);
    }catch(error){this.instances.set(component,entry);this.report(entry,error)}
   }
-  for(const [component,entry] of this.instances)if(!live.has(component)){this.invoke(entry,'OnDestroy');this.instances.delete(component)}
+  for(const [component,entry] of this.instances)if(!live.has(component)){Object.assign(entry.context,ctx);entry.lifecycle?.dispose();this.instances.delete(component)}
  }
  update(dt,ctx){
-  this.elapsed+=Math.min(.1,Math.max(0,Number(dt)||0));this.sync(ctx);const delta=Math.min(.1,Math.max(0,Number(dt)||0));this.fixed+=delta;
-  const active=entry=>entry.component.enabled!==false&&entry.entity.enabled!==false&&!entry.failed;
-  for(const entry of this.instances.values())if(active(entry)&&!entry.component.runtime.started){this.invoke(entry,'Awake');this.invoke(entry,'Start');entry.component.runtime.started=!entry.failed}
-  for(const entry of this.instances.values()){entry.clock.elapsed=this.elapsed;entry.clock.delta=.02}
-  while(this.fixed>=.02-1e-8){this.fixed-=.02;for(const entry of this.instances.values())if(active(entry))this.invoke(entry,'FixedUpdate')}
-  for(const entry of this.instances.values())if(active(entry)){if(!entry.component.runtime.started){this.invoke(entry,'Awake');this.invoke(entry,'Start');entry.component.runtime.started=!entry.failed}entry.clock.delta=delta;this.invoke(entry,'Update')}
+  const delta=Math.min(.1,Math.max(0,Number(dt)||0));this.elapsed+=delta;this.sync(ctx);this.fixed+=delta;
+  for(const entry of this.instances.values())if(entry.lifecycle){entry.clock.elapsed=this.elapsed;entry.clock.delta=delta;this.phase(entry,'activation')}
+  for(const entry of this.instances.values())if(entry.lifecycle)this.phase(entry);
+  while(this.fixed>=.02-1e-8){this.fixed-=.02;for(const entry of this.instances.values())if(entry.lifecycle){entry.clock.delta=.02;this.phase(entry,'FixedUpdate')}}
+  for(const entry of this.instances.values())if(entry.lifecycle){entry.clock.delta=delta;this.phase(entry,'Update')}
  }
- late(){for(const entry of this.instances.values())if(entry.component.enabled!==false&&entry.entity.enabled!==false)this.invoke(entry,'LateUpdate')}
- stop(){for(const entry of this.instances.values())if(entry.component.runtime.started)this.invoke(entry,'OnDestroy');this.instances.clear();this.elapsed=0;this.fixed=0;this.context=null;this.errors=[]}
+ late(){for(const entry of this.instances.values())if(entry.lifecycle)this.phase(entry,'LateUpdate')}
+ stop(){for(const entry of this.instances.values())entry.lifecycle?.dispose();this.instances.clear();this.elapsed=0;this.fixed=0;this.context=null;this.errors=[]}
 }
 export const warScriptRuntime=new WarScriptRuntime();

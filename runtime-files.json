@@ -16087,6 +16087,7 @@
     "js/core/scene-graph-v2.js",
     "js/core/scene-progress.js",
     "js/core/scene.js",
+    "js/core/script-lifecycle.js",
     "js/core/simulation-nodes.js",
     "js/core/spatial-index-3d.js",
     "js/core/state.js",

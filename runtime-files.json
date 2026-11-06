@@ -16094,6 +16094,8 @@
     "js/core/script-lifecycle.js",
     "js/core/simulation-nodes.js",
     "js/core/skeletal-animation.js",
+    "js/core/skeletal-authoring.js",
+    "js/core/skeletal-preview.js",
     "js/core/spatial-index-3d.js",
     "js/core/state.js",
     "js/core/storage.js",

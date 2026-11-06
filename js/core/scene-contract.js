@@ -5,7 +5,7 @@ export const UNITS_PER_METRE=64;
 const clone=value=>structuredClone(value);
 const finite=(value,fallback=0)=>Number.isFinite(value)?value:fallback;
 const validId=id=>Number.isSafeInteger(id)&&id>0;
-const webKeys=['webScripts','warScripts','stats','inventory','ai','controller2d','controller3d','collider2d','collider3d','rigidbody2d','rigidbody3d','joint3d','sequence','animatorGraph','superhero','rpgProgression','survival','simulationNode'];
+const webKeys=['webScripts','warScripts','stats','inventory','ai','controller2d','controller3d','collider2d','collider3d','rigidbody2d','rigidbody3d','joint3d','sequence','animatorGraph','animationStudio','superhero','rpgProgression','survival','simulationNode'];
 
 // Canonical transforms use metres, degrees and X/Y/Z. Legacy x/y are the
 // ground-plane X/Z in pixels; elevation3d is vertical Y in metres.

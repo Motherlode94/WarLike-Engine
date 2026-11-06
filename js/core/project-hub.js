@@ -1,3 +1,4 @@
+import {animationEditorPreview} from './animation-clips.js';
 import {gameProject,freshGameProject} from './game-project.js';
 import {createGenreScene} from './genre-templates.js';
 import {normalizeGenre,genreTemplates,genreCompatible,compatibleGenres,genreForMode,genreLabel,genreStage,resolveGameGenre} from './game-genres.js';
@@ -62,7 +63,7 @@ export function duplicateProject(id,name){
 const assertName=name=>{const n=String(name||'').trim().slice(0,64);if(!n)throw Error('Choisis un nom de projet.');return n};
 function saveMeta(meta){const all=indexed().filter(p=>p.id!==meta.id);all.unshift(meta);localStorage.setItem(INDEX,JSON.stringify(all))}
 export function saveProject(){
- if(!hub.projectId||state.playing)return false;
+ if(!hub.projectId||state.playing)return false;animationEditorPreview.stop();
  hub.type=workspace.mode;gameProject.genre=genreForMode(gameProject.genre,workspace.mode);
  const data={version:5,...workspacePayload(),entities:state.entities,camera:state.camera,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,genre:hub.genre};
  try{localStorage.setItem(PREFIX+hub.projectId,JSON.stringify(data));saveMeta({id:hub.projectId,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,genre:hub.genre,updated:Date.now()});return true}catch{return false}

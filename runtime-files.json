@@ -15977,6 +15977,8 @@
     "js/core/adventure-runtime.js",
     "js/core/adventure-scene.js",
     "js/core/ai-perception.js",
+    "js/core/animation-clips.js",
+    "js/core/animation-runtime.js",
     "js/core/animation-studio.js",
     "js/core/animator-graph.js",
     "js/core/annotations.js",

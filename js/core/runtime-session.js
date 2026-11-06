@@ -1,3 +1,7 @@
+import {stepEntityAnimations,resetAnimationRuntime} from './animation-runtime.js';
+import {emitFx} from './fx-runtime.js';
+import {playSound} from './audio.js';
+import {heroCenter} from './hero-movement.js';
 import {webScriptRuntime} from './web-script-runtime.js';
 import {nativeScriptEntities,nativeScriptSources} from './csharp-sources.js';
 import {warScriptRuntime} from './war-script-runtime.js';
@@ -30,13 +34,14 @@ export function startRuntimeSession(){
  startComponentRuntime();initializeWebComponents(state.entities,sequenceRuntime.globals);announce();
 }
 export function stopRuntimeSession(){
- webScriptRuntime.stop();webScene=null;webLoading=false;if(runtimeSession.backend==='native'&&nativeCanStop&&revision!==null)requestNative('/stop',{revision}).catch(()=>{});warScriptRuntime.stop();runtimeSession.generation++;runtimeSession.phase='stopped';runtimeSession.busy=false;revision=null;initializedScene=null;pending=null;elapsed=0;nativeCanStop=false;resetComponentRuntime();announce();
+ resetAnimationRuntime();webScriptRuntime.stop();webScene=null;webLoading=false;if(runtimeSession.backend==='native'&&nativeCanStop&&revision!==null)requestNative('/stop',{revision}).catch(()=>{});warScriptRuntime.stop();runtimeSession.generation++;runtimeSession.phase='stopped';runtimeSession.busy=false;revision=null;initializedScene=null;pending=null;elapsed=0;nativeCanStop=false;resetComponentRuntime();announce();
 }
 // A frame has one writer. Native callbacks finish before browser components,
 // gameplay and Blueprint actions run against the same state.entities objects.
 // Late responses are never applied after Stop, scene replacement or reconnect.
 const scriptContext=()=>({entities:state.entities,project:gameProject,mode:workspace.mode,globals:sequenceRuntime.globals,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,signal:emitSequenceSignal,log:(message,level,entity)=>globalThis.document?.dispatchEvent(new CustomEvent('warlike:script-log',{detail:{message:(entity.name||'GameObject')+' · '+message,level}}))});
-function browserFrame(dt,update,run){if(run){if(!isLanGuest()){webScriptRuntime.update(dt,scriptContext());warScriptRuntime.update(dt,scriptContext());}updateComponentRuntime(dt)}update?.(dt);if(run&&!isLanGuest()){warScriptRuntime.late();webScriptRuntime.late();}captureWebComponents(state.entities,sequenceRuntime.globals)}
+const animationEvent=(event,owner)=>{if(event.type==='signal')emitSequenceSignal(String(event.value||'animation:event').slice(0,100),owner.id);else if(event.type==='fx')emitFx(event.value||'energy',heroCenter(owner,workspace.mode),{...event.options,color:event.color||event.options?.color,mode:workspace.mode,ownerId:owner.id});else if(event.type==='sound')playSound(String(event.value||'impact'),{gain:.5,cooldown:.08});};
+function browserFrame(dt,update,run){if(run){if(!isLanGuest()){webScriptRuntime.update(dt,scriptContext());warScriptRuntime.update(dt,scriptContext());}updateComponentRuntime(dt)}update?.(dt);if(run&&!isLanGuest()){stepEntityAnimations(state.entities,dt,{mode:workspace.mode,onEvent:animationEvent});warScriptRuntime.late();webScriptRuntime.late();}captureWebComponents(state.entities,sequenceRuntime.globals)}
 export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
  if(!state.playing||runtimeSession.phase==='error')return false;
  if(runtimeSession.phase==='stopped'){update?.(dt);return true} // standalone tools/tests

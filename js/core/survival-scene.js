@@ -1,3 +1,4 @@
+import {decorateNatureDemo} from './nature-demo-layout.js';
 import {gameProject} from './game-project.js';
 import {prefab3d,get3dAsset} from '../assets/catalog-3d.js';
 import {getAsset} from '../assets/catalog.js';
@@ -30,6 +31,6 @@ export function createSurvivalScene(mode='3d'){
  const goals=[['campfire','survivalCamp','Allumer un feu de camp'],['shelter','survivalShelter','Construire un abri'],['meal','survivalMeal','Cuisiner un repas'],['dawn','survivalDawn','Survivre jusqu’à l’aube']];
  player.sequence={enabled:true,event:'start',once:true,conditions:[],instructions:[...goals.map(([,key,value])=>({type:'setObjective',key,value,total:1})),{type:'message',value:'PREMIÈRE AUBE · Récolte, place ton camp, cuisine et survis à la nuit. R : tourner l’aperçu · Échap : annuler / pause.'}]};
  player.sequences=[...goals.map(([key,id])=>({enabled:true,event:'interval',interval:.5,once:true,conditions:[{type:'survivalMilestone',key}],instructions:[{type:'completeObjective',key:id}]})),{enabled:true,event:'interval',interval:.5,once:true,conditions:[{type:'survivalMilestone',key:'expedition'}],instructions:[{type:'winGame',value:'Première aube · le camp est prêt et vous avez survécu. Expédition accomplie !'}]},{enabled:true,event:'interval',interval:.5,once:true,conditions:[{type:'survivalPartyDefeated'}],instructions:[{type:'loseGame',value:'Tous les survivants sont tombés. Reprends la sauvegarde ou prépare mieux le camp.'}]}];
- return {entities,selected:[player.id],nextId:entities.length+1,camera:{x:0,y:0,zoom:.8},playerId:player.id};
+ return decorateNatureDemo({entities,selected:[player.id],nextId:entities.length+1,camera:{x:0,y:0,zoom:.8},playerId:player.id},mode);
 }
 export function loadSurvivalScene(){if(state.playing)return false;const scene=createSurvivalScene(workspace.mode);state.entities=scene.entities;state.selected=scene.selected;state.nextId=scene.nextId;state.camera=scene.camera;gameProject.genre='survival';record('Survival · Clairière');notify();return true}

@@ -36,8 +36,8 @@ test('3D Town, Nature and Garage demos use native mesh prefabs and one playable 
   scene.load3dBetaDemo(kind);check(kind);
   assert.equal(state.entities.filter(e=>e.playable3d).length,1);
   assert.ok(state.entities.some(e=>e.type==='mesh3d'));
-  assert.ok(state.entities.some(e=>e.lightType));
-  assert.ok(state.entities.some(e=>e.audioEnabled));
+  assert.ok(state.entities.some(e=>e.sequence),'demo must provide real gameplay behaviours');
+  assert.ok(state.entities.some(e=>e.adventure||e.survival),'demo must provide a guided activity');
  }
 });
 test('3D demo loader cannot overwrite 2D project',()=>{

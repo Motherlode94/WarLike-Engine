@@ -1,3 +1,4 @@
+import {initDemoBrowser} from './ui/demo-browser.js';
 import {initScriptStudio} from './ui/script-studio.js';
 import {initLifeUi} from './ui/life-ui.js';
 import {initCompanyUi} from './ui/company-ui.js';
@@ -10,7 +11,6 @@ import {initCreativeRuntime} from './core/creative-runtime.js';
 import {initLanPanel} from './ui/lan-panel.js';
 import {initHeroForgeUi} from './ui/hero-forge-ui.js';
 import {initDesktopInteractions} from './ui/desktop-interactions.js';
-import {createBundledPhysicsScene2d} from './core/bundled-physics-scene.js';
 import {initClipboardControls} from './ui/clipboard-controls.js';
 import {isTypingTarget} from './core/editor-clipboard.js';
 import {initSimpleHub} from './ui/simple-hub.js';
@@ -289,16 +289,12 @@ document.getElementById('play')?.addEventListener('click',()=>{unlockHorrorAudio
 
 initGameFlowUi();
 initStudioPolish();
+initDemoBrowser();
 initAnnotationEditor();
 initResponsiveEditor();
 for(const event of ['warlike:annotation-open','warlike:annotation-close'])document.addEventListener(event,()=>{state.keys.clear();state.keyPresses?.clear()});
 
-document.addEventListener('warlike:load-asset-test',()=>{
- if(state.playing)return;
- if(workspace.mode==='2d'){if(!confirm('Charger la scène test de physique 2D ? La scène actuelle reste récupérable avec Ctrl+Z.'))return;record('Avant scène de physique 2D');const scene=createBundledPhysicsScene2d();Object.assign(state,scene);state.demoGuide=scene.guide;delete state.guide;record('Scène test · Physique 2D');notify();log(scene.guide);return}
- if(!confirm('Reconstruire la scène test avec les modèles Kenney et Quaternius ? La scène actuelle est remplaçable avec Ctrl+Z.'))return;
- load3dBetaDemo('town');Object.assign(view3d,{target:[0,1,0],radius:24,yaw:-.65,pitch:.65});log('Scène test reconstruite : Ultimate Guns, personnages et monstres animés, véhicules et décors intégrés.');
-});
+document.addEventListener('warlike:load-asset-test',()=>document.dispatchEvent(new Event('warlike:demo-browser-open')));
 
 initSimpleHub();
 

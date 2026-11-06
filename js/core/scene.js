@@ -1,10 +1,11 @@
+import {createTownDemo,createGarageDemo,createNatureDemo} from './authored-demo-scenes.js';
+import {createBundledPhysicsScene2d} from './bundled-physics-scene.js';
 import {inspectorMetadata} from './inspector-model.js';
 import {canonicalScene,runtimeEntities} from './scene-contract.js';
 import {startRuntimeSession,stopRuntimeSession} from './runtime-session.js';
 import {inspectRuntimeCompatibility} from './runtime-capabilities.js';
 import {gameProject} from './game-project.js';
 import {resetHeroRuntime} from './superhero-runtime.js';
-import {createBundledTestScene} from './bundled-test-scene.js';
 import {inspectGraph,applyGraph} from './blueprint-graph.js';
 import {inspectBlueprintGame} from './blueprint-validation.js';
 import {resetEngineDiagnostics,stopEngineDiagnostics} from './engine-diagnostics.js';
@@ -106,14 +107,7 @@ add('Jeep','prefab','jeep',230,390,110,66,{hp:200,behavior:'none'});
 add('Campfire','prefab','campfire',550,530,60,72,{hp:100,behavior:'none'});
 state.entities=entities;state.nextId=entities.length+1;state.selected=[1];setCamera({x:65,y:40,zoom:.8});state.demoGuide='Combat 2D : ZQSD/WASD pour bouger, F ou clic pour tirer, H pour se soigner.';record('Charger Combat Sandbox');notify()}
 
-export function loadDrivingDemo(){if(state.playing)return;const entities=[],add=(name,type,assetId,x,y,w,h,rest={})=>entities.push({id:entities.length+1,name,type,assetId,x,y,w,h,color:'#5f99af',rotation:0,...rest});
-add('Driver','character',undefined,155,250,50,72,{skin:'scout',animation:'idle'});
-add('Jeep','prefab','jeep',226,245,105,72,{hp:200,behavior:'none',maxSpeed:285,acceleration:235,brakeForce:320,turnRate:155,drag:1.3,collisionRadius:24});
-add('Tank','prefab','tank',640,145,126,86,{hp:400,behavior:'none',maxSpeed:110,acceleration:95,brakeForce:160,turnRate:68,drag:2.1,collisionRadius:33});
-add('Buggy','prefab','buggy',540,395,100,66,{hp:130,behavior:'none',maxSpeed:345,acceleration:310,brakeForce:260,turnRate:195,drag:.8,collisionRadius:23});
-for(const [x,y] of [[410,220],[490,260],[750,350],[330,440],[850,160],[160,520]])add('Roadblock','prefab','crate',x,y,65,60,{hp:100});
-for(const [x,y] of [[900,450],[1000,230],[390,550]])add('Rock','prefab','rock',x,y,75,64,{hp:100});
-state.entities=entities;state.nextId=entities.length+1;state.selected=[2];setCamera({x:65,y:20,zoom:.85});state.demoGuide='Conduite 2D : E pour monter dans la Jeep proche, ZQSD/WASD pour conduire, E pour descendre.';record('Charger Driving Sandbox');notify()}
+export function loadDrivingDemo(){return loadAuthoredDemo('garage')}
 
 export function addLogicHotspot(){if(state.playing)return;const id=state.nextId++;state.entities.push({id,name:'Hotspot '+id,type:'object',x:210+id*13,y:180+id*8,w:48,h:48,color:'#f2b65b',logic:defaultLogic()});state.selected=[id];record('Créer hotspot');notify()}
 export function loadLogicDemo(){if(state.playing)return;const entities=[],add=(name,type,x,y,w,h,color,logic)=>entities.push({id:entities.length+1,name,type,x,y,w,h,color,...(type==='character'?{skin:'scout'}:{}),...(logic?{logic}:{})});
@@ -126,18 +120,7 @@ const greet=defaultLogic();greet.event='onEnter';greet.prompt='Accueil';greet.on
 add('Zone bienvenue','object',175,170,50,90,'#4b90ac',greet);
 state.entities=entities;state.nextId=entities.length+1;state.selected=[2];setCamera({x:100,y:75,zoom:1});state.demoGuide='Logic 2D : approche le coffre, presse E pour la clé, puis ouvre la porte avec E.';record('Charger Visual Logic Demo');notify()}
 
-export function loadRpgDemo(){if(state.playing)return;const entities=[],add=(name,type,x,y,w,h,color,more={})=>entities.push({id:entities.length+1,name,type,x,y,w,h,color,...more});
-add('Hero','character',105,240,48,72,'#32c4a8',{skin:'scout',hp:100});
-const elder=defaultLogic();elder.prompt='Parler à Elara';elder.actions=[{type:'startDialogue'}];
-const dialogue={title:'Elara — Gardienne',nodes:[
-{text:'Bienvenue ! Le village a perdu trois reliques. Tu peux nous aider ?',choices:[{text:'Accepter la quête',next:1,quest:'relics',questTitle:'Les trois reliques',goal:3},{text:'Pas maintenant',next:-1}]},
-{text:'Cherche trois fragments de cristal au nord du village. Reviens quand tu les auras.',choices:[{text:'Je m’en occupe.',next:-1}]}]};
-add('Elara','object',300,240,55,75,'#9a83d4',{logic:elder,dialogue});
-for(const [x,y] of [[460,150],[670,310],[870,190]]){const l=defaultLogic();l.prompt='Ramasser relique';l.once=true;l.conditions=[{type:'questActive',key:'relics'}];l.actions=[{type:'giveItem',key:'relic',value:1},{type:'progressQuest',key:'relics',value:1},{type:'message',value:'Relique récupérée !'},{type:'destroy'}];add('Relique','object',x,y,30,35,'#6ae9c3',{logic:l})}
-const gate=defaultLogic();gate.prompt='Ouvrir portail';gate.conditions=[{type:'questCompleted',key:'relics'}];gate.actions=[{type:'message',value:'Le portail est déverrouillé !'},{type:'destroy'}];gate.once=true;
-add('Portail ancien','object',1000,200,42,140,'#a56f48',{logic:gate});
-for(const [x,y] of [[390,390],[770,460],[590,95]])add('Arbre','prefab',x,y,65,85,'#699b66',{assetId:'tree',hp:100});
-state.entities=entities;state.nextId=entities.length+1;state.selected=[2];setCamera({x:90,y:35,zoom:.9});state.demoGuide='RPG 2D : parler à Elara avec E, accepter sa quête et ramasser les trois reliques.';record('Charger RPG Demo');notify()}
+export function loadRpgDemo(){return loadAuthoredDemo('town')}
 
 export function loadNinjaZombieDemo(){
  if(state.playing)return;
@@ -205,8 +188,16 @@ export function loadElementsDemo(){
 }
 
 // Each demo is a complete, playable sandbox for its own project type.
+export function loadAuthoredDemo(kind='town'){
+ if(state.playing)return false;
+ const builders={town:createTownDemo,nature:createNatureDemo,garage:createGarageDemo,platformer:()=>{if(workspace.mode!=='2d')throw Error('Le parcours plateforme utilise le projet 2D.');return createBundledPhysicsScene2d()}};
+ const build=builders[kind];if(!build)throw Error('Scène démo inconnue.');
+ const demo=build(workspace.mode);record('Avant changement de scène démo');
+ Object.assign(state,{entities:demo.entities,selected:demo.selected,nextId:demo.nextId,demoGuide:demo.guide});
+ setCamera(demo.camera||{x:0,y:0,zoom:.8});gameProject.genre=demo.genre||(kind==='platformer'?'platformer':'adventure');
+ record('Scène démo · '+kind);notify();return true;
+}
 export function load3dBetaDemo(kind='town'){
- if(state.playing||workspace.mode!=='3d')return;
- const demo=createBundledTestScene(kind);Object.assign(state,{entities:demo.entities,selected:demo.selected,nextId:demo.nextId,demoGuide:demo.guide});
- setCamera({x:0,y:0,zoom:.7});record('Scène test 3D · '+kind);notify();
+ if(state.playing||workspace.mode!=='3d')return false;
+ return loadAuthoredDemo(kind);
 }

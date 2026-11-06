@@ -114,7 +114,7 @@ Le studio Squelette affiche maintenant le **vrai maillage déformé et ses os** 
 
 - Glisse dans l’aperçu pour tourner la vue, utilise la molette pour zoomer et **Cadrer le personnage** pour réinitialiser la caméra. Les flèches, `+`, `−` et `Home` fonctionnent lorsque l’aperçu a le focus.
 - Clique un os visible pour le sélectionner, ou filtre la liste par son nom. Les options **Maillage** et **Os** règlent l’affichage.
-- L’aperçu affiche les couleurs des matériaux, sans textures ni effets de la scène. Il est limité en fréquence et à 24 000 triangles dessinés par image pour les modèles lourds ; il ne remplace pas le rendu final du jeu.
+- L’aperçu affiche les couleurs des matériaux et une approximation des textures échantillonnée par triangle, sans les effets de la scène. Il est limité en fréquence et à 24 000 triangles dessinés par image pour les modèles lourds ; il ne remplace pas le rendu final du jeu.
 
 La timeline possède une cadence de **1 à 120 images/seconde**, un alignement sur les images et un instant numérique. Les boutons **Image précédente/suivante** avancent d’une image. **Clé précédente/suivante** parcourent les instants de toutes les pistes, en conservant exactement les temps des clips importés. Les instants des clés d’une piste sont aussi modifiables numériquement ; une collision avec une autre clé est refusée.
 

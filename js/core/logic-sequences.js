@@ -149,7 +149,7 @@ function finishFunction(job,value,owner){
 function execute(job,ctx,actionsLeft){
  if(job.playerId!=null){const player=ctx.entities.find(o=>o.id===job.playerId);if(!player){job.index=job.steps.length;return 0}ctx={...ctx,player}}
  const rt=sequenceRuntime,entity=ctx.entities.find(o=>o.id===job.objectId);
- if(!entity||!jobSequence(entity,job)||jobSequence(entity,job)?.enabled===false||entity.sequenceEnabled===false||entity._sequenceDestroyed){job.index=job.steps.length;return 0}
+ if(!entity||!jobSequence(entity,job)||jobSequence(entity,job)?.enabled===false||entity.enabled===false||entity.sequenceEnabled===false||entity._sequenceDestroyed){job.index=job.steps.length;return 0}
  let count=0;
  while(job.index<job.steps.length&&count<actionsLeft){
   if(gameSession.phase!=='playing'&&!job.runWhenPaused)return count;
@@ -303,7 +303,7 @@ export function updateSequences(dt,ctx){
  const pendingJobs=running?rt.jobs.splice(0):[];
  for(const job of pendingJobs){
   const owner=objects.find(o=>o.id===job.objectId);
-  if(!owner||!jobSequence(owner,job)||jobSequence(owner,job)?.enabled===false||owner.sequenceEnabled===false||owner._sequenceDestroyed)continue;
+  if(!owner||!jobSequence(owner,job)||jobSequence(owner,job)?.enabled===false||owner.enabled===false||owner.sequenceEnabled===false||owner._sequenceDestroyed)continue;
   job.wait=Math.max(0,job.wait-dt);
   if(!blueprintDebugger.paused&&job.wait<=1e-9&&budget>0)budget-=execute(job,ctx,budget)||0;
   if(job.index<job.steps.length)rt.jobs.push(job);
@@ -323,7 +323,7 @@ export function updateSequences(dt,ctx){
  };
  for(const o of objects){
   if(!o||typeof o!=='object')continue;
-  for(const {sequence:s,key:sequenceKey} of sequenceEntries(o)){if(s.enabled===false||o.sequenceEnabled===false||o._sequenceDestroyed)continue;
+  for(const {sequence:s,key:sequenceKey} of sequenceEntries(o)){if(o.enabled===false||s.enabled===false||o.sequenceEnabled===false||o._sequenceDestroyed)continue;
   const isInside=!!player&&distance(o,player)<=Math.max(0,number(s.radius,96));
   const wasInside=rt.inside.has(sequenceKey);if(isInside)rt.inside.add(sequenceKey);else rt.inside.delete(sequenceKey);
   if(!running&&!s.runWhenPaused)continue;

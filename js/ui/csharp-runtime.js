@@ -1,3 +1,5 @@
+import {nativeScriptEntities,nativeScriptSources} from '../core/csharp-sources.js';
+import {gameProject} from '../core/game-project.js';
 import {runtimeSession} from '../core/runtime-session.js';
 import {bridgeScene} from '../core/scene-contract.js';
 import {applyCsharpFrame} from '../core/csharp-frame.js';
@@ -20,7 +22,7 @@ async function request(path,method='GET',payload){
   return data;
  }finally{clearTimeout(timer)}
 }
-const currentScene=()=>bridgeScene(state.entities);
+const currentScene=()=>bridgeScene(nativeScriptEntities(state.entities,gameProject));
 export function initCSharpBridge(){
  const dialog=document.getElementById('csharpRuntimePanel'),button=document.getElementById('openCsharpRuntime');
  const close=document.getElementById('csharpRuntimeClose'),status=document.getElementById('csharpRuntimeStatus');
@@ -29,7 +31,7 @@ export function initCSharpBridge(){
  if(!dialog||!button||!close||!status||!connect||!sync||!tick||!second||!template)return;
  dialog.querySelector('.csharp-runtime-actions').after(status);
  const runtimeNotice=document.createElement('div');runtimeNotice.className='warlike-runtime-notice';runtimeNotice.hidden=true;runtimeNotice.setAttribute('role','status');document.body.append(runtimeNotice);
- document.addEventListener('warlike:runtime',()=>{const r=runtimeSession;runtimeNotice.hidden=r.backend!=='native'||!state.playing;runtimeNotice.classList.toggle('has-error',r.phase==='error');runtimeNotice.textContent=r.phase==='error'?r.error+' · Arrête Play pour corriger.':r.phase==='connecting'?'Connexion du Play au runtime C# local…':'Play C# local · composants et blueprints synchronisés';});
+ document.addEventListener('warlike:runtime',()=>{const r=runtimeSession;runtimeNotice.hidden=!state.playing||r.backend!=='native'&&!['error','connecting'].includes(r.phase);runtimeNotice.classList.toggle('has-error',r.phase==='error');runtimeNotice.textContent=r.phase==='error'?r.error+' · Arrête Play pour corriger.':r.phase==='connecting'?(r.backend==='native'?'Connexion du Play au runtime C# local…':'Chargement des modules JavaScript / TypeScript…'):'Play C# local · composants et blueprints synchronisés';});
  const announce=(message,ok=false)=>{status.textContent=message;status.dataset.ok=String(ok)};
  let busy=false,streaming=false,streamToken=0,streamTimer=null,streamBefore=null,streamApplied=false;
  let inspector=null,sceneToken=0,syncedScene=null;
@@ -64,6 +66,7 @@ export function initCSharpBridge(){
   if(state.playing||busy||streaming)return;busy=true;ui.ready=false;buttons();const token=++sceneToken,before=fingerprint();
   announce('Chargement de la scène dans .NET…');
   try{
+   const scripts=nativeScriptSources(state.entities,gameProject);if(scripts.length)await request('/scripts/compile','POST',{scripts});
    const response=await request('/scene','POST',currentScene());
    if(token!==sceneToken||state.playing||before!==fingerprint())throw Error('La scène a changé pendant l’envoi. Envoie-la à nouveau.');
    ui.revision=response.revision;ui.ready=response.ok===true;markSynced();
@@ -126,12 +129,12 @@ export function initCSharpBridge(){
 using System.Numerics;
 
 // Exemple : ajouter ce composant dans un projet .NET qui référence WarLike.Runtime.
-public sealed class MyMovement : WarLikeBehaviour
+public sealed class MyMovement : MonoBehaviour
 {
-    public float Speed { get; set; } = 2.5f;
-    public override void Update(float deltaTime)
+    public float Speed = 2.5f;
+    void Update()
     {
-        Actor.Position += new Vector3(Speed * deltaTime, 0, 0);
+        transform.Translate(Speed * Time.deltaTime, 0, 0);
     }
 }
 `;
@@ -191,14 +194,14 @@ public sealed class MyMovement : WarLikeBehaviour
  const defaultScript=name=>`using WarLike.Runtime;
 using System.Numerics;
 
-public sealed class ${name} : WarLikeBehaviour
+public sealed class ${name} : MonoBehaviour
 {
-    public float Speed { get; set; } = 2.5f;
+    public float Speed = 2.5f;
 
-    public override void Update(float deltaTime)
+    void Update()
     {
         // World units are meters; X and Z are the ground plane.
-        Actor.Position += new Vector3(Speed * deltaTime, 0, 0);
+        transform.Translate(Speed * Time.deltaTime, 0, 0);
     }
 }
 `;
@@ -219,12 +222,12 @@ public sealed class ${name} : WarLikeBehaviour
   const object=selectedObject();
   if(!object||state.playing||busy||streaming){announce('Sélectionne un objet et arrête Play avant de modifier un script.');return}
   if(scriptSource.value.length>30000){announce('Script limité à 30 000 caractères.');return}
-  const scriptId=object.csharpScript?.scriptId;
+  const scriptId=object.csharpScript?.scriptId,values=object.csharpScript?.values,enabled=object.csharpScript?.enabled;
   object.csharpScript={name:safeName(scriptName.value),source:scriptSource.value};
-  if(scriptId)object.csharpScript.scriptId=scriptId;
+  if(scriptId)object.csharpScript.scriptId=scriptId;if(values)object.csharpScript.values=values;if(typeof enabled==='boolean')object.csharpScript.enabled=enabled;
   record('C# : enregistrer script '+object.csharpScript.name);notify();
   ui.ready=false;buttons();
-  announce('Code C# enregistré dans '+object.name+'. Le runtime doit être recompilé pour l’exécuter.',true);
+  announce('Code C# enregistré dans '+object.name+'. Envoyer la scène ou Play C# local compile et exécute ce script dans .NET.',true);
  });
  scriptExport?.addEventListener('click',()=>{
   const source=scriptSource.value;

@@ -18,7 +18,7 @@ test('C# typed edits preserve booleans, integers and vectors and reject invalid 
  assert.deepEqual(parseCsharpValue('vector3',{x:'1.5',y:'0',z:'-3'}),{x:1.5,y:0,z:-3});
  for(const value of ['',Infinity,'NaN','1e999'])assert.throws(()=>parseCsharpValue('float',value));
  assert.throws(()=>parseCsharpValue('int','2.5'));
- assert.throws(()=>parseCsharpValue('string','42'));
+ assert.equal(parseCsharpValue('string','42'),'42');
 });
 test('squad member IDs support comma and whitespace lists without duplicates or invalid IDs',()=>{
  assert.deepEqual(parseSquadMembers('2, 3; 4\n5'),[2,3,4,5]);
@@ -41,4 +41,13 @@ test('runtime-only, stale, mismatched and malformed fields cannot overwrite a sc
   assert.equal(persistCsharpProperty(entities,7,component,property),false);
  for(const sceneKeys of [['__proto__'],['constructor'],['prototype']])assert.equal(persistCsharpProperty(entities,7,{sourceIndex:0,type:'VehicleControllerComponent'},{...property,sceneKeys}),false);
  assert.equal(JSON.stringify(entities),before);
+});
+
+test('native MonoBehaviour fields persist separately from built-in component definitions',()=>{
+ const entity={id:1,csharpScript:{name:'Spinner',source:'native'}};const component={sourceIndex:-1,type:'Spinner'};
+ assert.equal(persistCsharpProperty([entity],1,component,{name:'Speed',type:'float',value:45}),true);
+ assert.equal(persistCsharpProperty([entity],1,component,{name:'Label',type:'string',value:'test'}),true);
+ assert.equal(persistCsharpProperty([entity],1,component,{name:'Enabled',type:'bool',value:false}),true);
+ assert.deepEqual(entity.csharpScript.values,{Speed:45,Label:'test'});assert.equal(entity.csharpScript.enabled,false);
+ assert.equal(persistCsharpProperty([entity],1,component,{name:'__proto__',type:'float',value:1}),false);
 });

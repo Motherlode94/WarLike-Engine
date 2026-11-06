@@ -21,11 +21,11 @@ public sealed record InspectorComponent(int Index, string Type, int? SourceIndex
     bool Active, bool Started, IReadOnlyList<InspectorProperty> Properties);
 public sealed record InspectorActor(int Id, string Name, bool Enabled, IReadOnlyList<InspectorComponent> Components);
 
-/// <summary>No dynamic code loading: only annotated properties on already compiled behaviours.</summary>
+/// <summary>Typed annotated properties and serialized fields on compiled native scripts.</summary>
 public static class RuntimeInspector {
     private sealed record Field(PropertyInfo Property, InspectorFieldAttribute Attribute, string Type);
-    private static readonly ConcurrentDictionary<Type, Field[]> Cache = new();
-    private static Field[] Fields(Type type) => Cache.GetOrAdd(type, t => t
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Type, Field[]> Cache = new();
+    private static Field[] Fields(Type type) => Cache.GetValue(type, t => t
         .GetProperties(BindingFlags.Instance | BindingFlags.Public)
         .Select(p => (Property: p, Attribute: p.GetCustomAttribute<InspectorFieldAttribute>()))
         .Where(p => p.Attribute is not null && p.Property.GetMethod?.IsPublic == true && p.Property.GetIndexParameters().Length == 0)
@@ -33,7 +33,7 @@ public static class RuntimeInspector {
         .Where(p => p.Type != "").OrderBy(p => p.Property.Name, StringComparer.Ordinal).ToArray());
     private static string Kind(Type type) => type == typeof(float) ? "float" : type == typeof(int) ? "int" :
         type == typeof(bool) ? "bool" : type == typeof(Vector3) ? "vector3" : "";
-    private static object? Value(Field field, WarLikeBehaviour component) {
+    private static object? Value(Field field, MonoBehaviour component) {
         var value = field.Property.GetValue(component);
         return value is Vector3 vector ? new { x = vector.X, y = vector.Y, z = vector.Z } : value;
     }
@@ -45,15 +45,23 @@ public static class RuntimeInspector {
                     new InspectorProperty(field.Property.Name, field.Attribute.Label, field.Type, Value(field, component),
                         field.Property.SetMethod?.IsPublic != true, field.Attribute.Min, field.Attribute.Max,
                         field.Type == "int" ? 1 : field.Attribute.Step,
-                        field.Attribute.SceneKeys.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))).ToArray())).ToArray());
+                        field.Attribute.SceneKeys.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))).Concat(NativeScriptFields.Fields(component.GetType()).Select(field => new InspectorProperty(field.Name, field.Name, field.FieldType == typeof(string) ? "string" : Kind(field.FieldType), FieldValue(field, component), false, -1_000_000, 1_000_000, field.FieldType == typeof(int) ? 1 : .1, [field.Name]))).ToArray())).ToArray());
+    }
+    private static object? FieldValue(FieldInfo field, MonoBehaviour script) {
+        var value = field.GetValue(script); return value is Vector3 vector ? new {x=vector.X,y=vector.Y,z=vector.Z} : value;
     }
     public static InspectorActor Set(GameWorld world, int actorId, int componentIndex, string propertyName, JsonElement value) {
         var actor = world.Actors.FirstOrDefault(a => a.Id == actorId) ?? throw new KeyNotFoundException("Actor not found.");
         var components = world.GetComponents(actor);
         if (componentIndex < 0 || componentIndex >= components.Count) throw new ArgumentOutOfRangeException(nameof(componentIndex));
         var component = components[componentIndex];
-        var field = Fields(component.GetType()).FirstOrDefault(f => f.Property.Name == propertyName)
-            ?? throw new ArgumentException("Property is not exposed to the Inspector.");
+        var field = Fields(component.GetType()).FirstOrDefault(f => f.Property.Name == propertyName);
+        if (field is null) {
+            var scriptField = NativeScriptFields.Fields(component.GetType()).FirstOrDefault(f=>f.Name == propertyName)
+                ?? throw new ArgumentException("Property is not exposed to the Inspector.");
+            scriptField.SetValue(component, NativeScriptFields.Parse(scriptField.FieldType, value));
+            return Inspect(world, actorId);
+        }
         if (field.Property.SetMethod?.IsPublic != true) throw new ArgumentException("Property is read-only.");
         object parsed;
         if (field.Type == "bool") {

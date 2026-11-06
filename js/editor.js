@@ -307,3 +307,5 @@ initHeroForgeUi();initCompanyUi();initLifeUi();
 initLanPanel();
 
 initCreativeStudios();initCreativeRuntime();initSurvivalUi();initAdventureUi();
+
+document.addEventListener('warlike:script-log',event=>log(event.detail.message,event.detail.level));

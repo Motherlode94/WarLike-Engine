@@ -15,7 +15,7 @@ test('C# bridge uses loopback and executes scene through JSON API',()=>{
  assert.match(ui,/request\('\/scene','POST',currentScene\(\)\)/);
  assert.match(ui,/request\('\/tick','POST',\{dt\}\)/);
  assert.match(ui,/second\.addEventListener\('click',\(\)=>simulate\(1\)\)/);
- assert.match(native,/GameWorld\.FromWarLikeJson\(json\)/);
+ assert.match(native,/GameWorld\.FromWarLikeJson\(json,scriptCompiler\.Types\)/);
  assert.match(native,/world\.Tick\(dt\)/);
  assert.match(native,/rotation=a\.Rotation/);
 });

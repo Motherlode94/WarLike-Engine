@@ -21,7 +21,11 @@ Dans un navigateur compatible avec File System Access, sur HTTPS ou localhost :
 
 Sans File System Access, l’import et le téléchargement d’une copie restent disponibles. Ce mode ne surveille pas le fichier original. Le suivi d’un fichier n’est pas conservé après fermeture ou rechargement de la page : le sélectionner à nouveau pour rétablir son accès.
 
-La sauvegarde actualise les **sources**, pas l’exécution du jeu. Le JavaScript importé n’est pas évalué automatiquement. Le C#, Python et C++ se compilent/s’exécutent dans leur environnement approprié ; la coloration C# ne constitue pas un compilateur C#.
+Les fichiers **WarScript `.wls`** attachés au GameObject s’exécutent dans Play et l’export Web. **Vérifier / compiler** affiche leurs diagnostics avec ligne et colonne, même sans Monaco. Les champs publics se règlent dans l’Inspector. [Guide WarScript](../docs/warscript.md).
+
+Le **C# `.cs`** est compilé en véritable assembly .NET par le bridge local : installer le SDK .NET 8 et lancer `start-warlike-csharp.cmd`. **Vérifier / compiler** compile les sources C# ouvertes ; enregistrer puis sélectionner **Utiliser Play C# natif** dans l’Inspector pour exécuter les MonoBehaviour. Play compile les sources du projet avant de charger la scène. [Guide C# natif](../csharp/README.md). Les modules **JavaScript** attachés s’exécutent directement dans le navigateur ; le **TypeScript** est compilé dans Script Studio puis le JavaScript produit est conservé pour Play et l’export. Python et C++ restent des sources pour leurs runtimes dédiés. [API des scripts JS/TS](../docs/script-languages.md).
+
+Arrêter Play avant de synchroniser une sauvegarde de source ; le fichier et le brouillon restent conservés si le moteur refuse une modification pendant Play. La prochaine session repart du nouveau code et des valeurs enregistrées.
 
 ## Raccourcis
 

@@ -95,4 +95,26 @@ test('real .NET bridge: typed parameters, tactical orders, revisions, origin and
  const reset=await call('/scene',{entities:[{id:90}]});
  await call('/frame',{revision:shared.revision,frame:3,dt:.1,actors},409);
  const restarted=await call('/frame',{revision:reset.revision,frame:1,dt:0,actors:[actors[0]]});assert.equal(restarted.frame,1);
+ // Compile real C# at runtime, instantiate MonoBehaviour and edit serialized fields.
+ const nativeSource=`using WarLike.Runtime;
+using System.Numerics;
+public sealed class NativeSpinner : MonoBehaviour {
+ public float Speed = 90f;
+ public string Label = "native-ready";
+ [SerializeField] private bool reverse = false;
+ void Awake() { Debug.Log(Label); }
+ void Update() { transform.Rotate(0,(reverse ? -Speed : Speed)*Time.deltaTime,0); if(Input.GetKeyDown(KeyCode.E)) transform.Translate(1,0,0); }
+ void OnDestroy() { Debug.Log("native-destroyed"); }
+}`;
+ const compiled=await call('/scripts/compile',{scripts:[{name:'NativeSpinner',source:nativeSource}]});assert.equal(compiled.ok,true);assert.ok(compiled.classes.includes('NativeSpinner'));
+ const invalid=await call('/scripts/compile',{scripts:[{name:'NativeSpinner',source:nativeSource.replace('transform.Rotate','unknownThing.Rotate')}]},400);assert.ok(invalid.diagnostics.some(d=>d.severity==='error'&&d.line>0&&d.file==='NativeSpinner.cs'));
+ const custom=await call('/scene',{entities:[{id:95,name:'Native + Web',x:0,y:0,csharpScript:{name:'NativeSpinner',source:nativeSource,values:{Speed:40,Label:'serialized-before-awake'}}}]});
+ const scriptInspector=await call('/components/inspect',{id:95,revision:custom.revision});assert.equal(scriptInspector.actor.components[0].sourceIndex,-1);assert.equal(scriptInspector.actor.components[0].properties.find(p=>p.name==='Speed').value,40);
+ const customFrame=await call('/frame',{revision:custom.revision,frame:1,dt:.1,keys:['e'],pressedKeys:['e'],actors:[{id:95,x:0,y:0,elevation3d:0,rotation:0,hp:100,enabled:true}]});
+ assert.ok(Math.abs(customFrame.actors[0].rotation-4)<.001);assert.equal(customFrame.actors[0].x,64);assert.ok(customFrame.logs.includes('serialized-before-awake'));
+ await call('/components/set',{id:95,revision:custom.revision,index:0,property:'Speed',value:20});
+ await call('/components/set',{id:95,revision:custom.revision,index:0,property:'Label',value:'changed'});
+ const again=await call('/frame',{revision:custom.revision,frame:2,dt:.1,actors:customFrame.actors});assert.equal(again.actors[0].x,64);assert.ok(Math.abs(again.actors[0].rotation-6)<.001);
+ const stop=await call('/stop',{revision:custom.revision});assert.ok(stop.logs.includes('native-destroyed'));await call('/stop',{revision:custom.revision},409);
+
 });

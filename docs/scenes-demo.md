@@ -14,3 +14,7 @@ Dans un projet 2D ou 3D, choisir **Scènes démo** dans la barre d’outils ou *
 Les scènes utilisent les composants et le runtime ordinaires du moteur. Les quêtes, checkpoint et interactions sont stockés sur leurs objets ; ouvrir leur composant **Déclencheur** ou **Blueprint** dans Inspector pour les modifier. Les décors utilisent les ressources Kenney livrées avec le dépôt et des modèles GLB intégrés en 3D. La Jeep 2D conserve son illustration SVG historique. Les sols 2D sont des compositions reproductibles de tuiles Tiny Town CC0 : `python scripts/assets/build-demo-maps.py` (Pillow nécessaire).
 
 Pour tester l’export, enregistrer le projet puis **Exporter le jeu**, décompresser et servir le dossier en HTTP. Le contrôle de compatibilité de l’export doit rester sans erreur. Les sauvegardes du navigateur sont propres à l’adresse où le jeu est servi.
+
+## WarScript dans les quatre scènes
+
+Le relais du quartier possède `Relais.wls` : après le signal de quête Blueprint, le script fait varier la lumière. `Prototype.wls` applique vitesse et freinage au véhicule du garage. `PremiereAube.wls` règle la vitesse du cycle de survie. `Coursier.wls` règle saut et sprint du contrôleur 2D. Sélectionner l’objet, déplier **WarScript**, modifier un champ public ou ouvrir **Modifier le WarScript**, enregistrer puis relancer Play. Ces sources et valeurs sont incluses dans l’export Web.

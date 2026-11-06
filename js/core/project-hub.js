@@ -263,7 +263,7 @@ export function initHub(){
  document.querySelector('#hubClose').onclick=hide;
  document.querySelector('#hubSave').onclick=()=>{saveProject();updateTitle()};
  document.addEventListener('warlike:change',()=>{if(hub.projectId)updateTitle()});
- setInterval(()=>{if(!state.playing&&hub.projectId)saveProject()},2600);
+ setInterval(()=>{if(!state.playing&&hub.projectId&&!animationEditorPreview.owner)saveProject()},2600);
  window.addEventListener('pagehide',()=>saveProject());
  modal.hidden=false;document.body.classList.add('hub-open');render();
 }

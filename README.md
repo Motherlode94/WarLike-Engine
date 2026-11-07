@@ -284,3 +284,9 @@ Cet espace indépendant référence les ressources PNG incluses dans `assets/fre
 Chaque prefab conserve `assetId`, `spriteUrl`, dimensions, mode `2d` et provenance Kenney, sans inventer d'animation, scripts ou contrôle joueur. Les prefabs réinstallés ne remplacent pas les personnalisations. Les fichiers PNG restent distribués avec le moteur et les prefabs utilisent le même stockage local (domaine et navigateur identiques). Voir `tests/asset-store-prefabs-2d.test.mjs` pour la validation de format et de non-écrasement.
 
 Les boutons et parcours ont été vérifiés en code, mais le rendu et l'instanciation complète en navigateur restent à valider après publication.
+
+### Espace 2D — aperçu animé et prefabs enrichis
+
+L'[espace 2D](https://warlike-engine.pages.dev/asset-store/2d.html) propose maintenant une prévisualisation agrandie des vrais PNG, avec sélecteur de clips lorsque le manifeste contient des images d'animation, lecture/pause, vitesse de 1 à 18 images/seconde, zoom et filtre **Animations réelles**. Aucun clip n'est généré artificiellement : seuls les chemins PNG déclarés dans les packs sont affichés. Les prefabs natifs 2D installés préservent les listes de frames valides, le clip initial et les propriétés existantes ; l'installation ne remplace pas les copies personnalisées. Test de régression ajouté dans `tests/asset-store-prefabs-2d.test.mjs`.
+
+Limite : cette interface prévisualise les animations par séquence PNG ; elle ne garantit pas encore la lecture de ces clips dans tous les modes de gameplay de l'éditeur. Les scripts sont vérifiés syntaxiquement, pas encore testés dans un navigateur complet.

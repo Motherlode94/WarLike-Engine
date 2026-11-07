@@ -1,3 +1,9 @@
+## Transformations hiérarchiques 3D — noyau matriciel
+
+Le graphe de scène v2 (`js/core/scene-graph-v2.js`) fournit désormais des matrices 4×4 affines **column-major** : `composeTransformMatrix`, `multiplyMatrix4`, `invertMatrix4`, `worldTransformMatrices`, `setLocalTransform` et `reparent(scene,id,parentId,{keepWorld:true})`. Les matrices mondiales sont calculées à partir des transformations locales et des parents. Le changement de parent préserve **exactement** la matrice monde ; si l'échelle non uniforme produit du *shear*, le Transform conserve une matrice affine `matrix` / `matrixMode:'affine'` plutôt que de perdre l'information dans une décomposition TRS. Un parent non inversible entraîne une erreur et ne change pas la scène. Les éditions TRS explicites effacent la surcharge affine.
+
+Le pont `js/core/scene-contract.js` convertit les poses des entités historiques (coordonnées mondiales) en transformations locales du graphe v2 et reconstruit les poses mondiales lors du retour au runtime. **Limite actuelle :** le WebGL legacy ne sait pas encore dessiner une matrice monde contenant du shear ; la conversion vers ce runtime refuse ces cas au lieu de produire une déformation silencieuse. Les Gizmos, la physique et la visualisation 3D live doivent encore être raccordés à ce système de matrices ; cette phase ne constitue pas encore une compatibilité complète avec `Transform` de Unity. Les tests figurent dans `tests/scene-graph-transforms.test.mjs`.
+
 ## Éditeur unifié — Hierarchy, Inspector, Project et fenêtres (novembre 2026)
 
 L'éditeur existant est conservé. **Hierarchy** affiche maintenant les relations `parentId` de la scène, avec indentation, repli/dépli, sélection synchronisée vers l'Inspector et glisser-déposer d'un GameObject sur un autre pour changer son parent. Glisser un objet sur l'en-tête de scène le ramène à la racine. Les opérations empêchent les cycles et les parents inexistants.

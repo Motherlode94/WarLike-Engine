@@ -28,6 +28,12 @@ test('deployed WebAssembly runs native navigation and gravity batches with reusa
  assert.equal(nativeDiagnostics().scratchBytes,before);
  assert.ok(nativeDiagnostics().calls.paths>0&&nativeDiagnostics().calls.gravityBatches>=4);
  assert.equal(integrateNativeGravityBatch([{y:1e100,vy:0,gravity:10,restitution:0}],1/60),null);
+ assert.equal(integrateNativeGravityBatch([{y:1,vy:0,gravity:10,restitution:0}],NaN),null);
+ assert.equal(integrateNativeGravityBatch([{y:1,vy:0,gravity:10,restitution:0}],-1),null);
+ assert.equal(integrateNativeGravityBatch([{y:1,vy:0,gravity:10,restitution:0}],2),null);
+ const recovered=integrateNativeGravityBatch([{y:1,vy:0,gravity:10,restitution:0}],1/120);
+ assert.equal(recovered.length,1);
+ assert.ok(Number.isFinite(recovered[0].y));
 });
 
 test('native segment batches match the JavaScript geometry over seeded scenes',available,()=>{

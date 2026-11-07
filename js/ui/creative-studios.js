@@ -1,3 +1,4 @@
+import {renderAnimationProfiles} from './animation-library.js';
 import {machineAncestors} from '../core/animator-advanced.js';
 import {renderAdvancedAnimator} from './animator-advanced.js';
 import {state,active,notify} from '../core/state.js';
@@ -9,7 +10,7 @@ import {heroCenter} from '../core/hero-movement.js';
 import {getModelGeometry} from '../assets/real-models-3d.js';
 import {makeWindowResizable} from './resizable-window.js';
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n};
-const clipCache=new Map(),boneCache=new Map(),durationCache=new Map();
+const clipCache=new Map(),boneCache=new Map(),durationCache=new Map(),profileClipCache=new Map();
 export function initCreativeStudios(){
  const panels={};let lastPlaying=state.playing;let ownerId=null,selectedState='motion';
  const owner=()=>state.entities.find(o=>o.id===ownerId)||active();
@@ -21,9 +22,10 @@ export function initCreativeStudios(){
  const animator=windowFor('animator','Animator · États et mélange'),fx=windowFor('fx','FX Studio · Particules et courbes');
  function heading(panel){const body=panel.querySelector('.creative-body');body.replaceChildren();const o=owner();body.append(el('p','creative-owner',o?'Objet : '+o.name:'Sélectionne un objet dans la Hiérarchie.'));return {body,o}}
  const clipsFor=o=>clipCache.get(o.model3dId||o.assetId)||[];
- function loadClips(o){const id=o.model3dId||o.assetId;if(!id||clipCache.has(id))return;clipCache.set(id,[]);getModelGeometry(id).then(g=>{clipCache.set(id,g.rig?.animations.map(c=>c.name)||[]);durationCache.set(id,new Map((g.rig?.animations||[]).map(c=>[c.name,c.duration])));boneCache.set(id,g.rig?.nodes.map(n=>n.name).filter(Boolean)||[]);if(!animator.hidden&&owner()===o)renderAnimator()}).catch(()=>{})}
+ function loadClips(o){const id=o.model3dId||o.assetId;if(!id||clipCache.has(id))return;clipCache.set(id,[]);getModelGeometry(id).then(g=>{profileClipCache.set(id,g.rig?.animations||[]);clipCache.set(id,g.rig?.animations.map(c=>c.name)||[]);durationCache.set(id,new Map((g.rig?.animations||[]).map(c=>[c.name,c.duration])));boneCache.set(id,g.rig?.nodes.map(n=>n.name).filter(Boolean)||[]);if(!animator.hidden&&owner()===o)renderAnimator()}).catch(()=>{})}
  function renderAnimator(){
   const {body,o}=heading(animator);if(!o)return;loadClips(o);
+  if(profileClipCache.has(o.model3dId||o.assetId))renderAnimationProfiles(body,o,profileClipCache.get(o.model3dId||o.assetId),{selected:o.animatorGraph?.profileId||'adventure',onApplied:()=>{selectedState='motion';save('Appliquer un profil Animator');renderAnimator()}});
   if(!o.animatorGraph){body.append(el('p','','Crée un graphe de locomotion, saut, attaque, pouvoirs, vol et mort. Les poses viennent des clips du modèle.'));button(body,'Créer le graphe Animator',()=>{o.animatorGraph=defaultAnimatorGraph();save('Créer Animator');renderAnimator()});return}
   const graph=o.animatorGraph;graph.parameters??=[];graph.machines??=[];const toolbar=el('div','creative-toolbar');check(toolbar,'Animator actif',graph.enabled!==false,v=>graph.enabled=v);check(toolbar,'Aperçu dans la scène',o.animatorPreview,v=>o.animatorPreview=v);field(toolbar,'État initial',graph.entry,v=>{graph.entry=v;renderAnimator()},{choices:[...graph.states.map(s=>({value:s.id,label:s.name})),...graph.machines.map(m=>({value:'@'+m.id,label:'▱ '+m.name}))]});field(toolbar,'Vitesse simulée · aperçu',graph.previewSpeed??4.2,v=>graph.previewSpeed=Math.max(0,Math.min(12,v)),{min:0,max:12});field(toolbar,'Vitesse locale X · aperçu',graph.previewX??0,v=>graph.previewX=Math.max(-12,Math.min(12,v)),{min:-12,max:12});field(toolbar,'Vitesse locale Y · aperçu',graph.previewY??0,v=>graph.previewY=Math.max(-12,Math.min(12,v)),{min:-12,max:12});button(toolbar,'Ajouter un état',()=>{if(graph.states.length>=32)return;const id='state-'+Date.now().toString(36);graph.states.push({id,name:'Nouvel état',clip:'idle',loop:true,speed:1,duration:1,x:60,y:60,events:[]});selectedState=id;save('Ajouter état Animator');renderAnimator()});button(toolbar,'Squelette · Poses, courbes et IK',()=>document.dispatchEvent(new Event('warlike:skeleton-open')),false);body.append(toolbar);
   const layout=el('div','creative-layout'),board=el('div','animator-board'),world=el('div','animator-world'),details=el('aside','creative-details'),svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('animator-wires');world.append(svg);board.append(world);layout.append(board,details);body.append(layout);

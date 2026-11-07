@@ -22,7 +22,7 @@ const base='http://127.0.0.1:8765';
 export const runtimeSession={generation:0,phase:'stopped',backend:'web',frame:0,error:'',busy:false};
 let requestNative=defaultRequest,revision=null,initializedScene=null,pending=null,elapsed=0,nativeCanStop=false,webScene=null,webLoading=false;
 async function defaultRequest(path,payload){
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4500);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),path==='/scripts/compile'?30000:4500);
  try{const response=await fetch(base+path,{method:payload===undefined?'GET':'POST',headers:payload===undefined?{}:{'Content-Type':'application/json'},...(payload===undefined?{}:{body:JSON.stringify(payload)}),signal:controller.signal,cache:'no-store'});const data=await response.json();if(!response.ok||data.ok===false)throw Error(data.error||'HTTP '+response.status);return data}finally{clearTimeout(timer)}
 }
 export function setRuntimeTransport(transport=defaultRequest){requestNative=transport}

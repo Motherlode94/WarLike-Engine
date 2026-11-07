@@ -121,3 +121,33 @@ La timeline possède une cadence de **1 à 120 images/seconde**, un alignement s
 **Copier/Coller la valeur de pose** transfère la valeur locale de la propriété sélectionnée entre os compatibles. **Pose de repos de cet os** remet cette propriété à sa valeur de repos. Ces actions restent temporaires jusqu’à l’enregistrement d’une clé. **Enregistrer toute la pose** capture les transformations locales de tous les nœuds du modèle en une opération annulable ; la capture concerne le montage avant contraintes IK. Les limites de pistes et les noms d’os ambigus sont contrôlés avant modification.
 
 Renommer un clip met à jour ses références dans les états Animator, mélanges 1D/2D, couches, correspondances d’animations et lecture automatique. La suppression d’un clip encore référencé est refusée avec la liste des usages. Annuler/rétablir conserve le clip, l’os et l’instant sélectionnés lorsque le même objet est restauré. Les chargements asynchrones d’anciens objets ou anciennes sources de transfert ne peuvent plus remplacer la sélection courante.
+
+## Bibliothèque remplie et profils prêts à appliquer
+
+**Bibliothèque du modèle** présente tous les clips réellement contenus dans le GLB, avec recherche, catégories et durées. Les personnages Kenney Mini Characters offrent 32 clips ; le mannequin Quaternius UAL1 en fournit 43. Un modèle différent conserve sa propre liste : une action absente n’est pas remplacée par une animation inventée.
+
+**Aperçu** lit un clip source dans la vue du studio. Le sélecteur **Clip source à lire**, sous l’aperçu du personnage, permet aussi de parcourir rapidement ces animations. Ce lecteur possède sa propre horloge et ne déplace pas la tête de lecture du clip en cours de montage. Les sources ne sont pas modifiées.
+
+**Modifier** crée une copie locale éditable, avec les pistes d’os et les temps d’origine. Une sélection multiple permet de rendre plusieurs clips modifiables en une seule opération annulable. La limite de 32 copies par objet est vérifiée avant import ; tous les autres clips restent disponibles en aperçu. Une copie déjà importée depuis le même modèle est rouverte plutôt que dupliquée. Les pistes dépassant 512 clés et les rotations cubiques sont rééchantillonnées dans la limite du format de montage.
+
+Les **Profils Animator prêts à appliquer**, disponibles dans le studio Squelette et le graphe Animator, comprennent :
+
+| Profil | Contenu selon les clips du modèle |
+| --- | --- |
+| Aventure | Locomotion, saut, chute, attaque, impact et mort |
+| Corps à corps | Attaques, deuxième coup, coup de pied, parade et esquive |
+| Tir | Posture armée, visée, tir, rechargement et réactions |
+| Vie et interactions | Parler, saluer, s’asseoir, ramasser, utiliser, répondre et danser |
+| Mobilité | Saut, roulade, escalade, glissade et nage |
+| Créatures | Locomotion, saut, attaque, morsure, réactions et mort |
+
+Le panneau affiche les clips choisis et les actions absentes avant application. Appliquer un profil remplace le graphe actuel et réinitialise ses paramètres ; **Ctrl+Z** restaure le précédent. Chaque état emploie la durée réelle de son clip, avec un fondu et un retour à la locomotion après les actions ponctuelles.
+
+Les actions supplémentaires utilisent des triggers comme `attackRequest`, `shootRequest`, `pickupRequest` ou `danceRequest`, selon les états effectivement créés. Une posture en boucle peut être maintenue avec son booléen `<état>Active`, par exemple `blockActive` ou `swimActive`. Le profil Aventure conserve les paramètres automatiques de déplacement, saut et mort. Blueprint, WarScript, JS/TS et le composant Animator C# peuvent alimenter ces paramètres.
+
+Dans **Atelier du mouvement**, les personnages **04 · Clips de combat prêts** et **05 · Clips d’interactions prêts** ouvrent, avec **E**, un choix d’animations. Leurs profils sont déjà renseignés ; les signaux Blueprint déclenchent leurs triggers. Ils complètent les stations de poses, d’IK et de root motion.
+
+
+Les profils possédant un état de mort le conservent tant que le personnage reste mort, même en chute ou si une action est demandée. Le profil Tir écoute aussi l’action d’attaque standard du moteur ; `shootRequest` reste disponible pour Blueprint et les scripts.
+
+La première compilation native peut charger Roslyn et ses références : Play et le panneau C# lui accordent jusqu’à 30 secondes. Les autres requêtes conservent leur limite de 4,5 secondes. Une compilation interrompue ou invalide reste une erreur visible ; elle n’est pas considérée comme réussie.

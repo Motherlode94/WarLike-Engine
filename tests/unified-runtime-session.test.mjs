@@ -7,6 +7,28 @@ import {runtimeSession,startRuntimeSession,stopRuntimeSession,runRuntimeFrame,se
 globalThis.document??={dispatchEvent(){}};globalThis.CustomEvent??=class extends Event{constructor(name,options){super(name);this.detail=options?.detail}};
 const setup=(backend='native')=>{stopRuntimeSession();restoreGameProject({runtimeBackend:backend});state.entities=[{id:1,x:0,y:0,w:32,h:64,hp:90,csharpComponents:[{kind:'AutoRotate',speed:90},{kind:'Health',regen:5}]}];state.playing=true;startRuntimeSession()};
 const finish=()=>{stopRuntimeSession();state.playing=false;setRuntimeTransport()};
+for(const scenario of [
+ {name:'cold native compilation may take longer than a normal frame request',path:'/scripts/compile',elapsed:5000,complete:true},
+ {name:'unresponsive native compilation still stops Play after its extended deadline',path:'/scripts/compile',elapsed:30001,complete:false},
+ {name:'ordinary native requests retain their short deadline',path:'/health',elapsed:4501,complete:false}
+])test(scenario.name,async t=>{
+ setup();setRuntimeTransport();state.entities[0].csharpScript={name:'Spinner',source:'public class Spinner : MonoBehaviour {}'};
+ let heldSignal,release;
+ t.mock.timers.enable({apis:['setTimeout']});
+ t.mock.method(globalThis,'fetch',async(url,options)=>{
+  const path=new URL(url).pathname;
+  if(path===scenario.path){heldSignal=options.signal;return new Promise((resolve,reject)=>{release=()=>resolve(Response.json({ok:true}));options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true})});}
+  if(path==='/health')return Response.json({protocol:3,capabilities:['shared-play-frame','native-script-compiler']});
+  if(path==='/scene')return Response.json({revision:4});
+  const input=JSON.parse(options.body);return Response.json({revision:4,frame:input.frame,actors:input.actors});
+ });
+ try{
+  runRuntimeFrame(.02,{canRun:()=>true});await new Promise(resolve=>setImmediate(resolve));assert.ok(heldSignal);
+  t.mock.timers.tick(scenario.elapsed);
+  if(scenario.complete){assert.equal(heldSignal.aborted,false);release();await runtimeSession.completion;assert.equal(runtimeSession.phase,'ready');}
+  else {await runtimeSession.completion;assert.equal(heldSignal.aborted,true);assert.equal(runtimeSession.phase,'error');}
+ }finally{finish()}
+});
 function transport(frame){return async(path,input)=>path==='/health'?{protocol:3,capabilities:['shared-play-frame']}:path==='/scene'?{ok:true,revision:4}:(await frame(input))}
 test('native then browser components then Blueprint/gameplay observe the same object state',async()=>{
  setup();let seen;setRuntimeTransport(transport(async input=>({ok:true,revision:4,frame:input.frame,actors:input.actors.map(a=>({...a,x:64,rotation:45}))})));

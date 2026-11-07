@@ -39,3 +39,16 @@ test('legacy roots do not obtain spurious affine or local matrices',()=>{
  near(matrices.get(1)[12],1);
  near(legacyReferenceMatrix3d(es[0])[12],1);
 });
+
+test('direct Inspector edits to parent and child survive hierarchy propagation',()=>{
+ const es=setup();updateEditorEntityHierarchy3d(es);
+ es[0].x=128;
+ updateEditorEntityHierarchy3d(es);
+ near(es[1].x,192);
+ es[1].x=256; // inspector changes world-space x directly
+ updateEditorEntityHierarchy3d(es);
+ near(es[1].x,256);
+ es[0].x=192;
+ updateEditorEntityHierarchy3d(es);
+ near(es[1].x,320);
+});

@@ -1,3 +1,4 @@
+import {restoreLocalModels} from './core/local-asset-library.js';
 import {initSkeletalStudio} from './ui/skeletal-studio.js';
 import {initDemoBrowser} from './ui/demo-browser.js';
 import {initScriptStudio} from './ui/script-studio.js';
@@ -79,11 +80,12 @@ const horrorToggle=document.getElementById('horrorSurvivalToggle');
 if(horrorToggle){horrorToggle.checked=horror.enabled;horrorToggle.addEventListener('change',()=>{horror.enabled=horrorToggle.checked})}
 const enableLight=document.getElementById('render2dLight');
 if(enableLight){enableLight.checked=renderQuality.lighting2d;enableLight.addEventListener('change',()=>{setRenderQuality({lighting2d:enableLight.checked});saveRenderQuality()})}
+if(!globalThis.__WARLIKE_BUILD__)try{await restoreLocalModels()}catch(error){log('Bibliothèque locale : '+error.message,'warn')}
 initUnityPackageImport();
 document.getElementById('horrorPursuitDemo')?.addEventListener('click',()=>{if(!window.confirm('Charger Horror Pursuit ? La scène actuelle sera remplacée. Sauvegarde ton projet avant de continuer.'))return;try{loadHorrorPursuitDemo()}catch(error){window.alert(error.message)}});
 document.getElementById('horror3dDemo')?.addEventListener('click',()=>{if(!confirm('Remplacer la scene par Horror 3D ?'))return;try{loadHorror3dDemo()}catch(error){alert(error.message)}});
 initVisualAssetPacks();
-const importedLibraryModels=await hydrateLibraryModels(registerLocalModel);
+const importedLibraryModels=globalThis.__WARLIKE_BUILD__?{loaded:0,errors:[]}:await hydrateLibraryModels(registerLocalModel);
 if(importedLibraryModels.errors.length)console.warn('[WarLike Library] Importation partielle :',importedLibraryModels.errors);
 initHub();
 initBlueprintWorkspace();
@@ -116,7 +118,7 @@ requestAnimationFrame(audioFrame);
 $('#undo').onclick=undo;
 $('#redo').onclick=redo;
 $('#play').onclick=()=>{try{togglePlay()}catch(error){console.error('[WarLike Play]',error);const message='Play impossible : '+(error?.message||String(error));log(message);window.alert(message)}};
-$('#save').onclick=exportScene;
+$('#save').onclick=()=>exportScene().catch(error=>alert('Export impossible : '+error.message));
 $('#load').onclick=()=>$('#file').click();
 $('#file').onchange=async e=>{try{await importScene(e.target.files?.[0])}catch(error){alert('Impossible de charger la scène : '+error.message)}finally{e.target.value=''}};
 $('#zoomIn').onclick=()=>zoomAt(1.25,{x:host.clientWidth/2,y:host.clientHeight/2});

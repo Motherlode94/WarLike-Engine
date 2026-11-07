@@ -1,3 +1,4 @@
+import {portableModelArchive} from './portable-models.js';
 import {animationEditorPreview} from './animation-clips.js';
 import {gameProject,freshGameProject} from './game-project.js';
 import {createGenreScene} from './genre-templates.js';
@@ -237,13 +238,14 @@ export function initHub(){
   }
  });
  const backupAll=modal.querySelector('#hubBackupAll');
- backupAll.addEventListener('click',()=>{
+ backupAll.addEventListener('click',async()=>{
   try{
    if(hub.projectId&&!state.playing&&!saveProject())throw Error('Sauvegarde du projet actif impossible.');
    const projects=listProjects();
    if(!projects.length){message.textContent='Aucun projet à sauvegarder.';return}
    const archive={format:'warlike.hub.backup.v1',exportedAt:new Date().toISOString(),projects:projects.map(meta=>({meta,scene:safeRead(PREFIX+meta.id,null)}))};
    if(archive.projects.some(entry=>!entry.scene))throw Error('Un projet est introuvable : archive interrompue.');
+   archive.importedModels=await portableModelArchive(archive.projects);
    const blob=new Blob([JSON.stringify(archive,null,2)],{type:'application/json'});
    const url=URL.createObjectURL(blob);const link=document.createElement('a');
    link.href=url;link.download='warlike-projets-'+new Date().toISOString().slice(0,10)+'.json';

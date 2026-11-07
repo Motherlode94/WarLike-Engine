@@ -1,4 +1,4 @@
-import './editor.js';
+import {registerBuildModels} from './core/portable-models.js';
 import {state,notify} from './core/state.js';
 import {restoreWorkspaces} from './core/workspaces.js';
 import {restoreGameProject} from './core/game-project.js';
@@ -6,6 +6,8 @@ import {toolsState} from './ui/workspace.js';
 import {motion} from './core/player-controller.js';
 const data=JSON.parse(document.getElementById('warlikeGameData').textContent);
 if(data.format!=='warlike.game.v1')throw Error('Format de jeu inconnu.');
+registerBuildModels(data.importedModels);
+await import('./editor.js');
 const scene=data.project.scenes.find(s=>s.id===data.project.startupSceneId);
 if(!scene)throw Error('Scène de démarrage absente.');
 const slot={entities:scene.entities,selected:[],nextId:Math.max(0,...scene.entities.map(o=>o.id))+1,camera:scene.camera,game:{...data.project,activeSceneId:scene.id}};

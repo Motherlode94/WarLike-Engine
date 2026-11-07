@@ -14,7 +14,7 @@ export function initStudioMenus(){
  document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target))close()});
  const actions={
  new(){if(!state.playing)$('hubOpen').click()},
- open(){$('load').click()},recoverBackup(){if(state.playing)return alert('Arrête Play avant la récupération.');if(!confirm('Rouvrir la scène précédente ? La scène actuelle sera remplacée.'))return;if(!recoverBackup())alert('Aucune sauvegarde de secours disponible.');else log('Scène précédente restaurée')},save(){exportScene()},cloud(){$('cloudConnect').click()},
+ open(){$('load').click()},recoverBackup(){if(state.playing)return alert('Arrête Play avant la récupération.');if(!confirm('Rouvrir la scène précédente ? La scène actuelle sera remplacée.'))return;if(!recoverBackup())alert('Aucune sauvegarde de secours disponible.');else log('Scène précédente restaurée')},save(){exportScene().catch(error=>alert('Export impossible : '+error.message))},cloud(){$('cloudConnect').click()},
  undo,redo,duplicate:duplicateSelected,delete:deleteSelected,
  project(){$('projectTab').click();$('assetSearch').focus()},hotspot:addLogicHotspot,logicDemo(){$('logicDemo').click()},character(){addEntity('character')},object(){addEntity('object')},
  threeDDemo(){if(state.playing)return;if(!confirm('Remplacer la scène du projet 3D par la ville 3D ?'))return;if(!$('view3dToggle').classList.contains('active'))$('view3dToggle').click();load3dBetaDemo('town');$('view3dFocus').click();log('Ville 3D : scène de test prête')},

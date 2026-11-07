@@ -94,13 +94,13 @@ const shader=(gl,type,text)=>{
 };
 const program3d=gl=>{
  const vs=`precision highp float;
- attribute vec3 aPosition;attribute vec3 aNormal;attribute vec2 aTexcoord;varying vec2 vTexcoord;
+ attribute vec3 aPosition;attribute vec3 aNormal;attribute vec2 aTexcoord;varying vec2 vTexcoord;attribute vec4 aVertexColor;varying vec4 vVertexColor;
  uniform vec3 uEye,uRight,uUp,uForward,uPosition,uScale;
  uniform vec4 uRotation;uniform float uAspect;uniform bool uViewModel;uniform mat3 uViewBasis;
  vec3 rotateQ(vec3 v){return v+2.0*cross(uRotation.xyz,cross(uRotation.xyz,v)+uRotation.w*v);}
  varying vec3 vNormal,vWorld;
  void main(){
- vTexcoord=aTexcoord;vec3 q=aPosition*uScale;
+ vTexcoord=aTexcoord;vVertexColor=aVertexColor;vec3 q=aPosition*uScale;
  q=uViewModel?uViewBasis*q:rotateQ(q);
  vec3 rel=q+uPosition-uEye;
  vWorld=q+uPosition;vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vNormal=normalize(uViewModel?uViewBasis*scaledNormal:rotateQ(scaledNormal));
@@ -111,6 +111,7 @@ const program3d=gl=>{
  
  }`;
  const fs=`precision highp float;
+ varying vec4 vVertexColor;uniform bool uUnlit;uniform vec3 uEmissive;
  uniform vec4 uColor;uniform sampler2D uBaseColorTexture;uniform bool uUseTexture;uniform float uAlphaCutoff;varying vec2 vTexcoord;
  uniform vec3 uEye;
  uniform float uRoughness,uMetallic,uExposure,uFogDensity;
@@ -123,7 +124,7 @@ const program3d=gl=>{
  uniform float uLightPower[8],uLightRange[8],uLightCone[8],uLightSpot[8];
  varying vec3 vNormal,vWorld;
  void main(){
- vec4 baseColor=uColor;if(uUseTexture){vec4 texel=texture2D(uBaseColorTexture,vTexcoord);baseColor*=vec4(pow(texel.rgb,vec3(2.2)),texel.a);}if(uAlphaCutoff<0.)baseColor.a=1.;else if(baseColor.a<uAlphaCutoff)discard;
+ vec4 baseColor=uColor*vVertexColor;if(uUseTexture){vec4 texel=texture2D(uBaseColorTexture,vTexcoord);baseColor*=vec4(pow(texel.rgb,vec3(2.2)),texel.a);}if(uAlphaCutoff<0.)baseColor.a=1.;else if(baseColor.a<uAlphaCutoff)discard;
  vec3 normal=normalize(vNormal);
  if(!gl_FrontFacing)normal=-normal;
  vec3 skyLight=vec3(.60,.73,.91),groundLight=vec3(.24,.27,.32);
@@ -151,7 +152,7 @@ const program3d=gl=>{
  vec3 reflected=reflect(-normalize(uSunDir),normal);
  float gloss=pow(max(0.,dot(reflected,viewDir)),mix(48.,5.,clamp(uRoughness,0.04,1.)));
  vec3 specular=mix(vec3(.18),baseColor.rgb,clamp(uMetallic,0.,1.))*gloss*uSunIntensity*(1.-uRoughness*.75);
- vec3 lit=baseColor.rgb*clamp(irradiance,0.,3.0)+specular;
+ vec3 lit=(uUnlit?baseColor.rgb:baseColor.rgb*clamp(irradiance,0.,3.0)+specular)+uEmissive;
  float fog=1.-exp(-pow(max(0.,length(uEye-vWorld)-22.)*uFogDensity,2.));
  vec3 fogged=mix(lit,vec3(.24,.34,.43),clamp(fog,0.,.87));
  vec3 exposed=fogged*uExposure;
@@ -248,6 +249,7 @@ export function init3d(canvas,host,buttons){
  const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
  const viewModelUniform=loc('uViewModel'),viewBasisUniform=loc('uViewBasis');
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal'),aTexcoord=gl.getAttribLocation(program,'aTexcoord');
+ const aVertexColor=gl.getAttribLocation(program,'aVertexColor'),unlitUniform=loc('uUnlit'),emissiveUniform=loc('uEmissive');
  const textureUniform=loc('uBaseColorTexture'),useTexture=loc('uUseTexture'),alphaCutoff=loc('uAlphaCutoff');
  const makeBuffer=(data,dynamic=false)=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,dynamic?gl.DYNAMIC_DRAW:gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
  const cubes=makeBuffer(cubeVerts()),sphere=makeBuffer(curvedVerts('sphere')),cylinder=makeBuffer(curvedVerts('cylinder')),cone=makeBuffer(curvedVerts('cone')),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
@@ -270,7 +272,8 @@ export function init3d(canvas,host,buttons){
      const uvBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,uvBuffer);gl.bufferData(gl.ARRAY_BUFFER,part.texcoords,gl.STATIC_DRAW);
      Object.assign(mesh,{texture,uvBuffer});
     }
-    Object.assign(mesh,{alphaMode:part.alphaMode,alphaCutoff:part.alphaCutoff});
+    if(part.vertexColors){mesh.colorBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,mesh.colorBuffer);gl.bufferData(gl.ARRAY_BUFFER,part.vertexColors,gl.STATIC_DRAW);}
+    Object.assign(mesh,{alphaMode:part.alphaMode,alphaCutoff:part.alphaCutoff,unlit:part.unlit,emissive:part.emissive});
     return {mesh,color:part.color,roughness:part.roughness,metallic:part.metallic};
    }));
    realGlbBuffers.set(id,{status:'ready',parts,geometry:data,normalizedSize:data.normalizedSize,triangles:data.triangleCount});
@@ -287,6 +290,8 @@ export function init3d(canvas,host,buttons){
  // glTF models may include material surfaces wound in either orientation. Keep them visible in the editor.
  gl.disable(gl.CULL_FACE);
  const bind=mesh=>{gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aNormal);
+  gl.uniform1i(unlitUniform,mesh.unlit?1:0);gl.uniform3fv(emissiveUniform,mesh.emissive||[0,0,0]);
+  if(mesh.colorBuffer){gl.bindBuffer(gl.ARRAY_BUFFER,mesh.colorBuffer);gl.vertexAttribPointer(aVertexColor,4,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(aVertexColor)}else{gl.disableVertexAttribArray(aVertexColor);gl.vertexAttrib4f(aVertexColor,1,1,1,1)}
   gl.uniform1i(useTexture,mesh.texture?1:0);gl.uniform1f(alphaCutoff,mesh.alphaMode==='OPAQUE'?-1:mesh.alphaMode==='MASK'?mesh.alphaCutoff:.01);
   if(mesh.texture){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,mesh.texture);gl.uniform1i(textureUniform,0);gl.bindBuffer(gl.ARRAY_BUFFER,mesh.uvBuffer);gl.vertexAttribPointer(aTexcoord,2,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(aTexcoord)}
   else{gl.disableVertexAttribArray(aTexcoord);gl.vertexAttrib2f(aTexcoord,0,0)}

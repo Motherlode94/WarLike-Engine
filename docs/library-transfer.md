@@ -17,6 +17,6 @@ Les personnalisations d'un prefab déjà importé ne sont pas écrasées. Une va
 
 - Le transfert manuel par fichier est opérationnel au niveau **code et tests**. Les tests visuels réels dans un navigateur et l'utilisation des modèles dans Play/Export doivent encore être confirmés.
 - L'installation ne garantit pas de composants Animator, Collider de mesh, Rigidbody ou scripts complètement compatibles ; seule une collision simple est configurée automatiquement.
-- Les fichiers GLB importés sont restaurés dans l'éditeur à partir d'IndexedDB. **Le pipeline d'export Web ne garantit pas encore l'inclusion de ces binaires externes.** Ne pas publier un jeu utilisant ces assets avant d'avoir validé le ZIP exporté.
+- Les fichiers GLB importés sont restaurés dans l'éditeur à partir d'IndexedDB. Les binaires utilisés sont inclus dans le ZIP Web, sous `assets/imported/`, avec leurs identifiants `library-…` conservés. Voir [Imports et export](imported-assets-and-export.md). Le test `npm run test:export` vérifie également ce parcours dans Chromium.
 - Les sprites 2D, textures externes, dossiers de dépendances et formats glTF multi-fichiers ne sont pas encore acceptés par cet importateur v1.
 - Ce transfert **n'utilise pas de cloud ou compte utilisateur** : il fonctionne uniquement sur le navigateur d'import, via un fichier téléchargé explicitement.

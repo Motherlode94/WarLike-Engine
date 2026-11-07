@@ -1,3 +1,6 @@
+import {referencedImportedModels,importedModelId} from './portable-models.js';
+import {packageGlb} from '../assets/glb-package.js';
+import {parseGlb} from '../assets/real-models-3d.js';
 import {animationEditorPreview} from './animation-clips.js';
 import {inspectRuntimeCompatibility} from './runtime-capabilities.js';
 import {canonicalScene} from './scene-contract.js';
@@ -32,7 +35,7 @@ export function prepareGameDefinition({entities,camera,mode='2d',project=gamePro
  for(const s of definition.scenes)for(const o of s.entities)if(mode==='3d'&&(o.model3dId||o.assetId)){
   const id=o.model3dId||o.assetId,asset=get3dAsset(id);
   if(!asset)issues.push({severity:'error',message:'Modèle introuvable : '+id});
-  else if(asset.url?.startsWith('blob:')||asset.file)issues.push({severity:'error',message:'Le modèle local '+asset.name+' doit avoir une ressource durable avant l’export Web.'});
+  else if(asset.url?.startsWith('blob:')&&!asset.file)issues.push({severity:'error',message:'Fichier du modèle local indisponible : '+asset.name});
  }
  const errors=issues.filter(i=>i.severity==='error');if(errors.length)throw Error(errors.slice(0,5).map(i=>i.message).join('\n'));
  return {format:'warlike.game.v1',mode,project:definition,sceneContracts:definition.scenes.map(s=>canonicalScene(s.entities,{id:s.id,name:s.name})),runtime:{version:1,backend:'web',nativeScripts:false,warScript:1},issues};
@@ -76,6 +79,14 @@ export function gameBuildModelCatalog(name,source,data){
 }
 export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}={}){
  const data=prepareGameDefinition(input),base=new URL('../../',import.meta.url);
+ const importedEntries=[];data.importedModels=[];
+ for(const asset of referencedImportedModels(data.project)){
+  if(!asset.file)throw Error('Fichier du modèle importé indisponible : '+asset.name);
+  if(!importedModelId(asset.id))throw Error('Identifiant du modèle importé invalide.');
+  const buffer=await packageGlb(await asset.file.arrayBuffer());parseGlb(buffer);
+  const name='assets/imported/'+asset.id+'.glb';importedEntries.push({name,data:buffer});
+  data.importedModels.push({id:asset.id,name:asset.name,category:asset.category,license:asset.license,sourceUrl:asset.sourceUrl||'',url:'./'+name});
+ }
  const get=async path=>{const response=await fetcher(new URL(path,base));if(!response.ok)throw Error('Ressource indisponible : '+path);return response};
  const manifest=await (await get('runtime-files.json')).json();
  if(!Array.isArray(manifest.files)||manifest.files.length>25000||manifest.files.some(p=>typeof p!=='string'||!/^[-A-Za-z0-9._/]+$/.test(p)||p.startsWith('/')||p.includes('..')))throw Error('Manifest du runtime invalide.');
@@ -83,6 +94,7 @@ export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}=
  const entries=new Array(files.length);let cursor=0,completed=0;
  const worker=async()=>{while(cursor<files.length){const i=cursor++,name=files[i];const response=await get(name);entries[i]={name,data:name==='index.html'?gameBuildHtml(await response.text(),data):['js/assets/free-game-assets.js','js/assets/quaternius-game-assets.js'].includes(name)?gameBuildModelCatalog(name,await response.text(),data):await response.arrayBuffer()};onProgress(++completed,files.length)}};
  await Promise.all(Array.from({length:6},worker));
- entries.push({name:'game.json',data:JSON.stringify(data,null,2)},{name:'LIRE-MOI.txt',data:'WARLIKE GAME — '+data.project.title+'\n\nDécompresse cette archive et sers ce dossier via un serveur HTTP statique. Par exemple : python -m http.server 8000, puis http://localhost:8000. Le menu de démarrage est dans index.html.\n\nLe runtime JavaScript et les modèles intégrés utilisés sont inclus. Le module C++ / WASM est livré lorsqu’il est présent dans le moteur. Les modèles GLB distants demandent une connexion Internet et conservent leurs licences propres. Les ressources GLB locales sans lien durable bloquent l’export. Les scripts C#/.NET ne sont pas exécutés par ce build Web.\n\nDéplacements : ZQSD/WASD. E : interaction. Échap : pause. Les sauvegardes restent sur le navigateur.\n\nCOOP LOCALE (2 à 4 joueurs)\nPython 3.10+ est nécessaire sur le PC hôte. Lance start-warlike-multi.cmd sous Windows, ou python3 python/warlike.py multiplayer. Garde le terminal ouvert. Ouvre l’adresse locale affichée, puis Coop locale > Héberger avec la clé du terminal. Les invités ouvrent l’adresse réseau affichée sur leur PC et rejoignent avec le code du salon. L’hôte simule le jeu dans son navigateur et gère pause, sauvegardes et escouades. Le serveur Python relaie les commandes et les états, sans compte ni service extérieur. 256 objets maximum ; les ressources doivent être incluses dans le même export.\n'});
+ entries.push(...importedEntries);
+ entries.push({name:'game.json',data:JSON.stringify(data,null,2)},{name:'LIRE-MOI.txt',data:'WARLIKE GAME — '+data.project.title+'\n\nDécompresse cette archive et sers ce dossier via un serveur HTTP statique. Par exemple : python -m http.server 8000, puis http://localhost:8000. Le menu de démarrage est dans index.html.\n\nLe runtime JavaScript et les modèles intégrés utilisés sont inclus. Le module C++ / WASM est livré lorsqu’il est présent dans le moteur. Les modèles GLB distants demandent une connexion Internet et conservent leurs licences propres. Les modèles importés utilisés et leurs textures intégrées sont inclus dans assets/imported. Les scripts C#/.NET ne sont pas exécutés par ce build Web.\n\nDéplacements : ZQSD/WASD. E : interaction. Échap : pause. Les sauvegardes restent sur le navigateur.\n\nCOOP LOCALE (2 à 4 joueurs)\nPython 3.10+ est nécessaire sur le PC hôte. Lance start-warlike-multi.cmd sous Windows, ou python3 python/warlike.py multiplayer. Garde le terminal ouvert. Ouvre l’adresse locale affichée, puis Coop locale > Héberger avec la clé du terminal. Les invités ouvrent l’adresse réseau affichée sur leur PC et rejoignent avec le code du salon. L’hôte simule le jeu dans son navigateur et gère pause, sauvegardes et escouades. Le serveur Python relaie les commandes et les états, sans compte ni service extérieur. 256 objets maximum ; les ressources doivent être incluses dans le même export.\n'});
  return {blob:createZip(entries),filename:(data.project.title.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9-]+/g,'-').replace(/^-|-$/g,'')||'warlike-game')+'.zip',files:entries.length};
 }

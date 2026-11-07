@@ -26,6 +26,7 @@ import {gameIsRunning,gameSession} from './game-session.js';
 import {updateHorrorAudio} from './horror-audio.js';
 import {tickEngineDiagnostics} from './engine-diagnostics.js';
 import {updateDriving3d,currentVehicle3d,isDriveable3d,driving3d,resetDriving3d} from './vehicle-3d.js';
+import {vehicleRigPose} from './vehicle-articulation.js';
 import {updateGenreHud} from '../ui/genre-hud.js';
 import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
@@ -580,6 +581,10 @@ export function init3d(canvas,host,buttons){
       }
      }
      if(rig&&(hasSkeletalPreview(o)||skeletalFrame(o)?.clip&&(!o.animatorGraph||o.animatorGraph.enabled===false))){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,sampleEntityRigPose(o,cached.geometry,{},state.entities),{buffers:track.buffers})}
+     if(rig&&o.vehicleArticulation){
+      const pose=vehicleRigPose(rig,o);
+      if(pose){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,pose,{buffers:track.buffers})}
+     }
      for(const [partIndex,part] of cached.parts.entries()){
       if(posed){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,posed[partIndex])}
       else if(rig){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,cached.geometry.parts[partIndex].vertices)}

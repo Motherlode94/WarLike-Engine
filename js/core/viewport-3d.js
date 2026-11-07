@@ -6,7 +6,7 @@ import {updateCompanyMarkers} from '../ui/company-ui.js';
 import {resetBattlefield,tickBattlefield,battlefieldMatch,consumeBattlefieldShot,isBattlefieldSoldier} from './battlefield-runtime.js';
 import {updateBattlefieldHud} from '../ui/battlefield-hud.js';
 import {rotationQuaternion3d} from './collider-3d.js';
-import {affineCorrection3d,normalMatrix3d} from './scene-graph-v2.js';
+import {affineCorrection3d,normalMatrix3d,updateEditorEntityHierarchy3d,updateAffineEditorPose3d} from './scene-graph-v2.js';
 import {gameProject} from './game-project.js';
 import {survivalPlacement} from './survival-building.js';
 import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';
@@ -453,7 +453,7 @@ export function init3d(canvas,host,buttons){
    else {if(!state.selected.includes(selected.id))state.selected=[selected.id];notify()}
   }else if(!nav&&e.button===0&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey){state.selected=[];notify()}
   const point=groundHit3d(p.x,p.y,cam,p.w,p.h);
-  view3d.drag={button:e.button,nav:nav||(!selected?'marquee':'move'),x:p.x,y:p.y,target:[...view3d.target],eye:cam.eye.slice(),radius:view3d.radius,yaw:view3d.yaw,pitch:view3d.pitch,start:point,baseSelection,add:e.shiftKey||e.ctrlKey||e.metaKey,selected:selected&&e.button===0?state.entities.filter(o=>state.selected.includes(o.id)).map(o=>({id:o.id,x:o.x,y:o.y,z:o.z||0})):null,moved:false,pointer:e.pointerId};
+  view3d.drag={button:e.button,nav:nav||(!selected?'marquee':'move'),x:p.x,y:p.y,target:[...view3d.target],eye:cam.eye.slice(),radius:view3d.radius,yaw:view3d.yaw,pitch:view3d.pitch,start:point,baseSelection,add:e.shiftKey||e.ctrlKey||e.metaKey,selected:selected&&e.button===0?state.entities.filter(o=>state.selected.includes(o.id)).map(o=>({id:o.id,x:o.x,y:o.y,z:o.z||0,worldMatrix3d:Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,matrixReference3d:Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null})):null,moved:false,pointer:e.pointerId};
   canvas.setPointerCapture(e.pointerId);
  });
  document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&isFps()&&gameIsRunning()&&!gameplayInputBlocked()){const sensitivity=cameraRigFor(playableActor(state.entities)).sensitivity;view3d.yaw-=e.movementX*sensitivity;view3d.pitch=clamp(view3d.pitch+e.movementY*sensitivity,-1.25,1.25)}});
@@ -489,7 +489,7 @@ export function init3d(canvas,host,buttons){
    state.selected=drag.add?[...new Set([...drag.baseSelection,...ids])]:ids;
   }else if(drag.button===0&&drag.selected&&drag.start){
    const hit=groundHit3d(p.x,p.y,cam,p.w,p.h);
-   if(hit){for(const start of drag.selected){const obj=state.entities.find(o=>o.id===start.id);if(obj){obj.x=Math.round(start.x+(hit[0]-drag.start[0])*64);obj.y=Math.round(start.y+(hit[2]-drag.start[2])*64)}}}
+   if(hit){for(const start of drag.selected){const obj=state.entities.find(o=>o.id===start.id);if(obj){obj.x=Math.round(start.x+(hit[0]-drag.start[0])*64);obj.y=Math.round(start.y+(hit[2]-drag.start[2])*64);if(start.worldMatrix3d&&start.matrixReference3d)updateAffineEditorPose3d(obj,start.worldMatrix3d,start.matrixReference3d)}}updateEditorEntityHierarchy3d(state.entities,{worldOverrideIds:new Set(drag.selected.map(o=>o.id))})}
   }
  });
  const stop=e=>{const d=view3d.drag;if(!d||d.pointer!==e.pointerId)return;
@@ -557,6 +557,8 @@ export function init3d(canvas,host,buttons){
   gl.uniform1fv(u.lightSpot,new Float32Array(lamps.map(l=>l.spot?1:0).concat(Array(8-lamps.length).fill(0))));
   gl.disable(gl.CULL_FACE);
   if(!state.playing&&!globalThis.__WARLIKE_BUILD__){bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count)}
+  // Update attached child world matrices after gizmos, scripts and physics.
+  try{updateEditorEntityHierarchy3d(state.entities,{physicsOwnsDynamics:state.playing})}catch(error){if(!view3d._hierarchyWarned){console.warn('[WarLike] Hiérarchie 3D',error);view3d._hierarchyWarned=true}}
   const objects=[...state.entities].filter(o=>(state.playing||!o.editorHidden)&&(!state.playing||!((o.audioEnabled||o.lightType)&&!o.assetId)&&o.enabled!==false&&o.visible!==false&&o.sequenceEnabled!==false&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
   if(state.playing&&survivalPlacement.active&&survivalPlacement.entity)objects.push(survivalPlacement.entity);
   // Depth buffering resolves overlapping faces, including the composite mesh parts.

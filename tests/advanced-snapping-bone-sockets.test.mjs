@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {snapSurfaceFeature3d,boneSocketTransform3d,composeTransformMatrix} from '../js/core/scene-graph-v2.js';
+import {snapSurfaceFeature3d,boneSocketTransform3d,composeTransformMatrix,validateBoneSocketTarget3d} from '../js/core/scene-graph-v2.js';
 import {quaternionEuler3d} from '../js/core/collider-3d.js';
 const near=(a,b,epsilon=1e-5)=>assert.ok(Math.abs(a-b)<epsilon, `${a} != ${b}`);
 const quat={x:0,y:0,z:0,w:1};
@@ -39,4 +39,16 @@ test('socket follows parent model quaternion and orthogonalizes affine shear',()
 test('socket reports singular bone transformations instead of producing NaN',()=>{
  const bad=composeTransformMatrix([0,0,0],[0,0,0],[0,1,1]);
  assert.throws(()=>boneSocketTransform3d({},bad,geometry,box,quat),/singulière/);
+});
+
+test('socket graph rejects cycles through sockets and GameObject parent links',()=>{
+ const entities=[
+  {id:1,parentId:null,socket3d:{enabled:true,targetId:2}},
+  {id:2,parentId:null},
+  {id:3,parentId:1}
+ ];
+ assert.throws(()=>validateBoneSocketTarget3d(entities,2,1),/cyclique/);
+ assert.throws(()=>validateBoneSocketTarget3d(entities,1,3),/cyclique/);
+ assert.throws(()=>validateBoneSocketTarget3d(entities,1,99),/introuvable/);
+ assert.equal(validateBoneSocketTarget3d(entities,3,2),true);
 });

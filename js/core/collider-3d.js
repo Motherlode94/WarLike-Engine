@@ -20,3 +20,48 @@ export function quaternionEuler3d(q){
  return {rotationX3d:Math.asin(-Math.max(-1,Math.min(1,m23)))*180/Math.PI,rotation:-Math.atan2(m13,m33)*180/Math.PI,rotationZ3d:Math.atan2(m21,m22)*180/Math.PI};
 }
 export const colliderPosition3d=(o,g=colliderGeometry3d(o))=>({x:n(o.x)/64+n(o.w,32)/128,y:n(o.elevation3d)+n(o.h,32)/128,z:n(o.y)/64+n(o.depth3d,o.h||32)/128});
+
+/**
+ * Exact convex hull for an affine-transformed BoxCollider.
+ * Eight corners of an affine box still define a convex parallelepiped.
+ * Output vertices are in rigid-body-local coordinates, in metres; Rapier
+ * handles the body's rotation/translation independently.
+ * This is exact for BoxCollider volumes, NOT for arbitrary concave GLB meshes.
+ */
+export function affineBoxHull3d(correction,geometry,bodyPosition,bodyRotation){
+ if(!Array.isArray(correction)||correction.length!==16||!correction.every(Number.isFinite))throw Error('Matrice affine de collider invalide.');
+ const g=geometry,p=bodyPosition,q=bodyRotation;
+ const dims=[g.w,g.h,g.d];
+ if(dims.some(v=>!Number.isFinite(v)||v<=1e-7))throw Error('BoxCollider dégénéré.');
+ if(![p.x,p.y,p.z,q.x,q.y,q.z,q.w].every(Number.isFinite))throw Error('Pose du Rigidbody invalide.');
+ const norm=Math.hypot(q.x,q.y,q.z,q.w);
+ if(norm<1e-9)throw Error('Rotation du Rigidbody invalide.');
+ const rot={x:q.x/norm,y:q.y/norm,z:q.z/norm,w:q.w/norm};
+ const rotate=(v,r)=>{
+  const ux=r.x,uy=r.y,uz=r.z,w=r.w;
+  const tx=2*(uy*v.z-uz*v.y),ty=2*(uz*v.x-ux*v.z),tz=2*(ux*v.y-uy*v.x);
+  return {x:v.x+w*tx+uy*tz-uz*ty,y:v.y+w*ty+uz*tx-ux*tz,z:v.z+w*tz+ux*ty-uy*tx};
+ };
+ const offset=g.offset||{x:0,y:0,z:0};
+ const points=new Float32Array(24);
+ let index=0;
+ for(const sx of [-1,1])for(const sy of [-1,1])for(const sz of [-1,1]){
+  const local={x:sx*g.w/2+offset.x,y:sy*g.h/2+offset.y,z:sz*g.d/2+offset.z};
+  const relative=rotate(local,rot);
+  const world={x:p.x+relative.x,y:p.y+relative.y,z:p.z+relative.z};
+  const transformed={
+   x:correction[0]*world.x+correction[4]*world.y+correction[8]*world.z+correction[12],
+   y:correction[1]*world.x+correction[5]*world.y+correction[9]*world.z+correction[13],
+   z:correction[2]*world.x+correction[6]*world.y+correction[10]*world.z+correction[14]
+  };
+  const inverse=rotate({x:transformed.x-p.x,y:transformed.y-p.y,z:transformed.z-p.z},{x:-rot.x,y:-rot.y,z:-rot.z,w:rot.w});
+  points[index++]=inverse.x;points[index++]=inverse.y;points[index++]=inverse.z;
+ }
+ const axis=(c)=>[points[c]-points[0],points[c+1]-points[1],points[c+2]-points[2]];
+ const a=axis(12),b=axis(6),c=axis(3);
+ const cross=[b[1]*c[2]-b[2]*c[1],b[2]*c[0]-b[0]*c[2],b[0]*c[1]-b[1]*c[0]];
+ const volume=Math.abs(a[0]*cross[0]+a[1]*cross[1]+a[2]*cross[2]);
+ if(!Number.isFinite(volume)||volume<1e-8)throw Error('Collider affine non inversible ou de volume nul.');
+ return points;
+}
+export const affineHullSignature3d=points=>Array.from(points,n=>Math.round(n*1e5)).join(',');

@@ -2,7 +2,7 @@ import {copyEntitiesPayload,readEntitiesPayload,pasteEntitiesPayload,isTypingTar
 import {state,notify} from '../core/state.js';
 import {workspace} from '../core/workspaces.js';
 import {record} from '../core/history.js';
-import {descendants,deleteEntitySubtrees} from '../core/editor-hierarchy-commands.js';
+import {descendants,deleteEntitySubtrees} from '../core/scene-graph-v2.js';
 let localCopy='',pasteSerial=0,timer;
 const announce=message=>{let toast=document.querySelector('.studio-toast');if(!toast){toast=document.createElement('div');toast.className='studio-toast';toast.setAttribute('role','status');document.body.append(toast)}toast.textContent=message;toast.hidden=false;clearTimeout(timer);timer=setTimeout(()=>toast.hidden=true,2100)};
 const sceneScope=event=>!state.playing&&!document.body.classList.contains('hub-open')&&!document.querySelector('#blueprintDialog:not([hidden])')&&!isTypingTarget(event?.target)&&!isTypingTarget(document.activeElement);

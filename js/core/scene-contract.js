@@ -1,4 +1,4 @@
-import {validateScene,reparent,worldTransformMatrices,decomposeTransformMatrix} from './scene-graph-v2.js';
+import {validateScene,reparent,worldTransformMatrices,decomposeTransformMatrix,legacyReferenceMatrix3d} from './scene-graph-v2.js';
 
 export const SCENE_SCHEMA='warlike.scene.v2';
 export const UNITS_PER_METRE=64;
@@ -16,6 +16,9 @@ export function canonicalScene(entities,{id='main',name='Scène'}={}){
  const objects=entities.map(e=>{
   const components=[{type:'Transform',position:[finite(e.x)/64,finite(e.elevation3d),finite(e.y)/64],rotation:[finite(e.rotationX3d),finite(e.rotation),finite(e.rotationZ3d)],scale:[1,1,1]},
    {type:'LegacyEntity',data:clone(e)}];
+  if(Array.isArray(e.worldMatrix3d)&&e.worldMatrix3d.length===16&&e.worldMatrix3d.every(Number.isFinite)){
+   components[0].matrix=[...e.worldMatrix3d];components[0].matrixMode='affine';
+  }
   for(const key of webKeys)if(e[key]&&typeof e[key]==='object')components.push({type:key,data:clone(e[key])});
   for(const [index,c] of (e.csharpComponents||[]).entries())components.push({type:'NativeBehaviour',index,data:clone(c)});
   return {id:keys.get(e.id),sourceEntityId:e.id,name:e.name||'GameObject',parentId:keys.get(e.parentId)??null,active:e.enabled!==false,components};
@@ -44,9 +47,14 @@ export function runtimeEntities(scene){
   if(!legacy)e.sceneObjectId=o.id;
   if(o.parentId!==null)e.parentId=ids.get(o.parentId);else delete e.parentId;
   const world=worlds.get(o.id),pose=decomposeTransformMatrix(world);
-  if(!pose)throw Error('La transformation mondiale de '+o.name+' contient du shear non représentable par le renderer legacy. Conserve le document de scène v2.');
-  Object.assign(e,{x:pose.position[0]*64,y:pose.position[2]*64,elevation3d:pose.position[1],rotation:pose.rotation[1],rotationX3d:pose.rotation[0],rotationZ3d:pose.rotation[2],
-   w:Math.max(.001,finite(e.w,64)*Math.abs(pose.scale[0])),h:Math.max(.001,finite(e.h,64)*Math.abs(pose.scale[1])),depth3d:Math.max(.001,finite(e.depth3d,64)*Math.abs(pose.scale[2]))});
+  // The legacy renderer now consumes exact affine correction matrices where TRS cannot represent shear.
+  const position=pose?.position||[world[12],world[13],world[14]],rotation=pose?.rotation||t.rotation,scale=pose?.scale||[1,1,1];
+  Object.assign(e,{x:position[0]*64,y:position[2]*64,elevation3d:position[1],rotation:rotation[1],rotationX3d:rotation[0],rotationZ3d:rotation[2],
+   w:Math.max(.001,finite(e.w,64)*Math.abs(scale[0])),h:Math.max(.001,finite(e.h,64)*Math.abs(scale[1])),depth3d:Math.max(.001,finite(e.depth3d,64)*Math.abs(scale[2]))});
+  if(!pose){
+   e.worldMatrix3d=[...world];
+   e.matrixReference3d=legacyReferenceMatrix3d(e);
+  }else{delete e.worldMatrix3d;delete e.matrixReference3d;}
   if(mesh)Object.assign(e,{assetId:'primitive-'+({box:'cube',sphere:'sphere',cylinder:'cylinder'}[mesh.shape]||'cube'),meshShape:mesh.shape==='box'?'cube':mesh.shape,color:mesh.color,visible:mesh.visible!==false,materialRoughness:mesh.roughness,materialMetallic:mesh.metalness});
   const box=o.components.find(c=>c.type==='BoxCollider');if(box)e.collider3d={enabled:true,shape:'box',size:clone(box.size),isTrigger:box.isTrigger===true};
   const body=o.components.find(c=>c.type==='Rigidbody');if(body)e.rigidbody3d={enabled:true,bodyType:body.bodyType,mass:body.mass,gravityScale:body.gravityScale};

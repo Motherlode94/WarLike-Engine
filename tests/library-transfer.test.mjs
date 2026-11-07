@@ -38,14 +38,14 @@ test('registered Library model has a persistent deterministic lookup ID',()=>{
  importedModels3d.delete(id);
 });
 test('import page exposes real user-file transfer without cloud claims',()=>{
- const html=readFileSync(new URL('../asset-store/library-import.html',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../library-import.html',import.meta.url),'utf8');
  assert.ok(html.includes('parseLibraryTransfer'));
  assert.ok(html.includes('storeLibraryModel'));
  assert.ok(html.includes('installLibraryPrefab'));
 });
 
 test('direct Library handshake has strict origins, channel and same verified installer',()=>{
- const html=readFileSync(new URL('../asset-store/library-import.html',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../library-import.html',import.meta.url),'utf8');
  assert.ok(html.includes("const LIBRARY_ORIGIN='https://warlike-library.pages.dev'"));
  assert.ok(html.includes("event.origin!==LIBRARY_ORIGIN"));
  assert.ok(html.includes("event.source!==window.opener"));
@@ -54,4 +54,12 @@ test('direct Library handshake has strict origins, channel and same verified ins
  assert.ok(html.includes("warlike-engine-installed-v1"));
  assert.ok(html.includes('await storeLibraryModel(record)'));
  assert.ok(html.includes('installLibraryPrefab(record,localStorage,{replace})'));
+});
+
+test('legacy Store pages redirect to the independent provider while Library import stays in Engine',()=>{
+ const store=readFileSync(new URL('../asset-store/index.html',import.meta.url),'utf8');
+ assert.ok(store.includes('https://warlike-asset-stores.pages.dev/'));
+ assert.ok(store.includes('location.search+location.hash'));
+ const receiver=readFileSync(new URL('../asset-store/library-import.html',import.meta.url),'utf8');
+ assert.ok(receiver.includes('/library-import.html'));
 });

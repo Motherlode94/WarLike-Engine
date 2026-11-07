@@ -1,4 +1,4 @@
-import {validateScene} from './scene-graph-v2.js';
+import {validateScene,reparent,worldTransformMatrices,decomposeTransformMatrix} from './scene-graph-v2.js';
 
 export const SCENE_SCHEMA='warlike.scene.v2';
 export const UNITS_PER_METRE=64;
@@ -20,11 +20,19 @@ export function canonicalScene(entities,{id='main',name='Scène'}={}){
   for(const [index,c] of (e.csharpComponents||[]).entries())components.push({type:'NativeBehaviour',index,data:clone(c)});
   return {id:keys.get(e.id),sourceEntityId:e.id,name:e.name||'GameObject',parentId:keys.get(e.parentId)??null,active:e.enabled!==false,components};
  });
- const scene={schema:SCENE_SCHEMA,id,name,objects};const errors=validateScene(scene);if(errors.length)throw Error(errors.join('; '));return scene;
+ const scene={schema:SCENE_SCHEMA,id,name,objects};const errors=validateScene(scene);if(errors.length)throw Error(errors.join('; '));
+ // Legacy entity coordinates are WORLD space. Convert each authored parent
+ // link to LOCAL space without visually moving any object. Exact affine
+ // matrices retain shear induced by rotated/non-uniformly scaled parents.
+ const parents=objects.filter(o=>o.parentId!==null).map(o=>[o.id,o.parentId]);
+ for(const o of objects)o.parentId=null;
+ for(const [child,parent] of parents)reparent(scene,child,parent);
+ return scene;
 }
 export function runtimeEntities(scene){
  if(scene?.schema!==SCENE_SCHEMA){if(Array.isArray(scene?.entities))return clone(scene.entities);throw Error('Schéma de scène inconnu.')}
  const errors=validateScene(scene);if(errors.length)throw Error(errors.join('; '));
+ const worlds=worldTransformMatrices(scene);
  const used=new Set(),ids=new Map();let next=1;
  for(const o of scene.objects){const legacy=o.components.find(c=>c.type==='LegacyEntity')?.data,preferred=o.sourceEntityId??legacy?.id;
   if(preferred!==undefined){if(!validId(preferred)||used.has(preferred))throw Error('ID runtime invalide ou dupliqué.');used.add(preferred);ids.set(o.id,preferred)}}
@@ -35,8 +43,10 @@ export function runtimeEntities(scene){
   e.id=ids.get(o.id);e.name=o.name;e.enabled=o.active!==false;
   if(!legacy)e.sceneObjectId=o.id;
   if(o.parentId!==null)e.parentId=ids.get(o.parentId);else delete e.parentId;
-  Object.assign(e,{x:t.position[0]*64,y:t.position[2]*64,elevation3d:t.position[1],rotation:t.rotation[1],rotationX3d:t.rotation[0],rotationZ3d:t.rotation[2],
-   w:Math.max(.001,finite(e.w,64)*Math.abs(t.scale[0])),h:Math.max(.001,finite(e.h,64)*Math.abs(t.scale[1])),depth3d:Math.max(.001,finite(e.depth3d,64)*Math.abs(t.scale[2]))});
+  const world=worlds.get(o.id),pose=decomposeTransformMatrix(world);
+  if(!pose)throw Error('La transformation mondiale de '+o.name+' contient du shear non représentable par le renderer legacy. Conserve le document de scène v2.');
+  Object.assign(e,{x:pose.position[0]*64,y:pose.position[2]*64,elevation3d:pose.position[1],rotation:pose.rotation[1],rotationX3d:pose.rotation[0],rotationZ3d:pose.rotation[2],
+   w:Math.max(.001,finite(e.w,64)*Math.abs(pose.scale[0])),h:Math.max(.001,finite(e.h,64)*Math.abs(pose.scale[1])),depth3d:Math.max(.001,finite(e.depth3d,64)*Math.abs(pose.scale[2]))});
   if(mesh)Object.assign(e,{assetId:'primitive-'+({box:'cube',sphere:'sphere',cylinder:'cylinder'}[mesh.shape]||'cube'),meshShape:mesh.shape==='box'?'cube':mesh.shape,color:mesh.color,visible:mesh.visible!==false,materialRoughness:mesh.roughness,materialMetallic:mesh.metalness});
   const box=o.components.find(c=>c.type==='BoxCollider');if(box)e.collider3d={enabled:true,shape:'box',size:clone(box.size),isTrigger:box.isTrigger===true};
   const body=o.components.find(c=>c.type==='Rigidbody');if(body)e.rigidbody3d={enabled:true,bodyType:body.bodyType,mass:body.mass,gravityScale:body.gravityScale};

@@ -1,5 +1,5 @@
 import {solidBody3d,activeBody3d} from './collision-3d.js';
-import {updateAffineEditorPose3d,affineCorrection3d} from './scene-graph-v2.js';
+import {updateAffineEditorPose3d,affineCorrection3d,legacyReferenceMatrix3d,hasAffinePose} from './scene-graph-v2.js';
 import {characterBody3d,colliderGeometry3d,colliderPosition3d,rotationQuaternion3d,quaternionEuler3d,affineBoxHull3d,affineHullSignature3d} from './collider-3d.js';
 let activeScene=null;
 export const activeRapierScene3d=()=>activeScene;
@@ -19,6 +19,13 @@ const velocity=o=>({x:n(o.rigidbody3d?.vx),y:n(o.rigidbody3d?.vy),z:n(o.rigidbod
 const changed=(a,b)=>Object.keys(a).some(k=>Math.abs(a[k]-n(b?.[k]))>1e-5);
 const skippedColliderSignature=o=>bodyConfig(o)+'|'+JSON.stringify(affineCorrection3d(o)?.map(v=>Math.round(v*1e5)/1e5)||null);
 const affineColliderData=(o,g,pos,rotation)=>{
+ // Gameplay scripts may teleport/rotate actors before the viewport redraw.
+ // Keep the visual reference and collider transformation in sync immediately.
+ if(hasAffinePose(o)){
+  const reference=legacyReferenceMatrix3d(o);
+  if(reference.some((v,i)=>Math.abs(v-o.matrixReference3d[i])>1e-8))
+   updateAffineEditorPose3d(o,[...o.worldMatrix3d],[...o.matrixReference3d]);
+ }
  const correction=affineCorrection3d(o);
  if(!correction)return null;
  if(g.shape!=='box')throw Error('Collider sous shear : seuls les BoxColliders disposent pour le moment d’une forme exacte. Convertis ce collider en boîte ou crée un compound adapté.');

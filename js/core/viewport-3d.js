@@ -558,7 +558,7 @@ export function init3d(canvas,host,buttons){
   gl.disable(gl.CULL_FACE);
   if(!state.playing&&!globalThis.__WARLIKE_BUILD__){bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count)}
   // Update attached child world matrices after gizmos, scripts and physics.
-  try{updateEditorEntityHierarchy3d(state.entities,{physicsOwnsDynamics:state.playing})}catch(error){if(!view3d._hierarchyWarned){console.warn('[WarLike] Hiérarchie 3D',error);view3d._hierarchyWarned=true}}
+  if(state.entities.some(o=>o.parentId!==null&&o.parentId!==undefined||Array.isArray(o.worldMatrix3d)))try{updateEditorEntityHierarchy3d(state.entities,{physicsOwnsDynamics:state.playing})}catch(error){if(!view3d._hierarchyWarned){console.warn('[WarLike] Hiérarchie 3D',error);view3d._hierarchyWarned=true}}
   const objects=[...state.entities].filter(o=>(state.playing||!o.editorHidden)&&(!state.playing||!((o.audioEnabled||o.lightType)&&!o.assetId)&&o.enabled!==false&&o.visible!==false&&o.sequenceEnabled!==false&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
   if(state.playing&&survivalPlacement.active&&survivalPlacement.entity)objects.push(survivalPlacement.entity);
   // Depth buffering resolves overlapping faces, including the composite mesh parts.

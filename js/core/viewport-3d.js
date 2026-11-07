@@ -30,7 +30,7 @@ import {updateGenreHud} from '../ui/genre-hud.js';
 import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
 import {updateHorror,updateHorrorPerception,horror} from './horror-survival.js';
-import {renderQuality} from './render-quality.js';
+import {renderQuality,viewportPixelSize} from './render-quality.js';
 import {stepPhysics3d} from './physics-3d.js';
 import {rapierStatus,loadRapier3d,createRapierScene,moveRapierCharacter3d,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
@@ -294,7 +294,7 @@ export function init3d(canvas,host,buttons){
  };
  const model=(pos,scale,color,angle=0,object=null)=>{gl.uniform1i(viewModelUniform,0);const q=object?rotationQuaternion3d(object):{x:0,y:-Math.sin(angle/2),z:0,w:Math.cos(angle/2)};gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform4fv(u.rotation,[q.x,q.y,q.z,q.w]);gl.uniform4fv(u.color,color)};
  view3d.enabled=workspace.mode==='3d';
- const resize=()=>{const d=Math.min(2,window.devicePixelRatio||1),w=Math.round(host.clientWidth*d),h=Math.round(host.clientHeight*d);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h)};
+ const resize=()=>{const {width:w,height:h}=viewportPixelSize(host.clientWidth,host.clientHeight,window.devicePixelRatio||1);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h)};
  const focusScene=()=>{
   const arr=state.selected.length?state.entities.filter(o=>state.selected.includes(o.id)):state.entities;
   if(!arr.length){view3d.target=[9,0,6];view3d.radius=25;return}

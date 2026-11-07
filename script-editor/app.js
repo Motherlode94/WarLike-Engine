@@ -141,6 +141,50 @@ function updateProblems(){
  for(const m of markers.slice(0,60)){const row=document.createElement('button');row.className='problem-row';row.textContent=d.name+':'+m.startLineNumber+':'+m.startColumn+'  '+m.message;row.onclick=()=>{if(editor){editor.setPosition({lineNumber:m.startLineNumber,column:m.startColumn});editor.revealLineInCenter(m.startLineNumber);editor.focus()}else{$('source').focus();const offset=d.text.split('\n').slice(0,m.startLineNumber-1).reduce((sum,line)=>sum+line.length+1,0)+m.startColumn-1;$('source').setSelectionRange(offset,offset+1)}};$('problems').append(row)}
  }finally{checkingProblems=false}
 }
+// Native Python/C++ execution is opt-in and requires a user-launched local helper.
+// The user's session token is kept only in this page's memory.
+let scriptRunnerToken=null;
+let runningNativeScript=false;
+$('runNativeScript').onclick=async()=>{
+ const d=current();
+ if(!d||runningNativeScript)return;
+ if(!['python','cpp'].includes(d.language))
+  return status('Ouvre un script .py ou .cpp pour utiliser ce service local.',true);
+ if(!scriptRunnerToken){
+  const supplied=prompt('Démarre start-warlike-script-runner.cmd sur ton PC, puis colle la CLÉ DE SESSION affichée dans son terminal. Le code sera exécuté avec les permissions de ton utilisateur Windows. N’exécute que tes propres scripts de confiance.');
+  if(supplied===null)return;
+  if(!/^[a-zA-Z0-9_-]{20,128}$/.test(supplied.trim()))return status('Clé de session du service local invalide.',true);
+  scriptRunnerToken=supplied.trim();
+ }
+ const source=d.text,language=d.language,button=$('runNativeScript');
+ runningNativeScript=true;button.disabled=true;
+ $('outputTab').click();status('Exécution locale '+(language==='cpp'?'C++17':'Python')+' en cours…');
+ log('▶ '+d.name+' · '+(language==='cpp'?'compilation C++17 puis exécution':'exécution Python')+' sur le PC local');
+ try{
+  const response=await fetch('http://127.0.0.1:8891/run',{
+   method:'POST',
+   headers:{'Content-Type':'application/json','X-WarLike-Token':scriptRunnerToken},
+   body:JSON.stringify({language,source}),
+   signal:AbortSignal.timeout(20000),
+   cache:'no-store'
+  });
+  const result=await response.json();
+  if(response.status===401){scriptRunnerToken=null;throw Error('Clé refusée : relance la commande pour obtenir une nouvelle clé.');}
+  if(!response.ok)throw Error(result.error||'Erreur HTTP '+response.status);
+  const stage=result.stage==='compile'?'Compilation':'Exécution';
+  const output=result.stage==='compile'?result.compile:result.run;
+  if(!output)throw Error('Aucun résultat de programme renvoyé.');
+  if(output.stdout)for(const line of output.stdout.split('\n').slice(0,90))if(line)log('stdout  '+line);
+  if(output.stderr)for(const line of output.stderr.split('\n').slice(0,90))if(line)log('stderr  '+line);
+  if(output.truncated)log('Sortie trop longue : résultat tronqué.');
+  if(result.compile?.stderr&&result.stage==='run')log('Compilation C++ : '+result.compile.stderr.slice(0,2000));
+  log('['+stage+'] fin : code '+String(output.exitCode));
+  status(result.ok?'✓ '+stage+' locale terminée.':'✗ '+stage+' locale échouée (code '+output.exitCode+').',!result.ok);
+ }catch(error){
+  status('Service Python/C++ indisponible : lance start-warlike-script-runner.cmd et vérifie la clé. '+error.message,true);
+  log('Service local : '+error.message);
+ }finally{runningNativeScript=false;button.disabled=false;}
+};
 $('runWarScript').onclick=()=>{
  const d=current();if(!d)return;
  if(d.language!=='warscript')return status('Ouvre un script .wls pour utiliser cet aperçu. Pour C#, utilise Vérifier / compiler puis Play C# natif.',true);

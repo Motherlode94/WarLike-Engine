@@ -78,3 +78,19 @@ body.warlike-desktop{overscroll-behavior:none}body.warlike-desktop :is(.workspac
 .hero-forge-hud{pointer-events:auto;max-height:calc(100% - 65px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}.hero-forge-hud.compact{bottom:8px;max-height:calc(100% - 16px)}.hero-forge-hud.compact:not(.expanded)>:not(.hero-hud-top),.hero-forge-hud.minimized>:not(.hero-hud-top){display:none!important}.hero-hud-toggle{flex:none;min-width:26px}.hero-hud-top{position:relative}.hero-forge-hud.compact .hero-hud-top{gap:5px}.hero-forge-hud.compact .hero-hud-status{max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 #viewport>.game-objective-hud{top:42px;left:12px;min-width:0;width:min(280px,calc(100% - 24px));max-width:calc(100% - 24px);max-height:35%;overflow:auto;overscroll-behavior:contain;pointer-events:auto;z-index:17;color:#edf3fa;font-family:system-ui;padding:10px 12px;box-sizing:border-box;scrollbar-width:thin}#viewport>.game-objective-hud .game-objective-row{overflow-wrap:anywhere;font-size:11px}.warlike-game-build #viewport>.game-objective-hud{top:18px}
+
+/* Native hierarchy nesting: preserve the Unity Graphite treatment and make
+   parent/child structure visible without creating a second tree widget. */
+.unity-hierarchy-row[role="treeitem"]{min-width:0;position:relative}
+.unity-hierarchy-row[role="treeitem"] > .hierarchy-tree-toggle{
+ border:0;background:transparent;color:var(--text-muted,#a8b8c8);
+ cursor:pointer;font:inherit;width:18px;min-width:18px;padding:2px 0;
+}
+.unity-hierarchy-row[role="treeitem"] > .hierarchy-tree-toggle:hover,
+.unity-hierarchy-row[role="treeitem"] > .hierarchy-tree-toggle:focus-visible{color:var(--accent-color,#48cba9)}
+.unity-hierarchy-row[role="treeitem"]:has(> .hierarchy-object-label:focus-visible){
+ outline:1px solid var(--accent-color,#48cba9);outline-offset:-1px;
+}
+.unity-hierarchy-row[role="treeitem"]:has(> .hierarchy-object-label:active){
+ background:color-mix(in srgb,var(--accent-color,#48cba9) 12%,transparent);
+}

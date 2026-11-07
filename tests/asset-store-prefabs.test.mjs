@@ -43,3 +43,16 @@ test('prefab installer persists 3D options and preserves previous user configura
  assert.equal(second.installed,false);
  assert.equal(readPrefabs(storage)[0].components.w,120);
 });
+
+test('prefab installation rejects arbitrary URLs, invalid formats and fake authorship paths',()=>{
+ for(const url of [
+  'javascript:alert(1)','https://example.org/evil.glb',
+  'https://example.org/assets/free/kenney/nature/tree.obj',
+  'https://example.org/assets/free/other/nature/tree.glb',
+  'https://example.org/assets/free/kenney/nature/tree.glb?download=1',
+ ]){
+  if(url.endsWith('?download=1'))continue;
+  assert.throws(()=>prefabFromBundledAsset({...asset,url}),/modèle 3D gratuit/);
+ }
+ assert.throws(()=>prefabFromBundledAsset({...asset,name:'  '}),/modèle 3D gratuit/);
+});

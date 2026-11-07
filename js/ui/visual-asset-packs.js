@@ -1,3 +1,4 @@
+import {kaykitModels3d} from '../assets/kaykit-game-assets.js';
 import {lifeTownSprites} from '../assets/life-sprites-2d.js';
 import {uniqueAssets,filterAssetRecords,paginateAssets} from '../core/asset-browser.js';
 import {survivalSprites2d} from '../assets/survival-sprites-2d.js';
@@ -18,7 +19,7 @@ import {assignModelThumbnail} from './real-model-thumbnail.js';
 import {assetCredits} from './asset-credits.js';
 import {makeWindowResizable} from './resizable-window.js';
 const universal=()=>quaterniusModels3d.find(a=>a.id==='quaternius-ual1-mannequin');
-const includedModels=[...freeModels3d,...quaterniusModels3d];
+const includedModels=[...freeModels3d,...quaterniusModels3d,...kaykitModels3d];
 const categoryNames={Characters:'Personnages',Weapons:'Armes et munitions',Vehicles:'Véhicules',Monsters:'Monstres',Animals:'Animaux',Nature:'Nature',Buildings:'Bâtiments et modules',Food:'Nourriture',Props:'Accessoires'};
 const groupedPacks=new Map();for(const asset of includedModels){const key=asset.author+' / '+asset.pack;if(!groupedPacks.has(key))groupedPacks.set(key,[]);groupedPacks.get(key).push(asset)}
 const packGroups=[...groupedPacks.values()];
@@ -39,18 +40,18 @@ const PACKS=[
  {id:'kenney-ui',mode:'any',name:'Kenney · UI Pack',type:'ui',assets:()=>freeUiAssets},
  {id:'kenney-audio',mode:'any',name:'Kenney · Sons d’interface et RPG',type:'audio',assets:()=>freeAudioAssets},
  {id:'legacy-2d',mode:'2d',name:'Prototypage · SVG historiques',type:'2d',assets:()=>catalog.filter(a=>!a.spriteUrl)},
- {id:'external-3d',mode:'3d',name:'Modèles GLB externes · réseau requis',type:'3d',assets:()=>allAssets3d().filter(a=>a.shape==='glb'&&!['Kenney inclus','Quaternius inclus'].includes(a.collection)&&!/test|reference|morph|variant|transmission|texture coordinate|specular|clear coat|normal map/i.test(a.name))},
+ {id:'external-3d',mode:'3d',name:'Modèles GLB externes · réseau requis',type:'3d',assets:()=>allAssets3d().filter(a=>a.shape==='glb'&&!['Kenney inclus','Quaternius inclus','KayKit inclus'].includes(a.collection)&&!/test|reference|morph|variant|transmission|texture coordinate|specular|clear coat|normal map/i.test(a.name))},
  {id:'prototype-3d',mode:'3d',name:'Prototypage · Primitives 3D',type:'3d',assets:()=>allAssets3d().filter(a=>a.shape!=='glb')}
 ];
 const element=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;return el};
 export function initVisualAssetPacks(){
  const parent=document.querySelector('#projectContent');if(!parent||document.querySelector('#warlikeVisualPacks'))return;
- const root=element('section');root.id='warlikeVisualPacks';root.setAttribute('aria-label','Bibliothèque Kenney et Quaternius intégrée');
+ const root=element('section');root.id='warlikeVisualPacks';root.setAttribute('aria-label','Bibliothèque Kenney, Quaternius et KayKit intégrée');
  const toolbar=element('div','free-asset-toolbar'),title=element('strong','','Ressources du projet'),expand=element('button','','Agrandir'),select=element('select'),search=element('input');
  expand.type='button';expand.id='visualPackExpand';expand.setAttribute('aria-pressed','false');select.id='visualPackSelect';select.setAttribute('aria-label','Pack visuel');search.id='visualPackSearch';search.type='search';search.placeholder='Rechercher une ressource…';search.setAttribute('aria-label','Rechercher dans le pack');toolbar.append(title,expand,select,search);
  const filters=element('div','free-asset-filters'),author=element('select'),category=element('select'),animated=element('label'),animatedInput=element('input');
  author.id='visualPackAuthor';author.setAttribute('aria-label','Auteur des modèles');category.id='visualPackCategory';category.setAttribute('aria-label','Catégorie des modèles');
- for(const name of ['Tous les auteurs','Kenney','Quaternius']){const option=element('option','',name);option.value=name==='Tous les auteurs'?'':name;author.append(option)}
+ for(const name of ['Tous les auteurs','Kenney','Quaternius','KayKit']){const option=element('option','',name);option.value=name==='Tous les auteurs'?'':name;author.append(option)}
  for(const [value,name] of [['','Toutes les catégories'],...Object.entries(categoryNames)]){const option=element('option','',name);option.value=value;category.append(option)}
  animatedInput.type='checkbox';animatedInput.id='visualPackAnimated';animated.append(animatedInput,document.createTextNode('Avec animations'));filters.append(author,category,animated);
  const info=element('p');info.id='visualPackInfo';const actions=element('div','free-asset-actions'),grid=element('div','free-asset-grid');grid.id='visualPackItems';
@@ -88,7 +89,7 @@ export function initVisualAssetPacks(){
    folders.append(folderButton('Tous les modèles',()=>choose('included-all-3d'),pack.id==='included-all-3d'&&!category.value,pack.id==='included-all-3d'&&!category.value?result.total:uniqueAssets(includedModels).length));
    for(const [value,label] of Object.entries(categoryNames))folders.append(folderButton(label,()=>{select.value='included-all-3d';category.value=value;author.value='';search.value='';animatedInput.checked=false;page=1;render();grid.scrollTop=0},pack.id==='included-all-3d'&&category.value===value,pack.id==='included-all-3d'&&category.value===value?result.total:filterAssetRecords(includedModels,{category:value}).length));
   }
-  for(const authorName of ['Kenney','Quaternius']){const group=element('details'),heading=element('summary','','▱ '+authorName);group.open=folderFolds[authorName]??false;group.append(heading);group.addEventListener('toggle',()=>folderFolds[authorName]=group.open);for(const p of packs.filter(p=>!p.id.startsWith('project-')&&p.name.startsWith(authorName)&&!['kenney-included-3d','quaternius-monsters-3d','quaternius-animations-3d'].includes(p.id)))group.append(folderButton(p.name.replace(authorName+' · ',''),()=>choose(p.id),pack.id===p.id,pack.id===p.id?result.total:uniqueAssets(p.assets()).length));folders.append(group)}
+  for(const authorName of ['Kenney','Quaternius','KayKit']){const group=element('details'),heading=element('summary','','▱ '+authorName);group.open=folderFolds[authorName]??false;group.append(heading);group.addEventListener('toggle',()=>folderFolds[authorName]=group.open);for(const p of packs.filter(p=>!p.id.startsWith('project-')&&p.name.startsWith(authorName)&&!['kenney-included-3d','quaternius-monsters-3d','quaternius-animations-3d'].includes(p.id)))group.append(folderButton(p.name.replace(authorName+' · ',''),()=>choose(p.id),pack.id===p.id,pack.id===p.id?result.total:uniqueAssets(p.assets()).length));folders.append(group)}
   folders.append(folderButton('Mes fichiers / Importer',()=>advanced.open=true));
   if(pack.type==='ui'){
    for(const [skin,label] of [['kenney-blue','Habillage bleu des menus'],['kenney-grey','Habillage gris des menus']])button(actions,label,()=>{gameProject.uiSkin=skin;record('Interface du jeu : '+skin);notify();info.textContent='Habillage appliqué aux menus de pause et de démarrage du jeu. Kenney · UI Pack · CC0-1.0'});

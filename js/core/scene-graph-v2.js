@@ -404,3 +404,21 @@ export function snapSurfaceFeature3d(hit,mode='surface',{radius=.15}={}){
  }
  return best?{...hit,point:[...best],snapKind:mode,snapDistance:bestDistance}:hit;
 }
+
+/** Prevent Bone Socket and GameObject parenting loops before creating an attachment. */
+export function validateBoneSocketTarget3d(entities,sourceId,targetId){
+ if(targetId===null||targetId===undefined)return true;
+ const byId=new Map(entities.map(e=>[e.id,e]));
+ if(!byId.has(sourceId)||!byId.has(targetId))throw Error('GameObject du socket introuvable');
+ const seen=new Set([sourceId]);
+ let current=targetId;
+ while(current!==null&&current!==undefined){
+  if(seen.has(current))throw Error('Attachement Bone Socket cyclique interdit');
+  seen.add(current);
+  const item=byId.get(current);
+  if(!item)throw Error('Parent du socket introuvable');
+  const socketParent=item.socket3d?.enabled!==false?item.socket3d?.targetId:null;
+  current=socketParent??item.parentId??null;
+ }
+ return true;
+}

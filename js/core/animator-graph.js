@@ -31,7 +31,7 @@ export function inspectAnimatorGraph(graph){
   if(t?.interruptionSource!=null&&!transitionOrigins.includes(t.interruptionSource))errors.push('Source d’interruption invalide.');
   if(t?.blend!=null&&(!Number.isFinite(t.blend)||t.blend<0||t.blend>3)||t?.hasExitTime&&(!Number.isFinite(t.exitTime)||t.exitTime<0||t.exitTime>100)||t?.offset!=null&&(!Number.isFinite(t.offset)||t.offset<0||t.offset>1))errors.push('Fondu, temps de sortie ou décalage invalide.');
  }
- if(graph.layers!=null&&(!Array.isArray(graph.layers)||graph.layers.length>4||graph.layers.some(l=>!l||typeof l.clip!=='string'||!Number.isFinite(l.weight)||l.weight<0||l.weight>1||l.bones!=null&&(!Array.isArray(l.bones)||l.bones.length>32||l.bones.some(b=>typeof b!=='string'||b.length>160)))))errors.push('Couches Animator invalides.');
+ if(graph.layers!=null&&(!Array.isArray(graph.layers)||graph.layers.length>4||graph.layers.some(l=>!l||typeof l.clip!=='string'||l.mode!=null&&!['override','additive'].includes(l.mode)||l.speed!=null&&(!Number.isFinite(l.speed)||l.speed<.05||l.speed>4)||l.offset!=null&&(!Number.isFinite(l.offset)||l.offset<0||l.offset>1)||!Number.isFinite(l.weight)||l.weight<0||l.weight>1||l.bones!=null&&(!Array.isArray(l.bones)||l.bones.length>32||l.bones.some(b=>typeof b!=='string'||b.length>160)))))errors.push('Couches Animator invalides.');
  if(graph.parameters!=null&&(!Array.isArray(graph.parameters)||graph.parameters.length>32||new Set(graph.parameters.map(p=>p?.name)).size!==graph.parameters.length||graph.parameters.some(p=>!p||!safeParameter(p.name)||!['float','int','bool','trigger','string'].includes(p.type)||(['float','int'].includes(p.type)?!Number.isFinite(p.default)||p.type==='int'&&!Number.isInteger(p.default):['bool','trigger'].includes(p.type)?typeof p.default!=='boolean':typeof p.default!=='string'))))errors.push('Paramètres Animator invalides.');
  return [...new Set(errors)];
 }
@@ -46,7 +46,7 @@ let tracks=new WeakMap();
 export function resetAnimators(){tracks=new WeakMap()}
 export function noteAnimatorAction(owner,action='attack',duration=.45){owner._animatorAction={action:String(action).slice(0,40),remaining:clamp(n(duration,.45),.05,10)}}
 export function stepAnimator(owner,dt,{mode='3d',preview=false,parameters={},onEvent=()=>{}}={}){
- const graph=owner.animatorGraph;if(owner.enabled===false||!graph||graph.enabled===false||inspectAnimatorGraph(graph).length)return null;const frame=clamp(n(dt),0,.1);let track=tracks.get(owner);if(!track||track.graph!==graph||!graph.states.some(s=>s.id===track.id)){track={graph,id:resolveMachineState(graph,graph.entry),time:0,blend:1,lastX:n(owner.x),lastY:n(owner.y),lastZ:n(owner.elevation3d),previous:null,serial:0};tracks.set(owner,track);onEvent({type:'signal',value:'animation:'+track.id+':enter'},owner);for(const id of machineAncestors(graph,track.id).reverse())onEvent({type:'signal',value:'animation:machine:'+id+':enter'},owner)}
+ const graph=owner.animatorGraph;if(owner.enabled===false||!graph||graph.enabled===false||inspectAnimatorGraph(graph).length)return null;const frame=clamp(n(dt),0,.1);let track=tracks.get(owner);if(!track||track.graph!==graph||!graph.states.some(s=>s.id===track.id)){track={graph,id:resolveMachineState(graph,graph.entry),time:0,elapsed:0,blend:1,lastX:n(owner.x),lastY:n(owner.y),lastZ:n(owner.elevation3d),previous:null,serial:0};tracks.set(owner,track);onEvent({type:'signal',value:'animation:'+track.id+':enter'},owner);for(const id of machineAncestors(graph,track.id).reverse())onEvent({type:'signal',value:'animation:machine:'+id+':enter'},owner)}
  const action=owner._animatorAction;const speed=frame?Math.hypot(n(owner.x)-track.lastX,n(owner.y)-track.lastY)/(64*frame):0,vertical=frame?(n(owner.elevation3d)-track.lastZ)/frame:0;
  const declared=Object.fromEntries((graph.parameters||[]).map(p=>[p.name,p.default]));
  const localYaw=n(owner.rotation)*Math.PI/180,vx=frame?(n(owner.x)-track.lastX)/(64*frame):0,vz=frame?(n(owner.y)-track.lastY)/(64*frame):0;
@@ -71,11 +71,11 @@ export function stepAnimator(owner,dt,{mode='3d',preview=false,parameters={},onE
   if(forcing)forced.restart=false;else for(const c of transition?.conditions||[])if(c.operator==='trigger'){owner.animatorParameters??={};owner.animatorParameters[c.parameter]=false;}
   onEvent({type:'signal',value:'animation:'+next+':enter'},owner);
  }
- const before=track.time;track.time+=frame*clamp(n(current.speed,1),.05,4);track.blend=track.duration?Math.min(1,track.blend+frame/track.duration):1;const duration=durationOf(current);
+ track.elapsed+=frame;const before=track.time;track.time+=frame*clamp(n(current.speed,1),.05,4);track.blend=track.duration?Math.min(1,track.blend+frame/track.duration):1;const duration=durationOf(current);
  if(track.previous){track.previous.time+=frame*clamp(n(track.previous.state.speed,1),.05,4);for(const sample of track.previous.composite||[])sample.time+=frame;if(track.blend>=1)track.previous=null;}
  for(const event of animationEventsBetween(current.events,before,track.time,duration,{loop:current.loop!==false,normalized:true}))onEvent(event,owner);
  if(forced){forced.remaining=Math.max(0,forced.remaining-frame);if(!forced.remaining)delete owner._animatorForced;}
- const samples=animatorBlendSamples(current,p);owner._animatorFrame={stateId:current.id,name:current.name,clip:current.clip,samples,time:track.time,delta:frame*clamp(n(current.speed,1),.05,4),machinePath:machineAncestors(graph,current.id),normalizedTime:track.time/duration,duration,loop:current.loop!==false,blend:track.blend,previous:track.previous,parameters:p,layers:(graph.layers||[]).slice(0,4)};
+ const samples=animatorBlendSamples(current,p);owner._animatorFrame={stateId:current.id,name:current.name,clip:current.clip,samples,time:track.time,layerTime:track.elapsed,delta:frame*clamp(n(current.speed,1),.05,4),machinePath:machineAncestors(graph,current.id),normalizedTime:track.time/duration,duration,loop:current.loop!==false,blend:track.blend,previous:track.previous,parameters:p,layers:(graph.layers||[]).slice(0,4)};
  if(mode==='2d'&&!preview)owner.animation=samples.reduce((a,b)=>a.weight>b.weight?a:b).clip;
  if(action&&!preview){action.remaining=Math.max(0,action.remaining-frame);if(!action.remaining)delete owner._animatorAction}
  track.lastX=n(owner.x);track.lastY=n(owner.y);track.lastZ=n(owner.elevation3d);track.parameters=p;return owner._animatorFrame;
@@ -83,7 +83,7 @@ export function stepAnimator(owner,dt,{mode='3d',preview=false,parameters={},onE
 export function animatorPoseOptions(frame,clips,mapping={}){
  const convert=(samples,time,loop)=>samples.map(s=>({clip:resolveAnimationClip(clips,s.clip,mapping),weight:s.weight,time,loop})).filter(s=>s.clip);
  const samples=convert(frame.samples,frame.time,frame.loop),previous=frame.previous?{samples:frame.previous.composite?frame.previous.composite.flatMap(s=>convert([s],s.time,s.loop)):convert(animatorBlendSamples(frame.previous.state,frame.previous.parameters),frame.previous.time,frame.previous.state.loop!==false)}:null;
- const layers=(frame.layers||[]).filter(l=>l.enabled!==false).map(l=>({...l,clip:resolveAnimationClip(clips,l.clip,mapping),time:frame.time})).filter(l=>l.clip);return {samples,previous,blend:frame.blend,layers,loop:frame.loop};
+ const layers=(frame.layers||[]).filter(l=>l.enabled!==false).map(l=>({...l,clip:resolveAnimationClip(clips,l.clip,mapping),time:(frame.layerTime??frame.time)*n(l.speed,1)+n(l.offset)*n(resolveAnimationClip(clips,l.clip,mapping)?.duration)})).filter(l=>l.clip);return {samples,previous,blend:frame.blend,layers,loop:frame.loop};
 }
 
 export function playAnimatorState(owner,stateId,duration=null,{fade=null,offset=0}={}){const state=owner.animatorGraph?.states.find(s=>s.id===stateId);if(!state)return false;owner._animatorForced={stateId,restart:true,fade,offset:clamp(n(offset),0,1),remaining:Math.max(.05,Math.min(10,n(duration??state.duration??1,1)))};return true}

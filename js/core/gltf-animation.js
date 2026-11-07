@@ -2,6 +2,14 @@
 // Data is read from the asset; no generated poses or substitute characters.
 export const identityMatrix=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 export function multiplyMatrices(a,b){const out=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++)out[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];return out}
+// Inverse transpose preserves lighting under nonuniform and mirrored node scales.
+export function normalMatrix3(m){
+ const [a,d,g,b,e,h,c,f,i]=[m[0],m[1],m[2],m[4],m[5],m[6],m[8],m[9],m[10]];
+ const det=a*(e*i-f*h)-b*(d*i-f*g)+c*(d*h-e*g);
+ if(Math.abs(det)<1e-12)return [1,0,0,0,1,0,0,0,1];
+ return [e*i-f*h,f*g-d*i,d*h-e*g,c*h-b*i,a*i-c*g,b*g-a*h,b*f-c*e,c*d-a*f,a*e-b*d].map(v=>v/det);
+}
+export const transformNormal=(m,x,y,z)=>[m[0]*x+m[1]*y+m[2]*z,m[3]*x+m[4]*y+m[5]*z,m[6]*x+m[7]*y+m[8]*z];
 export function nodeMatrix(node){
  if(node.matrix)return node.matrix;
  const [x,y,z,w]=node.rotation||[0,0,0,1],s=node.scale||[1,1,1],t=node.translation||[0,0,0];
@@ -49,11 +57,31 @@ export function sampleRigPose(rig,clip,time,{loop=true,previous=null,blend=1,sam
   if(animation){const t=repeat&&animation.duration>0?((seconds%animation.duration)+animation.duration)%animation.duration:Math.min(Math.max(0,seconds),animation.duration);for(const channel of animation.channels){const value=sampleChannel(channel,t);if(value){nodes[channel.node][channel.path]=value;delete nodes[channel.node].matrix}}}
   return nodes;
  };
- const mix=(a,b,weight,mask=null)=>{for(let i=0;i<a.length;i++){if(mask&&!mask.has(i))continue;for(const key of ['translation','scale'])a[i][key]=a[i][key].map((v,k)=>v+(b[i][key][k]-v)*weight);a[i].rotation=slerpQuaternion(a[i].rotation,b[i].rotation,weight)}return a};
+ const mix=(a,b,weight,mask=null)=>{for(let i=0;i<a.length;i++){if(mask&&!mask.has(i))continue;for(const key of ['translation','scale'])a[i][key]=a[i][key].map((v,k)=>v+(b[i][key][k]-v)*weight);a[i].rotation=slerpQuaternion(a[i].rotation,b[i].rotation,weight);delete a[i].matrix}return a};
  const weighted=list=>{let nodes=null,total=0;for(const item of list||[]){const weight=Math.max(0,Number(item.weight)||0);if(!item.clip||!weight)continue;const pose=sample(item.clip,item.time||0,item.loop!==false);nodes=nodes?mix(nodes,pose,weight/(total+weight)):pose;total+=weight}return nodes||sample(null,0)};
  let nodes=samples?.length?weighted(samples):sample(clip,time);
  if(previous&&blend<1){const old=previous.samples?weighted(previous.samples):sample(previous.clip,previous.time);nodes=mix(old,nodes,Math.max(0,Math.min(1,blend)))}
- for(const layer of layers.slice(0,4)){if(!layer.clip)continue;const roots=new Set((layer.bones||[]).map(name=>rig.nodes.findIndex(n=>n.name===name)).filter(i=>i>=0)),mask=layer.bones?.length?new Set(roots):null;if(mask)for(let i=0;i<rig.nodes.length;i++){let parent=rig.parents[i];for(let k=0;parent>=0&&k<rig.nodes.length;k++,parent=rig.parents[parent])if(roots.has(parent)){mask.add(i);break}}if(mask&&!mask.size)continue;mix(nodes,sample(layer.clip,layer.time||0,layer.loop!==false),Math.max(0,Math.min(1,Number(layer.weight)||0)),mask)}
+ // Additive layers apply the clip's displacement from the bind pose; override
+ // layers affect only authored channels, preserving locomotion on other bones.
+ const qmul=(a,b)=>[a[3]*b[0]+a[0]*b[3]+a[1]*b[2]-a[2]*b[1],a[3]*b[1]-a[0]*b[2]+a[1]*b[3]+a[2]*b[0],a[3]*b[2]+a[0]*b[1]-a[1]*b[0]+a[2]*b[3],a[3]*b[3]-a[0]*b[0]-a[1]*b[1]-a[2]*b[2]];
+ for(const layer of layers.slice(0,4)){
+  if(!layer.clip||layer.enabled===false)continue;
+  const roots=new Set((layer.bones||[]).map(name=>rig.nodes.findIndex(n=>n.name===name)).filter(i=>i>=0)),mask=layer.bones?.length?new Set(roots):null;
+  if(mask)for(let i=0;i<rig.nodes.length;i++){let parent=rig.parents[i];for(let k=0;parent>=0&&k<rig.nodes.length;k++,parent=rig.parents[parent])if(roots.has(parent)){mask.add(i);break}}
+  const target=sample(layer.clip,layer.time||0,layer.loop!==false),weight=Math.max(0,Math.min(1,Number(layer.weight)||0)),seen=new Set();
+  if(!weight)continue;
+  for(const channel of layer.clip.channels){
+   const i=channel.node,key=channel.path,id=i+':'+key;if(seen.has(id)||mask&&!mask.has(i))continue;seen.add(id);
+   const a=nodes[i],b=target[i],rest=rig.nodes[i];
+   if(layer.mode==='additive'){
+    if(key==='rotation'){const q=rest.rotation,delta=qmul([-q[0],-q[1],-q[2],q[3]],b.rotation);a.rotation=qmul(a.rotation,slerpQuaternion([0,0,0,1],delta,weight));}
+    else if(key==='scale')a.scale=a.scale.map((v,k)=>v*(1+(b.scale[k]/(rest.scale[k]||1)-1)*weight));
+    else a.translation=a.translation.map((v,k)=>v+(b.translation[k]-rest.translation[k])*weight);
+   }else if(key==='rotation')a.rotation=slerpQuaternion(a.rotation,b.rotation,weight);
+   else a[key]=a[key].map((v,k)=>v+(b[key][k]-v)*weight);
+   delete a.matrix;
+  }
+ }
  const world=new Array(nodes.length),visiting=new Set();
  const visit=i=>{if(world[i])return world[i];if(visiting.has(i))throw Error('Squelette glTF cyclique');visiting.add(i);const local=nodeMatrix(nodes[i]),parent=rig.parents[i];world[i]=parent<0?local:multiplyMatrices(visit(parent),local);visiting.delete(i);return world[i]};
  for(let i=0;i<nodes.length;i++)visit(i);
@@ -64,13 +92,13 @@ export function deformGlbParts(geometry,pose,{buffers=[]}={}){
  const center=geometry.normalizationCenter,scale=geometry.normalizationScale;
  return geometry.parts.map((part,partIndex)=>{
   const source=part.motion;if(!source)return part.vertices;
-  const out=buffers[partIndex]||new Float32Array(part.vertices.length);buffers[partIndex]=out;let unique=vertexScratch.get(source);if(!unique){unique=new Float32Array(source.positions.length*2);vertexScratch.set(source,unique)}const matrices=source.skinIndex===undefined?null:pose.joints[source.skinIndex];
+  const out=buffers[partIndex]||new Float32Array(part.vertices.length);buffers[partIndex]=out;let unique=vertexScratch.get(source);if(!unique){unique=new Float32Array(source.positions.length*2);vertexScratch.set(source,unique)}const matrices=source.skinIndex===undefined?null:pose.joints[source.skinIndex];const normals=(matrices||[pose.world[source.nodeIndex]]).map(normalMatrix3);
   for(const index of source.vertexIds){
    const p=index*3,x=source.positions[p],y=source.positions[p+1],z=source.positions[p+2],nx=source.normals?.[p]??0,ny=source.normals?.[p+1]??1,nz=source.normals?.[p+2]??0;
    let px=0,py=0,pz=0,ax=0,ay=0,az=0,total=0;
-   const apply=(m,weight)=>{px+=(m[0]*x+m[4]*y+m[8]*z+m[12])*weight;py+=(m[1]*x+m[5]*y+m[9]*z+m[13])*weight;pz+=(m[2]*x+m[6]*y+m[10]*z+m[14])*weight;ax+=(m[0]*nx+m[4]*ny+m[8]*nz)*weight;ay+=(m[1]*nx+m[5]*ny+m[9]*nz)*weight;az+=(m[2]*nx+m[6]*ny+m[10]*nz)*weight;total+=weight};
-   if(matrices&&source.joints&&source.weights){for(let j=0;j<source.influences;j++){const offset=index*source.influences+j,weight=source.weights[offset],matrix=matrices[source.joints[offset]];if(weight>0&&matrix)apply(matrix,weight)}}
-   if(total<1e-8)apply(pose.world[source.nodeIndex],1);
+   const apply=(m,weight,normal)=>{px+=(m[0]*x+m[4]*y+m[8]*z+m[12])*weight;py+=(m[1]*x+m[5]*y+m[9]*z+m[13])*weight;pz+=(m[2]*x+m[6]*y+m[10]*z+m[14])*weight;const transformed=transformNormal(normal,nx,ny,nz);ax+=transformed[0]*weight;ay+=transformed[1]*weight;az+=transformed[2]*weight;total+=weight};
+   if(matrices&&source.joints&&source.weights){for(let j=0;j<source.influences;j++){const offset=index*source.influences+j,weight=source.weights[offset],matrix=matrices[source.joints[offset]];if(weight>0&&matrix)apply(matrix,weight,normals[source.joints[offset]])}}
+   if(total<1e-8)apply(pose.world[source.nodeIndex],1,normalMatrix3(pose.world[source.nodeIndex]));
    const length=Math.hypot(ax,ay,az)||1,offset=index*6;unique[offset]=(px/total-center[0])/scale;unique[offset+1]=(py/total-center[1])/scale;unique[offset+2]=(pz/total-center[2])/scale;unique[offset+3]=ax/length;unique[offset+4]=ay/length;unique[offset+5]=az/length;
   }
   for(let v=0;v<source.indices.length;v++){const start=source.indices[v]*6;out.set(unique.subarray(start,start+6),v*6)}

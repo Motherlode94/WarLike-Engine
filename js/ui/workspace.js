@@ -4,7 +4,7 @@ import {assetCredits} from './asset-credits.js';
 import {bindPanelSplitter,projectPanelRange} from './resizable-window.js';
 import {prefabsForMode,readPrefabs,savePrefab,instantiatePrefab,applyPrefabChanges,updatePrefab} from '../core/prefab-library.js';
 import {hub,sanitizeAssetPack} from '../core/project-hub.js';
-import {persistLocalModel,restoreLocalModels,clearLocalModels} from '../core/local-asset-library.js';
+import {persistLocalModel,clearLocalModels} from '../core/local-asset-library.js';
 import {addCommunityModels3d} from '../assets/community-models-3d.js';
 import {loadKenneyUnityAssets} from '../assets/kenney-unity-library.js';
 import {exportModelForUnity} from '../assets/unity-obj-export.js';
@@ -94,7 +94,7 @@ rapierCheckbox.onchange=()=>{gameProject.physics3d=rapierCheckbox.checked?'rapie
 document.addEventListener('warlike:project',()=>{rapierCheckbox.checked=gameProject.physics3d!=='builtin'});rapierOption.append(rapierCheckbox,rapierText);import3dPanel.append(rapierOption);
 const label3d=document.createElement('label');label3d.textContent='Importer un modèle GLB (personnage, arme, véhicule…)';
 const import3d=document.createElement('input');import3d.type='file';import3d.accept='.glb,model/gltf-binary';import3d.setAttribute('aria-label','Importer modèle 3D GLB');
-import3d.onchange=async()=>{try{const file=import3d.files?.[0];if(!file)return;const model=registerLocalModel(file);const cat=prompt('Catégorie du modèle : Characters, Weapons, Vehicles ou Props','Weapons');if(['Characters','Weapons','Vehicles','Props'].includes(cat))model.category=cat;await persistLocalModel(model);render();log('GLB importé dans la bibliothèque de cette session : '+model.name);document.dispatchEvent(new Event('warlike:workspace'))}catch(error){alert(error.message)}finally{import3d.value=''}};
+import3d.onchange=async()=>{try{const file=import3d.files?.[0];if(!file)return;const model=registerLocalModel(file);const cat=prompt('Catégorie du modèle : Characters, Weapons, Vehicles ou Props','Weapons');if(['Characters','Weapons','Vehicles','Props'].includes(cat))model.category=cat;await persistLocalModel(model);render();log('GLB enregistré dans le navigateur : '+model.name);document.dispatchEvent(new Event('warlike:workspace'))}catch(error){alert(error.message)}finally{import3d.value=''}};
 label3d.append(import3d);import3dPanel.append(label3d);
 // Import a local folder of existing GLB models; browsers cannot read arbitrary disk paths.
 const folderPanel=document.createElement('div');folderPanel.className='asset-folder-import';
@@ -140,7 +140,6 @@ const localTools=document.createElement('div');localTools.className='asset-local
 const clearSaved=document.createElement('button');clearSaved.type='button';clearSaved.textContent='Supprimer mes GLB enregistrés';
 clearSaved.onclick=async()=>{if(!confirm('Supprimer les fichiers GLB enregistrés dans ce navigateur ?'))return;try{await clearLocalModels();document.dispatchEvent(new Event('warlike:workspace'));folderStatus.textContent='Bibliothèque locale effacée.'}catch(error){folderStatus.textContent='Erreur : '+error.message}};
 localTools.append(clearSaved);import3dPanel.append(localTools);
-restoreLocalModels().then(count=>{if(count){log(count+' modèles GLB locaux restaurés');document.dispatchEvent(new Event('warlike:workspace'))}}).catch(error=>log('Bibliothèque locale : '+error.message,'warn'));
 const remoteForm=document.createElement('form');remoteForm.className='external-glb-form';
 const remoteInput=document.createElement('input');remoteInput.type='url';remoteInput.placeholder='https://exemple.org/personnage.glb';remoteInput.required=true;remoteInput.setAttribute('aria-label','URL HTTPS directe du modèle GLB');
 const categoryInput=document.createElement('select');categoryInput.setAttribute('aria-label','Catégorie de modèle externe');

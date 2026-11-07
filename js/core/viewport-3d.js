@@ -259,7 +259,7 @@ export function init3d(canvas,host,buttons){
   getModelGeometry(id).then(async data=>{
    const parts=await Promise.all(data.parts.map(async part=>{
     const mesh=makeBuffer(part.vertices,!!data.rig);
-    if(part.texture){
+    if(part.texture){try{
      const image=await getTextureImage(part.texture),texture=gl.createTexture();
      gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
@@ -270,7 +270,7 @@ export function init3d(canvas,host,buttons){
      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
      const uvBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,uvBuffer);gl.bufferData(gl.ARRAY_BUFFER,part.texcoords,gl.STATIC_DRAW);
      Object.assign(mesh,{texture,uvBuffer});
-    }
+    }catch(error){console.warn('[WarLike GLB] Texture indisponible, couleur du matériau conservée :',id,error)}}
     Object.assign(mesh,{alphaMode:part.alphaMode,alphaCutoff:part.alphaCutoff});
     return {mesh,color:part.color,roughness:part.roughness,metallic:part.metallic};
    }));
@@ -291,6 +291,7 @@ export function init3d(canvas,host,buttons){
   gl.uniform1i(useTexture,mesh.texture?1:0);gl.uniform1f(alphaCutoff,mesh.alphaMode==='OPAQUE'?-1:mesh.alphaMode==='MASK'?mesh.alphaCutoff:.01);
   if(mesh.texture){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,mesh.texture);gl.uniform1i(textureUniform,0);gl.bindBuffer(gl.ARRAY_BUFFER,mesh.uvBuffer);gl.vertexAttribPointer(aTexcoord,2,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(aTexcoord)}
   else{gl.disableVertexAttribArray(aTexcoord);gl.vertexAttrib2f(aTexcoord,0,0)}
+  gl.depthMask(mesh.alphaMode!=='BLEND');
   if(mesh.alphaMode==='BLEND'){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA)}else gl.disable(gl.BLEND);
  };
  const model=(pos,scale,color,angle=0,object=null)=>{gl.uniform1i(viewModelUniform,0);const q=object?rotationQuaternion3d(object):{x:0,y:-Math.sin(angle/2),z:0,w:Math.cos(angle/2)};gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform4fv(u.rotation,[q.x,q.y,q.z,q.w]);gl.uniform4fv(u.color,color)};
@@ -526,7 +527,7 @@ export function init3d(canvas,host,buttons){
   }
   if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent=companyController(state.entities)?'RTS · clic : escouade · clic droit : ordre · flèches : caméra':'3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}if(state.playing)buttons.status.textContent+=companyController(state.entities)?' · Navigation A* et collisions internes':' · Physique : '+(physicsSession?'Rapier':gameProject.physics3d==='builtin'?'interne':rapierStatus().error?'interne (Rapier indisponible)':'chargement Rapier');
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
-  const solar=sunAt();gl.clearColor(...solar.sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  const solar=sunAt();gl.clearColor(...solar.sky,1);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   if(state.playing&&!isFps()&&!companyController(state.entities)){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities)),desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);boomDistance=rig.collision?resolveCameraBoom(view3d.target,desired.eye,state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(collisionWorldBounds3d),{previousDistance:boomDistance,dt:cameraFrame}).distance:view3d.radius}
   gl.useProgram(program);const cam=camera();updateBattlefieldHud(state,{camera:cam,width:w,height:h,project:project3d});updateCompanyMarkers({camera:cam,width:w,height:h,project:project3d});
   gl.uniform3fv(u.flashPos,cam.eye);gl.uniform3fv(u.flashDir,cam.forward);
@@ -585,7 +586,7 @@ export function init3d(canvas,host,buttons){
       const pose=vehicleRigPose(rig,o);
       if(pose){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,pose,{buffers:track.buffers})}
      }
-     for(const [partIndex,part] of cached.parts.entries()){
+     for(const [partIndex,part] of [...cached.parts.entries()].sort(([,a],[,b])=>Number(a.mesh.alphaMode==='BLEND')-Number(b.mesh.alphaMode==='BLEND'))){
       if(posed){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,posed[partIndex])}
       else if(rig){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,cached.geometry.parts[partIndex].vertices)}
       const material=o.colorCustomized?color:part.color;

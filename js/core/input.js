@@ -5,7 +5,7 @@ import {orderRtsMove,orderRtsGroup,isRtsUnit} from './rts-orders.js';
 import {state,notify} from './state.js';
 import {toWorld,zoomAt} from './camera.js';
 import {record,undo,redo} from './history.js';
-import {deleteSelected} from './scene.js';
+import {deleteSelected,duplicateSelected} from './scene.js';
 
 // Live, screen-independent marquee rectangle. Renderer reads these world coordinates.
 export const selectionBox={active:false,start:null,end:null};
@@ -120,6 +120,7 @@ export function attachInput(canvas,host){
   if(key==='escape'&&!state.playing){e.preventDefault();drag=null;clearBox();state.selected=[];notify();return}
   if((e.ctrlKey||e.metaKey)&&key==='z'){e.preventDefault();e.shiftKey?redo():undo();return}
   if((e.ctrlKey||e.metaKey)&&key==='y'){e.preventDefault();redo();return}
+  if(!state.playing&&(e.ctrlKey||e.metaKey)&&key==='d'){e.preventDefault();duplicateSelected();return}
   if(!state.playing&&(key==='delete'||key==='backspace')){e.preventDefault();deleteSelected();return}
   if((e.ctrlKey||e.metaKey)&&key!=='control')return;
   if(e.code==='Space')space=true;

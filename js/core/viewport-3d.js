@@ -6,7 +6,7 @@ import {updateCompanyMarkers} from '../ui/company-ui.js';
 import {resetBattlefield,tickBattlefield,battlefieldMatch,consumeBattlefieldShot,isBattlefieldSoldier} from './battlefield-runtime.js';
 import {updateBattlefieldHud} from '../ui/battlefield-hud.js';
 import {rotationQuaternion3d} from './collider-3d.js';
-import {affineCorrection3d,normalMatrix3d,updateEditorEntityHierarchy3d,updateAffineEditorPose3d} from './scene-graph-v2.js';
+import {affineCorrection3d,normalMatrix3d,updateEditorEntityHierarchy3d,updateAffineEditorPose3d,boneSocketPoint3d} from './scene-graph-v2.js';
 import {gameProject} from './game-project.js';
 import {survivalPlacement} from './survival-building.js';
 import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';
@@ -622,6 +622,11 @@ export function init3d(canvas,host,buttons){
   // Update attached child world matrices after gizmos, scripts and physics.
   if(state.entities.some(o=>o.parentId!==null&&o.parentId!==undefined||Array.isArray(o.worldMatrix3d)))try{updateEditorEntityHierarchy3d(state.entities,{physicsOwnsDynamics:state.playing})}catch(error){if(!view3d._hierarchyWarned){console.warn('[WarLike] Hiérarchie 3D',error);view3d._hierarchyWarned=true}}
   const objects=[...state.entities].filter(o=>(state.playing||!o.editorHidden)&&(!state.playing||!((o.audioEnabled||o.lightType)&&!o.assetId)&&o.enabled!==false&&o.visible!==false&&o.sequenceEnabled!==false&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
+  if(objects.some(o=>o.socket3d?.targetId!==undefined)){
+   const order=new Map(objects.map((o,i)=>[o.id,i]));
+   const depth=o=>{let count=0,p=o.socket3d?.targetId,seen=new Set([o.id]);while(order.has(p)&&!seen.has(p)&&count<64){seen.add(p);count++;p=objects[order.get(p)].socket3d?.targetId}return count};
+   objects.sort((a,b)=>depth(a)-depth(b)||order.get(a.id)-order.get(b.id));
+  }
   if(state.playing&&survivalPlacement.active&&survivalPlacement.entity)objects.push(survivalPlacement.entity);
   // Depth buffering resolves overlapping faces, including the composite mesh parts.
   bind(cubes);
@@ -639,9 +644,10 @@ export function init3d(canvas,host,buttons){
     const id=o.model3dId||o.assetId;ensureModel(id);
     const cached=realGlbBuffers.get(id);
     if(cached?.status==='ready'){
-     let posed=null;const rig=cached.geometry.rig;if(rig)cacheAnimationGeometry(id,cached.geometry);
+     let posed=null,socketPose=null;const rig=cached.geometry.rig;if(rig)cacheAnimationGeometry(id,cached.geometry);
+     const sampleForSockets=(...args)=>{socketPose=sampleEntityRigPose(...args);return socketPose};
      if(rig&&(rig.animations.length||o.animationRig?.clips?.length)&&(state.playing||o.animationPreview||o.animatorPreview||o.animationRig?.playOnStart||hasSkeletalPreview(o))){
-      if(o.animatorGraph&&o.animatorGraph.enabled!==false&&o._animatorFrame){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}track.graph=true;const options=animatorPoseOptions(o._animatorFrame,skeletalClips(o,rig),o.animationMap||{});posed=deformGlbParts(cached.geometry,sampleEntityRigPose(o,cached.geometry,options,state.entities),{buffers:track.buffers})}else{
+      if(o.animatorGraph&&o.animatorGraph.enabled!==false&&o._animatorFrame){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}track.graph=true;const options=animatorPoseOptions(o._animatorFrame,skeletalClips(o,rig),o.animationMap||{});posed=deformGlbParts(cached.geometry,sampleForSockets(o,cached.geometry,options,state.entities),{buffers:track.buffers})}else{
       if(animationStates.get(o)?.graph)animationStates.delete(o);
       const desired=o.animationAuto===false?o.animation3dClip||'idle':(o.animation==='dead'?'death':o.animation||'idle');
       const clip=animationClipForState(rig.animations,desired,o.animationMap||{},animationStates.get(o),{automatic:o.animationAuto!==false});
@@ -650,14 +656,33 @@ export function init3d(canvas,host,buttons){
        if(track.clip!==clip){track.previous={clip:track.clip,time:track.time};track.clip=clip;track.time=0;track.transition=0;track.oneShot=o.animationAuto!==false&&['attack','hurt'].includes(desired)}else if(track.oneShot&&track.time>=clip.duration&&desired==='attack'){track.time=0}
        const step=state.playing&&!gameIsRunning()?0:dt*Math.max(.05,Math.min(4,Number(o.animationSpeed)||1));track.time+=step;track.transition=Math.min(1,track.transition+step/.18);
        const loop=!track.oneShot&&o.animationLoop!==false&&!/death|die|jump_start|jump_land/i.test(clip.name);
-       posed=deformGlbParts(cached.geometry,sampleEntityRigPose(o,cached.geometry,{samples:[{clip,time:track.time,weight:1,loop}],previous:track.previous,blend:track.transition},state.entities),{buffers:track.buffers});
+       posed=deformGlbParts(cached.geometry,sampleForSockets(o,cached.geometry,{samples:[{clip,time:track.time,weight:1,loop}],previous:track.previous,blend:track.transition},state.entities),{buffers:track.buffers});
       }
       }
      }
-     if(rig&&(hasSkeletalPreview(o)||skeletalFrame(o)?.clip&&(!o.animatorGraph||o.animatorGraph.enabled===false))){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,sampleEntityRigPose(o,cached.geometry,{},state.entities),{buffers:track.buffers})}
+     if(rig&&(hasSkeletalPreview(o)||skeletalFrame(o)?.clip&&(!o.animatorGraph||o.animatorGraph.enabled===false))){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,sampleForSockets(o,cached.geometry,{},state.entities),{buffers:track.buffers})}
      if(rig&&o.vehicleArticulation){
-      const pose=vehicleRigPose(rig,o);
+      const pose=vehicleRigPose(rig,o);if(pose)socketPose=pose;
       if(pose){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,pose,{buffers:track.buffers})}
+     }
+     if(rig&&state.entities.some(child=>child.socket3d?.targetId===o.id)){
+      socketPose??=sampleRigPose(rig,null,0);
+      const normalization=cached.geometry,bounds=objectBounds3d(o),q=rotationQuaternion3d(o);
+      for(const child of state.entities){
+       const socket=child.socket3d;
+       if(!socket||socket.enabled===false||socket.targetId!==o.id||child.id===o.id)continue;
+       const index=rig.nodes.findIndex(node=>node.name===socket.bone);
+       if(index<0||!socketPose.world?.[index])continue;
+       try{
+        const pos=boneSocketPoint3d(o,Array.from(socketPose.world[index]),normalization,bounds,q,socket.offset||[0,0,0]);
+        const previous=Array.isArray(child.worldMatrix3d)?[...child.worldMatrix3d]:null,reference=Array.isArray(child.matrixReference3d)?[...child.matrixReference3d]:null;
+        child.x=Math.round(pos[0]*64-(Number(child.w)||64)/2);
+        child.y=Math.round(pos[2]*64-(Number(child.depth3d??child.h)||64)/2);
+        child.elevation3d=pos[1]-(Number(child.h)||64)/128;
+        if(socket.followRotation!==false)child.rotation=o.rotation||0;
+        if(previous&&reference)updateAffineEditorPose3d(child,previous,reference);
+       }catch(error){if(!child._socketWarning){console.warn('[WarLike Socket]',child.name,error);child._socketWarning=true}}
+      }
      }
      for(const [partIndex,part] of [...cached.parts.entries()].sort(([,a],[,b])=>Number(a.mesh.alphaMode==='BLEND')-Number(b.mesh.alphaMode==='BLEND'))){
       if(posed){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,posed[partIndex])}

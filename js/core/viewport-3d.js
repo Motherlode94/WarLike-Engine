@@ -283,7 +283,7 @@ export function init3d(canvas,host,buttons){
  const textureUniform=loc('uBaseColorTexture'),useTexture=loc('uUseTexture'),alphaCutoff=loc('uAlphaCutoff');
  const makeBuffer=(data,dynamic=false)=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,dynamic?gl.DYNAMIC_DRAW:gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
  const cubes=makeBuffer(cubeVerts()),sphere=makeBuffer(curvedVerts('sphere')),cylinder=makeBuffer(curvedVerts('cylinder')),cone=makeBuffer(curvedVerts('cone')),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
- const realGlbBuffers=new Map(),animationStates=new WeakMap();
+ const realGlbBuffers=new Map(),animationStates=new WeakMap(),animatedHitVertices=new WeakMap();
  const ensureModel=id=>{
   if(realGlbBuffers.has(id))return;
   realGlbBuffers.set(id,{status:'loading'});
@@ -466,8 +466,9 @@ export function init3d(canvas,host,buttons){
      correction[2]*world[0]+correction[6]*world[1]+correction[10]*world[2]+correction[14]
     ]:world;
    };
-   for(const part of loaded.geometry.parts){
-    const hit=raycastTriangles3d(ray.origin,ray.direction,part.vertices,transform,{maxDistance:nearest?.distance??1e4});
+   const deformed=animatedHitVertices.get(entity);
+   for(const [partIndex,part] of loaded.geometry.parts.entries()){
+    const hit=raycastTriangles3d(ray.origin,ray.direction,deformed?.[partIndex]||part.vertices,transform,{maxDistance:nearest?.distance??1e4});
     if(hit&&(!nearest||hit.distance<nearest.distance))nearest={...hit,entity,kind:'triangle'};
    }
   }
@@ -697,6 +698,7 @@ export function init3d(canvas,host,buttons){
        }catch(error){if(!child._socketWarning){console.warn('[WarLike Socket]',child.name,error);child._socketWarning=true}}
       }
      }
+     if(posed)animatedHitVertices.set(o,posed);else animatedHitVertices.delete(o);
      for(const [partIndex,part] of [...cached.parts.entries()].sort(([,a],[,b])=>Number(a.mesh.alphaMode==='BLEND')-Number(b.mesh.alphaMode==='BLEND'))){
       if(posed){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,posed[partIndex])}
       else if(rig){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,cached.geometry.parts[partIndex].vertices)}

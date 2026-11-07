@@ -6,7 +6,7 @@ import {stepArcadeVehicle} from './arcade-driving.js';
 import {vehicleConfiguration,tickVehicleArticulation} from './vehicle-articulation.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 const center=o=>({x:o.x+(o.w||32)/2,y:o.y+(o.depth3d||o.h||32)/2});
-export const isDriveable3d=o=>!!o&&(o.vehicleConfig?.driveable===true||vehicleConfiguration(o)?.enabled===true||o.tags?.includes('race-vehicle')||get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles');
+export const isDriveable3d=o=>!!o&&(o.vehicleConfig?.driveable===true||vehicleConfiguration(o)?.enabled===true&&vehicleConfiguration(o)?.drive!=='static'||o.tags?.includes('race-vehicle')||get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles');
 export const driving3d={vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0};
 export const currentVehicle3d=entities=>entities.find(o=>o.id===driving3d.vehicleId&&isDriveable3d(o))||null;
 export const resetDriving3d=()=>Object.assign(driving3d,{vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0});
@@ -61,16 +61,17 @@ export function updateDriving3d(entities,player,keys,dt){
   {throttle,steer,handbrake},step,drivingCar);
  driving3d.speed=state.speed;driving3d.steer=state.steer;drivingCar.rotation=state.rotation;
  tickVehicleSystems(drivingCar,step,{speed:state.speed,throttle});
+ const startX=drivingCar.x,startY=drivingCar.y;
  const contacts=moveBody3d(drivingCar,state.dx,state.dy,0,entities,{ignore:player});
+ const move={collision:contacts.blockedX||contacts.blockedY};
  const articulated=vehicleConfiguration(drivingCar);
  if(articulated?.enabled){
   const pressed=keys.has('o')&&!drivingCar._doorKeyHeld;
-  tickVehicleArticulation(drivingCar,step,{speed:state.speed,steer:state.steer,doorToggle:pressed,
+  tickVehicleArticulation(drivingCar,step,{speed:step>0?Math.sign(state.speed)*Math.hypot(drivingCar.x-startX,drivingCar.y-startY)/step:0,steer:state.steer,doorToggle:pressed,
    turretYaw:Number(keys.has('l'))-Number(keys.has('j')),
    barrelPitch:Number(keys.has('i'))-Number(keys.has('k'))});
   drivingCar._doorKeyHeld=keys.has('o');
  }
- const move={collision:contacts.blockedX||contacts.blockedY};
  if(move.collision){recordEngineEvent('collision',drivingCar.name);impactVehicle(drivingCar,driving3d.speed);driving3d.speed=-driving3d.speed*.12;driving3d.impact=.25}
  player.x=drivingCar.x+((drivingCar.w||32)-(player.w||32))/2;
  player.y=drivingCar.y+((drivingCar.depth3d||drivingCar.h||32)-(player.depth3d||player.h||32))/2;

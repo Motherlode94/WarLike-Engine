@@ -1,3 +1,4 @@
+import {inspectModelColors} from './material-preview.js';
 // Optional 3D prefab model preview. Loads an actual GLB and the viewer on request.
 export function setup3dPreview({onInstall,isInstalled}){
  const $=id=>document.getElementById(id),dialog=$('modelPreview'),root=$('modelViewport');
@@ -21,11 +22,11 @@ export function setup3dPreview({onInstall,isInstalled}){
    const header=new DataView(await blob.slice(0,12).arrayBuffer());
    if(header.getUint32(0,true)!==0x46546c67||header.getUint32(4,true)!==2||header.getUint32(8,true)!==blob.size)throw Error('Signature GLB invalide');
    await initViewer();if(id!==requestId||!dialog.open)return;
-   objectUrl=URL.createObjectURL(blob);const view=document.createElement('model-viewer');
-   view.src=objectUrl;view.setAttribute('camera-controls','');view.setAttribute('shadow-intensity','1');
-   view.setAttribute('environment-image','neutral');view.setAttribute('alt','Modèle 3D : '+selected.name);
+   const info=inspectModelColors(await blob.arrayBuffer(),selected.name+'.glb');const view=document.createElement('model-viewer');
+   view.src=selected.url;view.setAttribute('camera-controls','');view.setAttribute('shadow-intensity','1');
+   view.setAttribute('environment-image','neutral');view.setAttribute('tone-mapping','neutral');view.setAttribute('exposure','1');view.setAttribute('alt','Modèle 3D : '+selected.name);
    view.style.cssText='width:100%;height:100%';
-   view.addEventListener('load',()=>{setClips(view);note('Modèle chargé · souris : rotation / molette : zoom')});
+   view.addEventListener('load',()=>{setClips(view);note('Modèle chargé · '+info.materials+' matériaux, '+info.textures+' textures. '+(info.warning?'⚠ '+info.warning:'Souris : rotation / molette : zoom'))});
    view.addEventListener('error',()=>note('Impossible de rendre ce GLB avec le visualiseur.'));
    root.append(view);
   }catch(error){if(id===requestId)note('Aperçu impossible : '+error.message)}

@@ -1,4 +1,5 @@
 import {compileWarScript} from './warscript.js';
+import {runWarScriptPreview} from './warscript-preview.js';
 import {ScriptDocument,MAX_SOURCE,newId,languageFor,templates,templateFor,readLinkedFile,saveLinkedFile} from './core.js';
 
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),embedded=params.get('embedded')==='1',session=params.get('session');
@@ -141,6 +142,28 @@ function updateProblems(){
  for(const m of markers.slice(0,60)){const row=document.createElement('button');row.className='problem-row';row.textContent=d.name+':'+m.startLineNumber+':'+m.startColumn+'  '+m.message;row.onclick=()=>{if(editor){editor.setPosition({lineNumber:m.startLineNumber,column:m.startColumn});editor.revealLineInCenter(m.startLineNumber);editor.focus()}else{$('source').focus();const offset=d.text.split('\n').slice(0,m.startLineNumber-1).reduce((sum,line)=>sum+line.length+1,0)+m.startColumn-1;$('source').setSelectionRange(offset,offset+1)}};$('problems').append(row)}
  }finally{checkingProblems=false}
 }
+$('runWarScript').onclick=()=>{
+ const d=current();if(!d)return;
+ if(d.language!=='warscript')return status('Ouvre un script .wls pour utiliser cet aperçu. Pour C#, utilise Vérifier / compiler puis Play C# natif.',true);
+ const result=runWarScriptPreview(d.text,{frames:60,fps:60});
+ $('outputTab').click();
+ if(!result.ok){
+  d.nativeDiagnostics=result.diagnostics;
+  for(const diag of result.diagnostics)log('WarScript '+diag.line+':'+diag.column+' · '+diag.message);
+  updateProblems();status('Aperçu WarScript interrompu : '+result.diagnostics[0]?.message,true);
+  return;
+ }
+ delete d.nativeDiagnostics;
+ log('▶ Aperçu isolé WarScript · '+result.frames+' frames simulées à 60 FPS · aucune scène modifiée');
+ for(const message of result.logs){
+  const args=message.args.map(v=>typeof v==='string'?v:JSON.stringify(v)).join(', ');
+  log('['+message.frame+'] '+message.method+'('+args+')');
+ }
+ log('Position simulée : '+JSON.stringify(result.state.position)+' · rotation : '+JSON.stringify(result.state.rotation));
+ log('Champs : '+JSON.stringify(result.fields));
+ if(result.overflow)log('Limite de logs atteinte, affichage tronqué.');
+ status('✓ WarScript exécuté en simulation. Pour tester les collisions, l’Animator et la scène réelle, attache le script à un GameObject puis lance Play.');
+};
 $('checkScript').onclick=async()=>{
  const d=current();if(!d)return;
  if(d.language==='typescript'){try{const ok=await compileTypeScript(d);$('problemsTab').click();status(ok?'✓ TypeScript compilé en JavaScript · Ctrl+S pour actualiser le moteur.':'Corrige les erreurs TypeScript avant Play.',!ok)}catch(error){status(error.message,true)}return}

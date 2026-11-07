@@ -1,0 +1,19 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WarLike Engine — Import depuis Library</title><style>:root{font:15px system-ui,sans-serif;color-scheme:dark;background:#10161b;color:#eef5fc}*{box-sizing:border-box}body{margin:0}main{max-width:790px;margin:42px auto;padding:24px}.card{background:#19252d;border:1px solid #405364;border-radius:15px;padding:24px}a{color:#afcffe}h1{font-size:clamp(26px,5vw,40px)}p{line-height:1.6;color:#b2c6ce}input,button{font:inherit;padding:12px;background:#263744;color:#f2fbff;border:1px solid #62818e;border-radius:8px}input{width:100%}button{cursor:pointer;margin-top:12px}button:disabled{opacity:.5}#status{white-space:pre-wrap;min-height:32px;color:#b7ecc4}.notice{border-left:3px solid #7caba2;padding-left:14px}</style></head><body><main><nav><a href="../">← WarLike Engine</a> · <a href="https://warlike-library.pages.dev/prefab-studio.html" target="_blank" rel="noopener">WarLike Library / Prefab Studio</a></nav><h1>Importer un prefab depuis Library</h1><section class="card"><p>Sélectionne le fichier <code>.wlpkg.json</code> exporté par Library. Engine vérifie l’empreinte SHA-256 et les maillages du GLB, conserve les octets du modèle dans IndexedDB, puis installe le prefab dans la bibliothèque locale du moteur.</p><label for="file">Pack WarLike Library 3D</label><input type="file" id="file" accept=".json,.wlpkg.json,application/json"><button id="install" disabled>Vérifier et installer le modèle</button><p id="status" role="status"></p><div id="result"></div></section><p class="notice">Cette importation fonctionne sur le navigateur et le domaine d'Engine. Les fichiers sont conservés localement, pas dans un compte cloud. La configuration complète Animator, Rigidbody et scripts nécessite encore une vérification dans l’Inspecteur avant Play/Export.</p></main><script type="module">
+import {parseLibraryTransfer,storeLibraryModel,installLibraryPrefab} from '../js/core/library-transfer.js';
+const $=id=>document.getElementById(id);let file=null;
+$('file').onchange=()=>{file=$('file').files?.[0]||null;$('install').disabled=!file;$('status').textContent=file?'Fichier sélectionné : '+file.name:'';};
+$('install').onclick=async()=>{
+ const button=$('install');button.disabled=true;$('result').replaceChildren();
+ try{
+  if(!file||file.size>36*1024*1024)throw Error('Pack absent ou supérieur à 36 Mo.');
+  $('status').textContent='Vérification du GLB et de son empreinte…';
+  const raw=JSON.parse(await file.text()),record=await parseLibraryTransfer(raw);
+  $('status').textContent='Modèle valide ('+record.meshCount+' maillages). Enregistrement local…';
+  await storeLibraryModel(record);
+  const result=installLibraryPrefab(record);
+  const p=document.createElement('p');p.textContent=result.installed?'✓ '+record.metadata.name+' : vrai GLB enregistré et prefab créé.':'✓ '+record.metadata.name+' : modèle enregistré ; prefab existant conservé.';$('result').append(p);
+  const link=document.createElement('a');link.href='../index.html';link.textContent='Ouvrir WarLike Engine →';$('result').append(link);
+  $('status').textContent='Import terminé. Les ressources seront chargées au démarrage de l’éditeur.';
+ }catch(error){$('status').textContent='Import refusé : '+(error?.message||error)}finally{button.disabled=false}
+};
+</script></body></html>

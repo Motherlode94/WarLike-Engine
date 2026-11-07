@@ -1,11 +1,15 @@
 """Rebuild bundled gameplay-oriented KayKit packs from the pinned official KayKit checkout.
-Usage: python scripts/assets/import-kaykit-models.py /path/to/checkout
+Usage: python scripts/assets/import-kaykit-models.py /path/to/checkout pack-id
 Only JSON, binary geometry and PNG inputs are read; no source code is executed.
 """
 import hashlib,json,struct,sys,subprocess
 from pathlib import Path
 import numpy as np
-from PIL import Image,ImageDraw
+from PIL import Image
+from importlib.util import spec_from_file_location,module_from_spec
+_thumbnail_spec=spec_from_file_location("mesh_thumbnail",Path(__file__).with_name("mesh-thumbnail.py"))
+_thumbnail_module=module_from_spec(_thumbnail_spec);_thumbnail_spec.loader.exec_module(_thumbnail_module)
+render_mesh_thumbnail=_thumbnail_module.render_mesh_thumbnail
 ROOT=Path(__file__).resolve().parents[2]
 PACKS={
  'furniture-bits':('KayKit-Furniture-Bits-1.0','96d5930a8dbdb363409bbc2d3341718b00e17c9c','Furniture Bits',['rp','simulation','lifesim','horror']),
@@ -57,16 +61,9 @@ for path in sorted(folder.glob('*.gltf')):
  for index in doc['scenes'][doc.get('scene',0)]['nodes']:visit(index,np.eye(4))
  pos=np.concatenate(positions);uv=np.concatenate(uvs);indices=np.concatenate(faces)
  size=pos.max(0)-pos.min(0)
- # Orthographic CPU preview of the original mesh, sampling its texture atlas.
- atlas=Image.open(next(folder.glob('*.png'))).convert('RGB');points=pos-(pos.max(0)+pos.min(0))/2
- right=np.array([.7071,0,-.7071]);up=np.array([-.35355,.866,-.35355]);depth=np.cross(right,up)
- xy=np.column_stack((points@right,-points@up));xy=(xy-(xy.min(0)+xy.max(0))/2)* (208/max(np.ptp(xy,axis=0)))+128
- img=Image.new('RGB',(256,256),(27,32,44));draw=ImageDraw.Draw(img)
- light=np.array([-.4,.85,.35]);light/=np.linalg.norm(light)
- for tri in sorted(indices,key=lambda t:float(np.mean(points[t]@depth))):
-  normal=np.cross(pos[tri[1]]-pos[tri[0]],pos[tri[2]]-pos[tri[0]]);normal/=max(np.linalg.norm(normal),1e-9)
-  sample=uv[tri].mean(0);color=atlas.getpixel((int(sample[0]*atlas.width)%atlas.width,int(sample[1]*atlas.height)%atlas.height));shade=.52+.48*max(0,float(normal@light))
-  draw.polygon([tuple(x) for x in xy[tri]],fill=tuple(int(c*shade) for c in color))
+ # Pixel depth testing prevents hidden surfaces bleeding through vehicles/crates.
+ atlas=Image.open(next(folder.glob('*.png')))
+ img=render_mesh_thumbnail(pos,uv,indices,atlas)
  thumb=out/'previews'/(assetId+'.png');img.save(thumb)
  prefix='./'+str(out.relative_to(ROOT))
  records.append(dict(id=assetId,name=path.stem.replace('_',' ').title(),category=('Vehicles' if name.startswith(('car-','spacetruck','lander')) else 'Buildings' if name.startswith(('building-','basemodule','cargodepot','tunnel','structure','drill-','landingpad')) else 'Props'),shape='glb',url=prefix+'/'+target.name,license='CC0-1.0',author='KayKit',collection='KayKit inclus',pack=pack,packName=title,genres=genres,sourceUrl=SOURCE,normalizedSize=(size/max(size)).tolist(),triangles=len(indices),thumbnailUrl=prefix+'/previews/'+thumb.name,animationClips=[],textureFiles=[],bytes=len(glb),sha256=digest(glb),sourceFile=str(path.relative_to(src)),sourceRevision=REVISION))

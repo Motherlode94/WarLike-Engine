@@ -53,5 +53,5 @@ test('direct Library handshake has strict origins, channel and same verified ins
  assert.ok(html.includes("warlike-library-ping-v1"));
  assert.ok(html.includes("warlike-engine-installed-v1"));
  assert.ok(html.includes('await storeLibraryModel(record)'));
- assert.ok(html.includes('installLibraryPrefab(record)'));
+ assert.ok(html.includes('installLibraryPrefab(record,localStorage,{replace})'));
 });

@@ -1,4 +1,5 @@
 import {solidBody3d,activeBody3d} from './collision-3d.js';
+import {updateAffineEditorPose3d} from './scene-graph-v2.js';
 import {characterBody3d,colliderGeometry3d,colliderPosition3d,rotationQuaternion3d,quaternionEuler3d} from './collider-3d.js';
 let activeScene=null;
 export const activeRapierScene3d=()=>activeScene;
@@ -80,9 +81,10 @@ export function moveRapierCharacter3d(scene,o,dx,dy,dz,{ignore=null}={}){
 }
 export function stepRapierScene(scene,dt){
  const t=Math.min(.05,Math.max(0,n(dt)));if(!t)return;scene.world.timestep=t;scene.world.step();
- for(const r of scene.actors.values()){if(!r.isDynamic)continue;const {body,entity:o,width,depth,height}=r,p=body.translation(),v=body.linvel();o.x=(p.x-width/2)*64;o.y=(p.z-depth/2)*64;o.elevation3d=Math.max(0,p.y-height/2);
+ for(const r of scene.actors.values()){if(!r.isDynamic)continue;const {body,entity:o,width,depth,height}=r,p=body.translation(),v=body.linvel();const oldAffine=Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,oldReference=Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null;o.x=(p.x-width/2)*64;o.y=(p.z-depth/2)*64;o.elevation3d=Math.max(0,p.y-height/2);
   if(o.rigidbody3d){o.rigidbody3d.vx=v.x*64;o.rigidbody3d.vy=v.y;o.rigidbody3d.vz=v.z*64;r.lastVelocity=velocity(o)}
   if(o.rigidbody3d?.lockRotations===false&&body.rotation){const rotation=body.rotation();Object.assign(o,quaternionEuler3d(rotation));r.lastRotation=rotation}
+  if(oldAffine&&oldReference)updateAffineEditorPose3d(o,oldAffine,oldReference);
   r.lastPosition=scenePosition(o);
  }
 }

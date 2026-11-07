@@ -41,7 +41,7 @@ import {defaultLogic,eventTypes,actionTypes,conditionTypes} from '../core/visual
 import {getAsset} from '../assets/catalog.js';
 import {state,active,notify} from '../core/state.js';
 import {record} from '../core/history.js';
-import {deleteEntitySubtrees} from '../core/scene-graph-v2.js';
+import {deleteEntitySubtrees,validateBoneSocketTarget3d} from '../core/scene-graph-v2.js';
 let inspectorFieldSerial=0;
 function deleteInspectedObject(object){if(state.playing)return;const result=deleteEntitySubtrees(state.entities,[object.id]);if(!result.removed.size)return;state.entities=result.entities;state.selected=state.selected.filter(id=>!result.removed.has(id));record('Supprimer '+object.name+' et ses enfants');notify()}
 function field(parent,o,key,label,type='number'){const line=document.createElement('div');line.className='property-row';const name=document.createElement('label');name.textContent=label;const input=document.createElement('input');input.id='inspector-field-'+(++inspectorFieldSerial);name.htmlFor=input.id;input.type=type==='number'?'text':type;if(type==='number')input.inputMode='decimal';input.value=o[key]??(type==='number'?0:'');input.disabled=state.playing;input.onchange=()=>{let v;try{v=type==='number'?inspectorNumber(input.value):input.value;if(['w','h'].includes(key)&&v<=0)throw Error('La dimension doit être positive.');input.setCustomValidity('')}catch(error){input.setCustomValidity(error.message);input.reportValidity();return}o[key]=v;record('Inspector : '+label);notify()};input.oninput=()=>input.setCustomValidity('');line.append(name,input);parent.append(line)}
@@ -162,7 +162,7 @@ function renderBoneSocketInspector(root,object){
    if(!bone.value&&bone.options.length)bone.selectedIndex=0;
   }catch(error){bone.replaceChildren();bone.append(new Option('Os indisponibles : '+error.message,''))}
  };
- source.onchange=()=>{socket.targetId=source.value?Number(source.value):null;socket.bone='';record('Bone Socket : personnage');notify()};
+ source.onchange=()=>{const id=source.value?Number(source.value):null;try{validateBoneSocketTarget3d(state.entities,object.id,id)}catch(error){window.alert(error.message);source.value=socket.targetId===null?'':String(socket.targetId);return}socket.targetId=id;socket.bone='';record('Bone Socket : personnage');notify()};
  bone.onchange=()=>{socket.bone=bone.value;record('Bone Socket : os');notify()};
  const offsets=document.createElement('div');offsets.className='property-row';offsets.textContent='Offset (m)';
  for(const [i,axis] of ['X','Y','Z'].entries()){

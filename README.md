@@ -252,3 +252,9 @@ La boutique charge maintenant les deux manifestes **locaux** `assets/free/kenney
 Nouveautés : filtres par auteur et par pack, sections de collections réelles, métadonnées (triangles, clips d'animation si disponibles), aperçus issus des fichiers existants, liens vers les sources et licences. Installer, prévisualiser ou télécharger utilise désormais le GLB **du domaine WarLike Engine** et valide sa signature avant utilisation. Les modèles tiers payants d'Unity Asset Store ne sont pas recopiés.
 
 Les deux manifestes peuvent être volumineux. Le chargement réel, la compatibilité des miniatures et l'intégration dans l'éditeur doivent encore être testés dans un navigateur après déploiement Cloudflare Pages. Les tests automatisés de mapping et de chemins sont définis dans `tests/asset-store-catalog.test.mjs`.
+
+### Asset Store — collections 2D, UI et audio
+
+La boutique inclut désormais [la galerie média](https://warlike-engine.pages.dev/asset-store/media.html), accessible depuis la page principale de l'Asset Store. Elle lit directement trois manifestes locaux déjà livrés dans le dépôt : `assets/free/kenney/sprites.json` (sprites 2D), `ui.json` (UI / HUD), `audio.json` (effets sonores). L'inventaire des tests du moteur documente respectivement **100 sprites, 40 éléments UI et 24 sons**, sous réserve de leur chargement effectif.
+
+Fonctionnalités : recherche, catégories, filtre par pack, favoris locaux, aperçu d'image, préécoute OGG, fiches d'asset avec auteur/licence/source et téléchargement du fichier. Les fichiers sont sur le même domaine que l'éditeur ; la galerie ne simule aucun asset inexistant, paiement ou installation automatique dans le projet. L'import multimédia direct dans les projets sera une étape distincte. La syntaxe JavaScript a été vérifiée, mais l'expérience complète doit encore être testée en navigateur.

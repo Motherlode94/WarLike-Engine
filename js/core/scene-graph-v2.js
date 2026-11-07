@@ -295,3 +295,27 @@ export function updateEditorEntityHierarchy3d(entities,{physicsOwnsDynamics=fals
  for(const o of entities)calculate(o.id);
  return cache;
 }
+
+// Snap in world metres. Keep one quantization implementation for project-drop
+// placement, gizmos and Inspector editing.
+export function snap3d(value,step=0){
+ if(!Number.isFinite(value)||!Number.isFinite(step)||step<0)throw Error('Valeur de snapping invalide');
+ return step>0?Math.round(value/step)*step:value;
+}
+export function placeEntityOnSurface3d(entity,hit,{snap=0,alignNormal=false}={}){
+ if(!entity||!hit||!Array.isArray(hit.point)||hit.point.length!==3||!hit.point.every(Number.isFinite))throw Error('Point de placement 3D invalide');
+ const [x,y,z]=hit.point;
+ const width=(Number(entity.w)||64)/64,depth=(Number(entity.depth3d??entity.h)||64)/64;
+ entity.x=Math.round((snap3d(x,snap)-width/2)*64);
+ entity.y=Math.round((snap3d(z,snap)-depth/2)*64);
+ entity.elevation3d=Math.max(0,snap3d(y,snap));
+ if(alignNormal&&Array.isArray(hit.normal)&&hit.normal.length===3&&hit.normal.every(Number.isFinite)){
+  const n=hit.normal,len=Math.hypot(...n);
+  if(len>1e-8){
+   // Rotate local up towards surface normal (editor Euler yaw/pitch convention).
+   entity.rotationX3d=Math.atan2(n[2],n[1])*180/Math.PI;
+   entity.rotationZ3d=-Math.atan2(n[0],Math.hypot(n[1],n[2]))*180/Math.PI;
+  }
+ }
+ return entity;
+}

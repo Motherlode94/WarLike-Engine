@@ -422,3 +422,86 @@ export function validateBoneSocketTarget3d(entities,sourceId,targetId){
  }
  return true;
 }
+
+
+/**
+ * World-space spatial hash for snapping to ANY neighbouring GLB triangle,
+ * including triangles not directly hit by the pointer ray.
+ * The index is constructed from the same positions used to render the mesh.
+ * Distinct vertex positions and undirected edges are deduplicated.
+ */
+export function buildMeshSnapIndex3d(parts,transform,{cellSize=.25,maxVertices=250000}={}){
+ if(!Array.isArray(parts)||typeof transform!=='function'||!Number.isFinite(cellSize)||cellSize<=0)throw Error('Paramètres de l’index de snapping invalides');
+ const vertices=[],edges=[],vertexIds=new Map(),edgeIds=new Set();
+ const buckets=new Map(),key=(x,y,z)=>x+','+y+','+z;
+ const hash=p=>p.map(n=>Math.floor(n/cellSize));
+ const put=(kind,index,p)=>{
+  const [x,y,z]=hash(p),label=key(x,y,z);
+  let bucket=buckets.get(label);if(!bucket){bucket={vertices:[],edges:[]};buckets.set(label,bucket)}
+  bucket[kind].push(index);
+ };
+ const pointKey=p=>p.map(n=>Math.round(n*1e6)).join(',');
+ let limited=false;
+ for(const part of parts){
+  const data=part?.vertices??part;
+  if(!data||data.length%18!==0)continue;
+  for(let i=0;i<data.length;i+=18){
+   const ids=[];
+   for(let k=0;k<3;k++){
+    const at=i+6*k,p=transform([data[at],data[at+1],data[at+2]]);
+    if(!Array.isArray(p)||p.length!==3||!p.every(Number.isFinite))throw Error('Sommet GLB non fini');
+    const signature=pointKey(p);
+    let id=vertexIds.get(signature);
+    if(id===undefined){
+     if(vertices.length>=maxVertices){limited=true;break}
+     id=vertices.length;vertices.push(p);vertexIds.set(signature,id);put('vertices',id,p);
+    }
+    ids.push(id);
+   }
+   if(ids.length<3)break;
+   for(let k=0;k<3;k++){
+    const a=ids[k],b=ids[(k+1)%3];if(a===b)continue;
+    const signature=Math.min(a,b)+':'+Math.max(a,b);if(edgeIds.has(signature))continue;
+    edgeIds.add(signature);
+    const pa=vertices[a],pb=vertices[b],id=edges.length;edges.push([a,b]);
+    // Every occupied cell of an edge is indexed, so a long edge whose
+    // endpoints are far away can still snap near its middle.
+    const distance=Math.hypot(...pa.map((n,j)=>n-pb[j]));
+    const steps=Math.max(1,Math.ceil(distance/cellSize));
+    if(steps>2048){limited=true;continue}
+    const visited=new Set();
+    for(let t=0;t<=steps;t++){
+     const p=pa.map((n,j)=>n+(pb[j]-n)*t/steps),cell=hash(p),label=key(...cell);
+     if(visited.has(label))continue;visited.add(label);
+     put('edges',id,p);
+    }
+   }
+  }
+  if(limited)break;
+ }
+ return {vertices,edges,buckets,cellSize,limited};
+}
+export function nearestMeshSnapFeature3d(index,point,mode,{radius=.15}={}){
+ if(!index||!['vertex','edge'].includes(mode)||!Array.isArray(point)||point.length!==3||!point.every(Number.isFinite)||!Number.isFinite(radius)||radius<=0)return null;
+ const {cellSize,vertices,edges,buckets}=index;
+ const low=point.map(n=>Math.floor((n-radius)/cellSize)),high=point.map(n=>Math.floor((n+radius)/cellSize));
+ let nearest=null,best=radius;
+ const checked=new Set();
+ for(let x=low[0];x<=high[0];x++)for(let y=low[1];y<=high[1];y++)for(let z=low[2];z<=high[2];z++){
+  const bucket=buckets.get(x+','+y+','+z);if(!bucket)continue;
+  for(const id of mode==='vertex'?bucket.vertices:bucket.edges){
+   if(checked.has(id))continue;checked.add(id);
+   let p;
+   if(mode==='vertex')p=vertices[id];
+   else{
+    const [a,b]=edges[id],pa=vertices[a],pb=vertices[b],delta=pb.map((n,j)=>n-pa[j]);
+    const length=delta.reduce((v,n)=>v+n*n,0);if(length<1e-14)continue;
+    const t=Math.max(0,Math.min(1,delta.reduce((v,n,j)=>v+n*(point[j]-pa[j]),0)/length));
+    p=pa.map((n,j)=>n+delta[j]*t);
+   }
+   const d=Math.hypot(...point.map((n,j)=>n-p[j]));
+   if(d<best){best=d;nearest={point:[...p],snapKind:mode,snapDistance:d,featureId:id}}
+  }
+ }
+ return nearest;
+}

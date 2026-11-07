@@ -476,7 +476,7 @@ export function init3d(canvas,host,buttons){
  };
  view3d.surfaceAt=(clientX,clientY,{excludeIds=[],groundFallback=true}={})=>{
   const rect=canvas.getBoundingClientRect(),point={x:clientX-rect.left,y:clientY-rect.top,w:rect.width,h:rect.height},cam=camera();
-  const mode=localStorage.getItem('warlike.snap3d.mode')||'grid';
+  const mode=localStorage.getItem('warlike.snap3d.enabled')==='true'?(localStorage.getItem('warlike.snap3d.mode')||'grid'):'grid';
   const raw=meshHit(point,cam,{excludeIds});
   const mesh=raw&&['vertex','edge'].includes(mode)?snapSurfaceFeature3d(raw,mode,{radius:Math.min(1,Math.max(.03,raw.distance*.018))}):raw;
   const floor=groundFallback?groundHit3d(point.x,point.y,cam,point.w,point.h):null;
@@ -698,11 +698,19 @@ export function init3d(canvas,host,buttons){
         child.elevation3d=pos[1]-(Number(child.h)||64)/128;
         if(socket.followRotation!==false){
          // Convert sampled bone WORLD orientation into the renderer's yaw/pitch/roll convention.
-         const euler=quaternionEuler3d(pose.quaternion);
          const offsetEuler=Array.isArray(socket.rotationOffset)?socket.rotationOffset:[0,0,0];
-         child.rotation=(euler.rotation||0)+(Number(offsetEuler[1])||0);
-         child.rotationX3d=(euler.rotationX3d||0)+(Number(offsetEuler[0])||0);
-         child.rotationZ3d=(euler.rotationZ3d||0)+(Number(offsetEuler[2])||0);
+         const b=rotationQuaternion3d({rotationX3d:Number(offsetEuler[0])||0,rotation:Number(offsetEuler[1])||0,rotationZ3d:Number(offsetEuler[2])||0});
+         const a=pose.quaternion;
+         const worldRotation={
+          x:a.w*b.x+a.x*b.w+a.y*b.z-a.z*b.y,
+          y:a.w*b.y-a.x*b.z+a.y*b.w+a.z*b.x,
+          z:a.w*b.z+a.x*b.y-a.y*b.x+a.z*b.w,
+          w:a.w*b.w-a.x*b.x-a.y*b.y-a.z*b.z
+         };
+         const euler=quaternionEuler3d(worldRotation);
+         child.rotation=euler.rotation;
+         child.rotationX3d=euler.rotationX3d;
+         child.rotationZ3d=euler.rotationZ3d;
         }
         if(previous&&reference)updateAffineEditorPose3d(child,previous,reference);
        }catch(error){if(!child._socketWarning){console.warn('[WarLike Socket]',child.name,error);child._socketWarning=true}}

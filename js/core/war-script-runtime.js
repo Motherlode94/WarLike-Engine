@@ -41,7 +41,7 @@ export function createScriptApi(entity,ctx,clock,component){
   throw Error('Propriété inconnue : '+name);
  };
  const write=(name,value)=>{
-  if(name==='transform.position'){warScriptValue('Vector3',value);entity.x=numeric(value.x)*64;if(three){entity.elevation3d=numeric(value.y);entity.y=numeric(value.z)*64}else entity.y=numeric(value.y)*64;return}
+  if(name==='transform.position'){warScriptValue('Vector3',value);const x=numeric(value.x),y=numeric(value.y),z=numeric(value.z);entity.x=x*64;if(three){entity.elevation3d=y;entity.y=z*64}else entity.y=y*64;return}
   if(name.startsWith('transform.position.')){const p=position();p[name.at(-1)]=numeric(value);write('transform.position',p);return}
   if(name.startsWith('transform.rotation.')){entity[{x:'rotationX3d',y:three?'rotation':'rotationY3d',z:three?'rotationZ3d':'rotation'}[name.at(-1)]]=numeric(value);return}
   if(name==='enabled'){warScriptValue('bool',value);if(!component)throw Error('Composant de script absent.');component.enabled=value;return}
@@ -77,7 +77,7 @@ export class WarScriptRuntime {
   this.context=ctx;const live=new Set();let total=0;
   for(const entity of ctx.entities)for(const component of entity.warScripts||[]){live.add(component);let entry=this.instances.get(component);if(component.enabled!==false&&++total>64)break;if(entry){Object.assign(entry.context,ctx);continue;}
    const clock={delta:0,elapsed:this.elapsed};entry={entity,component,clock,context:{...ctx},failed:false};entry.attached=()=>entry.context.entities.includes(entity)&&entity.warScripts?.includes(component);component.runtime??={started:false,fields:{},error:''};component.runtime.error='';
-   try{const program=compileWarScript(warScriptSource(component,ctx.project));entry.instance=createWarScriptInstance(program,createScriptApi(entity,entry.context,clock,component),{values:component.values||{},saved:component.runtime.started||component.runtime.awakened?component.runtime.fields:null});entry.lifecycle=new ScriptLifecycle(entry,(hook,cleanup)=>this.invoke(entry,hook,cleanup));this.instances.set(component,entry);
+   try{const program=compileWarScript(warScriptSource(component,ctx.project));if(!program.ok)throw Error('WarScript invalide : '+program.diagnostics.map(d=>d.line+':'+d.column+' '+d.message).join(' ; '));entry.instance=createWarScriptInstance(program,createScriptApi(entity,entry.context,clock,component),{values:component.values||{},saved:component.runtime.started||component.runtime.awakened?component.runtime.fields:null});entry.lifecycle=new ScriptLifecycle(entry,(hook,cleanup)=>this.invoke(entry,hook,cleanup));this.instances.set(component,entry);
    }catch(error){this.instances.set(component,entry);this.report(entry,error)}
   }
   for(const [component,entry] of this.instances)if(!live.has(component)){Object.assign(entry.context,ctx);entry.lifecycle?.dispose();this.instances.delete(component)}

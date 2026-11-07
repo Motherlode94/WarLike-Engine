@@ -319,3 +319,15 @@ export function placeEntityOnSurface3d(entity,hit,{snap=0,alignNormal=false}={})
  }
  return entity;
 }
+
+export function gizmoAxis3d(axis,quaternion,{local=false}={}){
+ const axes={x:[1,0,0],y:[0,1,0],z:[0,0,1]};
+ if(!Object.hasOwn(axes,axis))throw Error('Axe Gizmo inconnu');
+ const v=axes[axis];if(!local)return [...v];
+ if(!quaternion||![quaternion.x,quaternion.y,quaternion.z,quaternion.w].every(Number.isFinite))throw Error('Quaternion invalide');
+ const {x,y,z,w}=quaternion,mag=Math.hypot(x,y,z,w);
+ if(mag<1e-10)throw Error('Quaternion nul');
+ const qx=x/mag,qy=y/mag,qz=z/mag,qw=w/mag;
+ const t=[2*(qy*v[2]-qz*v[1]),2*(qz*v[0]-qx*v[2]),2*(qx*v[1]-qy*v[0])];
+ return [v[0]+qw*t[0]+qy*t[2]-qz*t[1],v[1]+qw*t[1]+qz*t[0]-qx*t[2],v[2]+qw*t[2]+qx*t[1]-qy*t[0]];
+}

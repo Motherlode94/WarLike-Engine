@@ -3,7 +3,7 @@
 export const PREFAB_STORAGE_KEY='warlike.prefabs.library.v1';
 const KEY_PREFIX='store-prefab-';
 const categories=new Set(['Personnages','Véhicules','Armes','Bâtiments','Nature','Objets']);
-function valid(a){return a&&typeof a.id==='string'&&/^[\w.-]{1,150}$/.test(a.id)&&typeof a.name==='string'&&a.name.length>0&&categories.has(a.category)&&a.bundled===true&&typeof a.url==='string'}
+function valid(a){if(!a||typeof a.id!=='string'||!/^[\w.-]{1,150}$/.test(a.id)||typeof a.name!=='string'||!a.name.trim()||a.name.length>160||!categories.has(a.category)||a.bundled!==true||typeof a.url!=='string')return false;try{const url=new URL(a.url);return url.protocol==='https:'&&/^\/.*\/assets\/free\/(?:kenney|quaternius)\/[a-z0-9_./-]+\.glb$/i.test(url.pathname)&&!url.pathname.includes('..')}catch{return false}}
 export function prefabFromBundledAsset(asset,options={}){
  if(!valid(asset))throw Error('Un modèle 3D gratuit du catalogue WarLike est requis');
  const solid=!['Nature'].includes(asset.category);

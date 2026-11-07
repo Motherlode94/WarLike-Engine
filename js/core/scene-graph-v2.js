@@ -250,3 +250,44 @@ export function updateAffineEditorPose3d(o,previousWorld=o.worldMatrix3d,previou
  o.matrixReference3d=reference;
  return true;
 }
+
+// Sync the legacy editor's world-space coordinates with canonical parent/child
+// matrices. A child's localMatrix3d is authoritative after its first attach.
+// Physics-driven dynamic children remain world-authoritative during Play.
+export function updateEditorEntityHierarchy3d(entities,{physicsOwnsDynamics=false}={}){
+ if(!Array.isArray(entities))throw Error('Entités invalides');
+ const byId=new Map(entities.map(o=>[o.id,o])),cache=new Map(),visiting=new Set();
+ const calculate=id=>{
+  if(cache.has(id))return cache.get(id);
+  const o=byId.get(id);if(!o)throw Error('GameObject absent');
+  if(visiting.has(id))throw Error('Cycle de parentage 3D');
+  visiting.add(id);
+  const parent=o.parentId!==null&&o.parentId!==undefined?byId.get(o.parentId):null;
+  const parentWorld=parent?calculate(parent.id):null;
+  const worldDriven=physicsOwnsDynamics&&o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic;
+  const reference=legacyReferenceMatrix3d(o);
+  let world;
+  if(parentWorld){
+   if(worldDriven||!Array.isArray(o.localMatrix3d)){
+    const absolute=hasAffinePose(o)?o.worldMatrix3d:reference;
+    o.localMatrix3d=multiplyMatrix4(invertMatrix4(parentWorld),absolute);
+    world=[...absolute];
+   }else{
+    if(o.localMatrix3d.length!==16||!o.localMatrix3d.every(finite))throw Error('Transformation locale de '+o.name+' invalide');
+    world=multiplyMatrix4(parentWorld,o.localMatrix3d);
+   }
+   const pose=decomposeTransformMatrix(world);
+   o.x=world[12]*64;o.elevation3d=world[13];o.y=world[14]*64;
+   if(pose){o.rotation=-pose.rotation[1];o.rotationX3d=pose.rotation[0];o.rotationZ3d=pose.rotation[2]}
+   o.worldMatrix3d=world;
+   o.matrixReference3d=legacyReferenceMatrix3d(o);
+  }else{
+   // Root poses still follow existing editor controls.
+   if(o.localMatrix3d!==undefined)delete o.localMatrix3d;
+   world=hasAffinePose(o)?o.worldMatrix3d:reference;
+  }
+  cache.set(id,world);visiting.delete(id);return world;
+ };
+ for(const o of entities)calculate(o.id);
+ return cache;
+}

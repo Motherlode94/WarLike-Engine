@@ -35,11 +35,13 @@ En cas d'API WarScript incompatible, la conversion échoue **sans générer un f
 | `transform.position.x += 1` | `WarScriptCompat.SetPositionAxis(this, 'X', transform.position.X + 1)` |
 | `Animator.SetTrigger("Attack")` | `GetComponent<Animator>()?.SetTrigger("Attack")` |
 | `Log("Hello")` | `Debug.Log("Hello")` |
+| `vehicle.maxSpeed = 270` | `WarScriptCompat.SetVehicleValue(this, "maxSpeed", 270)` |
 
 ## Limites explicites
 
+- Les propriétés `vehicle.maxSpeed`, `vehicle.acceleration`, `vehicle.brakeForce` et `vehicle.turnRate` disposent d'un adaptateur natif `VehicleControllerComponent`, qui doit être attaché au GameObject.
 - L'API WarScript des variables globales `Get` / `Set` / `Signal` n'a pas d'équivalent garanti dans `WarLike.Runtime` : **refus de conversion**.
-- Les paramètres directs `vehicle.*`, `controller.*`, `world.timeScale`, `light.*` et la visibilité graphique `SetVisible` ne sont pas traduits sans bridge natif équivalent.
+- Les paramètres `controller.*`, `world.timeScale`, `light.*` et la visibilité graphique `SetVisible` ne sont pas traduits sans bridge natif équivalent.
 - Les champs `var` n'ont pas de type statique sûr à émettre. Déclare `float`, `int`, `bool`, `string` ou `Vector3`.
 - Les scripts C# ont besoin de la connexion au runtime .NET natif. Les différences de comportement des physiques et des scènes entre les deux backends doivent être testées.
 - L'AST v1 ne propose pas les boucles `for` / `while`, fonctions avec paramètres, ni les closures : le transpileur ne les invente pas.

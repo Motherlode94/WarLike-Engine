@@ -1,4 +1,4 @@
-import {importedModels3d,model3dById,parseGlb} from '../assets/real-models-3d.js';
+import {importedModels3d,model3dById,parseGlb,embeddedGlbImage} from '../assets/real-models-3d.js';
 import {persistLocalModels} from './local-asset-library.js';
 const MAX_TOTAL=100*1024*1024;
 const safeId=id=>typeof id==='string'&&/^(?:local-[-a-zA-Z0-9]{1,100}|library-[a-f0-9]{24})$/.test(id);
@@ -14,7 +14,8 @@ export async function portableModelBytes(asset){
  // A local GLB must carry its images and buffers to travel to another machine.
  const view=new DataView(bytes.buffer),length=view.getUint32(12,true);
  const json=JSON.parse(new TextDecoder().decode(bytes.subarray(20,20+length)));
- if((json.buffers||[]).some(b=>b.uri)||(json.images||[]).some(i=>i.uri))throw Error(asset.name+' : réexporte le GLB avec ses textures et buffers intégrés.');
+ if((json.buffers||[]).some(b=>b.uri)||(json.images||[]).some(i=>i.uri&&!i.uri.startsWith('data:')))throw Error(asset.name+' : réexporte le GLB avec ses textures et buffers intégrés.');
+ for(const image of json.images||[])if(image.uri)embeddedGlbImage(image.uri);
  return bytes;
 }
 export function portableModelDescriptor(asset){

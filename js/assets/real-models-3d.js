@@ -101,6 +101,14 @@ function readAccessor(json,binary,index){
  // per element (POSITION is VEC3 even when the mesh has thousands of vertices).
  return {data:out,count:a.count,components:count};
 }
+// Images carried as data URIs are self-contained just like image bufferViews.
+export function embeddedGlbImage(uri){
+ const match=/^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]*={0,2})$/i.exec(uri||'');
+ if(!match)throw Error('Image GLB intégrée invalide : PNG, JPEG ou WebP en base64 requis');
+ let binary;try{binary=atob(match[2])}catch{throw Error('Image GLB : base64 invalide')}
+ if(!binary.length)throw Error('Image GLB intégrée vide');
+ return {mimeType:match[1].toLowerCase(),bytes:Uint8Array.from(binary,c=>c.charCodeAt(0))};
+}
 export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
  if(buffer.byteLength>maxBytes)throw Error('GLB supérieur à 25 Mo');
  const v=new DataView(buffer);if(buffer.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==buffer.byteLength)throw Error('GLB 2.0 invalide');
@@ -152,6 +160,10 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
      if(end>binary.byteLength)throw Error('Texture GLB incomplète');
      const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
      texture={bytes:binary.slice(start,end),mimeType:image.mimeType,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
+    }
+    else if(typeof image.uri==='string'&&image.uri.startsWith('data:')){
+     const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
+     texture={...embeddedGlbImage(image.uri),wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
     }
     else if(baseUrl&&image.uri&&!/^(?:[a-z]+:|\/\/)/i.test(image.uri)&&/\.(png|jpe?g|webp)$/i.test(image.uri)){
      const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};

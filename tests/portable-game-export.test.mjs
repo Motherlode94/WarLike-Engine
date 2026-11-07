@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {registerLocalModel,importedModels3d,parseGlb} from '../js/assets/real-models-3d.js';
-import {encodeProjectAssets,restoreProjectAssets} from '../js/core/portable-assets.js';
+import {encodeProjectAssets,restoreProjectAssets,portableModelBytes} from '../js/core/portable-assets.js';
 import {exportGamePackage} from '../js/core/game-build.js';
 import {freshGameProject} from '../js/core/game-project.js';
 import {sampleRigPose,normalMatrix3,transformNormal} from '../js/core/gltf-animation.js';
@@ -14,6 +14,27 @@ function unzip(bytes){
  while(view.getUint32(offset,true)===0x04034b50){const size=view.getUint32(offset+18,true),length=view.getUint16(offset+26,true),extra=view.getUint16(offset+28,true),start=offset+30+length+extra;files.set(decoder.decode(bytes.subarray(offset+30,offset+30+length)),bytes.slice(start,start+size));offset=start+size}
  return files;
 }
+function texturedGlb(uri){
+ const json={asset:{version:'2.0'},scenes:[{nodes:[0]}],nodes:[{mesh:0}],meshes:[{primitives:[{attributes:{POSITION:0,TEXCOORD_0:1},material:0}]}],materials:[{pbrMetallicRoughness:{baseColorTexture:{index:0}}}],textures:[{source:0}],images:[{uri}],accessors:[{bufferView:0,componentType:5126,count:3,type:'VEC3'},{bufferView:1,componentType:5126,count:3,type:'VEC2'}],bufferViews:[{buffer:0,byteLength:36},{buffer:0,byteOffset:36,byteLength:24}]};
+ const text=new TextEncoder().encode(JSON.stringify(json)),size=Math.ceil(text.length/4)*4,buffer=new ArrayBuffer(28+size+60),view=new DataView(buffer);
+ [0x46546c67,2,buffer.byteLength,size,0x4e4f534a].forEach((n,i)=>view.setUint32(i*4,n,true));new Uint8Array(buffer,20,size).fill(32);new Uint8Array(buffer,20,text.length).set(text);view.setUint32(20+size,60,true);view.setUint32(24+size,0x004e4942,true);
+ [0,0,0,1,0,0,0,1,0,0,0,1,0,0,1].forEach((n,i)=>view.setFloat32(28+size+i*4,n,true));return buffer;
+}
+test('base64 image data URIs survive rendering, scene transport and the game ZIP',async()=>{
+ const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aYz8AAAAASUVORK5CYII=',bytes=texturedGlb('data:image/png;base64,'+png),model=registerLocalModel(new File([bytes],'embedded.glb'));
+ try{
+  const entity={id:1,type:'mesh3d',name:'Embedded',x:0,y:0,w:32,h:64,playable3d:true,model3dId:model.id,assetId:model.id};
+  const original=parseGlb(bytes).parts[0].texture;assert.equal(original.mimeType,'image/png');assert.equal(btoa(String.fromCharCode(...original.bytes)),png);
+  const assets=await encodeProjectAssets({entities:[entity]});await restoreProjectAssets(assets,{persist:async()=>{}});
+  const result=await exportGamePackage({entities:[entity],mode:'3d',project:freshGameProject()},{fetcher:async url=>url.pathname.endsWith('runtime-files.json')?Response.json({files:['index.html']}):new Response(await readFile(url))});
+  const zipped=unzip(new Uint8Array(await result.blob.arrayBuffer())).get('assets/imported/'+model.id+'.glb');assert.deepEqual(parseGlb(zipped.buffer).parts[0].texture.bytes,original.bytes);
+ }finally{importedModels3d.delete(model.id)}
+});
+test('external image references and malformed embedded images still fail portability checks',async()=>{
+ for(const uri of ['textures/albedo.png','https://example.org/albedo.png','data:image/png;base64,???']){
+  const model={id:'local-invalid-image',name:'Invalid image',file:new File([texturedGlb(uri)],'invalid.glb')};await assert.rejects(portableModelBytes(model));
+ }
+});
 test('scene assets travel to a fresh catalogue and invalid imports are atomic',async()=>{
  const model=registerLocalModel(await fixture()),payload={entities:[{model3dId:model.id}]};
  try{
@@ -28,7 +49,7 @@ test('ZIP includes the original imported GLB and a bootable catalogue with no bl
  try{
   const entity={id:1,name:'Player',playable3d:true,type:'mesh3d',assetId:model.id,model3dId:model.id,x:0,y:0,w:32,h:64};
   const files=['index.html','js/assets/imported-models-3d.js'];
-  const result=await exportGamePackage({entities:[entity],mode:'3d',project:freshGameProject()},{fetcher:async url=>url.pathname.endsWith('runtime-files.json')?Response.json({files}):new Response(await readFile(new URL(url.pathname.split('/WarLike-Engine/')[1],root)))});
+  const result=await exportGamePackage({entities:[entity],mode:'3d',project:freshGameProject()},{fetcher:async url=>url.pathname.endsWith('runtime-files.json')?Response.json({files}):new Response(await readFile(url))});
   const entries=unzip(new Uint8Array(await result.blob.arrayBuffer())),decode=path=>new TextDecoder().decode(entries.get(path));
   const path='assets/imported/'+model.id+'.glb';assert.ok(entries.has(path));assert.equal(parseGlb(entries.get(path).buffer).rig.animations.length,32);
   assert.match(decode('js/assets/imported-models-3d.js'),new RegExp(model.id));assert.ok(!decode('js/assets/imported-models-3d.js').includes('blob:'));assert.match(decode('index.html'),/game-build-player/);

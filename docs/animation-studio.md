@@ -151,3 +151,9 @@ Dans **Atelier du mouvement**, les personnages **04 · Clips de combat prêts** 
 Les profils possédant un état de mort le conservent tant que le personnage reste mort, même en chute ou si une action est demandée. Le profil Tir écoute aussi l’action d’attaque standard du moteur ; `shootRequest` reste disponible pour Blueprint et les scripts.
 
 La première compilation native peut charger Roslyn et ses références : Play et le panneau C# lui accordent jusqu’à 30 secondes. Les autres requêtes conservent leur limite de 4,5 secondes. Une compilation interrompue ou invalide reste une erreur visible ; elle n’est pas considérée comme réussie.
+
+## Fiabilisation du retargeting et du viewport 3D (novembre 2026)
+
+Le transfert squelettique automatique rapproche désormais plusieurs noms d'os usuels des exports (ex. `LeftForeArm` / `leftLowerArm`, `Hips` / `pelvis`) en conservant la distinction gauche/droite. Pour éviter les rotations appliquées au mauvais os, les correspondances ambiguës, lorsqu'une même appellation normalisée apparaît plusieurs fois, sont ignorées. L'utilisateur doit alors compléter manuellement la table de correspondance. Cette amélioration ne garantit **pas** le transfert parfait de rigs incompatibles (axes, morphologie, rest pose et hiérarchie différents) ; les poses doivent être validées dans l'Animator avant de les exporter.
+
+Le viewport WebGL limite aussi désormais son nombre de pixels dessinés à environ 2560 × 1440, tout en respectant les proportions de la zone et la limite de ratio 2 sur les écrans à forte densité. Cette limite réduit la pression GPU potentielle sur les écrans haute résolution ; elle ne remplace pas l'optimisation des shaders, des textures, des draw calls ou des animations. Les tests `tests/animator-render-hardening.test.mjs` couvrent les alias d'os, les collisions de noms et le calcul de résolution.

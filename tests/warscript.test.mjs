@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {compileWarScript,createWarScriptInstance,warScriptBuiltin} from '../script-editor/warscript.js';
-import {WarScriptRuntime,inspectWarScripts} from '../js/core/war-script-runtime.js';
+import {WarScriptRuntime,inspectWarScripts,createScriptApi} from '../js/core/war-script-runtime.js';
 import {applyScriptSave,languageFor} from '../script-editor/core.js';
 import {createTownDemo,createGarageDemo,createNatureDemo} from '../js/core/authored-demo-scenes.js';
 import {createBundledPhysicsScene2d} from '../js/core/bundled-physics-scene.js';
@@ -66,4 +66,21 @@ test('attachment limits reject a save without partially changing project or enti
 
 test('Vector3 arithmetic can update positions using C# style compound assignment',()=>{
  const e=object('Vector3 speed = Vector3(1,2,0); Update(){ transform.position += speed * Time.deltaTime; }');const runtime=new WarScriptRuntime();runtime.update(.1,context([e]));assert.equal(e.x,6.4);assert.equal(e.y,12.8);
+});
+
+test('WarScript transform writes are atomic for invalid 3D coordinates',()=>{
+ const e=object('Start(){}'),ctx={...context([e]),mode:'3d'};
+ e.x=64;e.y=128;e.elevation3d=3;
+ const api=createScriptApi(e,ctx,{delta:0,elapsed:0},e.warScripts[0]);
+ assert.throws(()=>api.write('transform.position',{x:7,y:Infinity,z:8}),/Nombre fini/);
+ assert.deepEqual([e.x,e.y,e.elevation3d],[64,128,3]);
+ api.write('transform.position',{x:7,y:4,z:8});
+ assert.deepEqual([e.x,e.y,e.elevation3d],[448,512,4]);
+});
+test('invalid WarScript does not start or move a scene actor',()=>{
+ const e=object('Update(){ MissingFunction(); }'),ctx=context([e]),runtime=new WarScriptRuntime();
+ runtime.update(.02,ctx);
+ assert.equal(e.x,0);
+ assert.ok(runtime.errors.length>0);
+ assert.match(e.warScripts[0].runtime.error,/WarScript invalide/);
 });

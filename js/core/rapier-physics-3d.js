@@ -1,6 +1,6 @@
 import {solidBody3d,activeBody3d} from './collision-3d.js';
-import {updateAffineEditorPose3d} from './scene-graph-v2.js';
-import {characterBody3d,colliderGeometry3d,colliderPosition3d,rotationQuaternion3d,quaternionEuler3d} from './collider-3d.js';
+import {updateAffineEditorPose3d,affineCorrection3d} from './scene-graph-v2.js';
+import {characterBody3d,colliderGeometry3d,colliderPosition3d,rotationQuaternion3d,quaternionEuler3d,affineBoxHull3d,affineHullSignature3d} from './collider-3d.js';
 let activeScene=null;
 export const activeRapierScene3d=()=>activeScene;
 let rapier=null,initPromise=null,loadError=null;
@@ -17,6 +17,14 @@ const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,
 const scenePosition=o=>({x:n(o.x),y:n(o.y),z:n(o.elevation3d)});
 const velocity=o=>({x:n(o.rigidbody3d?.vx),y:n(o.rigidbody3d?.vy),z:n(o.rigidbody3d?.vz)});
 const changed=(a,b)=>Object.keys(a).some(k=>Math.abs(a[k]-n(b?.[k]))>1e-5);
+const affineColliderData=(o,g,pos,rotation)=>{
+ const correction=affineCorrection3d(o);
+ if(!correction)return null;
+ if(g.shape!=='box')throw Error('Collider sous shear : seuls les BoxColliders disposent pour le moment d’une forme exacte. Convertis ce collider en boîte ou crée un compound adapté.');
+ const points=affineBoxHull3d(correction,g,pos,rotation);
+ return {points,signature:affineHullSignature3d(points)};
+};
+
 function controllerFor(world,o){
  if(!world.createCharacterController)return null;
  const c=o.controller3d||{},controller=world.createCharacterController(clamp(c.skinWidth??.01,.001,.1));
@@ -35,11 +43,21 @@ export function createRapierScene(RAPIER,entities,gravity=15){
   const desc=(isDynamic?RAPIER.RigidBodyDesc.dynamic():isKinematic&&RAPIER.RigidBodyDesc.kinematicPositionBased?RAPIER.RigidBodyDesc.kinematicPositionBased():RAPIER.RigidBodyDesc.fixed()).setTranslation(pos.x,pos.y,pos.z);
   const rotation=rotationQuaternion3d(o);desc.setRotation?.(rotation);
   if(isDynamic){const v=velocity(o);desc.setLinvel(v.x/64,v.y,v.z/64);desc.setCcdEnabled?.(o.rigidbody3d.ccd!==false);desc.setGravityScale?.(Math.max(0,n(o.rigidbody3d.gravity,15))/Math.max(.001,gravity));if(o.rigidbody3d.lockRotations!==false)desc.lockRotations?.()}
+  // A sheared box is an exact convex polyhedron. Never fall back to a regular
+  // cuboid when a custom affine shape cannot be built.
+  let affine=null;
+  try{affine=affineColliderData(o,g,pos,rotation)}catch(error){errors.push(o.name+' : '+error.message);continue}
+  if(affine&&typeof RAPIER.ColliderDesc.convexHull!=='function'){
+   errors.push(o.name+' : ce runtime Rapier ne prend pas en charge les convex hulls sous shear.');continue;
+  }
+  const colliderDesc=affine?RAPIER.ColliderDesc.convexHull(affine.points):g.shape==='capsule'?RAPIER.ColliderDesc.capsule(g.halfHeight,g.radius):g.shape==='sphere'?RAPIER.ColliderDesc.ball(g.radius):RAPIER.ColliderDesc.cuboid(g.w/2,g.h/2,g.d/2);
+  if(!colliderDesc){errors.push(o.name+' : impossible de créer le convex hull du collider affine.');continue}
   const body=world.createRigidBody(desc);
-  const colliderDesc=g.shape==='capsule'?RAPIER.ColliderDesc.capsule(g.halfHeight,g.radius):g.shape==='sphere'?RAPIER.ColliderDesc.ball(g.radius):RAPIER.ColliderDesc.cuboid(g.w/2,g.h/2,g.d/2);
-  colliderDesc.setTranslation?.(g.offset.x,g.offset.y,g.offset.z);colliderDesc.setRestitution?.(clamp(o.rigidbody3d?.restitution??.2,0,1));colliderDesc.setFriction?.(clamp(o.rigidbody3d?.friction??.82,0,2));if(isDynamic)colliderDesc.setMass?.(Math.max(.01,n(o.rigidbody3d.mass,1)));
+  // Offset was already baked into affine hull vertices.
+  if(!affine)colliderDesc.setTranslation?.(g.offset.x,g.offset.y,g.offset.z);
+  colliderDesc.setRestitution?.(clamp(o.rigidbody3d?.restitution??.2,0,1));colliderDesc.setFriction?.(clamp(o.rigidbody3d?.friction??.82,0,2));if(isDynamic)colliderDesc.setMass?.(Math.max(.01,n(o.rigidbody3d.mass,1)));
   const collider=world.createCollider(colliderDesc,body),controller=isCharacter?controllerFor(world,o):null;
-  actors.set(o.id,{body,collider,controller,entity:o,geometry:g,width:n(o.w,32)/64,depth:n(o.depth3d,o.h||32)/64,height:n(o.h,32)/64,isDynamic,isKinematic,isCharacter,config:bodyConfig(o),lastPosition:scenePosition(o),lastVelocity:velocity(o),lastRotation:rotation});
+  actors.set(o.id,{body,collider,controller,entity:o,geometry:g,width:n(o.w,32)/64,depth:n(o.depth3d,o.h||32)/64,height:n(o.h,32)/64,isDynamic,isKinematic,isCharacter,config:bodyConfig(o),affineHullSignature:affine?.signature||null,lastPosition:scenePosition(o),lastVelocity:velocity(o),lastRotation:rotation});
  }
  for(const o of entities){const j=o.joint3d;if(!j||j.enabled===false)continue;const a=actors.get(o.id),b=actors.get(Number(j.targetId));if(!a||!b||a===b){errors.push(o.name+' : cible d’articulation invalide.');continue}
   try{
@@ -59,6 +77,11 @@ export function synchronizeRapierScene(scene,entities){
  for(const [id,r] of scene.actors){const o=current.get(id);if(o!==r.entity||!included(o)||bodyConfig(o)!==r.config)return false;
   if(Math.abs(n(o.w,32)/64-r.width)+Math.abs(n(o.h,32)/64-r.height)+Math.abs(n(o.depth3d,o.h||32)/64-r.depth)>1e-5)return false;
   const pos=colliderPosition3d(o),rotation=rotationQuaternion3d(o);
+  let affine=null;
+  try{affine=affineColliderData(o,colliderGeometry3d(o),pos,rotation)}catch{return false}
+  // If the authored affine shape changes, rebuild the physics shape. A pose
+  // translation alone keeps the same body-local vertex hull.
+  if((affine?.signature||null)!==r.affineHullSignature)return false;
   if(!r.isDynamic||changed(scenePosition(o),r.lastPosition)){
    if(changed(pos,r.body.translation())){r.body.setTranslation(pos,true);if(r.isKinematic)r.body.setNextKinematicTranslation?.(pos)}
   }

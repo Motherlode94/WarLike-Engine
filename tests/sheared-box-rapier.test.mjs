@@ -104,6 +104,8 @@ test('real Rapier ray contact follows the sheared face instead of the original A
   const shape=rapier.ColliderDesc.convexHull(points);
   assert.ok(shape,'Rapier must construct the convex polyhedron');
   world.createCollider(shape,body);
+  // Rapier updates its broad-phase/query pipeline on the simulation step.
+  world.step();
   world.updateSceneQueries?.();
   const ray=new rapier.Ray({x:4,y:3.8,z:0},{x:-1,y:0,z:0});
   const hit=world.castRay(ray,10,true);

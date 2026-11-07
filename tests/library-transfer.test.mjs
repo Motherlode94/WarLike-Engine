@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
-import {parseLibraryTransfer,nativePrefabFromTransfer,installLibraryPrefab} from '../js/core/library-transfer.js';
+import {parseLibraryTransfer,nativePrefabFromTransfer,installLibraryPrefab,libraryAnimationMapping} from '../js/core/library-transfer.js';
 import {registerLocalModel,importedModels3d} from '../js/assets/real-models-3d.js';
 const glb=readFileSync(new URL('../assets/free/kenney/mini-characters/character-male-a.glb',import.meta.url));
 const sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',glb)).toString('hex');
@@ -62,4 +62,21 @@ test('legacy Store pages redirect to the independent provider while Library impo
  assert.ok(store.includes('location.search+location.hash'));
  const receiver=readFileSync(new URL('../asset-store/library-import.html',import.meta.url),'utf8');
  assert.ok(receiver.includes('/library-import.html'));
+});
+
+test('animated Library prefab retains actual clip names and gameplay mappings',()=>{
+ const mapping=libraryAnimationMapping(['Idle_01','Walking','Sprint','Rifle_Attack','Death']);
+ assert.deepEqual(mapping,{idle:'Idle_01',walk:'Walking',run:'Sprint',attack:'Rifle_Attack',death:'Death'});
+ const record={id:'library-'+sha.slice(0,24),sha256:sha,animationCount:5,metadata:{
+  assetId:'source-character',mode:'3d',name:'Soldier',filename:'soldier.glb',
+  license:'CC0-1.0',sourceUrl:null,sourcePrefabId:'prefab-soldier',parentId:null,
+  animationNames:['Idle_01','Walking','Sprint','Rifle_Attack','Death'],animationMap:mapping,
+  config:{transform:{position:[0,0,0],rotation:[0,0,0],scale:[1,1,1]}}
+ }};
+ const prefab=nativePrefabFromTransfer(record);
+ assert.equal(prefab.components.animation3dClip,'Idle_01');
+ assert.equal(prefab.components.animationPreview,true);
+ assert.equal(prefab.components.animationMap.run,'Sprint');
+ const still=nativePrefabFromTransfer({...record,animationCount:0});
+ assert.equal(still.components.animation3dClip,undefined);
 });

@@ -171,6 +171,19 @@ function renderBoneSocketInspector(root,object){
   offsets.append(input);
  }
  details.append(offsets);
+ const followLabel=document.createElement('label');followLabel.className='property-row';
+ const follow=document.createElement('input');follow.type='checkbox';follow.checked=socket.followRotation!==false;follow.disabled=state.playing;
+ follow.setAttribute('aria-label','Hériter de la rotation de l’os');
+ follow.onchange=()=>{socket.followRotation=follow.checked;record('Bone Socket : suivre rotation');notify()};
+ followLabel.append(follow,document.createTextNode(' Suivre rotation de l’os'));details.append(followLabel);
+ const rotation=document.createElement('div');rotation.className='property-row';rotation.textContent='Rotation offset (degrés)';
+ for(const [i,axis] of ['X','Y','Z'].entries()){
+  const input=document.createElement('input');input.type='number';input.step='1';input.value=String(socket.rotationOffset?.[i]??0);input.disabled=state.playing;
+  input.style.width='30%';input.setAttribute('aria-label','Socket rotation '+axis);
+  input.onchange=()=>{const value=Number(input.value);if(!Number.isFinite(value))return;socket.rotationOffset??=[0,0,0];socket.rotationOffset[i]=value;record('Bone Socket : rotation '+axis);notify()};
+  rotation.append(input);
+ }
+ details.append(rotation);
  const remove=document.createElement('button');remove.type='button';remove.textContent='Retirer Bone Socket';remove.disabled=state.playing;
  remove.onclick=()=>{delete object.socket3d;record('Retirer Bone Socket');notify()};details.append(remove);root.append(details);
  void load();

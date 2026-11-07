@@ -6,7 +6,7 @@ import {updateCompanyMarkers} from '../ui/company-ui.js';
 import {resetBattlefield,tickBattlefield,battlefieldMatch,consumeBattlefieldShot,isBattlefieldSoldier} from './battlefield-runtime.js';
 import {updateBattlefieldHud} from '../ui/battlefield-hud.js';
 import {rotationQuaternion3d,quaternionEuler3d} from './collider-3d.js';
-import {affineCorrection3d,normalMatrix3d,updateEditorEntityHierarchy3d,updateAffineEditorPose3d,boneSocketTransform3d,snapSurfaceFeature3d} from './scene-graph-v2.js';
+import {affineCorrection3d,normalMatrix3d,updateEditorEntityHierarchy3d,updateAffineEditorPose3d,boneSocketTransform3d,buildMeshSnapIndex3d,nearestMeshSnapFeature3d} from './scene-graph-v2.js';
 import {gameProject} from './game-project.js';
 import {survivalPlacement} from './survival-building.js';
 import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';
@@ -443,9 +443,34 @@ export function init3d(canvas,host,buttons){
  document.addEventListener('keydown',e=>{if(state.playing||!view3d.enabled||view3d.drag?.nav!=='look'||isTypingTarget(e.target))return;if(['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();editorKeys.add(e.code)}});document.addEventListener('keyup',e=>editorKeys.delete(e.code));window.addEventListener('blur',()=>{editorKeys.clear();view3d.drag=null;selectionRect.hidden=true});
  const updateGizmos=initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBounds3d,getCamera:camera,record,notify});
  const rectPoint=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,w:r.width,h:r.height}};
+ const meshSnapCache=new WeakMap();
+ const nearbySnap=(hit,contexts,mode)=>{
+  if(!hit||!['vertex','edge'].includes(mode))return hit;
+  const radius=Math.min(1,Math.max(.03,hit.distance*.018));
+  let best=null;
+  for(const {entity,loaded,deformed,transform,correction} of contexts){
+   const bounds=objectBounds3d(entity);
+   // Reject distant models before creating their spatial indices.
+   const center=[bounds.x,(Number(entity.elevation3d)||0)+bounds.h/2,bounds.z];
+   if(Math.hypot(...center.map((v,i)=>v-hit.point[i]))>Math.max(bounds.w,bounds.h,bounds.d)*2+radius)continue;
+   const signature=JSON.stringify([entity.model3dId||entity.assetId,entity.x,entity.y,entity.elevation3d,entity.w,entity.h,entity.depth3d,entity.rotation,entity.rotationX3d,entity.rotationZ3d,correction]);
+   let cached=meshSnapCache.get(entity);
+   if(!cached||cached.signature!==signature){
+    const parts=loaded.geometry.parts.map((part,i)=>({vertices:deformed?.[i]||part.vertices}));
+    cached={signature,index:buildMeshSnapIndex3d(parts,transform,{cellSize:.2})};
+    // Animated vertex buffers are updated in place: invalidate this cache
+    // after every evaluated animated rig pose.
+    meshSnapCache.set(entity,cached);
+   }
+   const found=nearestMeshSnapFeature3d(cached.index,hit.point,mode,{radius});
+   if(found&&(!best||found.snapDistance<best.snapDistance))best={...found,entity};
+  }
+  return best?{...hit,...best}:hit;
+ };
  const meshHit=(point,cam,{excludeIds=[]}={})=>{
   const ray=sceneRay3d(point.x,point.y,cam,point.w,point.h);
   let nearest=null;
+  const contexts=[];
   for(const entity of state.entities){
    if(excludeIds.includes(entity.id)||entity.editorHidden||entity.enabled===false)continue;
    const id=entity.model3dId||entity.assetId,loaded=realGlbBuffers.get(id);
@@ -467,18 +492,21 @@ export function init3d(canvas,host,buttons){
     ]:world;
    };
    const deformed=animatedHitVertices.get(entity);
+   contexts.push({entity,loaded,deformed,transform,correction});
    for(const [partIndex,part] of loaded.geometry.parts.entries()){
     const hit=raycastTriangles3d(ray.origin,ray.direction,deformed?.[partIndex]||part.vertices,transform,{maxDistance:nearest?.distance??1e4});
     if(hit&&(!nearest||hit.distance<nearest.distance))nearest={...hit,entity,kind:'triangle'};
    }
   }
-  return nearest;
+  const snapping=localStorage.getItem('warlike.snap3d.enabled')==='true';
+  const mode=snapping?(localStorage.getItem('warlike.snap3d.mode')||'grid'):'grid';
+  return snapping&&['vertex','edge'].includes(mode)?nearbySnap(nearest,contexts,mode):nearest;
  };
  view3d.surfaceAt=(clientX,clientY,{excludeIds=[],groundFallback=true}={})=>{
   const rect=canvas.getBoundingClientRect(),point={x:clientX-rect.left,y:clientY-rect.top,w:rect.width,h:rect.height},cam=camera();
   const mode=localStorage.getItem('warlike.snap3d.enabled')==='true'?(localStorage.getItem('warlike.snap3d.mode')||'grid'):'grid';
   const raw=meshHit(point,cam,{excludeIds});
-  const mesh=raw&&['vertex','edge'].includes(mode)?snapSurfaceFeature3d(raw,mode,{radius:Math.min(1,Math.max(.03,raw.distance*.018))}):raw;
+  const mesh=raw;
   const floor=groundFallback?groundHit3d(point.x,point.y,cam,point.w,point.h):null;
   if(!floor)return mesh;
   const dist=Math.hypot(...floor.map((v,i)=>v-cam.eye[i]));
@@ -716,7 +744,7 @@ export function init3d(canvas,host,buttons){
        }catch(error){if(!child._socketWarning){console.warn('[WarLike Socket]',child.name,error);child._socketWarning=true}}
       }
      }
-     if(posed)animatedHitVertices.set(o,posed);else animatedHitVertices.delete(o);
+     if(posed){animatedHitVertices.set(o,posed);meshSnapCache.delete(o)}else animatedHitVertices.delete(o);
      for(const [partIndex,part] of [...cached.parts.entries()].sort(([,a],[,b])=>Number(a.mesh.alphaMode==='BLEND')-Number(b.mesh.alphaMode==='BLEND'))){
       if(posed){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,posed[partIndex])}
       else if(rig){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,cached.geometry.parts[partIndex].vertices)}

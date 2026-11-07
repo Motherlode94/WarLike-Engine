@@ -1,5 +1,4 @@
-import {compileWarScript} from './warscript.js';
-import {runWarScriptPreview} from './warscript-preview.js';
+import {compileWarScript,runWarScriptPreview} from './warscript.js';
 import {ScriptDocument,MAX_SOURCE,newId,languageFor,templates,templateFor,readLinkedFile,saveLinkedFile} from './core.js';
 
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),embedded=params.get('embedded')==='1',session=params.get('session');

@@ -17,6 +17,7 @@ const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,
 const scenePosition=o=>({x:n(o.x),y:n(o.y),z:n(o.elevation3d)});
 const velocity=o=>({x:n(o.rigidbody3d?.vx),y:n(o.rigidbody3d?.vy),z:n(o.rigidbody3d?.vz)});
 const changed=(a,b)=>Object.keys(a).some(k=>Math.abs(a[k]-n(b?.[k]))>1e-5);
+const skippedColliderSignature=o=>bodyConfig(o)+'|'+JSON.stringify(affineCorrection3d(o)?.map(v=>Math.round(v*1e5)/1e5)||null);
 const affineColliderData=(o,g,pos,rotation)=>{
  const correction=affineCorrection3d(o);
  if(!correction)return null;
@@ -35,7 +36,7 @@ function controllerFor(world,o){
 }
 export function createRapierScene(RAPIER,entities,gravity=15){
  if(!RAPIER?.World)throw Error('Rapier 3D not initialized');
- const world=new RAPIER.World({x:0,y:-Math.max(0,gravity),z:0}),actors=new Map(),joints=new Map(),errors=[];
+ const world=new RAPIER.World({x:0,y:-Math.max(0,gravity),z:0}),actors=new Map(),joints=new Map(),errors=[],skipped=new Map();
  const floor=world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,-.5,0));world.createCollider(RAPIER.ColliderDesc.cuboid(20000,.5,20000),floor);
  for(const o of entities){
   if(!included(o))continue;
@@ -46,12 +47,12 @@ export function createRapierScene(RAPIER,entities,gravity=15){
   // A sheared box is an exact convex polyhedron. Never fall back to a regular
   // cuboid when a custom affine shape cannot be built.
   let affine=null;
-  try{affine=affineColliderData(o,g,pos,rotation)}catch(error){errors.push(o.name+' : '+error.message);continue}
+  try{affine=affineColliderData(o,g,pos,rotation)}catch(error){errors.push(o.name+' : collision désactivée — '+error.message);skipped.set(o.id,{entity:o,signature:skippedColliderSignature(o)});continue}
   if(affine&&typeof RAPIER.ColliderDesc.convexHull!=='function'){
-   errors.push(o.name+' : ce runtime Rapier ne prend pas en charge les convex hulls sous shear.');continue;
+   errors.push(o.name+' : collision désactivée — ce runtime Rapier ne prend pas en charge les convex hulls sous shear.');skipped.set(o.id,{entity:o,signature:skippedColliderSignature(o)});continue;
   }
   const colliderDesc=affine?RAPIER.ColliderDesc.convexHull(affine.points):g.shape==='capsule'?RAPIER.ColliderDesc.capsule(g.halfHeight,g.radius):g.shape==='sphere'?RAPIER.ColliderDesc.ball(g.radius):RAPIER.ColliderDesc.cuboid(g.w/2,g.h/2,g.d/2);
-  if(!colliderDesc){errors.push(o.name+' : impossible de créer le convex hull du collider affine.');continue}
+  if(!colliderDesc){errors.push(o.name+' : collision désactivée — impossible de créer le convex hull du collider affine.');skipped.set(o.id,{entity:o,signature:skippedColliderSignature(o)});continue}
   const body=world.createRigidBody(desc);
   // Offset was already baked into affine hull vertices.
   if(!affine)colliderDesc.setTranslation?.(g.offset.x,g.offset.y,g.offset.z);
@@ -70,10 +71,11 @@ export function createRapierScene(RAPIER,entities,gravity=15){
   }catch(error){errors.push(o.name+' : '+error.message)}
  }
  world.propagateModifiedBodyPositionsToColliders?.();
- activeScene={world,actors,joints,errors,api:RAPIER,entityCount:entities.length};return activeScene;
+ activeScene={world,actors,joints,skipped,errors,api:RAPIER,entityCount:entities.length};return activeScene;
 }
 export function synchronizeRapierScene(scene,entities){
- const current=new Map(entities.map(o=>[o.id,o]));if(current.size!==scene.entityCount||entities.filter(included).length!==scene.actors.size)return false;
+ const current=new Map(entities.map(o=>[o.id,o]));if(current.size!==scene.entityCount||entities.filter(included).length!==scene.actors.size+(scene.skipped?.size||0))return false;
+ for(const [id,r] of scene.skipped||[]){const o=current.get(id);if(o!==r.entity||!included(o)||skippedColliderSignature(o)!==r.signature)return false;}
  for(const [id,r] of scene.actors){const o=current.get(id);if(o!==r.entity||!included(o)||bodyConfig(o)!==r.config)return false;
   if(Math.abs(n(o.w,32)/64-r.width)+Math.abs(n(o.h,32)/64-r.height)+Math.abs(n(o.depth3d,o.h||32)/64-r.depth)>1e-5)return false;
   const pos=colliderPosition3d(o),rotation=rotationQuaternion3d(o);
@@ -111,4 +113,4 @@ export function stepRapierScene(scene,dt){
   r.lastPosition=scenePosition(o);
  }
 }
-export function disposeRapierScene(scene){if(activeScene===scene)activeScene=null;scene?.world?.free?.();scene?.actors?.clear?.();scene?.joints?.clear?.()}
+export function disposeRapierScene(scene){if(activeScene===scene)activeScene=null;scene?.world?.free?.();scene?.actors?.clear?.();scene?.skipped?.clear?.();scene?.joints?.clear?.()}

@@ -1,0 +1,54 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WarLike Engine — Import depuis Library</title><style>:root{font:15px system-ui,sans-serif;color-scheme:dark;background:#10161b;color:#eef5fc}*{box-sizing:border-box}body{margin:0}main{max-width:790px;margin:42px auto;padding:24px}.card{background:#19252d;border:1px solid #405364;border-radius:15px;padding:24px}a{color:#afcffe}h1{font-size:clamp(26px,5vw,40px)}p{line-height:1.6;color:#b2c6ce}input,button{font:inherit;padding:12px;background:#263744;color:#f2fbff;border:1px solid #62818e;border-radius:8px}input{width:100%}button{cursor:pointer;margin-top:12px}button:disabled{opacity:.5}#status{white-space:pre-wrap;min-height:32px;color:#b7ecc4}.notice{border-left:3px solid #7caba2;padding-left:14px}</style></head><body><main><nav><a href="https://warlike-hub.pages.dev/guide.html#transferts" target="_blank" rel="noopener">Guide commun</a> · <a href="./">← WarLike Engine</a> · <a href="https://warlike-library.pages.dev/prefab-studio.html" target="_blank" rel="noopener">WarLike Library / Prefab Studio</a> · <a href="./library-bundle.html">Installer un lot multi-assets</a></nav><h1>Importer un prefab depuis Library</h1><section class="card"><p>Depuis Library, clique sur <strong>Installer dans Engine</strong> pour transmettre directement le pack par une fenêtre Engine sécurisée. L’import manuel <code>.wlpkg.json</code> reste disponible. Engine vérifie l’empreinte SHA-256 et les maillages du GLB, détecte les versions concurrentes et demande confirmation avant remplacement, conserve les octets du modèle dans IndexedDB, puis installe le prefab dans la bibliothèque locale du moteur.</p><label for="file">Pack WarLike Library (GLB ou PNG)</label><input type="file" id="file" accept=".json,.wlpkg.json,application/json"><button id="install" disabled>Vérifier et installer le modèle</button><p id="status" role="status"></p><div id="result"></div></section><p class="notice">Cette importation fonctionne sur le navigateur et le domaine d'Engine. Les fichiers sont conservés localement, pas dans un compte cloud. La configuration complète Animator, Rigidbody et scripts nécessite encore une vérification dans l’Inspecteur avant Play/Export.</p></main><script type="module">
+import {parseLibraryTransfer,storeLibraryModel,installLibraryPrefab,planLibraryPrefabInstall} from './js/core/library-transfer.js';
+const $=id=>document.getElementById(id);let file=null;
+const LIBRARY_ORIGIN='https://warlike-library.pages.dev';
+const TRANSFER_TYPE='warlike-library-transfer-v1';
+let busy=false;
+async function installPack(raw){
+ if(busy)throw Error('Une importation est déjà en cours.');
+ busy=true;$('install').disabled=true;$('result').replaceChildren();
+ try{
+  $('status').textContent='Validation du modèle GLB et de son empreinte…';
+  const record=await parseLibraryTransfer(raw);
+  $('status').textContent='Ressource valide : '+(record.metadata.mode==='2d'?'sprite PNG '+record.metadata.width+' × '+record.metadata.height:record.meshCount+' maillages, '+record.materialCount+' matériaux, '+record.textureCount+' textures, '+record.animationCount+' animations')+'. Installation locale…';
+  const plan=planLibraryPrefabInstall(record);
+  let replace=false;
+  if(plan.status==='conflict'){
+   replace=window.confirm('Une version différente de ce prefab est déjà installée : '+plan.conflict.name+'. Remplacer cette version ? Les objets déjà placés dans les scènes ne sont pas migrés automatiquement.');
+   if(!replace)throw Error('Installation annulée : version existante conservée.');
+  }
+  await storeLibraryModel(record);
+  const result=installLibraryPrefab(record,localStorage,{replace});
+  const p=document.createElement('p');p.textContent=result.updated?'✓ '+record.metadata.name+' : mise à jour confirmée et modèle enregistré.':result.installed?'✓ '+record.metadata.name+' : GLB enregistré et prefab installé.':'✓ '+record.metadata.name+' : version identique, prefab conservé.';$('result').append(p);
+  const link=document.createElement('a');link.href='../index.html';link.textContent='Ouvrir WarLike Engine →';$('result').append(link);
+  $('status').textContent='Installation terminée. Ouvre Engine dans ce navigateur pour retrouver le prefab.';
+  return {installed:result.installed,name:record.metadata.name};
+ }finally{busy=false;$('install').disabled=!file}
+}
+const channel=new URLSearchParams(location.search).get('libraryTransfer');
+if(channel&&/^[a-zA-Z0-9_-]{16,100}$/.test(channel)&&window.opener){
+ window.addEventListener('message',async event=>{
+  if(event.origin!==LIBRARY_ORIGIN||event.source!==window.opener||event.data?.channel!==channel)return;
+  if(event.data?.type==='warlike-library-ping-v1'){
+   event.source.postMessage({type:'warlike-engine-ready-v1',channel},LIBRARY_ORIGIN);return;
+  }
+  if(event.data?.type!==TRANSFER_TYPE||busy)return;
+  try{
+   const result=await installPack(event.data.pack);
+   event.source.postMessage({type:'warlike-engine-installed-v1',channel,ok:true,...result},LIBRARY_ORIGIN);
+  }catch(error){
+   $('status').textContent='Import refusé : '+(error?.message||error);
+   event.source.postMessage({type:'warlike-engine-installed-v1',channel,ok:false,error:String(error?.message||error)},LIBRARY_ORIGIN);
+  }
+ });
+ window.opener.postMessage({type:'warlike-engine-ready-v1',channel},LIBRARY_ORIGIN);
+ $('status').textContent='Connexion sécurisée à WarLike Library établie. Réception du prefab…';
+}
+$('file').onchange=()=>{file=$('file').files?.[0]||null;$('install').disabled=!file;$('status').textContent=file?'Fichier sélectionné : '+file.name:'';};
+$('install').onclick=async()=>{
+ try{
+  if(!file||file.size>36*1024*1024)throw Error('Pack absent ou supérieur à 36 Mo.');
+  await installPack(JSON.parse(await file.text()));
+ }catch(error){$('status').textContent='Import refusé : '+(error?.message||error)}
+};
+</script></body></html>

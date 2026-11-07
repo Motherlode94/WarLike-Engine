@@ -1,3 +1,4 @@
+import {deleteEntitySubtrees,duplicateEntitySubtrees,reparentEntities} from './editor-hierarchy-commands.js';
 import {encodeProjectAssets,restoreProjectAssets} from './portable-assets.js';
 import {horror} from './horror-survival.js';
 import {createAnimationDemo} from './animation-demo.js';
@@ -45,7 +46,23 @@ export function addAudioEmitter(){
  audioEnabled:true,audioClip:'vehicle',audioGain:.55,audioRange:18,audioInterval:3,audioLoop:true,audioSpatial:true});
  state.selected=[id];record('Ajouter Audio Source');notify();
 }
-export function deleteSelected(){if(state.playing||!state.selected.length)return;state.entities=state.entities.filter(o=>!state.selected.includes(o.id));state.selected=state.entities.length?[state.entities[0].id]:[];record('Supprimer objets');notify()}
+export function deleteSelected(){
+ if(state.playing||!state.selected.length)return;
+ const result=deleteEntitySubtrees(state.entities,state.selected);
+ if(!result.removed.size)return;
+ state.entities=result.entities;
+ state.selected=state.entities.length?[state.entities[0].id]:[];
+ record('Supprimer '+result.removed.size+' objet(s) et enfants');notify();
+}
+export function reparentSelected(id,parentId){
+ if(state.playing)throw Error('Impossible de déplacer la hiérarchie pendant Play');
+ const current=state.entities.find(o=>o.id===id);
+ if(!current)throw Error('GameObject absent');
+ if((current.parentId??null)===(parentId??null))return false;
+ state.entities=reparentEntities(state.entities,id,parentId);
+ record('Changer le parent de '+current.name);
+ notify();return true;
+}
 export function togglePlay(){
  const btn=document.querySelector('#play');
  if(state.playing){
@@ -104,7 +121,14 @@ export async function importScene(file){if(state.playing)throw Error('Arrêter P
  }
  state.entities=parsed;state.nextId=next;state.selected=parsed.length?[parsed[0].id]:[];setCamera(data.camera);if(data.workspaces)restoreWorkspaces(data,true);record('Importer scène');notify()}
 
-export function duplicateSelected(){if(state.playing||!state.selected.length)return;const copies=state.entities.filter(o=>state.selected.includes(o.id)).map(o=>({...structuredClone(o),id:state.nextId++,name:o.name+' Copy',x:o.x+24,y:o.y+24}));state.entities.push(...copies);state.selected=copies.map(o=>o.id);record('Dupliquer '+copies.length+' objet(s)');notify()}
+export function duplicateSelected(){
+ if(state.playing||!state.selected.length)return;
+ const result=duplicateEntitySubtrees(state.entities,state.selected,state.nextId);
+ if(!result.selected.length)return;
+ state.entities=result.entities;state.selected=result.selected;state.nextId=result.nextId;
+ record('Dupliquer '+result.selected.length+' objet(s) avec leurs enfants');
+ notify();
+}
 
 export function loadCombatDemo(){if(state.playing)return;const entities=[],add=(name,type,assetId,x,y,w,h,other={})=>{entities.push({id:entities.length+1,name,type,assetId,x,y,w,h,color:'#579ca5',...other})};
 add('Ranger','character',undefined,120,210,48,72,{skin:'scout',animation:'idle',hp:100});

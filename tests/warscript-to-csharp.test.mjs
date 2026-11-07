@@ -34,7 +34,7 @@ test('maps Vector3 constructors and math intrinsic calls',()=>{
  assert.match(result.source,/MathF.Sin\(Time\.time\)/);
 });
 test('refuses API without native equivalence instead of emitting a misleading C# implementation',()=>{
- const result=convert('public float speed = 20; Start(){ vehicle.maxSpeed = speed; }');
+ const result=convert('public float speed = 20; Start(){ world.timeScale = speed; }');
  assert.equal(result.ok,false);
  assert.equal(result.source,'');
  assert.match(result.diagnostics[0].message,/sans équivalent natif/);
@@ -61,4 +61,11 @@ test('compilation examples are deterministic and never rewrite source when conve
  const a=convert(source),b=convert(source);
  assert.deepEqual(a,b);
  assert.match(a.source,/gameObject.SetActive\(true\)/);
+});
+
+test('vehicle settings use the native VehicleControllerComponent compatibility library',()=>{
+ const result=convert('public float speed = 270; Start(){ vehicle.maxSpeed = speed; vehicle.brakeForce = 300; }');
+ assert.equal(result.ok,true,JSON.stringify(result.diagnostics));
+ assert.match(result.source,/WarScriptCompat.SetVehicleValue\(this, "maxSpeed", speed\)/);
+ assert.match(result.source,/WarScriptCompat.SetVehicleValue\(this, "brakeForce", 300\)/);
 });

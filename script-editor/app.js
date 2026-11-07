@@ -54,7 +54,7 @@ function applyIncoming(script){
 }
 const pendingSaves=new Map();
 function publishSave(d,text){
- if(!connected){d.revision++;preserve();return}
+ if(!connected){if(!session)d.revision++;preserve();if(session)status('Source conservée localement : connexion au moteur non établie. Réenregistre après connexion.',true);return}
  const requestId=newId();pendingSaves.set(requestId,d.id);safePost({type:'save',requestId,binding,baseRevision:d.revision,script:{...d.record(),source:text}});setTimeout(()=>{if(pendingSaves.has(requestId)){pendingSaves.delete(requestId);status('Source sauvegardée · moteur sans réponse. Rouvre le script depuis le moteur pour reconnecter.',true)}},8000);status('Fichier sauvegardé · synchronisation avec le moteur…');
 }
 function receive(message){

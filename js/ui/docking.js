@@ -7,6 +7,9 @@ const defaults={leftWidth:245,rightWidth:350,float:{}};
 let layout;
 try{layout={...defaults,...JSON.parse(localStorage.getItem(storageKey)||'{}')}}catch{layout={...defaults,float:{}}}
 layout.float=layout.float&&typeof layout.float==='object'&&!Array.isArray(layout.float)?layout.float:{};
+layout.tabGroups=Array.isArray(layout.tabGroups)?layout.tabGroups.filter(g=>Array.isArray(g)&&g.every(k=>panelMap[k])).map(g=>[...new Set(g)]).filter(g=>g.length>1):[];
+layout.activeTabs=layout.activeTabs&&typeof layout.activeTabs==='object'&&!Array.isArray(layout.activeTabs)?layout.activeTabs:{};
+
 for(const kind of Object.keys(layout.float)){
  const f=layout.float[kind];
  if(!panelMap[kind]||!f||!['x','y','width','height'].every(key=>Number.isFinite(f[key])))delete layout.float[kind];
@@ -28,13 +31,56 @@ function applyWidths(prefer){
  document.body.classList.toggle('inspector-floating',!!layout.float.inspector);
  document.body.classList.toggle('project-floating',!!layout.float.project);
 }
+function groupFor(kind){return layout.tabGroups.find(group=>group.includes(kind))}
+function ungroup(kind){
+ const original=groupFor(kind);
+ if(!original)return;
+ layout.tabGroups=layout.tabGroups.filter(g=>g!==original);
+ const left=original.filter(id=>id!==kind);
+ if(left.length>1)layout.tabGroups.push(left);
+ if(layout.activeTabs[original[0]]===kind)layout.activeTabs[original[0]]=left[0];
+ for(const id of original)if(id!==kind)layout.activeTabs[id]=left[0];
+ delete layout.activeTabs[kind];
+}
+function groupPanels(source,target){
+ if(source===target||!panelMap[source]||!panelMap[target])return false;
+ if(!layout.float[source])floatPanel(source);
+ if(!layout.float[target])floatPanel(target);
+ const members=[...new Set([...(groupFor(target)||[target]),...(groupFor(source)||[source])])];
+ layout.tabGroups=layout.tabGroups.filter(group=>!group.includes(source)&&!group.includes(target));
+ layout.tabGroups.push(members);
+ const bounds={...layout.float[target]};for(const id of members){layout.float[id]={...bounds};layout.activeTabs[id]=source}
+ applyLayout();save();return true;
+}
+function showGroupedTabs(){
+ for(const [kind,id] of Object.entries(panelMap)){
+  const panel=$(id);if(!panel)continue;
+  const group=groupFor(kind),host=document.querySelector('[data-dock-handle="'+kind+'"]');
+  if(!host)continue;
+  host.querySelector('.warlike-dock-tabs')?.remove();
+  if(!group||!layout.float[kind]){panel.style.removeProperty('display');continue}
+  const selected=group.includes(layout.activeTabs[kind])?layout.activeTabs[kind]:group[0];
+  if(kind!==selected){panel.style.display='none';continue}
+  panel.style.removeProperty('display');
+  const bar=document.createElement('span');bar.className='warlike-dock-tabs';
+  bar.style.cssText='display:inline-flex;gap:3px;max-width:100%;flex-wrap:wrap;margin:0 6px';
+  for(const member of group){
+   const tab=document.createElement('button');tab.type='button';tab.textContent=member[0].toUpperCase()+member.slice(1);
+   tab.setAttribute('aria-pressed',String(member===selected));tab.title='Afficher '+member;
+   tab.style.cssText='padding:3px 6px;border:1px solid #455363;border-radius:4px;background:'+(member===selected?'#48cba9':'#303944')+';color:'+(member===selected?'#14202a':'#e5eaf1')+';cursor:pointer';
+   tab.onclick=e=>{e.stopPropagation();for(const id of group)layout.activeTabs[id]=member;applyLayout();save();bringToFront($(panelMap[member]))};
+   bar.append(tab);
+  }
+  host.append(bar);
+ }
+}
 function floatPanel(kind){
  const element=$(panelMap[kind]);if(!element)return;const rect=element.getBoundingClientRect();
  const scale=uiScale(),viewport=viewportSize();
  layout.float[kind]={x:clamp(Math.round(rect.x/scale+18),0,Math.max(0,viewport.width-260)),y:clamp(Math.round(rect.y/scale+16),35,Math.max(35,viewport.height-210)),width:clamp(Math.round(rect.width/scale),260,Math.max(260,viewport.width-24)),height:clamp(Math.round(rect.height/scale),210,Math.max(210,viewport.height-50))};
  applyLayout();save();
 }
-function dockPanel(kind){delete layout.float[kind];applyLayout();save()}
+function dockPanel(kind){ungroup(kind);delete layout.float[kind];applyLayout();save()}
 function applyLayout(){
  applyWidths();
  for(const [kind,id] of Object.entries(panelMap)){
@@ -45,6 +91,11 @@ function applyLayout(){
   else if(!f){for(const property of ['left','top','width','height','min-width','min-height','max-width','max-height','right','bottom'])el.style.removeProperty(property)}
   if(button){button.textContent=f?'↧':'▣';button.title=f?'Ancrer '+kind:'Détacher '+kind}
  }
+ for(const group of layout.tabGroups){
+  const f=layout.float[group[0]];if(!f)continue;
+  for(const id of group)if(layout.float[id])layout.float[id]={...f};
+ }
+ showGroupedTabs();
 }
 function bindColumnSplitter(splitterId,side){
  const handle=$(splitterId);if(!handle)return;
@@ -97,9 +148,17 @@ function bindFloating(kind){
   panel.style.left=left+'px';panel.style.top=top+'px';
   const f=layout.float[kind];if(f){f.x=left;f.y=top}
  });
- const stop=()=>{
+ const stop=e=>{
   if(!drag)return;
-  if(drag.started){save();panel.classList.remove('moving-panel');document.body.classList.remove('dragging-window')}
+  if(drag.started){
+   panel.style.pointerEvents='none';
+   const underlying=e?.clientX!==undefined?document.elementFromPoint(e.clientX,e.clientY):null;
+   panel.style.removeProperty('pointer-events');
+   const target=Object.keys(panelMap).find(key=>key!==kind&&underlying?.closest('#'+panelMap[key]));
+   panel.classList.remove('moving-panel');document.body.classList.remove('dragging-window');
+   if(target&&layout.float[target])groupPanels(kind,target);
+   else{const group=groupFor(kind);if(group){for(const member of group)if(layout.float[member])Object.assign(layout.float[member],layout.float[kind]);applyLayout()}save()}
+  }
   drag=null;
  };
  handle.addEventListener('pointerup',stop);
@@ -127,7 +186,7 @@ const layoutPresets={
 export function applyLayoutPreset(name){
  const preset=layoutPresets[name];
  if(!preset)return false;
- layout={leftWidth:preset.leftWidth,rightWidth:preset.rightWidth,float:{}};
+ layout={leftWidth:preset.leftWidth,rightWidth:preset.rightWidth,float:{},tabGroups:[],activeTabs:{}};
  const center=document.querySelector('.center-stack');
  if(center)center.style.setProperty('--project-height',preset.projectHeight+'px');
  try{localStorage.setItem('warlike.projectHeight',String(preset.projectHeight))}catch{}
@@ -139,7 +198,7 @@ const customLayoutKey='warlike.workspace.layout.custom.v1';
 export function saveCustomLayout(){
  const center=document.querySelector('.center-stack');
  const height=parseInt(getComputedStyle(center).getPropertyValue('--project-height'),10)||320;
- const snapshot={leftWidth:layout.leftWidth,rightWidth:layout.rightWidth,float:JSON.parse(JSON.stringify(layout.float)),projectHeight:height};
+ const snapshot={leftWidth:layout.leftWidth,rightWidth:layout.rightWidth,float:JSON.parse(JSON.stringify(layout.float)),tabGroups:layout.tabGroups.map(g=>[...g]),activeTabs:{...layout.activeTabs},projectHeight:height};
  try{localStorage.setItem(customLayoutKey,JSON.stringify(snapshot));return true}catch{return false}
 }
 export function loadCustomLayout(){
@@ -153,7 +212,7 @@ export function loadCustomLayout(){
    if(panel&&['x','y','width','height'].every(key=>Number.isFinite(panel[key])))safeFloat[kind]=panel;
   }
  }
- layout={leftWidth:clamp(saved.leftWidth,160,640),rightWidth:clamp(saved.rightWidth,190,880),float:safeFloat};
+ layout={leftWidth:clamp(saved.leftWidth,160,640),rightWidth:clamp(saved.rightWidth,190,880),float:safeFloat,tabGroups:(saved.tabGroups||[]).filter(g=>Array.isArray(g)&&g.length>1&&g.every(id=>safeFloat[id])),activeTabs:saved.activeTabs||{}};
  const center=document.querySelector('.center-stack');
  if(center&&Number.isFinite(saved.projectHeight))center.style.setProperty('--project-height',clamp(saved.projectHeight,120,650)+'px');
  applyLayout();save();window.dispatchEvent(new Event('resize'));return true;

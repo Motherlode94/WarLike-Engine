@@ -43,3 +43,15 @@ test('import page exposes real user-file transfer without cloud claims',()=>{
  assert.ok(html.includes('storeLibraryModel'));
  assert.ok(html.includes('installLibraryPrefab'));
 });
+
+test('direct Library handshake has strict origins, channel and same verified installer',()=>{
+ const html=readFileSync(new URL('../asset-store/library-import.html',import.meta.url),'utf8');
+ assert.ok(html.includes("const LIBRARY_ORIGIN='https://warlike-library.pages.dev'"));
+ assert.ok(html.includes("event.origin!==LIBRARY_ORIGIN"));
+ assert.ok(html.includes("event.source!==window.opener"));
+ assert.ok(html.includes("event.data?.channel!==channel"));
+ assert.ok(html.includes("warlike-library-ping-v1"));
+ assert.ok(html.includes("warlike-engine-installed-v1"));
+ assert.ok(html.includes('await storeLibraryModel(record)'));
+ assert.ok(html.includes('installLibraryPrefab(record)'));
+});

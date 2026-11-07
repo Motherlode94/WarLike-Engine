@@ -12,7 +12,8 @@
     "test:native": "dotnet run --project csharp/WarLike.Tests",
     "bench:wasm": "node scripts/bench-native-queries.mjs",
     "check:wasm": "node --test tests/native-3d-wasm.test.mjs",
-    "test:export": "node scripts/test-exported-game.mjs"
+    "test:export": "node scripts/export-validation-game.mjs && node scripts/test-exported-game.mjs",
+    "test:export:browser": "node scripts/test-exported-game-browser.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

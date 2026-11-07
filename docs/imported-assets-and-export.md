@@ -24,8 +24,10 @@ Les jeux Web exportés continuent d’exécuter WarScript et JavaScript/TypeScri
 
 ## Vérifications
 
+`npm run test:export` génère une archive complète puis vérifie son runtime extrait sur 200 frames, sans dépendre du GPU. Le scénario navigateur reste disponible séparément.
+
 - `npm test` : tests du moteur, imports, archive JSON, contenu ZIP, matériaux et virages root motion.
 - `npm run typecheck` : contrat TypeScript existant.
-- `npx playwright install chromium`, puis `npm run test:export` : crée une véritable archive ZIP de l’atelier, la décompresse dans un dossier temporaire et teste le jeu dans Chromium. Toutes les requêtes externes sont bloquées. Le scénario vérifie le personnage importé, Rapier, le déplacement clavier, la collision, les scripts, les virages, la sauvegarde après réouverture et la restauration IndexedDB de l’éditeur. Il capture le menu, le jeu et la partie restaurée.
+- `npx playwright install chromium`, puis `npm run test:export:browser` : crée une véritable archive ZIP de l’atelier, la décompresse dans un dossier temporaire et teste le jeu dans Chromium. Toutes les requêtes externes sont bloquées. Le scénario vérifie le personnage importé, Rapier, le déplacement clavier, la collision, les scripts, les virages, la sauvegarde après réouverture et la restauration IndexedDB de l’éditeur. Il capture le menu, le jeu et la partie restaurée.
 
 `WARLIKE_CHROMIUM` permet d’utiliser un exécutable Chromium déjà installé ; `WARLIKE_PLAYWRIGHT_MODULE` permet de sélectionner une installation Playwright externe au dépôt. Le chemin des captures temporaires est indiqué dans le résultat du test.

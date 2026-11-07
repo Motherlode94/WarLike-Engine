@@ -1,6 +1,7 @@
 import {packageGlb,imageResource} from './glb-package.js';
+import {packagedModels3d} from './imported-models-3d.js';
 import {quaterniusModels3d} from './quaternius-game-assets.js';
-import {readAnimationRig} from '../core/gltf-animation.js';
+import {readAnimationRig,normalMatrix3,transformNormal as applyNormal} from '../core/gltf-animation.js';
 import {freeModels3d} from './free-game-assets.js';
 // WarLike static glTF 2.0 GLB mesh loader. No eval, scripts or external binary executables.
 // Supports embedded GLB, node hierarchy/TRS, material baseColorFactor, triangle indices.
@@ -36,7 +37,7 @@ export const realModels3d=[...freeModels3d,...quaterniusModels3d,
  {id:'real-toycar',name:'Toy Car',category:'Vehicles',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/ToyCar/glTF-Binary/ToyCar.glb',license:'Consulter la licence du modèle • Khronos'},
  {id:'real-antique-camera',name:'Antique Camera',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AntiqueCamera/glTF-Binary/AntiqueCamera.glb',license:'Consulter la licence du modèle • Khronos'}
 ];
-export const importedModels3d=new Map();
+export const importedModels3d=new Map(packagedModels3d.map(asset=>[asset.id,asset]));
 const modelCache=new Map();
 const maxBytes=25*1024*1024;
 export function registerLocalModel(file,{id=null,license='Fichier local, licence à vérifier'}={}){
@@ -81,11 +82,7 @@ const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 const mul=(a,b)=>{const o=new Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)o[c*4+r]+=a[k*4+r]*b[c*4+k];return o};
 const transform=(m,p,w=1)=>[m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12]*w,m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13]*w,m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]*w];
 // Inverse transpose of the node's linear transform, including nonuniform scale.
-export function transformNormal(m,n){
- const a=m[0],b=m[4],c=m[8],d=m[1],e=m[5],f=m[9],g=m[2],h=m[6],i=m[10],det=a*(e*i-f*h)-b*(d*i-f*g)+c*(d*h-e*g);
- if(Math.abs(det)<1e-12)return n;
- const [x,y,z]=n;return [((e*i-f*h)*x+(f*g-d*i)*y+(d*h-e*g)*z)/det,((c*h-b*i)*x+(a*i-c*g)*y+(b*g-a*h)*z)/det,((b*f-c*e)*x+(c*d-a*f)*y+(a*e-b*d)*z)/det];
-}
+export const transformNormal=(m,n)=>applyNormal(normalMatrix3(m),...n);
 const matrixFromNode=node=>{
  if(node.matrix?.length===16)return node.matrix;
  const [x,y,z,w]=node.rotation||[0,0,0,1],s=node.scale||[1,1,1],t=node.translation||[0,0,0];
@@ -99,16 +96,24 @@ function readAccessor(json,binary,index){
  if(!a||!v||!type||a.sparse)throw Error('Accessor glTF non pris en charge');
  if(v.buffer!==undefined&&v.buffer!==0)throw Error('GLB externe non pris en charge');
  const count=({SCALAR:1,VEC2:2,VEC3:3,VEC4:4,MAT2:4,MAT3:9,MAT4:16})[a.type];
- if(!count||a.count>3000000)throw Error('Données GLB invalides');
+ if(!count||!Number.isSafeInteger(a.count)||a.count<1||a.count>3000000)throw Error('Données GLB invalides');
  const stride=v.byteStride||type.size*count,offset=(v.byteOffset||0)+(a.byteOffset||0);
- if(stride<type.size*count||offset+(a.count-1)*stride+type.size*count>binary.byteLength)throw Error('Buffer GLB incomplet');
+ if(!Number.isSafeInteger(stride)||!Number.isSafeInteger(offset)||offset<0||stride<type.size*count||(a.byteOffset||0)+(a.count-1)*stride+type.size*count>v.byteLength||offset+(a.count-1)*stride+type.size*count>binary.byteLength)throw Error('Buffer GLB incomplet');
  const dv=new DataView(binary.buffer,binary.byteOffset,binary.byteLength),out=[];
- for(let i=0;i<a.count;i++)for(let j=0;j<count;j++){let value=dv[type.method](offset+i*stride+j*type.size,true);if(a.normalized&&a.componentType!==5126){const maximum=({5120:127,5121:255,5122:32767,5123:65535,5125:4294967295})[a.componentType];value=Math.max(-1,value/maximum)}out.push(value)}
+ for(let i=0;i<a.count;i++)for(let j=0;j<count;j++){let value=dv[type.method](offset+i*stride+j*type.size,true);if(a.normalized&&a.componentType!==5126){const maximum=({5120:127,5121:255,5122:32767,5123:65535,5125:4294967295})[a.componentType];value=Math.max(-1,value/maximum)}if(!Number.isFinite(value))throw Error('Valeur GLB non finie');out.push(value)}
  // Accessor count is the number of elements, not the number of components
  // per element (POSITION is VEC3 even when the mesh has thousands of vertices).
  return {data:out,count:a.count,components:count};
 }
-export function parseGlb(buffer,{baseUrl}={}){
+// Images carried as data URIs are self-contained just like image bufferViews.
+export function embeddedGlbImage(uri){
+ const match=/^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]*={0,2})$/i.exec(uri||'');
+ if(!match)throw Error('Image GLB intégrée invalide : PNG, JPEG ou WebP en base64 requis');
+ let binary;try{binary=atob(match[2])}catch{throw Error('Image GLB : base64 invalide')}
+ if(!binary.length)throw Error('Image GLB intégrée vide');
+ return {mimeType:match[1].toLowerCase(),bytes:Uint8Array.from(binary,c=>c.charCodeAt(0))};
+}
+export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
  if(buffer.byteLength>maxBytes)throw Error('GLB supérieur à 25 Mo');
  const v=new DataView(buffer);if(buffer.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==buffer.byteLength)throw Error('GLB 2.0 invalide');
  let offset=12,json=null,binary=null;
@@ -120,12 +125,15 @@ export function parseGlb(buffer,{baseUrl}={}){
  const supported=new Set(['KHR_materials_unlit','KHR_texture_transform','KHR_mesh_quantization','KHR_materials_emissive_strength']);
  for(const extension of json.extensionsRequired||[])if(!supported.has(extension))throw Error('Extension GLB requise non prise en charge : '+extension);
  const accessorCache=new Map();const accessor=index=>{if(!accessorCache.has(index))accessorCache.set(index,readAccessor(json,binary,index));return accessorCache.get(index)};
- const rig=readAnimationRig(json,accessor);
- const roots=json.scenes?.[json.scene||0]?.nodes||json.nodes?.map((_,i)=>i)||[],parts=[];
+ const rig=readAnimationRig(json,accessor,{allowStatic:allowStaticRig});
+ const childNodes=new Set((json.nodes||[]).flatMap(n=>n.children||[]));
+ const roots=json.scenes?.[json.scene||0]?.nodes||(json.nodes||[]).map((_,i)=>i).filter(i=>!childNodes.has(i)),parts=[],visiting=new Set();
  const walk=(idx,parent,depth)=>{
-  if(depth>64||parts.length>300)return;
+  if(depth>64||visiting.has(idx))throw Error('Hiérarchie GLB cyclique ou trop profonde');
+  if(parts.length>300)throw Error('GLB : trop de primitives');
   const node=json.nodes?.[idx];if(!node)return;
-  const m=mul(parent,matrixFromNode(node));
+  visiting.add(idx);
+  const m=mul(parent,matrixFromNode(node)),normalTransform=normalMatrix3(m);
   for(const primitive of (json.meshes?.[node.mesh]?.primitives||[])){
    if(primitive.mode!==undefined&&primitive.mode!==4)continue;
    if(primitive.extensions?.KHR_draco_mesh_compression)throw Error('GLB Draco : décompresser le modèle avant import.');
@@ -146,7 +154,7 @@ export function parseGlb(buffer,{baseUrl}={}){
    const pbr=json.materials?.[primitive.material]?.pbrMetallicRoughness||{};
    const color=pbr.baseColorFactor||[1,1,1,1];
    const roughness=Math.max(.04,Math.min(1,Number(pbr.roughnessFactor??1)));
-   const metallic=Math.max(0,Math.min(1,Number(pbr.metallicFactor??0)));
+   const metallic=Math.max(0,Math.min(1,Number(pbr.metallicFactor??1)));
    const textureInfo=pbr.baseColorTexture,textureTransform=textureInfo?.extensions?.KHR_texture_transform;
    const uvIndex=textureTransform?.texCoord??textureInfo?.texCoord??0;
    const uvAccessor=primitive.attributes['TEXCOORD_'+uvIndex];
@@ -161,6 +169,10 @@ export function parseGlb(buffer,{baseUrl}={}){
      const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
      texture={bytes:binary.slice(start,end),mimeType:image.mimeType,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
     }
+    else if(typeof image.uri==='string'&&image.uri.startsWith('data:')){
+     const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
+     texture={...embeddedGlbImage(image.uri),wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
+    }
     else if(baseUrl&&image.uri&&!/^(?:[a-z]+:|\/\/)/i.test(image.uri)&&/\.(png|jpe?g|webp)$/i.test(image.uri)){
      const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
      texture={url:new URL(image.uri,baseUrl).href,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
@@ -172,7 +184,7 @@ export function parseGlb(buffer,{baseUrl}={}){
     const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
     const delta=(a,b)=>a.map((n,k)=>n-b[k]),normal=cross(delta(points[1],points[0]),delta(points[2],points[0]));
     const len=Math.hypot(...normal)||1;const flat=normal.map(n=>n/len);
-    for(let j=0;j<3;j++){let n=flat;if(norm){const raw=transformNormal(m,norm.data.slice(idxs[i+j]*3,idxs[i+j]*3+3));const l=Math.hypot(...raw)||1;n=raw.map(z=>z/l)}vertices.push(...points[j],...n);
+    for(let j=0;j<3;j++){let n=flat;if(norm){const raw=applyNormal(normalTransform,...norm.data.slice(idxs[i+j]*3,idxs[i+j]*3+3));const l=Math.hypot(...raw)||1;n=raw.map(z=>z/l)}vertices.push(...points[j],...n);
      if(colors){const offset=idxs[i+j]*colors.components;vertexColors.push(...colors.data.slice(offset,offset+3),colors.components===4?colors.data[offset+3]:1);}
      if(texture){
       let u=uv.data[idxs[i+j]*uv.components],v=uv.data[idxs[i+j]*uv.components+1];
@@ -186,6 +198,7 @@ export function parseGlb(buffer,{baseUrl}={}){
    if(vertices.length)parts.push({...(motion?{motion}:{}),vertices:new Float32Array(vertices),color,roughness,metallic,unlit:!!json.materials?.[primitive.material]?.extensions?.KHR_materials_unlit,emissive:(json.materials?.[primitive.material]?.emissiveFactor||[0,0,0]).map(v=>v*(json.materials?.[primitive.material]?.extensions?.KHR_materials_emissive_strength?.emissiveStrength??1)),...(colors?{vertexColors:new Float32Array(vertexColors)}:{}),...(texture?{texture,texcoords:new Float32Array(texcoords)}:{}),alphaMode:json.materials?.[primitive.material]?.alphaMode||'OPAQUE',alphaCutoff:json.materials?.[primitive.material]?.alphaCutoff??.5});
   }
   for(const child of node.children||[])walk(child,m,depth+1);
+  visiting.delete(idx);
  };
  for(const root of roots)walk(root,identity(),0);
  if(!parts.length)throw Error('Aucun triangle compatible dans ce GLB');
@@ -223,7 +236,7 @@ export async function getModelGeometry(id){
     buffer=await result.arrayBuffer();
    }
   }
-  return parseGlb(buffer,{baseUrl:item.url?new URL(item.url,new URL('../../',import.meta.url)).href:undefined});
+  return parseGlb(buffer,{baseUrl:item.url?new URL(item.url,new URL('../../',import.meta.url)).href:undefined,allowStaticRig:item.category==='Vehicles'});
  })();
  modelCache.set(id,task);
  try{return await task}catch(e){modelCache.delete(id);throw e}

@@ -244,3 +244,11 @@ Le projet 3D propose **Atelier du mouvement** dans Scènes démo : personnage co
 La boutique dispose maintenant de cartes d'assets enrichies, statistiques de catalogue, favoris persistants par navigateur, filtre « Mes favoris », fiches détaillées, téléchargement direct des modèles GLB, et **prévisualisation 3D manipulable** à la demande (rotation, zoom) via un composant externe chargé uniquement lors de l'ouverture de l'aperçu. L'installation locale GLB/IndexedDB et la connexion à Project / Assets restent conservées.
 
 **Limites :** l'aperçu 3D nécessite une connexion au CDN externe et le chargement du GLB ; le manifeste distant, ses miniatures et les autorisations CORS peuvent limiter certains modèles. Cette version ne comprend ni achats, ni notes réelles, ni avis certifiés, ni compte vendeur. Les fonctionnalités n'ont pas encore été soumises à une batterie de tests dans un navigateur.
+
+### Asset Store — catalogue rempli depuis les assets livrés
+
+La boutique charge maintenant les deux manifestes **locaux** `assets/free/kenney/models.json` et `assets/free/quaternius/models.json` au lieu d'être dépendante du catalogue tiers initial. L'inventaire du moteur documente **4 716 modèles Kenney (50 packs)** et **2 910 modèles Quaternius (55 packs)**, soit **7 626 modèles dans 105 packs**. Le nombre effectivement affiché dépend du chargement et de la validation des entrées à l'exécution.
+
+Nouveautés : filtres par auteur et par pack, sections de collections réelles, métadonnées (triangles, clips d'animation si disponibles), aperçus issus des fichiers existants, liens vers les sources et licences. Installer, prévisualiser ou télécharger utilise désormais le GLB **du domaine WarLike Engine** et valide sa signature avant utilisation. Les modèles tiers payants d'Unity Asset Store ne sont pas recopiés.
+
+Les deux manifestes peuvent être volumineux. Le chargement réel, la compatibilité des miniatures et l'intégration dans l'éditeur doivent encore être testés dans un navigateur après déploiement Cloudflare Pages. Les tests automatisés de mapping et de chemins sont définis dans `tests/asset-store-catalog.test.mjs`.

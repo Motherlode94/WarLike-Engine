@@ -28,7 +28,8 @@ export function log(message,level='info'){lines.push({message,time:new Date().to
 function drawLogs(){const root=$('#consoleEntries');if(!root)return;root.replaceChildren();const filters={info:$('#showInfo')?.checked,warn:$('#showWarn')?.checked,error:$('#showError')?.checked};for(const entry of lines.filter(x=>filters[x.level])){const div=document.createElement('div');div.className='console-line '+entry.level;div.textContent='['+entry.time+'] '+entry.message;root.append(div)}$('#consoleCount').textContent=lines.filter(x=>x.level==='error').length||lines.length}
 export function initWorkspace(){
 document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
-$('#snapEnabled').onchange=e=>{toolsState.snap=e.target.checked;log('Snap '+(toolsState.snap?'activé':'désactivé'))};
+$('#snapEnabled').checked=localStorage.getItem('warlike.snap3d.enabled')==='true';toolsState.snap=$('#snapEnabled').checked;
+$('#snapEnabled').onchange=e=>{toolsState.snap=e.target.checked;localStorage.setItem('warlike.snap3d.enabled',String(toolsState.snap));document.dispatchEvent(new CustomEvent('warlike:snap3d',{detail:{enabled:toolsState.snap}}));log('Snap '+(toolsState.snap?'activé':'désactivé'))};
 $('#gridEnabled').onchange=e=>{toolsState.grid=e.target.checked};
 $('#colliderVisible').onchange=e=>{toolsState.colliders=e.target.checked};
 $('#hierarchySearch').oninput=notify;
@@ -307,7 +308,7 @@ canvas3d.addEventListener('drop',e=>{
  add3d(id);
  const obj=state.entities.find(o=>o.id===state.selected.at(-1));
  if(obj&&hit){
-  const snapStep=toolsState.snap?Math.max(.01,Number(localStorage.getItem('warlike.snap3d.step'))||.5):0;
+  const snapStep=(toolsState.snap||localStorage.getItem('warlike.snap3d.enabled')==='true')?Math.max(.01,Number(localStorage.getItem('warlike.snap3d.step'))||.5):0;
   placeEntityOnSurface3d(obj,hit,{snap:snapStep,alignNormal:e.shiftKey});
   record('Positionner prefab 3D sur '+(hit.kind==='triangle'?'surface GLB':'plan du sol'));notify();
  }

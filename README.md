@@ -1,3 +1,11 @@
+## Éditeur unifié — Hierarchy, Inspector, Project et fenêtres (novembre 2026)
+
+L'éditeur existant est conservé. **Hierarchy** affiche maintenant les relations `parentId` de la scène, avec indentation, repli/dépli, sélection synchronisée vers l'Inspector et glisser-déposer d'un GameObject sur un autre pour changer son parent. Glisser un objet sur l'en-tête de scène le ramène à la racine. Les opérations empêchent les cycles et les parents inexistants.
+
+**Suppr**, **Ctrl/Cmd+D** et **couper/copier/coller** traitent désormais le sous-arbre complet ; les nouveaux IDs et les références `parentId` sont remappés au collage. Les opérations enregistrent l'historique existant. Le **Project Browser** conserve son drag/drop 2D et 3D avec placement sur le plan de scène, tandis que le Window Manager existant conserve fenêtres flottantes, ancrage simple, redimensionnement et dispositions persistées. Les contrôles Inspector existants continuent à notifier le rendu et à alimenter Undo/Redo.
+
+**Limites :** ce changement n'ajoute pas encore une hiérarchie complète des transformations 3D héritées entre parents/enfants, un docking par arbre d'onglets à la Unity, ni un système général de propriétés typées pour tous les scripts. Ces mécanismes devront être implémentés et testés indépendamment avant de les annoncer comme compatibles Unity.
+
 ## Nouveau — Import de packs WarLike Library (novembre 2026)
 
 Ouvrir `asset-store/library-import.html` pour un prefab individuel GLB ou PNG, ou `asset-store/library-bundle.html` pour un bundle `warlike.library.bundle.v2` contenant jusqu'à **16 modèles/sprites/scripts** pour **32 Mo** au total. Les données sont vérifiées avant écriture (tailles, extensions, identifiants, empreintes SHA-256, structure GLB ou en-tête PNG). Les modèles et sprites sont installés dans la bibliothèque locale de prefabs ; les scripts sont archivés dans IndexedDB, **sans exécution automatique**.

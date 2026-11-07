@@ -3,6 +3,15 @@ const KEY='warlike.render.quality.v1';
 const defaults={lighting2d:true,ambient2d:.72,lightRadius2d:210,shadows2d:true,exposure3d:1.15,fog3d:.01};
 const clamp=(v,a,b,d)=>Number.isFinite(Number(v))?Math.min(b,Math.max(a,Number(v))):d;
 export const renderQuality={...defaults};
+// Keep the 3D drawing buffer bounded on high-DPI and large screens while preserving aspect ratio.
+export function viewportPixelSize(width,height,devicePixelRatio=1,{maxRatio=2,maxPixels=2560*1440}={}){
+ const w=Number(width),h=Number(height),ratio=Number(devicePixelRatio);
+ if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0)return {width:1,height:1,scale:1};
+ const d=Math.min(Math.max(Number.isFinite(ratio)?ratio:1,.5),Math.max(.5,maxRatio));
+ const budget=Math.sqrt(Math.max(1,maxPixels)/(w*h));
+ const scale=Math.min(d,budget);
+ return {width:Math.max(1,Math.round(w*scale)),height:Math.max(1,Math.round(h*scale)),scale};
+}
 export const horrorProfile={ambient2d:.24,lightRadius2d:125,exposure3d:.68,fog3d:.035};
 export function applyHorrorAtmosphere(){return setRenderQuality(horrorProfile)}
 export function setRenderQuality(next){

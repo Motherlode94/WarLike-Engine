@@ -80,3 +80,11 @@ test('animated Library prefab retains actual clip names and gameplay mappings',(
  const still=nativePrefabFromTransfer({...record,animationCount:0});
  assert.equal(still.components.animation3dClip,undefined);
 });
+
+test('installed Engine animation alias extension refines clip mapping without running remote code',()=>{
+ const previous=globalThis.localStorage;
+ const presets={'engine-animation-map':{enabled:true,schema:'warlike.engine.animation-map.v1',data:{schema:'warlike.engine.animation-map.v1',aliases:{idle:['resting'],walk:['marching'],run:['sprinting']}}}};
+ globalThis.localStorage={getItem:key=>key==='warlike.extensions.v1'?JSON.stringify(presets):null};
+ try{const mapping=libraryAnimationMapping(['Resting_01','Marching_02','Sprinting_03']);assert.equal(mapping.idle,'Resting_01');assert.equal(mapping.walk,'Marching_02');assert.equal(mapping.run,'Sprinting_03');}
+ finally{if(previous===undefined)delete globalThis.localStorage;else globalThis.localStorage=previous}
+});

@@ -58,7 +58,20 @@ export function constrainRigPose(rig,pose,constraints){
  return {...working,diagnostics};
 }
 export const normalizeBoneName=name=>name.toLowerCase().replace(/mixamorig|armature|skeleton|rig[.:_\s-]*/g,'').replace(/[^a-z0-9]/g,'');
-export function autoBoneMap(source,target){const map={};for(const node of source.nodes){const matches=target.nodes.filter(n=>normalizeBoneName(n.name)===normalizeBoneName(node.name));if(node.name&&matches.length===1)map[node.name]=matches[0].name;}return map;}
+// Normalize common exporter names without conflating left/right limbs.
+const canonicalBoneName=name=>{
+ const key=normalizeBoneName(String(name||''));
+ const aliases={hips:'pelvis',hip:'pelvis',pelvis:'pelvis',rootmotion:'root',spine1:'spine01',spine2:'spine02',spine3:'spine03',leftupperarm:'leftarm',rightupperarm:'rightarm',leftforearm:'leftlowerarm',rightforearm:'rightlowerarm',leftthigh:'leftupleg',rightthigh:'rightupleg',leftcalf:'leftleg',rightcalf:'rightleg',leftankle:'leftfoot',rightankle:'rightfoot',neck1:'neck',headtop:'head'};
+ return aliases[key]||key;
+};
+export function autoBoneMap(source,target){
+ const map={},used=new Set();
+ const targetNames=new Map();
+ for(const bone of target?.nodes||[]){if(!bone?.name)continue;const key=canonicalBoneName(bone.name);const group=targetNames.get(key)||[];group.push(bone.name);targetNames.set(key,group)}
+ const sourceKeys=new Map();for(const bone of source?.nodes||[]){if(!bone?.name)continue;const key=canonicalBoneName(bone.name);sourceKeys.set(key,(sourceKeys.get(key)||0)+1)}
+ for(const bone of source?.nodes||[]){if(!bone?.name)continue;const key=canonicalBoneName(bone.name),matches=targetNames.get(key)||[];if(sourceKeys.get(key)===1&&matches.length===1&&!used.has(matches[0])){map[bone.name]=matches[0];used.add(matches[0])}}
+ return map;
+}
 // Rest-relative local rotations; explicit maps avoid guessing between incompatible rigs.
 export function retargetSkeletalClip(source,target,clip,map,{translationScale=1,name=clip.name+' · transféré'}={}){
  if(!Number.isFinite(translationScale)||translationScale<=0||translationScale>1000)throw Error('Échelle de transfert invalide.');const result={name,duration:clip.duration,loop:true,channels:[]},targets=new Set();

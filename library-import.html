@@ -19,7 +19,7 @@ async function installPack(raw){
   }
   await storeLibraryModel(record);
   const result=installLibraryPrefab(record,localStorage,{replace});
-  const p=document.createElement('p');p.textContent=result.updated?'✓ '+record.metadata.name+' : mise à jour confirmée et modèle enregistré.':result.installed?'✓ '+record.metadata.name+' : GLB enregistré et prefab installé.':'✓ '+record.metadata.name+' : version identique, prefab conservé.';$('result').append(p);
+  const p=document.createElement('p');p.textContent=result.updated?'✓ '+record.metadata.name+' : mise à jour confirmée et modèle enregistré.':result.installed?'✓ '+record.metadata.name+' : '+(record.metadata.mode==='2d'?'PNG':'GLB')+' enregistré et prefab installé.':'✓ '+record.metadata.name+' : version identique, prefab conservé.';$('result').append(p);
   const link=document.createElement('a');link.href='../index.html';link.textContent='Ouvrir WarLike Engine →';$('result').append(link);
   $('status').textContent='Installation terminée. Ouvre Engine dans ce navigateur pour retrouver le prefab.';
   return {installed:result.installed,name:record.metadata.name};

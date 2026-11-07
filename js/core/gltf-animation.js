@@ -31,8 +31,8 @@ export function decomposeNodeMatrix(m){
  const scale=[Math.hypot(m[0],m[1],m[2]),Math.hypot(m[4],m[5],m[6]),Math.hypot(m[8],m[9],m[10])];const det=m[0]*(m[5]*m[10]-m[6]*m[9])-m[4]*(m[1]*m[10]-m[2]*m[9])+m[8]*(m[1]*m[6]-m[2]*m[5]);if(det<0)scale[0]*=-1;const a=m[0]/(scale[0]||1),b=m[4]/(scale[1]||1),c=m[8]/(scale[2]||1),d=m[1]/(scale[0]||1),e=m[5]/(scale[1]||1),f=m[9]/(scale[2]||1),g=m[2]/(scale[0]||1),h=m[6]/(scale[1]||1),i=m[10]/(scale[2]||1);let q;
  const trace=a+e+i;if(trace>0){const s=2*Math.sqrt(trace+1);q=[(h-f)/s,(c-g)/s,(d-b)/s,s/4];}else if(a>e&&a>i){const s=2*Math.sqrt(1+a-e-i);q=[s/4,(b+d)/s,(c+g)/s,(h-f)/s];}else if(e>i){const s=2*Math.sqrt(1+e-a-i);q=[(b+d)/s,s/4,(f+h)/s,(c-g)/s];}else{const s=2*Math.sqrt(1+i-a-e);q=[(c+g)/s,(f+h)/s,s/4,(d-b)/s];}const length=Math.hypot(...q)||1;return {translation:Array.from(m.slice(12,15)),rotation:q.map(v=>v/length),scale};
 }
-export function readAnimationRig(json,accessor){
- if(!json.skins?.length&&!json.animations?.length)return null;
+export function readAnimationRig(json,accessor,{allowStatic=false}={}){
+ if(!json.skins?.length&&!json.animations?.length&&!allowStatic)return null;
  const nodes=(json.nodes||[]).map(n=>({name:n.name||'',...(n.matrix?decomposeNodeMatrix(n.matrix):{translation:n.translation||[0,0,0],rotation:n.rotation||[0,0,0,1],scale:n.scale||[1,1,1]}),...(n.matrix?{matrix:n.matrix}:{}),children:n.children||[]}));
  const parents=new Int32Array(nodes.length).fill(-1);for(let i=0;i<nodes.length;i++)for(const child of nodes[i].children)parents[child]=i;
  const skins=(json.skins||[]).map(s=>({joints:s.joints,inverseBinds:s.inverseBindMatrices===undefined?s.joints.map(identityMatrix):Array.from({length:s.joints.length},(_,i)=>new Float32Array(accessor(s.inverseBindMatrices).data.slice(i*16,i*16+16)))}));

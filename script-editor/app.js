@@ -1,4 +1,5 @@
 import {compileWarScript,runWarScriptPreview} from './warscript.js';
+import {convertWarScriptToCSharp} from './warscript-to-csharp.js';
 import {ScriptDocument,MAX_SOURCE,newId,languageFor,templates,templateFor,readLinkedFile,saveLinkedFile} from './core.js';
 
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),embedded=params.get('embedded')==='1',session=params.get('session');
@@ -184,6 +185,27 @@ $('runNativeScript').onclick=async()=>{
   status('Service Python/C++ indisponible : lance start-warlike-script-runner.cmd et vérifie la clé. '+error.message,true);
   log('Service local : '+error.message);
  }finally{runningNativeScript=false;button.disabled=false;}
+};
+$('convertWarScriptCsharp').onclick=()=>{
+ const d=current();if(!d||d.language!=='warscript')return status('Choisis un fichier WarScript (.wls) avant de convertir.',true);
+ const className=(d.name.replace(/\.wls$/i,'').replace(/[^A-Za-z0-9_]/g,'_')||'ConvertedWarScript').replace(/^[^A-Za-z_]/,'_');
+ const output=convertWarScriptToCSharp(d.text,{className});
+ $('outputTab').click();
+ if(!output.ok){
+  d.nativeDiagnostics=output.diagnostics;
+  updateProblems();
+  for(const diag of output.diagnostics)log('WarScript → C# '+diag.line+':'+diag.column+' · '+diag.message);
+  status('Conversion impossible : '+output.diagnostics.length+' problème(s) à corriger.',true);
+  return;
+ }
+ delete d.nativeDiagnostics;
+ const filename=output.className+'.cs';
+ const converted=addRecord({id:newId(),name:filename,source:output.source,revision:0});
+ converted.compiledFrom=d.id;
+ converted.compiledSource=d.text;
+ preserve();
+ log('Conversion WarScript → C# : '+d.name+' → '+filename+' · source native à relire et compiler localement');
+ status('✓ '+filename+' généré dans un nouvel onglet · utiliser Télécharger ou Enregistrer sous pour l’export.');
 };
 $('runWarScript').onclick=()=>{
  const d=current();if(!d)return;

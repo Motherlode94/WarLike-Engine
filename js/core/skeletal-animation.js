@@ -57,7 +57,7 @@ export function constrainRigPose(rig,pose,constraints){
  }
  return {...working,diagnostics};
 }
-export const normalizeBoneName=name=>String(name||'').toLowerCase().replace(/^(?:(?:mixamorig|armature|skeleton|rig)[.:_\s-]*)+/,'').replace(/[^a-z0-9]/g,'');
+export const normalizeBoneName=name=>String(name||'').toLowerCase().replace(/^(?:(?:mixamorig|armature|skeleton)[.:_\s-]*|rig[.:_\s-]+)+/,'').replace(/[^a-z0-9]/g,'');
 // Normalize common exporter names without conflating left/right limbs.
 const canonicalBoneName=name=>{
  const key=normalizeBoneName(String(name||''));

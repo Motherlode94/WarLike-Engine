@@ -1,0 +1,42 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WarLike Engine — Installer un lot Library</title><style>:root{color-scheme:dark;font:15px/1.6 system-ui;background:#101820;color:#e9f2fa}body{margin:0}main{max-width:820px;margin:38px auto;padding:22px}section{padding:22px;border:1px solid #40576a;background:#19252f;border-radius:12px}a{color:#acd5ff}input,button{padding:12px;background:#243749;color:#fff;border:1px solid #668ba6;border-radius:8px;font:inherit;cursor:pointer}input{max-width:100%}button:disabled{opacity:.5}#status{white-space:pre-wrap;min-height:36px}li{margin:8px 0}.warning{border-left:3px solid #f2c479;padding:10px 16px;background:#302a22}</style></head><body><main><nav><a href="./">← Engine</a> · <a href="https://warlike-library.pages.dev/pack-builder.html" target="_blank" rel="noopener">Library Bundle Builder</a></nav><h1>Installer un lot Library</h1><section><p>Importer simultanément des prefabs GLB et PNG, plus des scripts WarScript / JavaScript / TypeScript / C#. Toutes les empreintes SHA-256 sont vérifiées avant la moindre écriture. Les scripts sont conservés dans Engine sans exécution automatique.</p><label for="file">Choisir un fichier .warlike-bundle.json</label><input type="file" id="file" accept=".json,application/json"><button id="install">Vérifier puis installer</button><p id="status" role="status">Prêt.</p><ul id="resources"></ul></section><p class="warning">Les scripts ne sont pas exécutés automatiquement. Pour les utiliser, télécharge le fichier depuis la liste puis importe-le explicitement dans Script Studio. Les dépendances d'exécution et les objets déjà placés dans les scènes ne sont pas mis à jour automatiquement.</p><a href="./index.html">Ouvrir Engine →</a></main><script type="module">
+import {parseLibraryBundle,planBundlePrefabs,installLibraryBundle,readInstalledLibraryScripts} from './js/core/library-bundle.js';
+const $=id=>document.getElementById(id),status=message=>$('status').textContent=message;
+let busy=false;
+async function refreshScripts(){
+ const scripts=await readInstalledLibraryScripts(),list=$('resources');list.replaceChildren();
+ for(const script of scripts){
+  const li=document.createElement('li'),b=document.createElement('button');b.textContent='Télécharger '+script.filename;
+  b.onclick=()=>{const url=URL.createObjectURL(new Blob([script.text],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=script.filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);};
+  li.append(b,document.createTextNode(' · Source archivée, non exécutée'));list.append(li);
+ }
+}
+async function handle(raw){
+ if(busy)throw Error('Installation déjà en cours.');
+ busy=true;$('install').disabled=true;
+ try{
+  status('Vérification des ressources, licences et empreintes…');
+  const bundle=await parseLibraryBundle(raw),plan=planBundlePrefabs(bundle);
+  const replace=plan.conflicts.length?window.confirm(plan.conflicts.length+' conflit(s) de prefab détecté(s). Remplacer les versions précédentes ? Les objets de scènes déjà instanciés ne seront pas modifiés.'):false;
+  if(plan.conflicts.length&&!replace)throw Error('Installation annulée : versions précédentes conservées.');
+  status('Installation locale des '+bundle.models.length+' prefabs et '+bundle.scripts.length+' scripts…');
+  const result=await installLibraryBundle(bundle,{replace});
+  status('Installation terminée : '+result.models+' prefabs, '+result.scripts+' scripts archivés, '+result.replaced+' versions remplacées. Recharge Engine pour retrouver les prefabs.');
+  await refreshScripts();return result;
+ }finally{busy=false;$('install').disabled=false;}
+}
+$('install').onclick=async()=>{try{const file=$('file').files?.[0];if(!file||file.size>46*1024*1024)throw Error('Lot absent ou trop volumineux.');await handle(JSON.parse(await file.text()));}catch(e){status('Installation refusée : '+e.message);}};
+const channel=new URLSearchParams(location.search).get('bundleTransfer');
+const origin='https://warlike-library.pages.dev';
+if(channel&&/^[a-f0-9]{40}$/.test(channel)&&window.opener){
+ const tell=message=>window.opener?.postMessage({...message,channel},origin);
+ window.addEventListener('message',async e=>{
+  if(e.origin!==origin||e.source!==window.opener||e.data?.channel!==channel)return;
+  if(e.data.type==='warlike-bundle-ping-v2'){tell({type:'warlike-engine-bundle-ready-v2'});return;}
+  if(e.data.type!=='warlike-bundle-transfer-v2')return;
+  try{const result=await handle(e.data.pack);tell({type:'warlike-engine-bundle-installed-v2',ok:true,...result});}
+  catch(error){status('Installation refusée : '+error.message);tell({type:'warlike-engine-bundle-installed-v2',ok:false,error:error.message});}
+ });
+ tell({type:'warlike-engine-bundle-ready-v2'});
+}
+refreshScripts().catch(error=>status('Liste de scripts indisponible : '+error.message));
+</script></body></html>

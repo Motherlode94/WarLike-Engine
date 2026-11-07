@@ -258,3 +258,11 @@ Les deux manifestes peuvent être volumineux. Le chargement réel, la compatibil
 La boutique inclut désormais [la galerie média](https://warlike-engine.pages.dev/asset-store/media.html), accessible depuis la page principale de l'Asset Store. Elle lit directement trois manifestes locaux déjà livrés dans le dépôt : `assets/free/kenney/sprites.json` (sprites 2D), `ui.json` (UI / HUD), `audio.json` (effets sonores). L'inventaire des tests du moteur documente respectivement **100 sprites, 40 éléments UI et 24 sons**, sous réserve de leur chargement effectif.
 
 Fonctionnalités : recherche, catégories, filtre par pack, favoris locaux, aperçu d'image, préécoute OGG, fiches d'asset avec auteur/licence/source et téléchargement du fichier. Les fichiers sont sur le même domaine que l'éditeur ; la galerie ne simule aucun asset inexistant, paiement ou installation automatique dans le projet. L'import multimédia direct dans les projets sera une étape distincte. La syntaxe JavaScript a été vérifiée, mais l'expérience complète doit encore être testée en navigateur.
+
+### Asset Store — collections thématiques et animations (mise à jour)
+
+La nouvelle page [Collections](https://warlike-engine.pages.dev/asset-store/collections.html) organise les ressources réelles du dépôt en sélections : combat et tactique, personnages, villes, nature, véhicules, modèles animés, sprites 2D, UI/HUD et sons. Les nombres de ressources et les packs populaires sont calculés depuis les manifestes chargés, sans produits fictifs.
+
+Le catalogue 3D dispose d'un filtre **Animations uniquement** et les fiches proposent le choix d'un clip d'animation lorsque le visualiseur 3D peut lire les clips du GLB. Les URLs filtrées `?category=...`, `?animated=1`, `?pack=...` et `?q=...` ouvrent directement les sélections ; la galerie multimédia accepte `?type=sprite|ui|audio`.
+
+Limites : une collection est une sélection éditoriale d'assets, **pas encore un ZIP ni un prefab d'ensemble**. La lecture des animations dépend des clips embarqués compatibles avec le visualiseur ; aucun retargeting n'est promis. Les changements de code et la syntaxe des nouveaux modules ont été contrôlés, mais pas encore testés en navigateur avec tous les modèles.

@@ -69644,8 +69644,8 @@
     "sourceFile": "OBJ/Bush_1x1.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "ee75ec254a59539a9c3d2dd8e5104ced7391e0168633c758041941a4df9f88b0",
-    "bytes": 22176,
+    "sha256": "cb9c990173bbb535424444de67ee7a36b82d676b34977b4ddde93976e1c09d90",
+    "bytes": 141188,
     "animationClips": [],
     "sourceSha256": "3a075913c70db53dfc65402d69d7580182e373d62be92d099ec660c99c344d53",
     "normalizedSize": [
@@ -69654,7 +69654,19 @@
       0.9904522668996615
     ],
     "triangles": 516,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-bush-1x1.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-bush-1x1.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "ee75ec254a59539a9c3d2dd8e5104ced7391e0168633c758041941a4df9f88b0",
+      "textures": [
+        {
+          "material": "Texture_Leaves",
+          "sourceFile": "Textures/Leaf_Texture.png",
+          "sha256": "34649aec779adde617568fc89e6ed24277d2bc5b254f592cdf26627f29fe63e0"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],
@@ -69672,8 +69684,8 @@
     "sourceFile": "OBJ/Bush_2x1.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "a06faea4cf8a0e800c96c1f430575f6ff5432e51a610dd1214782cba3a1693d7",
-    "bytes": 27888,
+    "sha256": "e070769241ab9e3784542b662a56bc8c657b966ee4c638c7e2dc02263cb5a164",
+    "bytes": 146900,
     "animationClips": [],
     "sourceSha256": "ab81a3706d1a55aa1332e18eb7edcfef5262e86372213abf58a28f55c177b382",
     "normalizedSize": [
@@ -69682,7 +69694,19 @@
       0.7290472268917322
     ],
     "triangles": 652,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-bush-2x1.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-bush-2x1.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "a06faea4cf8a0e800c96c1f430575f6ff5432e51a610dd1214782cba3a1693d7",
+      "textures": [
+        {
+          "material": "Texture_Leaves",
+          "sourceFile": "Textures/Leaf_Texture.png",
+          "sha256": "34649aec779adde617568fc89e6ed24277d2bc5b254f592cdf26627f29fe63e0"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],
@@ -69700,8 +69724,8 @@
     "sourceFile": "OBJ/Bush_2x2.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "fd74957b041d103a11b6b537598f1ebd8d3fb6be34398c6a65429e479dc4c93b",
-    "bytes": 40664,
+    "sha256": "a7cc68651d36dbcbb0216c5b45025a286ea4e65bac5944be292d50b44aaf1afd",
+    "bytes": 159672,
     "animationClips": [],
     "sourceSha256": "8bd1eb83b4eaad71afa85f6d2bc11dd55f5c4018d826998c6a64dfbfcba2d0dc",
     "normalizedSize": [
@@ -69710,7 +69734,19 @@
       0.6586722818025786
     ],
     "triangles": 956,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-bush-2x2.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-bush-2x2.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "fd74957b041d103a11b6b537598f1ebd8d3fb6be34398c6a65429e479dc4c93b",
+      "textures": [
+        {
+          "material": "Texture_Leaves",
+          "sourceFile": "Textures/Leaf_Texture.png",
+          "sha256": "34649aec779adde617568fc89e6ed24277d2bc5b254f592cdf26627f29fe63e0"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],
@@ -69728,8 +69764,8 @@
     "sourceFile": "OBJ/Bush_Large.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "fa886926abb42acd3e6f6bb8f27c837a254e9245fcbd9ef84cc6e6f8a0238a8e",
-    "bytes": 11652,
+    "sha256": "80d95c1fa09cd49925df0b977b338c9d51c8987d9e9af1d03c52e4a520b00cb9",
+    "bytes": 130660,
     "animationClips": [],
     "sourceSha256": "8de8772fa54cf12bea116faf2e50c2e10dbb7872abe4cab3af6990f5af0ecef2",
     "normalizedSize": [
@@ -69738,7 +69774,19 @@
       0.9981552729308183
     ],
     "triangles": 360,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-bush-large.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-bush-large.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "fa886926abb42acd3e6f6bb8f27c837a254e9245fcbd9ef84cc6e6f8a0238a8e",
+      "textures": [
+        {
+          "material": "Texture_Leaves",
+          "sourceFile": "Textures/Leaf_Texture.png",
+          "sha256": "34649aec779adde617568fc89e6ed24277d2bc5b254f592cdf26627f29fe63e0"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],
@@ -69756,8 +69804,8 @@
     "sourceFile": "OBJ/Bush_Round.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "632bee1a56aec6bfe765e0cc1a8db274a13d906429f10d0dfc92afe2dd7d7ddb",
-    "bytes": 10272,
+    "sha256": "ad52a707e26bb91de81d2271ec1f0454a5ed295ff611b4bff78cccd34143699f",
+    "bytes": 129284,
     "animationClips": [],
     "sourceSha256": "34c9aaa0386846a6b91e35eb4867c680fc165843b8b9eecbd15c7422e7e039cb",
     "normalizedSize": [
@@ -69766,7 +69814,19 @@
       1
     ],
     "triangles": 312,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-bush-round.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-bush-round.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "632bee1a56aec6bfe765e0cc1a8db274a13d906429f10d0dfc92afe2dd7d7ddb",
+      "textures": [
+        {
+          "material": "Texture_Leaves",
+          "sourceFile": "Textures/Leaf_Texture.png",
+          "sha256": "34649aec779adde617568fc89e6ed24277d2bc5b254f592cdf26627f29fe63e0"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],
@@ -70204,8 +70264,8 @@
     "sourceFile": "OBJ/DeadTree_1.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "6002e367261d9285cf9777d72346d9dad3f2fd1505f3a22ae121f95a7ddff824",
-    "bytes": 16788,
+    "sha256": "5af5e961b212f1e78751a98bb6f29c847e3612d88b8fb1e23bcf2c88e71ca19f",
+    "bytes": 258012,
     "animationClips": [],
     "sourceSha256": "f2af14fc9205b8f19235f31ae9a451f6e13d0b418cafbfa99aee350449565f2d",
     "normalizedSize": [
@@ -70214,7 +70274,19 @@
       0.29373779218606283
     ],
     "triangles": 444,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-deadtree-1.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-deadtree-1.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "6002e367261d9285cf9777d72346d9dad3f2fd1505f3a22ae121f95a7ddff824",
+      "textures": [
+        {
+          "material": "Bark",
+          "sourceFile": "Textures/Bark_Texture.jpg",
+          "sha256": "d6fdb3cbf6df624bfe8e5d45fe7b5b1a05ec6d7b1fdb0fa4cc4774b4119bf017"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],
@@ -70232,8 +70304,8 @@
     "sourceFile": "OBJ/DeadTree_2.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "38c7b8c698e8e9e80612d559e17ad40c5b3ea07bebd7de035fce41944b75d4b3",
-    "bytes": 17220,
+    "sha256": "c2d05bd189a4af7bcc7fdb64299cc82ffbd951a9bd8bb30079197bab43b018fc",
+    "bytes": 258444,
     "animationClips": [],
     "sourceSha256": "36b0bf42e7a57b272958bd7481fd2a526a52186003e834c14428dc6fe6e1e9ee",
     "normalizedSize": [
@@ -70242,7 +70314,19 @@
       0.09029755135831069
     ],
     "triangles": 516,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-deadtree-2.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-deadtree-2.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "38c7b8c698e8e9e80612d559e17ad40c5b3ea07bebd7de035fce41944b75d4b3",
+      "textures": [
+        {
+          "material": "Bark",
+          "sourceFile": "Textures/Bark_Texture.jpg",
+          "sha256": "d6fdb3cbf6df624bfe8e5d45fe7b5b1a05ec6d7b1fdb0fa4cc4774b4119bf017"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],
@@ -70260,8 +70344,8 @@
     "sourceFile": "OBJ/DeadTree_3.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "decf07d12e17c985c5415364ed16718d075931794b2a1535f91475c23c13f114",
-    "bytes": 41616,
+    "sha256": "bf5d4d866214bc0064e2cfd1da8febdd8aa27f5252b4c365d94da65233a466a8",
+    "bytes": 282836,
     "animationClips": [],
     "sourceSha256": "32c7c7c329b8aeaf9771d6c9b9463f6c1c0c8d1df4477fd8f23aff6fe1863116",
     "normalizedSize": [
@@ -70270,7 +70354,19 @@
       0.8037617847313089
     ],
     "triangles": 1392,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-deadtree-3.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-deadtree-3.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "decf07d12e17c985c5415364ed16718d075931794b2a1535f91475c23c13f114",
+      "textures": [
+        {
+          "material": "Bark",
+          "sourceFile": "Textures/Bark_Texture.jpg",
+          "sha256": "d6fdb3cbf6df624bfe8e5d45fe7b5b1a05ec6d7b1fdb0fa4cc4774b4119bf017"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],
@@ -71324,8 +71420,8 @@
     "sourceFile": "OBJ/Tree_1.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "952daccf1147231f62255a8033cbd8cf0b9e40d648e4f4e4e2350b88372ea6f7",
-    "bytes": 28040,
+    "sha256": "553915e40fc178249a5982a427e3fb999baae8559b4e4a7b06d4e3b824779291",
+    "bytes": 388236,
     "animationClips": [],
     "sourceSha256": "508ba8dcabb107f09a2009cd55b9e2bf2c45c88c692b31d0a1107b7573c2a30d",
     "normalizedSize": [
@@ -71334,7 +71430,24 @@
       0.7449767642290335
     ],
     "triangles": 804,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-tree-1.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-tree-1.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "952daccf1147231f62255a8033cbd8cf0b9e40d648e4f4e4e2350b88372ea6f7",
+      "textures": [
+        {
+          "material": "Bark",
+          "sourceFile": "Textures/Bark_Texture.jpg",
+          "sha256": "d6fdb3cbf6df624bfe8e5d45fe7b5b1a05ec6d7b1fdb0fa4cc4774b4119bf017"
+        },
+        {
+          "material": "Texture_Leaves",
+          "sourceFile": "Textures/Leaf_Texture.png",
+          "sha256": "34649aec779adde617568fc89e6ed24277d2bc5b254f592cdf26627f29fe63e0"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],
@@ -71352,8 +71465,8 @@
     "sourceFile": "OBJ/Tree_2.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "61e97462406ff8d886f5ccfe50f0de2fdadba063a8f2278faae23cb8a9b02ad2",
-    "bytes": 54528,
+    "sha256": "bcd2dbf095663448ae7ec5b9ed320127a915b04c60a821e11c9ea90e0ff3b51a",
+    "bytes": 414724,
     "animationClips": [],
     "sourceSha256": "196f29a2b278a36cacb245f7b5d223721984df68170c1dbf2d761fb88db04fbe",
     "normalizedSize": [
@@ -71362,7 +71475,24 @@
       0.7666946454151439
     ],
     "triangles": 1816,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-tree-2.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-tree-2.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "61e97462406ff8d886f5ccfe50f0de2fdadba063a8f2278faae23cb8a9b02ad2",
+      "textures": [
+        {
+          "material": "Bark",
+          "sourceFile": "Textures/Bark_Texture.jpg",
+          "sha256": "d6fdb3cbf6df624bfe8e5d45fe7b5b1a05ec6d7b1fdb0fa4cc4774b4119bf017"
+        },
+        {
+          "material": "Texture_Leaves",
+          "sourceFile": "Textures/Leaf_Texture.png",
+          "sha256": "34649aec779adde617568fc89e6ed24277d2bc5b254f592cdf26627f29fe63e0"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],
@@ -71380,8 +71510,8 @@
     "sourceFile": "OBJ/Tree_3.obj",
     "archiveUrl": "https://herni-studio-tokoupim.cz/asset-knihovna/soubory/quaternius-ultimatemodularruins/data.zip",
     "archiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
-    "sha256": "376c065ca7e36a22a8730d9cf4b5a7a5b0fc820fa1ee720b48461dfc0221b550",
-    "bytes": 41540,
+    "sha256": "24db91a462a29f23f051c4f42a914aafc88bbeac8ff5747eb6fbd546c558e8d0",
+    "bytes": 401736,
     "animationClips": [],
     "sourceSha256": "535dcd42bbba410dcd0c11a5385a788e5f4d9ad94f55bf8453ceb61813ba0f33",
     "normalizedSize": [
@@ -71390,7 +71520,24 @@
       0.7629265292518016
     ],
     "triangles": 1332,
-    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-tree-3.png"
+    "thumbnailUrl": "./assets/free/quaternius/ultimatemodularruins/previews/quaternius-ultimatemodularruins-tree-3.png",
+    "materialRepair": {
+      "recipe": "ruins-original-textures-v1",
+      "sourceArchiveSha256": "add26f9403ca1c6354566c2366aadca806eab4d4971fa35c0d4b48c080b0c447",
+      "previousGlbSha256": "376c065ca7e36a22a8730d9cf4b5a7a5b0fc820fa1ee720b48461dfc0221b550",
+      "textures": [
+        {
+          "material": "Bark",
+          "sourceFile": "Textures/Bark_Texture.jpg",
+          "sha256": "d6fdb3cbf6df624bfe8e5d45fe7b5b1a05ec6d7b1fdb0fa4cc4774b4119bf017"
+        },
+        {
+          "material": "Texture_Leaves",
+          "sourceFile": "Textures/Leaf_Texture.png",
+          "sha256": "34649aec779adde617568fc89e6ed24277d2bc5b254f592cdf26627f29fe63e0"
+        }
+      ]
+    }
   },
   {
     "textureFiles": [],

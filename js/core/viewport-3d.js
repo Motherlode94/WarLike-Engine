@@ -81,6 +81,31 @@ export const groundHit3d=(sx,sy,cam,width,height)=>{
  if(Math.abs(r[1])<1e-5)return null;
  const t=-cam.eye[1]/r[1];return t>0?V.add(cam.eye,V.mul(r,t)):null;
 };
+// Triangle-accurate raycasting against the same normalized vertex positions the
+// WebGL renderer draws. Double-sided Moller-Trumbore; nearest positive hit.
+export function raycastTriangles3d(origin,direction,vertices,transform,{maxDistance=1e4}={}){
+ if(!vertices||vertices.length%18!==0||!Array.isArray(origin)||!Array.isArray(direction))return null;
+ const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+ const sub=(a,b)=>a.map((v,i)=>v-b[i]),dot=(a,b)=>a.reduce((v,n,i)=>v+n*b[i],0);
+ let result=null,best=maxDistance;
+ for(let i=0;i<vertices.length;i+=18){
+  const point=j=>transform([vertices[i+j],vertices[i+j+1],vertices[i+j+2]]);
+  const a=point(0),b=point(6),c=point(12),u=sub(b,a),v=sub(c,a);
+  const p=cross(direction,v),det=dot(u,p);if(Math.abs(det)<1e-9)continue;
+  const inv=1/det,tvec=sub(origin,a),x=dot(tvec,p)*inv;if(x<-1e-7||x>1+1e-7)continue;
+  const q=cross(tvec,u),y=dot(direction,q)*inv;if(y<-1e-7||x+y>1+1e-7)continue;
+  const distance=dot(v,q)*inv;if(distance<=1e-6||distance>=best)continue;
+  let normal=cross(u,v),length=Math.hypot(...normal);if(length<1e-9)continue;
+  normal=normal.map(n=>n/length);if(dot(normal,direction)>0)normal=normal.map(n=>-n);
+  best=distance;result={distance,point:origin.map((n,k)=>n+direction[k]*distance),normal,triangle:i/18};
+ }
+ return result;
+}
+export function sceneRay3d(x,y,cam,width,height){
+ const f=1/Math.tan(Math.PI/6);
+ const direction=V.norm(V.add(cam.forward,V.add(V.mul(cam.right,(x-width/2)*2/(height*f)),V.mul(cam.up,(height/2-y)*2/(height*f)))));
+ return {origin:[...cam.eye],direction};
+}
 // Ray against oriented scene boxes. Thin ground tiles cannot swallow actor clicks.
 export function pickEntity3d(entities,point,cam,{playing=false}={}){
  const f=1/Math.tan(Math.PI/6),direction=V.norm(V.add(cam.forward,V.add(V.mul(cam.right,(point.x-point.w/2)*2/(point.h*f)),V.mul(cam.up,(point.h/2-point.y)*2/(point.h*f)))));let selected=null,distance=300;
@@ -418,7 +443,44 @@ export function init3d(canvas,host,buttons){
  document.addEventListener('keydown',e=>{if(state.playing||!view3d.enabled||view3d.drag?.nav!=='look'||isTypingTarget(e.target))return;if(['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();editorKeys.add(e.code)}});document.addEventListener('keyup',e=>editorKeys.delete(e.code));window.addEventListener('blur',()=>{editorKeys.clear();view3d.drag=null;selectionRect.hidden=true});
  const updateGizmos=initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBounds3d,getCamera:camera,record,notify});
  const rectPoint=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,w:r.width,h:r.height}};
- const pick=(point,cam)=>pickEntity3d(state.entities,point,cam,{playing:state.playing});
+ const meshHit=(point,cam,{excludeIds=[]}={})=>{
+  const ray=sceneRay3d(point.x,point.y,cam,point.w,point.h);
+  let nearest=null;
+  for(const entity of state.entities){
+   if(excludeIds.includes(entity.id)||entity.editorHidden||entity.enabled===false)continue;
+   const id=entity.model3dId||entity.assetId,loaded=realGlbBuffers.get(id);
+   if(loaded?.status!=='ready')continue;
+   const box=objectBounds3d(entity),size=loaded.normalizedSize||[1,1,1];
+   const factor=Math.min(box.w/size[0],box.h/size[1],box.d/size[2]);
+   const q=rotationQuaternion3d(entity),qx=q.x,qy=q.y,qz=q.z,qw=q.w;
+   let correction=null;try{correction=affineCorrection3d(entity)}catch{}
+   const transform=pos=>{
+    const v=pos.map(n=>n*factor);
+    const t=[2*(qy*v[2]-qz*v[1]),2*(qz*v[0]-qx*v[2]),2*(qx*v[1]-qy*v[0])];
+    const rotated=[v[0]+qw*t[0]+qy*t[2]-qz*t[1],v[1]+qw*t[1]+qz*t[0]-qx*t[2],v[2]+qw*t[2]+qx*t[1]-qy*t[0]];
+    const world=[rotated[0]+box.x,rotated[1]+box.y,rotated[2]+box.z];
+    return correction?[
+     correction[0]*world[0]+correction[4]*world[1]+correction[8]*world[2]+correction[12],
+     correction[1]*world[0]+correction[5]*world[1]+correction[9]*world[2]+correction[13],
+     correction[2]*world[0]+correction[6]*world[1]+correction[10]*world[2]+correction[14]
+    ]:world;
+   };
+   for(const part of loaded.geometry.parts){
+    const hit=raycastTriangles3d(ray.origin,ray.direction,part.vertices,transform,{maxDistance:nearest?.distance??1e4});
+    if(hit&&(!nearest||hit.distance<nearest.distance))nearest={...hit,entity,kind:'triangle'};
+   }
+  }
+  return nearest;
+ };
+ view3d.surfaceAt=(clientX,clientY,{excludeIds=[],groundFallback=true}={})=>{
+  const rect=canvas.getBoundingClientRect(),point={x:clientX-rect.left,y:clientY-rect.top,w:rect.width,h:rect.height},cam=camera();
+  const mesh=meshHit(point,cam,{excludeIds});
+  const floor=groundFallback?groundHit3d(point.x,point.y,cam,point.w,point.h):null;
+  if(!floor)return mesh;
+  const dist=Math.hypot(...floor.map((v,i)=>v-cam.eye[i]));
+  return mesh&&mesh.distance<dist?mesh:{point:floor,normal:[0,1,0],distance:dist,kind:'ground'};
+ };
+ const pick=(point,cam)=>meshHit(point,cam)?.entity||pickEntity3d(state.entities,point,cam,{playing:state.playing});
  view3d.groundAt=(clientX,clientY)=>{const r=canvas.getBoundingClientRect(),hit=groundHit3d(clientX-r.left,clientY-r.top,camera(),r.width,r.height);return hit?{x:hit[0]*64,y:hit[2]*64}:null};
  view3d.pickAt=(clientX,clientY)=>{const r=canvas.getBoundingClientRect();return pick({x:clientX-r.left,y:clientY-r.top,w:r.width,h:r.height},camera())};
  canvas.addEventListener('contextmenu',e=>e.preventDefault());

@@ -1,4 +1,5 @@
 import {cacheAnimationGeometry,skeletalClips,sampleEntityRigPose,hasSkeletalPreview,skeletalFrame} from './skeletal-animation.js';
+import {waterSettings,waterSurface3d,waterColor} from './stylized-water.js';
 import {runRuntimeFrame} from './runtime-session.js';
 import {companyController,commandCompany,selectCompanySquad} from './company-runtime.js';
 import {moveCompanyCamera} from './company-camera.js';
@@ -283,6 +284,7 @@ export function init3d(canvas,host,buttons){
  const textureUniform=loc('uBaseColorTexture'),useTexture=loc('uUseTexture'),alphaCutoff=loc('uAlphaCutoff');
  const makeBuffer=(data,dynamic=false)=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,dynamic?gl.DYNAMIC_DRAW:gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
  const cubes=makeBuffer(cubeVerts()),sphere=makeBuffer(curvedVerts('sphere')),cylinder=makeBuffer(curvedVerts('cylinder')),cone=makeBuffer(curvedVerts('cone')),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
+ const waterMesh=makeBuffer(new Float32Array(0),true);
  const realGlbBuffers=new Map(),animationStates=new WeakMap(),animatedHitVertices=new WeakMap();
  const ensureModel=id=>{
   if(realGlbBuffers.has(id))return;
@@ -677,6 +679,24 @@ export function init3d(canvas,host,buttons){
    const angle=(o.rotation||0)*Math.PI/180;
    gl.uniform1f(u.roughness,Math.max(.04,Math.min(1,Number(o.materialRoughness??.7))));
    gl.uniform1f(u.metallic,Math.max(0,Math.min(1,Number(o.materialMetallic??0))));
+   if(o.water3d?.enabled){
+    const water=waterSettings(o.water3d),surface=waterSurface3d(b.w,b.d,now/1000,water);
+    gl.bindBuffer(gl.ARRAY_BUFFER,waterMesh.buffer);gl.bufferData(gl.ARRAY_BUFFER,surface,gl.DYNAMIC_DRAW);waterMesh.count=surface.length/6;
+    bind(waterMesh);gl.uniform1i(useTexture,0);gl.uniform1f(alphaCutoff,.01);gl.uniform1i(unlitUniform,0);gl.uniform3fv(emissiveUniform,water.style==='magic'?[.09,.18,.22]:[.015,.045,.08]);
+    gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
+    gl.uniform1f(u.roughness,.2);gl.uniform1f(u.metallic,.08);
+    model([b.x,Number(o.elevation3d)||0,b.z],[1,1,1],waterColor(water.color,water.opacity),(o.rotation||0)*Math.PI/180,o);
+    gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
+    if(water.foam>0){
+     // Pale translucent crest layer with lower wave amplitude; visible
+     // on the entire surface without adding a second material/shader.
+     gl.uniform3fv(emissiveUniform,[.075,.11,.13]);
+     model([b.x,(Number(o.elevation3d)||0)+.015,b.z],[1,1,1],waterColor(water.foamColor,water.opacity*water.foam*.17),(o.rotation||0)*Math.PI/180,o);
+     gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
+    }
+    gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform3fv(emissiveUniform,[0,0,0]);
+    continue;
+   }
    const shape=o.model3dId?'glb':get3dAsset(o.assetId)?.shape;
    const drawShape=(mesh,p,scale,shade)=>{bind(mesh);if(o._survivalPreview){gl.uniform1f(alphaCutoff,.01);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}model(p,scale,o._survivalPreview?[...shade.slice(0,3),.5]:shade,angle,o);gl.drawArrays(gl.TRIANGLES,0,mesh.count);if(o._survivalPreview)gl.depthMask(true)};
    const cube=(p,scale,shade)=>drawShape(cubes,p,scale,shade);

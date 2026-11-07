@@ -1,5 +1,6 @@
+import {packagedModels3d} from './imported-models-3d.js';
 import {quaterniusModels3d} from './quaternius-game-assets.js';
-import {readAnimationRig} from '../core/gltf-animation.js';
+import {readAnimationRig,normalMatrix3,transformNormal} from '../core/gltf-animation.js';
 import {freeModels3d} from './free-game-assets.js';
 // WarLike static glTF 2.0 GLB mesh loader. No eval, scripts or external binary executables.
 // Supports embedded GLB, node hierarchy/TRS, material baseColorFactor, triangle indices.
@@ -35,7 +36,7 @@ export const realModels3d=[...freeModels3d,...quaterniusModels3d,
  {id:'real-toycar',name:'Toy Car',category:'Vehicles',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/ToyCar/glTF-Binary/ToyCar.glb',license:'Consulter la licence du modèle • Khronos'},
  {id:'real-antique-camera',name:'Antique Camera',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AntiqueCamera/glTF-Binary/AntiqueCamera.glb',license:'Consulter la licence du modèle • Khronos'}
 ];
-export const importedModels3d=new Map();
+export const importedModels3d=new Map(packagedModels3d.map(asset=>[asset.id,asset]));
 const modelCache=new Map();
 const maxBytes=25*1024*1024;
 export function registerLocalModel(file,{id=null,license='Fichier local, licence à vérifier'}={}){
@@ -91,11 +92,11 @@ function readAccessor(json,binary,index){
  if(!a||!v||!type||a.sparse)throw Error('Accessor glTF non pris en charge');
  if(v.buffer!==undefined&&v.buffer!==0)throw Error('GLB externe non pris en charge');
  const count=({SCALAR:1,VEC2:2,VEC3:3,VEC4:4,MAT2:4,MAT3:9,MAT4:16})[a.type];
- if(!count||a.count>3000000)throw Error('Données GLB invalides');
+ if(!count||!Number.isSafeInteger(a.count)||a.count<1||a.count>3000000)throw Error('Données GLB invalides');
  const stride=v.byteStride||type.size*count,offset=(v.byteOffset||0)+(a.byteOffset||0);
- if(stride<type.size*count||offset+(a.count-1)*stride+type.size*count>binary.byteLength)throw Error('Buffer GLB incomplet');
+ if(!Number.isSafeInteger(stride)||!Number.isSafeInteger(offset)||offset<0||stride<type.size*count||(a.byteOffset||0)+(a.count-1)*stride+type.size*count>v.byteLength||offset+(a.count-1)*stride+type.size*count>binary.byteLength)throw Error('Buffer GLB incomplet');
  const dv=new DataView(binary.buffer,binary.byteOffset,binary.byteLength),out=[];
- for(let i=0;i<a.count;i++)for(let j=0;j<count;j++){let value=dv[type.method](offset+i*stride+j*type.size,true);if(a.normalized&&a.componentType!==5126){const maximum=({5120:127,5121:255,5122:32767,5123:65535,5125:4294967295})[a.componentType];value=Math.max(-1,value/maximum)}out.push(value)}
+ for(let i=0;i<a.count;i++)for(let j=0;j<count;j++){let value=dv[type.method](offset+i*stride+j*type.size,true);if(a.normalized&&a.componentType!==5126){const maximum=({5120:127,5121:255,5122:32767,5123:65535,5125:4294967295})[a.componentType];value=Math.max(-1,value/maximum)}if(!Number.isFinite(value))throw Error('Valeur GLB non finie');out.push(value)}
  // Accessor count is the number of elements, not the number of components
  // per element (POSITION is VEC3 even when the mesh has thousands of vertices).
  return {data:out,count:a.count,components:count};
@@ -111,13 +112,16 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
  if(!json||!binary||!Array.isArray(json.meshes))throw Error('GLB sans géométrie intégrée');
  const accessorCache=new Map();const accessor=index=>{if(!accessorCache.has(index))accessorCache.set(index,readAccessor(json,binary,index));return accessorCache.get(index)};
  const rig=readAnimationRig(json,accessor,{allowStatic:allowStaticRig});
- const roots=json.scenes?.[json.scene||0]?.nodes||json.nodes?.map((_,i)=>i)||[],parts=[];
+ const childNodes=new Set((json.nodes||[]).flatMap(n=>n.children||[]));
+ const roots=json.scenes?.[json.scene||0]?.nodes||(json.nodes||[]).map((_,i)=>i).filter(i=>!childNodes.has(i)),parts=[],visiting=new Set();
  const walk=(idx,parent,depth)=>{
-  if(depth>64||parts.length>300)return;
+  if(depth>64||visiting.has(idx))throw Error('Hiérarchie GLB cyclique ou trop profonde');
+  if(parts.length>300)throw Error('GLB : trop de primitives');
   const node=json.nodes?.[idx];if(!node)return;
-  const m=mul(parent,matrixFromNode(node));
+  visiting.add(idx);
+  const m=mul(parent,matrixFromNode(node)),normalTransform=normalMatrix3(m);
   for(const primitive of (json.meshes?.[node.mesh]?.primitives||[])){
-   if(primitive.mode!==undefined&&primitive.mode!==4||primitive.extensions)continue;
+   if(primitive.mode!==undefined&&primitive.mode!==4||primitive.extensions?.KHR_draco_mesh_compression)continue;
    if(primitive.attributes?.POSITION===undefined)continue;
    const pos=accessor(primitive.attributes.POSITION);
    const norm=primitive.attributes.NORMAL===undefined?null:accessor(primitive.attributes.NORMAL);
@@ -134,7 +138,7 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
    const pbr=json.materials?.[primitive.material]?.pbrMetallicRoughness||{};
    const color=pbr.baseColorFactor||[1,1,1,1];
    const roughness=Math.max(.04,Math.min(1,Number(pbr.roughnessFactor??1)));
-   const metallic=Math.max(0,Math.min(1,Number(pbr.metallicFactor??0)));
+   const metallic=Math.max(0,Math.min(1,Number(pbr.metallicFactor??1)));
    const textureInfo=pbr.baseColorTexture,textureTransform=textureInfo?.extensions?.KHR_texture_transform;
    const uvIndex=textureTransform?.texCoord??textureInfo?.texCoord??0;
    const uvAccessor=primitive.attributes['TEXCOORD_'+uvIndex];
@@ -160,7 +164,7 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
     const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
     const delta=(a,b)=>a.map((n,k)=>n-b[k]),normal=cross(delta(points[1],points[0]),delta(points[2],points[0]));
     const len=Math.hypot(...normal)||1;const flat=normal.map(n=>n/len);
-    for(let j=0;j<3;j++){let n=flat;if(norm){const raw=transform(m,norm.data.slice(idxs[i+j]*3,idxs[i+j]*3+3),0);const l=Math.hypot(...raw)||1;n=raw.map(z=>z/l)}vertices.push(...points[j],...n);
+    for(let j=0;j<3;j++){let n=flat;if(norm){const raw=transformNormal(normalTransform,...norm.data.slice(idxs[i+j]*3,idxs[i+j]*3+3));const l=Math.hypot(...raw)||1;n=raw.map(z=>z/l)}vertices.push(...points[j],...n);
      if(texture){
       let u=uv.data[idxs[i+j]*uv.components],v=uv.data[idxs[i+j]*uv.components+1];
       const scale=textureTransform?.scale||[1,1],offset=textureTransform?.offset||[0,0],angle=textureTransform?.rotation||0;
@@ -173,6 +177,7 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
    if(vertices.length)parts.push({...(motion?{motion}:{}),vertices:new Float32Array(vertices),color,roughness,metallic,...(texture?{texture,texcoords:new Float32Array(texcoords)}:{}),alphaMode:json.materials?.[primitive.material]?.alphaMode||'OPAQUE',alphaCutoff:json.materials?.[primitive.material]?.alphaCutoff??.5});
   }
   for(const child of node.children||[])walk(child,m,depth+1);
+  visiting.delete(idx);
  };
  for(const root of roots)walk(root,identity(),0);
  if(!parts.length)throw Error('Aucun triangle compatible dans ce GLB');

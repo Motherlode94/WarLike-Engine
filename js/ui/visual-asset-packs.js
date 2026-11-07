@@ -34,7 +34,7 @@ const PACKS=[
  {id:'kenney-dungeon-2d',mode:'2d',name:'Kenney · Tiny Dungeon',type:'2d',assets:()=>freeSprites2d.filter(a=>a.pack==='tiny-dungeon')},
  {id:'kenney-included-3d',mode:'3d',name:'Kenney · Modèles 3D inclus',type:'3d',assets:()=>freeModels3d},
  {id:'quaternius-monsters-3d',mode:'3d',name:'Quaternius · Ultimate Monsters',type:'3d',assets:()=>quaterniusModels3d.filter(a=>a.pack==='ultimate-monsters')},
- {id:'quaternius-animations-3d',mode:'3d',name:'Quaternius · Animations Standard',type:'animation',assets:()=>universal().animationClips.map((name,index)=>({...universal(),id:'ual1-clip-'+index,name,clipName:name}))},
+ {id:'quaternius-animations-3d',mode:'3d',name:'Quaternius · Animations Standard',type:'animation',assets:()=>(universal()?.animationClips||[]).map((name,index)=>({...universal(),id:'ual1-clip-'+index,name,clipName:name}))},
  ...packGroups.map(assets=>({id:'pack-'+assets[0].author.toLowerCase()+'-'+assets[0].pack,mode:'3d',name:assets[0].author+' · '+assets[0].packName,type:'3d',assets:()=>assets})),
  {id:'kenney-ui',mode:'any',name:'Kenney · UI Pack',type:'ui',assets:()=>freeUiAssets},
  {id:'kenney-audio',mode:'any',name:'Kenney · Sons d’interface et RPG',type:'audio',assets:()=>freeAudioAssets},

@@ -1,3 +1,4 @@
+import {kaykitModels3d} from './kaykit-game-assets.js';
 import {packageGlb,imageResource} from './glb-package.js';
 import {packagedModels3d} from './imported-models-3d.js';
 import {quaterniusModels3d} from './quaternius-game-assets.js';
@@ -5,7 +6,7 @@ import {readAnimationRig,normalMatrix3,transformNormal as applyNormal} from '../
 import {freeModels3d} from './free-game-assets.js';
 // WarLike static glTF 2.0 GLB mesh loader. No eval, scripts or external binary executables.
 // Supports embedded GLB, node hierarchy/TRS, material baseColorFactor, triangle indices.
-export const realModels3d=[...freeModels3d,...quaterniusModels3d,
+export const realModels3d=[...freeModels3d,...quaterniusModels3d,...kaykitModels3d,
  {id:'real-specular-test',name:'Specular Material Test',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/SpecularTest.glb',license:'CC-BY-4.0 • Ed Mackey'},
  {id:'real-normal-tangent-test',name:'Normal Map Geometry Reference',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/NormalTangentTest/glTF-Binary/NormalTangentTest.glb',license:'CC0 • Ed Mackey'},
  {id:'real-texture-coordinate-test',name:'Textured Geometry Reference',category:'Props',shape:'glb',scale:1,url:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/TextureCoordinateTest/glTF-Binary/TextureCoordinateTest.glb',license:'CC0 • Ed Mackey'},

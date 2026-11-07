@@ -1,3 +1,4 @@
+import {recommendedGenres} from './genre-relevance.js';
 // WarLike bundled CC0 catalog adapter, no invented product records.
 const categories={Characters:'Personnages',Character:'Personnages',Monsters:'Personnages',Animals:'Personnages',Vehicles:'Véhicules',Weapons:'Armes',Buildings:'Bâtiments',Nature:'Nature',Props:'Objets'};
 export function categoryFor(asset){
@@ -13,7 +14,7 @@ export function categoryFor(asset){
 function assetUrl(path,extension){
  if(typeof path!=='string')return null;
  const clean=path.replace(/^\.\//,'');
- if(clean.includes('..')||!new RegExp('^assets/free/(kenney|quaternius)/[a-z0-9_./-]+\\.'+extension+'$','i').test(clean))return null;
+ if(clean.includes('..')||!new RegExp('^assets/free/(kenney|quaternius|kaykit)/[a-z0-9_./-]+\\.'+extension+'$','i').test(clean))return null;
  return new URL('../'+clean,import.meta.url).href;
 }
 export function toStoreAsset(a,author){
@@ -21,16 +22,16 @@ export function toStoreAsset(a,author){
  const url=assetUrl(a.url,'glb');if(!url)return null;
  const pack=String(a.pack||'sans-pack');
  return {id:a.id,name:a.name,author,pack,packName:String(a.packName||pack),
-  category:categoryFor(a),url,thumb:assetUrl(a.thumbnailUrl,'(?:png|webp|jpg|jpeg)'),
+  genres:recommendedGenres(a),category:categoryFor(a),url,thumb:assetUrl(a.thumbnailUrl,'(?:png|webp|jpg|jpeg)'),
   size:Number(a.bytes)||0,triangles:Number(a.triangles)||0,
   animationClips:Array.isArray(a.animationClips)?a.animationClips.length:0,
   animationNames:Array.isArray(a.animationClips)?a.animationClips.map(c=>typeof c==='string'?c:String(c?.name||'')).filter(Boolean):[],
   textureFiles:Array.isArray(a.textureFiles)?a.textureFiles.filter(path=>typeof path==='string'&&/^\.\/assets\/free\/textures\/[a-z0-9_.-]+\.(png|jpg|jpeg|webp)$/i.test(path)).slice(0,64):[],
-  source:typeof a.sourceUrl==='string'&&a.sourceUrl.startsWith('https://')?a.sourceUrl:author==='Kenney'?'https://kenney.nl/assets':'https://quaternius.com/',
+  source:typeof a.sourceUrl==='string'&&a.sourceUrl.startsWith('https://')?a.sourceUrl:author==='KayKit'?'https://kaylousberg.com/game-assets':author==='Kenney'?'https://kenney.nl/assets':'https://quaternius.com/',
   license:String(a.license||'CC0-1.0'),bundled:true};
 }
 export async function loadBundledCatalog(){
- const entries=[['Kenney','../assets/free/kenney/models.json'],['Quaternius','../assets/free/quaternius/models.json']];
+ const entries=[['KayKit','../assets/free/kaykit/models.json'],['Kenney','../assets/free/kenney/models.json'],['Quaternius','../assets/free/quaternius/models.json']];
  const settled=await Promise.allSettled(entries.map(async ([author,path])=>{
   const r=await fetch(new URL(path,import.meta.url),{credentials:'same-origin'});
   if(!r.ok)throw Error(author+' : HTTP '+r.status);

@@ -68,6 +68,7 @@ export function gameRuntimeFiles(files,data){
 }
 export function gameBuildModelCatalog(name,source,data){
  const models=gameRuntimeModels(data);
+ if(name==='js/assets/kaykit-game-assets.js')return 'export const kaykitModels3d='+JSON.stringify(models.filter(a=>a.author==='KayKit'))+';\n';
  if(name==='js/assets/quaternius-game-assets.js')return 'export const quaterniusModels3d='+JSON.stringify(models.filter(a=>a.author==='Quaternius'))+';\n';
  if(name==='js/assets/free-game-assets.js'){
   const start=source.indexOf('export const freeSprites2d=');if(start<0)throw Error('Catalogue 2D incompatible');
@@ -87,7 +88,7 @@ export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}=
  const importedCatalog='export const packagedModels3d='+JSON.stringify(models.map(portableModelDescriptor))+';\n';
  const files=gameRuntimeFiles(manifest.files,data);
  const entries=new Array(files.length);let cursor=0,completed=0;
- const worker=async()=>{while(cursor<files.length){const i=cursor++,name=files[i];const response=await get(name);entries[i]={name,data:name==='js/assets/imported-models-3d.js'?importedCatalog:name==='index.html'?gameBuildHtml(await response.text(),data):['js/assets/free-game-assets.js','js/assets/quaternius-game-assets.js'].includes(name)?gameBuildModelCatalog(name,await response.text(),data):await response.arrayBuffer()};onProgress(++completed,files.length)}};
+ const worker=async()=>{while(cursor<files.length){const i=cursor++,name=files[i];const response=await get(name);entries[i]={name,data:name==='js/assets/imported-models-3d.js'?importedCatalog:name==='index.html'?gameBuildHtml(await response.text(),data):['js/assets/free-game-assets.js','js/assets/quaternius-game-assets.js','js/assets/kaykit-game-assets.js'].includes(name)?gameBuildModelCatalog(name,await response.text(),data):await response.arrayBuffer()};onProgress(++completed,files.length)}};
  await Promise.all(Array.from({length:6},worker));
  entries.push(...importedEntries);
  if(!files.includes('js/assets/imported-models-3d.js'))entries.push({name:'js/assets/imported-models-3d.js',data:importedCatalog});

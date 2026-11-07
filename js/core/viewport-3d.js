@@ -6,7 +6,7 @@ import {updateCompanyMarkers} from '../ui/company-ui.js';
 import {resetBattlefield,tickBattlefield,battlefieldMatch,consumeBattlefieldShot,isBattlefieldSoldier} from './battlefield-runtime.js';
 import {updateBattlefieldHud} from '../ui/battlefield-hud.js';
 import {rotationQuaternion3d} from './collider-3d.js';
-import {affineCorrection3d,normalMatrix3d} from './affine-render-3d.js';
+import {affineCorrection3d,normalMatrix3d} from './scene-graph-v2.js';
 import {gameProject} from './game-project.js';
 import {survivalPlacement} from './survival-building.js';
 import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';

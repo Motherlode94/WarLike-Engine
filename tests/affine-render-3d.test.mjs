@@ -15,7 +15,8 @@ const makeScene=()=>{
  const child=addGameObject(scene,createGameObject('Turret','b'));
  Object.assign(parent.components[0],{position:[5,0,2],rotation:[0,45,0],scale:[2,1,3]});
  Object.assign(child.components[0],{position:[1,2,3],rotation:[15,30,10],scale:[1,1,1]});
- reparent(scene,'b','a');
+ // Local TRS under non-uniform rotated scale produces actual WORLD shear.
+ reparent(scene,'b','a',{keepWorld:false});
  return {scene,parent,child};
 };
 test('canonical affine shear survives runtime conversion without dropping the visual matrix',()=>{

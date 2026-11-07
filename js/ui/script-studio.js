@@ -4,6 +4,7 @@ import {workspace} from '../core/workspaces.js';
 import {saveProject,hub} from '../core/project-hub.js';
 import {record} from '../core/history.js';
 import {newId,applyScriptSave,templates,languageFor} from '../../script-editor/core.js';
+import {readInstalledLibraryScripts} from '../core/library-bundle.js';
 
 export function initScriptStudio(){
  if(document.getElementById('scriptStudioPanel'))return;
@@ -11,8 +12,9 @@ export function initScriptStudio(){
  const header=document.createElement('header'),title=document.createElement('strong');title.textContent='⌘ WarLike Script Studio';
  const maximize=document.createElement('button');maximize.textContent='⛶';maximize.title='Agrandir ou restaurer Script Studio';maximize.onclick=()=>panel.classList.toggle('maximized');
  const standalone=document.createElement('button');standalone.textContent='↗ Autonome';
+ const importLibrary=document.createElement('button');importLibrary.type='button';importLibrary.textContent='↓ Scripts Library';importLibrary.title='Importer un script archivé dans le projet courant, sans l’exécuter';
  const close=document.createElement('button');close.textContent='×';close.setAttribute('aria-label','Fermer Script Studio');close.onclick=()=>{panel.hidden=true};
- const frame=document.createElement('iframe');frame.title='Éditeur de scripts WarLike';header.append(title,standalone,maximize,close);panel.append(header,frame);document.body.append(panel);
+ const frame=document.createElement('iframe');frame.title='Éditeur de scripts WarLike';header.append(title,importLibrary,standalone,maximize,close);panel.append(header,frame);document.body.append(panel);
  const menuButton=document.createElement('button');menuButton.id='openScriptStudio';menuButton.type='button';menuButton.textContent='⌘ Script Studio · éditeur de code';
  const windowMenu=[...document.querySelectorAll('#studioMenus details')].find(d=>d.querySelector('summary')?.textContent==='Window');
  (windowMenu?.querySelector('.studio-dropdown')||document.getElementById('studioPrimaryActions')||document.body).append(menuButton);
@@ -58,6 +60,27 @@ export function initScriptStudio(){
   if(autonomous){childWindow=window.open(url.href,'warlike-script-'+session);if(!childWindow)alert('Autorise les fenêtres pour ouvrir Script Studio, ou utilise le panneau intégré.');return}
   url.searchParams.set('embedded','1');frame.src=url.href;panel.hidden=false;
  }
+ importLibrary.onclick=async()=>{
+  if(state.playing)return alert('Arrête Play avant d’importer des scripts.');
+  try{
+   const sources=await readInstalledLibraryScripts();
+   if(!sources.length)return alert('Aucun script Library installé. Utilise Library → Pack Builder pour importer des scripts.');
+   const choices=sources.map((f,i)=>(i+1)+'. '+f.filename).join('\n');
+   const answer=prompt('Importer quel script Library dans le projet actif ? Saisis son numéro :\n'+choices);
+   if(answer===null)return;
+   const index=Number(answer)-1;
+   if(!Number.isInteger(index)||index<0||index>=sources.length)throw Error('Numéro de script invalide.');
+   const source=sources[index],script={id:newId(),name:source.filename,source:source.text,revision:0};
+   const result=applyScriptSave(gameProject,{baseRevision:0,script},null);
+   if(!result.ok)throw Error('Script refusé ou version incompatible.');
+   try{localStorage.setItem(cacheKey(),JSON.stringify(gameProject.scripts));if(hub.projectId&&!saveProject())throw Error('Le projet n’a pas pu être sauvegardé.');}
+   catch(error){gameProject.scripts=gameProject.scripts.filter(s=>s.id!==script.id);throw error;}
+   record('Importer le script Library '+script.name);notify();
+   // Do not attach to an entity: explicit user action is required to execute.
+   open({scriptId:result.script.id,entityId:null,language:languageFor(result.script.name)});
+   alert('Script ajouté dans Script Studio. Il ne sera exécuté que si tu l’attaches volontairement à un objet et lances le moteur compatible.');
+  }catch(error){alert('Import de script refusé : '+error.message);}
+ };
  standalone.onclick=()=>{if(!session)return open({autonomous:true});const url=new URL('./script-editor/index.html',location.href);url.searchParams.set('session',session);url.searchParams.set('project',gameProject.id);url.searchParams.set('mode',workspace.mode);childWindow=window.open(url.href,'warlike-script-'+session);};menuButton.onclick=()=>{windowMenu?.removeAttribute('open');open()};
  document.addEventListener('warlike:script-open',event=>open(event.detail||{}));
  // Refresh already-open viewers when another editor in the engine saves C#.

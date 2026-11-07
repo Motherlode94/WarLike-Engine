@@ -19,6 +19,7 @@ import {genreKeywords} from '../assets/genre-essentials.js';
 import {state,notify} from '../core/state.js';
 import {catalog,urlFor,categories} from '../assets/catalog.js';
 import {addPrefab} from '../core/scene.js';
+import {placeEntityOnSurface3d} from '../core/scene-graph-v2.js';
 export const toolsState={tool:'move',snap:false,grid:true,colliders:false};
 const $=s=>document.querySelector(s);
 export function setTool(id){if(!['hand','move','rotate','scale','rect'].includes(id))return;toolsState.tool=id;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===id));$('#toolStatus').textContent=id[0].toUpperCase()+id.slice(1)+' tool';log('Outil : '+id)}
@@ -302,12 +303,15 @@ canvas3d.addEventListener('drop',e=>{
  const id=e.dataTransfer.getData('application/x-warlike-asset');
  if(!get3dAsset(id))return;
  const rect=canvas3d.getBoundingClientRect();
- const cam=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
- const position=groundHit3d(e.clientX-rect.left,e.clientY-rect.top,cam,rect.width,rect.height);
+ const hit=view3d.surfaceAt?.(e.clientX,e.clientY)||null;
  add3d(id);
  const obj=state.entities.find(o=>o.id===state.selected.at(-1));
- if(obj&&position){obj.x=Math.round(position[0]*64-obj.w/2);obj.y=Math.round(position[2]*64-(obj.depth3d??obj.h)/2);record('Positionner prefab 3D');notify()}
- log('Prefab 3D déposé : '+id);
+ if(obj&&hit){
+  const snapStep=toolsState.snap?Math.max(.01,Number(localStorage.getItem('warlike.snap3d.step'))||.5):0;
+  placeEntityOnSurface3d(obj,hit,{snap:snapStep,alignNormal:e.shiftKey});
+  record('Positionner prefab 3D sur '+(hit.kind==='triangle'?'surface GLB':'plan du sol'));notify();
+ }
+ log('Prefab 3D déposé : '+id+(hit?' · '+(hit.kind==='triangle'?'surface du modèle':'sol'):' · placement par défaut'));
 });
 window.addEventListener('keydown',e=>{if(e.defaultPrevented||view3d.drag?.nav==='look')return;if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||e.ctrlKey||e.metaKey||state.playing)return;const map={q:'hand',w:'move',e:'rotate',r:'scale',t:'rect'};if(map[e.key.toLowerCase()])setTool(map[e.key.toLowerCase()])});
 log('WarLike Engine editor démarré');}

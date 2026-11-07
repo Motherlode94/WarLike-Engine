@@ -5,8 +5,8 @@ import {moveCompanyCamera} from './company-camera.js';
 import {updateCompanyMarkers} from '../ui/company-ui.js';
 import {resetBattlefield,tickBattlefield,battlefieldMatch,consumeBattlefieldShot,isBattlefieldSoldier} from './battlefield-runtime.js';
 import {updateBattlefieldHud} from '../ui/battlefield-hud.js';
-import {rotationQuaternion3d} from './collider-3d.js';
-import {affineCorrection3d,normalMatrix3d,updateEditorEntityHierarchy3d,updateAffineEditorPose3d,boneSocketPoint3d} from './scene-graph-v2.js';
+import {rotationQuaternion3d,quaternionEuler3d} from './collider-3d.js';
+import {affineCorrection3d,normalMatrix3d,updateEditorEntityHierarchy3d,updateAffineEditorPose3d,boneSocketTransform3d,snapSurfaceFeature3d} from './scene-graph-v2.js';
 import {gameProject} from './game-project.js';
 import {survivalPlacement} from './survival-building.js';
 import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';
@@ -97,7 +97,7 @@ export function raycastTriangles3d(origin,direction,vertices,transform,{maxDista
   const distance=dot(v,q)*inv;if(distance<=1e-6||distance>=best)continue;
   let normal=cross(u,v),length=Math.hypot(...normal);if(length<1e-9)continue;
   normal=normal.map(n=>n/length);if(dot(normal,direction)>0)normal=normal.map(n=>-n);
-  best=distance;result={distance,point:origin.map((n,k)=>n+direction[k]*distance),normal,triangle:i/18};
+  best=distance;result={distance,point:origin.map((n,k)=>n+direction[k]*distance),normal,triangle:i/18,vertices:[a,b,c],barycentric:[1-x-y,x,y]};
  }
  return result;
 }
@@ -476,7 +476,9 @@ export function init3d(canvas,host,buttons){
  };
  view3d.surfaceAt=(clientX,clientY,{excludeIds=[],groundFallback=true}={})=>{
   const rect=canvas.getBoundingClientRect(),point={x:clientX-rect.left,y:clientY-rect.top,w:rect.width,h:rect.height},cam=camera();
-  const mesh=meshHit(point,cam,{excludeIds});
+  const mode=localStorage.getItem('warlike.snap3d.mode')||'grid';
+  const raw=meshHit(point,cam,{excludeIds});
+  const mesh=raw&&['vertex','edge'].includes(mode)?snapSurfaceFeature3d(raw,mode,{radius:Math.min(1,Math.max(.03,raw.distance*.018))}):raw;
   const floor=groundFallback?groundHit3d(point.x,point.y,cam,point.w,point.h):null;
   if(!floor)return mesh;
   const dist=Math.hypot(...floor.map((v,i)=>v-cam.eye[i]));
@@ -688,12 +690,20 @@ export function init3d(canvas,host,buttons){
        const index=rig.nodes.findIndex(node=>node.name===socket.bone);
        if(index<0||!socketPose.world?.[index])continue;
        try{
-        const pos=boneSocketPoint3d(o,Array.from(socketPose.world[index]),normalization,bounds,q,socket.offset||[0,0,0]);
+        const pose=boneSocketTransform3d(o,Array.from(socketPose.world[index]),normalization,bounds,q,socket.offset||[0,0,0]);
         const previous=Array.isArray(child.worldMatrix3d)?[...child.worldMatrix3d]:null,reference=Array.isArray(child.matrixReference3d)?[...child.matrixReference3d]:null;
+        const pos=pose.point;
         child.x=Math.round(pos[0]*64-(Number(child.w)||64)/2);
         child.y=Math.round(pos[2]*64-(Number(child.depth3d??child.h)||64)/2);
         child.elevation3d=pos[1]-(Number(child.h)||64)/128;
-        if(socket.followRotation!==false)child.rotation=o.rotation||0;
+        if(socket.followRotation!==false){
+         // Convert sampled bone WORLD orientation into the renderer's yaw/pitch/roll convention.
+         const euler=quaternionEuler3d(pose.quaternion);
+         const offsetEuler=Array.isArray(socket.rotationOffset)?socket.rotationOffset:[0,0,0];
+         child.rotation=(euler.rotation||0)+(Number(offsetEuler[1])||0);
+         child.rotationX3d=(euler.rotationX3d||0)+(Number(offsetEuler[0])||0);
+         child.rotationZ3d=(euler.rotationZ3d||0)+(Number(offsetEuler[2])||0);
+        }
         if(previous&&reference)updateAffineEditorPose3d(child,previous,reference);
        }catch(error){if(!child._socketWarning){console.warn('[WarLike Socket]',child.name,error);child._socketWarning=true}}
       }

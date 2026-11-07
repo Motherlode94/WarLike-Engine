@@ -1,4 +1,4 @@
-import {deleteEntitySubtrees,duplicateEntitySubtrees,reparentEntities} from './editor-hierarchy-commands.js';
+import {deleteEntitySubtrees,duplicateEntitySubtrees,reparentEntities} from './scene-graph-v2.js';
 import {encodeProjectAssets,restoreProjectAssets} from './portable-assets.js';
 import {horror} from './horror-survival.js';
 import {createAnimationDemo} from './animation-demo.js';

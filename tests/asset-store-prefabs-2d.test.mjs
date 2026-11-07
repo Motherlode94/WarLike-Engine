@@ -7,3 +7,14 @@ function memory(){const map=new Map();return{getItem:k=>map.get(k)||null,setItem
 test('store creates 2D native prefab with a real sprite ref, never a fake 3D object or automatic player',()=>{const p=spritePrefab(asset);assert.equal(p.mode,'2d');assert.equal(p.components.type,'object');assert.equal(p.components.assetId,asset.id);assert.equal(p.components.spriteUrl,asset.spriteUrl);assert.equal(p.components.w,64);assert.equal(p.components.pixelArt,true)});
 test('prefab installs in shared native WarLike library and instantiates',()=>{const storage=memory(),first=installSpritePrefab(asset,storage);assert.equal(first.installed,true);assert.equal(installSpritePrefab(asset,storage).installed,false);const saved=readPrefabs(storage);assert.equal(prefabsForMode(saved,'2d').length,1);const inst=instantiatePrefab(saved[0],77);assert.equal(inst.assetId,asset.id);assert.equal(inst.spriteUrl,asset.spriteUrl);assert.ok(installed2dIds(storage).has(asset.id))});
 test('store rejects outside PNG sources and keeps user edits on reinstall',()=>{assert.throws(()=>spritePrefab({...asset,spriteUrl:'https://untrusted.example/test.png'}));const storage=memory();installSpritePrefab(asset,storage);const p=readPrefabs(storage);p[0].components.w=123;storage.setItem('warlike.prefabs.library.v1',JSON.stringify(p));installSpritePrefab(asset,storage);assert.equal(readPrefabs(storage)[0].components.w,123)});
+
+test('sprite animations are preserved from real frame paths and invalid extra frames are rejected',()=>{
+ const anim={...asset,frames:{idle:[asset.spriteUrl],walk:[asset.spriteUrl,'./assets/free/kenney/platformer-art-deluxe/Player/p1_walk/PNG/p1_walk01.png','https://invalid.example/injected.png']}};
+ const prefab=spritePrefab(anim);
+ assert.deepEqual(Object.keys(prefab.components.frames),['idle','walk']);
+ assert.equal(prefab.components.frames.walk.length,2);
+ assert.equal(prefab.components.animation,'idle');
+ const storage=memory();installSpritePrefab(anim,storage);
+ const instance=instantiatePrefab(readPrefabs(storage)[0],42);
+ assert.equal(instance.frames.walk.length,2);
+});

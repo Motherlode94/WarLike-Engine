@@ -308,7 +308,8 @@ canvas3d.addEventListener('drop',e=>{
  add3d(id);
  const obj=state.entities.find(o=>o.id===state.selected.at(-1));
  if(obj&&hit){
-  const snapStep=(toolsState.snap||localStorage.getItem('warlike.snap3d.enabled')==='true')?Math.max(.01,Number(localStorage.getItem('warlike.snap3d.step'))||.5):0;
+  const snapMode=localStorage.getItem('warlike.snap3d.mode')||'grid';
+  const snapStep=(toolsState.snap||localStorage.getItem('warlike.snap3d.enabled')==='true')&&snapMode==='grid'?Math.max(.01,Number(localStorage.getItem('warlike.snap3d.step'))||.5):0;
   placeEntityOnSurface3d(obj,hit,{snap:snapStep,alignNormal:e.shiftKey});
   record('Positionner prefab 3D sur '+(hit.kind==='triangle'?'surface GLB':'plan du sol'));notify();
  }

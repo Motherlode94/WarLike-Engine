@@ -16,3 +16,6 @@
 .adventure-playing #viewport>.warlike-genre-hud{display:none!important}
 
 .adventure-playing #viewport>footer,.adventure-playing #viewport>.scene-axis{display:none}
+.adventure-vitals{display:block;font-size:11px;color:#b9e3d3;margin-top:5px}
+
+.adventure-hud.horror{top:98px}

@@ -355,7 +355,7 @@ export function init3d(canvas,host,buttons){
   }else stepPhysics3d(state.entities,dt);
   if(!p)return;
   updateHorror(dt,p,state.entities,input);updateHorrorPerception(dt,p,state.entities,input);updateHorrorAudio(dt,p,state.entities,input,horror);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
-  const inVehicle=updateDriving3d(state.entities,p,input,dt);
+  const inVehicle=updateDriving3d(state.entities,p,input,dt,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses});
   if(!inVehicle)updateController3d(p,input,dt,view3d.yaw,state.entities,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,moveCharacter:physicsSession?.actors.get(p.id)?.controller?(actor,dx,dy,dz,options)=>moveRapierCharacter3d(physicsSession,actor,dx,dy,dz,options):null});
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);

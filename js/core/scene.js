@@ -1,4 +1,5 @@
 import {encodeProjectAssets,restoreProjectAssets} from './portable-assets.js';
+import {horror} from './horror-survival.js';
 import {createAnimationDemo} from './animation-demo.js';
 import {animationEditorPreview} from './animation-clips.js';
 import {createTownDemo,createGarageDemo,createNatureDemo} from './authored-demo-scenes.js';
@@ -7,7 +8,8 @@ import {inspectorMetadata} from './inspector-model.js';
 import {canonicalScene,runtimeEntities} from './scene-contract.js';
 import {startRuntimeSession,stopRuntimeSession} from './runtime-session.js';
 import {inspectRuntimeCompatibility} from './runtime-capabilities.js';
-import {gameProject} from './game-project.js';
+import {gameProject,freshGameProject,restoreGameProject} from './game-project.js';
+import {createGenreScene} from './genre-templates.js';
 import {resetHeroRuntime} from './superhero-runtime.js';
 import {inspectGraph,applyGraph} from './blueprint-graph.js';
 import {inspectBlueprintGame} from './blueprint-validation.js';
@@ -53,6 +55,7 @@ export function togglePlay(){
   finally{
    try{if(state.playBackup)state.entities=JSON.parse(state.playBackup)}catch(e){error??=e}
    state.nextId=state.playNextId??state.nextId;
+   if(state.playHorrorBackup){Object.assign(horror,state.playHorrorBackup);state.playHorrorBackup=null}
    if(state.playCameraBackup)state.camera=structuredClone(state.playCameraBackup);state.playCameraBackup=null;state.playBackup=null;state.playNextId=null;state.playing=false;state.keys.clear();state.keyPresses?.clear();
    if(btn){btn.textContent='▶ Play';btn.classList.remove('active');btn.setAttribute('aria-pressed','false')}
    document.querySelector('#status')?.replaceChildren(document.createTextNode('Édition'));
@@ -79,12 +82,14 @@ export function togglePlay(){
    state.entities.unshift({id,name:workspace.mode==='3d'?'3D Test Player':'2D Test Player',type:'character',skin:'scout',animation:'idle',x:100,y:100,w:45,h:78,color:'#41cdb5',elevation3d:0});
   }
   resetHeroRuntime();resetGame();resetSequences();resetEngineDiagnostics(workspace.mode);startRuntimeSession();
+  const horrorActor=state.entities.find(o=>o.horrorSettings);if(horrorActor){state.playHorrorBackup=structuredClone(horror);Object.assign(horror,{...horrorActor.horrorSettings,battery:100,fear:0,threat:0,toggleHeld:false,jumpscare:0})}
   if(btn){btn.textContent='■ Stop';btn.classList.add('active');btn.setAttribute('aria-pressed','true')}
   document.querySelector('#status')?.replaceChildren(document.createTextNode('Play mode'));
   renderHistory();notify();
  }catch(error){
   try{stopEngineDiagnostics();stopRuntimeSession()}catch(cleanupError){console.error('[WarLike Play] rollback:',cleanupError)}
   state.entities=JSON.parse(backup);state.nextId=nextId;state.playing=false;
+  if(state.playHorrorBackup){Object.assign(horror,state.playHorrorBackup);state.playHorrorBackup=null}
   state.keys.clear();if(state.playCameraBackup)state.camera=structuredClone(state.playCameraBackup);state.playCameraBackup=null;state.playBackup=null;state.playNextId=null;
   if(btn){btn.textContent='▶ Play';btn.classList.remove('active');btn.setAttribute('aria-pressed','false')}
   document.querySelector('#status')?.replaceChildren(document.createTextNode('Erreur Play'));
@@ -195,10 +200,12 @@ export function loadElementsDemo(){
 export function loadAuthoredDemo(kind='town'){
  if(state.playing)return false;
  const builders={animation:createAnimationDemo,town:createTownDemo,nature:createNatureDemo,garage:createGarageDemo,platformer:()=>{if(workspace.mode!=='2d')throw Error('Le parcours plateforme utilise le projet 2D.');return createBundledPhysicsScene2d()}};
- const build=builders[kind];if(!build)throw Error('Scène démo inconnue.');
+ const genre=kind.startsWith('genre:')?kind.slice(6):null;
+ const build=genre?mode=>createGenreScene(genre,mode):builders[kind];if(!build)throw Error('Scène démo inconnue.');
  const demo=build(workspace.mode);record('Avant changement de scène démo');
+ if(genre)restoreGameProject({...freshGameProject(),id:gameProject.id,title:gameProject.title,...demo.game,genre});
  Object.assign(state,{entities:demo.entities,selected:demo.selected,nextId:demo.nextId,demoGuide:demo.guide});
- setCamera(demo.camera||{x:0,y:0,zoom:.8});gameProject.genre=demo.genre||(kind==='platformer'?'platformer':'adventure');
+ setCamera(demo.camera||{x:0,y:0,zoom:.8});gameProject.genre=genre||demo.genre||(kind==='platformer'?'platformer':'adventure');
  record('Scène démo · '+kind);notify();return true;
 }
 export function load3dBetaDemo(kind='town'){

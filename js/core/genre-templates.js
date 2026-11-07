@@ -5,7 +5,9 @@ import {createAdventureCampaign} from './adventure-campaign.js';
 import {createSurvivalScene} from './survival-scene.js';
 import {createHeroForgeScene} from './hero-forge-scene.js';
 import {createBattlefieldScene} from './battlefield-scene.js';
-import {default2dCharacterPng} from '../assets/real-starter-sprites-2d.js?v=fix-20261028';
+import {starterModel,starterSprites,finishStarterScene} from './starter-scenes.js';
+import {getAsset} from '../assets/catalog.js';
+import {lifeArt} from '../assets/life-sprites-2d.js';
 // Playable starting scenes for Hub game genres. All data remains ordinary WarLike
 // entities / Blueprint Sequences, so projects can be saved, reopened and edited.
 import {prefab3d} from '../assets/catalog-3d.js';
@@ -37,20 +39,22 @@ export function createGenreScene(genre,mode='3d'){
  const objects=[];
  const spawn=(assetId,name,x,y,props={})=>{
   const id=objects.length+1;
-  const model=threeD?prefab3d(assetId,id,x,y):null;
-  const base=model||{id,type:'object',name,x,y,w:75,h:65,color:props.color||'#7e9fb5'};
+  const model=threeD?starterModel(assetId,id,x,y):null;
+  const sprite=getAsset(starterSprites[assetId]||assetId);
+  const base=model||{id,type:sprite?'prefab':'object',name,x,y,w:sprite?.width||75,h:sprite?.height||65,color:props.color||'#7e9fb5',...(sprite?{assetId:sprite.id,animation:'idle',behavior:'none',collision3d:['Buildings','Vehicles','Props'].includes(sprite.category)}:{})};
   const value={...base,name,...props,id,x,y};
+  if(!threeD&&assetId.startsWith('building-')&&assetId!=='building-wall')Object.assign(value,{type:'object',spriteDataUrl:lifeArt[assetId==='building-house'?'home':assetId==='building-tower'?'cafe':'studio'],w:160,h:140,collision3d:true,collider2d:{enabled:true}});
   objects.push(value);return value;
  };
  const actor=()=>{
   const player=spawn('character-hero','Player',125,160,threeD?{
-   playable3d:true,controller3d:defaultController(),stats:defaultStats(),inventory:defaultInventory(),tags:['player']
-  }:{type:'player',w:64,h:64,color:'#41cdb5',tags:['player'],spriteDataUrl:default2dCharacterPng});
+   playable3d:true,controller3d:defaultController(),stats:defaultStats(),inventory:defaultInventory(),tags:['player'],team:1,cameraRig:{mode:'thirdPerson',distance:6,height:.72,collision:true}
+  }:{type:'prefab',assetId:'free-tiny-dungeon-tile-0098',w:42,h:52,color:'#41cdb5',tags:['player'],team:1,animation:'idle',stats:defaultStats(),inventory:defaultInventory(),controller2d:{mode:'topDown',walkSpeed:190,sprintSpeed:290},collider2d:{enabled:true,width:24,height:20,offsetX:8,offsetY:34}});
   return player;
  };
  const object=(assetId,name,x,y,props={})=>spawn(assetId,name,x,y,props);
- const marker=(name,x,y,sequence,color='#e4c16e')=>object(threeD?'prop-cone':'primitive-cube',name,x,y,
-  {type:threeD?'mesh3d':'object',w:threeD?55:60,h:threeD?80:60,depth3d:55,color,collision3d:false,solid3d:false,sequence});
+ const marker=(name,x,y,sequence,color='#e4c16e')=>object(threeD?'prop-cone':'life-town-tile-0115',name,x,y,
+  {type:threeD?'mesh3d':'prefab',w:threeD?55:60,h:threeD?80:60,depth3d:55,color,collision3d:false,solid3d:false,sequence});
  const player=actor();
  if(['tactical','openworld','survival','rts','horror'].includes(chosen)){
   const mission=(name,x,y,actions)=>marker(name,x,y,interact(actions,{radius:130,once:true}));
@@ -171,5 +175,5 @@ export function createGenreScene(genre,mode='3d'){
  }
  // All starter projects retain at least one playable actor. The sandbox template
  // adds nothing else; it must stay small.
- return {entities:objects,selected:[player.id],nextId:objects.length+1,camera:{x:0,y:0,zoom:1}};
+ return finishStarterScene(chosen,mode,objects,player);
 }

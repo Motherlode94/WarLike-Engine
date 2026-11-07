@@ -46,3 +46,13 @@ test('3D demo loader cannot overwrite 2D project',()=>{
  scene.load3dBetaDemo('town');
  assert.equal(JSON.stringify(state.entities),previous);
 });
+
+test('genre demo catalog filters project modes and restores complete scene sets through the normal loader',async()=>{
+ const {starterDemosForMode}=await import('../js/core/demo-catalog.js');const {gameProject}=await import('../js/core/game-project.js');
+ for(const mode of ['2d','3d']){
+  workspace.mode=mode;state.playing=false;
+  const entries=starterDemosForMode(mode);assert.ok(entries.length>=10);
+  assert.equal(entries.some(e=>e.genre==='lifesim'),mode==='2d');assert.equal(entries.some(e=>e.genre==='company'),mode==='3d');
+  for(const entry of entries){assert.equal(scene.loadAuthoredDemo(entry.id),true);check(entry.name);assert.equal(gameProject.genre,entry.genre);assert.ok(state.entities.some(o=>o.id===state.selected[0]));if(entry.genre==='adventure')assert.ok(gameProject.scenes.some(s=>s.id==='echo-valley'));}
+ }
+});

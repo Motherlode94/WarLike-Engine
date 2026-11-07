@@ -33,3 +33,22 @@ L’Atelier du mouvement comporte aussi deux personnages de bibliothèque. **E**
 - Les véhicules 2D respectent les colliders de la scène, leurs dimensions et leurs décalages, y compris les barrières du circuit. Le compteur de vitesse et l’aide pour monter restent visibles dans la démo de conduite.
 
 Validation : `node --test tests/demo-playability.test.mjs tests/physics-2d.test.mjs` rejoue la mission du canal en marchant et le parcours des trois colis avec les sauts, sans téléportation. Un cas de conduite vérifie les barrières et leur désactivation. Cela complète les tests de logique ; cela ne remplace pas une validation visuelle et un parcours manuel complet en 3D.
+
+## Autres jeux et scènes 2D / 3D
+
+Le navigateur **Scènes démo** propose maintenant 16 scènes en projet 2D et 17 en projet 3D, avec recherche. Il filtre les jeux selon leur compatibilité : Liens de vie reste en 2D ; Company et Front restent en 3D. Le phare et la vallée charge ses deux chapitres ensemble.
+
+Les parcours de départ RP, RPG, simulation, monde ouvert/livraison, horreur, action, RTS et 4X ont un terrain, des chemins, des limites de site, des décors, un départ dégagé et des interactions guidées. Les versions 2D utilisent des sprites et des bâtiments PNG ; les versions 3D utilisent des modèles GLB intégrés. Ce sont toujours des scènes de départ modifiables, pas des jeux commerciaux complets.
+
+- **Premier jour au quartier** : rencontrer le citoyen, travailler et acheter des provisions. Les crédits et la place disponible sont vérifiés avant un achat.
+- **L’atelier en service** : produire, livrer une commande et effectuer la maintenance. Une livraison ne rapporte rien avant la production ou sans matériau.
+- **Les ruines du messager** : accepter la quête, explorer et rapporter la découverte. La récompense est donnée au retour.
+- **Livraison périphérique** : prendre le colis puis le livrer. La Jeep est pilotable dans les deux modes.
+- **La génératrice** : remettre le courant puis évacuer ; la sortie refuse la fuite tant que le courant est coupé. Le profil de lampe et de peur s’active pour cette scène puis restaure les réglages précédents à Stop.
+- **Mine et avant-poste** : sécuriser la mine, sélectionner une escouade et lui donner un ordre vers le poste. Le commandant seul ne valide pas la capture. Les alliés mobiles peuvent se croiser sans que les bâtiments perdent leurs collisions.
+- **Expédition de frontière** : explorer, financer une colonie puis conquérir le camp avec une armée. Les prérequis et coûts sont vérifiés ; le prototype 4X n’ajoute pas d’adversaire stratégique autonome.
+- **Poste d’observation** : rejoindre le poste et le capturer à pied, avec couverture, adversaire et véhicule armé.
+
+Les panneaux Hero Forge / escouade restent compacts dans les petits viewports ; **F1** ouvre les détails, les boutons ou les ordres. Les touches **1–6** restent disponibles pour les pouvoirs. Une pression courte sur **E** est conservée pour monter dans un véhicule 3D entre deux images de simulation.
+
+`tests/starter-scenes-playability.test.mjs` rejoue les trajets vers les interactions avec les solveurs de collision 2D et 3D, vérifie les missions et rejets d’actions prématurées, les départs, les assets et les exports. Le test RTS donne un véritable ordre de déplacement. Les tests de logique ne remplacent pas une validation visuelle WebGL, ni un combat manuel complet avec des ennemis mobiles.

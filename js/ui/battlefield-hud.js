@@ -15,7 +15,7 @@ export function updateBattlefieldHud(state,{camera=null,width=0,height=0,project
  for(const sector of match.sectors)sectors.append(text('span',sector.name+' · '+(sector.contested?'CONTESTÉ':sector.owner===1?'BLEU':sector.owner===2?'ORANGE':'NEUTRE')+' · '+Math.round(Math.abs(sector.progress)*100)+'%',sector.owner===1?'blue':sector.owner===2?'orange':''));
  const status=match.winner!==null?(match.winner===0?'ÉGALITÉ':match.winner===player.team?'VICTOIRE':'DÉFAITE')+' · Stop puis Play pour rejouer':dead?'RÉAPPARITION · '+Math.max(0,Math.ceil(match.dead.get(player.id)-match.elapsed))+' s':
   'PV '+Math.round(healthOf(player))+' · '+(match.reloading?'RECHARGEMENT '+match.reload.toFixed(1)+' s':match.ammo+' / '+match.reserve+' MUN.')+' · '+match.kills+' élim. / '+match.deaths+' morts';
- hud.replaceChildren(score,sectors,text('div',status,'battlefield-status'),text('small','Souris : viser · clic/F : tirer · R : recharger · E : véhicule · F : canon · Échap : souris libre'));
+ hud.replaceChildren(score,sectors,text('div',status,'battlefield-status'),text('small','Souris : viser · clic/F : tirer · R : recharger · E : véhicule · F : canon · Échap : pause'));
  }
  if(camera&&project){markers.replaceChildren();for(const sector of match.sectors){const at=project([sector.x/64,3.2,sector.y/64],camera,width,height);if(!at||at.x<0||at.x>width||at.y<0||at.y>height)continue;const marker=text('span',sector.name+' · '+Math.round(Math.hypot(sector.x-player.x,sector.y-player.y)/64)+' m');marker.className='battlefield-marker '+(sector.owner===1?'blue':sector.owner===2?'orange':'');marker.style.left=at.x+'px';marker.style.top=at.y+'px';markers.append(marker)}}
 }

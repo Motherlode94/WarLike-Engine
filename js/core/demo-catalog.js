@@ -1,0 +1,4 @@
+import {genreTemplates,genreCompatible,genreLabel} from './game-genres.js';
+const names={lifesim:'Liens de vie · Le quartier',company:'WarLike Company · Le carrefour',battlefield:'WarLike Front · Trois secteurs',superhero:'Hero Forge · Le gardien',tactical:'Poste d’observation',openworld:'Livraison périphérique',adventure:'Le phare et la vallée',rts:'Mine et avant-poste',horror:'La génératrice',fieldlab:'WarLike Field Lab',rp:'Premier jour au quartier',simulation:'L’atelier en service',rpg:'Les ruines du messager',fourx:'Expédition de frontière'};
+export const starterDemoCatalog=Object.entries(names).map(([genre,name])=>({id:'genre:'+genre,genre,name,type:genreTemplates[genre].label,description:genreTemplates[genre].description,features:genreTemplates[genre].features.slice(0,3).join(' · ')}));
+export const starterDemosForMode=mode=>starterDemoCatalog.filter(scene=>genreCompatible(scene.genre,mode)).map(scene=>({...scene,type:genreLabel(scene.genre,mode)}));

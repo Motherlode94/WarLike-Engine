@@ -6,7 +6,7 @@ import {healthOf,sameFaction,hasLineOfSight} from './ai-perception.js';
 import {awardExperience,progressionDamageScale} from './rpg-progression.js';
 import {emitFx} from './fx-runtime.js';
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
-export const defaultTacticalUnit=()=>({enabled:true,speed:100,attackRange:190,damage:9,attackInterval:.8,followDistance:95,autoAttack:true});
+export const defaultTacticalUnit=()=>({enabled:true,speed:100,attackRange:190,damage:9,attackInterval:.8,followDistance:95,autoAttack:true,passFriendlyUnits:true});
 export const isRtsUnit=o=>o?.tacticalUnit?o.tacticalUnit.enabled!==false:Array.isArray(o?.tags)&&o.tags.includes('rts-unit');
 export function orderRtsMove(entities,ids,target){
  if(!target||![target.x,target.y].every(Number.isFinite))return 0;const selected=entities.filter(o=>ids.includes(o.id)&&isRtsUnit(o)),columns=Math.ceil(Math.sqrt(selected.length));
@@ -35,14 +35,15 @@ export function updateRtsOrders(entities,dt,playing,{mode='2d',passFriendlyUnits
   const distance=Math.hypot(goal.x-origin.x,goal.y-origin.y);if(distance<stop){if(order?.type==='move')delete o.rtsOrder;o.animation='idle';continue}
   // Company squads can pass allied soldiers, while friendly buildings remain solid.
   // Use the same collision set for pathfinding and movement to avoid deadlocks.
-  const collisionEntities=passFriendlyUnits?entities.filter(t=>!t.companyUnit||!sameFaction(o,t)):entities;
-  const obstacles=collisionEntities.filter(t=>t!==o&&t.id!==order?.targetId&&(passFriendlyUnits||!sameFaction(o,t))&&(mode==='3d'?solidHero3d(t):solidCollider2d(t)));
+  const passAllies=passFriendlyUnits||cfg.passFriendlyUnits===true;
+  const collisionEntities=passAllies?entities.filter(t=>t===o||!sameFaction(o,t)||!(t.companyUnit||isRtsUnit(t)||t.playable3d||t.controller2d||t.type==='player')):entities;
+  const obstacles=collisionEntities.filter(t=>t!==o&&t.id!==order?.targetId&&(passAllies||!sameFaction(o,t))&&(mode==='3d'?solidHero3d(t):solidCollider2d(t)));
   let target=goal;
   if(obstacles.length){o._rtsRepath=n(o._rtsRepath)-frame;if(o._rtsRepath<=0||!Array.isArray(o._rtsPath)){
-    const start=passFriendlyUnits?origin:{x:o.x,y:o.y},end=passFriendlyUnits?goal:{x:goal.x-o.w/2,y:goal.y-(o.depth3d??o.h)/2};
-    o._rtsPath=findEnginePath(start,end,obstacles.map(t=>({...t,h:mode==='3d'?t.depth3d??t.h:t.h})),{cellSize:32,padding:Math.max(o.w,o.depth3d??o.h)*(passFriendlyUnits?.5:.3)+(passFriendlyUnits?4:0),maxNodes:1200});o._rtsRepath=.65}
-   const at=passFriendlyUnits?origin:o;
-   while(o._rtsPath?.length&&Math.hypot(o._rtsPath[0].x-at.x,o._rtsPath[0].y-at.y)<8)o._rtsPath.shift();if(o._rtsPath?.length){const p=o._rtsPath[0];target=passFriendlyUnits?p:{x:p.x+o.w/2,y:p.y+(mode==='3d'?o.depth3d??o.h:o.h)/2}}else continue;
+    const start=passAllies?origin:{x:o.x,y:o.y},end=passAllies?goal:{x:goal.x-o.w/2,y:goal.y-(o.depth3d??o.h)/2};
+    o._rtsPath=findEnginePath(start,end,obstacles.map(t=>({...t,h:mode==='3d'?t.depth3d??t.h:t.h})),{cellSize:32,padding:Math.max(o.w,o.depth3d??o.h)*(passAllies?.5:.3)+(passAllies?4:0),maxNodes:1200});o._rtsRepath=.65}
+   const at=passAllies?origin:o;
+   while(o._rtsPath?.length&&Math.hypot(o._rtsPath[0].x-at.x,o._rtsPath[0].y-at.y)<8)o._rtsPath.shift();if(o._rtsPath?.length){const p=o._rtsPath[0];target=passAllies?p:{x:p.x+o.w/2,y:p.y+(mode==='3d'?o.depth3d??o.h:o.h)/2}}else continue;
   }
   const dx=target.x-origin.x,dy=target.y-origin.y,length=Math.hypot(dx,dy)||1,step=Math.min(distance,Math.max(1,n(cfg.speed,n(o.rtsSpeed,n(o.ai?.speed,70))))*frame);moveHero(o,dx/length*step,dy/length*step,0,collisionEntities,mode);o.animation='walk';if(mode==='3d')o.rotation=Math.atan2(-dx,dy)*180/Math.PI;else if(Math.abs(dx)>.01)o.flipX=dx<0;
  }

@@ -19,3 +19,4 @@
 .demo-brief-actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
 .demo-brief-actions button{font-size:11px!important;padding:5px!important;min-height:28px!important}
 @media(max-width:640px){.demo-browser{padding:14px}.demo-browser-grid{grid-template-columns:1fr}.demo-browser-card{padding:15px}}
+.demo-browser-search{width:100%;box-sizing:border-box;min-height:36px;padding:8px 12px;border:1px solid var(--wl-theme-border,#40525f);background:var(--wl-theme-header,#263844);color:inherit;border-radius:4px;font:13px system-ui}

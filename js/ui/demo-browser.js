@@ -2,6 +2,7 @@ import {state,notify} from '../core/state.js';
 import {workspace} from '../core/workspaces.js';
 import {view3d} from '../core/viewport-3d.js';
 import {loadAuthoredDemo} from '../core/scene.js';
+import {starterDemosForMode} from '../core/demo-catalog.js';
 const make=(tag,cls,text)=>{const node=document.createElement(tag);node.className=cls;if(text)node.textContent=text;return node};
 const scenes=[
  {id:'animation',name:'Atelier du mouvement',type:'Personnages et animation · 3D',description:'Contrôle Alex puis explore cinq stations : poses, IK, root motion, clips de combat et interactions.',features:'Marche · course · saut · attaque · squelette · IK · root motion',mode:'3d'},
@@ -14,12 +15,13 @@ const demoOf=()=>state.entities.map(object=>({object,demo:object.adventure?.demo
 export function initDemoBrowser(){
  const dialog=make('dialog','demo-browser');dialog.id='demoSceneBrowser';dialog.setAttribute('aria-labelledby','demoSceneBrowserTitle');
  const header=make('header',''),title=make('h2','','Scènes démo jouables');title.id='demoSceneBrowserTitle';const close=make('button','','Fermer');close.type='button';close.onclick=()=>dialog.close();header.append(title,close);
- const intro=make('p','','Chaque scène présente un parcours complet et des systèmes modifiables dans l’Inspector et Blueprint. Le chargement remplace la scène actuelle ; Ctrl+Z permet de revenir en arrière.'),grid=make('div','demo-browser-grid'),status=make('p','demo-browser-status');status.setAttribute('role','status');dialog.append(header,intro,grid,status);document.body.append(dialog);
+ const intro=make('p','','Scènes jouables et parcours de départ par genre. Le chargement remplace la scène actuelle ; Ctrl+Z permet de revenir en arrière.'),search=make('input','demo-browser-search'),grid=make('div','demo-browser-grid'),status=make('p','demo-browser-status');search.type='search';search.placeholder='Rechercher un jeu ou une scène';search.setAttribute('aria-label','Rechercher une scène');status.setAttribute('role','status');dialog.append(header,intro,search,grid,status);document.body.append(dialog);
  dialog.addEventListener('keydown',event=>event.stopPropagation());dialog.addEventListener('close',()=>state.keys.clear());
- const render=()=>{grid.replaceChildren();status.textContent='Projet '+workspace.mode.toUpperCase()+' · données de scène éditables et exportables';for(const scene of scenes.filter(scene=>!scene.mode||scene.mode===workspace.mode)){
+ const render=()=>{grid.replaceChildren();const query=search.value.trim().toLocaleLowerCase('fr'),available=[...scenes.filter(scene=>!scene.mode||scene.mode===workspace.mode),...starterDemosForMode(workspace.mode)],filtered=available.filter(scene=>(scene.name+' '+scene.type+' '+scene.description).toLocaleLowerCase('fr').includes(query));status.textContent='Projet '+workspace.mode.toUpperCase()+' · '+filtered.length+' / '+available.length+' scènes · données éditables et exportables';for(const scene of filtered){
   const card=make('article','demo-browser-card');card.dataset.demoScene=scene.id;card.append(make('small','',scene.type),make('h3','',scene.name),make('p','',scene.description),make('p','demo-browser-features',scene.features));const load=make('button','','Charger cette scène');load.type='button';load.disabled=state.playing;
   load.onclick=()=>{if(state.playing)return;if(!confirm('Charger « '+scene.name+' » à la place de la scène actuelle ? Ctrl+Z permet de revenir en arrière.'))return;try{if(!loadAuthoredDemo(scene.id))return;if(workspace.mode==='3d'){const actor=state.entities.find(object=>object.id===state.selected[0]);Object.assign(view3d,{target:[(actor.x+actor.w/2)/64,1,(actor.y+(actor.depth3d||actor.h)/2)/64],radius:18,yaw:-.65,pitch:.65})}dialog.close();document.getElementById('sceneTab')?.click()}catch(error){status.textContent=error.message}};card.append(load);grid.append(card);
  }};
+ search.addEventListener('input',render);
  document.addEventListener('warlike:demo-browser-open',()=>{if(state.playing)return;state.keys.clear();render();if(!dialog.open)dialog.showModal()});
  const menu=[...document.querySelectorAll('#studioMenus>details')].find(details=>details.querySelector('summary')?.textContent.trim()==='Game')?.querySelector('.studio-dropdown');if(menu){const open=make('button','','Scènes démo jouables…');open.type='button';open.id='openDemoScenes';open.onclick=()=>{open.closest('details').open=false;document.dispatchEvent(new Event('warlike:demo-browser-open'))};menu.prepend(open)}
  const brief=make('details','demo-scene-brief'),summary=make('summary',''),body=make('div','demo-scene-brief-body');brief.hidden=true;brief.append(summary,body);document.getElementById('viewport')?.append(brief);let signature='';

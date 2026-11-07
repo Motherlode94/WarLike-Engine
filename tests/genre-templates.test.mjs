@@ -88,7 +88,7 @@ test('Field Lab is a reversible diagnostics course in both workspaces',()=>{
   assert.ok(scene.entities.some(o=>o.sequence?.conditions?.some(c=>c.type==='playerOnFoot')));
   assert.ok(scene.entities.some(o=>o.sequence?.conditions?.some(c=>c.type==='playerInVehicle')));
   assert.ok(scene.entities.some(o=>o.sequence?.branches?.some(b=>b.conditions?.some(c=>c.key==='labDrive'))));
-  assert.deepEqual(scene.selected,[1]);
+  assert.deepEqual(scene.selected,[scene.entities.find(o=>o.type==='player'||o.playable3d||o.controller2d).id]);
   assert.ok(scene.entities.every((o,i)=>o.id===i+1));
  }
  const logic=read('js/core/logic-sequences.js');

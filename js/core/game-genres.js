@@ -52,6 +52,7 @@ export function resolveGameGenre(value,entities=[]){
  if(Object.hasOwn(genreTemplates,value))return value;
  if(!Array.isArray(entities))return 'sandbox';
  entities=entities.filter(o=>o&&typeof o==='object');
+ const authored=entities.find(o=>Object.hasOwn(genreTemplates,o.starterGenre));if(authored)return authored.starterGenre;
  if(entities.some(o=>o.lifeSim?.enabled))return 'lifesim';
  if(entities.some(o=>o.company?.enabled))return 'company';
  if(entities.some(o=>o.battlefield?.enabled))return 'battlefield';

@@ -18,10 +18,10 @@ const intersects=(car,x,y,o)=>{
  const otherBase=Number(o.elevation3d)||0,otherTop=otherBase+Math.max(.1,(o.h||32)/64);
  return verticalBase<otherTop&&verticalTop>otherBase&&x<o.x+otherW&&x+w>o.x&&y<o.y+otherD&&y+d>o.y;
 };
-export function updateDriving3d(entities,player,keys,dt){
+export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}={}){
  const step=Math.min(.1,Math.max(0,Number(dt)||0));
  driving3d.impact=Math.max(0,driving3d.impact-step);
- const enter=keys.has('e');
+ const enter=keys.has('e')||pressedKeys.has('e');
  const car=currentVehicle3d(entities);
  if(enter&&!driving3d.enterHeld){
   if(car){

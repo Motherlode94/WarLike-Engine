@@ -146,3 +146,8 @@ Le panneau affiche les clips choisis et les actions absentes avant application. 
 Les actions supplémentaires utilisent des triggers comme `attackRequest`, `shootRequest`, `pickupRequest` ou `danceRequest`, selon les états effectivement créés. Une posture en boucle peut être maintenue avec son booléen `<état>Active`, par exemple `blockActive` ou `swimActive`. Le profil Aventure conserve les paramètres automatiques de déplacement, saut et mort. Blueprint, WarScript, JS/TS et le composant Animator C# peuvent alimenter ces paramètres.
 
 Dans **Atelier du mouvement**, les personnages **04 · Clips de combat prêts** et **05 · Clips d’interactions prêts** ouvrent, avec **E**, un choix d’animations. Leurs profils sont déjà renseignés ; les signaux Blueprint déclenchent leurs triggers. Ils complètent les stations de poses, d’IK et de root motion.
+
+
+Les profils possédant un état de mort le conservent tant que le personnage reste mort, même en chute ou si une action est demandée. Le profil Tir écoute aussi l’action d’attaque standard du moteur ; `shootRequest` reste disponible pour Blueprint et les scripts.
+
+La première compilation native peut charger Roslyn et ses références : Play et le panneau C# lui accordent jusqu’à 30 secondes. Les autres requêtes conservent leur limite de 4,5 secondes. Une compilation interrompue ou invalide reste une erreur visible ; elle n’est pas considérée comme réussie.

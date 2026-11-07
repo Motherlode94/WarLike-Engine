@@ -13,7 +13,7 @@ const base='http://127.0.0.1:8765';
 const timeout=4500;
 const ui={connected:false,ready:false,inspector:false,revision:null};
 async function request(path,method='GET',payload){
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),path==='/scripts/compile'?30000:timeout);
  try{
   const response=await fetch(base+path,{method,mode:'cors',cache:'no-store',signal:controller.signal,
    ...(payload===undefined?{}:{headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})});

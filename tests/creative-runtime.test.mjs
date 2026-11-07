@@ -52,3 +52,10 @@ test('top-down 2D locomotion stays grounded even when the collision resolver has
 test('an unmasked animation layer blends the whole skeleton',()=>{
  const rig={nodes:[node('Root')],parents:new Int32Array([-1]),skins:[]},base=clip('Idle',0,[0,0,0]),full=clip('Wave',0,[0,4,0]);const pose=sampleRigPose(rig,base,0,{layers:[{clip:full,time:0,weight:.5,bones:[]}]});assert.equal(pose.world[0][13],2);
 });
+
+test('default Animator remains dead during flight, falling, powers and attacks until revival',()=>{
+ const o=actor();stepAnimator(o,.05);o.stats.health=0;o.grounded3d=false;o.heroState={flight:true};noteAnimatorAction(o,'nova',1);
+ for(let i=0;i<20;i++){o.elevation3d+=i%2?.1:-.1;assert.equal(stepAnimator(o,.05).stateId,'death');}
+ noteAnimatorAction(o,'attack',1);for(let i=0;i<20;i++)assert.equal(stepAnimator(o,.05).stateId,'death');
+ o.stats.health=100;o.grounded3d=true;o.heroState.flight=false;assert.equal(stepAnimator(o,.05).stateId,'motion');
+});

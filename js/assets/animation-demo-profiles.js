@@ -105,6 +105,11 @@ export const animationDemoProfiles={
     "to": "attack",
     "conditions": [
      {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
+     {
       "parameter": "attackRequest",
       "operator": "trigger"
      }
@@ -116,6 +121,11 @@ export const animationDemoProfiles={
     "from": "*",
     "to": "attack",
     "conditions": [
+     {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
      {
       "parameter": "attacking",
       "operator": "==",
@@ -145,6 +155,11 @@ export const animationDemoProfiles={
     "to": "attack2",
     "conditions": [
      {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
+     {
       "parameter": "attack2Request",
       "operator": "trigger"
      }
@@ -172,6 +187,11 @@ export const animationDemoProfiles={
     "to": "dodge",
     "conditions": [
      {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
+     {
       "parameter": "dodgeRequest",
       "operator": "trigger"
      }
@@ -198,6 +218,11 @@ export const animationDemoProfiles={
     "from": "*",
     "to": "hurt",
     "conditions": [
+     {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
      {
       "parameter": "hurtRequest",
       "operator": "trigger"
@@ -349,6 +374,11 @@ export const animationDemoProfiles={
     "to": "wave",
     "conditions": [
      {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
+     {
       "parameter": "waveRequest",
       "operator": "trigger"
      }
@@ -375,6 +405,11 @@ export const animationDemoProfiles={
     "from": "*",
     "to": "sit",
     "conditions": [
+     {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
      {
       "parameter": "sitRequest",
       "operator": "trigger"
@@ -403,6 +438,11 @@ export const animationDemoProfiles={
     "to": "pickup",
     "conditions": [
      {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
+     {
       "parameter": "pickupRequest",
       "operator": "trigger"
      }
@@ -429,6 +469,11 @@ export const animationDemoProfiles={
     "from": "*",
     "to": "interact",
     "conditions": [
+     {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
      {
       "parameter": "interactRequest",
       "operator": "trigger"
@@ -457,6 +502,11 @@ export const animationDemoProfiles={
     "to": "yes",
     "conditions": [
      {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
+     {
       "parameter": "yesRequest",
       "operator": "trigger"
      }
@@ -483,6 +533,11 @@ export const animationDemoProfiles={
     "from": "*",
     "to": "no",
     "conditions": [
+     {
+      "parameter": "dead",
+      "operator": "==",
+      "value": false
+     },
      {
       "parameter": "noRequest",
       "operator": "trigger"

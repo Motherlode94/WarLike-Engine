@@ -6,7 +6,7 @@ import {applyCsharpFrame} from '../js/core/csharp-frame.js';
 import {createCsharpSquadDemo} from '../js/core/csharp-tactical-scene.js';
 
 test('real .NET bridge: typed parameters, tactical orders, revisions, origin and body limits',
- {skip:process.env.WARLIKE_DOTNET_BRIDGE!=='1',timeout:25000},async t=>{
+ {skip:process.env.WARLIKE_DOTNET_BRIDGE!=='1',timeout:90000},async t=>{
  const base='http://127.0.0.1:8765',origin='https://warlike-engine.pages.dev';
  // Refuse to reuse an unrelated local bridge or test against an old process.
  try{await fetch(base+'/health',{signal:AbortSignal.timeout(300)});assert.fail('Port 8765 is already occupied.')}catch(error){if(error.code==='ERR_ASSERTION')throw error}
@@ -25,7 +25,7 @@ test('real .NET bridge: typed parameters, tactical orders, revisions, origin and
  }
  assert.ok(healthy,'Bridge did not start: '+logs);
  const call=async(path,data,expected=200)=>{
-  const response=await fetch(base+path,{method:data===undefined?'GET':'POST',headers:{Origin:origin,...(data===undefined?{}:{'Content-Type':'application/json'})},...(data===undefined?{}:{body:JSON.stringify(data)}),signal:AbortSignal.timeout(3000)});
+  const response=await fetch(base+path,{method:data===undefined?'GET':'POST',headers:{Origin:origin,...(data===undefined?{}:{'Content-Type':'application/json'})},...(data===undefined?{}:{body:JSON.stringify(data)}),signal:AbortSignal.timeout(path==='/scripts/compile'?30000:3000)});
   const body=await response.json();assert.equal(response.status,expected,JSON.stringify(body));return body;
  };
  const health=await call('/health');assert.equal(health.protocol,3);

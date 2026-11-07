@@ -10,7 +10,7 @@ async function installPack(raw){
  try{
   $('status').textContent='Validation du modèle GLB et de son empreinte…';
   const record=await parseLibraryTransfer(raw);
-  $('status').textContent='Modèle valide ('+record.meshCount+' maillages). Installation locale…';
+  $('status').textContent='Modèle valide ('+record.meshCount+' maillages, '+record.materialCount+' matériaux, '+record.textureCount+' textures, '+record.animationCount+' animations). Installation locale…';
   const plan=planLibraryPrefabInstall(record);
   let replace=false;
   if(plan.status==='conflict'){

@@ -27,7 +27,7 @@ test('canonical affine shear survives runtime conversion without dropping the vi
  const corrected=affineCorrection3d(child);
  near(multiplyMatrix4(corrected,child.matrixReference3d),expected);
  const restored=canonicalScene(entities);
- near(worldTransformMatrices(restored).get('entity-'+child.id),expected);
+ near(worldTransformMatrices(restored).get(restored.objects.find(o=>o.name==='Turret').id),expected);
 });
 test('affine inverse-transpose normal matrix handles skewed lighting',()=>{
  const shear=[2,0,0,0,1,3,0,0,0,0,1,0,4,5,6,1];

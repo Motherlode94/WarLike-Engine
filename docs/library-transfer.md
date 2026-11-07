@@ -13,6 +13,12 @@ WarLike Library et WarLike Engine sont deux applications sur des domaines distin
 
 Les personnalisations d'un prefab déjà importé ne sont pas écrasées. Une variante héritée est exportée avec les composants de son parent résolus ; Engine conserve les informations de provenance mais ne synchronise pas les modifications futures du parent Library.
 
+## Clips d’animation importés
+
+Lorsqu'un fichier GLB possède des clips, Engine conserve leurs noms dans les métadonnées du modèle et dans la configuration du prefab. Les noms courants (`idle`, `walk`, `run`, `attack`, `jump`, `death`, `hurt`) sont rapprochés des animations réellement présentes pour faciliter leur lecture en Play ; aucun clip absent n'est généré. Le prefab active l'aperçu et la sélection automatique des clips 3D. L’import n’installe pas un Animator Controller complet ou un contrôleur clavier/manette : ceux-ci doivent encore être configurés dans la scène.
+
+Cette intégration nécessite toujours une validation visuelle réelle (déformations, transitions, articulations), puis une vérification de l’export Web et de son lancement dans un navigateur indépendant. Le transfert de fichiers et les tests unitaires ne prouvent pas à eux seuls la jouabilité.
+
 ## Limites vérifiées
 
 - Le transfert manuel par fichier est opérationnel au niveau **code et tests**. Les tests visuels réels dans un navigateur et l'utilisation des modèles dans Play/Export doivent encore être confirmés.

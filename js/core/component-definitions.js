@@ -69,3 +69,38 @@ export function inspectorComponentRank(title){
  if(/Lighting|Audio/.test(title))return 60;
  return 70;
 }
+
+/**
+ * Declarative editor fields, shared by native/script/custom component adapters.
+ * Schema describes allowed types, not arbitrary executable render callbacks.
+ */
+export function validateEditorProperty(meta,value){
+ if(!meta||typeof meta!=='object')throw Error('Métadonnées de propriété absentes');
+ switch(meta.type){
+  case 'number':{
+   const n=typeof value==='number'?value:Number(value);
+   if(!Number.isFinite(n))throw Error('Nombre fini requis');
+   if(Number.isFinite(meta.min)&&n<meta.min||Number.isFinite(meta.max)&&n>meta.max)throw Error('Valeur hors limites');
+   return n;
+  }
+  case 'boolean':return Boolean(value);
+  case 'string':{
+   const s=String(value);if(s.length>4096)throw Error('Chaîne trop longue');
+   return s;
+  }
+  case 'color':{
+   if(!/^#[a-f\d]{6}$/i.test(String(value)))throw Error('Couleur hexadécimale requise');
+   return value.toLowerCase();
+  }
+  case 'vector3':{
+   const o=value;
+   if(!o||!['x','y','z'].every(k=>Number.isFinite(Number(o[k]))))throw Error('Vector3 invalide');
+   return {x:Number(o.x),y:Number(o.y),z:Number(o.z)};
+  }
+  case 'enum':{
+   if(!Array.isArray(meta.options)||!meta.options.includes(value))throw Error('Choix invalide');
+   return value;
+  }
+  default:throw Error('Type de propriété non pris en charge : '+meta.type);
+ }
+}

@@ -180,14 +180,14 @@ function renderTypedComponent(root,componentInstance,owner){
  const section=document.createElement('details');section.open=true;section.className='inspector-component typed-component';
  const title=document.createElement('summary');title.textContent=componentInstance.name||componentInstance.type||'Component';section.append(title);
  for(const [key,meta] of Object.entries(componentInstance.properties)){
-  if(!meta||!['number','boolean','string','color','vector3','enum'].includes(meta.type))continue;
+  if(!meta||!['number','boolean','string','color','vector3','enum'].includes(meta.type)||!/^[a-zA-Z_][a-zA-Z_0-9]*$/.test(key)||['__proto__','prototype','constructor'].includes(key))continue;
   const line=document.createElement('div');line.className='property-row';
   const label=document.createElement('label');label.textContent=meta.label||key;line.append(label);
   const apply=value=>{
-   try{const validated=validateEditorProperty(meta,value);componentInstance.values??={};componentInstance.values[key]=validated;record('Inspector : '+(componentInstance.name||'Component')+'.'+key);notify()}
+   try{const validated=validateEditorProperty(meta,value);componentInstance.values??={};componentInstance.values[key]=validated;if(Object.hasOwn(componentInstance,key))componentInstance[key]=structuredClone(validated);if(Object.hasOwn(meta,'value'))meta.value=structuredClone(validated);record('Inspector : '+(componentInstance.name||'Component')+'.'+key);notify()}
    catch(error){console.warn('[WarLike Inspector] Valeur refusée',error)}
   };
-  const value=componentInstance.values?.[key]??meta.default;
+  const value=componentInstance.values?.[key]??meta.value??componentInstance[key]??meta.default;
   if(meta.type==='vector3'){
    const group=document.createElement('div');group.style.cssText='display:flex;gap:4px;min-width:0';
    for(const axis of ['x','y','z']){

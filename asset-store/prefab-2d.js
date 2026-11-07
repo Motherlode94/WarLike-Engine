@@ -6,7 +6,7 @@ export function spritePrefab(asset){
  const width=Math.min(512,Math.max(8,Math.round(Number(asset.width)||64)));
  const height=Math.min(512,Math.max(8,Math.round(Number(asset.height)||64)));
  const isUi=asset.category==='UI',isActor=asset.kind==='actor';
- const components={type:isActor?'player':'object',assetId:asset.id,w:width,h:height,rotation:0,visible:true,
+ const components={type:'object',assetId:asset.id,w:width,h:height,rotation:0,visible:true,
   // assetId resolves through the same editor asset catalog as the source PNG.
   spriteUrl:asset.spriteUrl,sourceType:'png',pixelArt:!!asset.pixelArt,collidable:!isUi};
  return {id:PREFIX+asset.id,name:asset.name,mode:'2d',components,

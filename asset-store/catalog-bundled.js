@@ -24,6 +24,7 @@ export function toStoreAsset(a,author){
   category:categoryFor(a),url,thumb:assetUrl(a.thumbnailUrl,'(?:png|webp|jpg|jpeg)'),
   size:Number(a.bytes)||0,triangles:Number(a.triangles)||0,
   animationClips:Array.isArray(a.animationClips)?a.animationClips.length:0,
+  animationNames:Array.isArray(a.animationClips)?a.animationClips.map(c=>typeof c==='string'?c:String(c?.name||'')).filter(Boolean):[],
   source:typeof a.sourceUrl==='string'&&a.sourceUrl.startsWith('https://')?a.sourceUrl:author==='Kenney'?'https://kenney.nl/assets':'https://quaternius.com/',
   license:String(a.license||'CC0-1.0'),bundled:true};
 }

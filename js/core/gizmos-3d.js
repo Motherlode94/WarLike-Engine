@@ -19,7 +19,13 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const snap=document.createElement('input');snap.type='checkbox';snap.checked=localStorage.getItem('warlike.snap3d.enabled')==='true';snap.setAttribute('aria-label','Activer snapping 3D');snap.onchange=()=>{localStorage.setItem('warlike.snap3d.enabled',String(snap.checked));document.dispatchEvent(new CustomEvent('warlike:snap3d',{detail:{enabled:snap.checked}}))};
  document.addEventListener('warlike:snap3d',e=>{snap.checked=Boolean(e.detail?.enabled)});
  const step=document.createElement('input');step.type='number';step.min='.01';step.max='20';step.step='.05';step.value=localStorage.getItem('warlike.snap3d.step')||'.5';step.title='Pas de snapping en mètres (rotation en degrés)';step.setAttribute('aria-label','Pas de snapping 3D');step.style.cssText='width:55px;background:#151b23;color:inherit;border:1px solid #455363;padding:3px';step.onchange=()=>{step.value=String(Math.min(20,Math.max(.01,Number(step.value)||.5)));localStorage.setItem('warlike.snap3d.step',step.value)};
- options.append(mode,snap,document.createTextNode('Snap'),step);host.append(options);
+ const snapMode=document.createElement('select');
+ snapMode.setAttribute('aria-label','Mode de snapping 3D');snapMode.title='Accrochage grille, sommet, arête ou surface';
+ snapMode.style.cssText='background:#303944;color:#e5eaf1;border:1px solid #455363;border-radius:4px;padding:4px;max-width:105px';
+ for(const [value,label] of [['grid','Grille'],['vertex','Sommet'],['edge','Arête'],['surface','Surface']]){const opt=document.createElement('option');opt.value=value;opt.textContent=label;snapMode.append(opt)}
+ snapMode.value=localStorage.getItem('warlike.snap3d.mode')||'grid';
+ snapMode.onchange=()=>localStorage.setItem('warlike.snap3d.mode',snapMode.value);
+ options.append(mode,snap,document.createTextNode('Snap'),step,snapMode);host.append(options);
  let drag=null,lastTool='';
  const tool=()=>document.querySelector('.scene-tools [data-tool].active')?.dataset.tool||'move';
  const center=()=>{
@@ -67,6 +73,8 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   const dx=event.clientX-drag.startX,dy=event.clientY-drag.startY;
   const scale=Math.max(.05,view3d.radius/Math.max(140,canvas.clientHeight))*60;
   const amount=(dx-dy)*scale/64,snapStep=snap.checked?Math.max(.01,Number(step.value)||.5):0;
+  const surfaceHit=snap.checked&&drag.mode==='move'&&snapMode.value!=='grid'?
+   view3d.surfaceAt?.(event.clientX,event.clientY,{excludeIds:drag.objects.map(o=>o.id),groundFallback:snapMode.value==='surface'}):null;
   const quant=(value,increment)=>snapStep?snap3d(value,increment??snapStep):value;
   for(const start of drag.objects){
    const o=state.entities.find(o=>o.id===start.id);if(!o)continue;
@@ -83,9 +91,18 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
     else o.depth3d=scaled(start.depth3d);
    }else{
     const direction=axisVector(drag.axis,{...o,rotation:start.rotation,rotationX3d:start.rotationX3d,rotationZ3d:start.rotationZ3d});
-    o.x=Math.round((quant(start.x/64+direction[0]*amount))*64);
-    o.elevation3d=quant(start.elevation3d+direction[1]*amount);
-    o.y=Math.round((quant(start.y/64+direction[2]*amount))*64);
+    if(surfaceHit){
+     // Project the pointer-to-feature displacement on the selected gizmo axis.
+     const center=[start.x/64+(start.w||64)/128,start.elevation3d+(start.h||64)/128,start.y/64+(start.depth3d||start.h||64)/128];
+     const distance=direction.reduce((sum,n,i)=>sum+n*(surfaceHit.point[i]-center[i]),0);
+     o.x=Math.round((start.x/64+direction[0]*distance)*64);
+     o.elevation3d=start.elevation3d+direction[1]*distance;
+     o.y=Math.round((start.y/64+direction[2]*distance)*64);
+    }else{
+     o.x=Math.round(quant(start.x/64+direction[0]*amount)*64);
+     o.elevation3d=quant(start.elevation3d+direction[1]*amount);
+     o.y=Math.round(quant(start.y/64+direction[2]*amount)*64);
+    }
    }
    // Keep the authored affine shear instead of throwing it away when the gizmo moves.
    if(start.worldMatrix3d&&start.matrixReference3d)updateAffineEditorPose3d(o,start.worldMatrix3d,start.matrixReference3d);

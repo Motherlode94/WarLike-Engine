@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spritePrefab,installSpritePrefab,installed2dIds} from '../asset-store/prefab-2d.js';
+import {readPrefabs,instantiatePrefab,prefabsForMode} from '../js/core/prefab-library.js';
+const asset={id:'free-tiny-dungeon-tile-0084',name:'Mage violet',sourceType:'png',spriteUrl:'./assets/free/kenney/tiny-dungeon/Tiles/tile_0084.png',category:'Characters',kind:'actor',width:64,height:64,pixelArt:true,license:'CC0-1.0 · Kenney'};
+function memory(){const map=new Map();return{getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v)}}
+test('store creates 2D native prefab with a real sprite ref, never a fake 3D object or automatic player',()=>{const p=spritePrefab(asset);assert.equal(p.mode,'2d');assert.equal(p.components.type,'object');assert.equal(p.components.assetId,asset.id);assert.equal(p.components.spriteUrl,asset.spriteUrl);assert.equal(p.components.w,64);assert.equal(p.components.pixelArt,true)});
+test('prefab installs in shared native WarLike library and instantiates',()=>{const storage=memory(),first=installSpritePrefab(asset,storage);assert.equal(first.installed,true);assert.equal(installSpritePrefab(asset,storage).installed,false);const saved=readPrefabs(storage);assert.equal(prefabsForMode(saved,'2d').length,1);const inst=instantiatePrefab(saved[0],77);assert.equal(inst.assetId,asset.id);assert.equal(inst.spriteUrl,asset.spriteUrl);assert.ok(installed2dIds(storage).has(asset.id))});
+test('store rejects outside PNG sources and keeps user edits on reinstall',()=>{assert.throws(()=>spritePrefab({...asset,spriteUrl:'https://untrusted.example/test.png'}));const storage=memory();installSpritePrefab(asset,storage);const p=readPrefabs(storage);p[0].components.w=123;storage.setItem('warlike.prefabs.library.v1',JSON.stringify(p));installSpritePrefab(asset,storage);assert.equal(readPrefabs(storage)[0].components.w,123)});

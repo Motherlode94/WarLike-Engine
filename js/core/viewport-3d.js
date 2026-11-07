@@ -6,6 +6,7 @@ import {updateCompanyMarkers} from '../ui/company-ui.js';
 import {resetBattlefield,tickBattlefield,battlefieldMatch,consumeBattlefieldShot,isBattlefieldSoldier} from './battlefield-runtime.js';
 import {updateBattlefieldHud} from '../ui/battlefield-hud.js';
 import {rotationQuaternion3d} from './collider-3d.js';
+import {affineCorrection3d,normalMatrix3d} from './affine-render-3d.js';
 import {gameProject} from './game-project.js';
 import {survivalPlacement} from './survival-building.js';
 import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';
@@ -97,14 +98,16 @@ const program3d=gl=>{
  const vs=`precision highp float;
  attribute vec3 aPosition;attribute vec3 aNormal;attribute vec2 aTexcoord;varying vec2 vTexcoord;attribute vec4 aVertexColor;varying vec4 vVertexColor;
  uniform vec3 uEye,uRight,uUp,uForward,uPosition,uScale;
- uniform vec4 uRotation;uniform float uAspect;uniform bool uViewModel;uniform mat3 uViewBasis;
+ uniform vec4 uRotation;uniform float uAspect;uniform bool uViewModel,uUseAffine;uniform mat3 uViewBasis,uAffineNormal;uniform mat4 uAffineMatrix;
  vec3 rotateQ(vec3 v){return v+2.0*cross(uRotation.xyz,cross(uRotation.xyz,v)+uRotation.w*v);}
  varying vec3 vNormal,vWorld;
  void main(){
  vTexcoord=aTexcoord;vVertexColor=aVertexColor;vec3 q=aPosition*uScale;
  q=uViewModel?uViewBasis*q:rotateQ(q);
- vec3 rel=q+uPosition-uEye;
- vWorld=q+uPosition;vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vNormal=normalize(uViewModel?uViewBasis*scaledNormal:rotateQ(scaledNormal));
+ vec3 worldPosition=q+uPosition;
+ if(uUseAffine)worldPosition=(uAffineMatrix*vec4(worldPosition,1.0)).xyz;
+ vec3 rel=worldPosition-uEye;
+ vWorld=worldPosition;vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vec3 worldNormal=uViewModel?uViewBasis*scaledNormal:rotateQ(scaledNormal);vNormal=normalize(uUseAffine?uAffineNormal*worldNormal:worldNormal);
  float d=max(0.01,dot(rel,uForward));
  float f=1.7320508;
  float clipZ=d*1.00066689-0.20006669;
@@ -249,6 +252,7 @@ export function init3d(canvas,host,buttons){
  const loc=n=>gl.getUniformLocation(program,n);
  const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
  const viewModelUniform=loc('uViewModel'),viewBasisUniform=loc('uViewBasis');
+ const useAffineUniform=loc('uUseAffine'),affineMatrixUniform=loc('uAffineMatrix'),affineNormalUniform=loc('uAffineNormal');
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal'),aTexcoord=gl.getAttribLocation(program,'aTexcoord');
  const aVertexColor=gl.getAttribLocation(program,'aVertexColor'),unlitUniform=loc('uUnlit'),emissiveUniform=loc('uEmissive');
  const textureUniform=loc('uBaseColorTexture'),useTexture=loc('uUseTexture'),alphaCutoff=loc('uAlphaCutoff');
@@ -299,7 +303,7 @@ export function init3d(canvas,host,buttons){
   gl.depthMask(mesh.alphaMode!=='BLEND');
   if(mesh.alphaMode==='BLEND'){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA)}else gl.disable(gl.BLEND);
  };
- const model=(pos,scale,color,angle=0,object=null)=>{gl.uniform1i(viewModelUniform,0);const q=object?rotationQuaternion3d(object):{x:0,y:-Math.sin(angle/2),z:0,w:Math.cos(angle/2)};gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform4fv(u.rotation,[q.x,q.y,q.z,q.w]);gl.uniform4fv(u.color,color)};
+ const model=(pos,scale,color,angle=0,object=null)=>{gl.uniform1i(viewModelUniform,0);let correction=null;try{if(object)correction=affineCorrection3d(object)}catch(error){if(!object._affineWarning){console.warn('[WarLike] Affine 3D '+object.name,error);object._affineWarning=true}}gl.uniform1i(useAffineUniform,!!correction);if(correction){gl.uniformMatrix4fv(affineMatrixUniform,false,new Float32Array(correction));gl.uniformMatrix3fv(affineNormalUniform,false,new Float32Array(normalMatrix3d(correction)))}const q=object?rotationQuaternion3d(object):{x:0,y:-Math.sin(angle/2),z:0,w:Math.cos(angle/2)};gl.uniform3fv(u.pos,pos);gl.uniform3fv(u.scale,scale);gl.uniform4fv(u.rotation,[q.x,q.y,q.z,q.w]);gl.uniform4fv(u.color,color)};
  view3d.enabled=workspace.mode==='3d';
  const resize=()=>{const {width:w,height:h}=viewportPixelSize(host.clientWidth,host.clientHeight,window.devicePixelRatio||1);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h)};
  const focusScene=()=>{

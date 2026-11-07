@@ -17,6 +17,6 @@ export function pasteEntitiesPayload(text,{entities,mode,nextId=1,offset=24}){
  const data=readEntitiesPayload(text);if(!data)throw Error('Le presse-papiers ne contient pas d’objets WarLike.');if(data.mode!==mode)throw Error('Ces objets sont en '+data.mode.toUpperCase()+'. Ouvre un projet de ce type pour les coller.');
  let serial=Math.max(nextId,...entities.map(o=>o.id+1));const map=new Map(data.entities.map(o=>[o.id,serial++]));
  const remap=value=>{if(Array.isArray(value))return value.map(remap);if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,refs.has(key)&&map.has(item)?map.get(item):remap(item)]));return value};
- const added=data.entities.map(source=>{const o=remap(source);o.id=map.get(source.id);o.name=String(source.name||'GameObject')+' (copie)';o.x+=offset;o.y+=offset;if(Number.isFinite(o.ai?.homeX))o.ai.homeX+=offset;if(Number.isFinite(o.ai?.homeY))o.ai.homeY+=offset;return o});
+ const added=data.entities.map(source=>{const o=remap(source);o.id=map.get(source.id);if(o.parentId!==undefined&&o.parentId!==null&&!map.has(source.parentId))o.parentId=null;o.name=String(source.name||'GameObject')+' (copie)';o.x+=offset;o.y+=offset;if(Number.isFinite(o.ai?.homeX))o.ai.homeX+=offset;if(Number.isFinite(o.ai?.homeY))o.ai.homeY+=offset;return o});
  return {entities:[...entities,...added],selected:added.map(o=>o.id),nextId:serial};
 }

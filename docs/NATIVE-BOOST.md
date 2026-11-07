@@ -47,3 +47,12 @@ The bridge listens only on `127.0.0.1:8765`, with `GET /health`, `POST /scene`, 
 ## Remaining challenges
 
 Continuous collision detection, mature rigidbody solver, scene-to-C# gameplay synchronization, skeletal animation, PBR textures, asset persistence and standalone builds.
+
+
+## Durcissement WarScript, WASM et Prefabs — novembre 2026
+
+- **WarScript :** les affectations de position Vector3 valident les trois coordonnées avant de modifier l'entité ; une compilation en échec produit un diagnostic explicite et ne démarre pas le script. Tests de régression dans `tests/warscript.test.mjs`.
+- **C++ / WebAssembly :** les lots de gravité refusent les pas de temps non finis, négatifs ou supérieurs à une seconde ; les requêtes valides suivantes restent possibles. Exécuter `npm run check:wasm` et `npm run bench:wasm` sur un dépôt contenant le WASM compilé. Les mesures comparent les temps CPU des requêtes, **pas** les FPS.
+- **Asset Store / prefabs :** les prefabs 3D doivent référencer un GLB Kenney ou Quaternius du catalogue intégré. Avant l'installation par l'interface, le moteur télécharge et contrôle les octets, la taille, la signature GLB 2.0 et la présence d'un maillage. Un modèle inaccessible ou invalide n'est pas installé ; les personnalisations de prefabs existants restent conservées. Tests dans `tests/asset-store-prefabs.test.mjs`.
+
+**Limites :** la validation GLB ne prouve pas que le modèle possède des animations exploitables, des collisions exactes ou un contrôleur jouable ; les prefabs continuent à référencer les GLB intégrés. L'import de modèles externes persistants, l'interopérabilité directe avec WarLike Library et les tests visuels Play/Export restent des chantiers distincts.

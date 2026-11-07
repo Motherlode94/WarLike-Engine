@@ -1,3 +1,5 @@
+import {readFileSync} from 'node:fs';
+import {verifyBundledGlb} from '../asset-store/verify-glb.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {prefabFromBundledAsset,installBundledPrefab,installedPrefabIds,PREFAB_STORAGE_KEY} from '../asset-store/prefab-store.js';
@@ -55,4 +57,17 @@ test('prefab installation rejects arbitrary URLs, invalid formats and fake autho
   assert.throws(()=>prefabFromBundledAsset({...asset,url}),/modèle 3D gratuit/);
  }
  assert.throws(()=>prefabFromBundledAsset({...asset,name:'  '}),/modèle 3D gratuit/);
+});
+
+test('3D prefab install preflight reads real bundled GLB bytes and rejects corrupted assets',async()=>{
+ const bytes=readFileSync(new URL('../assets/free/kenney/mini-characters/character-male-a.glb',import.meta.url));
+ const origin='https://warlike-engine.pages.dev';
+ const item={...asset,url:origin+'/assets/free/kenney/mini-characters/character-male-a.glb'};
+ const response=data=>({ok:true,headers:{get:()=>String(data.length)},arrayBuffer:async()=>data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength)});
+ const options={origin,fetcher:async()=>response(bytes)};
+ const result=await verifyBundledGlb(item,options);
+ assert.ok(result.meshes>0);assert.equal(result.bytes,bytes.length);
+ await assert.rejects(verifyBundledGlb({...item,url:origin+'/evil.glb'},options),/non autorisée/);
+ await assert.rejects(verifyBundledGlb(item,{origin,fetcher:async()=>response(Buffer.from('invalid'))}),/Taille GLB/);
+ await assert.rejects(verifyBundledGlb(item,{origin,fetcher:async()=>({ok:false,status:404})}),/HTTP 404/);
 });

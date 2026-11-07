@@ -274,3 +274,13 @@ Limites : une collection est une sélection éditoriale d'assets, **pas encore u
 La galerie produit de **véritables entrées de prefabs WarLike 3D**, à la demande, depuis les modèles GLB Kenney et Quaternius existants. Le bouton **Installer le prefab** écrit une entrée dans la même clé `localStorage` que `js/core/prefab-library.js` : `warlike.prefabs.library.v1`. La fiche contient `mode: '3d'`, `components.type: 'mesh3d'`, `model3dId` pointant vers un modèle réellement présent dans la bibliothèque du moteur, des transformations de base et les données de provenance/licence. Les prefabs s'affichent ensuite dans les ressources du moteur sur **le même domaine/navigateur**, avec un rechargement éventuel du navigateur.
 
 La galerie est filtrable par catégorie, auteur, modèle et présence d'animations ; elle n'invente aucun prefab Unity `.prefab` ou gameplay préconfiguré. Un prefab installé et modifié n'est **pas écrasé** par une nouvelle installation. Les données restent locales, sans synchronisation de compte. Des tests sont ajoutés dans `tests/asset-store-prefabs.test.mjs` pour l'installation, l'instanciation et le non-écrasement.
+
+### WarLike Asset Store — espace 2D
+
+[Ouvrir l'espace 2D](https://warlike-engine.pages.dev/asset-store/2d.html).
+
+Cet espace indépendant référence les ressources PNG incluses dans `assets/free/kenney/sprites.json` et `assets/free/kenney/ui.json`, avec recherche, filtres de catégories et packs, prévisualisation d'images réelles et installation de **prefabs natifs 2D** dans `warlike.prefabs.library.v1`.
+
+Chaque prefab conserve `assetId`, `spriteUrl`, dimensions, mode `2d` et provenance Kenney, sans inventer d'animation, scripts ou contrôle joueur. Les prefabs réinstallés ne remplacent pas les personnalisations. Les fichiers PNG restent distribués avec le moteur et les prefabs utilisent le même stockage local (domaine et navigateur identiques). Voir `tests/asset-store-prefabs-2d.test.mjs` pour la validation de format et de non-écrasement.
+
+Les boutons et parcours ont été vérifiés en code, mais le rendu et l'instanciation complète en navigateur restent à valider après publication.

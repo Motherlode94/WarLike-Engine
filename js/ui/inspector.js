@@ -24,6 +24,7 @@ import {finishInspector as finishComponentInspector,openComponentBrowser} from '
 import {communityRecipes,applyCommunityRecipe} from '../core/community-plugins.js';
 import {threatFactions,threatRelations,threatProfile} from '../core/threat-intelligence.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
+import {getModelGeometry} from '../assets/real-models-3d.js';
 import {defaultRigidbody3d,applyImpulse3d} from '../core/physics-3d.js';
 import {recipes,applyRecipe} from '../core/gameplay-recipes.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController,inventoryAdd,inventoryRemove,equipItem} from '../core/gameplay-components.js';
@@ -128,6 +129,52 @@ function renderObjectBehaviors(root,owner){
  }
 }
 export function renderHierarchy(){renderSceneHierarchy()}
+function renderBoneSocketInspector(root,object){
+ if(workspace.mode!=='3d')return;
+ const details=document.createElement('details');details.className='inspector-component';details.open=Boolean(object.socket3d);
+ const heading=document.createElement('summary');heading.textContent='Bone Socket · Attachement animé';details.append(heading);
+ const help=document.createElement('p');help.className='notice';help.textContent='Attache cet objet à un os d’un personnage GLB riggé. Les positions sont actualisées depuis l’Animator pendant la lecture.';details.append(help);
+ if(!object.socket3d){
+  const btn=document.createElement('button');btn.type='button';btn.textContent='+ Ajouter Bone Socket';btn.disabled=state.playing;
+  btn.onclick=()=>{object.socket3d={enabled:true,targetId:null,bone:'',offset:[0,0,0],followRotation:true};record('Ajouter Bone Socket');notify()};
+  details.append(btn);root.append(details);return;
+ }
+ const socket=object.socket3d;
+ const source=document.createElement('select');source.disabled=state.playing;source.setAttribute('aria-label','GameObject parent du socket');
+ const no=document.createElement('option');no.value='';no.textContent='Choisir un personnage riggé';source.append(no);
+ for(const e of state.entities.filter(e=>e.id!==object.id&&(e.model3dId||e.assetId))){const opt=document.createElement('option');opt.value=String(e.id);opt.textContent=e.name;source.append(opt)}
+ source.value=socket.targetId===null?'':String(socket.targetId);
+ const bone=document.createElement('select');bone.disabled=state.playing;bone.setAttribute('aria-label','Os du squelette pour le socket');
+ const label=document.createElement('label');label.textContent='GameObject animé';label.append(source);details.append(label);
+ const boneLabel=document.createElement('label');boneLabel.textContent='Os de fixation';boneLabel.append(bone);details.append(boneLabel);
+ const load=async()=>{
+  bone.replaceChildren();const selected=state.entities.find(x=>String(x.id)===String(source.value));
+  if(!selected){bone.append(new Option('Sélectionner un modèle',''));return}
+  const placeholder=new Option('Chargement des os…','');bone.append(placeholder);
+  try{
+   const data=await getModelGeometry(selected.model3dId||selected.assetId);
+   if(source.value!==String(selected.id))return;
+   bone.replaceChildren();
+   const nodes=data.rig?.nodes||[];
+   if(!nodes.length){bone.append(new Option('Ce GLB ne possède pas de rig',''));return}
+   for(const node of nodes){if(!node?.name)continue;const option=new Option(node.name,node.name);bone.append(option)}
+   bone.value=socket.bone||bone.options[0]?.value||'';
+   if(!bone.value&&bone.options.length)bone.selectedIndex=0;
+  }catch(error){bone.replaceChildren();bone.append(new Option('Os indisponibles : '+error.message,''))}
+ };
+ source.onchange=()=>{socket.targetId=source.value?Number(source.value):null;socket.bone='';record('Bone Socket : personnage');notify()};
+ bone.onchange=()=>{socket.bone=bone.value;record('Bone Socket : os');notify()};
+ const offsets=document.createElement('div');offsets.className='property-row';offsets.textContent='Offset (m)';
+ for(const [i,axis] of ['X','Y','Z'].entries()){
+  const input=document.createElement('input');input.type='number';input.step='.01';input.value=String(socket.offset?.[i]??0);input.disabled=state.playing;input.style.width='30%';input.setAttribute('aria-label','Socket offset '+axis);
+  input.onchange=()=>{const value=Number(input.value);if(!Number.isFinite(value))return;socket.offset??=[0,0,0];socket.offset[i]=value;record('Bone Socket : offset '+axis);notify()};
+  offsets.append(input);
+ }
+ details.append(offsets);
+ const remove=document.createElement('button');remove.type='button';remove.textContent='Retirer Bone Socket';remove.disabled=state.playing;
+ remove.onclick=()=>{delete object.socket3d;record('Retirer Bone Socket');notify()};details.append(remove);root.append(details);
+ void load();
+}
 function renderTypedComponent(root,componentInstance,owner){
  if(!componentInstance||typeof componentInstance!=='object'||!componentInstance.properties||typeof componentInstance.properties!=='object')return;
  const section=document.createElement('details');section.open=true;section.className='inspector-component typed-component';
@@ -477,6 +524,7 @@ const removeLogic=document.createElement('button');removeLogic.textContent='Remo
 }
 }
 for(const instance of (o.editorComponents||o.components||[]))renderTypedComponent(root,instance,o);
+renderBoneSocketInspector(root,o);
 root.append(advancedTools);
 renderPhysics2d(root,o,{component,field,selectField});
 const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=()=>deleteInspectedObject(o);root.append(del);finishInspector(root,o,advancedTools)}

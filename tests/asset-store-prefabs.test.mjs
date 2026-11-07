@@ -24,3 +24,22 @@ test('store does not overwrite customized prefabs and rejects non-bundled entrie
  assert.equal(readPrefabs(storage)[0].components.color,'#ff8800');
  assert.throws(()=>prefabFromBundledAsset({...asset,bundled:false}),/modèle 3D gratuit/);
 });
+
+test('3D prefab settings configure size and collisions within supported bounds',()=>{
+ const scaled=prefabFromBundledAsset(asset,{scale:2,collision:true});
+ assert.equal(scaled.components.w,160);
+ assert.equal(scaled.components.h,160);
+ assert.equal(scaled.components.depth3d,160);
+ assert.equal(scaled.components.collision3d,true);
+ assert.equal(prefabFromBundledAsset(asset,{scale:900}).components.w,320);
+ assert.equal(prefabFromBundledAsset(asset,{scale:-1}).components.w,20);
+});
+test('prefab installer persists 3D options and preserves previous user configuration',()=>{
+ const storage=createStorage();
+ const first=installBundledPrefab(asset,storage,{scale:1.5,collision:true});
+ assert.equal(first.installed,true);assert.equal(first.prefab.components.w,120);
+ assert.equal(first.prefab.components.collision3d,true);
+ const second=installBundledPrefab(asset,storage,{scale:3,collision:false});
+ assert.equal(second.installed,false);
+ assert.equal(readPrefabs(storage)[0].components.w,120);
+});

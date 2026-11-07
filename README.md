@@ -226,3 +226,15 @@ Validation : `node --test tests/company.test.mjs`.
 [Clips de transformation, timeline, transitions, paramètres et API Animator](docs/animation-studio.md).
 
 Le projet 3D propose **Atelier du mouvement** dans Scènes démo : personnage contrôlable et stations de poses/courbes, IK et root motion. Le studio Squelette est accessible dans Window et l’Animator. [Fonctionnement et limites de l’animation avancée](docs/animation-studio.md).
+
+## WarLike Asset Store — catalogue intégré
+
+[Lancer WarLike Asset Store](https://warlike-engine.pages.dev/asset-store/) — nouvelle interface indépendante accessible depuis **Assets → WarLike Asset Store** dans l'éditeur.
+
+- Catalogue dynamique de modèles **Kenney CC0** via un manifeste externe existant ; recherche, catégories, tri, aperçus et fiches de licence/source.
+- Installation directe des modèles **GLB** sélectionnés dans le stockage local `IndexedDB` déjà utilisé par WarLike Engine (`warlike-local-assets-v1/glb`).
+- Import manuel de fichiers `.glb` jusqu'à 25 Mo et affichage des modèles déjà installés.
+- Retour dans **Project / Assets** après rechargement de l'éditeur, sur le **même domaine et le même navigateur**.
+- Liens vers les packs officiels Kenney/Quaternius, sans redistribution de contenus payants tiers.
+
+**Limites :** le catalogue dépend d'un manifeste hébergé par un tiers et d'un navigateur autorisant IndexedDB et CORS ; certaines installations peuvent échouer. Pas encore d'achat, de paiement, d'avis certifiés, de portail éditeur ou de synchronisation cloud. La compatibilité des modèles reste à valider en navigateur et sur des projets réels.

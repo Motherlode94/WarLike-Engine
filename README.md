@@ -1,3 +1,13 @@
+## Snapping avancé et Bone Sockets — novembre 2026
+
+**Snapping 3D :** la barre des Gizmos permet de choisir `Grille`, `Sommet`, `Arête` ou `Surface`, avec activation et pas configurables. Le moteur utilise les triangles réels des GLB chargés, calcule la position du sommet le plus proche ou la projection sur l'arête la plus proche dans une tolérance proportionnelle à la distance caméra, et conserve le placement de surface. Les Gizmos déplacent l'objet le long de leur axe, y compris en mode Local. La barre Scene et les Gizmos partagent l'état enregistré `warlike.snap3d.enabled`. Les modes Sommet/Arête ne sont pas re-quantifiés sur la grille.
+
+**Sockets animés :** `boneSocketTransform3d` utilise la même matrice monde échantillonnée que la déformation glTF, avec offsets **dans le repère local de l'os**. L'orientation complète est calculée depuis les axes transformés et corrigée du cisaillement par orthonormalisation, puis convertie en angles du moteur. Un décalage angulaire XYZ est composé par multiplication des quaternions, et l'Inspector permet d'activer/désactiver l'héritage de rotation. Les références cycliques entre sockets et les parents de la Hierarchy sont refusées. Les données restent stockées dans `socket3d` et traversent la conversion scène/runtime.
+
+**Limites :** le snapping sur sommets/arêtes considère le triangle intercepté le plus proche, pas encore tous les triangles voisins dans un index spatial (BVH) ; il n'y a pas d'accrochage automatique sur pivots et bounding boxes d'objets non-GLB. L'orientation d'un os sous shear est orthonormalisée : la géométrie graphique conserve son affine, mais un GameObject orientable par Euler ne peut pas recevoir une rotation cisaillée exacte. Les sockets ne constituent pas des joints physiques Rapier et doivent être testés visuellement sur différents rigs.
+
+Tests : `tests/advanced-snapping-bone-sockets.test.mjs`, `tests/typed-inspector-sockets.test.mjs`, `tests/scene-raycast-placement-3d.test.mjs`.
+
 ## Éditeur 3D — placement sur triangles, Gizmos, sockets et panneaux (novembre 2026)
 
 Cette étape améliore **l'éditeur existant**, sans ajouter de second moteur.

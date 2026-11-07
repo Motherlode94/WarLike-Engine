@@ -3,7 +3,7 @@ const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const defaultCollider2d=()=>({enabled:true,isTrigger:false,offsetX:0,offsetY:0,width:0,height:0});
 export const defaultRigidbody2d=()=>({enabled:true,bodyType:'dynamic',mass:1,gravity:980,gravityScale:1,restitution:0,friction:.8,vx:0,vy:0});
-export const defaultController2d=()=>({mode:'auto',walkSpeed:190,sprintSpeed:295,jumpSpeed:430});
+export const defaultController2d=()=>({mode:'auto',walkSpeed:190,sprintSpeed:295,jumpSpeed:430,coyoteTime:.1,jumpBuffer:.12});
 export const actor2d=o=>!!o?.controller2d||o?.type==='player'||o?.type==='character'||getAsset(o?.assetId)?.category==='Characters';
 export function controllerMode2d(player,entities){
  const mode=player?.controller2d?.mode;
@@ -64,7 +64,15 @@ export function walkPlatformer2d(player,dt,keys,entities,{pressedKeys=new Set()}
  const frame=clamp(n(dt),0,.1),axis=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const jump=keys.has(' ')||keys.has('space')||keys.has('w')||keys.has('z')||keys.has('arrowup'),sprint=keys.has('shift');
  const support=moveBody2d(player,0,.001,entities);if(support.grounded&&n(rb.vy)>=0)rb.vy=0;
- if((jump&&!player._jump2dHeld||[' ','space','w','z','arrowup'].some(key=>pressedKeys.has(key)))&&support.grounded&&rb.enabled!==false)rb.vy=-Math.max(0,n(cfg.jumpSpeed,430));player._jump2dHeld=jump;
+ // Forgive a slightly late edge jump or a press just before landing. Holding
+ // jump still launches only once; these timers are runtime state on the actor.
+ const pressed=jump&&!player._jump2dHeld||[' ','space','w','z','arrowup'].some(key=>pressedKeys.has(key));
+ player._jump2dGrace=support.grounded&&n(rb.vy)>=0?clamp(n(cfg.coyoteTime,.1),0,.25):Math.max(0,n(player._jump2dGrace)-frame);
+ player._jump2dBuffer=pressed?Math.max(frame,clamp(n(cfg.jumpBuffer,.12),0,.25)):Math.max(0,n(player._jump2dBuffer)-frame);
+ if(player._jump2dBuffer>0&&(support.grounded&&n(rb.vy)>=0||player._jump2dGrace>0)){
+  rb.vy=-Math.max(0,n(cfg.jumpSpeed,430));player._jump2dBuffer=0;player._jump2dGrace=0;
+ }
+ player._jump2dHeld=jump;
  rb.vx=axis*Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,sprint?295:190))*(player.survival?.enabled!==false&&player.survival&&player.survivalState?.rest<15?.6:1);
  stepPhysics2d(entities.includes(player)?entities:[player,...entities],frame,{only:player});
  // Other bodies are stepped by the scene runtime, not again by the controller.

@@ -7,10 +7,11 @@ import {gameSession,gameIsRunning} from '../core/game-session.js';
 import {sequenceRuntime,queueSequenceInteraction} from '../core/logic-sequences.js';
 import {isLanGuest,lanCommands,lanState} from '../core/lan-state.js';
 import {loadAdventureCampaign} from '../core/adventure-campaign.js';
+import {demoGuidance} from '../core/demo-guidance.js';
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n};
 export function initAdventureUi(){
  const host=document.getElementById('viewport'),hud=el('section','adventure-hud'),title=el('strong'),hint=el('p'),controls=el('div'),interact=el('button','','Interagir · E'),journalButton=el('button','','Journal · J');hud.id='adventureHud';hud.hidden=true;interact.type=journalButton.type='button';controls.append(interact,journalButton);const hudHeader=el('header'),toggleHint=el('button','','−'),hudBody=el('div','adventure-hud-body');toggleHint.type='button';toggleHint.setAttribute('aria-label','Réduire ou développer l’aide aventure');toggleHint.onclick=()=>hud.classList.toggle(hud.classList.contains('compact')?'expanded':'minimized');hudHeader.append(title,toggleHint);hudBody.append(hint,controls);hud.append(hudHeader,hudBody);host.append(hud);
- const chapter=el('small','adventure-chapter'),nextGoal=el('p','adventure-next-goal');hudBody.prepend(chapter,nextGoal);
+ const chapter=el('small','adventure-chapter'),nextGoal=el('p','adventure-next-goal'),destination=el('small','adventure-destination');hudBody.prepend(chapter,nextGoal,destination);
  const journal=el('section','adventure-journal'),header=el('header'),heading=el('strong','','JOURNAL D’AVENTURE'),close=el('button','','Fermer · Échap'),body=el('div','adventure-journal-body');journal.id='adventureJournal';journal.hidden=true;close.type='button';header.append(heading,close);journal.append(header,body);journal.setAttribute('role','dialog');journal.setAttribute('aria-label','Journal d’aventure');host.append(journal);
  const toggle=()=>{if(!state.playing||!gameIsRunning()||gameSession.dialogue)return;adventureView.journalOpen=!adventureView.journalOpen;state.keys.clear();state.keyPresses?.clear();document.exitPointerLock?.();document.activeElement?.blur()};
  journalButton.onclick=toggle;close.onclick=()=>{adventureView.journalOpen=false;state.keys.clear();state.keyPresses?.clear()};
@@ -25,13 +26,15 @@ export function initAdventureUi(){
  let previous=0,signature='';
  const frame=now=>{
   requestAnimationFrame(frame);if(now-previous<100)return;previous=now;
-  const actor=playableActor(state.entities);hud.hidden=!state.playing||!actor?.adventure;document.body.classList.toggle('adventure-playing',!hud.hidden);
+  const actor=playableActor(state.entities);hud.hidden=!state.playing||!actor?.adventure;document.body.classList.toggle('adventure-playing',!hud.hidden);hud.classList.toggle('obscured',!!gameSession.dialogue||adventureView.journalOpen||!gameIsRunning());
   if(hud.hidden||!gameIsRunning()){adventureView.journalOpen=false;journal.hidden=true;if(hud.hidden)return}
   const cfg=actor.adventure,globals=isLanGuest()?lanState.variables||{}:sequenceRuntime.globals,target=adventureTarget(actor,state.entities,{mode:workspace.mode});
   hud.classList.toggle('compact',host.clientHeight<300);const expanded=!(hud.classList.contains('minimized')||hud.classList.contains('compact')&&!hud.classList.contains('expanded'));toggleHint.textContent=expanded?'−':'＋';toggleHint.setAttribute('aria-expanded',String(expanded));
   title.textContent=cfg.title||'AVENTURE';hint.textContent=gameSession.dialogue?'Conversation en cours…':target?target.adventureInteractable.label||target.name:cfg.hint||'Explore les lieux · parle aux habitants et lis les indices.';
+  if(Number(globals.raceStarted)===1){const seconds=Math.max(0,Number(globals.raceElapsed)||0);hint.textContent='Course · '+Math.floor(seconds/60)+':'+String(Math.floor(seconds%60)).padStart(2,'0')+' · Checkpoints '+(Number(globals.raceCheckpoint)||0)+'/4'+(actor._hiddenInVehicle?' · E : descendre':' · Rejoins le véhicule · E : monter')}
   chapter.hidden=!cfg.chapter;chapter.textContent=cfg.chapter?'CHAPITRE '+cfg.chapter.index+' / '+cfg.chapter.total:'';
-  const goals=Object.values(gameSession.objectives),activeGoals=goals.filter(o=>o.status==='active'),finishedGoals=goals.filter(o=>o.status==='complete');nextGoal.textContent=activeGoals[0]?'◇ '+activeGoals[0].label:'';nextGoal.hidden=!activeGoals.length;
+  const goals=Object.values(gameSession.objectives),activeGoals=goals.filter(o=>o.status==='active'),finishedGoals=goals.filter(o=>o.status==='complete');nextGoal.textContent=activeGoals[0]?'◇ '+activeGoals[0].label+(activeGoals[0].total>1?' · '+activeGoals[0].current+'/'+activeGoals[0].total:''):'';nextGoal.hidden=!activeGoals.length;
+  destination.textContent=demoGuidance(actor,state.entities,gameSession.objectives,{mode:workspace.mode});destination.hidden=!destination.textContent;
   interact.disabled=!target||!gameIsRunning()||!!gameSession.dialogue||adventureView.journalOpen;journalButton.disabled=!gameIsRunning()||!!gameSession.dialogue;journalButton.setAttribute('aria-expanded',String(adventureView.journalOpen));journal.hidden=!adventureView.journalOpen;
   const items=(Array.isArray(cfg.items)?cfg.items:[]).slice(0,32).filter(item=>item&&typeof item.id==='string').map(item=>({name:String(item.name||item.id),count:questItemCount(state.entities,item.id)})),notes=(Array.isArray(cfg.notes)?cfg.notes:[]).slice(0,32).filter(note=>note&&typeof note==='object'&&globals[note.key]);
   const next=JSON.stringify([cfg.title,cfg.chapter,items,notes,gameSession.objectives]);if(next===signature)return;signature=next;const completedOpen=body.querySelector('details')?.open;body.replaceChildren();heading.textContent=cfg.title||'JOURNAL D’AVENTURE';

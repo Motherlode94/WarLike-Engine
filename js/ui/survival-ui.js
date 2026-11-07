@@ -17,6 +17,7 @@ export function initSurvivalUi(){
  const host=document.getElementById('viewport'),hud=el('section','survival-hud');hud.id='survivalHud';hud.hidden=true;hud.setAttribute('aria-label','Survie, provisions et fabrication');
  const top=el('header'),title=el('strong','','SURVIE'),toggle=el('button','','−');toggle.type='button';toggle.setAttribute('aria-label','Réduire ou développer le panneau survie');toggle.onclick=()=>hud.classList.toggle(hud.classList.contains('compact')?'expanded':'minimized');top.append(title,toggle);hud.append(top);
  const body=el('div','survival-body'),meters=el('div','survival-meters'),bars={};
+ const glance=el('p','survival-glance'),quickGather=el('button','survival-quick-gather','Récolter · E');quickGather.type='button';hud.append(glance,quickGather);
  for(const [key,label] of [['food','Satiété'],['water','Hydratation'],['rest','Repos'],['warmth','Chaleur']]){
   const row=el('label'),value=el('span'),meter=el('progress');meter.max=100;meter.setAttribute('aria-label',label);row.append(value,meter);meters.append(row);bars[key]={value,meter,label};
  }
@@ -31,6 +32,7 @@ export function initSurvivalUi(){
  for(const [action,label] of [['gather','Récolter · E'],['drink','Boire'],['eat','Manger des baies'],['rest','Se reposer'],['refuel','Attiser le feu'],['revive','Relever · 2 fibres']]){
   const b=el('button','',label);b.type='button';b.onclick=()=>run(action);actions.append(b);buttons[action]=b;
  }
+ quickGather.onclick=()=>run('gather');
  const pause=el('button','','Pause / sauvegarde');pause.type='button';pause.onclick=()=>{clearSurvivalPlacement();setGamePhase('paused');state.keys.clear()};actions.append(pause);
  const begin=id=>{
   const p=playableActor(state.entities);if(!p||!gameIsRunning()||gameplayInputBlocked())return;
@@ -87,20 +89,34 @@ export function initSurvivalUi(){
  },{capture:true});
  if(!globalThis.__WARLIKE_BUILD__){const menu=[...document.querySelectorAll('#studioMenus>details')].find(d=>d.querySelector('summary')?.textContent.trim()==='Game')?.querySelector('.studio-dropdown');if(menu){const b=el('button','','Survival · Scène de survie');b.id='loadSurvivalScene';b.type='button';b.onclick=()=>{b.closest('details').open=false;loadSurvivalScene()};menu.append(b)}}
  window.addEventListener('keydown',event=>{if(event.key.toLowerCase()!=='e'||event.repeat||isLanGuest()||!state.playing||placement.active||editable(event.target))return;run('gather')});
+ // I belongs to Survival while playing a survivor, rather than opening the
+ // legacy RPG inventory (which blocks movement behind this panel).
+ window.addEventListener('keydown',event=>{
+  if(!state.playing||!playableActor(state.entities)?.survival||editable(event.target)||event.repeat)return;
+  const key=event.key.toLowerCase();
+  if(key!=='i'&&!(key==='escape'&&hud.classList.contains('expanded')))return;
+  if(!gameIsRunning()||gameplayInputBlocked())return;
+  event.preventDefault();event.stopImmediatePropagation();state.keys.clear();state.keyPresses?.clear();document.exitPointerLock?.();document.activeElement?.blur();
+  hud.classList.toggle('expanded',key==='i'&&!hud.classList.contains('expanded'));hud.classList.remove('minimized');
+ },{capture:true});
  let previous=0;
  const frame=now=>{
   requestAnimationFrame(frame);if(now-previous<80)return;previous=now;
   const p=playableActor(state.entities);hud.hidden=!state.playing||!p?.survival||p.survival.enabled===false;night.hidden=hud.hidden||workspace.mode!=='2d';
   if(placement.active)refresh();bar.hidden=!placement.active;
-  if(hud.hidden){clearSurvivalPlacement();bar.hidden=true;return}
+  document.body.classList.toggle('survival-playing',!hud.hidden);
+  if(hud.hidden){clearSurvivalPlacement();bar.hidden=true;hud.classList.remove('expanded','minimized');return}
   const s=ensureSurvival(p),world=state.entities.find(o=>o.survivalWorld?.enabled)?.survivalWorld,hour=world?.hour??14;
   title.textContent='SURVIE · J'+(world?.day||1)+' · '+String(Math.floor(hour)).padStart(2,'0')+':'+String(Math.floor(hour%1*60)).padStart(2,'0')+' · PV '+Math.ceil(healthOf(p));
-  hud.classList.toggle('compact',host.clientHeight<340);hud.classList.toggle('hybrid',!!p.superhero);
+  hud.classList.toggle('compact',true);hud.classList.toggle('hybrid',!!p.superhero);
   const expanded=!(hud.classList.contains('compact')&&!hud.classList.contains('expanded')||hud.classList.contains('minimized'));toggle.textContent=expanded?'−':'＋';toggle.setAttribute('aria-expanded',String(expanded));night.style.opacity=s.night?'.2':'.02';
   for(const [key,b] of Object.entries(bars)){b.value.textContent=b.label+' '+Math.ceil(s[key])+' %';b.meter.value=s[key];b.meter.classList.toggle('low',s[key]<20)}
   supplies.textContent=Object.entries(survivalResources).map(([id,name])=>name+' '+inventoryCount(p,id)).join(' · ');
   const target=survivalHarvestTarget(p,state.entities,{mode:workspace.mode});resourceText.textContent=target?(target.node.name||survivalResources[target.node.survivalNode.kind])+' · stock '+target.stock:'Approche-toi d’une ressource';resourceHint.textContent=!target?'E ou Récolter pour prélever.':target.blocked?'Obstacle devant la ressource · contourne-le.':!target.stock?(target.node.survivalNode.respawn>0?'Épuisée · retour dans '+Math.ceil(target.node.survivalNode.cooldown||0)+' s.':'Épuisée · sans régénération.'):'+'+target.amount+' '+survivalResources[target.node.survivalNode.kind]+(target.tool?.usable?' · '+target.tool.name+' équipée automatiquement':' · à la main');resource.classList.toggle('blocked',!!target&&!target.available);
   const disabled=!gameIsRunning()||gameplayInputBlocked()||healthOf(p)<=0||s.actionCooldown>0;
+  glance.textContent='Faim '+Math.ceil(s.food)+'% · Eau '+Math.ceil(s.water)+'% · Chaleur '+Math.ceil(s.warmth)+'% · I : fabrication';
+  glance.classList.toggle('low',Math.min(s.food,s.water,s.warmth)<20);
+  quickGather.hidden=!target;quickGather.textContent=target?'E · '+(target.node.name||'Récolter'):'Récolter · E';quickGather.disabled=disabled||!target?.available;
   for(const b of Object.values(buttons))b.disabled=disabled;
   buttons.gather.disabled||=!target?.available;
   buttons.drink.disabled||=inventoryCount(p,'water')<=0;buttons.eat.disabled||=inventoryCount(p,'berries')<=0;buttons.refuel.disabled||=inventoryCount(p,'wood')<=0;buttons.rest.disabled||=s.restCooldown>0;buttons.revive.disabled||=inventoryCount(p,'fiber')<2;
@@ -109,6 +125,7 @@ export function initSurvivalUi(){
   for(const [id,row] of Object.entries(toolRows)){const tool=survivalToolStatus(p,id),asset=get3dAsset(tool.modelId);if(asset?.thumbnailUrl&&!row.img.getAttribute('src'))row.img.src=asset.thumbnailUrl;row.img.hidden=!asset?.thumbnailUrl;row.meter.max=tool.maxDurability;row.meter.value=tool.durability;row.card.classList.toggle('broken',tool.owned&&!tool.usable);row.text.textContent=tool.owned?tool.name+' · '+tool.durability+'/'+tool.maxDurability+' utilisations'+(tool.usable?'':' · cassée'):tool.name+' à fabriquer · +'+tool.bonus+' '+survivalResources[tool.resource]+' / récolte';row.repair.disabled=disabled||!tool.owned||tool.durability===tool.maxDurability||Object.entries(tool.repair).some(([id,count])=>inventoryCount(p,id)<count);craftButtons[id].disabled||=tool.owned}
   const ownedTools=Object.keys(survivalTools).map(id=>survivalToolStatus(p,id)).filter(tool=>tool.owned);toolSummary.textContent=ownedTools.length?'Outils · '+ownedTools.map(tool=>tool.name+' '+tool.durability+'/'+tool.maxDurability).join(' · '):'Outils · fabriquer et réparer';
   const progress=survivalMilestones(state.entities,{mode:workspace.mode});
+  const nextGoal=Object.entries(goals).find(([key])=>!progress[key]);if(nextGoal)glance.textContent+=' · Objectif : '+nextGoal[1].label;
   for(const [key,{row,label}] of Object.entries(goals)){row.textContent=(progress[key]?'✓ ':'◇ ')+label;row.classList.toggle('complete',progress[key])}
   party.textContent=state.entities.filter(o=>o.survival&&!o.survivalDormant).map(o=>(o===p?'Toi':o.name)+' · '+(healthOf(o)>0?Math.ceil(healthOf(o))+' PV':'À TERRE')).join(' / ');
   message.textContent=healthOf(p)<=0?'À terre · un coéquipier peut te relever avec 2 fibres.':s.noticeTime>0?s.notice:s.night?'Nuit · reste près du feu et surveille les rôdeurs.':s.sheltered?'Abri à portée · tu peux te reposer.':'E : récolter · place le feu et l’abri près l’un de l’autre.';

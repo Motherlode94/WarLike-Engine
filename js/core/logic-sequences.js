@@ -366,11 +366,15 @@ export function updateSequences(dt,ctx){
 }
 
 export function drawSequenceMessages(ctx,width,height){
- if(!sequenceRuntime.messages.length)return;
- ctx.save();ctx.font='12px system-ui';ctx.textAlign='center';
- sequenceRuntime.messages.slice(-3).forEach((m,i)=>{
-  const y=height-175-i*34;ctx.fillStyle='#162c3be8';ctx.fillRect(width/2-195,y-18,390,28);
-  ctx.fillStyle='#e0ffef';ctx.fillText(m.text,width/2,y+1,365);
- });
+ if(!sequenceRuntime.messages.length||gameSession.dialogue)return;
+ // Objectives already have a HUD. Keep one readable toast at the edge of the
+ // playfield instead of stacking stretched text across the character.
+ const labels=new Set(Object.values(gameSession.objectives).map(o=>o.label));
+ const message=sequenceRuntime.messages.filter(m=>!labels.has(m.text)).at(-1);if(!message)return;
+ ctx.save();ctx.font='12px system-ui';ctx.textAlign='left';
+ const boxWidth=Math.max(40,Math.min(560,width-24)),lines=[];let line='';
+ for(const word of message.text.split(/\s+/)){const next=line?line+' '+word:word;if(line&&ctx.measureText(next).width>boxWidth-24){lines.push(line);line=word}else line=next}if(line)lines.push(line);
+ const visible=lines.slice(0,3),boxHeight=visible.length*17+16,x=(width-boxWidth)/2,y=height-boxHeight-12;
+ ctx.fillStyle='#162c3bf2';ctx.fillRect(x,y,boxWidth,boxHeight);ctx.fillStyle='#e0ffef';visible.forEach((text,i)=>ctx.fillText(text,x+12,y+20+i*17));
  ctx.restore();
 }

@@ -4,3 +4,15 @@
 .adventure-hud>.adventure-hud-body{display:block}.adventure-playing #gameHint,.adventure-playing .rpg-shortcuts{display:none!important}
 
 .adventure-chapter{display:block;color:#e8ce96;font-size:10px;font-weight:700;letter-spacing:.1em}.adventure-hud .adventure-next-goal{padding:7px 9px;border-left:2px solid #dbba74;background:#d6b57712;color:#fff1cf;font-size:12px}.adventure-playing .game-objective-hud{display:none}.adventure-completed{margin:15px 0;padding:9px 12px;border:1px solid #537161;border-radius:4px;background:#19392d55}.adventure-completed summary{cursor:pointer;color:#ade0c4;font-weight:600}.adventure-completed summary:focus-visible{outline:2px solid #e8ce96;outline-offset:3px}
+
+/* Keep the current task readable without covering the character or dialogue. */
+.adventure-hud{top:12px;bottom:auto;width:min(300px,calc(100% - 24px));padding:9px 11px;max-height:calc(100% - 80px);background:#182535ed}
+.adventure-hud.obscured{visibility:hidden;pointer-events:none}
+.adventure-hud .adventure-next-goal{margin:6px 0;padding:5px 7px;line-height:1.4}
+.adventure-destination{display:block;color:#b9e3d3;font-size:11px;line-height:1.5;margin:5px 0}
+.adventure-hud-body>p:not(.adventure-next-goal){margin:5px 0;font-size:11px}
+.adventure-hud button{min-height:28px;padding:4px 8px;font-size:11px}
+.warlike-game-build .adventure-hud{top:12px;bottom:auto}
+.adventure-playing #viewport>.warlike-genre-hud{display:none!important}
+
+.adventure-playing #viewport>footer,.adventure-playing #viewport>.scene-axis{display:none}

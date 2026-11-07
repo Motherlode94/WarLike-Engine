@@ -40,3 +40,26 @@ test('the 2D component browser creates colliders and physical bodies that the si
  const o=box(1,0,0);assert.ok(componentChoices('2d').some(c=>c.id==='rigidbody2d'));assert.ok(!componentChoices('3d').some(c=>c.id==='rigidbody2d'));
  assert.equal(addObjectComponent(o,'rigidbody2d','2d'),true);assert.equal(o.collider2d.enabled,true);assert.equal(o.rigidbody2d.gravity,980);removeObjectComponent(o,'collider2d');assert.equal(solidCollider2d(o),false);
 });
+
+test('late edge jumps have a short grace window without allowing a second air jump',()=>{
+ const a={...box(1,60,118),type:'player'},floor=box(2,0,150,100,8),objects=[a,floor];
+ walkPlatformer2d(a,1/60,new Set(),objects);
+ for(let i=0;i<14;i++)walkPlatformer2d(a,1/60,new Set(['d']),objects);
+ assert.ok(a.x>100);assert.equal(a.grounded2d,false);
+ walkPlatformer2d(a,1/60,new Set([' ']),objects);assert.ok(a.rigidbody2d.vy<0,'press just past the ledge must jump');
+ walkPlatformer2d(a,1/60,new Set(),objects);const before=a.rigidbody2d.vy;
+ walkPlatformer2d(a,1/60,new Set([' ']),objects);assert.ok(a.rigidbody2d.vy>before,'another press in the air must not jump again');
+});
+test('a press just before landing is buffered once, then holding cannot auto-jump',()=>{
+ const a={...box(1,0,115),type:'player',rigidbody2d:{...defaultRigidbody2d(),vy:200}},floor=box(2,-100,150,500,8),objects=[a,floor],held=new Set([' ']);
+ walkPlatformer2d(a,1/60,held,objects);assert.equal(a.grounded2d,true);
+ walkPlatformer2d(a,1/60,held,objects);assert.ok(a.rigidbody2d.vy<0,'buffer fires on landing');
+ for(let i=0;i<100;i++)walkPlatformer2d(a,1/60,held,objects);
+ close(a.y,118);close(a.rigidbody2d.vy,0);
+});
+test('an old airborne press expires before landing',()=>{
+ const a={...box(1,0,-200),type:'player'},floor=box(2,-100,150,500,8),objects=[a,floor];
+ walkPlatformer2d(a,1/60,new Set([' ']),objects);
+ for(let i=0;i<120;i++)walkPlatformer2d(a,1/60,new Set(),objects);
+ close(a.y,118);close(a.rigidbody2d.vy,0);
+});

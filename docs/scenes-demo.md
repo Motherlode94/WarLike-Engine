@@ -24,3 +24,12 @@ Le relais du quartier possède `Relais.wls` : après le signal de quête Bluepri
 Personnage Kenney contrôlable avec marche/course, saut et attaque déclenchée par WarScript. Trois stations organisées montrent le montage de poses et de courbes, une main et un regard IK sur mannequin Quaternius, et un déplacement par root motion. E lit les panneaux ; Window → Squelette et Animator ouvrent les outils d’édition. Tous les modèles sont intégrés et les données de la scène sont exportables.
 
 L’Atelier du mouvement comporte aussi deux personnages de bibliothèque. **E** près du combattant propose ses coups et réactions ; **E** près du personnage d’interactions propose ses gestes. Leurs profils Animator sont construits à partir des vrais clips intégrés, avec leurs durées et des triggers pilotés par Blueprint.
+
+## Jouabilité et commandes
+
+- Le HUD d’aventure garde l’objectif courant, la progression des colis et la destination. En 2D, une indication gauche/droite/haut/bas aide à se repérer ; en 3D, le nom de la destination reste indépendant de l’orientation de la caméra.
+- En survie, les besoins et la prochaine étape restent visibles dans une fiche compacte. **I** ouvre ou ferme les provisions et la fabrication ; **Échap** referme cette fiche avant d’ouvrir la pause. **E** récolte la ressource à portée. Le bouton de récolte apparaît aussi dans la fiche compacte.
+- Le contrôleur de plateforme accepte un saut jusqu’à 0,10 seconde après avoir quitté un bord et mémorise une pression jusqu’à 0,12 seconde avant l’atterrissage. Maintenir la touche ne provoque pas de sauts automatiques. Ces délais peuvent être configurés avec `controller2d.coyoteTime` et `controller2d.jumpBuffer` (0 à 0,25 seconde).
+- Les véhicules 2D respectent les colliders de la scène, leurs dimensions et leurs décalages, y compris les barrières du circuit. Le compteur de vitesse et l’aide pour monter restent visibles dans la démo de conduite.
+
+Validation : `node --test tests/demo-playability.test.mjs tests/physics-2d.test.mjs` rejoue la mission du canal en marchant et le parcours des trois colis avec les sauts, sans téléportation. Un cas de conduite vérifie les barrières et leur désactivation. Cela complète les tests de logique ; cela ne remplace pas une validation visuelle et un parcours manuel complet en 3D.

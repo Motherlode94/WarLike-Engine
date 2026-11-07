@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WarLike Engine — Extensions installées</title><style>:root{font:15px/1.5 system-ui;color-scheme:dark;background:#101624;color:#f0f3ff}*{box-sizing:border-box}main{max-width:900px;margin:5vh auto;padding:24px}a{color:#b6a6ff}button{cursor:pointer;color:#fff;background:#2a3651;border:1px solid #556384;padding:9px;border-radius:7px;font:inherit}button:disabled{opacity:.5}.item{background:#192438;border:1px solid #394a66;border-radius:12px;margin:10px 0;padding:15px}.item p{color:#bec9dc}h1{margin:8px 0}.status{color:#a7e6d5}nav{display:flex;gap:16px;flex-wrap:wrap}.warning{background:#252b3d;padding:13px;border:1px solid #566075;border-radius:10px}</style></head><body><main><nav><a href="./">← Retour à Engine</a><a href="https://warlike-asset-stores.pages.dev/extensions.html" target="_blank" rel="noopener">WarLike Asset Store</a></nav><h1>Extensions · WarLike Engine</h1><p>Installation locale des préréglages JSON, avec activation, désactivation et suppression. Les données sont conservées dans ce navigateur, sur le domaine de Engine.</p><p class="warning">Installation ≠ exécution : seuls les identifiants et schémas autorisés sont acceptés. Aucun script téléchargé n'est évalué. Les préréglages deviennent utilisables lorsque l'application dispose d'un consommateur du format correspondant.</p><p id="status" class="status" role="status"></p><div id="list"></div></main><script type="module">
 const APP="Engine",ORIGIN="https://warlike-asset-stores.pages.dev",KEY='warlike.extensions.v1';
-const ALLOWED={};
+const ALLOWED={"engine-animation-map":"warlike.engine.animation-map.v1"};
 const $=id=>document.getElementById(id);const channel=new URLSearchParams(location.search).get('channel')||'';
 function all(){try{const x=JSON.parse(localStorage.getItem(KEY)||'{}');return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return {}}}
 function save(value){localStorage.setItem(KEY,JSON.stringify(value));window.dispatchEvent(new Event('warlike:extensions-changed'))}
@@ -9,7 +9,7 @@ function validate(data){
  if(data?.app!==APP||!Object.hasOwn(ALLOWED,data.id)||data.version!=='1.0')throw Error('Extension non autorisée pour '+APP);
  const payload=data.payload,expected=ALLOWED[data.id];if(!payload||typeof payload!=='object'||Array.isArray(payload)||payload.schema!==expected)throw Error('Schéma de préréglage invalide');
  const json=JSON.stringify(payload);if(json.length>65536)throw Error('Préréglage trop volumineux');
- const array=data.id==='studio-mix-presets'?payload.presets:data.id==='node-compositing-kit'?payload.presets:data.id==='monteur-export-presets'?payload.profiles:payload.instruments;
+ const array=data.id==='engine-animation-map'?Object.entries(payload.aliases||{}):data.id==='studio-mix-presets'?payload.presets:data.id==='node-compositing-kit'?payload.presets:data.id==='monteur-export-presets'?payload.profiles:payload.instruments;
  if(!Array.isArray(array)||!array.length||array.length>100)throw Error('Données du préréglage invalides');
  return {id:data.id,version:data.version,schema:expected,enabled:true,installedAt:new Date().toISOString(),data:payload};
 }

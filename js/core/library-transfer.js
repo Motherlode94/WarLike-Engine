@@ -3,10 +3,18 @@
 const DB='warlike-engine-library-assets',STORE='models',LIMIT=25*1024*1024;
 const plain=(v)=>v&&typeof v==='object'&&!Array.isArray(v);
 const animationStates={idle:[/^idle(?:_|$)/i,/idle/i],walk:[/^walk(?:_|$)/i,/walk/i],run:[/^run(?:_|$)/i,/sprint/i,/jog/i],attack:[/attack/i,/shoot/i,/punch/i],jump:[/jump/i],death:[/death/i,/die/i],hurt:[/hurt/i,/hit/i]};
+function installedAnimationAliases(){
+ try{
+  const record=JSON.parse(globalThis.localStorage?.getItem('warlike.extensions.v1')||'{}')['engine-animation-map'];
+  if(!record?.enabled||record.schema!=='warlike.engine.animation-map.v1'||record.data?.schema!=='warlike.engine.animation-map.v1')return {};
+  const out={};for(const state of Object.keys(animationStates)){const aliases=record.data.aliases?.[state];if(Array.isArray(aliases))out[state]=aliases.slice(0,24).filter(s=>typeof s==='string'&&/^[a-z0-9_-]{2,32}$/i.test(s))}
+  return out;
+ }catch{return {}}
+}
 export function libraryAnimationMapping(names){
- const clips=names.filter(s=>typeof s==='string'&&s.trim()).slice(0,128),map={};
+ const clips=names.filter(s=>typeof s==='string'&&s.trim()).slice(0,128),map={},aliases=installedAnimationAliases();
  for(const [state,patterns] of Object.entries(animationStates)){
-  const name=clips.find(n=>patterns.some(rx=>rx.test(n)));
+  const name=clips.find(n=>(aliases[state]||[]).some(alias=>n.toLowerCase()===alias.toLowerCase()||n.toLowerCase().startsWith(alias.toLowerCase()+'_')))||clips.find(n=>patterns.some(rx=>rx.test(n)));
   if(name)map[state]=name;
  }
  return map;

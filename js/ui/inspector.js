@@ -18,7 +18,7 @@ import {renderSceneHierarchy} from './hierarchy-view.js';
 import {renderAnimator3d} from './animator-3d.js';
 import {freeAudioAssets} from '../assets/free-game-assets.js';
 import {assetCredits} from './asset-credits.js';
-import {componentChoices,addObjectComponent,resetObjectComponent,removeObjectComponent,webDataComponentKinds,inspectorComponentRank} from '../core/component-definitions.js';
+import {componentChoices,addObjectComponent,resetObjectComponent,removeObjectComponent,webDataComponentKinds,inspectorComponentRank,validateEditorProperty} from '../core/component-definitions.js';
 import {newSequence} from '../core/logic-sequences.js';
 import {finishInspector as finishComponentInspector,openComponentBrowser} from './component-browser.js';
 import {communityRecipes,applyCommunityRecipe} from '../core/community-plugins.js';
@@ -128,6 +128,46 @@ function renderObjectBehaviors(root,owner){
  }
 }
 export function renderHierarchy(){renderSceneHierarchy()}
+function renderTypedComponent(root,componentInstance,owner){
+ if(!componentInstance||typeof componentInstance!=='object'||!componentInstance.properties||typeof componentInstance.properties!=='object')return;
+ const section=document.createElement('details');section.open=true;section.className='inspector-component typed-component';
+ const title=document.createElement('summary');title.textContent=componentInstance.name||componentInstance.type||'Component';section.append(title);
+ for(const [key,meta] of Object.entries(componentInstance.properties)){
+  if(!meta||!['number','boolean','string','color','vector3','enum'].includes(meta.type))continue;
+  const line=document.createElement('div');line.className='property-row';
+  const label=document.createElement('label');label.textContent=meta.label||key;line.append(label);
+  const apply=value=>{
+   try{const validated=validateEditorProperty(meta,value);componentInstance.values??={};componentInstance.values[key]=validated;record('Inspector : '+(componentInstance.name||'Component')+'.'+key);notify()}
+   catch(error){console.warn('[WarLike Inspector] Valeur refusée',error)}
+  };
+  const value=componentInstance.values?.[key]??meta.default;
+  if(meta.type==='vector3'){
+   const group=document.createElement('div');group.style.cssText='display:flex;gap:4px;min-width:0';
+   for(const axis of ['x','y','z']){
+    const input=document.createElement('input');input.type='number';input.step='any';input.value=String(value?.[axis]??0);input.disabled=state.playing;
+    input.setAttribute('aria-label',(meta.label||key)+' '+axis.toUpperCase());input.style.width='33%';
+    input.onchange=()=>apply({...value,...componentInstance.values?.[key],[axis]:Number(input.value)});
+    group.append(input);
+   }line.append(group);
+  }else{
+   const input=meta.type==='enum'?document.createElement('select'):document.createElement('input');
+   if(meta.type==='enum'){
+    for(const option of meta.options||[]){const child=document.createElement('option');child.value=String(option);child.textContent=String(option);input.append(child)}
+    input.value=String(value??'');
+   }else{
+    input.type=meta.type==='boolean'?'checkbox':meta.type==='number'?'number':meta.type==='color'?'color':'text';
+    if(meta.type==='boolean')input.checked=Boolean(value);
+    else input.value=String(value??(meta.type==='color'?'#ffffff':''));
+    if(meta.type==='number'){input.step='any';if(Number.isFinite(meta.min))input.min=meta.min;if(Number.isFinite(meta.max))input.max=meta.max}
+   }
+   input.disabled=state.playing;input.setAttribute('aria-label',meta.label||key);
+   input.onchange=()=>apply(meta.type==='boolean'?input.checked:input.value);
+   line.append(input);
+  }
+  section.append(line);
+ }
+ root.append(section);
+}
 export function renderInspector(){initAssetInspection();const root=document.querySelector('#properties');const objects=inspectedObjects(),o=objects.at(-1),asset=inspectedAsset();const signature=inspectorContext()+':'+(asset?'asset:'+asset.id:objects.map(object=>object.id).join(','));const scroll=root.dataset.inspection===signature?root.scrollTop:0;root.dataset.inspection=signature;root.replaceChildren();inspectorWindowHeader(root,asset?[asset]:objects,asset?assetInspectorLock():{});requestAnimationFrame(()=>{root.scrollTop=scroll});if(asset){if(inspectorDebug())renderInspectorDebug(root,[asset]);else renderAssetInspector(root,asset);return}if(!o){const empty=document.createElement('p');empty.className='inspector-empty';empty.textContent='Sélectionne un GameObject dans Hierarchy ou une ressource dans Project pour afficher ses propriétés.';root.append(empty);return}if(inspectorDebug()){renderInspectorDebug(root,objects);return}if(objects.length>1){renderMultipleInspector(root,objects);return}
 
 const header=document.createElement('div');header.className='inspector-object';
@@ -436,6 +476,7 @@ const addNode=document.createElement('button');addNode.textContent='+ Dialogue N
 const removeLogic=document.createElement('button');removeLogic.textContent='Remove Visual Logic component';removeLogic.disabled=state.playing;removeLogic.onclick=()=>{delete o.logic;saveLogic('Remove Visual Logic')};inner.append(removeLogic)
 }
 }
+for(const instance of (o.editorComponents||o.components||[]))renderTypedComponent(root,instance,o);
 root.append(advancedTools);
 renderPhysics2d(root,o,{component,field,selectField});
 const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=()=>deleteInspectedObject(o);root.append(del);finishInspector(root,o,advancedTools)}

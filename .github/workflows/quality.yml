@@ -16,6 +16,8 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run typecheck
       - run: npm test
+      - name: Verify local Python and C++ Script Studio runner
+        run: python3 -m unittest discover -s tests -p 'script_runner_test.py' -v
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'

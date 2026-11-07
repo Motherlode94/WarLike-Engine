@@ -347,7 +347,7 @@ export function init3d(canvas,host,buttons){
    if(!synchronizeRapierScene(physicsSession,state.entities)){
     const api=physicsSession.api;
     disposeRapierScene(physicsSession);
-    try{physicsSession=createRapierScene(api,state.entities);physicsAccumulator=0}
+    try{physicsSession=createRapierScene(api,state.entities);physicsAccumulator=0;for(const warning of physicsSession.errors)console.warn('[WarLike] Collision Rapier : '+warning)}
     catch(error){console.warn('[WarLike] Rapier scene rebuild failed',error);physicsSession=null}
    }
   }
@@ -409,7 +409,7 @@ export function init3d(canvas,host,buttons){
   const token=++physicsGeneration;
   loadRapier3d().then(api=>{
    if(!api||token!==physicsGeneration||!state.playing||workspace.mode!=='3d')return;
-   try{physicsSession=createRapierScene(api,state.entities);for(const error of physicsSession.errors)console.warn('[WarLike] Articulation : '+error)}
+   try{physicsSession=createRapierScene(api,state.entities);for(const error of physicsSession.errors)console.warn('[WarLike] Collision Rapier : '+error)}
    catch(error){console.warn('[WarLike] Rapier unavailable, using built-in physics',error);physicsSession=null}
   });
  };
@@ -534,7 +534,7 @@ export function init3d(canvas,host,buttons){
    horrorHud.hidden=!(state.playing&&horror.enabled);
    if(!horrorHud.hidden)horrorHud.textContent=(horror.jumpscare>0?'⚠ DANGER !  |  ':'☾ SURVIVAL HORROR  |  ')+'L : lampe '+(horror.flashlight?'ON':'OFF')+'  |  Batterie '+Math.round(horror.battery)+'%  |  Peur '+Math.round(horror.fear)+'%';
   }
-  if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent=companyController(state.entities)?'RTS · clic : escouade · clic droit : ordre · flèches : caméra':'3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}if(state.playing)buttons.status.textContent+=companyController(state.entities)?' · Navigation A* et collisions internes':' · Physique : '+(physicsSession?'Rapier':gameProject.physics3d==='builtin'?'interne':rapierStatus().error?'interne (Rapier indisponible)':'chargement Rapier');
+  if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent=companyController(state.entities)?'RTS · clic : escouade · clic droit : ordre · flèches : caméra':'3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}if(state.playing)buttons.status.textContent+=companyController(state.entities)?' · Navigation A* et collisions internes':' · Physique : '+(physicsSession?'Rapier'+(physicsSession.skipped?.size?' · '+physicsSession.skipped.size+' collider(s) incompatible(s)':''):gameProject.physics3d==='builtin'?'interne':rapierStatus().error?'interne (Rapier indisponible)':'chargement Rapier');
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
   const solar=sunAt();gl.clearColor(...solar.sky,1);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   if(state.playing&&!isFps()&&!companyController(state.entities)){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities)),desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);boomDistance=rig.collision?resolveCameraBoom(view3d.target,desired.eye,state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(collisionWorldBounds3d),{previousDistance:boomDistance,dt:cameraFrame}).distance:view3d.radius}

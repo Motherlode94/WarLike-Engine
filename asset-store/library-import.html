@@ -22,7 +22,11 @@ async function installPack(raw){
 const channel=new URLSearchParams(location.search).get('libraryTransfer');
 if(channel&&/^[a-zA-Z0-9_-]{16,100}$/.test(channel)&&window.opener){
  window.addEventListener('message',async event=>{
-  if(event.origin!==LIBRARY_ORIGIN||event.source!==window.opener||event.data?.type!==TRANSFER_TYPE||event.data?.channel!==channel||busy)return;
+  if(event.origin!==LIBRARY_ORIGIN||event.source!==window.opener||event.data?.channel!==channel)return;
+  if(event.data?.type==='warlike-library-ping-v1'){
+   event.source.postMessage({type:'warlike-engine-ready-v1',channel},LIBRARY_ORIGIN);return;
+  }
+  if(event.data?.type!==TRANSFER_TYPE||busy)return;
   try{
    const result=await installPack(event.data.pack);
    event.source.postMessage({type:'warlike-engine-installed-v1',channel,ok:true,...result},LIBRARY_ORIGIN);

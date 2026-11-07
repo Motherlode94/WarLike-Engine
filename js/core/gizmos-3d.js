@@ -1,3 +1,4 @@
+import {updateAffineEditorPose3d} from './scene-graph-v2.js';
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
 const el=(tag,props={})=>{const node=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(props))node.setAttribute(k,String(v));return node};
@@ -49,7 +50,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   if(!selected.length)return;
   event.preventDefault();event.stopPropagation();
   drag={pointer:event.pointerId,axis,startX:event.clientX,startY:event.clientY,mode:lastTool,
-   objects:selected.map(o=>({id:o.id,x:o.x,y:o.y,elevation3d:o.elevation3d||0,w:o.w,h:o.h,rotation:o.rotation||0}))};
+   objects:selected.map(o=>({id:o.id,x:o.x,y:o.y,elevation3d:o.elevation3d||0,w:o.w,h:o.h,rotation:o.rotation||0,worldMatrix3d:Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,matrixReference3d:Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null}))};
   event.target.setPointerCapture(event.pointerId);
  });
  layer.addEventListener('pointermove',event=>{
@@ -63,6 +64,8 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
    else if(drag.axis==='x')o.x=Math.round(start.x+dx*scale);
    else if(drag.axis==='y')o.elevation3d=Math.round((start.elevation3d-dy*scale/64)*100)/100;
    else o.y=Math.round(start.y-dy*scale);
+   // Keep the authored affine shear instead of throwing it away when the gizmo moves.
+   if(start.worldMatrix3d&&start.matrixReference3d)updateAffineEditorPose3d(o,start.worldMatrix3d,start.matrixReference3d);
   }
   redraw();
  });

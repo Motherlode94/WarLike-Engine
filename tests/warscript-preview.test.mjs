@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runWarScriptPreview} from '../script-editor/warscript-preview.js';
+import {runWarScriptPreview} from '../script-editor/warscript.js';
 
 test('executes real WarScript callbacks in a bounded isolated preview',()=>{
  const source='public float speed = 60;\nStart() { Log("ready"); }\nUpdate() { Rotate(speed * Time.deltaTime); }';

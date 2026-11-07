@@ -238,3 +238,9 @@ Le projet 3D propose **Atelier du mouvement** dans Scènes démo : personnage co
 - Liens vers les packs officiels Kenney/Quaternius, sans redistribution de contenus payants tiers.
 
 **Limites :** le catalogue dépend d'un manifeste hébergé par un tiers et d'un navigateur autorisant IndexedDB et CORS ; certaines installations peuvent échouer. Pas encore d'achat, de paiement, d'avis certifiés, de portail éditeur ou de synchronisation cloud. La compatibilité des modèles reste à valider en navigateur et sur des projets réels.
+
+### Asset Store — interface premium (version 1.1)
+
+La boutique dispose maintenant de cartes d'assets enrichies, statistiques de catalogue, favoris persistants par navigateur, filtre « Mes favoris », fiches détaillées, téléchargement direct des modèles GLB, et **prévisualisation 3D manipulable** à la demande (rotation, zoom) via un composant externe chargé uniquement lors de l'ouverture de l'aperçu. L'installation locale GLB/IndexedDB et la connexion à Project / Assets restent conservées.
+
+**Limites :** l'aperçu 3D nécessite une connexion au CDN externe et le chargement du GLB ; le manifeste distant, ses miniatures et les autorisations CORS peuvent limiter certains modèles. Cette version ne comprend ni achats, ni notes réelles, ni avis certifiés, ni compte vendeur. Les fonctionnalités n'ont pas encore été soumises à une batterie de tests dans un navigateur.

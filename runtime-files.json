@@ -16062,6 +16062,7 @@
     "js/core/lan-play.js",
     "js/core/lan-state.js",
     "js/core/lan-survivors.js",
+    "js/core/library-transfer.js",
     "js/core/life-scene.js",
     "js/core/life-simulation.js",
     "js/core/lighting.js",

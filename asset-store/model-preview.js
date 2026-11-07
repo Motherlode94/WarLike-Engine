@@ -44,6 +44,6 @@ export function setup3dPreview({onInstall,isInstalled}){
  dialog.addEventListener('close',()=>{requestId++;clear();asset=null});
  $('modelClips').onchange=e=>{const view=root.querySelector('model-viewer');if(!view)return;if(e.target.value){view.animationName=e.target.value;view.play()}else view.pause()};
  $('modelScale').oninput=e=>$('modelScaleText').textContent=e.target.value+'×';
- $('modelInstall').onclick=()=>{if(!asset)return;try{const result=onInstall(asset,{scale:Number($('modelScale').value),collision:$('modelCollision').checked});note(result.installed?'✓ Prefab 3D installé dans la bibliothèque.':'Ce prefab existe déjà et n’a pas été écrasé.');$('modelInstall').disabled=true;$('modelInstall').textContent='✓ Installé'}catch(e){note('Installation : '+e.message)}};
+ $('modelInstall').onclick=async()=>{if(!asset)return;const selected=asset,id=requestId;const button=$('modelInstall');button.disabled=true;note('Vérification du modèle GLB avant installation…');try{const result=await onInstall(selected,{scale:Number($('modelScale').value),collision:$('modelCollision').checked});if(id!==requestId||!dialog.open)return;note(result.installed?'✓ Prefab 3D installé dans la bibliothèque.':'Ce prefab existe déjà et n’a pas été écrasé.');button.textContent='✓ Installé'}catch(e){if(id===requestId&&dialog.open){button.disabled=false;note('Installation : '+e.message)}}};
  return {open};
 }

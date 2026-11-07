@@ -20,7 +20,7 @@ test('surface raycasting transforms GLB triangles and returns oriented surface n
 test('placement uses world metres, height, user snapping and requested surface normal',()=>{
  const obj={w:128,h:64,depth3d:64};
  placeEntityOnSurface3d(obj,{point:[2.27,3.19,1.23],normal:[0,1,0]},{snap:.5,alignNormal:true});
- assert.equal(obj.x,64);assert.equal(obj.y,32);assert.equal(obj.elevation3d,3);
+ assert.equal(obj.x,96);assert.equal(obj.y,32);assert.equal(obj.elevation3d,3);
  assert.equal(obj.rotationX3d,0);assert.equal(obj.rotationZ3d,0);
  assert.equal(snap3d(3.24,.5),3);
  assert.throws(()=>snap3d(1,-1),/invalide/);

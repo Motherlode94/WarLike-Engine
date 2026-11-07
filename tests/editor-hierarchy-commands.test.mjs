@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {hierarchyIndex,descendants,validateReparent,reparentEntities,deleteEntitySubtrees,duplicateEntitySubtrees} from '../js/core/editor-hierarchy-commands.js';
+import {hierarchyIndex,descendants,validateReparent,reparentEntities,deleteEntitySubtrees,duplicateEntitySubtrees} from '../js/core/scene-graph-v2.js';
 import {copyEntitiesPayload,pasteEntitiesPayload} from '../js/core/editor-clipboard.js';
 
 const objects=()=>[

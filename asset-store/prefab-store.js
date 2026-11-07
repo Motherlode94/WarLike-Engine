@@ -4,15 +4,18 @@ export const PREFAB_STORAGE_KEY='warlike.prefabs.library.v1';
 const KEY_PREFIX='store-prefab-';
 const categories=new Set(['Personnages','Véhicules','Armes','Bâtiments','Nature','Objets']);
 function valid(a){return a&&typeof a.id==='string'&&/^[\w.-]{1,150}$/.test(a.id)&&typeof a.name==='string'&&a.name.length>0&&categories.has(a.category)&&a.bundled===true&&typeof a.url==='string'}
-export function prefabFromBundledAsset(asset){
+export function prefabFromBundledAsset(asset,options={}){
  if(!valid(asset))throw Error('Un modèle 3D gratuit du catalogue WarLike est requis');
  const solid=!['Nature'].includes(asset.category);
- const components={type:'mesh3d',assetId:asset.id,model3dId:asset.id,meshShape:'glb',w:80,h:80,depth3d:80,elevation3d:0,rotation:0,color:'#ffffff',collision3d:solid,visible:true};
+ const scale=Number.isFinite(options.scale)?Math.max(.25,Math.min(4,options.scale)):1;
+ const collision=typeof options.collision==='boolean'?options.collision:solid;
+ const size=Math.round(80*scale);
+ const components={type:'mesh3d',assetId:asset.id,model3dId:asset.id,meshShape:'glb',w:size,h:size,depth3d:size,elevation3d:0,rotation:0,color:'#ffffff',collision3d:collision,visible:true};
  // No invented movement, AI, weapon damage, vehicle physics or animation controller.
  return {id:KEY_PREFIX+asset.id,name:asset.name,mode:'3d',components,origin:{store:'WarLike Asset Store',author:asset.author||'Auteur inconnu',license:asset.license||'Licence non précisée',sourceUrl:asset.source||'',model3dId:asset.id}};
 }
-export function installBundledPrefab(asset,storage=globalThis.localStorage){
- const prefab=prefabFromBundledAsset(asset);
+export function installBundledPrefab(asset,storage=globalThis.localStorage,options={}){
+ const prefab=prefabFromBundledAsset(asset,options);
  let list;try{list=JSON.parse(storage.getItem(PREFAB_STORAGE_KEY)||'[]')}catch{list=[]}
  if(!Array.isArray(list))throw Error('Bibliothèque des prefabs invalide');
  // Prevent accidental overwrite of user-edited templates with the same id.

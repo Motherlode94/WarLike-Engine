@@ -266,3 +266,11 @@ La nouvelle page [Collections](https://warlike-engine.pages.dev/asset-store/coll
 Le catalogue 3D dispose d'un filtre **Animations uniquement** et les fiches proposent le choix d'un clip d'animation lorsque le visualiseur 3D peut lire les clips du GLB. Les URLs filtrées `?category=...`, `?animated=1`, `?pack=...` et `?q=...` ouvrent directement les sélections ; la galerie multimédia accepte `?type=sprite|ui|audio`.
 
 Limites : une collection est une sélection éditoriale d'assets, **pas encore un ZIP ni un prefab d'ensemble**. La lecture des animations dépend des clips embarqués compatibles avec le visualiseur ; aucun retargeting n'est promis. Les changements de code et la syntaxe des nouveaux modules ont été contrôlés, mais pas encore testés en navigateur avec tous les modèles.
+
+### Asset Store — prefabs gratuits natifs
+
+[Ouvrir la bibliothèque de prefabs gratuits](https://warlike-engine.pages.dev/asset-store/prefabs.html).
+
+La galerie produit de **véritables entrées de prefabs WarLike 3D**, à la demande, depuis les modèles GLB Kenney et Quaternius existants. Le bouton **Installer le prefab** écrit une entrée dans la même clé `localStorage` que `js/core/prefab-library.js` : `warlike.prefabs.library.v1`. La fiche contient `mode: '3d'`, `components.type: 'mesh3d'`, `model3dId` pointant vers un modèle réellement présent dans la bibliothèque du moteur, des transformations de base et les données de provenance/licence. Les prefabs s'affichent ensuite dans les ressources du moteur sur **le même domaine/navigateur**, avec un rechargement éventuel du navigateur.
+
+La galerie est filtrable par catégorie, auteur, modèle et présence d'animations ; elle n'invente aucun prefab Unity `.prefab` ou gameplay préconfiguré. Un prefab installé et modifié n'est **pas écrasé** par une nouvelle installation. Les données restent locales, sans synchronisation de compte. Des tests sont ajoutés dans `tests/asset-store-prefabs.test.mjs` pour l'installation, l'instanciation et le non-écrasement.

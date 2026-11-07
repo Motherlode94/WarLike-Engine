@@ -9,6 +9,7 @@
 <dialog id="modelPreview" class="model-dialog"><div class="row" style="justify-content:space-between"><h2 id="modelPreviewName">Modèle 3D</h2><button id="modelClose" class="btn">✕ Fermer</button></div><div class="model-stage" id="modelViewport"></div><p id="modelPreviewInfo" class="info"></p><div class="model-tools"><button id="modelLoad" class="btn">⬡ Charger la 3D</button><label>Animation <select id="modelClips" disabled><option>Aucun clip chargé</option></select></label><label>Taille <input type="range" id="modelScale" min=".25" max="4" step=".25" value="1"></label><span id="modelScaleText">1×</span><label><input id="modelCollision" type="checkbox" checked> Collision</label></div><p id="modelPreviewStatus" class="status" role="status"></p><div class="row"><a id="modelSource" href="#" target="_blank" rel="noopener noreferrer">Source officielle ↗</a><button id="modelInstall" class="btn primary">Installer le prefab</button></div></dialog></main><script type="module">
 import {loadBundledCatalog} from './catalog-bundled.js';
 import {installBundledPrefab,installedPrefabIds} from './prefab-store.js';
+import {verifyBundledGlb} from './verify-glb.js';
 import {setup3dPreview} from './model-preview.js';
 const $=s=>document.querySelector(s);let all=[],items=[],page=1;let installed=new Set(),preview=null;
 const status=message=>$('#status').textContent=message;
@@ -29,7 +30,7 @@ function render(){
   const desc=document.createElement('p');desc.textContent=asset.author+' · '+asset.packName+' · '+asset.category;
   const actions=document.createElement('div');actions.className='actions';
   const install=document.createElement('button');install.className='btn primary';install.textContent=installed.has(asset.id)?'✓ Déjà installé':'Installer le prefab';install.disabled=installed.has(asset.id);
-  install.onclick=()=>{try{const outcome=installBundledPrefab(asset);updateInstalled();install.textContent='✓ Déjà installé';install.disabled=true;status(outcome.installed?'✓ '+asset.name+' installé dans les prefabs locaux. Ouvre WarLike Engine / Prefabs.':'Prefab déjà présent, aucune modification écrasée.')}catch(e){status('Installation impossible : '+e.message)}};
+  install.onclick=async()=>{install.disabled=true;status('Vérification du fichier GLB avant installation : '+asset.name);try{await verifyBundledGlb(asset);const outcome=installBundledPrefab(asset);updateInstalled();install.textContent='✓ Déjà installé';status(outcome.installed?'✓ '+asset.name+' installé dans les prefabs locaux. Ouvre WarLike Engine / Prefabs.':'Prefab déjà présent, aucune modification écrasée.')}catch(e){install.disabled=false;status('Installation impossible : '+e.message)}};
   const link=document.createElement('a');link.href='./index.html?q='+encodeURIComponent(asset.name);link.className='btn';link.textContent='Voir le modèle';link.style.textDecoration='none';
   const inspect=document.createElement('button');inspect.className='btn';inspect.textContent='Aperçu 3D';inspect.onclick=()=>preview?.open(asset);actions.append(install,inspect,link);content.append(title,desc,actions);card.append(visual,content);root.append(card)
  }
@@ -47,7 +48,7 @@ async function init(){
  }catch(e){status('Catalogue inaccessible : '+e.message)}
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateInstalled();render()}});
-preview=setup3dPreview({isInstalled:a=>installed.has(a.id),onInstall:(asset,options)=>{const result=installBundledPrefab(asset,localStorage,options);updateInstalled();render();status(result.installed?'✓ Prefab 3D installé : '+asset.name:'Prefab existant conservé : '+asset.name);return result}});
+preview=setup3dPreview({isInstalled:a=>installed.has(a.id),onInstall:async(asset,options)=>{await verifyBundledGlb(asset);const result=installBundledPrefab(asset,localStorage,options);updateInstalled();render();status(result.installed?'✓ Prefab 3D installé : '+asset.name:'Prefab existant conservé : '+asset.name);return result}});
 const incoming=new URLSearchParams(location.search);if(incoming.get('q'))$('#search').value=incoming.get('q').slice(0,120);
 await init();
 </script></body></html>

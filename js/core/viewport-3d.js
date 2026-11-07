@@ -452,13 +452,14 @@ export function init3d(canvas,host,buttons){
    if(loaded?.status!=='ready')continue;
    const box=objectBounds3d(entity),size=loaded.normalizedSize||[1,1,1];
    const factor=Math.min(box.w/size[0],box.h/size[1],box.d/size[2]);
+   const renderY=(Number(entity.elevation3d)||0)+size[1]*factor/2;
    const q=rotationQuaternion3d(entity),qx=q.x,qy=q.y,qz=q.z,qw=q.w;
    let correction=null;try{correction=affineCorrection3d(entity)}catch{}
    const transform=pos=>{
     const v=pos.map(n=>n*factor);
     const t=[2*(qy*v[2]-qz*v[1]),2*(qz*v[0]-qx*v[2]),2*(qx*v[1]-qy*v[0])];
     const rotated=[v[0]+qw*t[0]+qy*t[2]-qz*t[1],v[1]+qw*t[1]+qz*t[0]-qx*t[2],v[2]+qw*t[2]+qx*t[1]-qy*t[0]];
-    const world=[rotated[0]+box.x,rotated[1]+box.y,rotated[2]+box.z];
+    const world=[rotated[0]+box.x,rotated[1]+renderY,rotated[2]+box.z];
     return correction?[
      correction[0]*world[0]+correction[4]*world[1]+correction[8]*world[2]+correction[12],
      correction[1]*world[0]+correction[5]*world[1]+correction[9]*world[2]+correction[13],
@@ -480,7 +481,17 @@ export function init3d(canvas,host,buttons){
   const dist=Math.hypot(...floor.map((v,i)=>v-cam.eye[i]));
   return mesh&&mesh.distance<dist?mesh:{point:floor,normal:[0,1,0],distance:dist,kind:'ground'};
  };
- const pick=(point,cam)=>meshHit(point,cam)?.entity||pickEntity3d(state.entities,point,cam,{playing:state.playing});
+ const pick=(point,cam)=>{
+  const mesh=meshHit(point,cam);
+  if(mesh)return mesh.entity;
+  // A loaded GLB missed by triangle raycasting must not be selected by its
+  // much larger oriented bounding box (e.g. through a doorway).
+  const fallback=state.entities.filter(o=>{
+   const id=o.model3dId||o.assetId;
+   return realGlbBuffers.get(id)?.status!=='ready';
+  });
+  return pickEntity3d(fallback,point,cam,{playing:state.playing});
+ };
  view3d.groundAt=(clientX,clientY)=>{const r=canvas.getBoundingClientRect(),hit=groundHit3d(clientX-r.left,clientY-r.top,camera(),r.width,r.height);return hit?{x:hit[0]*64,y:hit[2]*64}:null};
  view3d.pickAt=(clientX,clientY)=>{const r=canvas.getBoundingClientRect();return pick({x:clientX-r.left,y:clientY-r.top,w:r.width,h:r.height},camera())};
  canvas.addEventListener('contextmenu',e=>e.preventDefault());
@@ -668,6 +679,8 @@ export function init3d(canvas,host,buttons){
      if(rig&&state.entities.some(child=>child.socket3d?.targetId===o.id)){
       socketPose??=sampleRigPose(rig,null,0);
       const normalization=cached.geometry,bounds=objectBounds3d(o),q=rotationQuaternion3d(o);
+      const dims=cached.normalizedSize||[1,1,1],factor=Math.min(bounds.w/dims[0],bounds.h/dims[1],bounds.d/dims[2]);
+      bounds.y=(Number(o.elevation3d)||0)+dims[1]*factor/2;
       for(const child of state.entities){
        const socket=child.socket3d;
        if(!socket||socket.enabled===false||socket.targetId!==o.id||child.id===o.id)continue;

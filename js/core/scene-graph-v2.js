@@ -314,7 +314,7 @@ export function placeEntityOnSurface3d(entity,hit,{snap=0,alignNormal=false}={})
   if(len>1e-8){
    // Rotate local up towards surface normal (editor Euler yaw/pitch convention).
    entity.rotationX3d=Math.atan2(n[2],n[1])*180/Math.PI;
-   entity.rotationZ3d=-Math.atan2(n[0],Math.hypot(n[1],n[2]))*180/Math.PI;
+   const roll=-Math.atan2(n[0],Math.hypot(n[1],n[2]))*180/Math.PI;entity.rotationZ3d=roll===0?0:roll;
   }
  }
  return entity;

@@ -40,8 +40,9 @@ import {defaultLogic,eventTypes,actionTypes,conditionTypes} from '../core/visual
 import {getAsset} from '../assets/catalog.js';
 import {state,active,notify} from '../core/state.js';
 import {record} from '../core/history.js';
+import {deleteEntitySubtrees} from '../core/editor-hierarchy-commands.js';
 let inspectorFieldSerial=0;
-function deleteInspectedObject(object){if(state.playing)return;state.entities=state.entities.filter(entity=>entity.id!==object.id);state.selected=state.selected.filter(id=>id!==object.id);record('Supprimer '+object.name);notify()}
+function deleteInspectedObject(object){if(state.playing)return;const result=deleteEntitySubtrees(state.entities,[object.id]);if(!result.removed.size)return;state.entities=result.entities;state.selected=state.selected.filter(id=>!result.removed.has(id));record('Supprimer '+object.name+' et ses enfants');notify()}
 function field(parent,o,key,label,type='number'){const line=document.createElement('div');line.className='property-row';const name=document.createElement('label');name.textContent=label;const input=document.createElement('input');input.id='inspector-field-'+(++inspectorFieldSerial);name.htmlFor=input.id;input.type=type==='number'?'text':type;if(type==='number')input.inputMode='decimal';input.value=o[key]??(type==='number'?0:'');input.disabled=state.playing;input.onchange=()=>{let v;try{v=type==='number'?inspectorNumber(input.value):input.value;if(['w','h'].includes(key)&&v<=0)throw Error('La dimension doit être positive.');input.setCustomValidity('')}catch(error){input.setCustomValidity(error.message);input.reportValidity();return}o[key]=v;record('Inspector : '+label);notify()};input.oninput=()=>input.setCustomValidity('');line.append(name,input);parent.append(line)}
 const colorsPreset=['#41cdb5','#ffffff','#1b2535','#ef5350','#ff9f43','#ffd166','#74c96c','#4f9ce9','#9b78ef','#e667b4','#926b4c','#9daab5'];
 const normalizedHex=value=>/^#[0-9a-f]{6}$/i.test(String(value||''))?String(value).toLowerCase():'#8195ef';

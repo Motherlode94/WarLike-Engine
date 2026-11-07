@@ -38,12 +38,13 @@ export const realModels3d=[...freeModels3d,...quaterniusModels3d,
 export const importedModels3d=new Map();
 const modelCache=new Map();
 const maxBytes=25*1024*1024;
-export function registerLocalModel(file){
+export function registerLocalModel(file,{id=null,license='Fichier local, licence à vérifier'}={}){
  if(!file||!/.glb$/i.test(file.name))throw Error('Format requis : .glb (glTF binaire).');
  if(file.size>maxBytes)throw Error('Fichier trop volumineux (maximum 25 Mo).');
- const id='local-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
- const item={id,name:file.name.replace(/\.glb$/i,''),category:'Imported 3D',shape:'glb',license:'Fichier local, licence à vérifier',file};
- importedModels3d.set(id,item);return item;
+ if(id!==null&&!/^library-[a-f0-9]{24}$/.test(id))throw Error('Identifiant de modèle Library invalide.');
+ const modelId=id||'local-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
+ const item={id:modelId,name:file.name.replace(/\.glb$/i,''),category:'Imported 3D',shape:'glb',license,file};
+ importedModels3d.set(modelId,item);return item;
 }
 /** Import an external GLB into the current project session. Remote hosts must permit CORS. */
 export async function registerRemoteModel(address,{category='Imported 3D',license='Licence à vérifier'}={}){

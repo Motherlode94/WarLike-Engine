@@ -16111,6 +16111,7 @@
     "js/core/threat-intelligence.js",
     "js/core/unitypackage.js",
     "js/core/vehicle-3d.js",
+    "js/core/vehicle-articulation.js",
     "js/core/vehicle-components.js",
     "js/core/vehicle-weapons-3d.js",
     "js/core/vehicle.js",

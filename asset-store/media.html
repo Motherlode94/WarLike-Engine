@@ -69,6 +69,9 @@ $('#download').onclick=async()=>{if(!chosen)return;const btn=$('#download');btn.
  catch(e){$('#detailStatus').textContent='Téléchargement impossible : '+e.message}finally{btn.disabled=false}};
 document.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>{tab=b.dataset.type;limit=32;document.querySelectorAll('[data-type]').forEach(x=>x.classList.toggle('active',x===b));render()});
 $('#query').oninput=()=>{limit=32;render()};$('#sort').onchange=render;$('#pack').onchange=e=>{pack=e.target.value;limit=32;render()};$('#more').onclick=()=>{limit+=32;render()};
+const params=new URLSearchParams(location.search);const type=params.get('type');if(['sprite','ui','audio','favorite'].includes(type)){tab=type;document.querySelectorAll('[data-type]').forEach(el=>el.classList.toggle('active',el.dataset.type===tab))}
+const search=params.get('q');if(search)$('#query').value=search.slice(0,100);
+const packQuery=params.get('pack');if(packQuery)pack=packQuery;
 const results=await Promise.allSettled(manifest.map(async ([type,path])=>{const r=await fetch(path,{credentials:'same-origin'});if(!r.ok)throw Error('HTTP '+r.status);const list=await r.json();if(!Array.isArray(list))throw Error('Manifest invalide');return list.map(a=>convert(a,type)).filter(Boolean)}));
 const errors=[];results.forEach((r,i)=>{if(r.status==='fulfilled')all.push(...r.value);else errors.push(manifest[i][0]+': '+r.reason.message)});
 all=[...new Map(all.map(a=>[a.id,a])).values()];$('#total').textContent=all.length;$('#packs').textContent=new Set(all.map(a=>a.pack)).size;renderPacks();render();if(errors.length)$('#status').textContent+=' Certaines sources indisponibles : '+errors.join('; ');

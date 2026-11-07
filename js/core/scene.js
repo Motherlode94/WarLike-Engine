@@ -1,4 +1,4 @@
-import {deleteEntitySubtrees,duplicateEntitySubtrees,reparentEntities} from './scene-graph-v2.js';
+import {deleteEntitySubtrees,duplicateEntitySubtrees,reparentEntities,updateEditorEntityHierarchy3d,legacyReferenceMatrix3d} from './scene-graph-v2.js';
 import {encodeProjectAssets,restoreProjectAssets} from './portable-assets.js';
 import {horror} from './horror-survival.js';
 import {createAnimationDemo} from './animation-demo.js';
@@ -59,7 +59,19 @@ export function reparentSelected(id,parentId){
  const current=state.entities.find(o=>o.id===id);
  if(!current)throw Error('GameObject absent');
  if((current.parentId??null)===(parentId??null))return false;
- state.entities=reparentEntities(state.entities,id,parentId);
+ // Build the current absolute world transform *before* touching parent IDs.
+ // Keep world when placing an object under a new hierarchy branch.
+ let world=null;
+ if(workspace.mode==='3d')world=updateEditorEntityHierarchy3d(state.entities).get(id);
+ const next=reparentEntities(state.entities,id,parentId);
+ if(world){
+  const moved=next.find(o=>o.id===id);
+  delete moved.localMatrix3d;
+  moved.worldMatrix3d=[...world];
+  moved.matrixReference3d=legacyReferenceMatrix3d(moved);
+ }
+ state.entities=next;
+ if(world)updateEditorEntityHierarchy3d(state.entities);
  record('Changer le parent de '+current.name);
  notify();return true;
 }

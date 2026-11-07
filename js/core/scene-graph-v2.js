@@ -254,7 +254,7 @@ export function updateAffineEditorPose3d(o,previousWorld=o.worldMatrix3d,previou
 // Sync the legacy editor's world-space coordinates with canonical parent/child
 // matrices. A child's localMatrix3d is authoritative after its first attach.
 // Physics-driven dynamic children remain world-authoritative during Play.
-export function updateEditorEntityHierarchy3d(entities,{physicsOwnsDynamics=false}={}){
+export function updateEditorEntityHierarchy3d(entities,{physicsOwnsDynamics=false,worldOverrideIds=null}={}){
  if(!Array.isArray(entities))throw Error('Entités invalides');
  const byId=new Map(entities.map(o=>[o.id,o])),cache=new Map(),visiting=new Set();
  const calculate=id=>{
@@ -264,7 +264,7 @@ export function updateEditorEntityHierarchy3d(entities,{physicsOwnsDynamics=fals
   visiting.add(id);
   const parent=o.parentId!==null&&o.parentId!==undefined?byId.get(o.parentId):null;
   const parentWorld=parent?calculate(parent.id):null;
-  const worldDriven=physicsOwnsDynamics&&o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic;
+  const worldDriven=(physicsOwnsDynamics&&o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic)||worldOverrideIds?.has(o.id);
   const reference=legacyReferenceMatrix3d(o);
   let world;
   if(parentWorld){

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {affineBoxHull3d,affineHullSignature3d} from '../js/core/collider-3d.js';
 import {createRapierScene,synchronizeRapierScene,disposeRapierScene} from '../js/core/rapier-physics-3d.js';
-import {legacyReferenceMatrix3d,multiplyMatrix4,updateAffineEditorPose3d} from '../js/core/scene-graph-v2.js';
+import {legacyReferenceMatrix3d,multiplyMatrix4} from '../js/core/scene-graph-v2.js';
 
 const near=(x,y)=>assert.ok(Math.abs(x-y)<1e-5,`${x} != ${y}`);
 const shear=[1,0,0,0,.5,1,0,0,0,0,1,0,0,0,0,1];
@@ -72,9 +72,9 @@ test('Rapier creates a convexHull instead of a cuboid, then rebuilds only on sha
  assert.equal(shapes.length,1);
  assert.deepEqual(calls,['box','hull']); // first box is the shared floor
  assert.equal(synchronizeRapierScene(scene,[e]),true);
- const old=[...e.worldMatrix3d],ref=[...e.matrixReference3d];
- e.x+=64;updateAffineEditorPose3d(e,old,ref);
+ e.x+=64; // gameplay teleport before the viewport runs
  assert.equal(synchronizeRapierScene(scene,[e]),true,'pure translation does not change body-local convex hull');
+ assert.equal(e.matrixReference3d[12],1,'collider reference follows gameplay world-space edits');
  e.worldMatrix3d[4]+=0.2;
  assert.equal(synchronizeRapierScene(scene,[e]),false,'changing shear requires a collider rebuild');
  disposeRapierScene(scene);

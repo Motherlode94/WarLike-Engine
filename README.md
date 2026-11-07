@@ -1,3 +1,13 @@
+## Collisions affines exactes — BoxCollider + Rapier (novembre 2026)
+
+Les **BoxColliders 3D** disposant d'une transformation affine (`worldMatrix3d` et `matrixReference3d`) utilisent maintenant un **convex hull Rapier** construit depuis leurs huit coins effectivement transformés (mètres, offsets inclus). Le volume obtenu correspond exactement au *parallélépipède* d'un BoxCollider sous rotation, échelle non uniforme et *shear*, plutôt qu'à une boîte orthogonale de substitution. Les sommets sont convertis en espace local du rigidbody afin de conserver les translations et rotations natives de Rapier.
+
+La forme du collider est reconstruite lorsque la géométrie affine change, mais pas pour une translation seule. La création de hulls dégénérés est refusée. Les comportements dynamiques, kinematic et statiques utilisent la même géométrie de volume dans Rapier. Les erreurs de génération et les formes incompatibles sont visibles dans la console et dans le statut 3D ; ces objets perdent **explicitement** la collision plutôt que de recevoir une fausse collision.
+
+**Limites obligatoires :** le hull est exact **pour le BoxCollider défini**, pas pour la surface d'un modèle GLB arbitraire, notamment concave. Une capsule ou une sphère soumise à un shear n'est pas actuellement un collider exact ; elle est signalée comme incompatible. Les collisions sur le moteur physique alternatif `builtin`, les raycasts/picks de l'éditeur hors Rapier et les maillages GLB concaves ne sont pas convertis par ce mécanisme. Ils exigent un pipeline de maillages/compound et des tests dédiés.
+
+Vérification : `tests/sheared-box-rapier.test.mjs` comporte les coordonnées des huit sommets, offsets, quaternion de corps, changement de forme, erreur de géométrie dégénérée et un véritable test de raycast contre Rapier WASM.
+
 ## Scene View 3D — Affine WebGL, Gizmos et Rapier (novembre 2026)
 
 - **WebGL :** le vertex shader accepte `uAffineMatrix` (matrice de correction 4×4) et `uAffineNormal` (inverse-transposée 3×3). Les GLB, primitives et objets composés peuvent donc conserver leur position et leur *shear* lorsque le document v2 contient une transformation affine non décomposable en TRS. Les matériaux et normales continuent d'utiliser les données originales.

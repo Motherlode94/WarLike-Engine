@@ -73,7 +73,7 @@ export function overlapNative3d(a,b){
 /** Batch up to 100k bodies in a single C++/WASM call. Returns null if WASM unavailable. */
 export function integrateNativeGravityBatch(bodies,dt){
  if(!native||typeof native._wl_integrate_gravity_batch!=='function')return null;
- if(!Array.isArray(bodies)||bodies.length>100000)return null;
+ if(!Array.isArray(bodies)||bodies.length>100000||!Number.isFinite(dt)||dt<0||dt>1)return null;
  if(!bodies.length)return [];
  try{
   const floats=new Float32Array(bodies.length*4);

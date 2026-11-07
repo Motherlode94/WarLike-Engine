@@ -4,7 +4,8 @@ import {compileWarScript} from './warscript.js';
 // are errors, never silently rewritten to no-ops.
 const csharpKeywords=new Set(('abstract as base bool break byte case catch char checked class const continue decimal default delegate do double else enum event explicit extern false finally fixed float for foreach goto if implicit in int interface internal is lock long namespace new null object operator out override params private protected public readonly ref return sbyte sealed short sizeof stackalloc static string struct switch this throw true try typeof uint ulong unchecked unsafe ushort using virtual void volatile while var').split(' '));
 const primitiveTypes=new Set(['float','int','bool','string','Vector3']);
-const warnUnsupported=new Set(['world.timeScale','vehicle.maxSpeed','vehicle.acceleration','vehicle.brakeForce','vehicle.turnRate','controller.walkSpeed','controller.sprintSpeed','controller.jumpSpeed','light.intensity','light.enabled']);
+const vehicleProps=new Set(['vehicle.maxSpeed','vehicle.acceleration','vehicle.brakeForce','vehicle.turnRate']);
+const warnUnsupported=new Set(['world.timeScale','controller.walkSpeed','controller.sprintSpeed','controller.jumpSpeed','light.intensity','light.enabled']);
 const readProperties={
  'Time.deltaTime':'Time.deltaTime','Time.fixedDeltaTime':'Time.fixedDeltaTime','Time.time':'Time.time',
  'transform.position':'transform.position','transform.position.x':'transform.position.X','transform.position.y':'transform.position.Y','transform.position.z':'transform.position.Z',
@@ -35,6 +36,7 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
  }
  const read=(node,scope)=>{
   if(scope.has(node.name)||fields.has(node.name))return node.name;
+  if(vehicleProps.has(node.name))return 'WarScriptCompat.GetVehicleValue(this, '+escapeString(node.name.slice(8))+')';
   if(warnUnsupported.has(node.name))return fail(node,'API WarScript sans équivalent C# natif garanti : '+node.name);
   return readProperties[node.name]||fail(node,'Propriété WarScript non convertible : '+node.name);
  };
@@ -91,6 +93,7 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
  const write=(node,scope)=>{
   const name=node.name;
   if(scope.has(name)||fields.has(name))return {target:name};
+  if(vehicleProps.has(name))return {vehicle:name.slice(8)};
   if(warnUnsupported.has(name))return {target:fail(node,'Écriture sans équivalent natif : '+name)};
   if(name.startsWith('transform.position.')||name.startsWith('transform.rotation.')){
    const axis=name.at(-1).toUpperCase(),field=name.startsWith('transform.position.')?'position':'eulerAngles';
@@ -110,6 +113,11 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
   if(node.kind==='assign'){
    const w=write(node,scope),value=expr(node.value,scope);
    const op=node.op==='++'?'+=':node.op==='--'?'-=':node.op;
+   if(w.vehicle){
+    const oldValue='WarScriptCompat.GetVehicleValue(this, '+escapeString(w.vehicle)+')';
+    const assigned=op==='='?value:'('+oldValue+' '+op.slice(0,-1)+' '+value+')';
+    return pad+'WarScriptCompat.SetVehicleValue(this, '+escapeString(w.vehicle)+', '+assigned+');';
+   }
    if(w.vector){
     // System.Numerics.Vector3 is a struct and transform.position is a property;
     // a direct transform.position.X = ... would not compile.

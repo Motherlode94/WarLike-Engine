@@ -22,3 +22,5 @@ Le relais du quartier possède `Relais.wls` : après le signal de quête Bluepri
 ## Atelier du mouvement · 3D
 
 Personnage Kenney contrôlable avec marche/course, saut et attaque déclenchée par WarScript. Trois stations organisées montrent le montage de poses et de courbes, une main et un regard IK sur mannequin Quaternius, et un déplacement par root motion. E lit les panneaux ; Window → Squelette et Animator ouvrent les outils d’édition. Tous les modèles sont intégrés et les données de la scène sont exportables.
+
+L’Atelier du mouvement comporte aussi deux personnages de bibliothèque. **E** près du combattant propose ses coups et réactions ; **E** près du personnage d’interactions propose ses gestes. Leurs profils Animator sont construits à partir des vrais clips intégrés, avec leurs durées et des triggers pilotés par Blueprint.

@@ -331,3 +331,28 @@ export function gizmoAxis3d(axis,quaternion,{local=false}={}){
  const t=[2*(qy*v[2]-qz*v[1]),2*(qz*v[0]-qx*v[2]),2*(qx*v[1]-qy*v[0])];
  return [v[0]+qw*t[0]+qy*t[2]-qz*t[1],v[1]+qw*t[1]+qz*t[0]-qx*t[2],v[2]+qw*t[2]+qx*t[1]-qy*t[0]];
 }
+
+/**
+ * Resolve an animated glTF bone socket to a world position. Input boneWorld is
+ * the actual sampled bone world matrix (before geometry normalization).
+ * Offsets are in metres along the normalized model axes.
+ */
+export function boneSocketPoint3d(parent,boneWorld,geometry,renderBox,quaternion,offset=[0,0,0]){
+ if(!Array.isArray(boneWorld)||boneWorld.length!==16||!boneWorld.every(finite))throw Error('Pose osseuse invalide');
+ const scale=geometry?.normalizationScale,center=geometry?.normalizationCenter,size=geometry?.normalizedSize;
+ if(!Number.isFinite(scale)||scale<=0||!Array.isArray(center)||center.length!==3||!Array.isArray(size))throw Error('Normalisation GLB indisponible');
+ const factor=Math.min(renderBox.w/size[0],renderBox.h/size[1],renderBox.d/size[2]);
+ if(!Number.isFinite(factor)||factor<=0)throw Error('Échelle de rendu GLB invalide');
+ const point=[0,1,2].map(i=>((boneWorld[12+i]-center[i])/scale)*factor+(Number(offset[i])||0));
+ const q=quaternion,mag=Math.hypot(q.x,q.y,q.z,q.w);
+ if(mag<1e-9)throw Error('Rotation parent invalide');
+ const [x,y,z,w]=[q.x/mag,q.y/mag,q.z/mag,q.w/mag];
+ const t=[2*(y*point[2]-z*point[1]),2*(z*point[0]-x*point[2]),2*(x*point[1]-y*point[0])];
+ const world=[point[0]+w*t[0]+y*t[2]-z*t[1]+renderBox.x,point[1]+w*t[1]+z*t[0]-x*t[2]+renderBox.y,point[2]+w*t[2]+x*t[1]-y*t[0]+renderBox.z];
+ const affine=affineCorrection3d(parent);
+ return affine?[
+  affine[0]*world[0]+affine[4]*world[1]+affine[8]*world[2]+affine[12],
+  affine[1]*world[0]+affine[5]*world[1]+affine[9]*world[2]+affine[13],
+  affine[2]*world[0]+affine[6]*world[1]+affine[10]*world[2]+affine[14]
+ ]:world;
+}

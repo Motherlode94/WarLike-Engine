@@ -241,3 +241,12 @@ export function followPhysicsPosition3d(o,newPosition,oldPosition){
  if(![newPosition,oldPosition].every(p=>Array.isArray(p)&&p.length===3&&p.every(Number.isFinite)))throw Error('Position physique invalide');
  return moveAffinePose3d(o,newPosition.map((n,i)=>n-oldPosition[i]));
 }
+
+export function updateAffineEditorPose3d(o,previousWorld=o.worldMatrix3d,previousReference=o.matrixReference3d){
+ if(!Array.isArray(previousWorld)||previousWorld.length!==16||!previousWorld.every(finite)||!Array.isArray(previousReference)||previousReference.length!==16||!previousReference.every(finite))return false;
+ const reference=legacyReferenceMatrix3d(o);
+ const change=multiplyMatrix4(reference,invertMatrix4(previousReference));
+ o.worldMatrix3d=multiplyMatrix4(change,previousWorld);
+ o.matrixReference3d=reference;
+ return true;
+}

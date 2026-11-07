@@ -100,7 +100,7 @@ function readAccessor(json,binary,index){
  // per element (POSITION is VEC3 even when the mesh has thousands of vertices).
  return {data:out,count:a.count,components:count};
 }
-export function parseGlb(buffer,{baseUrl}={}){
+export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
  if(buffer.byteLength>maxBytes)throw Error('GLB supérieur à 25 Mo');
  const v=new DataView(buffer);if(buffer.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==buffer.byteLength)throw Error('GLB 2.0 invalide');
  let offset=12,json=null,binary=null;
@@ -110,7 +110,7 @@ export function parseGlb(buffer,{baseUrl}={}){
  }
  if(!json||!binary||!Array.isArray(json.meshes))throw Error('GLB sans géométrie intégrée');
  const accessorCache=new Map();const accessor=index=>{if(!accessorCache.has(index))accessorCache.set(index,readAccessor(json,binary,index));return accessorCache.get(index)};
- const rig=readAnimationRig(json,accessor);
+ const rig=readAnimationRig(json,accessor,{allowStatic:allowStaticRig});
  const roots=json.scenes?.[json.scene||0]?.nodes||json.nodes?.map((_,i)=>i)||[],parts=[];
  const walk=(idx,parent,depth)=>{
   if(depth>64||parts.length>300)return;
@@ -210,7 +210,7 @@ export async function getModelGeometry(id){
     buffer=await result.arrayBuffer();
    }
   }
-  return parseGlb(buffer,{baseUrl:item.url?new URL(item.url,new URL('../../',import.meta.url)).href:undefined});
+  return parseGlb(buffer,{baseUrl:item.url?new URL(item.url,new URL('../../',import.meta.url)).href:undefined,allowStaticRig:item.category==='Vehicles'});
  })();
  modelCache.set(id,task);
  try{return await task}catch(e){modelCache.delete(id);throw e}

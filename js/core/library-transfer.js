@@ -40,11 +40,28 @@ export async function storeLibraryModel(record){
 export async function readLibraryModels(){
  const db=await openDatabase();try{return await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),r=tx.objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}finally{db.close()}
 }
-export function installLibraryPrefab(record,storage=globalThis.localStorage){
+export function planLibraryPrefabInstall(record,storage=globalThis.localStorage){
  const key='warlike.prefabs.library.v1',prefab=nativePrefabFromTransfer(record);
- const list=JSON.parse(storage.getItem(key)||'[]');if(!Array.isArray(list)||list.length>2000)throw Error('Bibliothèque de prefabs pleine ou invalide.');
- const original=list.find(p=>p?.id===prefab.id);if(original)return {prefab:original,installed:false};
- list.push(prefab);storage.setItem(key,JSON.stringify(list));return {prefab,installed:true};
+ const list=JSON.parse(storage.getItem(key)||'[]');
+ if(!Array.isArray(list)||list.length>2000)throw Error('Bibliothèque de prefabs pleine ou invalide.');
+ const same=list.find(p=>p?.id===prefab.id);
+ if(same)return {status:'unchanged',prefab:same};
+ const conflict=list.find(p=>p?.origin?.sourcePrefabId&&p.origin.sourcePrefabId===prefab.origin.sourcePrefabId&&p.origin.sha256!==prefab.origin.sha256);
+ return {status:conflict?'conflict':'new',prefab,conflict:conflict||null};
+}
+export function installLibraryPrefab(record,storage=globalThis.localStorage,{replace=false}={}){
+ const key='warlike.prefabs.library.v1',plan=planLibraryPrefabInstall(record,storage);
+ if(plan.status==='unchanged')return {prefab:plan.prefab,installed:false,updated:false};
+ if(plan.status==='conflict'&&!replace)throw Error('Conflit de version : prefab déjà installé avec un autre modèle. Confirmation requise.');
+ const list=JSON.parse(storage.getItem(key)||'[]');
+ if(plan.status==='conflict'){
+  const index=list.findIndex(p=>p?.id===plan.conflict.id);
+  if(index<0)throw Error('Conflit modifié : recommence l’installation.');
+  list.splice(index,1);
+ }
+ list.push(plan.prefab);
+ storage.setItem(key,JSON.stringify(list));
+ return {prefab:plan.prefab,installed:true,updated:plan.status==='conflict'};
 }
 export async function hydrateLibraryModels(registerModel){
  if(typeof indexedDB==='undefined')return {loaded:0,errors:['IndexedDB indisponible']};

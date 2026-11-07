@@ -343,7 +343,7 @@ export function boneSocketPoint3d(parent,boneWorld,geometry,renderBox,quaternion
  if(!Number.isFinite(scale)||scale<=0||!Array.isArray(center)||center.length!==3||!Array.isArray(size))throw Error('Normalisation GLB indisponible');
  const factor=Math.min(renderBox.w/size[0],renderBox.h/size[1],renderBox.d/size[2]);
  if(!Number.isFinite(factor)||factor<=0)throw Error('Échelle de rendu GLB invalide');
- const point=[0,1,2].map(i=>((boneWorld[12+i]-center[i])/scale)*factor+(Number(offset[i])||0));
+ const point=[0,1,2].map(i=>((boneWorld[12+i]-center[i])/scale)*factor+([0,1,2].reduce((total,axis)=>total+boneWorld[axis*4+i]*(Number(offset[axis])||0),0))*factor/scale);
  const q=quaternion,mag=Math.hypot(q.x,q.y,q.z,q.w);
  if(mag<1e-9)throw Error('Rotation parent invalide');
  const [x,y,z,w]=[q.x/mag,q.y/mag,q.z/mag,q.w/mag];
@@ -355,4 +355,52 @@ export function boneSocketPoint3d(parent,boneWorld,geometry,renderBox,quaternion
   affine[1]*world[0]+affine[5]*world[1]+affine[9]*world[2]+affine[13],
   affine[2]*world[0]+affine[6]*world[1]+affine[10]*world[2]+affine[14]
  ]:world;
+}
+
+/** A complete socket pose derived from the SAME bone world matrix used by skinning.
+ * Position offsets follow the bone's local axes, not the scene's XYZ axes.
+ * Inherited affine shear is orthogonalized into a renderable quaternion.
+ */
+export function boneSocketTransform3d(parent,boneWorld,geometry,renderBox,quaternion,offset=[0,0,0]){
+ const point=boneSocketPoint3d(parent,boneWorld,geometry,renderBox,quaternion,offset);
+ const axes=[0,1,2].map(axis=>{
+  const moved=[...offset];moved[axis]=(Number(moved[axis])||0)+1;
+  const at=boneSocketPoint3d(parent,boneWorld,geometry,renderBox,quaternion,moved);
+  return at.map((v,i)=>v-point[i]);
+ });
+ const normalized=vector=>{const length=Math.hypot(...vector);if(!Number.isFinite(length)||length<1e-10)throw Error('Orientation du socket singulière');return vector.map(n=>n/length)};
+ const dot=(a,b)=>a.reduce((t,n,i)=>t+n*b[i],0);
+ const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+ const x=normalized(axes[0]),y=normalized(axes[1].map((v,i)=>v-dot(axes[1],x)*x[i]));
+ let z=normalized(cross(x,y));
+ if(dot(z,axes[2])<0){z=z.map(n=>-n);y.splice(0,3,...cross(z,x))}
+ const [m00,m01,m02,m10,m11,m12,m20,m21,m22]=[x[0],y[0],z[0],x[1],y[1],z[1],x[2],y[2],z[2]];
+ const trace=m00+m11+m22;
+ let qx,qy,qz,qw;
+ if(trace>0){const k=Math.sqrt(trace+1)*2;qw=k/4;qx=(m21-m12)/k;qy=(m02-m20)/k;qz=(m10-m01)/k}
+ else if(m00>m11&&m00>m22){const k=Math.sqrt(1+m00-m11-m22)*2;qw=(m21-m12)/k;qx=k/4;qy=(m01+m10)/k;qz=(m02+m20)/k}
+ else if(m11>m22){const k=Math.sqrt(1+m11-m00-m22)*2;qw=(m02-m20)/k;qx=(m01+m10)/k;qy=k/4;qz=(m12+m21)/k}
+ else{const k=Math.sqrt(1+m22-m00-m11)*2;qw=(m10-m01)/k;qx=(m02+m20)/k;qy=(m12+m21)/k;qz=k/4}
+ const len=Math.hypot(qx,qy,qz,qw);
+ return {point,quaternion:{x:qx/len,y:qy/len,z:qz/len,w:qw/len}};
+}
+/** Choose the closest actual GLB vertex or edge inside a world-space snap radius. */
+export function snapSurfaceFeature3d(hit,mode='surface',{radius=.15}={}){
+ if(!hit||!Array.isArray(hit.point)||!['surface','vertex','edge'].includes(mode))return hit;
+ if(mode==='surface'||!Array.isArray(hit.vertices)||hit.vertices.length!==3||!Number.isFinite(radius)||radius<=0)return hit;
+ const distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
+ const points=hit.vertices;
+ let best=null,bestDistance=radius;
+ if(mode==='vertex'){
+  for(const p of points){const d=distance(p,hit.point);if(d<bestDistance){bestDistance=d;best=p}}
+ }else{
+  for(let i=0;i<3;i++){
+   const a=points[i],b=points[(i+1)%3],diff=a.map((v,j)=>b[j]-v),length=diff.reduce((t,v)=>t+v*v,0);
+   if(length<1e-12)continue;
+   const t=Math.max(0,Math.min(1,diff.reduce((sum,v,j)=>sum+v*(hit.point[j]-a[j]),0)/length));
+   const p=a.map((v,j)=>v+diff[j]*t),d=distance(p,hit.point);
+   if(d<bestDistance){bestDistance=d;best=p}
+  }
+ }
+ return best?{...hit,point:[...best],snapKind:mode,snapDistance:bestDistance}:hit;
 }

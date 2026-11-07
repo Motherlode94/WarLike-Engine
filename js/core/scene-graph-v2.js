@@ -264,8 +264,12 @@ export function updateEditorEntityHierarchy3d(entities,{physicsOwnsDynamics=fals
   visiting.add(id);
   const parent=o.parentId!==null&&o.parentId!==undefined?byId.get(o.parentId):null;
   const parentWorld=parent?calculate(parent.id):null;
-  const worldDriven=(physicsOwnsDynamics&&o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic)||worldOverrideIds?.has(o.id);
+  const worldDriven=externalEdit||(physicsOwnsDynamics&&o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic)||worldOverrideIds?.has(o.id);
   const reference=legacyReferenceMatrix3d(o);
+  // Inspector, scripts and legacy controllers may mutate x/y/rotation directly.
+  // Convert those world-space edits into an affine delta before propagating.
+  const externalEdit=hasAffinePose(o)&&reference.some((v,i)=>Math.abs(v-o.matrixReference3d[i])>1e-8);
+  if(externalEdit)updateAffineEditorPose3d(o,[...o.worldMatrix3d],[...o.matrixReference3d]);
   let world;
   if(parentWorld){
    if(worldDriven||!Array.isArray(o.localMatrix3d)){

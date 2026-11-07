@@ -72,7 +72,7 @@ test('WarScript transform writes are atomic for invalid 3D coordinates',()=>{
  const e=object('Start(){}'),ctx={...context([e]),mode:'3d'};
  e.x=64;e.y=128;e.elevation3d=3;
  const api=createScriptApi(e,ctx,{delta:0,elapsed:0},e.warScripts[0]);
- assert.throws(()=>api.write('transform.position',{x:7,y:Infinity,z:8}),/Nombre fini/);
+ assert.throws(()=>api.write('transform.position',{x:7,y:Infinity,z:8}),/Vector3 invalide|Nombre fini/);
  assert.deepEqual([e.x,e.y,e.elevation3d],[64,128,3]);
  api.write('transform.position',{x:7,y:4,z:8});
  assert.deepEqual([e.x,e.y,e.elevation3d],[448,512,4]);

@@ -79,7 +79,7 @@ Le transfert corrige les rotations par rapport aux poses de repos et met les tra
 
 ## Root motion
 
-Choisis un os contenant une translation, les axes à extraire et **Appliquer le root motion**. Le déplacement du clip est calculé sur l’image de simulation, boucles comprises, retiré de la pose squelettique et appliqué au GameObject. L’option de collisions utilise le balayage du moteur. Le root motion est une extraction de translation ; l’extraction de rotation n’est pas proposée. N’additionne pas le déplacement d’un contrôleur au déplacement extrait sauf si cet effet est intentionnel.
+Choisis un os contenant une translation, les axes à extraire et **Appliquer le root motion**. Le déplacement du clip est calculé sur l’image de simulation, boucles comprises, retiré de la pose squelettique et appliqué au GameObject. L’option de collisions utilise le balayage du moteur. L’option **Extraire la rotation Y (virage)** transfère aussi le lacet animé au GameObject, en conservant les boucles et les passages à ±180°. La rotation extraite est retirée de la pose pour ne pas tourner deux fois. Le tangage et le roulis restent sur le squelette ; une rotation ne réalise pas de balayage du collider. N’additionne pas le déplacement d’un contrôleur au déplacement extrait sauf si cet effet est intentionnel.
 
 ## Animator C# natif
 

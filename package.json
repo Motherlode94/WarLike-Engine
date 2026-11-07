@@ -11,10 +11,13 @@
     "build:runtime": "node scripts/build-runtime-manifest.mjs",
     "test:native": "dotnet run --project csharp/WarLike.Tests",
     "bench:wasm": "node scripts/bench-native-queries.mjs",
-    "check:wasm": "node --test tests/native-3d-wasm.test.mjs"
+    "check:wasm": "node --test tests/native-3d-wasm.test.mjs",
+    "test:export": "node scripts/export-validation-game.mjs && node scripts/test-exported-game.mjs",
+    "test:export:browser": "node scripts/test-exported-game-browser.mjs"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "playwright": "1.62.1"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",

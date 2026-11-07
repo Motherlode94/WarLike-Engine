@@ -80,12 +80,12 @@ const horrorToggle=document.getElementById('horrorSurvivalToggle');
 if(horrorToggle){horrorToggle.checked=horror.enabled;horrorToggle.addEventListener('change',()=>{horror.enabled=horrorToggle.checked})}
 const enableLight=document.getElementById('render2dLight');
 if(enableLight){enableLight.checked=renderQuality.lighting2d;enableLight.addEventListener('change',()=>{setRenderQuality({lighting2d:enableLight.checked});saveRenderQuality()})}
+if(!globalThis.__WARLIKE_BUILD__)try{await restoreLocalModels()}catch(error){log('Bibliothèque locale : '+error.message,'warn')}
 initUnityPackageImport();
 document.getElementById('horrorPursuitDemo')?.addEventListener('click',()=>{if(!window.confirm('Charger Horror Pursuit ? La scène actuelle sera remplacée. Sauvegarde ton projet avant de continuer.'))return;try{loadHorrorPursuitDemo()}catch(error){window.alert(error.message)}});
 document.getElementById('horror3dDemo')?.addEventListener('click',()=>{if(!confirm('Remplacer la scene par Horror 3D ?'))return;try{loadHorror3dDemo()}catch(error){alert(error.message)}});
 initVisualAssetPacks();
-if(!globalThis.__WARLIKE_BUILD__)await restoreLocalModels().catch(error=>console.warn('[WarLike Assets]',error));
-const importedLibraryModels=globalThis.__WARLIKE_BUILD__?{errors:[]}:await hydrateLibraryModels(registerLocalModel);
+const importedLibraryModels=globalThis.__WARLIKE_BUILD__?{loaded:0,errors:[]}:await hydrateLibraryModels(registerLocalModel);
 if(importedLibraryModels.errors.length)console.warn('[WarLike Library] Importation partielle :',importedLibraryModels.errors);
 initHub();
 initBlueprintWorkspace();

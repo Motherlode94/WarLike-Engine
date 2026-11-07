@@ -1,6 +1,7 @@
+import {packageGlb,imageResource} from './glb-package.js';
 import {packagedModels3d} from './imported-models-3d.js';
 import {quaterniusModels3d} from './quaternius-game-assets.js';
-import {readAnimationRig,normalMatrix3,transformNormal} from '../core/gltf-animation.js';
+import {readAnimationRig,normalMatrix3,transformNormal as applyNormal} from '../core/gltf-animation.js';
 import {freeModels3d} from './free-game-assets.js';
 // WarLike static glTF 2.0 GLB mesh loader. No eval, scripts or external binary executables.
 // Supports embedded GLB, node hierarchy/TRS, material baseColorFactor, triangle indices.
@@ -65,9 +66,10 @@ export async function registerRemoteModel(address,{category='Imported 3D',licens
   const data=new Uint8Array(await response.arrayBuffer());loaded=data.byteLength;if(loaded>maxBytes)throw Error('Modèle trop volumineux (25 Mo maximum)');chunks.push(data);
  }
  const bytes=new Uint8Array(loaded);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength}
- parseGlb(bytes.buffer); // Verify GLB structure and meshes before registering it.
+ const packed=await packageGlb(bytes.buffer,async uri=>{const address=new URL(uri,url);if(address.protocol!=='https:'&&!/^data:image\/(png|jpeg|webp);base64,/i.test(uri))throw Error('URL de texture non autorisée.');return imageResource(await fetch(address.href,{mode:'cors',credentials:'omit'}));});
+ parseGlb(packed);
  const name=decodeURIComponent(url.pathname.split('/').pop()||'external.glb');
- const file=new File([bytes],name,{type:'model/gltf-binary'});
+ const file=new File([packed],name,{type:'model/gltf-binary'});
  const model=registerLocalModel(file);
  model.category=['Characters','Monsters','Vehicles','Weapons','Props','Buildings','Imported 3D'].includes(category)?category:'Imported 3D';
  model.license=license;
@@ -79,6 +81,8 @@ export const model3dById=id=>bundledModelLookup.get(id)||importedModels3d.get(id
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 const mul=(a,b)=>{const o=new Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)o[c*4+r]+=a[k*4+r]*b[c*4+k];return o};
 const transform=(m,p,w=1)=>[m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12]*w,m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13]*w,m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]*w];
+// Inverse transpose of the node's linear transform, including nonuniform scale.
+export const transformNormal=(m,n)=>applyNormal(normalMatrix3(m),...n);
 const matrixFromNode=node=>{
  if(node.matrix?.length===16)return node.matrix;
  const [x,y,z,w]=node.rotation||[0,0,0,1],s=node.scale||[1,1,1],t=node.translation||[0,0,0];
@@ -118,6 +122,8 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
  if(type===0x004e4942)binary=new Uint8Array(buffer,offset,length);offset+=length;
  }
  if(!json||!binary||!Array.isArray(json.meshes))throw Error('GLB sans géométrie intégrée');
+ const supported=new Set(['KHR_materials_unlit','KHR_texture_transform','KHR_mesh_quantization','KHR_materials_emissive_strength']);
+ for(const extension of json.extensionsRequired||[])if(!supported.has(extension))throw Error('Extension GLB requise non prise en charge : '+extension);
  const accessorCache=new Map();const accessor=index=>{if(!accessorCache.has(index))accessorCache.set(index,readAccessor(json,binary,index));return accessorCache.get(index)};
  const rig=readAnimationRig(json,accessor,{allowStatic:allowStaticRig});
  const childNodes=new Set((json.nodes||[]).flatMap(n=>n.children||[]));
@@ -129,10 +135,12 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
   visiting.add(idx);
   const m=mul(parent,matrixFromNode(node)),normalTransform=normalMatrix3(m);
   for(const primitive of (json.meshes?.[node.mesh]?.primitives||[])){
-   if(primitive.mode!==undefined&&primitive.mode!==4||primitive.extensions?.KHR_draco_mesh_compression)continue;
+   if(primitive.mode!==undefined&&primitive.mode!==4)continue;
+   if(primitive.extensions?.KHR_draco_mesh_compression)throw Error('GLB Draco : décompresser le modèle avant import.');
    if(primitive.attributes?.POSITION===undefined)continue;
    const pos=accessor(primitive.attributes.POSITION);
    const norm=primitive.attributes.NORMAL===undefined?null:accessor(primitive.attributes.NORMAL);
+   const colors=primitive.attributes.COLOR_0===undefined?null:accessor(primitive.attributes.COLOR_0);
    let idxs=primitive.indices===undefined?Array.from({length:pos.count},(_,i)=>i):accessor(primitive.indices).data;
    // Some sample GLBs contain invalid triangles in optional meshes.
    // Ignore only affected faces, preserving the rest of the real geometry.
@@ -170,13 +178,14 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
      texture={url:new URL(image.uri,baseUrl).href,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
     }
    }
-   const vertices=[],texcoords=[];
+   const vertices=[],texcoords=[],vertexColors=[];
    for(let i=0;i<idxs.length;i+=3){const points=[];
     for(let j=0;j<3;j++){const vi=idxs[i+j];if(vi>=pos.count||vi<0)throw Error('Index GLB invalide');points.push(transform(m,pos.data.slice(vi*3,vi*3+3)))}
     const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
     const delta=(a,b)=>a.map((n,k)=>n-b[k]),normal=cross(delta(points[1],points[0]),delta(points[2],points[0]));
     const len=Math.hypot(...normal)||1;const flat=normal.map(n=>n/len);
-    for(let j=0;j<3;j++){let n=flat;if(norm){const raw=transformNormal(normalTransform,...norm.data.slice(idxs[i+j]*3,idxs[i+j]*3+3));const l=Math.hypot(...raw)||1;n=raw.map(z=>z/l)}vertices.push(...points[j],...n);
+    for(let j=0;j<3;j++){let n=flat;if(norm){const raw=applyNormal(normalTransform,...norm.data.slice(idxs[i+j]*3,idxs[i+j]*3+3));const l=Math.hypot(...raw)||1;n=raw.map(z=>z/l)}vertices.push(...points[j],...n);
+     if(colors){const offset=idxs[i+j]*colors.components;vertexColors.push(...colors.data.slice(offset,offset+3),colors.components===4?colors.data[offset+3]:1);}
      if(texture){
       let u=uv.data[idxs[i+j]*uv.components],v=uv.data[idxs[i+j]*uv.components+1];
       const scale=textureTransform?.scale||[1,1],offset=textureTransform?.offset||[0,0],angle=textureTransform?.rotation||0;
@@ -186,7 +195,7 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
     }
    }
    const motion=rig?{nodeIndex:idx,skinIndex:node.skin,indices:new Uint32Array(idxs),vertexIds:new Uint32Array([...new Set(idxs)]),positions:new Float32Array(pos.data),normals:norm?new Float32Array(norm.data):null,...(node.skin!==undefined&&primitive.attributes.JOINTS_0!==undefined?{joints:new Uint16Array(accessor(primitive.attributes.JOINTS_0).data),weights:new Float32Array(accessor(primitive.attributes.WEIGHTS_0).data),influences:accessor(primitive.attributes.JOINTS_0).components}:{})}:null;
-   if(vertices.length)parts.push({...(motion?{motion}:{}),vertices:new Float32Array(vertices),color,roughness,metallic,...(texture?{texture,texcoords:new Float32Array(texcoords)}:{}),alphaMode:json.materials?.[primitive.material]?.alphaMode||'OPAQUE',alphaCutoff:json.materials?.[primitive.material]?.alphaCutoff??.5});
+   if(vertices.length)parts.push({...(motion?{motion}:{}),vertices:new Float32Array(vertices),color,roughness,metallic,unlit:!!json.materials?.[primitive.material]?.extensions?.KHR_materials_unlit,emissive:(json.materials?.[primitive.material]?.emissiveFactor||[0,0,0]).map(v=>v*(json.materials?.[primitive.material]?.extensions?.KHR_materials_emissive_strength?.emissiveStrength??1)),...(colors?{vertexColors:new Float32Array(vertexColors)}:{}),...(texture?{texture,texcoords:new Float32Array(texcoords)}:{}),alphaMode:json.materials?.[primitive.material]?.alphaMode||'OPAQUE',alphaCutoff:json.materials?.[primitive.material]?.alphaCutoff??.5});
   }
   for(const child of node.children||[])walk(child,m,depth+1);
   visiting.delete(idx);

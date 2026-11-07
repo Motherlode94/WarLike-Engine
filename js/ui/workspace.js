@@ -125,7 +125,14 @@ folderInput.onchange=async()=>{
     const asset=registerLocalModel(file);
     asset.category=classifyLocal(file.webkitRelativePath||file.name);
     asset.sourcePath=file.webkitRelativePath||file.name;
-    await persistLocalModel(asset);
+    await persistLocalModel(asset,{resolve:async uri=>{
+     const base=new URL('https://local.invalid/'+asset.sourcePath),address=new URL(uri,base);
+     if(address.origin!==base.origin)throw Error('Texture externe hors du dossier.');
+     const path=decodeURIComponent(address.pathname.slice(1)),image=files.find(f=>(f.webkitRelativePath||f.name)===path);
+     if(!image)throw Error('Texture manquante : '+uri);
+     const mimeType=image.type||(/\.png$/i.test(path)?'image/png':/\.webp$/i.test(path)?'image/webp':/\.jpe?g$/i.test(path)?'image/jpeg':'');
+     return {bytes:await image.arrayBuffer(),mimeType};
+    }});
     imported++;
    }catch(error){rejected++;log('Asset ignoré '+file.name+' : '+String(error?.message||error),'warn')}
   }
@@ -140,6 +147,7 @@ const localTools=document.createElement('div');localTools.className='asset-local
 const clearSaved=document.createElement('button');clearSaved.type='button';clearSaved.textContent='Supprimer mes GLB enregistrés';
 clearSaved.onclick=async()=>{if(!confirm('Supprimer les fichiers GLB enregistrés dans ce navigateur ?'))return;try{await clearLocalModels();document.dispatchEvent(new Event('warlike:workspace'));folderStatus.textContent='Bibliothèque locale effacée.'}catch(error){folderStatus.textContent='Erreur : '+error.message}};
 localTools.append(clearSaved);import3dPanel.append(localTools);
+// Restoration is awaited by editor bootstrap before any project is opened.
 const remoteForm=document.createElement('form');remoteForm.className='external-glb-form';
 const remoteInput=document.createElement('input');remoteInput.type='url';remoteInput.placeholder='https://exemple.org/personnage.glb';remoteInput.required=true;remoteInput.setAttribute('aria-label','URL HTTPS directe du modèle GLB');
 const categoryInput=document.createElement('select');categoryInput.setAttribute('aria-label','Catégorie de modèle externe');
@@ -151,6 +159,7 @@ remoteForm.onsubmit=async event=>{
  event.preventDefault();remoteSubmit.disabled=true;remoteSubmit.textContent='Téléchargement…';
  try{
   const asset=await registerRemoteModel(remoteInput.value,{category:categoryInput.value});
+  await persistLocalModel(asset);
   remoteInput.value='';render();log('Modèle externe importé : '+asset.name);document.dispatchEvent(new Event('warlike:workspace'));
  }catch(error){log('Import externe : '+(error.message||error),'error');alert('Échec de l’import : '+(error.message||error)+'\\nLe serveur doit autoriser CORS et fournir un fichier GLB valide.')}
  finally{remoteSubmit.disabled=false;remoteSubmit.textContent='↓ Importer URL GLB'}

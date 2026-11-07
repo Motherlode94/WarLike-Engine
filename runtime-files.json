@@ -15966,6 +15966,7 @@
     "js/assets/free-game-assets.js",
     "js/assets/game-elements.js",
     "js/assets/genre-essentials.js",
+    "js/assets/glb-package.js",
     "js/assets/humanoid-rigs.js",
     "js/assets/imported-models-3d.js",
     "js/assets/kenney-unity-library.js",
@@ -16079,6 +16080,7 @@
     "js/core/play-camera.js",
     "js/core/player-controller.js",
     "js/core/portable-assets.js",
+    "js/core/portable-models.js",
     "js/core/prefab-library.js",
     "js/core/project-diagnostics.js",
     "js/core/project-format-v2.js",
@@ -16208,6 +16210,9 @@
     "vendor/dom-to-image-more/README.md",
     "vendor/dom-to-image-more/dom-to-image-more.min.js",
     "vendor/phaser/LICENSE.md",
-    "vendor/phaser/src/math/Clamp.js"
+    "vendor/phaser/src/math/Clamp.js",
+    "vendor/rapier3d/LICENSE.txt",
+    "vendor/rapier3d/README.md",
+    "vendor/rapier3d/rapier.mjs"
   ]
 }

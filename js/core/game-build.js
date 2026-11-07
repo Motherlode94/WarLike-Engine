@@ -83,6 +83,7 @@ export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}=
  const models=gameRuntimeModels(data).filter(asset=>asset.file);
  const importedEntries=[];let importedBytes=0;
  for(const asset of models){const bytes=await portableModelBytes(asset);importedBytes+=bytes.length;if(importedBytes>100*1024*1024)throw Error('Assets importés supérieurs à 100 Mo.');importedEntries.push({name:portableModelDescriptor(asset).url.slice(2),data:bytes})}
+ data.importedModels=models.map(portableModelDescriptor);
  const importedCatalog='export const packagedModels3d='+JSON.stringify(models.map(portableModelDescriptor))+';\n';
  const files=gameRuntimeFiles(manifest.files,data);
  const entries=new Array(files.length);let cursor=0,completed=0;

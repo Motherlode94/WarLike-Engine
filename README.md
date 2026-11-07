@@ -1,3 +1,9 @@
+## Nouveau — Import de packs WarLike Library (novembre 2026)
+
+Ouvrir `asset-store/library-import.html` pour un prefab individuel GLB ou PNG, ou `asset-store/library-bundle.html` pour un bundle `warlike.library.bundle.v2` contenant jusqu'à **16 modèles/sprites/scripts** pour **32 Mo** au total. Les données sont vérifiées avant écriture (tailles, extensions, identifiants, empreintes SHA-256, structure GLB ou en-tête PNG). Les modèles et sprites sont installés dans la bibliothèque locale de prefabs ; les scripts sont archivés dans IndexedDB, **sans exécution automatique**.
+
+Dans **Window → Script Studio**, le bouton « Scripts Library » permet de choisir un script importé et de l'ajouter au projet courant. Le moteur n'exécute un script que lorsque l'utilisateur le rattache volontairement à un objet puis démarre Play dans le runtime compatible (TS doit être compilé, C# requiert le bridge .NET local). Les conflits de prefab exigent confirmation et les objets déjà instanciés ne sont pas migrés automatiquement. La compatibilité de rendu 2D/3D et la persistance complète doivent encore être testées sur appareil.
+
 # WarLike Engine
 
 **Moteur et éditeur de jeux 2D / 3D développé par Hardi Victor MBANVU — HardieBay.**

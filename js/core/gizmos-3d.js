@@ -1,4 +1,4 @@
-import {updateAffineEditorPose3d} from './scene-graph-v2.js';
+import {updateAffineEditorPose3d,updateEditorEntityHierarchy3d} from './scene-graph-v2.js';
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
 const el=(tag,props={})=>{const node=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(props))node.setAttribute(k,String(v));return node};
@@ -67,6 +67,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
    // Keep the authored affine shear instead of throwing it away when the gizmo moves.
    if(start.worldMatrix3d&&start.matrixReference3d)updateAffineEditorPose3d(o,start.worldMatrix3d,start.matrixReference3d);
   }
+  if(drag.objects.length)updateEditorEntityHierarchy3d(state.entities,{worldOverrideIds:new Set(drag.objects.map(o=>o.id))});
   redraw();
  });
  const finish=event=>{

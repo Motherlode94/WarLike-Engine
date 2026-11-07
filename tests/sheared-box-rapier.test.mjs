@@ -89,3 +89,26 @@ test('unsupported sheared capsules have explicit collision-disabled diagnostics 
  assert.equal(synchronizeRapierScene(scene,[e]),false);
  disposeRapierScene(scene);
 });
+
+test('real Rapier ray contact follows the sheared face instead of the original AABB',async()=>{
+ const module=await import('@dimforge/rapier3d-compat');
+ const rapier=module.default||module;
+ await rapier.init();
+ const world=new rapier.World({x:0,y:0,z:0});
+ try{
+  const body=world.createRigidBody(rapier.RigidBodyDesc.fixed().setTranslation(0,3,0));
+  const points=affineBoxHull3d([
+   1,0,0,0,.5,1,0,0,0,0,1,0,-1.5,0,0,1
+  ],{w:2,h:2,d:2,offset:{x:0,y:0,z:0}},
+  {x:0,y:3,z:0},{x:0,y:0,z:0,w:1});
+  const shape=rapier.ColliderDesc.convexHull(points);
+  assert.ok(shape,'Rapier must construct the convex polyhedron');
+  world.createCollider(shape,body);
+  world.updateSceneQueries?.();
+  const ray=new rapier.Ray({x:4,y:3.8,z:0},{x:-1,y:0,z:0});
+  const hit=world.castRay(ray,10,true);
+  assert.ok(hit,'ray must hit the sheared collider');
+  // x limit is 1 + 0.5 * (3.8 - 3.0) = 1.4.
+  assert.ok(Math.abs(hit.timeOfImpact-2.6)<.03,`expected 2.6m, got ${hit.timeOfImpact}`);
+ }finally{world.free()}
+});

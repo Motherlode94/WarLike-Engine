@@ -1,24 +1,28 @@
 // Shared axis-aligned collision geometry. Ground X/Z and sizes are scene pixels;
 // elevation is meters on entities and pixels in these boxes (64 pixels = 1 m).
 import {traceNativeSegments3d} from './native-3d.js';
+import {terrainFloorAt3d} from './gaia-terrain-physics.js';
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const epsilon=.00001;
 const axes=[['x','w'],['y','d'],['z','h']];
 export const activeBody3d=o=>!!o&&o.enabled!==false&&o.sequenceEnabled!==false&&!o._sequenceDestroyed&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated;
-export const solidBody3d=o=>activeBody3d(o)&&o.collision3d!==false&&!o.lightType&&!o.audioEnabled&&(o.solid3d===true||o.type==='object'||o.type==='mesh3d'||!!o.collider3d);
+export const solidBody3d=o=>activeBody3d(o)&&o.collision3d!==false&&!o.lightType&&!o.audioEnabled&&(o.solid3d===true||o.type==='object'||o.type==='mesh3d'||!!o.collider3d||!!o.terrainHeightfield);
 export const collisionBox3d=o=>({x:n(o.x),y:n(o.y),z:n(o.elevation3d)*64,w:Math.max(1,n(o.w,32)),d:Math.max(1,n(o.depth3d,o.h||32)),h:Math.max(1,n(o.h,32))});
 export const collisionWorldBounds3d=o=>{const b=collisionBox3d(o);return {x:(b.x+b.w/2)/64,y:(b.z+b.h/2)/64,z:(b.y+b.d/2)/64,w:b.w/64,h:b.h/64,d:b.d/64}};
 const overlapAxis=(a,b,axis,size)=>a[axis]<b[axis]+b[size]-epsilon&&a[axis]+a[size]>b[axis]+epsilon;
 export const boxesOverlap3d=(a,b)=>axes.every(([axis,size])=>overlapAxis(a,b,axis,size));
 const translate=(o,axis,delta)=>{if(axis==='z')o.elevation3d=n(o.elevation3d)+delta/64;else o[axis]=n(o[axis])+delta};
 export function supportBody3d(o,entities,tolerance=2.3){
- const box=collisionBox3d(o);return entities.filter(e=>e!==o&&solidBody3d(e)).find(e=>{const b=collisionBox3d(e);return overlapAxis(box,b,'x','w')&&overlapAxis(box,b,'y','d')&&Math.abs(box.z-b.z-b.h)<=tolerance})||null;
+ const floor=terrainFloorAt3d(o,entities.filter(e=>e!==o&&e.terrainHeightfield&&solidBody3d(e)));
+ if(floor&&Math.abs(n(o.elevation3d)-floor.height)*64<=tolerance)return floor.entity;
+ const box=collisionBox3d(o);return entities.filter(e=>e!==o&&solidBody3d(e)&&!e.terrainHeightfield).find(e=>{const b=collisionBox3d(e);return overlapAxis(box,b,'x','w')&&overlapAxis(box,b,'y','d')&&Math.abs(box.z-b.z-b.h)<=tolerance})||null;
 }
 // Axis sweeps prevent tunnelling independently of frame time or obstacle thickness.
 export function moveBody3d(body,dx,dy,dz,entities,{recover=true,ignore=null}={}){
  const result={blockedX:false,blockedY:false,blockedZ:false,grounded:false,ceiling:false,hits:[]};
  if(body.enabled===false)return result;
- const obstacles=body.collision3d===false?[]:entities.filter(o=>o!==body&&o!==ignore&&solidBody3d(o));
+ const solids=body.collision3d===false?[]:entities.filter(o=>o!==body&&o!==ignore&&solidBody3d(o));
+ const terrains=solids.filter(o=>o.terrainHeightfield),obstacles=solids.filter(o=>!o.terrainHeightfield);
  body.x=n(body.x);body.y=n(body.y);body.elevation3d=n(body.elevation3d);
  if(recover)for(let i=0;i<8;i++){
   const box=collisionBox3d(body),other=obstacles.find(o=>boxesOverlap3d(box,collisionBox3d(o)));if(!other)break;
@@ -35,7 +39,16 @@ export function moveBody3d(body,dx,dy,dz,entities,{recover=true,ignore=null}={})
   if(hit&&Number.isFinite(hit.x)){const b=collisionBox3d(hit),position=value>0?b[axis]-box[size]:b[axis]+b[size];if(axis==='z')body.elevation3d=position/64;else body[axis]=position}
   if(hit){result['blocked'+axis.toUpperCase()]=true;if(hit.id!=null)result.hits.push(hit.id);if(axis==='z'){result.grounded=value<0;result.ceiling=value>0}}
  }
- result.grounded||=!!supportBody3d(body,obstacles,.01);result.hits=[...new Set(result.hits)];return result;
+ // Heightfield ground collision: keep the actor above the terrain's sampled surface.
+ const floor=terrainFloorAt3d(body,terrains);
+ if(floor){
+  const vertical=n(body.elevation3d),delta=vertical-floor.height;
+  if(delta<0&&n(dz)<=0){
+   body.elevation3d=floor.height;result.blockedZ=true;result.grounded=true;
+   if(floor.entity.id!=null)result.hits.push(floor.entity.id);
+  }else if(Math.abs(delta)<=.002&&n(dz)<=0){result.grounded=true}
+ }
+ result.grounded||=!!supportBody3d(body,solids,.01);result.hits=[...new Set(result.hits)];return result;
 }
 export function segmentBox3d(from,to,box,padding=0){
  let near=0,far=1;for(const [axis,size] of axes){const start=n(from[axis]),delta=n(to[axis])-start,low=box[axis]-padding,high=box[axis]+box[size]+padding;

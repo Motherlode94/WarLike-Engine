@@ -20,3 +20,13 @@
 .demo-brief-actions button{font-size:11px!important;padding:5px!important;min-height:28px!important}
 @media(max-width:640px){.demo-browser{padding:14px}.demo-browser-grid{grid-template-columns:1fr}.demo-browser-card{padding:15px}}
 .demo-browser-search{width:100%;box-sizing:border-box;min-height:36px;padding:8px 12px;border:1px solid var(--wl-theme-border,#40525f);background:var(--wl-theme-header,#263844);color:inherit;border-radius:4px;font:13px system-ui}
+
+/* Embedded playable examples: preserve native editor scene and project state. */
+.demo-game-frame{width:min(1380px,98vw);height:min(860px,95dvh);max-width:none;max-height:none;box-sizing:border-box;margin:auto;padding:0;border:1px solid #5b696b;border-radius:13px;overflow:hidden;background:#17211b;color:#f8fbf1;box-shadow:0 20px 80px #000b;display:none;flex-direction:column}
+.demo-game-frame[open]{display:flex}
+.demo-game-frame::backdrop{background:#06110acb}
+.demo-game-frame>header{display:flex;flex-shrink:0;align-items:center;justify-content:space-between;gap:12px;padding:10px 15px;background:#37463d;border-bottom:1px solid #5b696b}
+.demo-game-frame>header h2{font-size:16px;margin:0;color:#f8fbf1}
+.demo-game-frame>header button{background:#c5c5a9;color:#17211b;border:1px solid #c5c5a9;border-radius:8px;padding:7px 13px;cursor:pointer;font-weight:700}
+.demo-game-frame>iframe{flex:1;display:block;width:100%;min-height:0;border:0;background:#17211b}
+@media(max-width:720px){.demo-game-frame{width:100vw;height:100dvh;max-height:none;border-radius:0}.demo-game-frame>header h2{font-size:13px}.demo-game-frame>header button{font-size:12px}}

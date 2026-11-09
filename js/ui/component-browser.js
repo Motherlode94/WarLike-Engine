@@ -59,8 +59,11 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
  // A body-level popup avoids being clipped by the narrow, scrolling Inspector.
  document.body.append(popup);
  let opened=false;
+ let positionFrame=0;
+ const schedulePosition=()=>{if(!opened||positionFrame)return;positionFrame=requestAnimationFrame(()=>{positionFrame=0;position()})};
  const position=()=>{
   if(!opened)return;
+  if(!heading.isConnected){close();popup.remove();return}
   const anchor=heading.getBoundingClientRect(),width=Math.min(330,Math.max(240,window.innerWidth-16));
   popup.style.width=width+'px';
   popup.style.left=Math.max(8,Math.min(window.innerWidth-width-8,anchor.left+(anchor.width-width)/2))+'px';
@@ -72,8 +75,11 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
   if(!opened)return;opened=false;popup.hidden=true;root.open=false;
   document.removeEventListener('pointerdown',outside,true);
   document.removeEventListener('keydown',keyboard,true);
-  window.removeEventListener('resize',position);
-  heading.focus();
+  window.removeEventListener('resize',schedulePosition);
+  document.removeEventListener('scroll',schedulePosition,true);
+  window.removeEventListener('pointermove',schedulePosition);
+  if(positionFrame){cancelAnimationFrame(positionFrame);positionFrame=0}
+  if(heading.isConnected)heading.focus();
  };
  const outside=e=>{if(!popup.contains(e.target)&&!heading.contains(e.target))close()};
  const keyboard=e=>{
@@ -111,7 +117,9 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
   opened=true;root.open=false;search.value='';render();popup.hidden=false;position();
   document.addEventListener('pointerdown',outside,true);
   document.addEventListener('keydown',keyboard,true);
-  window.addEventListener('resize',position);
+  window.addEventListener('resize',schedulePosition);
+  document.addEventListener('scroll',schedulePosition,true);
+  window.addEventListener('pointermove',schedulePosition,{passive:true});
   search.focus();
  });
  search.addEventListener('input',render);

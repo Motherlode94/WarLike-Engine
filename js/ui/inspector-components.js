@@ -1,4 +1,4 @@
-import {componentChoices,addObjectComponent,resetObjectComponent,removeObjectComponent} from '../core/component-definitions.js';
+import {componentChoices,addObjectComponent,resetObjectComponent,removeObjectComponent,componentRemovalBlockers,inspectorComponentGroup} from '../core/component-definitions.js';
 import {copyInspectorComponent,pasteInspectorComponent} from '../core/inspector-model.js';
 import {solidCollider2d,actor2d} from '../core/physics-2d.js';
 import {state,notify} from '../core/state.js';
@@ -50,7 +50,14 @@ export function decorateInspectorComponents(root,owner){
    action('Copier le composant',()=>{clipboard={family:descriptor.family,value:descriptor.snapshot?descriptor.snapshot():descriptor.keys?copyInspectorComponent(owner,descriptor.keys):structuredClone(descriptor.get())};notify()});
    action('Coller les valeurs',()=>{if(descriptor.keys)pasteInspectorComponent(owner,descriptor.keys,clipboard.value);else descriptor.set(structuredClone(clipboard.value));record('Coller '+title);notify()},state.playing||clipboard?.family!==descriptor.family);
    if(descriptor.reset)action(title==='Transform'?'Réinitialiser position et rotation':'Réinitialiser',()=>{descriptor.reset();record('Réinitialiser '+title);notify()},state.playing);
-   if(descriptor.remove)action('Supprimer le composant',()=>{descriptor.remove();record('Supprimer '+title);notify()},state.playing);
+   if(descriptor.remove){
+   const blockers=descriptor.id&&componentRemovalBlockers(owner,descriptor.id)||[];
+   const removeButton=action(blockers.length?'Dépendances : '+blockers.join(', '):'Supprimer le composant',()=>{
+    if(blockers.length)return;
+    if(descriptor.remove()!==false){record('Supprimer '+title);notify()}
+   },state.playing||blockers.length>0);
+   if(blockers.length)removeButton.title='Retirer d’abord : '+blockers.join(', ');
+  }
   }
   const move=direction=>{const ordered=[...root.querySelectorAll(':scope>.inspector-component')],from=ordered.indexOf(card),to=from+direction;if(to<1||to>=ordered.length)return;[ordered[from],ordered[to]]=[ordered[to],ordered[from]];owner.inspectorOrder=ordered.map(keyFor);record('Ordre Inspector : '+title);notify()};
   if(title!=='Transform'){action('Monter',()=>move(-1)).dataset.move='-1';action('Descendre',()=>move(1)).dataset.move='1'}
@@ -63,7 +70,12 @@ export function decorateInspectorComponents(root,owner){
  if(order.length){const sorted=cards.slice().sort((a,b)=>{if(a.dataset.componentTitle==='Transform')return -1;if(b.dataset.componentTitle==='Transform')return 1;const rank=card=>order.includes(keyFor(card))?order.indexOf(keyFor(card)):1e5;return rank(a)-rank(b)});const end=root.querySelector(':scope>.inspector-add-component');for(const card of sorted)root.insertBefore(card,end)}
  // Keep the Unity-like main inspector focused on rendering and physics.
  // Attached gameplay/script data remains intact and accessible under Extensions.
- const extensionCards=cards.filter(card=>!/Transform|Renderer|Material|Sprite|Animator|Collider|Rigidbody|Collision|Articulation|Camera|Caméra|Lighting|Lumière|Audio/i.test(card.dataset.componentTitle||''));
+ const builtinVisualTitles=new Set(['Transform','Sprite Renderer','Mesh Renderer · Matériau','Animator 2D','Animator 3D · clips du modèle','Caméra de jeu','Camera','Camera 3D','Collider 3D','Box Collider 3D','Box Collider 2D','Rigidbody 2D','Rigidbody 3D','Physics 3D • Rigidbody','Articulation 3D','Audio Source']);
+ const extensionCards=cards.filter(card=>{
+  const key=card.dataset.componentKey;
+  if(key&&componentChoices(workspace.mode).some(def=>def.id===key))return inspectorComponentGroup(key)==='extension';
+  return !builtinVisualTitles.has(card.dataset.componentTitle);
+ });
  if(extensionCards.length){
   const toggle=make('button','inspector-extensions-toggle','▸ Extensions · '+extensionCards.length+' composants');
   toggle.type='button';

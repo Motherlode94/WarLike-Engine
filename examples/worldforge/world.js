@@ -116,6 +116,28 @@ export function tick(world,rng=random(world.seed+world.ticks)){
    s.territory=Math.min(7,Math.max(1,Math.ceil(Math.sqrt(s.houses)/1.8)+s.level-1));
  }
  world.settlements=world.settlements.filter(s=>s.pop>0);
+ // Autonomous colonization: sufficiently prosperous cities send settlers
+ // to nearby land. Spawn events use deterministic tick RNG; no new timers.
+ const colonists=[];
+ if(world.settlements.length<60)for(const origin of world.settlements){
+  if(origin.age<16||origin.age%11!==0||origin.pop<58||origin.food<85||origin.wood<19||rng()>.58)continue;
+  for(let trial=0;trial<22;trial++){
+   const angle=rng()*Math.PI*2,distance=7+rng()*7;
+   const xx=Math.round(origin.x+Math.cos(angle)*distance),yy=Math.round(origin.y+Math.sin(angle)*distance);
+   if(!inWorld(world,xx,yy)||!land(cell(world,xx,yy))||closeTo(world,xx,yy,null,6)||
+      colonists.some(s=>Math.hypot(s.x-xx,s.y-yy)<6))continue;
+   colonists.push({x:xx,y:yy,faction:origin.faction,origin});
+   break;
+  }
+ }
+ for(const colony of colonists){
+  const {origin,x,y,faction}=colony;
+  const result=found(world,x,y,faction);
+  if(!result.ok)continue;
+  origin.pop-=15;origin.food-=30;origin.wood-=12;
+  result.settlement.pop=15;result.settlement.food=45;result.settlement.wood=12;
+  addNews(world,"Des colons de la cité "+origin.id+" fondent une nouvelle communauté.");
+ }
  // Finite interactions for the small number of settlements; no per-tile AI.
  for(let i=0;i<world.settlements.length;i++)for(let j=i+1;j<world.settlements.length;j++){
   const a=world.settlements[i],b=world.settlements[j];if(a.faction===b.faction)continue;

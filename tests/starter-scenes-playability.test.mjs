@@ -54,8 +54,18 @@ for(const mode of ['2d','3d']){
   for(const [genre] of compatibleGenres(mode)){const scene=createGenreScene(genre,mode),project={...freshGameProject(),...scene.game,id:'starter-check',genre};assert.deepEqual(inspectBlueprintGame(scene.entities,{project,requirePlayer:false}).filter(x=>x.severity==='error'),[],genre);assert.doesNotThrow(()=>prepareGameDefinition({...scene,mode,project}),genre)}
  });
  test(`${mode}: RP, simulation, RPG, delivery, horror and 4X have complete walkable mission routes`,()=>{
-  const routes={rp:['Citoyen','Travail','Boutique'],simulation:['Machine de production','Commande client','Maintenance'],rpg:['Donneur de quête','Ruines','Donneur de quête'],openworld:['Citoyen','Livraison'],horror:['Generatrice','Evacuation'],fourx:['Explorer','Coloniser','Camp ennemi']};
+  const routes={rp:['Citoyen','Travail','Boutique'],simulation:['Machine de production','Commande client','Maintenance'],rpg:['Donneur de quête','Ruines','Donneur de quête'],openworld:['Citoyen','Livraison'],horror:['Generatrice','Evacuation'],fourx:['Explorer','Coloniser','Fin du tour','Camp ennemi']};
   for(const [genre,route] of Object.entries(routes)){const f=boot(genre,mode);for(const name of route)walkTo(f,name);for(let i=0;i<30;i++)f.tick();assert.equal(gameSession.phase,'won',genre);assert.deepEqual(sequenceRuntime.errors,[],genre);assert.equal(resolveGameGenre(undefined,f.scene.entities),genre)}
+ });
+ test(`${mode}: 4X requires a completed turn before conquest`,()=>{
+  const f=boot('fourx',mode);
+  for(const name of ['Explorer','Coloniser','Camp ennemi'])walkTo(f,name);
+  assert.equal(gameSession.phase,'playing');
+  assert.equal(sequenceRuntime.globals.army,2);
+  walkTo(f,'Fin du tour');
+  assert.equal(sequenceRuntime.globals.turn,2);
+  walkTo(f,'Camp ennemi');
+  assert.equal(gameSession.phase,'won');
  });
  test(`${mode}: quest rewards and purchases enforce their prerequisites and inventory capacity`,()=>{
   let f=boot('rpg',mode);walkTo(f,'Ruines');assert.equal(sequenceRuntime.globals.questCompleted,0);assert.equal(sequenceRuntime.globals.experience,0);

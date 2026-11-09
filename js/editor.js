@@ -53,6 +53,7 @@ import {bindGameInput,startGameSimulation} from './core/gameplay.js';
 import {initWorkspace,log} from './ui/workspace.js';
 import {catalog,urlFor} from './assets/catalog.js';
 import {state,notify} from './core/state.js';
+import {gaiaWorldToEntities} from './core/gaia-terrain-physics.js';
 import {autoSave,recoverLocal,hasLocalSave,backupLocalSave,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo,renderHistory} from './core/history.js';
@@ -119,6 +120,20 @@ $('#undo').onclick=undo;
 $('#redo').onclick=redo;
 $('#play').onclick=()=>{try{togglePlay()}catch(error){console.error('[WarLike Play]',error);const message='Play impossible : '+(error?.message||String(error));log(message);window.alert(message)}};
 $('#save').onclick=()=>exportScene().catch(error=>alert('Export impossible : '+error.message));
+$('#gaiaLoad').onclick=()=>{if(state.playing){alert('Quitte Play avant d’importer les colliders Gaia.');return}$('#gaiaFile').click()};
+$('#gaiaFile').onchange=async event=>{
+ try{
+  const file=event.target.files?.[0];if(!file)return;
+  if(file.size>24*1024*1024)throw Error('Monde Gaia trop volumineux (24 Mo maximum).');
+  const world=JSON.parse(await file.text());
+  if(state.playing)throw Error('Import indisponible pendant Play.');
+  const entities=gaiaWorldToEntities(world,{firstId:state.nextId});
+  state.entities.push(...entities);state.nextId+=entities.length;state.selected=[entities[0].id];
+  record('Importer '+entities.length+' colliders Gaia');notify();
+  document.getElementById('workspace3d')?.click();
+  log(entities.length+' terrains Gaia importés : collisions du sol disponibles en Play.');
+ }catch(error){alert('Import Gaia impossible : '+error.message)}finally{event.target.value=''}
+};
 $('#load').onclick=()=>$('#file').click();
 $('#file').onchange=async e=>{try{await importScene(e.target.files?.[0])}catch(error){alert('Impossible de charger la scène : '+error.message)}finally{e.target.value=''}};
 $('#zoomIn').onclick=()=>zoomAt(1.25,{x:host.clientWidth/2,y:host.clientHeight/2});

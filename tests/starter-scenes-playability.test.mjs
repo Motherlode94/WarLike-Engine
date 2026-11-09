@@ -71,6 +71,19 @@ for(const mode of ['2d','3d']){
   for(let i=0;i<1800&&gameSession.phase==='playing';i++){updateRtsOrders(f.scene.entities,1/60,true,{mode});f.tick()}
   assert.equal(gameSession.phase,'won');assert.equal(sequenceRuntime.globals.outpostCaptured,1);
  });
+ test(`${mode}: tactical capture requires the defender to be neutralized`,()=>{
+  const f=boot('tactical',mode);
+  walkTo(f,'Capturer');
+  assert.equal(sequenceRuntime.globals.captured,0);
+  assert.equal(gameSession.phase,'playing');
+  f.find('Opposant').stats.health=0;
+  f.tick();
+  assert.equal(sequenceRuntime.globals.tacticalEnemyDown,1);
+  walkTo(f,'Capturer');
+  assert.equal(sequenceRuntime.globals.captured,1);
+  assert.equal(gameSession.phase,'won');
+  assert.deepEqual(sequenceRuntime.errors,[]);
+ });
  test(`${mode}: departure, terrain and mission props are concrete scene assets`,()=>{
   for(const genre of ['rp','rpg','simulation','openworld','horror','fourx','rts','tactical','fieldlab']){
    const f=boot(genre,mode);assert.ok(standable(f,f.p),'blocked departure '+genre);assert.ok(f.scene.entities.some(o=>o.hierarchyGroup==='Terrain'));assert.ok(f.scene.entities.some(o=>o.hierarchyGroup==='Limites'));

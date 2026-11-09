@@ -122,9 +122,10 @@ export function finishStarterScene(genre,mode,entities,player){
   Object.assign(find('Traqueur'),{team:2,stats:defaultStats(),ai:{...defaultAi(),state:'patrol',speed:55,detection:240,attackDamage:8,requireLineOfSight:true},horrorAiConfig:{enabled:false}});
  }
  if(genre==='tactical'){
-  start.push(set('captured',0));task('tacticalCapture','Atteindre et capturer le poste à l’est','Capturer');
-  bind('Capturer',[set('captured',1),done('tacticalCapture'),win('Poste sécurisé.')],{once:true,conditions:[{type:'playerOnFoot'}],hint:'Descends du véhicule pour sécuriser le poste.'});
+  start.push(set('captured',0),set('tacticalEnemyDown',0));task('tacticalEnemy','Neutraliser l’opposant','Opposant');task('tacticalCapture','Atteindre et capturer le poste à l’est','Capturer');
+  bind('Capturer',[set('captured',1),done('tacticalCapture'),win('Poste sécurisé.')],{once:true,conditions:[check('tacticalEnemyDown'),{type:'playerOnFoot'}],hint:'Neutralise l’opposant et descends du véhicule pour sécuriser le poste.'});
   const enemy=find('Opposant');enemy.ai={...defaultAi(),...enemy.ai,requireLineOfSight:true,pathfinding:true};
+  enemy.sequence={enabled:true,event:'death',once:true,instructions:[set('tacticalEnemyDown',1),done('tacticalEnemy'),say('Opposant neutralisé. Capture le poste à pied.')]};
   if(three)player.fpsController=true;
  }
  if(genre==='rts'){
@@ -137,10 +138,11 @@ export function finishStarterScene(genre,mode,entities,player){
  if(genre==='fourx'){
   delete find('Capitale').sequence;
   start.push(set('turn',1),set('food',12),set('industry',8),set('science',3),set('territory',1),set('army',2),set('explored',0),set('expanded',0));
-  task('fourExplore','Explorer la région','Explorer');task('fourExpand','Fonder une colonie','Coloniser');task('fourConquer','Prendre le camp ennemi','Camp ennemi');
+  task('fourExplore','Explorer la région','Explorer');task('fourExpand','Fonder une colonie','Coloniser');task('fourTurn','Terminer un tour','Fin du tour');task('fourConquer','Prendre le camp ennemi','Camp ennemi');
   bind('Explorer',[set('explored',1),add('science',2),done('fourExplore'),say('Région explorée · +2 science.')],{once:true});
   bind('Coloniser',[set('expanded',1),add('food',-2),add('territory',1),done('fourExpand'),say('Colonie fondée · −2 nourriture.')],{once:true,conditions:[check('explored'),check('food',2,'>=')],hint:'Explore la région et conserve deux unités de nourriture.'});
-  bind('Camp ennemi',[add('army',-1),add('territory',1),done('fourConquer'),win('Région explorée, colonisée et camp conquis.')],{once:true,conditions:[check('expanded'),check('army',1,'>=')],hint:'Fonde une colonie et conserve au moins une armée.'});
+  const endTurn=find('Fin du tour');endTurn.sequence.instructions.push(done('fourTurn'));
+  bind('Camp ennemi',[add('army',-1),add('territory',1),done('fourConquer'),win('Région explorée, colonisée et camp conquis.')],{once:true,conditions:[check('expanded'),check('turn',2,'>='),check('army',1,'>=')],hint:'Fonde une colonie, termine un tour et conserve au moins une armée.'});
  }
  if(genre==='fieldlab'){
   // Existing diagnostic sequences remain intact; add reachability and navigation.

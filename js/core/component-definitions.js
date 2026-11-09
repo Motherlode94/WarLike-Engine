@@ -50,7 +50,7 @@ export const webComponentDefinitions=[
 export const inspectorCoreComponentIds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','cameraRig']);
 export function inspectorComponentGroup(id){return inspectorCoreComponentIds.has(id)?(id==='cameraRig'?'render':'physics'):'extension'}
 export const componentDependencies=Object.freeze({
- collider2d:['rigidbody2d'],
+ // Rigidbody 2D may legitimately run without a Collider 2D.
  collider3d:['rigidbody3d','joint3d','controller3d'],
  rigidbody3d:['joint3d']
 });

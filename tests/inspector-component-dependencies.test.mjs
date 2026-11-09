@@ -28,9 +28,9 @@ test('Joint requires its Rigidbody and Collider until removed',()=>{
  assert.equal(removeObjectComponent(object,'collider3d'),true);
 });
 
-test('Collider 2D remains attached until Rigidbody 2D is removed',()=>{
+test('Collider 2D can be removed independently from Rigidbody 2D',()=>{
  const object={collider2d:{enabled:true},rigidbody2d:{enabled:true}};
- assert.equal(removeObjectComponent(object,'collider2d'),false);
- assert.equal(removeObjectComponent(object,'rigidbody2d'),true);
  assert.equal(removeObjectComponent(object,'collider2d'),true);
+ assert.ok(object.rigidbody2d);
+ assert.equal(removeObjectComponent(object,'rigidbody2d'),true);
 });

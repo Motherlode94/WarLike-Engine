@@ -10,6 +10,7 @@ const nativePrimaryKinds=new Set(['Rigidbody']);
 const primaryCategory=(option)=>{
  if(/Collider|Rigidbody|Articulation|Joint/.test(option.name))return 'Physique';
  if(/Caméra|Camera|Audio|Lumière/.test(option.name))return 'Rendu et scène';
+ if(option.id==='script')return 'Extensions';
  return null;
 };
 export function openComponentBrowser(){
@@ -46,6 +47,8 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
    });
   }
  }
+ // Preserve the existing Script Studio entry point, without crowding the default picker.
+ options.push({id:'script',name:'Script C# local',category:'Extensions',description:'Ouvrir le script C# de cet objet dans Script Studio.',runtime:'dotnet',add:()=>{openScript();return false}});
  const popup=make('div','unity-component-popup');
  popup.setAttribute('role','dialog');popup.setAttribute('aria-label','Ajouter un composant');
  popup.hidden=true;
@@ -79,7 +82,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
  };
  const render=()=>{
   const query=search.value.trim().toLocaleLowerCase('fr');list.replaceChildren();let lastCategory='',count=0;
-  for(const option of options.filter(o=>!query||(o.name+' '+o.description).toLocaleLowerCase('fr').includes(query)).sort((a,b)=>primaryCategory(a).localeCompare(primaryCategory(b))||a.name.localeCompare(b.name))){
+  for(const option of options.filter(o=>(o.id!=='script'||!!query)&&(!query||(o.name+' '+o.description).toLocaleLowerCase('fr').includes(query))).sort((a,b)=>primaryCategory(a).localeCompare(primaryCategory(b))||a.name.localeCompare(b.name))){
    const category=primaryCategory(option)||'Autres';
    if(category!==lastCategory){list.append(make('h4','component-browser-category',category));lastCategory=category}
    const button=make('button','component-browser-option');button.type='button';button.dataset.componentId=option.id;

@@ -1,13 +1,16 @@
 // Gaia heightfield collision bridge. Scene ground coordinates use 64 pixels per metre.
 // Terrain descriptor stores world-centred X/Z offsets and height samples in metres.
-const n=v=>Number.isFinite(v)?v:null;
+const validated=new WeakSet();
 export const GAIA_TERRAIN_SCHEMA='warlike.terrain.heightfield.v1';
 export function validTerrainHeightfield(t){
- return !!t&&t.schema===GAIA_TERRAIN_SCHEMA&&Number.isInteger(t.resolution)&&t.resolution>=2&&t.resolution<=257
+ if(t&&typeof t==='object'&&validated.has(t))return true;
+ const valid=!!t&&t.schema===GAIA_TERRAIN_SCHEMA&&Number.isInteger(t.resolution)&&t.resolution>=2&&t.resolution<=257
  &&Number.isFinite(t.size)&&t.size>0&&t.size<=2048&&Number.isFinite(t.height)&&t.height>0&&t.height<=320
  &&Array.isArray(t.heights)&&t.heights.length===t.resolution*t.resolution
  &&t.heights.every(v=>Number.isFinite(v)&&v>=0&&v<=1)
  &&Number.isFinite(t.offsetX)&&Number.isFinite(t.offsetZ);
+ if(valid)validated.add(t);
+ return valid;
 }
 export function heightfieldAt3d(t,x,z){
  if(!validTerrainHeightfield(t))return null;
@@ -37,7 +40,7 @@ export function gaiaWorldToEntities(world,{firstId=1}={}){
  return world.tiles.map((tile,i)=>{
   const t=tile?.collision;
   if(!validTerrainHeightfield(t))throw Error('Tuile Gaia invalide : '+i);
-  return {id:firstId+i,name:'Gaia Terrain '+tile.tileX+'-'+tile.tileZ,type:'terrain3d',enabled:true,collision3d:true,solid3d:true,
+  return {id:firstId+i,name:'Gaia Terrain '+tile.tileX+'-'+tile.tileZ,type:'terrain3d',visible:false,enabled:true,collision3d:true,solid3d:true,
     x:(t.offsetX-t.size/2)*64,y:(t.offsetZ-t.size/2)*64,elevation3d:0,w:t.size*64,depth3d:t.size*64,h:t.height*64,terrainHeightfield:structuredClone(t)};
  });
 }

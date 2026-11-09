@@ -18,6 +18,8 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Check JavaScript syntax
         run: find js -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Refresh runtime file manifest
+        run: node scripts/build-runtime-manifest.mjs
       - run: npm test
       - run: npm run typecheck
 

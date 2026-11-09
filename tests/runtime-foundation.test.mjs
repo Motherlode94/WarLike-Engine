@@ -10,6 +10,7 @@ import {rpg} from '../js/core/rpg-systems.js';
 import {gameSession} from '../js/core/game-session.js';
 const box=(id,x=0,y=0,extra={})=>({id,type:'mesh3d',x,y,w:32,h:64,depth3d:32,elevation3d:0,...extra});
 const player=extra=>box(1,0,0,{type:'player',playable3d:true,stats:defaultStats(),controller3d:defaultController(),...extra});
+const floor=()=>box(99,-300,-300,{w:600,depth3d:600,h:16,elevation3d:-.25});
 const close=(a,b,tolerance=.001)=>assert.ok(Math.abs(a-b)<tolerance,`${a} != ${b}`);
 
 test('shared sweep catches subpixel walls at high speed and slides on the other axis',()=>{
@@ -31,12 +32,12 @@ test('moving platforms carry a standing character and jumping detaches it',()=>{
  const x=p.x;platform.x+=15;updateController3d(p,new Set(),1/60,0,[p,platform]);close(p.x,x);
 });
 test('step climbing requires headroom and cannot climb a full-height wall',()=>{
- const p=player(),step=box(2,40,-50,{w:80,depth3d:140,h:12}),keys=new Set(['d']);for(let i=0;i<15;i++)updateController3d(p,keys,1/60,0,[p,step]);assert.ok(p.x>40);close(p.elevation3d,12/64);
- const blocked=player(),ceiling=box(3,-50,-100,{w:300,depth3d:200,h:5,elevation3d:1.05});for(let i=0;i<15;i++)updateController3d(blocked,keys,1/60,0,[blocked,step,ceiling]);assert.ok(blocked.x+blocked.w<=40.001);
+ const p=player(),step=box(2,40,-50,{w:80,depth3d:140,h:12}),ground=floor(),keys=new Set(['d']);for(let i=0;i<15;i++)updateController3d(p,keys,1/60,0,[p,step,ground]);assert.ok(p.x>40);close(p.elevation3d,12/64);
+ const blocked=player(),ceiling=box(3,-50,-100,{w:300,depth3d:200,h:5,elevation3d:1.05});for(let i=0;i<15;i++)updateController3d(blocked,keys,1/60,0,[blocked,step,ceiling,ground]);assert.ok(blocked.x+blocked.w<=40.001);
 });
 test('coyote time and a buffered tap improve jumps without repeating a held jump',()=>{
  const p=player({x:60,elevation3d:1}),ledge=box(2,0,-50,{w:100,depth3d:150,h:64});updateController3d(p,new Set(),1/60,0,[p,ledge]);p.x=110;updateController3d(p,new Set(),.02,0,[p,ledge]);updateController3d(p,new Set(),.02,0,[p,ledge],{pressedKeys:new Set([' '])});assert.ok(p._verticalVelocity>0);
- const falling=player({elevation3d:.025,_verticalVelocity:-1});updateController3d(falling,new Set(),1/60,0,[falling],{pressedKeys:new Set([' '])});for(let i=0;i<4;i++)updateController3d(falling,new Set(),1/60,0,[falling]);assert.ok(falling._verticalVelocity>0,'tap before landing must jump after contact');
+ const falling=player({elevation3d:.025,_verticalVelocity:-1}),ground=floor();updateController3d(falling,new Set(),1/60,0,[falling,ground],{pressedKeys:new Set([' '])});for(let i=0;i<4;i++)updateController3d(falling,new Set(),1/60,0,[falling,ground]);assert.ok(falling._verticalVelocity>0,'tap before landing must jump after contact');
 });
 test('aimed fire hits the nearest real box and respects disabled obstacles',()=>{
  const enemy=box(2,-16,300),wall=box(3,-100,150,{w:200,h:200,depth3d:1}),origin=[0,.7,0],direction=[0,0,1],target=o=>o===enemy;

@@ -131,7 +131,7 @@ export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()
  if(p.superhero?.enabled!==false&&p.heroState?.flight){delete p._support3d;stepHeroFlight(p,keys,frame,entities,'3d',yaw);return}
  // A moving support carries its passenger, while walls and ceilings still block it.
  const prior=p._support3d,support=prior&&entities.find(o=>o.id===prior.id&&solidBody3d(o));
- if(support&&p.grounded3d&&n(p._verticalVelocity)<=0){const dx=n(support.x)-prior.x,dy=n(support.y)-prior.y,dz=(n(support.elevation3d)-prior.z)*64;if(Math.hypot(dx,dy,dz)<256){if(moveCharacter)moveCharacter(p,dx,dy,dz,{ignore:support});else moveBody3d(p,dx,dy,dz,entities,{ignore:support,recover:false})}}
+ if(support&&p.grounded3d&&n(p._verticalVelocity)<=0){const dx=n(support.x)-prior.x,dy=n(support.y)-prior.y,dz=(n(support.elevation3d)-prior.z)*64;if(Math.hypot(dx,dy,dz)>1e-7&&Math.hypot(dx,dy,dz)<256){if(moveCharacter)moveCharacter(p,dx,dy,dz,{ignore:support});else moveBody3d(p,dx,dy,dz,entities,{ignore:support,recover:false})}}
  if(!moveCharacter)moveBody3d(p,0,0,0,entities);
  const ax=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const az=Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
@@ -142,7 +142,7 @@ export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()
  p._dodgeHeld=dodgeDown;
  const dodge=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0,movement=cameraRelativeWalk3d(ax,az,yaw),speed=Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64*(p.survival?.enabled!==false&&p.survival&&p.survivalState?.rest<15?.6:1)+dodge;
  if(Number.isFinite(yaw))p.rotation=cameraFacingDegrees(yaw);if(len&&sprint)stats.stamina=clamp(stats.stamina-18*frame,0,n(stats.maxStamina,100));
- const grounded=(moveCharacter?p.grounded3d||p.elevation3d<=.015:p.elevation3d<=.0001||!!supportBody3d(p,entities))&&p._verticalVelocity<=0;
+ const grounded=(moveCharacter?p.grounded3d===true||!!supportBody3d(p,entities):!!supportBody3d(p,entities))&&p._verticalVelocity<=0;
  p._coyote3d=grounded?clamp(n(cfg.coyoteTime,.1),0,.3):Math.max(0,n(p._coyote3d)-frame);
  p._jumpBuffer3d=Math.max(0,n(p._jumpBuffer3d)-frame);
  if(jump&&!p._jumpHeld||pressedKeys.has(' ')||pressedKeys.has('space'))p._jumpBuffer3d=Math.max(.001,clamp(n(cfg.jumpBuffer,.12),0,.3));p._jumpHeld=jump;
@@ -150,7 +150,7 @@ export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()
  const steps=Math.max(1,Math.ceil(frame/(1/90))),t=frame/steps,stepHeight=clamp(n(cfg.stepHeight,.28),0,.6),gravity=Math.max(0,n(cfg.gravity,15));
  for(let i=0;i<steps;i++){
   if(moveCharacter){p._verticalVelocity-=gravity*t;const hit=moveCharacter(p,movement.x*speed*t,movement.z*speed*t,p._verticalVelocity*t*64);if(hit){if(hit.grounded&&p._verticalVelocity<0||hit.ceiling)p._verticalVelocity=0;continue}}
-  const supported=(p.elevation3d<=.0001||!!supportBody3d(p,entities))&&p._verticalVelocity<=0;
+  const supported=!!supportBody3d(p,entities)&&p._verticalVelocity<=0;
   for(const [axis,delta] of [['x',movement.x*speed*t],['y',movement.z*speed*t]]){
    if(!delta)continue;const before={x:p.x,y:p.y,z:p.elevation3d},result=moveBody3d(p,axis==='x'?delta:0,axis==='y'?delta:0,0,entities,{recover:false});
    if(supported&&stepHeight>0&&result[axis==='x'?'blockedX':'blockedY']){
@@ -162,7 +162,7 @@ export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()
   }
   p._verticalVelocity-=gravity*t;const contact=moveBody3d(p,0,0,p._verticalVelocity*t*64,entities,{recover:false});if(contact.blockedZ)p._verticalVelocity=0;
  }
- const standing=supportBody3d(p,entities);p.grounded3d=(moveCharacter?p.grounded3d:p.elevation3d<=.0001||!!standing)&&p._verticalVelocity<=0;
+ const standing=supportBody3d(p,entities);p.grounded3d=(moveCharacter?p.grounded3d:!!standing)&&p._verticalVelocity<=0;
  p._support3d=p.grounded3d&&standing?{id:standing.id,x:n(standing.x),y:n(standing.y),z:n(standing.elevation3d)}:null;
  p.animation=p.grounded3d?(len?(sprint?'run':'walk'):'idle'):(p._verticalVelocity>0?'jump':'fall');
 }

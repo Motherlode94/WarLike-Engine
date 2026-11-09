@@ -13,8 +13,8 @@ export function createCompanyScene(){
   {id:'M',name:'M · Munitions',kind:'munitions',x:900,y:1430,owner:0,links:['A']},
   {id:'F',name:'F · Carburant',kind:'fuel',x:2350,y:1430,owner:0,links:['C']}
  ]};
- const terrain=get3dAsset('free-nature-kit-ground-grass').normalizedSize,height=640*terrain[1]/terrain[0];
- for(let x=0;x<5;x++)for(let y=0;y<3;y++)place('free-nature-kit-ground-grass','Terrain',x*640,y*640,{w:640,h:height,depth3d:640,elevation3d:-height/64,collision3d:false,solid3d:false,hierarchyGroup:'Terrain'});
+ const terrain=get3dAsset('free-nature-kit-ground-grass').normalizedSize,height=Math.max(1,640*terrain[1]/terrain[0]);
+ for(let x=0;x<5;x++)for(let y=0;y<3;y++)place('free-nature-kit-ground-grass','Terrain',x*640,y*640,{w:640,h:height,depth3d:640,elevation3d:-height/64,collision3d:true,solid3d:true,hierarchyGroup:'Terrain'});
  let firstSquad;
  for(const team of [1,2])for(const [index,role] of ['rifle','rifle','mg','engineer','tank'].entries()){
   const members=makeCompanySquad(role,team,id,team===1?470+(index%2)*300:2460-(index%2)*300,470+Math.floor(index/2)*380);

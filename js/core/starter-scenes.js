@@ -45,8 +45,8 @@ const win=value=>({type:'winGame',value});
 export function finishStarterScene(genre,mode,entities,player){
  if(genre==='sandbox')return {entities,selected:[player.id],nextId:entities.length+1,camera:{x:0,y:0,zoom:1}};
  const three=mode==='3d',find=name=>entities.find(o=>o.name===name),combat=genre==='tactical'||genre==='rts';
- const floor=three?{...prefab3d('free-nature-kit-ground-grass',0),w:1500,h:6,depth3d:1000,elevation3d:-.12}:{type:'prefab',assetId:'life-town-tile-0000',w:1500,h:1000,tileSize:48};
- Object.assign(floor,{id:0,name:genre==='horror'?'Domaine · terrain':'Terrain · '+genreLabel(genre,mode),x:-100,y:-100,collision3d:false,solid3d:false,hideLabelInPlay:true,hierarchyGroup:'Terrain'});
+ const floor=three?{...prefab3d('free-nature-kit-ground-grass',0),w:1500,h:6,depth3d:1000,elevation3d:-6/64}:{type:'prefab',assetId:'life-town-tile-0000',w:1500,h:1000,tileSize:48};
+ Object.assign(floor,{id:0,name:genre==='horror'?'Domaine · terrain':'Terrain · '+genreLabel(genre,mode),x:-100,y:-100,collision3d:three,solid3d:three,hideLabelInPlay:true,hierarchyGroup:'Terrain'});
  entities.unshift(floor);
  const roadColor=genre==='horror'?'#48504b':genre==='tactical'||genre==='rts'?'#7d8477':'#ba9a70';
  for(const [x,y,w,d] of [[80,225,1190,80],[80,470,1190,80],[180,70,80,690],[780,70,80,690]]){

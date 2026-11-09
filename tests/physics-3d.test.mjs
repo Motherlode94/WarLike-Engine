@@ -4,7 +4,8 @@ import {defaultRigidbody3d,stepPhysics3d,applyImpulse3d,overlap3d} from '../js/c
 
 test('rigidbody gravity brings object to floor',()=>{
  const o={id:1,type:'mesh3d',x:0,y:0,w:25,h:25,elevation3d:2,rigidbody3d:{...defaultRigidbody3d(),restitution:0}};
- for(let i=0;i<120;i++)stepPhysics3d([o],1/60);
+ const floor={id:2,type:'object',x:-300,y:-300,w:600,h:16,depth3d:600,elevation3d:-.25,solid3d:true};
+ for(let i=0;i<120;i++)stepPhysics3d([o,floor],1/60);
  assert.equal(o.elevation3d,0);
 });
 test('impulse respects mass and kinematic setting',()=>{

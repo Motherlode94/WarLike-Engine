@@ -19,10 +19,10 @@ export function moveBody3d(body,dx,dy,dz,entities,{recover=true,ignore=null}={})
  const result={blockedX:false,blockedY:false,blockedZ:false,grounded:false,ceiling:false,hits:[]};
  if(body.enabled===false)return result;
  const obstacles=body.collision3d===false?[]:entities.filter(o=>o!==body&&o!==ignore&&solidBody3d(o));
- body.x=n(body.x);body.y=n(body.y);body.elevation3d=Math.max(0,n(body.elevation3d));
+ body.x=n(body.x);body.y=n(body.y);body.elevation3d=n(body.elevation3d);
  if(recover)for(let i=0;i<8;i++){
   const box=collisionBox3d(body),other=obstacles.find(o=>boxesOverlap3d(box,collisionBox3d(o)));if(!other)break;
-  const b=collisionBox3d(other),options=axes.flatMap(([axis,size])=>[[axis,b[axis]-box[axis]-box[size]],[axis,b[axis]+b[size]-box[axis]]]).filter(([axis,delta])=>axis!=='z'||box.z+delta>=-epsilon).sort((a,b)=>Math.abs(a[1])-Math.abs(b[1]));
+  const b=collisionBox3d(other),options=axes.flatMap(([axis,size])=>[[axis,b[axis]-box[axis]-box[size]],[axis,b[axis]+b[size]-box[axis]]]).sort((a,b)=>Math.abs(a[1])-Math.abs(b[1]));
   if(!options.length)break;const [axis,delta]=options[0];translate(body,axis,delta);result.hits.push(other.id);if(axis==='z'&&delta>0)result.grounded=true;
  }
  for(const [axis,size,value] of [['x','w',n(dx)],['y','d',n(dy)],['z','h',n(dz)]]){
@@ -31,12 +31,11 @@ export function moveBody3d(body,dx,dy,dz,entities,{recover=true,ignore=null}={})
    if(value>0&&box[axis]+box[size]<=b[axis]+epsilon){const allowed=Math.max(0,b[axis]-box[axis]-box[size]);if(allowed<delta){delta=allowed;hit=o}}
    else if(value<0&&box[axis]>=b[axis]+b[size]-epsilon){const allowed=Math.min(0,b[axis]+b[size]-box[axis]);if(allowed>delta){delta=allowed;hit=o}}
   }
-  if(axis==='z'&&box.z+delta<0){delta=-box.z;hit={id:null}}
   translate(body,axis,delta);
   if(hit&&Number.isFinite(hit.x)){const b=collisionBox3d(hit),position=value>0?b[axis]-box[size]:b[axis]+b[size];if(axis==='z')body.elevation3d=position/64;else body[axis]=position}
   if(hit){result['blocked'+axis.toUpperCase()]=true;if(hit.id!=null)result.hits.push(hit.id);if(axis==='z'){result.grounded=value<0;result.ceiling=value>0}}
  }
- body.elevation3d=Math.max(0,n(body.elevation3d));result.grounded||=body.elevation3d<=epsilon||!!supportBody3d(body,obstacles,.01);result.hits=[...new Set(result.hits)];return result;
+ result.grounded||=!!supportBody3d(body,obstacles,.01);result.hits=[...new Set(result.hits)];return result;
 }
 export function segmentBox3d(from,to,box,padding=0){
  let near=0,far=1;for(const [axis,size] of axes){const start=n(from[axis]),delta=n(to[axis])-start,low=box[axis]-padding,high=box[axis]+box[size]+padding;

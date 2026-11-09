@@ -1,0 +1,135 @@
+{
+  "apiVersion": "1.0",
+  "id": "warlike-acces-securise",
+  "version": "1.0.0",
+  "name": "Accès et portes",
+  "author": "WarLike Studio",
+  "modes": [
+    "2d",
+    "3d"
+  ],
+  "description": "Un interrupteur et une porte commandée par signal, avec verrouillage depuis une console.",
+  "recipes": [
+    {
+      "id": "interrupteur",
+      "name": "Interrupteur d’ouverture",
+      "description": "Active la variable d’accès et envoie un signal.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": true,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "accesAutorise",
+            "value": 1
+          },
+          {
+            "type": "emitSignal",
+            "value": "acces:ouvrir"
+          },
+          {
+            "type": "message",
+            "value": "Accès autorisé."
+          }
+        ]
+      }
+    },
+    {
+      "id": "porte",
+      "name": "Porte à signal",
+      "description": "La porte disparaît et sa collision est désactivée au signal acces:ouvrir.",
+      "sequence": {
+        "event": "signal",
+        "signal": "acces:ouvrir",
+        "once": true,
+        "instructions": [
+          {
+            "type": "setCollision",
+            "value": false
+          },
+          {
+            "type": "setVisibility",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "console",
+      "name": "Console conditionnelle",
+      "description": "Envoie le signal seulement si l’accès a été autorisé.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": false,
+        "branches": [
+          {
+            "conditions": [
+              {
+                "type": "variable",
+                "key": "accesAutorise",
+                "value": 1,
+                "operator": "=="
+              }
+            ],
+            "instructions": [
+              {
+                "type": "emitSignal",
+                "value": "acces:ouvrir"
+              },
+              {
+                "type": "message",
+                "value": "Ouverture demandée."
+              }
+            ]
+          }
+        ],
+        "elseInstructions": [
+          {
+            "type": "message",
+            "value": "Active d’abord l’interrupteur."
+          }
+        ]
+      }
+    },
+    {
+      "id": "statut",
+      "name": "Panneau de contrôle",
+      "description": "Affiche si l’accès a été autorisé.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": false,
+        "branches": [
+          {
+            "conditions": [
+              {
+                "type": "variable",
+                "key": "accesAutorise",
+                "value": 1,
+                "operator": "=="
+              }
+            ],
+            "instructions": [
+              {
+                "type": "message",
+                "value": "Accès autorisé."
+              }
+            ]
+          }
+        ],
+        "elseInstructions": [
+          {
+            "type": "message",
+            "value": "Accès verrouillé."
+          }
+        ]
+      }
+    }
+  ]
+}

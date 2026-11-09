@@ -2,40 +2,120 @@ import {componentChoices,addObjectComponent,resetObjectComponent,removeObjectCom
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 import {workspace} from '../core/workspaces.js';
-let scope='web';
 const make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;return el};
+// The regular object inspector is deliberately limited to rendering and physics.
+// Feature/genre components are attached by the relevant WarLike extension or prefab.
+const primaryKinds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','light','audio','cameraRig']);
+const nativePrimaryKinds=new Set(['Rigidbody']);
+const primaryCategory=(option)=>{
+ if(/Collider|Rigidbody|Articulation|Joint/.test(option.name))return 'Physique';
+ if(/Caméra|Camera|Audio|Lumière/.test(option.name))return 'Rendu et scène';
+ if(option.id==='script')return 'Extensions';
+ return null;
+};
 export function openComponentBrowser(){
- const browser=document.querySelector('#objectComponentBrowser');
- if(!browser)return;
- browser.open=true;browser.scrollIntoView({block:'nearest'});browser.querySelector('input[type=search]')?.focus();
+ const button=document.querySelector('#objectComponentBrowser>summary');
+ if(button)button.click();
 }
 export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
  const root=make('details','inspector-add-component');root.id='objectComponentBrowser';
- const heading=make('summary','','＋ Ajouter un composant');root.append(heading);
- const content=make('div','component-browser-body'),search=make('input');search.type='search';search.placeholder='Rechercher : santé, IA, déclencheur…';search.setAttribute('aria-label','Rechercher un composant');
- const tabs=make('div','component-browser-tabs'),list=make('div','component-browser-results'),hint=make('small','component-browser-hint');
- const options=componentChoices(workspace.mode).map(d=>({...d,runtime:'web',attached:!d.multiple&&owner[d.id]!=null,add:()=>addObjectComponent(owner,d.id,workspace.mode)}));
- if(workspace.mode==='3d')options.push(
-  {id:'light',name:'Lumière ponctuelle',category:'Affichage',description:'Éclaire la scène 3D.',runtime:'web',attached:!!owner.lightType&&owner.lightType!=='none',add:()=>Object.assign(owner,{lightType:'point',lightEnabled:true,lightColor:'#ffd48b',lightIntensity:3,lightRange:13,lightAngle:45})});
- options.push({id:'audio',name:'Audio Source',category:'Audio',description:'Son spatial et clip audio.',runtime:'web',attached:owner.audioEnabled!==undefined,add:()=>Object.assign(owner,{audioEnabled:true,audioClip:'kenney-interface-sounds-click_001',audioGain:.6,audioRange:18,audioInterval:3})});
- for(const [category,kinds] of Object.entries(nativeCatalog))for(const [kind,defaults] of Object.entries(kinds))options.push({id:'data-'+kind,name:kind,category:category.replace(' / C#',''),description:webDataComponentKinds.has(kind)?'Composant utilisable en Play Web.':'Exécution dans le runtime C# local.',runtime:webDataComponentKinds.has(kind)?'web':'dotnet',attached:owner.csharpComponents?.some(c=>c.kind===kind),add:()=>{owner.csharpComponents??=[];owner.csharpComponents.push({kind,...structuredClone(defaults)});return true}});
- options.push({id:'script',name:'Script C# local',category:'Scripts',description:'Ouvrir le script de cet objet dans le panneau C#.',runtime:'dotnet',add:()=>{openScript();return false}});
+ const heading=make('summary','','Add Component');
+ heading.setAttribute('aria-label','Add Component · composants essentiels Unity');
+ root.append(heading);
+ const options=componentChoices(workspace.mode).filter(d=>primaryKinds.has(d.id))
+  .map(d=>({...d,runtime:'web',attached:!d.multiple&&owner[d.id]!=null,add:()=>addObjectComponent(owner,d.id,workspace.mode)}));
+ if(workspace.mode==='3d')options.push({
+  id:'light',name:'Lumière ponctuelle',category:'Rendu et scène',
+  description:'Éclaire la scène 3D.',runtime:'web',
+  attached:!!owner.lightType&&owner.lightType!=='none',
+  add:()=>{Object.assign(owner,{lightType:'point',lightEnabled:true,lightColor:'#ffd48b',lightIntensity:3,lightRange:13,lightAngle:45});return true}
+ });
+ options.push({
+  id:'audio',name:'Audio Source',category:'Rendu et scène',
+  description:'Son spatial et clip audio.',runtime:'web',
+  attached:owner.audioEnabled!==undefined,
+  add:()=>{Object.assign(owner,{audioEnabled:true,audioClip:'kenney-interface-sounds-click_001',audioGain:.6,audioRange:18,audioInterval:3});return true}
+ });
+ for(const [category,kinds] of Object.entries(nativeCatalog)){
+  for(const [kind,defaults] of Object.entries(kinds)){
+   if(!nativePrimaryKinds.has(kind))continue;
+   options.push({
+    id:'data-'+kind,name:kind+' (C#)',category:'Physique',
+    description:'Rigidbody natif via pont .NET local.',runtime:'dotnet',
+    attached:owner.csharpComponents?.some(c=>c.kind===kind),
+    add:()=>{owner.csharpComponents??=[];owner.csharpComponents.push({kind,...structuredClone(defaults)});return true}
+   });
+  }
+ }
+ // Preserve the existing Script Studio entry point, without crowding the default picker.
+ options.push({id:'script',name:'Script C# local',category:'Extensions',description:'Ouvrir le script C# de cet objet dans Script Studio.',runtime:'dotnet',add:()=>{openScript();return false}});
+ const popup=make('div','unity-component-popup');
+ popup.setAttribute('role','dialog');popup.setAttribute('aria-label','Ajouter un composant');
+ popup.hidden=true;
+ const search=make('input','unity-component-search');search.type='search';search.placeholder='Search';search.setAttribute('aria-label','Rechercher un composant');
+ const list=make('div','component-browser-results'),hint=make('small','component-browser-hint');
+ const title=make('div','unity-component-popup-title','Add Component');
+ popup.append(title,search,list,hint);
+ // A body-level popup avoids being clipped by the narrow, scrolling Inspector.
+ document.body.append(popup);
+ let opened=false;
+ const position=()=>{
+  if(!opened)return;
+  const anchor=heading.getBoundingClientRect(),width=Math.min(330,Math.max(240,window.innerWidth-16));
+  popup.style.width=width+'px';
+  popup.style.left=Math.max(8,Math.min(window.innerWidth-width-8,anchor.left+(anchor.width-width)/2))+'px';
+  const above=window.innerHeight-anchor.bottom<300&&anchor.top>300;
+  popup.style.top=above?'auto':Math.max(8,anchor.bottom+5)+'px';
+  popup.style.bottom=above?Math.max(8,window.innerHeight-anchor.top+5)+'px':'auto';
+ };
+ const close=()=>{
+  if(!opened)return;opened=false;popup.hidden=true;root.open=false;
+  document.removeEventListener('pointerdown',outside,true);
+  document.removeEventListener('keydown',keyboard,true);
+  window.removeEventListener('resize',position);
+  heading.focus();
+ };
+ const outside=e=>{if(!popup.contains(e.target)&&!heading.contains(e.target))close()};
+ const keyboard=e=>{
+  if(e.key==='Escape'){e.preventDefault();close()}
+  if(e.key==='ArrowDown'&&document.activeElement===search){e.preventDefault();list.querySelector('button:not(:disabled)')?.focus()}
+ };
  const render=()=>{
-  list.replaceChildren();const query=search.value.trim().toLocaleLowerCase('fr');let category=null,count=0;
-  const found=options.filter(d=>d.runtime===scope&&(!query||(d.name+' '+d.category+' '+d.description).toLocaleLowerCase('fr').includes(query))).sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
-  for(const option of found){
-   if(category!==option.category){category=option.category;list.append(make('h4','component-browser-category',category))}
-   const button=make('button','component-browser-option');button.type='button';button.dataset.componentId=option.id;button.disabled=state.playing||!!option.attached;
+  const query=search.value.trim().toLocaleLowerCase('fr');list.replaceChildren();let lastCategory='',count=0;
+  for(const option of options.filter(o=>(o.id!=='script'||!!query)&&(!query||(o.name+' '+o.description).toLocaleLowerCase('fr').includes(query))).sort((a,b)=>primaryCategory(a).localeCompare(primaryCategory(b))||a.name.localeCompare(b.name))){
+   const category=primaryCategory(option)||'Autres';
+   if(category!==lastCategory){list.append(make('h4','component-browser-category',category));lastCategory=category}
+   const button=make('button','component-browser-option');button.type='button';button.dataset.componentId=option.id;
+   button.disabled=state.playing||!!option.attached;
    button.append(make('strong','',option.name+(option.attached?' · ajouté':'')),make('small','',option.description));
-   button.onclick=()=>{if(option.add()){record('Ajouter '+option.name);notify();requestAnimationFrame(()=>{const card=[...document.querySelectorAll('#properties>.inspector-component')].find(el=>el.dataset.componentKey===option.id||el.dataset.componentTitle===option.name);if(card){card.open=true;card.scrollIntoView({block:'nearest'})}})}};
+   button.onclick=()=>{
+    close();
+    if(option.add()){
+     record('Ajouter '+option.name);notify();
+     requestAnimationFrame(()=>{
+      const card=[...document.querySelectorAll('#properties>.inspector-component')].find(el=>el.dataset.componentKey===option.id||el.dataset.componentTitle===option.name);
+      if(card){card.open=true;card.scrollIntoView({block:'nearest'})}
+     });
+    }
+   };
    list.append(button);count++;
   }
-  if(!count)list.append(make('p','component-browser-empty','Aucun composant ne correspond à cette recherche.'));
-  hint.textContent=scope==='web'?'Ces composants utilisent le runtime du jeu Web.':'Le pont .NET local est requis pour exécuter ces composants C#.';
-  tabs.querySelectorAll('button').forEach(button=>{button.classList.toggle('active',button.dataset.scope===scope);button.setAttribute('aria-pressed',String(button.dataset.scope===scope))});
+  if(!count)list.append(make('p','component-browser-empty','Aucun composant trouvé.'));
+  hint.textContent='Autres composants : gérés par les extensions ou les prefabs WarLike.';
  };
- for(const [id,title] of [['web','Jeu Web'],['dotnet','C# local']]){const tab=make('button','',title);tab.type='button';tab.dataset.scope=id;tab.onclick=()=>{scope=id;render()};tabs.append(tab)}
- search.addEventListener('input',render);root.addEventListener('toggle',()=>{if(root.open)search.focus()});content.append(search,tabs,hint,list);root.append(content);parent.append(root);render();return root;
+ heading.addEventListener('click',e=>{
+  e.preventDefault();
+  if(opened){close();return}
+  // Unmount the previous dialog when the Inspector has been redrawn.
+  document.querySelectorAll('body > .unity-component-popup').forEach(node=>{if(node!==popup)node.remove()});
+  opened=true;root.open=false;search.value='';render();popup.hidden=false;position();
+  document.addEventListener('pointerdown',outside,true);
+  document.addEventListener('keydown',keyboard,true);
+  window.addEventListener('resize',position);
+  search.focus();
+ });
+ search.addEventListener('input',render);
+ parent.append(root);return root;
 }
 export function finishInspector(root,owner,templates,nativeCatalog,renderNative,openScript){
  renderNative(root,owner);

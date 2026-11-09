@@ -46,6 +46,17 @@ export const webComponentDefinitions=[
  {id:'worldPoliceConfig',name:'Police · Recherche',category:'Intelligence artificielle',description:'Patrouille et poursuite selon le niveau de recherche.',create:()=>({enabled:true,range:450,speed:75})},
  {id:'worldInfectedConfig',name:'Infecté · Horde',category:'Intelligence artificielle',description:'Poursuite du joueur à proximité.',create:()=>({enabled:true,range:300,speed:53})}
 ];
+// Stable Inspector metadata: classification never depends on translated display names.
+export const inspectorCoreComponentIds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','cameraRig']);
+export function inspectorComponentGroup(id){return inspectorCoreComponentIds.has(id)?(id==='cameraRig'?'render':'physics'):'extension'}
+export const componentDependencies=Object.freeze({
+ collider2d:['rigidbody2d'],
+ collider3d:['rigidbody3d','joint3d','controller3d'],
+ rigidbody3d:['joint3d']
+});
+export function componentRemovalBlockers(object,id){
+ return (componentDependencies[id]||[]).filter(dependent=>object?.[dependent]!=null);
+}
 export const componentChoices=mode=>webComponentDefinitions.filter(d=>!d.modes||d.modes.includes(mode));
 export function hasObjectComponent(object,id){return id==='sequence'?!!object.sequence:object[id]!=null}
 export function addObjectComponent(object,id,mode){
@@ -55,7 +66,7 @@ export function addObjectComponent(object,id,mode){
  object[id]=definition.create();if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='controller3d')object.collider3d??={...defaultCollider3d(),shape:'capsule'};if(['rigidbody3d','joint3d'].includes(id)){object.collider3d??=defaultCollider3d();object.collision3d=true;if(id==='joint3d')object.rigidbody3d??={...defaultRigidbody3d(),lockRotations:false}}if(id==='rigidbody2d')object.collider2d??=defaultCollider2d();return true;
 }
 export function resetObjectComponent(object,id){const definition=webComponentDefinitions.find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
-export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id))return false;delete object[id];if(id==='collider2d')object.collision3d=false;if(id==='superhero')delete object.heroState;if(id==='survival')delete object.survivalState;return true}
+export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id)||componentRemovalBlockers(object,id).length)return false;delete object[id];if(id==='collider2d')object.collision3d=false;if(id==='superhero')delete object.heroState;if(id==='survival')delete object.survivalState;return true}
 export {webComponentKinds as webDataComponentKinds} from './runtime-capabilities.js';
 export function inspectorComponentRank(title){
  if(title==='Transform')return 0;

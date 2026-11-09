@@ -1,5 +1,18 @@
 # Scènes démo jouables
 
+## Worldforge · Forge des mondes — simulation de monde jouable
+
+Ouvrir un projet **2D**, puis **Game → Scènes démo jouables… → Worldforge → Jouer dans Engine**. Le jeu est présenté dans une fenêtre intégrée, sans remplacer la scène de l'éditeur. Il est également disponible en ouvrant `examples/worldforge/index.html` via un serveur HTTP local.
+
+Worldforge est un **jeu original de god game**, inspiré des simulations de mondes à la WorldBox, sans reprendre ses assets ni son code. Le joueur peut modifier le terrain (eau, plages, plaines, forêts et montagnes), créer quatre peuples, déclencher des pluies, des incendies ou des météorites, puis observer la croissance des villes. L'IA simule les ressources, la nourriture, les habitations, la natalité, la mortalité, la colonisation et les conflits frontaliers entre peuples distincts.
+
+**Commandes :** clic gauche pour peindre ou sélectionner une ville ; clic droit ou Maj + glisser pour déplacer la carte ; molette pour zoomer ; Espace pour suspendre/reprendre ; F pour recentrer. Les boutons règlent la vitesse (pause, 1×, 2×, 5×), la taille du pinceau, le peuple et les événements. **Sauvegarder / Charger** emploie localStorage dans le navigateur ; **Exporter JSON** fournit les données du monde. La simulation ne communique avec aucun serveur.
+
+**Portée du prototype :** c'est un exemple Web autonome lancé depuis l'interface Engine, **pas encore une scène native modifiable dans Inspector, ni un projet exportable avec le pipeline de scènes Engine**. Les agents et les guerres sont simulés au niveau des villes et des ressources, sans unités individuelles contrôlables. La physique 3D, la diplomatie approfondie, la faune et les animations de combat ne sont pas encore implémentées.
+
+Tests de simulation : `node --test tests/worldforge-demo.test.mjs` valide notamment la reproductibilité du monde, les civilisations, le cycle économique, les outils divins, la sérialisation et la présence du jeu dans le navigateur des démos. Les résultats des tests automatisés ne remplacent pas un parcours visuel du jeu dans le navigateur.
+
+
 Dans un projet 2D ou 3D, choisir **Scènes démo** dans la barre d’outils ou **Game → Scènes démo jouables…**. Le chargement remplace la scène courante et reste annulable avec Ctrl+Z. Sauvegarder le projet pour conserver ses modifications. La fiche repliable en haut de la scène ouvre Play ou un comportement Blueprint.
 
 | Scène | Parcours | Systèmes présentés |

@@ -187,10 +187,10 @@ function loop(time){
  if(world&&playing&&speed){
   const dt=Math.min(.2,(time-lastTime)/1000||0);carry+=dt*speed;
   let turns=0;
-  while(carry>=.45&&turns++<16){
-   const rng=random(world.seed+world.ticks*13+1761);tick(world,rng);carry-=.45;
+  while(carry>=.45&&turns<16){
+   const rng=random(world.seed+world.ticks*13+1761);tick(world,rng);carry-=.45;turns++;
   }
-  if(turns>1)renderHud();
+  if(turns>0)renderHud();
  }
  lastTime=time;draw();
 }

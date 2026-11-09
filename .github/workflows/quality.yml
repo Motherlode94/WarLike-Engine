@@ -15,6 +15,8 @@ jobs:
           node-version: '22'
       - run: npm install --ignore-scripts
       - run: npm run typecheck
+      - name: Refresh runtime file manifest
+        run: node scripts/build-runtime-manifest.mjs
       - run: npm test
       - name: Verify local Python and C++ Script Studio runner
         run: python3 -m unittest discover -s tests -p 'script_runner_test.py' -v

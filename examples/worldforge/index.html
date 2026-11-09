@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#37463D"><title>WarLike Worldforge · Simulation de monde</title>
+<style>
+:root{font:14px/1.45 Inter,system-ui,Segoe UI,sans-serif;color:#f8fbf1;background:#17211b;--forest:#37463d;--slate:#5b696b;--graphite:#535953;--ivory:#f8fbf1;--sage:#c5c5a9}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;overflow:hidden}button,select{font:inherit}button{background:#37463d;color:#f8fbf1;border:1px solid #667969;border-radius:9px;padding:9px 11px;cursor:pointer;font-weight:600;transition:background .12s}button:hover{background:#536e57}button:focus-visible,select:focus-visible{outline:2px solid #c5c5a9;outline-offset:2px}
+button.active,.highlight{background:#c5c5a9;color:#17211b;border-color:#c5c5a9}header{min-height:72px;padding:10px 18px;background:#26362b;border-bottom:1px solid #5b696b;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.brand small{font-size:10px;letter-spacing:.18em;color:#c5c5a9;font-weight:800}.brand h1{font-size:21px;margin:0}.actions{display:flex;gap:7px;flex-wrap:wrap}main{display:grid;grid-template-columns:minmax(220px,257px) minmax(0,1fr) minmax(230px,270px);height:calc(100dvh - 72px)}
+aside{overflow:auto;padding:13px;background:#24332a;border-right:1px solid #536353;scrollbar-color:#596a5c #17211b}aside.info{border-left:1px solid #536353;border-right:0}h2{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#c5c5a9;margin:13px 0 8px}h2:first-child{margin-top:3px}
+.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.tools button{font-size:12px;padding:11px 5px}.field{display:grid;gap:6px;margin:12px 0}.field label{color:#d6e1d4;font-size:12px}
+select{color:#f8fbf1;background:#37463d;border:1px solid #6d8170;border-radius:8px;padding:10px;width:100%}.hint{font-size:12px;color:#cbd3bd;line-height:1.6}
+#viewport{min-width:0;position:relative;background:#111a20;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.worldLabel{pointer-events:none;position:absolute;top:15px;left:15px;background:#17211bdc;border:1px solid #5b696b;border-radius:11px;padding:10px 13px;max-width:350px;box-shadow:0 8px 26px #0007}
+.worldLabel strong{display:block;font-size:15px}.worldLabel span{font-size:12px;color:#c5c5a9}
+#toast{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:#26362bee;border:1px solid #c5c5a9;border-radius:10px;padding:11px 17px;max-width:90%;text-align:center;pointer-events:none}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.metric{border:1px solid #5b696b;background:#34473a;border-radius:10px;padding:11px}
+.metric small{color:#c5c5a9;display:block}.metric strong{font-size:19px}
+.people-row{display:flex;justify-content:space-between;gap:6px;font-size:12px;padding:9px 0;border-bottom:1px solid #4b6052}.people-row strong{color:#f8fbf1;font-size:11px}
+#eventLog{margin:0;padding:0;list-style:none}#eventLog li{padding:7px 0;border-bottom:1px solid #4b6052;font-size:12px;color:#d8e2d4}
+#inspected{min-height:44px;color:#e4ebda;font-size:12px;line-height:1.6}
+.speedRow{display:flex;align-items:center;gap:7px}.speedRow select{flex:1}
+footer{font-size:11px;color:#becbbd;margin-top:20px}
+dialog{border:1px solid #c5c5a9;background:#26362b;color:#f8fbf1;border-radius:16px;max-width:560px;width:min(92vw,560px);padding:26px;line-height:1.7;box-shadow:0 18px 50px #0009}
+dialog::backdrop{background:#07120be0}dialog h2{font-size:22px;color:#f8fbf1}
+@media(max-width:1100px){main{grid-template-columns:205px minmax(0,1fr)}aside.info{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;border-left:0;border-top:1px solid #536353;max-height:230px}main{height:calc(100dvh - 72px)}#viewport{min-height:350px}}
+@media(max-width:700px){body{overflow:auto}header{padding:10px}.brand h1{font-size:17px}main{display:flex;flex-direction:column;height:auto}#viewport{height:58dvh;min-height:330px;order:-1}aside{overflow:visible}.tools{grid-template-columns:repeat(4,minmax(0,1fr))}.tools button{font-size:11px}aside.info{display:block;max-height:none}.worldLabel{top:8px;left:8px}.actions button{padding:7px}}
+</style></head>
+<body>
+<header><div class="brand"><small>WARLIKE ENGINE · JEU DÉMO 2D</small><h1>🌍 Worldforge — Forge des mondes</h1></div>
+<div class="actions">
+<button id="playPause" class="highlight">⏸ Pause</button>
+<button id="newWorld">↻ Nouveau monde</button>
+<button id="saveWorld">Sauvegarder</button>
+<button id="loadWorld">Charger</button>
+<button id="exportWorld">Exporter JSON</button>
+<button id="helpButton" aria-label="Aide">?</button>
+</div></header>
+<main>
+<aside aria-label="Outils divins">
+<h2>Créer et transformer</h2>
+<div class="tools">
+<button data-tool="inspect" class="active" aria-pressed="true">🔎 Observer</button>
+<button data-tool="spawn" aria-pressed="false">👑 Peuple</button>
+<button data-tool="water" aria-pressed="false">💧 Eau</button>
+<button data-tool="grass" aria-pressed="false">🌱 Plaine</button>
+<button data-tool="forest" aria-pressed="false">🌳 Forêt</button>
+<button data-tool="mountain" aria-pressed="false">⛰ Montagne</button>
+<button data-tool="sand" aria-pressed="false">🏝 Plage</button>
+<button data-tool="rain" aria-pressed="false">🌧 Pluie</button>
+<button data-tool="fire" aria-pressed="false">🔥 Incendie</button>
+<button data-tool="meteor" aria-pressed="false">☄ Météore</button>
+</div>
+<div class="field"><label for="civilization">Peuple à créer</label>
+<select id="civilization"><option value="0">☀ Aube</option><option value="1">❖ Mousse</option><option value="2">✦ Azur</option><option value="3">✹ Bra braise</option></select></div>
+<div class="field"><label for="brush">Taille du pinceau</label>
+<select id="brush"><option value="1">1 case · précision</option><option value="2">3 × 3 · petit</option><option value="3">5 × 5 · moyen</option><option value="5">9 × 9 · grand</option></select></div>
+<h2>Temps et évolution</h2>
+<div class="speedRow"><label for="speed">Vitesse</label><select id="speed"><option value="0">Pause</option><option value="1" selected>1×</option><option value="2">2×</option><option value="5">5×</option></select></div>
+<h2>Objectif libre</h2><p class="hint">Tu es le créateur du monde. Établis plusieurs peuples, développe leurs civilisations et observe comment leurs ressources, leurs territoires et leurs conflits évoluent.</p>
+<p class="hint">Clic gauche : utiliser l'outil · Clic droit / Maj + glisser : déplacer la caméra · Molette : zoomer · Espace : pause · F : recentrer · Ctrl+S : sauvegarder.</p>
+</aside>
+<section id="viewport" aria-label="Monde simulé"><canvas id="world" aria-label="Carte 2D interactive de Worldforge"></canvas>
+<div class="worldLabel"><strong>Un monde vivant</strong><span>Outil actif : <span id="currentTool">🔎 Observer</span></span></div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+</section>
+<aside class="info" aria-label="État du monde">
+<div><h2>Le monde</h2><div class="metrics">
+<div class="metric"><small>Année</small><strong id="year">0</strong></div>
+<div class="metric"><small>Habitants</small><strong id="population">0</strong></div>
+<div class="metric"><small>Cités</small><strong id="cities">0</strong></div>
+<div class="metric"><small>Conflits</small><strong id="warCount">0</strong></div>
+</div></div>
+<div><h2>Les civilisations</h2><div id="peoples"></div>
+<h2>Village observé</h2><p id="inspected">Clique sur un village.</p></div>
+<div><h2>Chronique du monde</h2><ul id="eventLog"></ul>
+<footer>Simulation de monde originale construite comme exemple Web autonome pour WarLike Engine. Le jeu n'utilise aucun contenu de WorldBox. Les sauvegardes sont locales au navigateur.</footer></div>
+</aside>
+</main>
+<dialog id="helpDialog"><h2>🌍 Comment jouer à Worldforge ?</h2>
+<p>Peins les continents et les biomes. Dépose des peuples sur une terre ferme à distance des autres villes. Leurs habitants récoltent de la nourriture et du bois, construisent des maisons, évoluent et étendent leurs territoires. Des voisins de peuples différents peuvent se battre quand leurs frontières se touchent.</p>
+<p>Avec les outils Pluie, Feu et Météore, déclenche des changements dans leur monde. La sauvegarde reste dans ton navigateur. L'export JSON permet d'examiner les données de la simulation.</p>
+<p>Ce prototype est un **jeu de simulation original inspiré du genre god game**, pas une reproduction du jeu commercial WorldBox ni une scène native du moteur éditable dans Inspector.</p><button id="closeHelp" class="highlight">Jouer</button></dialog>
+<script type="module" src="./game.js"></script></body></html>

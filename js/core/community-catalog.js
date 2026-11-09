@@ -1,5 +1,9 @@
 // Bundled, same-origin community examples. The catalog is curated, not a remote registry.
 export const communityCatalog=[
+ {id:'warlike-cuisine-commerce',title:'Cuisine et commerce',category:'2D / 3D · Simulation',source:'./examples/community/warlike-cuisine-commerce.json',description:'Récolte, préparation, vente et approvisionnement : 4 recettes liées'},
+ {id:'warlike-quete-livraison',title:'Quête de livraison',category:'2D / 3D · Missions',source:'./examples/community/warlike-quete-livraison.json',description:'Mission, colis, livraison et indication : 4 recettes liées'},
+ {id:'warlike-acces-securise',title:'Accès et portes',category:'2D / 3D · Interactions',source:'./examples/community/warlike-acces-securise.json',description:'Interrupteur, porte à signal et console : 4 recettes liées'},
+ {id:'warlike-objectifs-arcade',title:'Objectifs arcade',category:'2D / 3D · Arcade',source:'./examples/community/warlike-objectifs-arcade.json',description:'Pièces, point de reprise et sortie : 4 recettes liées'},
  {id:'warlike-2d-game-builder',title:'Game Builder 2D',category:'2D / Construction',source:'./examples/community/warlike-2d-game-builder.json',description:'Plateforme, arcade, RPG et stratégie : 10 recettes'},
  {id:'warlike-3d-game-builder',title:'Game Builder 3D',category:'3D / Construction',source:'./examples/community/warlike-3d-game-builder.json',description:'FPS, TPS, exploration, course et RPG : 10 recettes'},
  {id:'warlike-2d-horror-builder',title:'Horror Builder 2D',category:'2D / Horreur',source:'./examples/community/warlike-2d-horror-builder.json',description:'Enquête, zones sûres et sortie : 6 recettes'},

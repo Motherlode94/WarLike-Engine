@@ -1,0 +1,172 @@
+{
+  "apiVersion": "1.0",
+  "id": "warlike-cuisine-commerce",
+  "version": "1.0.0",
+  "name": "Cuisine et commerce",
+  "author": "WarLike Studio",
+  "modes": [
+    "2d",
+    "3d"
+  ],
+  "description": "Recettes Blueprint pour récolter, préparer et vendre des repas. Variables partagées : cuisineIngredients, cuisineRepas, cuisineCredits.",
+  "recipes": [
+    {
+      "id": "recolte",
+      "name": "Réserve d’ingrédients",
+      "description": "E : obtenir deux ingrédients.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": false,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "addVariable",
+            "key": "cuisineIngredients",
+            "value": 2
+          },
+          {
+            "type": "message",
+            "value": "Ingrédients +2."
+          }
+        ]
+      }
+    },
+    {
+      "id": "preparation",
+      "name": "Plan de préparation",
+      "description": "Consomme deux ingrédients pour préparer un repas.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": false,
+        "branches": [
+          {
+            "conditions": [
+              {
+                "type": "variable",
+                "key": "cuisineIngredients",
+                "value": 2,
+                "operator": ">="
+              }
+            ],
+            "instructions": [
+              {
+                "type": "addVariable",
+                "key": "cuisineIngredients",
+                "value": -2
+              },
+              {
+                "type": "addVariable",
+                "key": "cuisineRepas",
+                "value": 1
+              },
+              {
+                "type": "message",
+                "value": "Repas préparé !"
+              }
+            ]
+          }
+        ],
+        "elseInstructions": [
+          {
+            "type": "message",
+            "value": "Il faut deux ingrédients."
+          }
+        ]
+      }
+    },
+    {
+      "id": "vente",
+      "name": "Comptoir de vente",
+      "description": "Vend un repas contre dix crédits.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": false,
+        "branches": [
+          {
+            "conditions": [
+              {
+                "type": "variable",
+                "key": "cuisineRepas",
+                "value": 1,
+                "operator": ">="
+              }
+            ],
+            "instructions": [
+              {
+                "type": "addVariable",
+                "key": "cuisineRepas",
+                "value": -1
+              },
+              {
+                "type": "addVariable",
+                "key": "cuisineCredits",
+                "value": 10
+              },
+              {
+                "type": "message",
+                "value": "Repas vendu : +10 crédits."
+              }
+            ]
+          }
+        ],
+        "elseInstructions": [
+          {
+            "type": "message",
+            "value": "Prépare d’abord un repas."
+          }
+        ]
+      }
+    },
+    {
+      "id": "approvisionnement",
+      "name": "Acheter des ingrédients",
+      "description": "Échange dix crédits contre quatre ingrédients.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": false,
+        "branches": [
+          {
+            "conditions": [
+              {
+                "type": "variable",
+                "key": "cuisineCredits",
+                "value": 10,
+                "operator": ">="
+              }
+            ],
+            "instructions": [
+              {
+                "type": "addVariable",
+                "key": "cuisineCredits",
+                "value": -10
+              },
+              {
+                "type": "addVariable",
+                "key": "cuisineIngredients",
+                "value": 4
+              },
+              {
+                "type": "message",
+                "value": "Approvisionnement : +4 ingrédients."
+              }
+            ]
+          }
+        ],
+        "elseInstructions": [
+          {
+            "type": "message",
+            "value": "Il faut 10 crédits."
+          }
+        ]
+      }
+    }
+  ]
+}

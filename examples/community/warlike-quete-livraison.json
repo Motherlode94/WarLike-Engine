@@ -1,0 +1,143 @@
+{
+  "apiVersion": "1.0",
+  "id": "warlike-quete-livraison",
+  "version": "1.0.0",
+  "name": "Quête de livraison",
+  "author": "WarLike Studio",
+  "modes": [
+    "2d",
+    "3d"
+  ],
+  "description": "Quatre comportements liés : accepter, récupérer, livrer et demander une indication.",
+  "recipes": [
+    {
+      "id": "accepter",
+      "name": "Donneur de mission",
+      "description": "Accepte la mission une seule fois et affiche l’objectif.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": true,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "livraisonActive",
+            "value": 1
+          },
+          {
+            "type": "setObjective",
+            "key": "livraisonColis",
+            "value": "Récupérer le colis"
+          },
+          {
+            "type": "message",
+            "value": "Mission acceptée : récupère le colis."
+          }
+        ]
+      }
+    },
+    {
+      "id": "colis",
+      "name": "Colis de mission",
+      "description": "À récupérer après acceptation de la mission.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": true,
+        "conditions": [
+          {
+            "type": "variable",
+            "key": "livraisonActive",
+            "value": 1,
+            "operator": "=="
+          }
+        ],
+        "instructions": [
+          {
+            "type": "setVariable",
+            "key": "livraisonColisPris",
+            "value": 1
+          },
+          {
+            "type": "completeObjective",
+            "key": "livraisonColis"
+          },
+          {
+            "type": "setObjective",
+            "key": "livraisonDestination",
+            "value": "Livrer le colis"
+          },
+          {
+            "type": "message",
+            "value": "Colis récupéré."
+          }
+        ]
+      }
+    },
+    {
+      "id": "destination",
+      "name": "Point de livraison",
+      "description": "Accorde la victoire seulement après récupération du colis.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": false,
+        "branches": [
+          {
+            "conditions": [
+              {
+                "type": "variable",
+                "key": "livraisonColisPris",
+                "value": 1,
+                "operator": "=="
+              }
+            ],
+            "instructions": [
+              {
+                "type": "setVariable",
+                "key": "livraisonColisPris",
+                "value": 0
+              },
+              {
+                "type": "completeObjective",
+                "key": "livraisonDestination"
+              },
+              {
+                "type": "winGame",
+                "value": "Livraison terminée !"
+              }
+            ]
+          }
+        ],
+        "elseInstructions": [
+          {
+            "type": "message",
+            "value": "Récupère d’abord le colis."
+          }
+        ]
+      }
+    },
+    {
+      "id": "indice",
+      "name": "Panneau indicateur",
+      "description": "Explique les étapes au joueur.",
+      "sequence": {
+        "event": "interact",
+        "key": "e",
+        "radius": 130,
+        "once": false,
+        "conditions": [],
+        "instructions": [
+          {
+            "type": "message",
+            "value": "Accepte la mission, récupère le colis, puis rejoins le point de livraison."
+          }
+        ]
+      }
+    }
+  ]
+}

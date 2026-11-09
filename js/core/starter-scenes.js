@@ -122,9 +122,10 @@ export function finishStarterScene(genre,mode,entities,player){
   Object.assign(find('Traqueur'),{team:2,stats:defaultStats(),ai:{...defaultAi(),state:'patrol',speed:55,detection:240,attackDamage:8,requireLineOfSight:true},horrorAiConfig:{enabled:false}});
  }
  if(genre==='tactical'){
-  start.push(set('captured',0));task('tacticalCapture','Atteindre et capturer le poste à l’est','Capturer');
-  bind('Capturer',[set('captured',1),done('tacticalCapture'),win('Poste sécurisé.')],{once:true,conditions:[{type:'playerOnFoot'}],hint:'Descends du véhicule pour sécuriser le poste.'});
+  start.push(set('captured',0),set('tacticalEnemyDown',0));task('tacticalEnemy','Neutraliser l’opposant','Opposant');task('tacticalCapture','Atteindre et capturer le poste à l’est','Capturer');
+  bind('Capturer',[set('captured',1),done('tacticalCapture'),win('Poste sécurisé.')],{once:true,conditions:[check('tacticalEnemyDown'),{type:'playerOnFoot'}],hint:'Neutralise l’opposant et descends du véhicule pour sécuriser le poste.'});
   const enemy=find('Opposant');enemy.ai={...defaultAi(),...enemy.ai,requireLineOfSight:true,pathfinding:true};
+  enemy.sequence={enabled:true,event:'death',once:true,instructions:[set('tacticalEnemyDown',1),done('tacticalEnemy'),say('Opposant neutralisé. Capture le poste à pied.')]};
   if(three)player.fpsController=true;
  }
  if(genre==='rts'){

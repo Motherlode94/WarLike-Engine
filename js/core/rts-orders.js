@@ -37,7 +37,8 @@ export function updateRtsOrders(entities,dt,playing,{mode='2d',passFriendlyUnits
   // Use the same collision set for pathfinding and movement to avoid deadlocks.
   const passAllies=passFriendlyUnits||cfg.passFriendlyUnits===true;
   const collisionEntities=passAllies?entities.filter(t=>t===o||!sameFaction(o,t)||!(t.companyUnit||isRtsUnit(t)||t.playable3d||t.controller2d||t.type==='player')):entities;
-  const obstacles=collisionEntities.filter(t=>t!==o&&t.id!==order?.targetId&&(passAllies||!sameFaction(o,t))&&(mode==='3d'?solidHero3d(t):solidCollider2d(t)));
+  const actorBox=mode==='3d'?heroBox(o,'3d'):null;
+  const obstacles=collisionEntities.filter(t=>{if(t===o||t.id===order?.targetId||!(passAllies||!sameFaction(o,t)))return false;if(mode!=='3d')return solidCollider2d(t);if(!solidHero3d(t))return false;const box=heroBox(t,'3d');return box.z<actorBox.z+actorBox.h-.001&&box.z+box.h>actorBox.z+.001});
   let target=goal;
   if(obstacles.length){o._rtsRepath=n(o._rtsRepath)-frame;if(o._rtsRepath<=0||!Array.isArray(o._rtsPath)){
     const start=passAllies?origin:{x:o.x,y:o.y},end=passAllies?goal:{x:goal.x-o.w/2,y:goal.y-(o.depth3d??o.h)/2};

@@ -70,7 +70,7 @@ test('Rapier creates a convexHull instead of a cuboid, then rebuilds only on sha
  assert.equal(scene.errors.length,0);
  assert.equal(scene.actors.get(e.id).collider.kind,'hull');
  assert.equal(shapes.length,1);
- assert.deepEqual(calls,['box','hull']); // first box is the shared floor
+ assert.deepEqual(calls,['hull']); // only the authored collider is created
  assert.equal(synchronizeRapierScene(scene,[e]),true);
  e.x+=64; // gameplay teleport before the viewport runs
  assert.equal(synchronizeRapierScene(scene,[e]),true,'pure translation does not change body-local convex hull');

@@ -1,4 +1,4 @@
-import {solidBody3d,activeBody3d} from './collision-3d.js';
+import {solidBody3d,activeBody3d,supportBody3d} from './collision-3d.js';
 import {updateAffineEditorPose3d,affineCorrection3d,legacyReferenceMatrix3d,hasAffinePose} from './scene-graph-v2.js';
 import {characterBody3d,colliderGeometry3d,colliderPosition3d,rotationQuaternion3d,quaternionEuler3d,affineBoxHull3d,affineHullSignature3d} from './collider-3d.js';
 let activeScene=null;
@@ -44,7 +44,6 @@ function controllerFor(world,o){
 export function createRapierScene(RAPIER,entities,gravity=15){
  if(!RAPIER?.World)throw Error('Rapier 3D not initialized');
  const world=new RAPIER.World({x:0,y:-Math.max(0,gravity),z:0}),actors=new Map(),joints=new Map(),errors=[],skipped=new Map();
- const floor=world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,-.5,0));world.createCollider(RAPIER.ColliderDesc.cuboid(20000,.5,20000),floor);
  for(const o of entities){
   if(!included(o))continue;
   const g=colliderGeometry3d(o),pos=colliderPosition3d(o,g),isCharacter=characterBody3d(o),isDynamic=dynamic(o),isKinematic=isCharacter||o.rigidbody3d?.kinematic===true;
@@ -105,15 +104,27 @@ export function moveRapierCharacter3d(scene,o,dx,dy,dz,{ignore=null}={}){
  const requested={x:n(dx)/64,y:n(dz)/64,z:n(dy)/64},position=colliderPosition3d(o);
  r.body.setTranslation(position,true);scene.world.propagateModifiedBodyPositionsToColliders?.();
  r.controller.computeColliderMovement(r.collider,requested,scene.api.QueryFilterFlags?.EXCLUDE_SENSORS,undefined,ignore?collider=>collider.handle!==scene.actors.get(ignore.id)?.collider?.handle:undefined);
- const v=r.controller.computedMovement(),p={x:position.x+v.x,y:position.y+v.y,z:position.z+v.z};
+ const raw=r.controller.computedMovement(),v={x:raw.x,y:raw.y,z:raw.z};
+ // Rapier can drift through a flat support when repeatedly moving a stationary
+ // kinematic capsule. Correct only against a real support under the destination;
+ // sloped/rotated surfaces remain entirely under Rapier's control.
+ if(requested.y<=0&&v.y<0){
+  const destination={...o,x:n(o.x)+v.x*64,y:n(o.y)+v.z*64};
+  const support=supportBody3d(destination,[...scene.actors.values()].map(actor=>actor.entity));
+  if(support&&!n(support.rotationX3d)&&!n(support.rotationZ3d)&&!hasAffinePose(support)){
+   const top=n(support.elevation3d)+n(support.h,32)/64;
+   v.y=Math.max(v.y,top-n(o.elevation3d));
+  }
+ }
+ const p={x:position.x+v.x,y:position.y+v.y,z:position.z+v.z};
  r.body.setTranslation(p,true);r.body.setNextKinematicTranslation?.(p);
- o.x+=v.x*64;o.y+=v.z*64;o.elevation3d=Math.max(0,n(o.elevation3d)+v.y);o.grounded3d=r.controller.computedGrounded();r.lastPosition=scenePosition(o);
+ o.x+=v.x*64;o.y+=v.z*64;o.elevation3d=n(o.elevation3d)+v.y;o.grounded3d=r.controller.computedGrounded();r.lastPosition=scenePosition(o);
  scene.world.propagateModifiedBodyPositionsToColliders?.();
  return {blockedX:Math.abs(v.x-requested.x)>.001,blockedY:Math.abs(v.z-requested.z)>.001,blockedZ:Math.abs(v.y-requested.y)>.001,grounded:o.grounded3d,ceiling:requested.y>0&&v.y<requested.y-.001};
 }
 export function stepRapierScene(scene,dt){
  const t=Math.min(.05,Math.max(0,n(dt)));if(!t)return;scene.world.timestep=t;scene.world.step();
- for(const r of scene.actors.values()){if(!r.isDynamic)continue;const {body,entity:o,width,depth,height}=r,p=body.translation(),v=body.linvel();const oldAffine=Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,oldReference=Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null;o.x=(p.x-width/2)*64;o.y=(p.z-depth/2)*64;o.elevation3d=Math.max(0,p.y-height/2);
+ for(const r of scene.actors.values()){if(!r.isDynamic)continue;const {body,entity:o,width,depth,height}=r,p=body.translation(),v=body.linvel();const oldAffine=Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,oldReference=Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null;o.x=(p.x-width/2)*64;o.y=(p.z-depth/2)*64;o.elevation3d=p.y-height/2;
   if(o.rigidbody3d){o.rigidbody3d.vx=v.x*64;o.rigidbody3d.vy=v.y;o.rigidbody3d.vz=v.z*64;r.lastVelocity=velocity(o)}
   if(o.rigidbody3d?.lockRotations===false&&body.rotation){const rotation=body.rotation();Object.assign(o,quaternionEuler3d(rotation));r.lastRotation=rotation}
   if(oldAffine&&oldReference)updateAffineEditorPose3d(o,oldAffine,oldReference);

@@ -33,7 +33,7 @@ test('nova affects hostile actors and destructible nodes while protecting teamma
 });
 test('ruée and flight obey thin 3D walls, ceilings and the world floor',()=>{
  resetHeroRuntime();const p=hero({type:'mesh3d',elevation3d:0}),wall=box(2,80,-20,{w:1,h:200,depth3d:80});castHeroPower(p,'dash',{entities:[p,wall],mode:'3d',yaw:-Math.PI/2});assert.ok(p.x+p.w<=80.001);const before=p.x;p.heroState.flight=true;updateController3d(p,new Set(['w']),.1,-Math.PI/2,[p,wall]);assert.ok(p.x>=before&&p.x+p.w<=80.001);
- const ceiling=box(3,-100,-100,{w:400,depth3d:400,h:20,elevation3d:1});for(let i=0;i<20;i++)stepHeroFlight(p,new Set([' ']),.1,[p,ceiling],'3d',0);assert.ok(p.elevation3d+p.h/64<=1.001);moveHero3d(p,0,0,-1000,[p]);assert.equal(p.elevation3d,0);
+ const ceiling=box(3,-100,-100,{w:400,depth3d:400,h:20,elevation3d:1});for(let i=0;i<20;i++)stepHeroFlight(p,new Set([' ']),.1,[p,ceiling],'3d',0);assert.ok(p.elevation3d+p.h/64<=1.001);const ground=box(99,-200,-200,{w:600,depth3d:600,h:16,elevation3d:-.25});moveHero3d(p,0,0,-1000,[p,ground]);assert.equal(p.elevation3d,0);
 });
 test('flight drains energy, stops when empty, and a charging station adds measurable regeneration',()=>{
  resetHeroRuntime();const p=hero();ensureHeroState(p);p.heroState.energy=20;castHeroPower(p,'flight',{entities:[p]});for(let i=0;i<20;i++)tick([p],p);assert.equal(p.heroState.flight,false);assert.ok(p.heroState.energy>=0);

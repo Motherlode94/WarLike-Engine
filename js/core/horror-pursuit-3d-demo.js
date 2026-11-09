@@ -15,6 +15,7 @@ export function loadHorror3dDemo(){
   Object.assign(o,{name,...props});entities.push(o);return o;
  };
  const player=add('character-hero','Survivant',110,140,{playable3d:true,controller3d:defaultController(),stats:defaultStats(),inventory:defaultInventory()});
+ add('primitive-cube','Sol de la scène',20,20,{w:1200,h:16,depth3d:850,elevation3d:-.25,collision3d:true,solid3d:true});
  for(const [x,y,w,h] of [[20,20,1200,40],[20,20,40,850],[20,830,1200,40],[1180,20,40,850],[330,50,38,350],[570,450,38,380],[800,50,38,370]]){
   add('building-wall','Mur',x,y,{w,h,depth3d:40,collision3d:true});
  }

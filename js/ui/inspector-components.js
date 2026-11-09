@@ -6,6 +6,7 @@ import {workspace} from '../core/workspaces.js';
 import {record} from '../core/history.js';
 import {inspectorContext} from './inspector-context.js';
 let clipboard=null;
+const expandedExtensionObjects=new Set();
 const make=(tag,cls,text)=>{const node=document.createElement(tag);node.className=cls;if(text)node.textContent=text;return node};
 const flatComponents={
  Transform:['x','y','elevation3d','rotation','rotationX3d','rotationZ3d','w','h','depth3d'],
@@ -60,5 +61,21 @@ export function decorateInspectorComponents(root,owner){
  });
  const order=owner.inspectorOrder||[];
  if(order.length){const sorted=cards.slice().sort((a,b)=>{if(a.dataset.componentTitle==='Transform')return -1;if(b.dataset.componentTitle==='Transform')return 1;const rank=card=>order.includes(keyFor(card))?order.indexOf(keyFor(card)):1e5;return rank(a)-rank(b)});const end=root.querySelector(':scope>.inspector-add-component');for(const card of sorted)root.insertBefore(card,end)}
+ // Keep the Unity-like main inspector focused on rendering and physics.
+ // Attached gameplay/script data remains intact and accessible under Extensions.
+ const extensionCards=cards.filter(card=>!/Transform|Renderer|Material|Sprite|Animator|Collider|Rigidbody|Collision|Articulation|Camera|Caméra|Lighting|Lumière|Audio/i.test(card.dataset.componentTitle||''));
+ if(extensionCards.length){
+  const toggle=make('button','inspector-extensions-toggle','▸ Extensions · '+extensionCards.length+' composants');
+  toggle.type='button';
+  const update=()=>{
+   const open=expandedExtensionObjects.has(context);
+   toggle.textContent=(open?'▾':'▸')+' Extensions · '+extensionCards.length+' composants';
+   toggle.setAttribute('aria-expanded',String(open));
+   for(const card of extensionCards)card.hidden=!open;
+  };
+  toggle.onclick=()=>{if(expandedExtensionObjects.has(context))expandedExtensionObjects.delete(context);else expandedExtensionObjects.add(context);update()};
+  root.insertBefore(toggle,root.querySelector(':scope>.inspector-add-component'));
+  update();
+ }
  root.onpointerdown=event=>{if(!event.target.closest('.component-menu-toggle,.inspector-component-actions')){root.querySelectorAll('.inspector-component-actions').forEach(menu=>menu.hidden=true);root.querySelectorAll('.component-menu-toggle').forEach(button=>button.setAttribute('aria-expanded','false'))}};
 }

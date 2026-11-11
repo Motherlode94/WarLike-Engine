@@ -43,3 +43,15 @@ Références Unity :
 **P0 :** tests Play/export intégrés → pipeline assets GLB/matériaux → collisions/contrôleur 3D → cohérence Inspector ↔ runtime.
 **P1 :** prefabs hiérarchiques/variantes → Animator complet → C# API et migration contrôlée.
 **P2 :** outils terrain avancés → profilage → pipelines builds et automatisation.
+
+## Lot de rattrapage : pipeline de jeu 3D exporté (11 novembre 2026)
+
+- `js/core/game-build.js` : récupération non destructive d'une ancienne scène de démarrage uniquement lorsqu'il ne reste qu'une scène. Si plusieurs scènes existent, le build échoue avec une erreur explicite au lieu de choisir la mauvaise.
+- `tests/chambre-07-export-readiness.test.mjs` : vérifie que les données de CHAMBRE 07 sont présentes dans la définition de build, que les objets de scène ne sont pas mutés et que la scène de démarrage est cohérente.
+- `scripts/test-chambre07-export-browser.mjs` : export ZIP réel, hébergement statique isolé, démarrage Play sous Chromium, contrôles des modèles, des entités, du sol, des erreurs WebGL et des fichiers manquants ; capture de test.
+- `scripts/check-chambre07-runtime-manifest.mjs` : vérifie la présence des modules requis dans le manifest.
+- `.github/workflows/engine-integrity.yml` : reconstruit le manifest, vérifie types/tests/export puis lance un smoke test Playwright en navigateur.
+- `package.json` : commandes `npm run test:chambre07:export` et `npm run test:chambre07:browser`.
+
+**Statut réel :** code et contrôle automatique enregistrés ; aucune exécution CI complète ni capture WebGL finale confirmée pendant cette intervention. Un « smoke test » de lancement ne prouve pas encore la jouabilité complète des trois souvenirs et des deux fins. Ces parcours et l'export depuis d'anciens projets restent à valider séparément.
+

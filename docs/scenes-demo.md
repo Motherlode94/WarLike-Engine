@@ -1,6 +1,21 @@
 # Scènes démo jouables
 
-## CHAMBRE 07 · La Voix — prototype d'horreur psychologique
+## CHAMBRE 07 · La Voix — scène 3D native et éditable
+
+Créer ou ouvrir un projet **3D**, puis ouvrir **Game → Scènes démo jouables… → CHAMBRE 07 · Scène 3D native → Charger cette scène**. Dans le **Hub du moteur**, le raccourci CHAMBRE 07 ouvre ce même navigateur. La scène charge de véritables objets de l'éditeur ; ce n'est **pas** une iframe.
+
+La scène utilise des primitives polygonales 3D et les composants natifs : **Transform**, **collisions**, **contrôleur 3D**, **caméra FPS**, **éclairage**, **IA**, **objectifs**, **dialogues** et **Blueprint Sequences**. Les entités apparaissent dans Hierarchy et sont modifiables dans Inspector. Le sol possède une collision physique et le tag `ai-walkable` : il soutient le joueur sans devenir un obstacle artificiel pour le calcul de chemin de l'IA.
+
+**Parcours :** récupérer la photographie dans le salon, la cassette près des archives et la lettre dans la chambre ; parler à Lia ; choisir une réponse ; rejoindre la porte de sortie pendant que l'ombre poursuit le joueur. Les deux réponses mènent à deux conclusions différentes.
+
+**Commandes :** ZQSD/WASD, souris, **Maj** pour courir, **E** pour interagir, **J** pour le journal, **F5/F9** pour sauvegarder/charger. Ces commandes passent par le runtime habituel du moteur.
+
+**Source native :** `js/core/chambre-07-scene.js`. **Régressions :** `tests/chambre-07-native.test.mjs`. Tester avec `node --test tests/chambre-07-native.test.mjs`.
+
+**Limites à valider :** le prologue utilise pour l'instant des personnages et du mobilier génériques, sans doublages, cinématiques ni animation faciale dédiée. Le trajet du poursuivant entre cloisons, les collisions réelles, le déclenchement des signaux de dialogue et l'export web complet exigent un test navigateur et un test de build. La scène n'est pas encore une reproduction complète de l'expérience du prototype HTML ; elle est la première conversion native.
+
+
+## CHAMBRE 07 · La Voix — prototype HTML historique
 
 Dans un projet **3D**, ouvrir **Game → Scènes démo jouables… → CHAMBRE 07 → Jouer dans Engine**. La démo s'ouvre dans une fenêtre intégrée. Elle est aussi accessible par le raccourci du **Hub de projets**, ou directement via `examples/chambre-07/index.html`.
 

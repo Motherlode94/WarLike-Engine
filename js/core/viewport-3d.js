@@ -12,7 +12,7 @@ import {gameProject} from './game-project.js';
 import {survivalPlacement} from './survival-building.js';
 import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';
 import {lanActor,isLanGuest} from './lan-state.js';
-import {solidBody3d,collisionWorldBounds3d,raycastScene3d} from './collision-3d.js';
+import {solidBody3d,raycastScene3d} from './collision-3d.js';
 import {gameplayInputBlocked,gameplayKeys} from './gameplay-input.js';
 import {sameFaction,healthOf} from './ai-perception.js';
 import {progressionDamageScale,awardExperience} from './rpg-progression.js';
@@ -23,7 +23,7 @@ import {createFxRenderer3d} from './fx-renderer-3d.js';
 import {tickFxRuntime,emitFx} from './fx-runtime.js';
 import {isTypingTarget} from './editor-clipboard.js';
 import {sampleRigPose,deformGlbParts,animationClipForState} from './gltf-animation.js';
-import {cameraRigFor,cameraTargetFor,resolveCameraBoom,cameraPose,cameraDamping} from './play-camera.js';
+import {cameraObstacleForEntity,cameraRigFor,cameraTargetFor,resolveCameraBoom,cameraPose,cameraDamping} from './play-camera.js';
 import {gameIsRunning,gameSession} from './game-session.js';
 import {updateHorrorAudio} from './horror-audio.js';
 import {tickEngineDiagnostics} from './engine-diagnostics.js';
@@ -408,7 +408,7 @@ export function init3d(canvas,host,buttons){
    const desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
    if(!state.playing||companyController(state.entities))return desired;
    const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities));
-   const obstacles=state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(collisionWorldBounds3d);
+   const obstacles=state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(cameraObstacleForEntity);
    const boom=rig.collision?resolveCameraBoom(view3d.target,desired.eye,obstacles,{previousDistance:boomDistance,dt:0}):{eye:desired.eye,distance:view3d.radius};
    return cameraPose(view3d.target,boom.eye);
 
@@ -651,7 +651,7 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent=companyController(state.entities)?'RTS · clic : escouade · clic droit : ordre · flèches : caméra':'3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}if(state.playing)buttons.status.textContent+=companyController(state.entities)?' · Navigation A* et collisions internes':' · Physique : '+(physicsSession?'Rapier'+(physicsSession.skipped?.size?' · '+physicsSession.skipped.size+' collider(s) incompatible(s)':''):gameProject.physics3d==='builtin'?'interne':rapierStatus().error?'interne (Rapier indisponible)':'chargement Rapier');
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
   const solar=sunAt();gl.clearColor(...solar.sky,1);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-  if(state.playing&&!isFps()&&!companyController(state.entities)){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities)),desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);boomDistance=rig.collision?resolveCameraBoom(view3d.target,desired.eye,state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(collisionWorldBounds3d),{previousDistance:boomDistance,dt:cameraFrame}).distance:view3d.radius}
+  if(state.playing&&!isFps()&&!companyController(state.entities)){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities)),desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);boomDistance=rig.collision?resolveCameraBoom(view3d.target,desired.eye,state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(cameraObstacleForEntity),{previousDistance:boomDistance,dt:cameraFrame}).distance:view3d.radius}
   gl.useProgram(program);const cam=camera();updateBattlefieldHud(state,{camera:cam,width:w,height:h,project:project3d});updateCompanyMarkers({camera:cam,width:w,height:h,project:project3d});
   gl.uniform3fv(u.flashPos,cam.eye);gl.uniform3fv(u.flashDir,cam.forward);
   gl.uniform1f(u.flashPower,state.playing&&horror.enabled&&horror.flashlight&&horror.battery>0?3.1:0);

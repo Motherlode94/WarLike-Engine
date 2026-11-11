@@ -3,16 +3,23 @@ import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 import {workspace} from '../core/workspaces.js';
 const make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;return el};
-// The regular object inspector is deliberately limited to rendering and physics.
-// Feature/genre components are attached by the relevant WarLike extension or prefab.
-const primaryKinds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','light','audio','cameraRig']);
+// The Add Component picker lists every component supported by the current
+// project mode. Existing entities and unknown legacy component data are untouched.
+const featuredKinds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','cameraRig','controller2d','controller3d','animatorGraph','ai','sequence','stats','inventory','webScripts','warScripts']);
 const nativePrimaryKinds=new Set(['Rigidbody']);
-const primaryCategory=(option)=>{
- if(/Collider|Rigidbody|Articulation|Joint/.test(option.name))return 'Physique';
- if(/Caméra|Camera|Audio|Lumière/.test(option.name))return 'Rendu et scène';
- if(option.id==='script')return 'Extensions';
- return null;
+export const componentBrowserCategory=option=>{
+ if(option.id==='script')return 'Scripts';
+ if(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d'].includes(option.id))return 'Physique';
+ if(['cameraRig','light','audio'].includes(option.id))return 'Rendu et scène';
+ if(['webScripts','warScripts'].includes(option.id))return 'Scripts';
+ return option.category||'Autres';
 };
+export const componentBrowserMatches=(option,query)=>!query||[option.name,option.category,option.description,option.id,option.runtime].some(part=>String(part||'').toLocaleLowerCase('fr').includes(query.toLocaleLowerCase('fr')));
+export const orderComponentBrowserOptions=options=>[...options].sort((a,b)=>
+ Number(!featuredKinds.has(a.id))-Number(!featuredKinds.has(b.id))||
+ componentBrowserCategory(a).localeCompare(componentBrowserCategory(b),'fr')||
+ a.name.localeCompare(b.name,'fr')
+);
 export function openComponentBrowser(){
  const button=document.querySelector('#objectComponentBrowser>summary');
  if(button)button.click();
@@ -20,10 +27,10 @@ export function openComponentBrowser(){
 export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
  const root=make('details','inspector-add-component');root.id='objectComponentBrowser';
  const heading=make('summary','','Add Component');
- heading.setAttribute('aria-label','Add Component · composants essentiels Unity');
+ heading.setAttribute('aria-label','Ajouter un composant WarLike');
  root.append(heading);
- const options=componentChoices(workspace.mode).filter(d=>primaryKinds.has(d.id))
-  .map(d=>({...d,runtime:'web',attached:!d.multiple&&owner[d.id]!=null,add:()=>addObjectComponent(owner,d.id,workspace.mode)}));
+ const options=componentChoices(workspace.mode)
+  .map(d=>({...d,runtime:'web',attached:d.id==='sequence'?false:owner[d.id]!=null,add:()=>addObjectComponent(owner,d.id,workspace.mode)}));
  if(workspace.mode==='3d')options.push({
   id:'light',name:'Lumière ponctuelle',category:'Rendu et scène',
   description:'Éclaire la scène 3D.',runtime:'web',
@@ -52,7 +59,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
  const popup=make('div','unity-component-popup');
  popup.setAttribute('role','dialog');popup.setAttribute('aria-label','Ajouter un composant');
  popup.hidden=true;
- const search=make('input','unity-component-search');search.type='search';search.placeholder='Search';search.setAttribute('aria-label','Rechercher un composant');
+ const search=make('input','unity-component-search');search.type='search';search.placeholder='Rechercher : physique, IA, animation, script…';search.setAttribute('aria-label','Rechercher un composant');
  const list=make('div','component-browser-results'),hint=make('small','component-browser-hint');
  const title=make('div','unity-component-popup-title','Add Component');
  popup.append(title,search,list,hint);
@@ -87,27 +94,37 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
   if(e.key==='ArrowDown'&&document.activeElement===search){e.preventDefault();list.querySelector('button:not(:disabled)')?.focus()}
  };
  const render=()=>{
-  const query=search.value.trim().toLocaleLowerCase('fr');list.replaceChildren();let lastCategory='',count=0;
-  for(const option of options.filter(o=>(o.id!=='script'||!!query)&&(!query||(o.name+' '+o.description).toLocaleLowerCase('fr').includes(query))).sort((a,b)=>primaryCategory(a).localeCompare(primaryCategory(b))||a.name.localeCompare(b.name))){
-   const category=primaryCategory(option)||'Autres';
-   if(category!==lastCategory){list.append(make('h4','component-browser-category',category));lastCategory=category}
-   const button=make('button','component-browser-option');button.type='button';button.dataset.componentId=option.id;
-   button.disabled=state.playing||!!option.attached;
-   button.append(make('strong','',option.name+(option.attached?' · ajouté':'')),make('small','',option.description));
-   button.onclick=()=>{
-    close();
-    if(option.add()){
-     record('Ajouter '+option.name);notify();
-     requestAnimationFrame(()=>{
-      const card=[...document.querySelectorAll('#properties>.inspector-component')].find(el=>el.dataset.componentKey===option.id||el.dataset.componentTitle===option.name);
-      if(card){card.open=true;card.scrollIntoView({block:'nearest'})}
-     });
-    }
-   };
-   list.append(button);count++;
+  const query=search.value.trim().toLocaleLowerCase('fr');list.replaceChildren();let count=0;
+  const matched=orderComponentBrowserOptions(options.filter(o=>componentBrowserMatches(o,query)));
+  const categories=new Map();
+  for(const option of matched){
+   const group=featuredKinds.has(option.id)&&!query?'Essentiels':componentBrowserCategory(option);
+   if(!categories.has(group))categories.set(group,[]);
+   categories.get(group).push(option);
   }
-  if(!count)list.append(make('p','component-browser-empty','Aucun composant trouvé.'));
-  hint.textContent='Autres composants : gérés par les extensions ou les prefabs WarLike.';
+  for(const [category,entries] of categories){
+   list.append(make('h4','component-browser-category',category));
+   for(const option of entries){
+    const button=make('button','component-browser-option');button.type='button';button.dataset.componentId=option.id;
+    button.disabled=state.playing||!!option.attached;
+    button.title=option.description;
+    const runtimeLabel=option.runtime==='dotnet'?' · .NET local':' · Web';
+    button.append(make('strong','',option.name+(option.attached?' · ajouté':'')),make('small','',option.description+runtimeLabel));
+    button.onclick=()=>{
+     close();
+     if(option.add()){
+      record('Ajouter '+option.name);notify();
+      requestAnimationFrame(()=>{
+       const card=[...document.querySelectorAll('#properties>.inspector-component')].find(el=>el.dataset.componentKey===option.id||el.dataset.componentTitle===option.name);
+       if(card){card.open=true;card.scrollIntoView({block:'nearest'})}
+      });
+     }
+    };
+    list.append(button);count++;
+   }
+  }
+  if(!count)list.append(make('p','component-browser-empty','Aucun composant trouvé pour cette recherche.'));
+  hint.textContent=count+' composants disponibles · Web = Play navigateur ; .NET local = pont C# requis. Les composants déjà présents restent intacts.';
  };
  heading.addEventListener('click',e=>{
   e.preventDefault();

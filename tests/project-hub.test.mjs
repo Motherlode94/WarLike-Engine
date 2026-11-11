@@ -71,3 +71,17 @@ test('changing a legacy closed project genre preserves its existing project name
 test('duplicating a Hub project keeps a full independent copy of its scenes, functions and exposed variables',async()=>{
  const {duplicateProject,projectSummary}=await import('../js/core/project-hub.js');state.playing=false;const source=createProject('Source complète','2d');state.entities[0].blueprintVariables=[{name:'vitesse',type:'number',value:5,exposed:true}];state.entities[0].blueprintOverrides={vitesse:8};gameProject.functions=[{id:'echo',name:'Echo',parameters:[],returnType:'void',instructions:[]}];captureGameScene(state.entities,state.camera,{id:'chapter'});saveProject();const current=hub.projectId,copy=duplicateProject(source,'Copie indépendante');assert.equal(hub.projectId,current);assert.equal(projectSummary(copy).functions,1);openProject(copy);assert.equal(gameProject.id,copy);assert.equal(gameProject.functions[0].id,'echo');assert.equal(state.entities[0].blueprintOverrides.vitesse,8);state.entities[0].blueprintOverrides.vitesse=99;saveProject();openProject(source);assert.equal(state.entities[0].blueprintOverrides.vitesse,8);assert.equal(gameProject.scenes[0].id,'chapter');assert.equal(projectSummary(source).objects,state.entities.length);state.playing=true;assert.throws(()=>duplicateProject(source),/Arrête Play/);state.playing=false;
 });
+
+test('Hub recovers an earlier valid scene when the latest project snapshot is corrupt',()=>{
+ state.playing=false;
+ const id=createProject('Projet sauvegardé','3d');
+ state.entities[0].name='Ancien personnage';
+ assert.equal(saveProject(),true);
+ const key='warlike.hub.project.'+id;
+ assert.ok(elements.has(key+'.backup.v1'));
+ elements.set(key,'{malformed');
+ assert.equal(openProject(id),true);
+ assert.ok(state.entities.some(o=>o.name==='Ancien personnage'));
+ assert.match(state.demoGuide,/sauvegarde de secours/i);
+ assert.equal(elements.get(key),'{malformed','Recovery must not overwrite the evidence');
+});

@@ -15,8 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - run: npm ci
+      - run: npm install --no-package-lock
       - name: Rebuild portable runtime file manifest
         run: npm run build:runtime
       - name: Check runtime files required by native CHAMBRE 07

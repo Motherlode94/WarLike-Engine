@@ -86,8 +86,8 @@ Le format ancien `{id,name,components}` reste valide et la fonction historique `
 - La structure est contrôlée : une seule racine, parents existants, aucun cycle, pas plus de 1000 nœuds.
 - L'Inspector permet d'enregistrer un objet et tous ses enfants, puis de créer des instances supplémentaires. Le bouton n'apparaît que si la sélection possède au moins un enfant.
 - Les overrides de l'Inspector et leur remise à zéro utilisent désormais le bon nœud, sans réécrire la hiérarchie ni les identifiants.
-- Les variantes à propriétés surchargées sont disponibles via API, mais **leur gestion complète dans la bibliothèque, l'éditeur visuel et la propagation des évolutions du prefab parent sont encore à développer**.
+- Les variantes à propriétés surchargées peuvent être sauvegardées dans la bibliothèque via `savePrefabVariant` et sont résolues depuis leur source à chaque lecture ; leurs champs non surchargés suivent donc les évolutions du parent. **L'interface complète de création et de gestion des variantes reste à développer.**
 
 Tests : `tests/prefab-hierarchy-v2.test.mjs` et `tests/prefab-hierarchy-inspector.test.mjs`. Les tests de conversion de scène et de build ne remplacent pas encore un parcours complet dans deux navigateurs.
 
-**Attention :** les références externes à la sous-hiérarchie (par exemple vers un objet situé hors du prefab) ne sont pas automatiquement réassignées. Aucun système de clonage d'assets importés ou de prefabs imbriqués récursifs n'est revendiqué à ce stade. La règle WL-COMPAT-001 demeure prioritaire.
+**Attention :** les références externes à la sous-hiérarchie ne sont pas automatiquement réassignées : une articulation 3D active pointant vers un objet extérieur bloque la création du prefab avec une erreur explicite. Aucun système de clonage d'assets importés ou de prefabs imbriqués récursifs n'est revendiqué à ce stade. La règle WL-COMPAT-001 demeure prioritaire.

@@ -1,6 +1,11 @@
 // User-defined scene prefabs. Explicit overrides stay on instances until applied.
 const key='warlike.prefabs.library.v1';
-const clean=o=>{const {id,name,x,y,...components}=o;return structuredClone(components)};
+// A single-object prefab stores reusable component data, never an instance's
+// identity, parent link, source metadata or selection-specific editor state.
+const clean=o=>{
+ const {id,name,x,y,parentId,sceneObjectId,prefabSourceId,prefabOverrides,inspectorOrder,...components}=o;
+ return structuredClone(components);
+};
 export function readPrefabs(storage=globalThis.localStorage){
  try{const data=JSON.parse(storage.getItem(key)||'[]');return Array.isArray(data)?data.filter(p=>p&&typeof p.id==='string'&&p.components&&typeof p.components==='object'):[]}
  catch{return []}
@@ -16,7 +21,10 @@ export function savePrefab(entity,storage=globalThis.localStorage,{mode=null}={}
 }
 export function instantiatePrefab(prefab,nextId,x=120,y=120){
  if(!prefab?.components)throw Error('Prefab invalide');
- return {...structuredClone(prefab.components),id:nextId,name:prefab.name+' '+nextId,x,y,prefabSourceId:prefab.id,prefabOverrides:[]};
+ const fresh=structuredClone(prefab.components);
+ // Legacy user prefabs might already contain source-instance metadata.
+ for(const field of ['id','name','x','y','parentId','sceneObjectId','prefabSourceId','prefabOverrides','inspectorOrder'])delete fresh[field];
+ return {...fresh,id:nextId,name:prefab.name+' '+nextId,x,y,prefabSourceId:prefab.id,prefabOverrides:[]};
 }
 export function applyPrefabChanges(prefab,entity,instances){
  if(!prefab||!entity||entity.prefabSourceId!==prefab.id)throw Error('Instance incompatible');

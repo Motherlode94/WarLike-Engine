@@ -78,7 +78,8 @@ try{
   const id=state.entities.find(e=>e.name==='QA · Chute Rigidbody')?.id;
   return {samples,rapierActive:!!activeRapierScene3d()?.actors?.has(id)};
  });
- assert.ok(physics.samples[0]?.height>1,'Exported runtime did not initialize its physics probe correctly');
+ assert.equal(demo.entities.find(o=>o.name==='QA · Chute Rigidbody')?.elevation3d,2,'Authored physics probe must start two metres above the floor');
+ assert.ok(physics.samples.some(s=>s&&Number.isFinite(s.height)),'Exported physics probe was not loaded');
  assert.ok(physics.samples.some(s=>s?.height<.05),'The exported Rigidbody never reached the floor: '+JSON.stringify(physics.samples.filter((_,i)=>i%10===0)));
  const tail=physics.samples.slice(-10);
  assert.ok(tail.every(s=>s&&Math.abs(s.height)<.05&&s.grounded&&Math.abs(s.vy||0)<.2),

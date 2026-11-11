@@ -6,9 +6,22 @@ const clean=o=>{
  const {id,name,x,y,parentId,sceneObjectId,prefabSourceId,prefabOverrides,inspectorOrder,...components}=o;
  return structuredClone(components);
 };
-export function readPrefabs(storage=globalThis.localStorage){
+const rawPrefabs=storage=>{
  try{const data=JSON.parse(storage.getItem(key)||'[]');return Array.isArray(data)?data.filter(p=>p&&typeof p.id==='string'&&p.components&&typeof p.components==='object'):[]}
  catch{return []}
+};
+export function readPrefabs(storage=globalThis.localStorage){
+ const stored=rawPrefabs(storage),byId=new Map(stored.map(p=>[p.id,p])),resolved=new Map();
+ const resolve=(prefab,stack=new Set())=>{
+  if(resolved.has(prefab.id))return resolved.get(prefab.id);
+  if(!prefab.basePrefabId){resolved.set(prefab.id,prefab);return prefab}
+  if(stack.has(prefab.id))throw Error('Cycle de variantes prefab');
+  const base=byId.get(prefab.basePrefabId);
+  if(!base)throw Error('Source de variante absente');
+  const result=resolvePrefabVariant(prefab,resolve(base,new Set([...stack,prefab.id])));
+  resolved.set(prefab.id,result);return result;
+ };
+ return stored.map(p=>{try{return resolve(p)}catch{return {...p,invalidVariant:true}}});
 }
 export const prefabMode=prefab=>['2d','3d'].includes(prefab?.mode)?prefab.mode:prefab?.components?.type==='mesh3d'||prefab?.components?.collider3d||prefab?.components?.controller3d||prefab?.components?.rigidbody3d?'3d':'2d';
 export const prefabsForMode=(prefabs,mode)=>prefabs.filter(p=>prefabMode(p)===mode);
@@ -47,7 +60,7 @@ export function applyPrefabChanges(prefab,entity,instances){
  return {prefab:next,instances:affected};
 }
 export function updatePrefab(prefab,storage=globalThis.localStorage){
- const list=readPrefabs(storage),index=list.findIndex(p=>p.id===prefab.id);
+ const list=rawPrefabs(storage),index=list.findIndex(p=>p.id===prefab.id);
  if(index<0)throw Error('Prefab absent');
  list[index]=prefab;storage.setItem(key,JSON.stringify(list));changed();
 }
@@ -161,6 +174,14 @@ export function createPrefabVariant(base,overrides={},name=(base?.name||'Prefab'
  }
  return {version:2,id:'variant-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),
   basePrefabId:base.id,name,mode:base.mode,overrides:structuredClone(overrides)};
+}
+export function savePrefabVariant(base,overrides={},storage=globalThis.localStorage,{name=null}={}){
+ const source=readPrefabs(storage).find(p=>p.id===base?.id);
+ if(!source||source.invalidVariant)throw Error('La source de cette variante doit être enregistrée dans la bibliothèque');
+ const variant=createPrefabVariant(source,overrides,name||source.name+' Variant');
+ const stored={...variant,components:structuredClone(source.components)};
+ const all=rawPrefabs(storage);all.push(stored);storage.setItem(key,JSON.stringify(all));changed();
+ return resolvePrefabVariant(stored,source);
 }
 export function resolvePrefabVariant(variant,base){
  if(!variant?.basePrefabId||variant.basePrefabId!==base?.id||!Array.isArray(base.nodes))throw Error('Variante et prefab parent incompatibles');

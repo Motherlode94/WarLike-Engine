@@ -1,5 +1,14 @@
 # Scènes démo jouables
 
+## CHAMBRE 07 · La Voix — prototype d'horreur psychologique
+
+Dans un projet **3D**, ouvrir **Game → Scènes démo jouables… → CHAMBRE 07 → Jouer dans Engine**. La démo s'ouvre dans une fenêtre intégrée. Elle est aussi accessible par le raccourci du **Hub de projets**, ou directement via `examples/chambre-07/index.html`.
+
+Le parcours consiste à retrouver trois souvenirs, parler à Lia et atteindre la sortie. Commandes : **ZQSD/WASD**, souris ou flèches pour regarder, **E** pour interagir, **Maj** pour courir et **Échap** pour la pause. Deux fins narratives et une sauvegarde locale sont prévues.
+
+**Limite :** démo Web autonome avec rendu **2.5D raycast**. Il ne s'agit pas encore d'une scène native Engine modifiable dans Hierarchy/Inspector. Les modèles 3D animés, l'IA de poursuite avec navigation et l'export natif Engine restent à développer. Le rendu et les parcours doivent être vérifiés dans un navigateur réel.
+
+
 ## Worldforge · Forge des mondes — simulation de monde jouable
 
 Ouvrir un projet **2D**, puis **Game → Scènes démo jouables… → Worldforge → Jouer dans Engine**. Le jeu est présenté dans une fenêtre intégrée, sans remplacer la scène de l'éditeur. Il est également disponible en ouvrant `examples/worldforge/index.html` via un serveur HTTP local.

@@ -91,3 +91,16 @@ Le format ancien `{id,name,components}` reste valide et la fonction historique `
 Tests : `tests/prefab-hierarchy-v2.test.mjs` et `tests/prefab-hierarchy-inspector.test.mjs`. Les tests de conversion de scène et de build ne remplacent pas encore un parcours complet dans deux navigateurs.
 
 **Attention :** les références externes à la sous-hiérarchie ne sont pas automatiquement réassignées : une articulation 3D active pointant vers un objet extérieur bloque la création du prefab avec une erreur explicite. Aucun système de clonage d'assets importés ou de prefabs imbriqués récursifs n'est revendiqué à ce stade. La règle WL-COMPAT-001 demeure prioritaire.
+
+## Caméra 3D et proximité des murs — novembre 2026
+
+La caméra 3D Play conserve son système de suivi amorti et de contraction instantanée du bras au contact. Les obstacles sont maintenant calculés avec la géométrie du `BoxCollider` en mètres, son orientation 3D par quaternion et ses décalages locaux. Le rayon est transformé dans les axes du collider pour détecter la face réelle des murs inclinés : une boîte non tournée n'est plus utilisée pour représenter un mur incliné. Les autres géométries (sphere/capsule) utilisent encore des boîtes de sécurité conservatrices, pas un balayage exact de la forme.
+
+Le correctif s'applique dans le viewport WebGL pendant Play et dans le runtime Web exporté, sans changement de format de scène. Le calcul de base de la caméra ne peut plus produire des vecteurs de vue nuls lorsque le bras atteint momentanément une longueur quasi nulle. Les tests `tests/play-camera.test.mjs` vérifient :
+- Mur fin et incliné qui coupe le rayon caméra ;
+- Mur tourné et trop éloigné qui ne doit pas raccourcir la caméra ;
+- Offset local de Collider tourné avec l'objet ;
+- Retrait immédiat et retour progressif sans dépassement ;
+- Base de caméra orthonormale malgré la proximité d'un obstacle.
+
+Limites restantes : occlusion par les vrais triangles concaves des modèles GLB, continuité visuelle sur obstacles mobiles et analyse visuelle des problèmes de `near clipping` dans des jeux complets. Ces tests mathématiques n'établissent pas encore une équivalence de caméra avec les outils cinématiques actuels de Unity.

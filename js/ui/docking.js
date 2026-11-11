@@ -1,9 +1,31 @@
 import {makeWindowResizable,bindPanelSplitter,dockedPanelWidths} from './resizable-window.js';
 // WarLike Studio dockable and resizable editor windows.
 const storageKey='warlike.workspace.layout.v1';
+// UI-only upgrade, independent of saved projects and their entities.
+// Preserve a copy of the previous layout once, then switch existing users to
+// the Scene-first layout. Saved custom layouts remain recoverable.
+const uiUpgradeKey='warlike.workspace.ui-schema.v2';
+const previousLayoutKey='warlike.workspace.layout.before-scene-first.v2';
+export function upgradeLegacyEditorLayout(storage=globalThis.localStorage){
+ try {
+  if(storage.getItem(uiUpgradeKey)==='done')return false;
+  const oldLayout=storage.getItem(storageKey);
+  const oldProjectHeight=storage.getItem('warlike.projectHeight');
+  const previous={layout:oldLayout,projectHeight:oldProjectHeight};
+  if(oldLayout!==null||oldProjectHeight!==null){
+   storage.setItem(previousLayoutKey,JSON.stringify(previous));
+  }
+  // UI keys ONLY. Never touch warlike.hub.projects.v1 or warlike.hub.project.*.
+  storage.removeItem(storageKey);
+  storage.removeItem('warlike.projectHeight');
+  storage.setItem(uiUpgradeKey,'done');
+  return true;
+ }catch{return false}
+}
+upgradeLegacyEditorLayout();
 const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
 const panelMap={hierarchy:'hierarchyPanel',inspector:'inspectorPanel',project:'projectPanel'};
-const defaults={leftWidth:245,rightWidth:350,float:{}};
+const defaults={leftWidth:205,rightWidth:325,float:{}};
 let layout;
 try{layout={...defaults,...JSON.parse(localStorage.getItem(storageKey)||'{}')}}catch{layout={...defaults,float:{}}}
 layout.float=layout.float&&typeof layout.float==='object'&&!Array.isArray(layout.float)?layout.float:{};
@@ -179,7 +201,7 @@ function bindFloating(kind){
  }
 }
 const layoutPresets={
- default:{leftWidth:245,rightWidth:350,projectHeight:280},
+ default:{leftWidth:205,rightWidth:325,projectHeight:205},
  scene:{leftWidth:175,rightWidth:210,projectHeight:180},
  inspector:{leftWidth:165,rightWidth:420,projectHeight:235},
  assets:{leftWidth:175,rightWidth:230,projectHeight:460}
@@ -246,4 +268,4 @@ export function initDocking(){
  bindWindows();new MutationObserver(bindWindows).observe(document.body,{childList:true,subtree:true});
  applyLayout();window.addEventListener('resize',()=>applyLayout());
 }
-export function resetLayout(){layout={leftWidth:245,rightWidth:350,float:{}};applyLayout();save();const center=document.querySelector('.center-stack');center.style.removeProperty('--project-height');localStorage.removeItem('warlike.projectHeight')}
+export function resetLayout(){layout={leftWidth:205,rightWidth:325,float:{}};applyLayout();save();const center=document.querySelector('.center-stack');center.style.removeProperty('--project-height');localStorage.removeItem('warlike.projectHeight')}

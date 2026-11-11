@@ -1,0 +1,92 @@
+/* WarLike Engine — priority-first menu, preserving editor actions. */
+@media (min-width: 851px) {
+ body:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) {
+  --warlike-menubar-height: 60px !important;
+ }
+ body:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .studio-menubar {
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:28px 32px!important;
+  height:60px!important;min-height:60px!important;
+  gap:0 10px!important;padding:0 12px!important;
+  align-items:center;
+ }
+ body:not(.hub-open):not(.compact-workspace) .studio-menubar>.studio-menus {
+  grid-column:1!important;grid-row:1!important;min-width:0;
+  display:flex!important;gap:3px!important;overflow:visible;
+ }
+ body:not(.hub-open):not(.compact-workspace) .studio-menubar>.studio-primary-actions {
+  grid-column:1!important;grid-row:2!important;
+  display:flex!important;gap:5px!important;
+  overflow:visible;min-width:0;
+ }
+ body:not(.hub-open):not(.compact-workspace) .studio-menubar>.studio-project-name {
+  grid-column:2!important;grid-row:2!important;max-width:260px!important;
+  margin:0!important;white-space:nowrap;
+ }
+ body:not(.hub-open):not(.compact-workspace) .studio-menubar>.editor-appearance {
+  grid-column:2!important;grid-row:1!important;justify-self:end;
+ }
+ body:not(.hub-open):not(.compact-workspace) .studio-menubar #studioToolbarToggle {
+  position:absolute!important;top:1px;right:101px;z-index:5;
+  padding:3px 10px!important;min-height:25px!important;
+  border:1px solid var(--wl-theme-border,#52616b);border-radius:5px;
+ }
+ body:not(.hub-open):not(.compact-workspace) .studio-primary-actions>button,
+ body:not(.hub-open):not(.compact-workspace) .studio-primary-actions>details>summary {
+  min-height:26px!important;padding:4px 9px!important;font-size:11px!important;
+ }
+ body:not(.hub-open):not(.compact-workspace) .studio-primary-actions>#play {
+  font-weight:800;border-color:var(--editor-accent,#48cba9)!important;
+ }
+ body:not(.hub-open):not(.compact-workspace) .workspace {
+  height:calc(100dvh / var(--editor-ui-scale,1) - 60px - var(--warlike-footer-height,26px))!important;
+  min-height:0!important;
+ }
+ body:not(.hub-open):not(.compact-workspace).warlike-toolbar-expanded .workspace {
+  height:calc(100dvh / var(--editor-ui-scale,1) - 102px - var(--warlike-footer-height,26px))!important;
+ }
+ body:not(.hub-open):not(.compact-workspace) .studio-menus>details>summary {
+  min-height:25px!important;padding:4px 10px!important;font-size:11px!important;
+ }
+}
+#studioMoreMenus { position:relative; }
+#studioMoreMenus>.studio-more-popover {
+ position:absolute;top:100%;left:0;z-index:180;
+ width:min(340px,calc(100vw - 30px));max-height:min(78vh,660px);
+ overflow-y:auto;overscroll-behavior:contain;
+ background:var(--wl-theme-panel,#212936);border:1px solid var(--wl-theme-border,#556777);
+ border-radius:8px;box-shadow:0 18px 38px #0009;padding:8px;
+}
+#studioMoreMenus:not([open])>.studio-more-popover { display:none!important; }
+#studioMoreMenus .studio-more-popover>details { display:block;height:auto;position:relative; }
+#studioMoreMenus .studio-more-popover>details>summary {
+ display:block;padding:9px 12px!important;cursor:pointer;font-size:12px;
+ color:var(--wl-theme-fg,#e4ebf4);border-radius:5px;
+}
+#studioMoreMenus .studio-more-popover>details[open]>summary {background:#3a4b5c;}
+#studioMoreMenus .studio-more-popover .studio-dropdown {
+ position:static!important;min-width:0!important;width:100%;
+ box-shadow:none!important;border:0!important;border-left:2px solid var(--editor-accent,#48cba9)!important;
+ background:transparent!important;margin:2px 0 8px 9px;
+}
+#studioMoreMenus .studio-more-popover .studio-dropdown button,
+#studioMoreMenus .studio-more-popover .studio-dropdown a {
+ white-space:normal!important;text-align:left;min-height:30px;
+}
+#studioMoreMenus .studio-more-popover>button {
+ display:block;width:100%;text-align:left;padding:9px 12px;min-height:32px;
+ color:var(--wl-theme-fg,#e4ebf4);
+}
+@media(max-width:1150px) and (min-width:851px){
+ body:not(.hub-open) .studio-primary-actions #warlikeToolLibrary {display:none!important;}
+ body:not(.hub-open) .studio-menubar>.studio-project-name {max-width:170px!important;}
+}
+@media(max-width:850px){
+ #studioMoreMenus{display:none!important;}
+}
+/* Only a genuine opt-in should re-expand the secondary toolbar. */
+body.warlike-focus-menu:not(.warlike-toolbar-expanded) #studioSecondaryToolbar {
+ height:0!important;min-height:0!important;max-height:0!important;
+ overflow:hidden!important;visibility:hidden!important;padding:0!important;border:0!important;
+}

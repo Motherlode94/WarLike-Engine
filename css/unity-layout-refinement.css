@@ -1,0 +1,120 @@
+/* Unity-like workspace hierarchy; presentation only, no runtime rewrite. */
+@media(min-width:1100px){
+ body:not(.hub-open):not(.compact-workspace):not(.warlike-game-build){
+  --left-pane-width:205px;
+  --right-pane-width:325px;
+  --project-height:205px;
+ }
+ body:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .workspace{
+  grid-template-columns:minmax(165px,var(--left-pane-width)) 5px minmax(360px,1fr) 5px minmax(290px,var(--right-pane-width));
+ }
+ body:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .center-stack{
+  grid-template-rows:29px 26px minmax(280px,1fr) 5px minmax(135px,var(--project-height));
+ }
+}
+@media(min-width:851px) and (max-width:1099px){
+ body:not(.hub-open):not(.compact-workspace) {--project-height:170px}
+ body:not(.hub-open):not(.compact-workspace) .workspace {
+  grid-template-columns:minmax(125px,var(--left-pane-width,165px)) 5px minmax(230px,1fr) 5px minmax(245px,var(--right-pane-width,255px));
+ }
+}
+body:not(.hub-open):not(.compact-workspace) .workspace {
+ background:#202125;
+ gap:0;
+}
+body:not(.hub-open) .center-stack,body:not(.hub-open) #viewport {
+ min-width:0;min-height:0;
+}
+body:not(.hub-open) .scene-tools,body:not(.hub-open) .scene-header{
+ background:#303136!important;border-bottom:1px solid #17191e!important;
+}
+body:not(.hub-open) .scene-tools .tools-left {gap:3px;min-width:0}
+body:not(.hub-open) .scene-tools button[data-tool] {
+ min-width:27px;min-height:25px!important;padding:3px 6px!important;
+}
+body:not(.hub-open) #hierarchyPanel,body:not(.hub-open) #inspectorPanel,
+body:not(.hub-open) #projectPanel{
+ background:var(--wl-theme-panel,#303136)!important;
+ border-color:var(--wl-theme-border,#1d2025)!important;
+}
+body:not(.hub-open) #hierarchyPanel>.panel-title,
+body:not(.hub-open) #inspectorPanel>.panel-title,
+body:not(.hub-open) #projectPanel>.bottom-tabs {
+ background:var(--wl-theme-header,#37383d)!important;
+ border-bottom:1px solid #191c21!important;
+}
+body:not(.hub-open) #hierarchyPanel #objects button{
+ border-radius:2px!important;
+ padding:5px 9px!important;
+ min-height:25px!important;
+}
+body:not(.hub-open) #hierarchyPanel .warlike-create-bar{
+ padding:4px 6px!important;
+ border-bottom:1px solid var(--wl-theme-border,#24272d);
+}
+body:not(.hub-open) #projectPanel .asset-grid{
+ align-content:start;
+}
+body:not(.hub-open) #properties .inspector-object {
+ padding:10px 10px 11px!important;gap:8px!important;
+ border-bottom:2px solid #1f2228!important;
+}
+body:not(.hub-open) #properties .unity-object-identity>.inspector-object-name{
+ font-size:13px!important;font-weight:650!important;
+}
+body:not(.hub-open) #properties .unity-object-labels {
+ padding-left:0!important;gap:8px!important;
+}
+body:not(.hub-open) #properties .unity-object-labels label{
+ font-size:10px!important;
+}
+body:not(.hub-open) #properties>.inspector-component{
+ border-bottom:1px solid #1c1f24!important;
+ background:var(--wl-theme-panel,#303136)!important;
+}
+body:not(.hub-open) #properties>.inspector-component>summary{
+ min-height:30px!important;padding:6px 10px!important;
+ background:var(--wl-theme-header,#393a3f)!important;
+ font-weight:650!important;font-size:11px!important;
+ border-bottom:1px solid #282a30!important;
+}
+body:not(.hub-open) #properties>.inspector-component[open]>summary{
+ border-left:3px solid var(--editor-accent,#58b6c4)!important;
+ padding-left:7px!important;
+}
+body:not(.hub-open) #properties .component-content {
+ padding:10px 12px 12px!important;
+ display:block;
+}
+body:not(.hub-open) #properties .inspector-vector-row {
+ grid-template-columns:78px minmax(0,1fr)!important;
+ gap:8px!important;
+ margin-bottom:6px;
+}
+body:not(.hub-open) #properties .inspector-vector-fields{
+ gap:6px!important;
+}
+body:not(.hub-open) #properties .inspector-vector-fields input{
+ border-radius:2px!important;
+ min-height:25px!important;
+}
+body:not(.hub-open) #properties input:not([type=checkbox]):not([type=range]):not([type=color]),
+body:not(.hub-open) #properties select{
+ border-radius:2px!important;
+ background:var(--wl-theme-bg,#23262c)!important;
+ border:1px solid var(--wl-theme-border,#454a52)!important;
+ color:var(--wl-theme-fg,#e3e8ef)!important;
+}
+body:not(.hub-open) #properties button:focus-visible,
+body:not(.hub-open) .studio-menubar button:focus-visible{
+ outline:2px solid var(--editor-accent,#48cba9);outline-offset:2px;
+}
+body:not(.hub-open) #properties .inspector-component-actions {
+ box-shadow:0 8px 24px #0007;
+}
+body:not(.hub-open) .studio-primary-actions .studio-action-divider {opacity:.4}
+@media(max-width:850px){
+ body:not(.hub-open) #properties>.inspector-component>summary{
+  min-height:34px!important;
+ }
+}

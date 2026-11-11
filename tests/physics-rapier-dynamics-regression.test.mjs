@@ -18,9 +18,12 @@ const floor=()=>cube(1,-256,-.25,{name:'Floor',w:1024,depth3d:1024,y:-256,h:16})
 const project=()=>({...freshGameProject(),physics3d:'rapier',genre:'sandbox'});
 const portable=entities=>{
  const original=structuredClone(entities);
- const build=prepareGameDefinition({entities,mode:'3d',project:project()});
+ // An exportable Web game requires a playable actor. Keep this test-only
+ // actor far away and omit it from physics parity samples.
+ const testPlayer={id:9999,name:'QA Player',type:'mesh3d',x:2000,y:2000,w:32,h:64,depth3d:32,elevation3d:0,color:'#88ccff',playable3d:true};
+ const build=prepareGameDefinition({entities:[...entities,testPlayer],mode:'3d',project:project()});
  assert.deepEqual(entities,original,'Web export must not mutate authored physics entities');
- return structuredClone(build.project.scenes.find(s=>s.id===build.project.startupSceneId).entities);
+ return structuredClone(build.project.scenes.find(s=>s.id===build.project.startupSceneId).entities.filter(e=>e.id!==testPlayer.id));
 };
 async function simulate(entities,frames=180){
  const api=await loadRapier3d();assert.ok(api,'Rapier WASM must be available');

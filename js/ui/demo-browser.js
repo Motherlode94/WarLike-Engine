@@ -5,6 +5,7 @@ import {loadAuthoredDemo} from '../core/scene.js';
 import {starterDemosForMode} from '../core/demo-catalog.js';
 const make=(tag,cls,text)=>{const node=document.createElement(tag);node.className=cls;if(text)node.textContent=text;return node};
 const scenes=[
+ {id:'chambre07',name:'CHAMBRE 07 · La Voix',type:'Horreur psychologique · 3D raycast',description:'Explore un appartement labyrinthique, rassemble trois souvenirs, parle à Lia et échappe à une présence. Prototype autonome non éditable dans Inspector.',features:'Exploration · dialogue à choix · souvenirs · poursuite · sauvegarde · deux fins',mode:'3d',externalUrl:'examples/chambre-07/index.html'},
  {id:'worldforge',name:'Worldforge · Forge des mondes',type:'God game · simulation 2D',description:'Crée des continents, installe quatre peuples, observe leurs villages, leurs ressources, leur expansion et leurs conflits.',features:'Terrain · IA de civilisation · Expansion · Incendies · Météores · Sauvegarde',mode:'2d',externalUrl:'examples/worldforge/index.html'},
  {id:'animation',name:'Atelier du mouvement',type:'Personnages et animation · 3D',description:'Contrôle Alex puis explore cinq stations : poses, IK, root motion, clips de combat et interactions.',features:'Marche · course · saut · attaque · squelette · IK · root motion',mode:'3d'},
  {id:'town',name:'Quartier du Canal',type:'Exploration et mission',description:'Parle à Mara, retrouve le fusible de l’atelier, rétablis le courant et rouvre le passage.',features:'Dialogue · inventaire · barrière · lumière · effets · victoire'},
@@ -17,9 +18,9 @@ export function initDemoBrowser(){
  const dialog=make('dialog','demo-browser');dialog.id='demoSceneBrowser';dialog.setAttribute('aria-labelledby','demoSceneBrowserTitle');
  const header=make('header',''),title=make('h2','','Scènes démo jouables');title.id='demoSceneBrowserTitle';const close=make('button','','Fermer');close.type='button';close.onclick=()=>dialog.close();header.append(title,close);
  const standalone=make('dialog','demo-game-frame');standalone.id='warlikeStandaloneGame';
- const standaloneHeader=make('header','');const standaloneTitle=make('h2','','Worldforge · Forge des mondes');
+ const standaloneHeader=make('header','');const standaloneTitle=make('h2','','Démo jouable');
  const standaloneClose=make('button','','Fermer le jeu');standaloneClose.type='button';
- const iframe=make('iframe','');iframe.title='WarLike Worldforge';iframe.loading='lazy';
+ const iframe=make('iframe','');iframe.title='WarLike · Démo jouable';iframe.loading='lazy';
  iframe.setAttribute('referrerpolicy','no-referrer');
  standaloneClose.onclick=()=>standalone.close();
  standaloneHeader.append(standaloneTitle,standaloneClose);
@@ -28,7 +29,7 @@ export function initDemoBrowser(){
  standalone.addEventListener('keydown',event=>{if(event.key!=='Escape')event.stopPropagation();});
  const intro=make('p','','Scènes jouables et parcours de départ par genre. Le chargement remplace la scène actuelle ; Ctrl+Z permet de revenir en arrière.'),search=make('input','demo-browser-search'),grid=make('div','demo-browser-grid'),status=make('p','demo-browser-status');search.type='search';search.placeholder='Rechercher un jeu ou une scène';search.setAttribute('aria-label','Rechercher une scène');status.setAttribute('role','status');dialog.append(header,intro,search,grid,status);document.body.append(dialog);
  dialog.addEventListener('keydown',event=>event.stopPropagation());dialog.addEventListener('close',()=>state.keys.clear());
- const render=()=>{grid.replaceChildren();const query=search.value.trim().toLocaleLowerCase('fr'),available=[...scenes.filter(scene=>!scene.mode||scene.mode===workspace.mode),...starterDemosForMode(workspace.mode)],filtered=available.filter(scene=>(scene.name+' '+scene.type+' '+scene.description).toLocaleLowerCase('fr').includes(query));status.textContent='Projet '+workspace.mode.toUpperCase()+' · '+filtered.length+' / '+available.length+' scènes · données éditables et exportables';for(const scene of filtered){
+ const render=()=>{grid.replaceChildren();const query=search.value.trim().toLocaleLowerCase('fr'),available=[...scenes.filter(scene=>!scene.mode||scene.mode===workspace.mode),...starterDemosForMode(workspace.mode)],filtered=available.filter(scene=>(scene.name+' '+scene.type+' '+scene.description).toLocaleLowerCase('fr').includes(query));status.textContent='Projet '+workspace.mode.toUpperCase()+' · '+filtered.length+' / '+available.length+' scènes · Les jeux autonomes se lancent ici, sans conversion en scène native.';for(const scene of filtered){
   const card=make('article','demo-browser-card');card.dataset.demoScene=scene.id;card.append(make('small','',scene.type),make('h3','',scene.name),make('p','',scene.description),make('p','demo-browser-features',scene.features));const load=make('button','',scene.externalUrl?'Jouer dans Engine':'Charger cette scène');load.type='button';load.disabled=state.playing;
   load.onclick=()=>{if(scene.externalUrl){
     iframe.src=new URL(scene.externalUrl,document.baseURI).href;

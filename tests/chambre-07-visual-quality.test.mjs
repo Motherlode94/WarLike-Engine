@@ -9,7 +9,7 @@ test('point and spot lights contribute to specular shading in existing GLB shade
  assert.match(shader,/vec3 localSpecular=vec3\(0\.\)/);
  assert.match(shader,/vec3 halfVector=normalize\(L\+viewDir\)/);
  assert.match(shader,/specularTint\*localSpecular/);
- assert.match(shader,/if\(uUnlit\)/);
+ assert.match(shader,/uUnlit\?baseColor\.rgb/);
  assert.match(shader,/uRoughness/);
  assert.match(shader,/uMetallic/);
  assert.match(shader,/uLightSpot\[i\]/);

@@ -74,7 +74,7 @@ try{
   let elevation=probe.elevation3d;
   Object.defineProperty(probe,'elevation3d',{configurable:true,enumerable:true,
    get(){return elevation},
-   set(next){if(next>elevation+.35)globalThis.__qaPhysicsJumps.push({before:elevation,after:next,trace:new Error('unexpected physics jump').stack?.slice(0,1100)});elevation=next}
+   set(next){if(next>elevation+.003&&globalThis.__qaPhysicsJumps.length<12)globalThis.__qaPhysicsJumps.push({before:elevation,after:next,trace:new Error('unexpected physics rise').stack?.slice(0,850)});elevation=next}
   });
  });
  // Verify an actual exported Chromium runtime advances the Rigidbody, not

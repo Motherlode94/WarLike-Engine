@@ -12,6 +12,11 @@ export function inspectRuntimeCompatibility(entities,{target='web',backend='web'
  const issues=[],add=(message,entityId=null)=>issues.push({severity:'error',message,entityId,target});
  if(target==='web'&&backend==='native')add('Ce projet utilise le runtime C# local. Choisis Play Web et remplace les composants natifs avant l’export Web.');
  for(const e of entities||[]){
+  // The lightweight built-in solver handles rigidbody contacts but does not
+  // solve impulse joints. Never silently ship an articulated scene without
+  // its constraints: switching to Rapier is required for Web export.
+  if(target==='web'&&project?.physics3d==='builtin'&&e.joint3d?.enabled!==false&&e.joint3d)
+   add((e.name||'#'+e.id)+' · Joint 3D nécessite le moteur physique Rapier. Choisis Rapier dans les paramètres du projet avant l’export Web.',e.id);
   if(e.animationRig&&e.animationRig.enabled!==false)for(const error of inspectAnimationRig(e.animationRig))add((e.name||'#'+e.id)+' · '+error,e.id);
   if(e.animatorGraph&&e.animatorGraph.enabled!==false)for(const error of inspectAnimatorGraph(e.animatorGraph))add((e.name||'#'+e.id)+' · '+error,e.id);
   if(e.animationStudio&&e.animationStudio.enabled!==false&&e.animationStudio.playOnStart)for(const error of inspectAnimationStudio(e.animationStudio))add((e.name||'#'+e.id)+' · '+error,e.id);

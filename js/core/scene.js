@@ -2,6 +2,7 @@ import {deleteEntitySubtrees,duplicateEntitySubtrees,reparentEntities,updateEdit
 import {encodeProjectAssets,restoreProjectAssets} from './portable-assets.js';
 import {horror} from './horror-survival.js';
 import {createAnimationDemo} from './animation-demo.js';
+import {createChambre07Scene} from './chambre-07-scene.js';
 import {animationEditorPreview} from './animation-clips.js';
 import {createTownDemo,createGarageDemo,createNatureDemo} from './authored-demo-scenes.js';
 import {createBundledPhysicsScene2d} from './bundled-physics-scene.js';
@@ -235,7 +236,7 @@ export function loadElementsDemo(){
 // Each demo is a complete, playable sandbox for its own project type.
 export function loadAuthoredDemo(kind='town'){
  if(state.playing)return false;
- const builders={animation:createAnimationDemo,town:createTownDemo,nature:createNatureDemo,garage:createGarageDemo,platformer:()=>{if(workspace.mode!=='2d')throw Error('Le parcours plateforme utilise le projet 2D.');return createBundledPhysicsScene2d()}};
+ const builders={chambre07native:createChambre07Scene,animation:createAnimationDemo,town:createTownDemo,nature:createNatureDemo,garage:createGarageDemo,platformer:()=>{if(workspace.mode!=='2d')throw Error('Le parcours plateforme utilise le projet 2D.');return createBundledPhysicsScene2d()}};
  const genre=kind.startsWith('genre:')?kind.slice(6):null;
  const build=genre?mode=>createGenreScene(genre,mode):builders[kind];if(!build)throw Error('Scène démo inconnue.');
  const demo=build(workspace.mode);record('Avant changement de scène démo');

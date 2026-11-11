@@ -28,7 +28,7 @@ export function createChambre07Scene(mode='3d'){
  // This floor is both rendered and solid. Its top coincides with z=0.
  add('primitive-cube','Plancher · appartement',0,0,{
   w:1152,depth3d:896,h:16,elevation3d:-.25,
-  color:'#61515c',collision3d:true,solid3d:true,hierarchyGroup:'Architecture'
+  color:'#61515c',collision3d:true,solid3d:true,tags:['ai-walkable'],hierarchyGroup:'Architecture'
  });
  // Closed outer boundaries. Inner partitions intentionally leave walkable openings.
  block('Mur nord',0,0,1152,24);

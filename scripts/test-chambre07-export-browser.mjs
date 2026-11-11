@@ -21,7 +21,8 @@ demo.entities.push({id:Math.max(...demo.entities.map(o=>o.id))+1,name:'QA · Chu
  type:'mesh3d',x:540,y:240,w:32,depth3d:32,h:32,elevation3d:2,
  color:'#d5ec80',collision3d:true,solid3d:true,
  rigidbody3d:{...defaultRigidbody3d(),restitution:0},collider3d:defaultCollider3d()});
-const project={...freshGameProject(),id:'chambre07-e2e',title:'CHAMBRE 07',genre:'horror',physics3d:'builtin'};
+const backend=process.env.WARLIKE_PHYSICS_BACKEND==='rapier'?'rapier':'builtin';
+const project={...freshGameProject(),id:'chambre07-e2e',title:'CHAMBRE 07',genre:'horror',physics3d:backend};
 const fetcher=async url=>{
  try {
   const bytes=await readFile(fileURLToPath(url));
@@ -68,9 +69,19 @@ try{
  await page.waitForFunction(async()=>{
   const {state}=await import('/js/core/state.js');
   const cube=state.entities.find(o=>o.name==='QA · Chute Rigidbody');
-  return cube&&cube.elevation3d<.05&&cube.grounded3d===true;
- },null,{timeout:12000});
- await page.waitForTimeout(250);
+  const atRest=!!cube&&Math.abs(cube.elevation3d)<.05&&cube.grounded3d===true&&Math.abs(cube.rigidbody3d?.vy||0)<.1;
+  globalThis.__qaPhysicsStableFrames=atRest?(globalThis.__qaPhysicsStableFrames||0)+1:0;
+  return globalThis.__qaPhysicsStableFrames>=5;
+ },null,{timeout:15000,polling:100});
+ if(backend==='rapier'){
+  const usingRapier=await page.evaluate(async()=>{
+   const {activeRapierScene3d}=await import('/js/core/rapier-physics-3d.js');
+   return !!activeRapierScene3d()?.actors?.has(
+    (await import('/js/core/state.js')).state.entities.find(o=>o.name==='QA · Chute Rigidbody')?.id
+   );
+  });
+  assert.equal(usingRapier,true,'Browser silently fell back to built-in physics instead of Rapier');
+ }
  const state=await page.evaluate(async()=>{
   const {state}=await import('/js/core/state.js');
   const {gameSession}=await import('/js/core/game-session.js');
@@ -90,6 +101,6 @@ try{
  assert.equal(errors.length,0,'Unhandled page errors: '+errors.join('\n'));
  assert.equal(failed.length,0,'Missing runtime assets: '+JSON.stringify(failed.slice(0,10)));
  await page.screenshot({path:path.join(output,'chambre07-play.png'),timeout:20000});
- console.log(JSON.stringify({result:'PASS',output,files:packageResult.files,state},null,2));
+ console.log(JSON.stringify({result:'PASS',backend,output,files:packageResult.files,state},null,2));
  await context.close();
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

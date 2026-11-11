@@ -130,5 +130,13 @@ export function stepRapierScene(scene,dt){
   if(oldAffine&&oldReference)updateAffineEditorPose3d(o,oldAffine,oldReference);
   r.lastPosition=scenePosition(o);
  }
+ // The rigidbody pose is now synchronized. Report resting support in the
+ // same public grounded3d field as the built-in solver. Evaluate after all
+ // actors moved, otherwise dynamic-on-dynamic supports depend on loop order.
+ const supports=[...scene.actors.values()].map(actor=>actor.entity);
+ for(const actor of scene.actors.values())if(actor.isDynamic){
+  const o=actor.entity;
+  o.grounded3d=!!supportBody3d(o,supports,.3);
+ }
 }
 export function disposeRapierScene(scene){if(activeScene===scene)activeScene=null;scene?.world?.free?.();scene?.actors?.clear?.();scene?.skipped?.clear?.();scene?.joints?.clear?.()}

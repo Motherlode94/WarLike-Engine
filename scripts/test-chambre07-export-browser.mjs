@@ -64,6 +64,11 @@ try{
   const {runtimeSession}=await import('/js/core/runtime-session.js');
   return runtimeSession.phase==='ready';
  },null,{timeout:45000});
+ await page.evaluate(async()=>{
+  const {state}=await import('/js/core/state.js');
+  globalThis.__qaInitialSceneArray=state.entities;
+  globalThis.__qaInitialCube=state.entities.find(o=>o.name==='QA · Chute Rigidbody');
+ });
  // Verify an actual exported Chromium runtime advances the Rigidbody, not
  // just that the package contains a serialized Rigidbody descriptor.
  await page.waitForFunction(async()=>{
@@ -89,7 +94,7 @@ try{
   return {playing:state.playing,count:state.entities.length,player:state.entities.find(o=>o.playable3d)?.name,
    memories:state.entities.filter(o=>o.tags?.includes('chambre07-memory')).length,
    floor:state.entities.some(o=>o.name==='Plancher · appartement'&&o.solid3d),
-   physicsCube:(()=>{const o=state.entities.find(e=>e.name==='QA · Chute Rigidbody');return o?{elevation:o.elevation3d,grounded:o.grounded3d,velocity:o.rigidbody3d?.vy,position:[o.x,o.y]}:null})(),
+   physicsCube:(()=>{const o=state.entities.find(e=>e.name==='QA · Chute Rigidbody');return o?{elevation:o.elevation3d,grounded:o.grounded3d,velocity:o.rigidbody3d?.vy,position:[o.x,o.y],sceneReplaced:state.entities!==globalThis.__qaInitialSceneArray,objectReplaced:o!==globalThis.__qaInitialCube}:null})(),
    phase:gameSession.phase,glError:view3d.gl?.getError(),renderError:view3d.error};
  });
  assert(state.playing,'Exported scene must be in Play');

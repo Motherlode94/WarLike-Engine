@@ -10,7 +10,8 @@ const isWorkspaceSnapshot=value=>value&&typeof value==='object'&&
  });
 
 export function saveProjectSafely(storage,key,data,writeIndex){
- const original=storage.getItem(key);
+ let original;
+ try{original=storage.getItem(key)}catch{return false}
  // Do not replace a known-good backup with malformed or partial JSON.
  if(original!==null){
   try{

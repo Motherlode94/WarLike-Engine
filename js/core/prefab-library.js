@@ -115,7 +115,9 @@ export function makePrefabHierarchy(root,sceneEntities,{mode=null}={}){
  const nodes=sceneEntities.filter(e=>selected.has(e.id)).map(e=>{
   const data=cleanHierarchyNode(e);
   // Preserve intra-prefab joint links, remapping only references to members.
-  if(data.joint3d&&selected.has(Number(data.joint3d.targetId))){
+  if(data.joint3d?.enabled!==false&&data.joint3d?.targetId){
+   if(!selected.has(Number(data.joint3d.targetId)))
+    throw Error('Articulation externe au prefab : inclus aussi sa cible dans la hiérarchie.');
    data.joint3d.targetNodeKey=keyFor(Number(data.joint3d.targetId));
    delete data.joint3d.targetId;
   }

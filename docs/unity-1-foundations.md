@@ -75,3 +75,19 @@ Les scénarios de `tests/physics-rapier-dynamics-regression.test.mjs` chargent *
 Le moteur physique interne reste une solution simple de prototypage et **ne prend pas en charge les joints d'impulsion**. Une exportation silencieusement dégradée serait trompeuse. Le test Chromium de CHAMBRE 07 vérifie séparément une chute de Rigidbody et un contact `grounded3d` stable pour **builtin** et **Rapier**. Les tests numériques d'articulations, de pile et de CCD utilisent les données sérialisées du build mais ne remplacent pas un test navigateur distinct de chaque scénario ni une validation de performance sur appareils lents.
 
 Les anciennes scènes ne sont ni converties ni réécrites. Une scène historique avec des joints pourra nécessiter le choix explicite de Rapier avant export.
+
+## Prefabs hiérarchiques — socle v2 (12 novembre 2026)
+
+Le format ancien `{id,name,components}` reste valide et la fonction historique `instantiatePrefab()` continue de créer un seul objet. Le système ajoute des APIs compatibles pour enregistrer une sous-hiérarchie depuis les entités de scène : `makePrefabHierarchy`, `savePrefabHierarchy`, `instantiatePrefabHierarchy`, `createPrefabVariant`, `resolvePrefabVariant`.
+
+- Chaque nœud utilise une clé logique stable indépendante des futurs identifiants de scène.
+- Les liens `parentId` et `joint3d.targetId` internes sont remappés lors de l'instanciation, sans reprendre les références aux IDs du projet source.
+- Les positions des enfants sont conservées telles qu'elles sont représentées par le graphe actuel ; seul le placement de la racine est modifié à la création d'une nouvelle instance.
+- La structure est contrôlée : une seule racine, parents existants, aucun cycle, pas plus de 1000 nœuds.
+- L'Inspector permet d'enregistrer un objet et tous ses enfants, puis de créer des instances supplémentaires. Le bouton n'apparaît que si la sélection possède au moins un enfant.
+- Les overrides de l'Inspector et leur remise à zéro utilisent désormais le bon nœud, sans réécrire la hiérarchie ni les identifiants.
+- Les variantes à propriétés surchargées sont disponibles via API, mais **leur gestion complète dans la bibliothèque, l'éditeur visuel et la propagation des évolutions du prefab parent sont encore à développer**.
+
+Tests : `tests/prefab-hierarchy-v2.test.mjs` et `tests/prefab-hierarchy-inspector.test.mjs`. Les tests de conversion de scène et de build ne remplacent pas encore un parcours complet dans deux navigateurs.
+
+**Attention :** les références externes à la sous-hiérarchie (par exemple vers un objet situé hors du prefab) ne sont pas automatiquement réassignées. Aucun système de clonage d'assets importés ou de prefabs imbriqués récursifs n'est revendiqué à ce stade. La règle WL-COMPAT-001 demeure prioritaire.

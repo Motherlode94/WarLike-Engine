@@ -193,5 +193,5 @@ export function resolvePrefabVariant(variant,base){
   if(hierarchyFields.has(property)||property==='key'||property==='parentKey')throw Error('Override de structure interdit');
   node.data[property]=structuredClone(value);
  }
- return {...structuredClone(base),id:variant.id,name:variant.name||base.name,basePrefabId:base.id,nodes};
+ return {...structuredClone(base),id:variant.id,name:variant.name||base.name,basePrefabId:base.id,overrides:structuredClone(variant.overrides||{}),nodes};
 }

@@ -18,6 +18,8 @@ jobs:
       - run: npm install --no-package-lock
       - name: Rebuild portable runtime file manifest
         run: npm run build:runtime
+      - name: Reject an outdated committed runtime manifest
+        run: git diff --exit-code -- runtime-files.json
       - name: Check runtime files required by native CHAMBRE 07
         run: node scripts/check-chambre07-runtime-manifest.mjs
       - name: Check TypeScript definitions

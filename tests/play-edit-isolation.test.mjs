@@ -62,7 +62,7 @@ test('compiled Blueprint instructions never leak back into authored graph',()=>{
  sequence.graph={nodes:[{id:'event',kind:'event',event:'start',x:0,y:0},{id:'action1',kind:'action',action:{type:'message',value:'test'},x:200,y:0}],links:[{from:'event',to:'action1',port:'next'}]};
  const authored=structuredClone(state.entities);
  togglePlay();
- assert.deepEqual(state.entities[0].sequence.instructions,[{type:'message',value:'test'}]);
+ assert.deepEqual(state.entities[0].sequence.instructions,[{type:'message',value:'test',_nodeId:'action1'}]);
  togglePlay();
  assert.deepEqual(state.entities,authored,'Stop must restore instructions from before compilation');
  assert.deepEqual(state.selected,expected.selection);

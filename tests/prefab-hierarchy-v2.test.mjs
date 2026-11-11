@@ -108,3 +108,10 @@ test('library variants inherit later base changes without losing local overrides
  assert.equal(invalid.invalidVariant,true);
  assert.throws(()=>instantiatePrefabHierarchy(invalid,500),/Variante de prefab invalide/);
 });
+
+test('external 3D joint references are rejected rather than reused as stale scene IDs',()=>{
+ const objects=source();
+ objects[1].joint3d.targetId=13;
+ assert.throws(()=>makePrefabHierarchy(objects[0],objects,{mode:'3d'}),/Articulation externe/);
+ assert.equal(objects[1].joint3d.targetId,13,'A failed prefab save must not mutate the authored scene');
+});

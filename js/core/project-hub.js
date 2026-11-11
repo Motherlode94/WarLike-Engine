@@ -10,6 +10,7 @@ import {resetHistory,record} from './history.js';
 // WarLike Hub — local named projects, independent 2D/3D templates.
 // Storage stays on this browser. Export JSON to transfer projects to another device.
 import {workspace,restoreWorkspaces,workspacePayload} from './workspaces.js';
+import {saveProjectSafely,restoreProjectSafely} from './project-storage-guard.js';
 import {state,notify} from './state.js';
 import {stopSources} from './audio-sources.js';
 const INDEX='warlike.hub.projects.v1',PREFIX='warlike.hub.project.';
@@ -67,7 +68,7 @@ export function saveProject(){
  if(!hub.projectId||state.playing)return false;animationEditorPreview.stop();
  hub.type=workspace.mode;gameProject.genre=genreForMode(gameProject.genre,workspace.mode);
  const data={version:5,...workspacePayload(),entities:state.entities,camera:state.camera,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,genre:hub.genre};
- try{localStorage.setItem(PREFIX+hub.projectId,JSON.stringify(data));saveMeta({id:hub.projectId,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,genre:hub.genre,updated:Date.now()});return true}catch{return false}
+ return saveProjectSafely(localStorage,PREFIX+hub.projectId,data,()=>saveMeta({id:hub.projectId,name:hub.projectName,type:hub.type,accent:hub.accent,assetPack:hub.assetPack,genre:hub.genre,updated:Date.now()}));
 }
 export function createProject(name,type,assetPack='starter',genre='sandbox'){
  if(state.playing)throw Error('Arrête Play avant de créer un projet.');
@@ -83,10 +84,14 @@ export function createProject(name,type,assetPack='starter',genre='sandbox'){
 export function openProject(id){
  if(state.playing)throw Error('Arrête Play avant de changer de projet.');
  if(hub.projectId&&hub.projectId!==id)saveProject();
- const data=safeRead(PREFIX+id,null),meta=indexed().find(p=>p.id===id);
- if(!data||!meta||!restoreWorkspaces(data))throw Error('Projet introuvable ou corrompu.');
+ const meta=indexed().find(p=>p.id===id);
+ if(!meta)throw Error('Projet introuvable.');
+ const restored=restoreProjectSafely(localStorage,PREFIX+id,data=>restoreWorkspaces(data));
+ if(!restored)throw Error('Projet introuvable ou corrompu. Aucune copie de secours valide.');
+ const {data,source}=restored;
+ if(source!=='principal')console.warn('[WarLike Hub] Projet récupéré depuis sa sauvegarde de secours sans écraser l’original :',id);
  gameProject.id=id;if(!data.workspaces?.[workspace.mode]?.game?.title)gameProject.title=meta.name;
- Object.assign(hub,{projectId:id,projectName:meta.name,type:workspace.mode,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack),genre:genreForMode(resolveGameGenre(data.workspaces?.[workspace.mode]?.game?.genre??data.genre??meta.genre,state.entities),workspace.mode)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide='';resetHistory();record('Ouvrir le projet '+meta.name);notify();return true;
+ Object.assign(hub,{projectId:id,projectName:meta.name,type:workspace.mode,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack),genre:genreForMode(resolveGameGenre(data.workspaces?.[workspace.mode]?.game?.genre??data.genre??meta.genre,state.entities),workspace.mode)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide=source==='principal'?'':'Projet récupéré depuis une sauvegarde de secours. Vérifie son contenu et enregistre une copie.';resetHistory();record('Ouvrir le projet '+meta.name+(source==='principal'?'':' · secours'));notify();return true;
 }
 export function chooseProjectGenre(id,genre){
  if(state.playing)throw Error('Arrête Play avant de changer le type de jeu.');

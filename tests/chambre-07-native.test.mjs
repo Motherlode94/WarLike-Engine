@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createChambre07Scene} from '../js/core/chambre-07-scene.js';
 import {validEntities} from '../js/core/game-project.js';
+import {isAiObstacle} from '../js/core/ai-perception.js';
 
 const make=()=>createChambre07Scene('3d');
 test('CHAMBRE 07 is a native editable 3D scene with a valid entity catalog',()=>{
@@ -14,6 +15,14 @@ test('CHAMBRE 07 is a native editable 3D scene with a valid entity catalog',()=>
  assert.ok(scene.entities.every(e=>e.type==='mesh3d'));
  assert.ok(scene.entities.some(e=>e.hierarchyGroup==='Architecture'&&e.collision3d&&e.solid3d));
  assert.ok(scene.entities.some(e=>e.playable3d&&e.cameraRig?.mode==='firstPerson'&&e.controller3d));
+});
+test('walkable solid floor does not block AI navigation',()=>{
+ const scene=make(),floor=scene.entities.find(o=>o.tags?.includes('ai-walkable'));
+ const hunter=scene.entities.find(o=>o.tags?.includes('chambre07-hunter'));
+ const player=scene.entities.find(o=>o.playable3d);
+ assert.ok(floor?.solid3d && floor?.collision3d);
+ assert.equal(isAiObstacle(floor,hunter,player),false);
+ assert.ok(scene.entities.filter(o=>o.name.startsWith('Cloison')).every(o=>isAiObstacle(o,hunter,player)));
 });
 test('CHAMBRE 07 has three accessible memory interactions and a gated branching finale',()=>{
  const scene=make(),player=scene.entities.find(e=>e.playable3d);

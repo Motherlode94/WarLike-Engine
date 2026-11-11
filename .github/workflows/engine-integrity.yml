@@ -30,3 +30,12 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: CHAMBRE 07 export and isolated Play
         run: npm run test:chambre07:browser
+        env:
+          WARLIKE_CHAMBRE07_OUTPUT_DIR: .validation-tools/chambre07
+      - name: Upload export screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chambre07-export-play-screenshot
+          path: .validation-tools/chambre07/chambre07-play.png
+          if-no-files-found: ignore

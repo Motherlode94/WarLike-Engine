@@ -36,3 +36,24 @@ test('applying prefab deletion removes stale inherited component but preserves o
  assert.equal(instances[2].id,4);
  assert.ok(Object.hasOwn(prefab.components,'collider3d'),'original prefab asset remains unchanged');
 });
+
+test('prefab instances cannot inherit source hierarchy identifiers or prefab links',()=>{
+ const store=memory();
+ const source={id:41,name:'Door source',type:'mesh3d',x:80,y:60,w:48,h:120,parentId:5,sceneObjectId:'legacy-door',prefabSourceId:'prefab-parent',prefabOverrides:['color'],inspectorOrder:['Transform'],color:'#33bb99'};
+ const prefab=savePrefab(source,store,{mode:'3d'}),instance=instantiatePrefab(prefab,52,320,450);
+ for(const field of ['id','name','x','y','parentId','sceneObjectId','prefabSourceId','prefabOverrides','inspectorOrder']){
+  assert.equal(Object.hasOwn(prefab.components,field),false,'Source leaked '+field);
+ }
+ assert.equal(instance.id,52);assert.equal(instance.x,320);assert.equal(instance.y,450);
+ assert.equal(instance.parentId,undefined);assert.equal(instance.sceneObjectId,undefined);
+ assert.equal(instance.prefabSourceId,prefab.id);
+ assert.deepEqual(instance.prefabOverrides,[]);
+ assert.equal(instance.color,'#33bb99');
+});
+test('old prefabs with stored parent IDs are safely instantiated as independent roots',()=>{
+ const legacy={id:'old',name:'Old',components:{type:'mesh3d',w:64,h:64,parentId:99,sceneObjectId:'old-root',prefabSourceId:'other',prefabOverrides:['w'],x:1,y:2}};
+ const result=instantiatePrefab(legacy,7,70,80);
+ assert.equal(result.parentId,undefined);assert.equal(result.sceneObjectId,undefined);
+ assert.equal(result.prefabSourceId,'old');assert.deepEqual(result.prefabOverrides,[]);
+ assert.equal(result.id,7);assert.equal(result.x,70);assert.equal(result.y,80);
+});

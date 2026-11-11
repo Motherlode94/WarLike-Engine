@@ -1,0 +1,33 @@
+name: Engine integrity and Web export
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  core-and-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Rebuild portable runtime file manifest
+        run: npm run build:runtime
+      - name: Check runtime files required by native CHAMBRE 07
+        run: node scripts/check-chambre07-runtime-manifest.mjs
+      - name: Check TypeScript definitions
+        run: npm run typecheck
+      - name: Engine tests including legacy compatibility
+        run: npm test
+      - name: Full portable export smoke test
+        run: npm run test:export
+      - name: Install headless Chromium
+        run: npx playwright install --with-deps chromium
+      - name: CHAMBRE 07 export and isolated Play
+        run: npm run test:chambre07:browser

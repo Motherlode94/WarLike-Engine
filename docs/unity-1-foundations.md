@@ -49,3 +49,15 @@ Sources :
 **P2** : ombres et rendu PBR plus complet, profilage, optimisations pour grandes scènes.
 
 Cette feuille de route reste soumise à la règle [WL-COMPAT-001](../AGENTS.md). La compatibilité des anciens projets doit être éprouvée, et non déclarée par défaut.
+
+## Lot Inspector ↔ Play ↔ Export — novembre 2026
+
+WarLike distingue désormais les composants avec **Inspector dédié** et les composants enregistrés sans vue spécialisée. Ces derniers reçoivent un panneau de repli éditable pour leurs champs scalaires (nombre, texte et booléen) dans `js/ui/generic-component-inspector.js`. Les valeurs restent dans les **données du composant d'origine**, sans nouveau format de sauvegarde. Les composants complexes et les tableaux ne sont pas modifiés arbitrairement.
+
+- Ajouter via `Add Component` : le composant doit apparaître dans l'Inspector.
+- Éditer : changement validé par `setInspectorValue`, historique et notifications de l'éditeur.
+- Réinitialiser ou supprimer : respect des dépendances définies dans `componentRemovalBlockers` ; désactivation pendant Play.
+- Convertir / exporter : les données de composant restent dans l'entité, y compris pour les scènes `warlike.scene.v2` via `LegacyEntity`.
+- Régression : `tests/generic-component-inspector.test.mjs` vérifie les composants d'horreur et du monde ouvert, le round-trip et l'export.
+
+**Limite :** ce panneau de repli ne remplace pas un éditeur spécialisé pour les graphes, scripts, références d'objets, listes complexes, animation et runtime C# local. Le rendu visuel réel de chaque panneau reste à contrôler manuellement.

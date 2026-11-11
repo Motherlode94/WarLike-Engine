@@ -23,12 +23,12 @@ export function createChambre07Scene(mode='3d'){
  };
  const block=(name,x,y,w,depth,height=220,props={})=>add('primitive-cube',name,x,y,{
   w,depth3d:depth,h:height,elevation3d:0,
-  color:'#535269',collision3d:true,solid3d:true,hierarchyGroup:'Architecture',...props
+  color:'#535269',materialRoughness:.93,materialMetallic:0,collision3d:true,solid3d:true,hierarchyGroup:'Architecture',...props
  });
  // This floor is both rendered and solid. Its top coincides with z=0.
  add('primitive-cube','Plancher · appartement',0,0,{
   w:1152,depth3d:896,h:16,elevation3d:-.25,
-  color:'#61515c',collision3d:true,solid3d:true,tags:['ai-walkable'],hierarchyGroup:'Architecture'
+  color:'#61515c',materialRoughness:.88,materialMetallic:0,collision3d:true,solid3d:true,tags:['ai-walkable'],hierarchyGroup:'Architecture'
  });
  // Closed outer boundaries. Inner partitions intentionally leave walkable openings.
  block('Mur nord',0,0,1152,24);
@@ -42,9 +42,9 @@ export function createChambre07Scene(mode='3d'){
  block('Cloison archives · ouest',790,24,24,230);
  block('Cloison archives · sud',790,320,24,90);
  // Decorative furniture stays physically solid, but never blocks the mission route.
- block('Table basse',120,300,150,70,37,{color:'#8f7189',hierarchyGroup:'Mobilier'});
- block('Console archives',870,130,150,55,85,{color:'#454f65',hierarchyGroup:'Mobilier'});
- block('Lit ancien',130,610,175,100,48,{color:'#624c70',hierarchyGroup:'Mobilier'});
+ block('Table basse',120,300,150,70,37,{color:'#8f7189',materialRoughness:.52,materialMetallic:.05,hierarchyGroup:'Mobilier'});
+ block('Console archives',870,130,150,55,85,{color:'#454f65',materialRoughness:.42,materialMetallic:.25,hierarchyGroup:'Mobilier'});
+ block('Lit ancien',130,610,175,100,48,{color:'#624c70',materialRoughness:.88,materialMetallic:0,hierarchyGroup:'Mobilier'});
  const player=add('character-hero','Joueur · CHAMBRE 07',130,130,{
   hierarchyGroup:'Joueur',tags:['player'],team:1,playable3d:true,
   cameraRig:{mode:'firstPerson',distance:1.2,height:.78,collision:true,followSharpness:12},
@@ -53,7 +53,7 @@ export function createChambre07Scene(mode='3d'){
   hideLabelInPlay:true
  });
  const light=(name,x,y,color,intensity=1.5)=>add('primitive-cube',name,x,y,{
-  w:18,h:18,depth3d:18,elevation3d:2.6,color,collision3d:false,solid3d:false,
+  w:18,h:18,depth3d:18,elevation3d:2.6,color,materialRoughness:.18,materialMetallic:.2,collision3d:false,solid3d:false,
   lightType:'point',lightEnabled:true,lightColor:color,lightIntensity:intensity,lightRange:8,
   hierarchyGroup:'Éclairage'
  });
@@ -103,7 +103,7 @@ export function createChambre07Scene(mode='3d'){
   sequences:[listen('chambre:chase',[{type:'setAiEnabled',value:true},say('Quelque chose s’éveille derrière toi…')])]
  });
  const exit=add('primitive-cube','Porte de sortie',1050,75,{
-  hierarchyGroup:'Objectifs',w:55,depth3d:18,h:160,color:'#97d8c8',
+  hierarchyGroup:'Objectifs',w:55,depth3d:18,h:160,color:'#97d8c8',materialRoughness:.24,materialMetallic:.5,
   collision3d:false,solid3d:false,adventureInteractable:{label:'Ouvrir la sortie',radius:145}
  });
  exit.sequence=interact([],{

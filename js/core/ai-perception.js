@@ -19,6 +19,7 @@ export function isHostileTo(actor,target,player=target){
 export function isAiObstacle(entity,actor,target){
  return entity!==actor&&entity!==target&&activeBody3d(entity)&&entity.collision3d!==false&&
   entity.sequenceEnabled!==false&&!entity._sequenceDestroyed&&!entity._hiddenInVehicle&&
+  !entity.tags?.includes('ai-walkable')&&
   !entity.lightType&&!entity.audioEnabled&&!entity.ai&&!entity.playable3d&&entity.type!=='player'&&entity.type!=='character'&&
   (entity.solid3d===true||entity.type==='object'||entity.type==='mesh3d');
 }

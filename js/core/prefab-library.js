@@ -24,7 +24,16 @@ export function applyPrefabChanges(prefab,entity,instances){
  const affected=instances.map(item=>{
   if(item.prefabSourceId!==prefab.id||item.id===entity.id)return item;
   const preserved=new Set(['id','name','x','y','prefabSourceId','prefabOverrides',...(item.prefabOverrides||[])]);
-  const copy={...item};for(const [property,value] of Object.entries(next.components))if(!preserved.has(property))copy[property]=structuredClone(value);
+  const copy={...item};
+  // Remove source properties that were deliberately deleted on the authored
+  // prefab. Instance identity, placement and explicit per-instance overrides
+  // are never altered. This also preserves unrelated legacy component data.
+  for(const property of Object.keys(prefab.components)){
+   if(!Object.hasOwn(next.components,property)&&!preserved.has(property))delete copy[property];
+  }
+  for(const [property,value] of Object.entries(next.components)){
+   if(!preserved.has(property))copy[property]=structuredClone(value);
+  }
   return copy;
  });
  return {prefab:next,instances:affected};

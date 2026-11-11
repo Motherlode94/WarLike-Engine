@@ -11,7 +11,7 @@ export async function loadRapier3d(){
 }
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,n(v)));
-const included=o=>activeBody3d(o)&&o.collision3d!==false&&(solidBody3d(o)||characterBody3d(o));
+const included=o=>activeBody3d(o)&&o.collision3d!==false&&o.collider3d?.enabled!==false&&(solidBody3d(o)||characterBody3d(o));
 const dynamic=o=>!!o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!characterBody3d(o)&&!o.ai?.enabled;
 const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,o.collider3d,o.controller3d,o.joint3d].map((v,i)=>i===2&&v?Object.fromEntries(Object.entries(v).filter(([k])=>!['vx','vy','vz'].includes(k))):v));
 const scenePosition=o=>({x:n(o.x),y:n(o.y),z:n(o.elevation3d)});

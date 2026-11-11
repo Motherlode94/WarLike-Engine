@@ -78,13 +78,13 @@ try{
   return {playing:state.playing,count:state.entities.length,player:state.entities.find(o=>o.playable3d)?.name,
    memories:state.entities.filter(o=>o.tags?.includes('chambre07-memory')).length,
    floor:state.entities.some(o=>o.name==='Plancher · appartement'&&o.solid3d),
-   physicsCube:state.entities.find(o=>o.name==='QA · Chute Rigidbody')?.elevation3d,
+   physicsCube:(()=>{const o=state.entities.find(e=>e.name==='QA · Chute Rigidbody');return o?{elevation:o.elevation3d,grounded:o.grounded3d,velocity:o.rigidbody3d?.vy,position:[o.x,o.y]}:null})(),
    phase:gameSession.phase,glError:view3d.gl?.getError(),renderError:view3d.error};
  });
  assert(state.playing,'Exported scene must be in Play');
  assert(state.count>=20&&state.floor&&state.memories===3,'Native scene objects missing in exported build');
  assert.match(state.player||'',/CHAMBRE 07/);
- assert.ok(Math.abs(state.physicsCube)<.05,'Exported browser Rigidbody must settle on the floor');
+ assert.ok(state.physicsCube&&Math.abs(state.physicsCube.elevation)<.05&&state.physicsCube.grounded,'Exported browser Rigidbody must settle on the floor: '+JSON.stringify(state.physicsCube));
  assert.equal(state.glError||0,0,'WebGL runtime error');
  assert.equal(state.renderError||null,null,'3D render error');
  assert.equal(errors.length,0,'Unhandled page errors: '+errors.join('\n'));

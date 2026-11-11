@@ -53,7 +53,7 @@ test('store roundtrip keeps hierarchy and canonical serialization survives',()=>
  const {entities}=instantiatePrefabHierarchy(stored,80,300,400);
  const roundtrip=runtimeEntities(canonicalScene(entities));
  assert.equal(roundtrip.length,3);
- assert.deepEqual(roundtrip.map(x=>x.parentId),entities.map(x=>x.parentId));
+ assert.deepEqual(roundtrip.map(x=>x.parentId??null),entities.map(x=>x.parentId??null));
  assert.equal(roundtrip[1].joint3d.targetId,80);
 });
 test('variants override components without changing base or structure',()=>{

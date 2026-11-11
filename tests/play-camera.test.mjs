@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {cameraRigFor,cameraTargetFor,cameraBoomFraction,cameraPose,cameraDamping,followCamera2d} from '../js/core/play-camera.js';
+import {cameraRigFor,cameraTargetFor,cameraBoomFraction,cameraObstacleForEntity,resolveCameraBoom,cameraPose,cameraDamping,followCamera2d} from '../js/core/play-camera.js';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} ≠ ${b}`);
 test('camera follow smoothing is independent of frame rate and does not overshoot',()=>{
  const evolve=hz=>{let value=0;for(let i=0;i<hz;i++)value+=(10-value)*cameraDamping(9,1/hz);return value};near(evolve(30),evolve(144));assert.ok(evolve(30)<10);near(cameraDamping(9,0),0);
@@ -15,4 +15,31 @@ test('2D Play snaps on start, then follows smoothly without changing the editor 
 });
 test('camera pose stays orthonormal after obstacle avoidance',()=>{
  const {forward,right,up}=cameraPose([0,1,0],[2,3,5]);for(const axis of [forward,right,up])near(Math.hypot(...axis),1);near(forward.reduce((n,v,i)=>n+v*right[i],0),0);near(forward.reduce((n,v,i)=>n+v*up[i],0),0);
+});
+
+test('a rotated narrow wall stops the third-person camera even when its unrotated AABB misses the boom',()=>{
+ const target=[0,1,0],eye=[0,1,6],wall={x:1,y:1,z:3,w:.2,h:3,d:3};
+ const half=Math.PI/8,rotated={...wall,quaternion:{x:0,y:Math.sin(half),z:0,w:Math.cos(half)}};
+ assert.equal(cameraBoomFraction(target,eye,[wall]),1);
+ const fraction=cameraBoomFraction(target,eye,[rotated]);
+ assert.ok(fraction>0&&fraction<1,'Rotated wall must block: '+fraction);
+ const clear=cameraBoomFraction(target,eye,[{...rotated,x:5}]);
+ assert.equal(clear,1,'Distant rotated geometry must not shorten camera boom');
+});
+test('camera obstacle uses rotated BoxCollider geometry and offset',()=>{
+ const wall={type:'mesh3d',x:0,y:0,w:64,h:128,depth3d:64,
+  elevation3d:0,rotation:90,collider3d:{shape:'box',width:.2,height:2,depth:2,offsetX:1,offsetY:.2,offsetZ:0}};
+ const collision=cameraObstacleForEntity(wall);
+ assert.ok(collision.quaternion,'Camera should retain BoxCollider orientation');
+ near(collision.w,.2);near(collision.h,2);near(collision.d,2);
+ assert.ok(Math.abs(collision.z-.5)>.8,'Collider offset must follow rotation, not world X');
+});
+test('camera retracts immediately at contact and returns smoothly after wall clears',()=>{
+ const target=[0,1,0],eye=[0,1,6],wall={x:0,y:1,z:3,w:4,h:3,d:.4};
+ const hit=resolveCameraBoom(target,eye,[wall],{previousDistance:6,dt:1/60});
+ assert.ok(hit.distance<3,'Camera penetrated the wall');
+ const free=resolveCameraBoom(target,eye,[],{previousDistance:hit.distance,dt:1/60});
+ assert.ok(free.distance>hit.distance&&free.distance<6,'Camera recovery must be progressive');
+ const recovered=resolveCameraBoom(target,eye,[],{previousDistance:free.distance,dt:1});
+ assert.ok(recovered.distance>free.distance,'Camera must eventually restore desired distance');
 });

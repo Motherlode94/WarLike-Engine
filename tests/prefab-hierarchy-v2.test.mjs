@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
  makePrefabHierarchy,savePrefabHierarchy,instantiatePrefabHierarchy,
- createPrefabVariant,resolvePrefabVariant,readPrefabs,instantiatePrefab
+ createPrefabVariant,resolvePrefabVariant,savePrefabVariant,readPrefabs,instantiatePrefab
 } from '../js/core/prefab-library.js';
 import {canonicalScene,runtimeEntities} from '../js/core/scene-contract.js';
 import {freshGameProject} from '../js/core/game-project.js';
@@ -84,4 +84,27 @@ test('an instantiated hierarchy is carried into portable Web game definition',()
  assert.equal(exported.find(e=>e.id===101).parentId,100);
  assert.equal(exported.find(e=>e.id===101).joint3d.targetId,100);
  assert.deepEqual(scene,original);
+});
+
+test('library variants inherit later base changes without losing local overrides',()=>{
+ const storage=memory(),objects=source();
+ const base=savePrefabHierarchy(objects[0],objects,storage,{mode:'3d'});
+ const key=base.nodes[1].key;
+ const variant=savePrefabVariant(base,{[key]:{color:'#00fefe'}},storage,{name:'Portes personnalisées'});
+ assert.equal(variant.basePrefabId,base.id);
+ assert.equal(readPrefabs(storage).length,2);
+ const baseUpdated=structuredClone(base);
+ baseUpdated.nodes[1].data.w=64;
+ const raw=JSON.parse(storage.getItem('warlike.prefabs.library.v1'));
+ raw[0]=baseUpdated;
+ storage.setItem('warlike.prefabs.library.v1',JSON.stringify(raw));
+ const again=readPrefabs(storage).find(p=>p.id===variant.id);
+ const instance=instantiatePrefabHierarchy(again,400,500,600);
+ assert.equal(instance.entities[1].w,64,'Variant must inherit newly updated base width');
+ assert.equal(instance.entities[1].color,'#00fefe','Variant keeps overridden color');
+ const broken=raw.slice(1);
+ storage.setItem('warlike.prefabs.library.v1',JSON.stringify(broken));
+ const invalid=readPrefabs(storage)[0];
+ assert.equal(invalid.invalidVariant,true);
+ assert.throws(()=>instantiatePrefabHierarchy(invalid,500),/Variante de prefab invalide/);
 });

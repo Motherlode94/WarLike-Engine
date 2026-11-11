@@ -20,7 +20,7 @@ test('every registered fallback component is visible and addable in the correct 
  assert.ok(found.every(x=>typeof actor[x.id]==='object'));
 });
 test('Inspector primitive edits survive scene serialization, game export and component removal',()=>{
- const actor=entity();
+ const actor=entity();actor.playable3d=true;
  assert.equal(addObjectComponent(actor,'horrorAiConfig','3d'),true);
  const paths=commonInspectorFields([actor.horrorAiConfig]);
  assert.ok(paths.some(p=>p.join('.')==='visionRange'));

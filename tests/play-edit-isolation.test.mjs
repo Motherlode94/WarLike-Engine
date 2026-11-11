@@ -16,6 +16,7 @@ const control=id=>{
 globalThis.document={
  dispatchEvent:()=>true,
  querySelector:selector=>control(selector),
+ getElementById:id=>id==='rpgShortcuts'?null:null,
  createTextNode:text=>({textContent:text}),
  createElement:tag=>control('element-'+tag)
 };

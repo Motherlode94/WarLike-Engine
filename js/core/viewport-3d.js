@@ -160,6 +160,10 @@ const program3d=gl=>{
  vec3 skyLight=vec3(.60,.73,.91),groundLight=vec3(.24,.27,.32);
  vec3 irradiance=mix(groundLight,skyLight,clamp(normal.y*.5+.5,0.,1.))*uAmbient;
  irradiance+=uSunColor*uSunIntensity*max(0.,dot(normal,normalize(uSunDir)));
+ vec3 viewDir=normalize(uEye-vWorld);
+ vec3 localSpecular=vec3(0.);
+ vec3 specularTint=mix(vec3(.04),baseColor.rgb,clamp(uMetallic,0.,1.));
+ float specularExponent=mix(96.,8.,clamp(uRoughness,0.04,1.));
  for(int i=0;i<8;i++){
   if(i>=uLightCount)break;
   vec3 displacement=uLightPos[i]-vWorld;
@@ -171,18 +175,22 @@ const program3d=gl=>{
    float alignment=dot(normalize(-L),normalize(uLightDir[i]));
    cone=smoothstep(uLightCone[i]-.12,uLightCone[i],alignment);
   }
-  irradiance+=uLightColor[i]*uLightPower[i]*max(0.,dot(normal,L))*decay*cone;
+  float NdotL=max(0.,dot(normal,L));
+  irradiance+=uLightColor[i]*uLightPower[i]*NdotL*decay*cone;
+  // The original shader added specular highlights for the sun only.
+  // Point and spot sources now illuminate roughness/metallic materials too.
+  vec3 halfVector=normalize(L+viewDir);
+  localSpecular+=uLightColor[i]*uLightPower[i]*pow(max(0.,dot(normal,halfVector)),specularExponent)*NdotL*decay*cone;
  }
  vec3 flashRay=vWorld-uFlashPos;
  float flashDist=length(flashRay);
  float flashCone=smoothstep(.78,.94,dot(normalize(flashRay),normalize(uFlashDir)));
  float flashFalloff=pow(max(0.,1.-flashDist/16.),2.);
  irradiance+=vec3(1.,.92,.72)*uFlashPower*flashCone*flashFalloff*max(0.,dot(normal,-normalize(flashRay)));
- vec3 viewDir=normalize(uEye-vWorld);
  vec3 reflected=reflect(-normalize(uSunDir),normal);
  float gloss=pow(max(0.,dot(reflected,viewDir)),mix(48.,5.,clamp(uRoughness,0.04,1.)));
  vec3 specular=mix(vec3(.18),baseColor.rgb,clamp(uMetallic,0.,1.))*gloss*uSunIntensity*(1.-uRoughness*.75);
- vec3 lit=(uUnlit?baseColor.rgb:baseColor.rgb*clamp(irradiance,0.,3.0)+specular)+uEmissive;
+ vec3 lit=(uUnlit?baseColor.rgb:baseColor.rgb*clamp(irradiance,0.,3.0)+specular+specularTint*localSpecular*(1.-uRoughness*.65))+uEmissive;
  float fog=1.-exp(-pow(max(0.,length(uEye-vWorld)-22.)*uFogDensity,2.));
  vec3 fogged=mix(lit,vec3(.24,.34,.43),clamp(fog,0.,.87));
  vec3 exposed=fogged*uExposure;

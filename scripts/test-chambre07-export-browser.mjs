@@ -11,7 +11,8 @@ import {exportGamePackage} from '../js/core/game-build.js';
 import {freshGameProject} from '../js/core/game-project.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const output=await mkdtemp(path.join(tmpdir(),'chambre07-export-'));
+const output=process.env.WARLIKE_CHAMBRE07_OUTPUT_DIR?path.resolve(process.env.WARLIKE_CHAMBRE07_OUTPUT_DIR):await mkdtemp(path.join(tmpdir(),'chambre07-export-'));
+await mkdir(output,{recursive:true});
 const demo=createChambre07Scene('3d');
 const project={...freshGameProject(),id:'chambre07-e2e',title:'CHAMBRE 07',genre:'horror',physics3d:'builtin'};
 const fetcher=async url=>{

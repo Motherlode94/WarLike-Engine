@@ -76,6 +76,23 @@ export function reparentSelected(id,parentId){
  record('Changer le parent de '+current.name);
  notify();return true;
 }
+// Keep editor state independent from mutable Play objects. All authoring data
+// is snapshotted before graph compilation and runtime component initialization.
+function restoreEditorAfterPlay(){
+ if(state.playBackup!==null&&state.playBackup!==undefined)state.entities=JSON.parse(state.playBackup);
+ if(state.playSelectedBackup)state.selected=JSON.parse(state.playSelectedBackup);
+ if(state.playProjectBackup){
+  const saved=JSON.parse(state.playProjectBackup);
+  for(const key of Object.keys(gameProject))if(!Object.hasOwn(saved,key))delete gameProject[key];
+  Object.assign(gameProject,saved);
+ }
+ state.nextId=state.playNextId??state.nextId;
+ if(state.playHorrorBackup){Object.assign(horror,state.playHorrorBackup);state.playHorrorBackup=null}
+ if(state.playCameraBackup)state.camera=structuredClone(state.playCameraBackup);
+ state.playCameraBackup=null;state.playBackup=null;state.playNextId=null;
+ state.playSelectedBackup=null;state.playProjectBackup=null;
+ state.playing=false;state.keys.clear();state.keyPresses?.clear();
+}
 export function togglePlay(){
  const btn=document.querySelector('#play');
  if(state.playing){
@@ -83,10 +100,7 @@ export function togglePlay(){
   let error=null;
   try{resetHeroRuntime();stopEngineDiagnostics();resetSequences();stopRuntimeSession()}catch(e){error=e}
   finally{
-   try{if(state.playBackup)state.entities=JSON.parse(state.playBackup)}catch(e){error??=e}
-   state.nextId=state.playNextId??state.nextId;
-   if(state.playHorrorBackup){Object.assign(horror,state.playHorrorBackup);state.playHorrorBackup=null}
-   if(state.playCameraBackup)state.camera=structuredClone(state.playCameraBackup);state.playCameraBackup=null;state.playBackup=null;state.playNextId=null;state.playing=false;state.keys.clear();state.keyPresses?.clear();
+   try{restoreEditorAfterPlay()}catch(e){error??=e;state.playing=false;state.keys.clear();state.keyPresses?.clear()}
    if(btn){btn.textContent='▶ Play';btn.classList.remove('active');btn.setAttribute('aria-pressed','false')}
    document.querySelector('#status')?.replaceChildren(document.createTextNode('Édition'));
    renderHistory();notify();
@@ -101,10 +115,15 @@ export function togglePlay(){
  if(compatibility.length)throw Error(compatibility[0].message);
  const blueprintErrors=inspectBlueprintGame(state.entities,{requirePlayer:false}).filter(issue=>issue.severity==='error');
  if(blueprintErrors.length)throw Error(blueprintErrors[0].message);
- for(const o of state.entities)for(const {sequence} of sequenceEntries(o))if(sequence.enabled!==false&&sequence.graph)applyGraph(sequence);
  const backup=JSON.stringify(state.entities),nextId=state.nextId;
- state.playBackup=backup;state.playCameraBackup=structuredClone(state.camera);state.playNextId=nextId;state.keyPresses?.clear();
+ const selectedBackup=JSON.stringify(state.selected),projectBackup=JSON.stringify(gameProject);
+ state.playBackup=backup;state.playSelectedBackup=selectedBackup;state.playProjectBackup=projectBackup;
+ state.playCameraBackup=structuredClone(state.camera);state.playNextId=nextId;state.keyPresses?.clear();
  try{
+  // Play uses cloned entities. Blueprint compilation and scripts never touch
+  // the authored objects or their legacy component fields.
+  state.entities=JSON.parse(backup);
+  for(const o of state.entities)for(const {sequence} of sequenceEntries(o))if(sequence.enabled!==false&&sequence.graph)applyGraph(sequence);
   state.playing=true;
   const playable=state.entities.some(o=>o.playable3d===true||o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters');
   if(!playable){
@@ -118,9 +137,7 @@ export function togglePlay(){
   renderHistory();notify();
  }catch(error){
   try{stopEngineDiagnostics();stopRuntimeSession()}catch(cleanupError){console.error('[WarLike Play] rollback:',cleanupError)}
-  state.entities=JSON.parse(backup);state.nextId=nextId;state.playing=false;
-  if(state.playHorrorBackup){Object.assign(horror,state.playHorrorBackup);state.playHorrorBackup=null}
-  state.keys.clear();if(state.playCameraBackup)state.camera=structuredClone(state.playCameraBackup);state.playCameraBackup=null;state.playBackup=null;state.playNextId=null;
+  restoreEditorAfterPlay();
   if(btn){btn.textContent='▶ Play';btn.classList.remove('active');btn.setAttribute('aria-pressed','false')}
   document.querySelector('#status')?.replaceChildren(document.createTextNode('Erreur Play'));
   renderHistory();notify();

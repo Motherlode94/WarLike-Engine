@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 
 const code=readFileSync(new URL('../js/ui/docking.js',import.meta.url),'utf8');
 const hub=readFileSync(new URL('../js/core/project-hub.js',import.meta.url),'utf8');
-const fn=code.slice(code.indexOf('export function upgradeLegacyEditorLayout'),code.indexOf('upgradeLegacyEditorLayout();')).replace('export function','function');
+const fn=code.slice(code.indexOf("const storageKey='warlike.workspace.layout.v1'"),code.indexOf('upgradeLegacyEditorLayout();')).replace('export function','function');
 const migrate=new Function('storage',fn+'; return upgradeLegacyEditorLayout(storage);');
 function mockStorage(seed={}){const data=new Map(Object.entries(seed));return {getItem:k=>data.has(k)?data.get(k):null,setItem:(k,v)=>data.set(k,String(v)),removeItem:k=>data.delete(k),entries:()=>Object.fromEntries(data)}}
 test('legacy UI layout is migrated without deleting old project data',()=>{

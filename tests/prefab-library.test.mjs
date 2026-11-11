@@ -17,3 +17,22 @@ test('apply changes propagates shared component updates and preserves instance p
  assert.equal(result.instances[1].hp,150);assert.equal(result.instances[1].color,'#ffffff');
  assert.equal(result.instances[1].x,90);assert.equal(result.instances[1].y,80);
 });
+
+test('applying prefab deletion removes stale inherited component but preserves overrides and unrelated legacy data',()=>{
+ const store=memory();
+ const prefab=savePrefab({id:1,name:'Old 3D prefab',type:'mesh3d',x:0,y:0,collider3d:{shape:'box'},stats:{health:100}},store,{mode:'3d'});
+ const edited=instantiatePrefab(prefab,2,12,16);
+ delete edited.collider3d;
+ const normal=instantiatePrefab(prefab,3,80,90);
+ normal.legacyAnimation={clip:'idle',version:1};
+ const custom=instantiatePrefab(prefab,4,120,140);
+ custom.prefabOverrides=['collider3d'];
+ custom.collider3d={shape:'sphere'};
+ const {instances}=applyPrefabChanges(prefab,edited,[edited,normal,custom]);
+ assert.equal(Object.hasOwn(instances[1],'collider3d'),false);
+ assert.deepEqual(instances[1].legacyAnimation,{clip:'idle',version:1});
+ assert.equal(instances[1].x,80);
+ assert.deepEqual(instances[2].collider3d,{shape:'sphere'});
+ assert.equal(instances[2].id,4);
+ assert.ok(Object.hasOwn(prefab.components,'collider3d'),'original prefab asset remains unchanged');
+});

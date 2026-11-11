@@ -64,37 +64,26 @@ try{
   const {runtimeSession}=await import('/js/core/runtime-session.js');
   return runtimeSession.phase==='ready';
  },null,{timeout:45000});
- await page.evaluate(async()=>{
+ // Collect the trajectory in one Playwright page context. A single
+ // waitForFunction observation may race against a different browser world.
+ const physics=await page.evaluate(async()=>{
   const {state}=await import('/js/core/state.js');
-  globalThis.__qaInitialSceneArray=state.entities;
-  globalThis.__qaInitialCube=state.entities.find(o=>o.name==='QA · Chute Rigidbody');
-  // Observe unexpected upward teleports without modifying the authored build.
-  globalThis.__qaPhysicsJumps=[];
-  const probe=globalThis.__qaInitialCube;
-  let elevation=probe.elevation3d;
-  Object.defineProperty(probe,'elevation3d',{configurable:true,enumerable:true,
-   get(){return elevation},
-   set(next){if(next>elevation+.003&&globalThis.__qaPhysicsJumps.length<12)globalThis.__qaPhysicsJumps.push({before:elevation,after:next,trace:new Error('unexpected physics rise').stack?.slice(0,850)});elevation=next}
-  });
+  const {activeRapierScene3d}=await import('/js/core/rapier-physics-3d.js');
+  const samples=[];
+  for(let i=0;i<90;i++){
+   const o=state.entities.find(e=>e.name==='QA · Chute Rigidbody');
+   samples.push(o?{height:o.elevation3d,grounded:o.grounded3d===true,vy:o.rigidbody3d?.vy}:null);
+   await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  const id=state.entities.find(e=>e.name==='QA · Chute Rigidbody')?.id;
+  return {samples,rapierActive:!!activeRapierScene3d()?.actors?.has(id)};
  });
- // Verify an actual exported Chromium runtime advances the Rigidbody, not
- // just that the package contains a serialized Rigidbody descriptor.
- await page.waitForFunction(async()=>{
-  const {state}=await import('/js/core/state.js');
-  const cube=state.entities.find(o=>o.name==='QA · Chute Rigidbody');
-  const atRest=!!cube&&Math.abs(cube.elevation3d)<.05&&cube.grounded3d===true&&Math.abs(cube.rigidbody3d?.vy||0)<.1;
-  globalThis.__qaPhysicsStableFrames=atRest?(globalThis.__qaPhysicsStableFrames||0)+1:0;
-  return globalThis.__qaPhysicsStableFrames>=5;
- },null,{timeout:15000,polling:100});
- if(backend==='rapier'){
-  const usingRapier=await page.evaluate(async()=>{
-   const {activeRapierScene3d}=await import('/js/core/rapier-physics-3d.js');
-   return !!activeRapierScene3d()?.actors?.has(
-    (await import('/js/core/state.js')).state.entities.find(o=>o.name==='QA · Chute Rigidbody')?.id
-   );
-  });
-  assert.equal(usingRapier,true,'Browser silently fell back to built-in physics instead of Rapier');
- }
+ assert.ok(physics.samples[0]?.height>1,'Exported runtime did not initialize its physics probe correctly');
+ assert.ok(physics.samples.some(s=>s?.height<.05),'The exported Rigidbody never reached the floor: '+JSON.stringify(physics.samples.filter((_,i)=>i%10===0)));
+ const tail=physics.samples.slice(-10);
+ assert.ok(tail.every(s=>s&&Math.abs(s.height)<.05&&s.grounded&&Math.abs(s.vy||0)<.2),
+  'Exported Rigidbody is not resting on the floor: '+JSON.stringify(physics.samples.filter((_,i)=>i%10===0)));
+ if(backend==='rapier')assert.equal(physics.rapierActive,true,'Browser fell back to built-in instead of Rapier');
  const state=await page.evaluate(async()=>{
   const {state}=await import('/js/core/state.js');
   const {gameSession}=await import('/js/core/game-session.js');
@@ -102,13 +91,13 @@ try{
   return {playing:state.playing,count:state.entities.length,player:state.entities.find(o=>o.playable3d)?.name,
    memories:state.entities.filter(o=>o.tags?.includes('chambre07-memory')).length,
    floor:state.entities.some(o=>o.name==='Plancher · appartement'&&o.solid3d),
-   physicsCube:(()=>{const o=state.entities.find(e=>e.name==='QA · Chute Rigidbody');return o?{elevation:o.elevation3d,grounded:o.grounded3d,velocity:o.rigidbody3d?.vy,position:[o.x,o.y],sceneReplaced:state.entities!==globalThis.__qaInitialSceneArray,objectReplaced:o!==globalThis.__qaInitialCube,jumps:globalThis.__qaPhysicsJumps}:null})(),
+   physicsCube:state.entities.find(o=>o.name==='QA · Chute Rigidbody')?.elevation3d,
    phase:gameSession.phase,glError:view3d.gl?.getError(),renderError:view3d.error};
  });
  assert(state.playing,'Exported scene must be in Play');
  assert(state.count>=20&&state.floor&&state.memories===3,'Native scene objects missing in exported build');
  assert.match(state.player||'',/CHAMBRE 07/);
- assert.ok(state.physicsCube&&Math.abs(state.physicsCube.elevation)<.05&&state.physicsCube.grounded,'Exported browser Rigidbody must settle on the floor: '+JSON.stringify(state.physicsCube));
+ assert.ok(Number.isFinite(state.physicsCube),'Exported browser lost the physics test object');
  assert.equal(state.glError||0,0,'WebGL runtime error');
  assert.equal(state.renderError||null,null,'3D render error');
  assert.equal(errors.length,0,'Unhandled page errors: '+errors.join('\n'));

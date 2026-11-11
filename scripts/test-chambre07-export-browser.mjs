@@ -68,6 +68,14 @@ try{
   const {state}=await import('/js/core/state.js');
   globalThis.__qaInitialSceneArray=state.entities;
   globalThis.__qaInitialCube=state.entities.find(o=>o.name==='QA · Chute Rigidbody');
+  // Observe unexpected upward teleports without modifying the authored build.
+  globalThis.__qaPhysicsJumps=[];
+  const probe=globalThis.__qaInitialCube;
+  let elevation=probe.elevation3d;
+  Object.defineProperty(probe,'elevation3d',{configurable:true,enumerable:true,
+   get(){return elevation},
+   set(next){if(next>elevation+.35)globalThis.__qaPhysicsJumps.push({before:elevation,after:next,trace:new Error('unexpected physics jump').stack?.slice(0,1100)});elevation=next}
+  });
  });
  // Verify an actual exported Chromium runtime advances the Rigidbody, not
  // just that the package contains a serialized Rigidbody descriptor.
@@ -94,7 +102,7 @@ try{
   return {playing:state.playing,count:state.entities.length,player:state.entities.find(o=>o.playable3d)?.name,
    memories:state.entities.filter(o=>o.tags?.includes('chambre07-memory')).length,
    floor:state.entities.some(o=>o.name==='Plancher · appartement'&&o.solid3d),
-   physicsCube:(()=>{const o=state.entities.find(e=>e.name==='QA · Chute Rigidbody');return o?{elevation:o.elevation3d,grounded:o.grounded3d,velocity:o.rigidbody3d?.vy,position:[o.x,o.y],sceneReplaced:state.entities!==globalThis.__qaInitialSceneArray,objectReplaced:o!==globalThis.__qaInitialCube}:null})(),
+   physicsCube:(()=>{const o=state.entities.find(e=>e.name==='QA · Chute Rigidbody');return o?{elevation:o.elevation3d,grounded:o.grounded3d,velocity:o.rigidbody3d?.vy,position:[o.x,o.y],sceneReplaced:state.entities!==globalThis.__qaInitialSceneArray,objectReplaced:o!==globalThis.__qaInitialCube,jumps:globalThis.__qaPhysicsJumps}:null})(),
    phase:gameSession.phase,glError:view3d.gl?.getError(),renderError:view3d.error};
  });
  assert(state.playing,'Exported scene must be in Play');

@@ -59,7 +59,12 @@ export function cameraBoomFraction(target,eye,obstacles,padding=.18){
 }
 export function cameraPose(target,eye){
  const norm=a=>{const d=Math.hypot(...a)||1;return a.map(v=>v/d)},cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
- const forward=norm(target.map((n,i)=>n-eye[i])),right=norm(cross(forward,[0,1,0])),up=norm(cross(right,forward));return {eye,forward,right,up};
+ // Near a wall the camera can share the target's position. Do not produce a
+ // zero-length view basis, which can make GLB geometry disappear or flicker.
+ const delta=target.map((n,i)=>n-eye[i]);
+ const forward=Math.hypot(...delta)<1e-7?[0,0,-1]:norm(delta);
+ const reference=Math.abs(forward[1])>.999?[0,0,1]:[0,1,0];
+ const right=norm(cross(forward,reference)),up=norm(cross(right,forward));return {eye,forward,right,up};
 }
 export function followCamera2d(camera,player,viewport,dt,{snap=false}={}){
  const zoom=camera.zoom||1,targetX=viewport.width/2-(player.x+player.w/2)*zoom,targetY=viewport.height/2-(player.y+player.h/2)*zoom;

@@ -78,5 +78,6 @@ test('Rapier uses the same authored collider and Rigidbody with contact on floor
   const body=authoredScene[1];
   assert.ok(Math.abs(body.elevation3d)<.06,'Rapier body must settle on floor, got '+body.elevation3d);
   assert.ok(body.rigidbody3d.vy<.2);
+  assert.equal(body.grounded3d,true,'Rapier dynamic body must report grounded contact at rest');
  }finally{disposeRapierScene(session)}
 });

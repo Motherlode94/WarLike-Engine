@@ -9,11 +9,18 @@ import {fileURLToPath} from 'node:url';
 import {createChambre07Scene} from '../js/core/chambre-07-scene.js';
 import {exportGamePackage} from '../js/core/game-build.js';
 import {freshGameProject} from '../js/core/game-project.js';
+import {defaultRigidbody3d} from '../js/core/physics-3d.js';
+import {defaultCollider3d} from '../js/core/collider-3d.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const output=process.env.WARLIKE_CHAMBRE07_OUTPUT_DIR?path.resolve(process.env.WARLIKE_CHAMBRE07_OUTPUT_DIR):await mkdtemp(path.join(tmpdir(),'chambre07-export-'));
 await mkdir(output,{recursive:true});
 const demo=createChambre07Scene('3d');
+// Browser-only physics probe: never included in the authored CHAMBRE 07 demo.
+demo.entities.push({id:Math.max(...demo.entities.map(o=>o.id))+1,name:'QA · Chute Rigidbody',
+ type:'mesh3d',x:540,y:240,w:32,depth3d:32,h:32,elevation3d:2,
+ color:'#d5ec80',collision3d:true,solid3d:true,
+ rigidbody3d:{...defaultRigidbody3d(),restitution:0},collider3d:defaultCollider3d()});
 const project={...freshGameProject(),id:'chambre07-e2e',title:'CHAMBRE 07',genre:'horror',physics3d:'builtin'};
 const fetcher=async url=>{
  try {
@@ -56,6 +63,13 @@ try{
   const {runtimeSession}=await import('/js/core/runtime-session.js');
   return runtimeSession.phase==='ready';
  },null,{timeout:45000});
+ // Verify an actual exported Chromium runtime advances the Rigidbody, not
+ // just that the package contains a serialized Rigidbody descriptor.
+ await page.waitForFunction(async()=>{
+  const {state}=await import('/js/core/state.js');
+  const cube=state.entities.find(o=>o.name==='QA · Chute Rigidbody');
+  return cube&&cube.elevation3d<.05&&cube.grounded3d===true;
+ },null,{timeout:12000});
  await page.waitForTimeout(250);
  const state=await page.evaluate(async()=>{
   const {state}=await import('/js/core/state.js');
@@ -64,11 +78,13 @@ try{
   return {playing:state.playing,count:state.entities.length,player:state.entities.find(o=>o.playable3d)?.name,
    memories:state.entities.filter(o=>o.tags?.includes('chambre07-memory')).length,
    floor:state.entities.some(o=>o.name==='Plancher · appartement'&&o.solid3d),
+   physicsCube:state.entities.find(o=>o.name==='QA · Chute Rigidbody')?.elevation3d,
    phase:gameSession.phase,glError:view3d.gl?.getError(),renderError:view3d.error};
  });
  assert(state.playing,'Exported scene must be in Play');
  assert(state.count>=20&&state.floor&&state.memories===3,'Native scene objects missing in exported build');
  assert.match(state.player||'',/CHAMBRE 07/);
+ assert.ok(Math.abs(state.physicsCube)<.05,'Exported browser Rigidbody must settle on the floor');
  assert.equal(state.glError||0,0,'WebGL runtime error');
  assert.equal(state.renderError||null,null,'3D render error');
  assert.equal(errors.length,0,'Unhandled page errors: '+errors.join('\n'));

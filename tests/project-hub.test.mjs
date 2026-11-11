@@ -77,6 +77,8 @@ test('Hub recovers an earlier valid scene when the latest project snapshot is co
  const id=createProject('Projet sauvegardé','3d');
  state.entities[0].name='Ancien personnage';
  assert.equal(saveProject(),true);
+ state.entities[0].name='Version récente';
+ assert.equal(saveProject(),true);
  const key='warlike.hub.project.'+id;
  assert.ok(elements.has(key+'.backup.v1'));
  elements.set(key,'{malformed');

@@ -1,7 +1,7 @@
 // Physics dimensions are meters; scene positions and visual sizes use 64 px/m.
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const positive=(v,d)=>n(v)>0?n(v):d;
-export const defaultCollider3d=()=>({shape:'box',width:0,height:0,depth:0,radius:0,offsetX:0,offsetY:0,offsetZ:0});
+export const defaultCollider3d=()=>({enabled:true,shape:'box',width:0,height:0,depth:0,radius:0,offsetX:0,offsetY:0,offsetZ:0});
 export const defaultJoint3d=()=>({enabled:true,kind:'hinge',targetId:0,anchorX:0,anchorY:0,anchorZ:0,targetAnchorX:0,targetAnchorY:0,targetAnchorZ:0,axisX:0,axisY:1,axisZ:0,limitsEnabled:false,minAngle:-90,maxAngle:90});
 export const characterBody3d=o=>!!(o?.playable3d||o?.controller3d||o?.type==='player'||o?.type==='character');
 export function colliderGeometry3d(o){

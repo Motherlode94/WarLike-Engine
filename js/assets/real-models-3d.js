@@ -136,21 +136,34 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
   visiting.add(idx);
   const m=mul(parent,matrixFromNode(node)),normalTransform=normalMatrix3(m);
   for(const primitive of (json.meshes?.[node.mesh]?.primitives||[])){
-   if(primitive.mode!==undefined&&primitive.mode!==4)continue;
+   // glTF triangle lists (4), strips (5) and fans (6) all contain
+   // drawable surfaces. Ignoring strips/fans used to make GLB parts vanish.
+   const primitiveMode=primitive.mode??4;
+   if(![4,5,6].includes(primitiveMode))continue;
    if(primitive.extensions?.KHR_draco_mesh_compression)throw Error('GLB Draco : décompresser le modèle avant import.');
    if(primitive.attributes?.POSITION===undefined)continue;
    const pos=accessor(primitive.attributes.POSITION);
    const norm=primitive.attributes.NORMAL===undefined?null:accessor(primitive.attributes.NORMAL);
    const colors=primitive.attributes.COLOR_0===undefined?null:accessor(primitive.attributes.COLOR_0);
-   let idxs=primitive.indices===undefined?Array.from({length:pos.count},(_,i)=>i):accessor(primitive.indices).data;
-   // Some sample GLBs contain invalid triangles in optional meshes.
-   // Ignore only affected faces, preserving the rest of the real geometry.
-   const clean=[];
-   for(let k=0;k+2<idxs.length;k+=3){
-    const a=idxs[k],b=idxs[k+1],c=idxs[k+2];
-    if([a,b,c].every(i=>Number.isSafeInteger(i)&&i>=0&&i<pos.count))clean.push(a,b,c);
+   const indices=primitive.indices===undefined?Array.from({length:pos.count},(_,i)=>i):accessor(primitive.indices).data;
+   // Expand triangle strips/fans into triangles before assigning UVs,
+   // normals, skinning indices and materials to every rendered vertex.
+   // Alternate strip winding to preserve glTF-facing orientation.
+   const triangles=[];
+   if(primitiveMode===4){
+    for(let k=0;k+2<indices.length;k+=3)triangles.push([indices[k],indices[k+1],indices[k+2]]);
+   }else if(primitiveMode===5){
+    for(let k=0;k+2<indices.length;k++){
+     triangles.push(k%2?[indices[k+1],indices[k],indices[k+2]]:[indices[k],indices[k+1],indices[k+2]]);
+    }
+   }else{
+    for(let k=1;k+1<indices.length;k++)triangles.push([indices[0],indices[k],indices[k+1]]);
    }
-   idxs=clean;
+   // Ignore malformed or degenerate triangles without removing valid faces.
+   const idxs=[];
+   for(const triangle of triangles){
+    if(triangle.every(i=>Number.isSafeInteger(i)&&i>=0&&i<pos.count)&&new Set(triangle).size===3)idxs.push(...triangle);
+   }
    if(idxs.length%3)continue;
    const pbr=json.materials?.[primitive.material]?.pbrMetallicRoughness||{};
    const color=pbr.baseColorFactor||[1,1,1,1];

@@ -74,3 +74,11 @@ test('continuous collision detection prevents high-speed body from crossing a th
  assert.ok(end.y>-.1,'CCD body tunneled below floor: '+JSON.stringify(end));
  assert.ok(Math.abs(end.y-b.final.get(2).y)<.001,'CCD trajectory diverged on export');
 });
+
+test('built-in Web export never silently drops a requested 3D joint',()=>{
+ const objects=linked('hinge');
+ const actor={id:999,name:'Joueur QA',type:'mesh3d',x:500,y:500,w:32,h:64,depth3d:32,color:'#88ccff',playable3d:true};
+ assert.throws(()=>prepareGameDefinition({entities:[...objects,actor],mode:'3d',project:{...project(),physics3d:'builtin'}}),
+  /Joint 3D nécessite le moteur physique Rapier/,
+  'Unsupported articulated scenes must produce an actionable export error');
+});

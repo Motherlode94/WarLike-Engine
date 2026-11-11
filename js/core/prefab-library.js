@@ -33,6 +33,7 @@ export function savePrefab(entity,storage=globalThis.localStorage,{mode=null}={}
  entries.push(prefab);storage.setItem(key,JSON.stringify(entries));changed();return prefab;
 }
 export function instantiatePrefab(prefab,nextId,x=120,y=120){
+ if(prefab?.invalidVariant)throw Error('Variante de prefab invalide : source parent absente ou cyclique');
  if(!prefab?.components)throw Error('Prefab invalide');
  const fresh=structuredClone(prefab.components);
  // Legacy user prefabs might already contain source-instance metadata.
@@ -132,6 +133,7 @@ export function savePrefabHierarchy(root,sceneEntities,storage=globalThis.localS
  storage.setItem(key,JSON.stringify(entries));changed();return prefab;
 }
 export function instantiatePrefabHierarchy(prefab,nextId,x=120,y=120){
+ if(prefab?.invalidVariant)throw Error('Variante de prefab invalide : source parent absente ou cyclique');
  if(!idOf(nextId))throw Error('Identifiant de prefab invalide');
  if(!Array.isArray(prefab?.nodes)||!prefab.nodes.length){
   return {entities:[instantiatePrefab(prefab,nextId,x,y)],nextId:nextId+1,rootId:nextId};

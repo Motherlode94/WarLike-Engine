@@ -61,3 +61,17 @@ WarLike distingue désormais les composants avec **Inspector dédié** et les co
 - Régression : `tests/generic-component-inspector.test.mjs` vérifie les composants d'horreur et du monde ouvert, le round-trip et l'export.
 
 **Limite :** ce panneau de repli ne remplace pas un éditeur spécialisé pour les graphes, scripts, références d'objets, listes complexes, animation et runtime C# local. Le rendu visuel réel de chaque panneau reste à contrôler manuellement.
+
+## Validation physique avancée — novembre 2026
+
+Les scénarios de `tests/physics-rapier-dynamics-regression.test.mjs` chargent **Rapier WASM réel**, et non un mock :
+
+- Joint `hinge` : évolution du corps sous la gravité et comparaison de la trajectoire avec la définition de build Web.
+- Joint `ball` : déplacement avec contrainte et même test de parité.
+- Deux Rigidbody empilés : contact, absence de pénétration excessive, stabilité et parité Play/export.
+- CCD : un cube très rapide ne doit pas traverser un plancher mince.
+- Préflight : une articulation 3D active sur `physics3d: 'builtin'` est bloquée à l'export Web avec instruction de passer à Rapier.
+
+Le moteur physique interne reste une solution simple de prototypage et **ne prend pas en charge les joints d'impulsion**. Une exportation silencieusement dégradée serait trompeuse. Le test Chromium de CHAMBRE 07 vérifie séparément une chute de Rigidbody et un contact `grounded3d` stable pour **builtin** et **Rapier**. Les tests numériques d'articulations, de pile et de CCD utilisent les données sérialisées du build mais ne remplacent pas un test navigateur distinct de chaque scénario ni une validation de performance sur appareils lents.
+
+Les anciennes scènes ne sont ni converties ni réécrites. Une scène historique avec des joints pourra nécessiter le choix explicite de Rapier avant export.

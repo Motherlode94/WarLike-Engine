@@ -46,7 +46,7 @@ export function createChambre07Scene(mode='3d'){
  block('Console archives',870,130,150,55,85,{color:'#454f65',hierarchyGroup:'Mobilier'});
  block('Lit ancien',130,610,175,100,48,{color:'#624c70',hierarchyGroup:'Mobilier'});
  const player=add('character-hero','Joueur · CHAMBRE 07',130,130,{
-  hierarchyGroup:'Joueur',tags:['player'],playable3d:true,
+  hierarchyGroup:'Joueur',tags:['player'],team:1,playable3d:true,
   cameraRig:{mode:'firstPerson',distance:1.2,height:.78,collision:true,followSharpness:12},
   controller3d:{...defaultController(),walkSpeed:3.5,sprintSpeed:5.3},
   stats:defaultStats(),inventory:defaultInventory(),collision3d:true,

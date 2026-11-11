@@ -43,3 +43,13 @@ test('camera retracts immediately at contact and returns smoothly after wall cle
  const recovered=resolveCameraBoom(target,eye,[],{previousDistance:free.distance,dt:1});
  assert.ok(recovered.distance>free.distance,'Camera must eventually restore desired distance');
 });
+
+test('camera view basis never collapses against extremely close obstacles',()=>{
+ for(const eye of [[0,1,0],[0,1,0.00000001],[0,10,0]]){
+  const pose=cameraPose([0,1,0],eye);
+  for(const axis of [pose.forward,pose.right,pose.up]){
+   assert.ok(axis.every(Number.isFinite),'Camera direction must stay finite');
+   assert.ok(Math.abs(Math.hypot(...axis)-1)<1e-8,'Camera direction must remain normalized');
+  }
+ }
+});

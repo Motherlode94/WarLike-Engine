@@ -17,11 +17,13 @@ export function initFocusMenu(){
  const setCompact=()=>{
   document.body.classList.add('warlike-focus-menu');
   try{
-   const current=localStorage.getItem('warlike.toolbar.expanded.v1');
-   if(current===null){
+   if(localStorage.getItem(KEY)!=='initialized'){
+    localStorage.setItem(KEY,'initialized');
     localStorage.setItem('warlike.toolbar.expanded.v1','false');
     document.body.classList.remove('warlike-toolbar-expanded');
-    document.getElementById('studioToolbarToggle')?.setAttribute('aria-expanded','false');
+    const toggle=document.getElementById('studioToolbarToggle');
+    if(toggle){toggle.setAttribute('aria-expanded','false');toggle.textContent='☷ Plus';}
+    window.dispatchEvent(new Event('resize'));
    }
   }catch{}
  };

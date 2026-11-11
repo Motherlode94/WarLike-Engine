@@ -54,7 +54,7 @@ try{
  await page.waitForFunction(async()=>{
   const {runtimeSession}=await import('/js/core/runtime-session.js');
   return runtimeSession.phase==='ready';
- },{timeout:45000});
+ },null,{timeout:45000});
  await page.waitForTimeout(250);
  const state=await page.evaluate(async()=>{
   const {state}=await import('/js/core/state.js');

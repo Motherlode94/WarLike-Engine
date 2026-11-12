@@ -37,11 +37,11 @@ test('parse real glTF 2.0 indexed triangle from a binary GLB',()=>{
 
 // More than three vertices is essential here: a single triangle cannot catch an
 // accessor's element count being confused with its VEC3 component count.
-function meshGlb(positions,{indices,stride=12,offset=0}={}){
+function meshGlb(positions,{indices,stride=12,offset=0,mode=4}={}){
  const count=positions.length/3,positionBytes=count*stride,indexOffset=positionBytes;
  const binary=new Uint8Array(Math.ceil((positionBytes+(indices?.length||0)*2)/4)*4),data=new DataView(binary.buffer);
  for(let vertex=0;vertex<count;vertex++)for(let component=0;component<3;component++)data.setFloat32(vertex*stride+offset+component*4,positions[vertex*3+component],true);
- const primitive={attributes:{POSITION:0}},accessors=[{bufferView:0,byteOffset:offset,componentType:5126,count,type:'VEC3'}];
+ const primitive={attributes:{POSITION:0},mode},accessors=[{bufferView:0,byteOffset:offset,componentType:5126,count,type:'VEC3'}];
  const bufferViews=[{buffer:0,byteLength:positionBytes,byteStride:stride}];
  if(indices){primitive.indices=1;indices.forEach((value,i)=>data.setUint16(indexOffset+i*2,value,true));accessors.push({bufferView:1,componentType:5123,count:indices.length,type:'SCALAR'});bufferViews.push({buffer:0,byteOffset:indexOffset,byteLength:indices.length*2})}
  const json={asset:{version:'2.0'},scenes:[{nodes:[0]}],nodes:[{mesh:0}],meshes:[{primitives:[primitive]}],accessors,bufferViews};
@@ -69,4 +69,26 @@ test('interleaved position accessor counts and byte offsets preserve the complet
 test('invalid indices discard only the affected face after valid higher-index faces',()=>{
  const mesh=parseGlb(meshGlb([0,0,0, 1,0,0, 1,1,0, 0,1,0],{indices:[0,1,2,0,2,3,0,3,4]}));
  assert.equal(mesh.triangleCount,2);
+});
+
+test('GLB non-indexed TRIANGLE_STRIP renders both faces of a quad with consistent orientation',()=>{
+ const quad=meshGlb([0,0,0,1,0,0,0,1,0,1,1,0],{mode:5});
+ const result=parseGlb(quad),vertices=result.parts[0].vertices;
+ assert.equal(result.triangleCount,2);
+ assert.equal(vertices.length,36);
+ // The winding of odd strip triangles must alternate before triangulation.
+ const first=[vertices[3],vertices[4],vertices[5]],second=[vertices[21],vertices[22],vertices[23]];
+ assert.ok(first.every((v,i)=>Math.abs(v-second[i])<1e-6),'Strip faces must share their outward normal');
+});
+test('GLB indexed TRIANGLE_FAN reconstructs all three connected triangles',()=>{
+ const pentagon=meshGlb([0,0,0,1,0,0,1,1,0,0,2,0,-1,1,0],{indices:[0,1,2,3,4],mode:6});
+ const result=parseGlb(pentagon);
+ assert.equal(result.triangleCount,3);
+ assert.equal(result.parts[0].vertices.length,54);
+});
+test('GLB strip safely removes degenerates and preserves unaffected surfaces',()=>{
+ const positions=[0,0,0,1,0,0,0,1,0,1,1,0];
+ const result=parseGlb(meshGlb(positions,{indices:[0,1,2,2,3,1],mode:5}));
+ assert.equal(result.triangleCount,2);
+ assert.ok(result.parts[0].vertices.every(Number.isFinite));
 });

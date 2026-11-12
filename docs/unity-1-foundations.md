@@ -104,3 +104,11 @@ Le correctif s'applique dans le viewport WebGL pendant Play et dans le runtime W
 - Base de caméra orthonormale malgré la proximité d'un obstacle.
 
 Limites restantes : occlusion par les vrais triangles concaves des modèles GLB, continuité visuelle sur obstacles mobiles et analyse visuelle des problèmes de `near clipping` dans des jeux complets. Ces tests mathématiques n'établissent pas encore une équivalence de caméra avec les outils cinématiques actuels de Unity.
+
+## GLB — géométrie triangulée correctement (12 novembre 2026)
+
+Le parseur des GLB acceptait uniquement les primitives `mode=4` (`TRIANGLES`). Des surfaces pouvaient ainsi disparaître silencieusement si un fichier glTF utilisait `mode=5` (`TRIANGLE_STRIP`) ou `mode=6` (`TRIANGLE_FAN`). Les primitives de ces deux modes sont désormais converties en triangles avant la génération des sommets, des UV, des normales et des données d'animation. La conversion alterne correctement l'orientation des triangles d'une bande et ignore les triangles dégénérés sans supprimer les autres faces.
+
+Cette modification se trouve dans `js/assets/real-models-3d.js` et est couverte par `tests/real-models-3d.test.mjs`. Elle ne modifie ni les fichiers GLB importés, ni le schéma des projets sauvegardés.
+
+**Limites :** les primitives glTF de type `POINTS`, `LINES`, `LINE_STRIP` et `LINE_LOOP` ne sont pas des surfaces triangulées et restent non rendues. Les extensions de compression avancée et la compatibilité visuelle de toutes les textures/normal maps ne sont pas acquises par ce correctif. Le pipeline de textures, d'ombres dynamiques et de matériaux PBR doit être validé séparément avec des modèles réels.

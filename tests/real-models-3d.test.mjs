@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseGlb,realModels3d,registerLocalModel,model3dById} from '../js/assets/real-models-3d.js';
+import {parseGlb,resolveGlbTextureUrl,realModels3d,registerLocalModel,model3dById} from '../js/assets/real-models-3d.js';
 import {prefab3d,get3dAsset,allAssets3d} from '../js/assets/catalog-3d.js';
 test('real GLB prefabs are referenced in 3D catalog',()=>{
  assert.ok(realModels3d.length>=7);
@@ -91,4 +91,55 @@ test('GLB strip safely removes degenerates and preserves unaffected surfaces',()
  const result=parseGlb(meshGlb(positions,{indices:[0,1,2,2,3,1],mode:5}));
  assert.equal(result.triangleCount,2);
  assert.ok(result.parts[0].vertices.every(Number.isFinite));
+});
+
+function texturedGlb({uri='textures/albedo.png?rev=3',uv=true,texCoord=0}={}){
+ const binary=new Uint8Array(60),view=new DataView(binary.buffer);
+ [0,0,0,1,0,0,0,1,0].forEach((n,i)=>view.setFloat32(i*4,n,true));
+ [0,0,1,0,0,1].forEach((n,i)=>view.setFloat32(36+i*4,n,true));
+ const attributes={POSITION:0};if(uv)attributes.TEXCOORD_0=1;
+ const gltf={asset:{version:'2.0'},scenes:[{nodes:[0]}],nodes:[{mesh:0}],
+  meshes:[{primitives:[{attributes,material:0}]}],
+  accessors:[{bufferView:0,componentType:5126,count:3,type:'VEC3'},
+   {bufferView:1,componentType:5126,count:3,type:'VEC2'}],
+  bufferViews:[{buffer:0,byteLength:36},{buffer:0,byteOffset:36,byteLength:24}],
+  materials:[{pbrMetallicRoughness:{baseColorFactor:[.5,.25,1,1],baseColorTexture:{index:0,texCoord},roughnessFactor:.4,metallicFactor:.2}}],
+  textures:[{source:0,sampler:0}],samplers:[{wrapS:10497,wrapT:33071}],images:[{uri}]};
+ const encoded=new TextEncoder().encode(JSON.stringify(gltf)),pad=Math.ceil(encoded.byteLength/4)*4;
+ const out=new ArrayBuffer(28+pad+binary.length),result=new DataView(out);
+ result.setUint32(0,0x46546c67,true);result.setUint32(4,2,true);result.setUint32(8,out.byteLength,true);
+ result.setUint32(12,pad,true);result.setUint32(16,0x4e4f534a,true);
+ new Uint8Array(out,20,pad).fill(32);new Uint8Array(out,20,encoded.length).set(encoded);
+ result.setUint32(20+pad,binary.length,true);result.setUint32(24+pad,0x004e4942,true);
+ new Uint8Array(out,28+pad).set(binary);
+ return out;
+}
+test('relative GLB texture URIs with query or fragment remain valid and same-origin',()=>{
+ const url='https://example.org/models/furniture/chair.glb';
+ assert.equal(resolveGlbTextureUrl('../textures/Wood%20Oak.PNG?rev=4#base',url),
+  'https://example.org/models/textures/Wood%20Oak.PNG?rev=4#base');
+ assert.equal(resolveGlbTextureUrl('javascript:alert(1)',url),null);
+ assert.equal(resolveGlbTextureUrl('https://untrusted.example/image.png',url),null);
+ assert.equal(resolveGlbTextureUrl('//untrusted.example/image.png',url),null);
+ assert.equal(resolveGlbTextureUrl('normal.exe',url),null);
+});
+test('GLB PBR base-color texture, UV, sampler and material factors survive parsing',()=>{
+ const model=parseGlb(texturedGlb(),{baseUrl:'https://example.org/models/chair.glb'});
+ const part=model.parts[0];
+ assert.equal(model.materialWarnings.length,0);
+ assert.equal(part.texture.url,'https://example.org/models/textures/albedo.png?rev=3');
+ assert.equal(part.texture.wrapS,10497);assert.equal(part.texture.wrapT,33071);
+ assert.deepEqual(part.color,[.5,.25,1,1]);
+ assert.equal(part.roughness,.4);assert.equal(part.metallic,.2);
+ assert.deepEqual([...part.texcoords],[0,0,1,0,0,1]);
+});
+test('missing texture UV set produces explicit diagnostic rather than silent white model',()=>{
+ const model=parseGlb(texturedGlb({texCoord:1}),{baseUrl:'https://example.org/models/chair.glb'});
+ assert.equal(model.parts[0].texture,undefined);
+ assert.match(model.materialWarnings.join(' '),/TEXCOORD_1/);
+});
+test('unpackaged relative texture of imported GLB is diagnosed before rendering',()=>{
+ const model=parseGlb(texturedGlb(),{});
+ assert.ok(model.parts.length===1);
+ assert.match(model.materialWarnings.join(' '),/image externe/);
 });

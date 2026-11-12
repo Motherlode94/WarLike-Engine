@@ -81,7 +81,12 @@ test('portable Web ZIP includes a local remote GLB and replaces the remote catal
   if(value.endsWith('/runtime-files.json'))return resource(JSON.stringify({files}),'application/json');
   if(value.endsWith('/index.html'))return resource('<html><head><title>Engine</title></head><body><script type="module" src="./js/editor.js"></script></body></html>','text/html');
   if(value.endsWith('/js/assets/imported-models-3d.js'))return resource('export const packagedModels3d=[];','text/javascript');
-  return mock(calls)(url);
+  const remote='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/SpecularTest.glb';
+  if(value===remote){calls.push(value);return resource(externalTextureGlb())}
+  if(value==='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/textures/paint.png?revision=2'){
+   calls.push(value);return resource(png,'image/png');
+  }
+  throw Error('Unexpected '+value);
  };
  const scene=[{id:1,type:'mesh3d',name:'Hero',x:0,y:0,w:64,h:64,depth3d:64,playable3d:true},
   {id:2,type:'mesh3d',name:'Painted',x:100,y:100,w:64,h:64,depth3d:64,model3dId:'real-specular-test'}];
@@ -91,5 +96,5 @@ test('portable Web ZIP includes a local remote GLB and replaces the remote catal
  assert.ok(str.includes('assets/remote/real-specular-test.glb'),'ZIP must contain locally packed model');
  assert.ok(str.includes('./assets/remote/real-specular-test.glb'),'Packaged catalog must point to local copy');
  assert.deepEqual(scene,original,'Build must not mutate editor scene');
- assert.deepEqual(calls,[asset.url,'https://models.example.org/props/textures/paint.png?revision=2']);
+ assert.deepEqual(calls,['https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/SpecularTest.glb','https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/textures/paint.png?revision=2']);
 });

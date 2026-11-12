@@ -298,6 +298,7 @@ export function init3d(canvas,host,buttons){
   if(realGlbBuffers.has(id))return;
   realGlbBuffers.set(id,{status:'loading'});
   getModelGeometry(id).then(async data=>{
+   const textureWarnings=[...(data.materialWarnings||[])];
    const parts=await Promise.all(data.parts.map(async part=>{
     const mesh=makeBuffer(part.vertices,!!data.rig);
     if(part.texture){try{
@@ -311,17 +312,20 @@ export function init3d(canvas,host,buttons){
      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
      const uvBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,uvBuffer);gl.bufferData(gl.ARRAY_BUFFER,part.texcoords,gl.STATIC_DRAW);
      Object.assign(mesh,{texture,uvBuffer});
-    }catch(error){console.warn('[WarLike GLB] Texture indisponible, couleur du matériau conservée :',id,error)}}
+    }catch(error){
+     textureWarnings.push('Impossible de charger une texture : '+String(error?.message||error));
+     console.warn('[WarLike GLB] Texture indisponible, couleur du matériau conservée :',id,error)
+    }}
     if(part.vertexColors){mesh.colorBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,mesh.colorBuffer);gl.bufferData(gl.ARRAY_BUFFER,part.vertexColors,gl.STATIC_DRAW);}
     Object.assign(mesh,{alphaMode:part.alphaMode,alphaCutoff:part.alphaCutoff,unlit:part.unlit,emissive:part.emissive});
     return {mesh,color:part.color,roughness:part.roughness,metallic:part.metallic};
    }));
-   if(data.materialWarnings?.length){
-    console.warn('[WarLike GLB] Matériaux incomplets :',id,data.materialWarnings.join(' ; '));
+   if(textureWarnings.length){
+    console.warn('[WarLike GLB] Matériaux incomplets :',id,textureWarnings.join(' ; '));
     const status=document.querySelector('#view3dStatus');
-    if(status&&workspace.mode==='3d'){status.textContent='GLB : textures manquantes — '+id;status.title=data.materialWarnings.join('\n')}
+    if(status&&workspace.mode==='3d'){status.textContent='GLB : textures manquantes — '+id;status.title=textureWarnings.join('\n')}
    }
-   realGlbBuffers.set(id,{status:'ready',parts,geometry:data,normalizedSize:data.normalizedSize,triangles:data.triangleCount,materialWarnings:data.materialWarnings||[]});
+   realGlbBuffers.set(id,{status:'ready',parts,geometry:data,normalizedSize:data.normalizedSize,triangles:data.triangleCount,materialWarnings:textureWarnings});
   }).catch(error=>{
    const message=String(error.message||error);
    realGlbBuffers.set(id,{status:'error',message});

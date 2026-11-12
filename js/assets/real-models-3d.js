@@ -114,6 +114,17 @@ export function embeddedGlbImage(uri){
  if(!binary.length)throw Error('Image GLB intégrée vide');
  return {mimeType:match[1].toLowerCase(),bytes:Uint8Array.from(binary,c=>c.charCodeAt(0))};
 }
+// glTF image URIs may contain escaped characters, query parameters or
+// fragments. Reject arbitrary schemes, but retain legal relative PNG/JPEG/WebP
+// images instead of silently showing a blank white material.
+export function resolveGlbTextureUrl(uri,baseUrl){
+ if(typeof uri!=='string'||!uri.trim()||!baseUrl||uri.startsWith('//')||/^[a-z][a-z\d+.-]*:/i.test(uri))return null;
+ try{
+  const base=new URL(baseUrl),url=new URL(uri,base);
+  if(!['https:','http:'].includes(url.protocol)||url.origin!==base.origin||!/\.(?:png|jpe?g|webp)$/i.test(url.pathname))return null;
+  return url.href;
+ }catch{return null}
+}
 export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
  if(buffer.byteLength>maxBytes)throw Error('GLB supérieur à 25 Mo');
  const v=new DataView(buffer);if(buffer.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==buffer.byteLength)throw Error('GLB 2.0 invalide');
@@ -128,7 +139,7 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
  const accessorCache=new Map();const accessor=index=>{if(!accessorCache.has(index))accessorCache.set(index,readAccessor(json,binary,index));return accessorCache.get(index)};
  const rig=readAnimationRig(json,accessor,{allowStatic:allowStaticRig});
  const childNodes=new Set((json.nodes||[]).flatMap(n=>n.children||[]));
- const roots=json.scenes?.[json.scene||0]?.nodes||(json.nodes||[]).map((_,i)=>i).filter(i=>!childNodes.has(i)),parts=[],visiting=new Set();
+ const roots=json.scenes?.[json.scene||0]?.nodes||(json.nodes||[]).map((_,i)=>i).filter(i=>!childNodes.has(i)),parts=[],visiting=new Set(),materialWarnings=[];
  const walk=(idx,parent,depth)=>{
   if(depth>64||visiting.has(idx))throw Error('Hiérarchie GLB cyclique ou trop profonde');
   if(parts.length>300)throw Error('GLB : trop de primitives');
@@ -187,10 +198,19 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
      const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
      texture={...embeddedGlbImage(image.uri),wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
     }
-    else if(baseUrl&&image.uri&&!/^(?:[a-z]+:|\/\/)/i.test(image.uri)&&/\.(png|jpe?g|webp)$/i.test(image.uri)){
-     const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
-     texture={url:new URL(image.uri,baseUrl).href,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
+    else {
+     const resolved=resolveGlbTextureUrl(image.uri,baseUrl);
+     if(resolved){
+      const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
+      texture={url:resolved,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
+     }
     }
+   }
+   if(textureInfo&&!texture){
+    const detail=!uv?'coordonnées UV manquantes (TEXCOORD_'+uvIndex+')':
+     !image?'image glTF absente ou source non prise en charge':
+     'image externe introuvable ou format non pris en charge';
+    materialWarnings.push('Matériau '+String(primitive.material??0)+' : texture de couleur non chargée — '+detail);
    }
    const vertices=[],texcoords=[],vertexColors=[];
    for(let i=0;i<idxs.length;i+=3){const points=[];
@@ -222,7 +242,7 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
  // A single uniform scale preserves proportions. Per-axis normalization turned humans into distorted blocks.
  const longest=Math.max(...size);
  for(const part of parts)for(let j=0;j<part.vertices.length;j+=6)for(let k=0;k<3;k++)part.vertices[j+k]=(part.vertices[j+k]-center[k])/longest;
- return {parts,rig,normalizationCenter:center,normalizationScale:longest,normalizedSize:size.map(value=>value/longest),triangleCount:parts.reduce((sum,p)=>sum+p.vertices.length/18,0),source:json.asset?.generator||'glTF 2.0'};
+ return {parts,rig,normalizationCenter:center,normalizationScale:longest,normalizedSize:size.map(value=>value/longest),triangleCount:parts.reduce((sum,p)=>sum+p.vertices.length/18,0),materialWarnings:[...new Set(materialWarnings)],source:json.asset?.generator||'glTF 2.0'};
 }
 export async function getModelGeometry(id){
  if(modelCache.has(id))return modelCache.get(id);

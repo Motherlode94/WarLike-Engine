@@ -1,4 +1,5 @@
 import {portableModelBytes,portableModelDescriptor} from './portable-assets.js';
+import {portableRemoteModelBytes,portableRemoteModelDescriptor} from './portable-remote-models.js';
 import {animationEditorPreview} from './animation-clips.js';
 import {inspectRuntimeCompatibility} from './runtime-capabilities.js';
 import {canonicalScene} from './scene-contract.js';
@@ -80,7 +81,8 @@ export function gameRuntimeFiles(files,data){
  return files.filter(name=>toolPreviews.has(name)||!name.startsWith('assets/free/')||!name.includes('/previews/')&&!/\/(models|textures)\.json$/.test(name)&&(!(name.endsWith('.glb')||name.startsWith('assets/free/textures/'))||usedModels.has(name)));
 }
 export function gameBuildModelCatalog(name,source,data){
- const models=gameRuntimeModels(data);
+ const replacements=new Map((data.packagedRemoteModels||[]).map(model=>[model.id,model]));
+ const models=gameRuntimeModels(data).map(model=>replacements.get(model.id)||model);
  if(name==='js/assets/kaykit-game-assets.js')return 'export const kaykitModels3d='+JSON.stringify(models.filter(a=>a.author==='KayKit'))+';\n';
  if(name==='js/assets/quaternius-game-assets.js')return 'export const quaterniusModels3d='+JSON.stringify(models.filter(a=>a.author==='Quaternius'))+';\n';
  if(name==='js/assets/free-game-assets.js'){
@@ -94,17 +96,34 @@ export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}=
  const get=async path=>{const response=await fetcher(new URL(path,base));if(!response.ok)throw Error('Ressource indisponible : '+path);return response};
  const manifest=await (await get('runtime-files.json')).json();
  if(!Array.isArray(manifest.files)||manifest.files.length>25000||manifest.files.some(p=>typeof p!=='string'||!/^[-A-Za-z0-9._/]+$/.test(p)||p.startsWith('/')||p.includes('..')))throw Error('Manifest du runtime invalide.');
- const models=gameRuntimeModels(data).filter(asset=>asset.file);
+ const referenced=gameRuntimeModels(data);
+ const models=referenced.filter(asset=>asset.file);
+ const remote=referenced.filter(asset=>!asset.file&&/^https:\/\//i.test(asset.url||''));
  const importedEntries=[];let importedBytes=0;
- for(const asset of models){const bytes=await portableModelBytes(asset);importedBytes+=bytes.length;if(importedBytes>100*1024*1024)throw Error('Assets importés supérieurs à 100 Mo.');importedEntries.push({name:portableModelDescriptor(asset).url.slice(2),data:bytes})}
- data.importedModels=models.map(portableModelDescriptor);
- const importedCatalog='export const packagedModels3d='+JSON.stringify(models.map(portableModelDescriptor))+';\n';
+ const localDescriptors=[];
+ for(const asset of models){
+  const bytes=await portableModelBytes(asset);
+  importedBytes+=bytes.length;if(importedBytes>100*1024*1024)throw Error('Assets importés supérieurs à 100 Mo.');
+  const descriptor=portableModelDescriptor(asset);
+  localDescriptors.push(descriptor);
+  importedEntries.push({name:descriptor.url.slice(2),data:bytes});
+ }
+ const remoteDescriptors=[];
+ for(const asset of remote){
+  const {descriptor,bytes}=await portableRemoteModelBytes(asset,{fetcher});
+  importedBytes+=bytes.length;if(importedBytes>100*1024*1024)throw Error('GLB et textures exportés supérieurs à 100 Mo.');
+  remoteDescriptors.push(descriptor);
+  importedEntries.push({name:descriptor.url.slice(2),data:bytes});
+ }
+ data.importedModels=localDescriptors;
+ data.packagedRemoteModels=remoteDescriptors;
+ const importedCatalog='export const packagedModels3d='+JSON.stringify([...localDescriptors,...remoteDescriptors])+';\n';
  const files=gameRuntimeFiles(manifest.files,data);
  const entries=new Array(files.length);let cursor=0,completed=0;
  const worker=async()=>{while(cursor<files.length){const i=cursor++,name=files[i];const response=await get(name);entries[i]={name,data:name==='js/assets/imported-models-3d.js'?importedCatalog:name==='index.html'?gameBuildHtml(await response.text(),data):['js/assets/free-game-assets.js','js/assets/quaternius-game-assets.js','js/assets/kaykit-game-assets.js'].includes(name)?gameBuildModelCatalog(name,await response.text(),data):await response.arrayBuffer()};onProgress(++completed,files.length)}};
  await Promise.all(Array.from({length:6},worker));
  entries.push(...importedEntries);
  if(!files.includes('js/assets/imported-models-3d.js'))entries.push({name:'js/assets/imported-models-3d.js',data:importedCatalog});
- entries.push({name:'game.json',data:JSON.stringify(data,null,2)},{name:'LIRE-MOI.txt',data:'WARLIKE GAME — '+data.project.title+'\n\nDécompresse cette archive et sers ce dossier via un serveur HTTP statique. Par exemple : python -m http.server 8000, puis http://localhost:8000. Le menu de démarrage est dans index.html.\n\nLe runtime JavaScript et les modèles intégrés utilisés sont inclus. Le module C++ / WASM est livré lorsqu’il est présent dans le moteur. Les modèles GLB distants demandent une connexion Internet et conservent leurs licences propres. Les GLB importés et leurs textures intégrées sont inclus dans assets/imported. Les scripts C#/.NET ne sont pas exécutés par ce build Web.\n\nDéplacements : ZQSD/WASD. E : interaction. Échap : pause. Les sauvegardes restent sur le navigateur.\n\nCOOP LOCALE (2 à 4 joueurs)\nPython 3.10+ est nécessaire sur le PC hôte. Lance start-warlike-multi.cmd sous Windows, ou python3 python/warlike.py multiplayer. Garde le terminal ouvert. Ouvre l’adresse locale affichée, puis Coop locale > Héberger avec la clé du terminal. Les invités ouvrent l’adresse réseau affichée sur leur PC et rejoignent avec le code du salon. L’hôte simule le jeu dans son navigateur et gère pause, sauvegardes et escouades. Le serveur Python relaie les commandes et les états, sans compte ni service extérieur. 256 objets maximum ; les ressources doivent être incluses dans le même export.\n'});
+ entries.push({name:'game.json',data:JSON.stringify(data,null,2)},{name:'LIRE-MOI.txt',data:'WARLIKE GAME — '+data.project.title+'\n\nDécompresse cette archive et sers ce dossier via un serveur HTTP statique. Par exemple : python -m http.server 8000, puis http://localhost:8000. Le menu de démarrage est dans index.html.\n\nLe runtime JavaScript et les modèles intégrés utilisés sont inclus. Le module C++ / WASM est livré lorsqu’il est présent dans le moteur. Les modèles GLB distants utilisés dans le jeu sont intégrés dans assets/remote avec leurs textures externes PNG/JPEG/WebP pour un jeu hors ligne. Les GLB importés et leurs textures intégrées sont inclus dans assets/imported. Les licences d’origine restent applicables. Les scripts C#/.NET ne sont pas exécutés par ce build Web.\n\nDéplacements : ZQSD/WASD. E : interaction. Échap : pause. Les sauvegardes restent sur le navigateur.\n\nCOOP LOCALE (2 à 4 joueurs)\nPython 3.10+ est nécessaire sur le PC hôte. Lance start-warlike-multi.cmd sous Windows, ou python3 python/warlike.py multiplayer. Garde le terminal ouvert. Ouvre l’adresse locale affichée, puis Coop locale > Héberger avec la clé du terminal. Les invités ouvrent l’adresse réseau affichée sur leur PC et rejoignent avec le code du salon. L’hôte simule le jeu dans son navigateur et gère pause, sauvegardes et escouades. Le serveur Python relaie les commandes et les états, sans compte ni service extérieur. 256 objets maximum ; les ressources doivent être incluses dans le même export.\n'});
  return {blob:createZip(entries),filename:(data.project.title.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9-]+/g,'-').replace(/^-|-$/g,'')||'warlike-game')+'.zip',files:entries.length};
 }

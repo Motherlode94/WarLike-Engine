@@ -142,3 +142,16 @@ Les commandes sont présentes sur tous les onglets de Blueprint :
 - **Continuer / F6** : reprendre les jobs et la simulation.
 
 Les raccourcis s’utilisent lorsque la fenêtre Blueprint a le focus. Débogage montre les variables globales, les variables locales de la pause, les paramètres et la pile des fonctions, ainsi que la trace des instructions et les erreurs. Le nœud suspendu est encadré en jaune dans son graphe. Stop remet le débogueur à zéro. Le débogage est local à l’éditeur ; il ne constitue pas un débogueur distant pour les invités LAN.
+
+## Plaque de pression et porte reliée
+
+Dans **Bibliothèque → Mécanismes reliés** :
+
+1. Sur un objet plaque, ajouter **Plaque · Entrée du joueur**, puis **Plaque · Sortie du joueur** comme second comportement. Garder le même rayon pour les deux zones.
+2. Sur un objet porte, ajouter **Porte · Ouvrir par signal**, puis **Porte · Fermer par signal**.
+3. Le joueur entrant dans la zone envoie `mechanism:open` ; sa sortie envoie `mechanism:close`. La porte change de visibilité et de collision. L’opération est répétable.
+4. Pour une seconde paire indépendante, renommer les deux signaux sur la plaque et sur sa porte, par exemple `porte2:open` et `porte2:close`. Plusieurs portes partageant les signaux réagiront ensemble.
+
+Placer la porte à distance de la plaque : ce modèle ne détecte pas un corps coincé dans une porte au moment de sa fermeture et ne compte pas plusieurs occupants. Il ne contient pas d’animation d’ouverture. Les modèles utilisent les instructions existantes sans changer le format des sauvegardes. Aucun comportement n’est ajouté automatiquement aux anciens objets.
+
+Vérification : tests du runtime pour entrée, sortie, réentrée et collision dans les deux modes. La validation visuelle en navigateur avec des projets anciens reste à effectuer.

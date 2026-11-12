@@ -120,3 +120,13 @@ L'import de GLB reconnaît désormais les URI de textures relatives avec des car
 Au lieu d'omettre silencieusement les textures de couleur, le parseur collecte des `materialWarnings` pour les références sans image prise en charge ou sans coordonnées UV. Le viewport 3D affiche également un avertissement en cas d'échec réseau/CORS ou de décodage d'une image. Le matériau garde sa couleur de base si une texture échoue ; **ce rendu de secours n'est pas considéré comme une validation de fidélité du modèle**.
 
 Des tests avec un GLB synthétique contrôlent les URI relatives, les UV, le facteur `baseColorFactor`, la rugosité, la métallicité et les erreurs de ressources manquantes. La compatibilité avec les extensions de textures compressées, toutes les variantes PBR et l'inclusion hors ligne des textures externes restent des chantiers distincts.
+
+## Export Web — GLB distants et textures autonomes (12 novembre 2026)
+
+L'export Web utilise maintenant `portable-remote-models.js` pour les modèles GLB distants **référencés par le jeu**. Leurs fichiers sont téléchargés pendant la préparation du ZIP ; toute image de matériau externe PNG, JPEG ou WebP référencée par le GLB est intégrée directement dans une nouvelle copie binaire du GLB grâce à `packageGlb`. Les copies se trouvent dans `assets/remote/`, et le catalogue exporté référence la copie locale au lieu de l'URL distante. Les fichiers sources et les projets enregistrés restent inchangés.
+
+**Garanties :** URL HTTPS directe, chemins de textures relatifs au même hôte, validation des téléchargements et du MIME, taille de 25 Mo par GLB emballé et budget total de 100 Mo pour les GLB locaux et distants. En cas d'image manquante ou d'accès CORS impossible, l'export échoue avec une erreur explicite ; il ne produit pas silencieusement un modèle blanc. Les licences des auteurs continuent à s'appliquer, même à une copie distribuée dans le ZIP.
+
+Les tests `tests/portable-remote-models.test.mjs` vérifient l'intégration effective des octets de texture dans un GLB, l'échec volontaire si une image manque, le rejet des ressources externes non autorisées, ainsi que la présence du modèle local et de son nouveau chemin dans un export ZIP complet.
+
+**Limites restantes :** textures compressées `KHR_texture_basisu`, extensions PBR avancées, modèles qui chargent des dépendances de plusieurs origines, gros assets dépassant la limite d'export, licences interdisant la redistribution et validation visuelle de nombreux modèles réels. Un modèle déjà inclus dans `assets/free/` continue à utiliser son catalogue local et ses dépendances déclarées.

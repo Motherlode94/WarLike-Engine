@@ -112,3 +112,11 @@ Le parseur des GLB acceptait uniquement les primitives `mode=4` (`TRIANGLES`). D
 Cette modification se trouve dans `js/assets/real-models-3d.js` et est couverte par `tests/real-models-3d.test.mjs`. Elle ne modifie ni les fichiers GLB importés, ni le schéma des projets sauvegardés.
 
 **Limites :** les primitives glTF de type `POINTS`, `LINES`, `LINE_STRIP` et `LINE_LOOP` ne sont pas des surfaces triangulées et restent non rendues. Les extensions de compression avancée et la compatibilité visuelle de toutes les textures/normal maps ne sont pas acquises par ce correctif. Le pipeline de textures, d'ombres dynamiques et de matériaux PBR doit être validé séparément avec des modèles réels.
+
+## GLB — diagnostics de textures et matériaux (12 novembre 2026)
+
+L'import de GLB reconnaît désormais les URI de textures relatives avec des caractères échappés et des paramètres de version ou fragments (par exemple `textures/wood.png?rev=2`). Les URL de textures doivent rester sur le même hôte HTTP(S) que le GLB ; les schémas arbitraires sont refusés. Cela ne rend pas pour autant les textures distantes disponibles hors ligne.
+
+Au lieu d'omettre silencieusement les textures de couleur, le parseur collecte des `materialWarnings` pour les références sans image prise en charge ou sans coordonnées UV. Le viewport 3D affiche également un avertissement en cas d'échec réseau/CORS ou de décodage d'une image. Le matériau garde sa couleur de base si une texture échoue ; **ce rendu de secours n'est pas considéré comme une validation de fidélité du modèle**.
+
+Des tests avec un GLB synthétique contrôlent les URI relatives, les UV, le facteur `baseColorFactor`, la rugosité, la métallicité et les erreurs de ressources manquantes. La compatibilité avec les extensions de textures compressées, toutes les variantes PBR et l'inclusion hors ligne des textures externes restent des chantiers distincts.

@@ -316,7 +316,12 @@ export function init3d(canvas,host,buttons){
     Object.assign(mesh,{alphaMode:part.alphaMode,alphaCutoff:part.alphaCutoff,unlit:part.unlit,emissive:part.emissive});
     return {mesh,color:part.color,roughness:part.roughness,metallic:part.metallic};
    }));
-   realGlbBuffers.set(id,{status:'ready',parts,geometry:data,normalizedSize:data.normalizedSize,triangles:data.triangleCount});
+   if(data.materialWarnings?.length){
+    console.warn('[WarLike GLB] Matériaux incomplets :',id,data.materialWarnings.join(' ; '));
+    const status=document.querySelector('#view3dStatus');
+    if(status&&workspace.mode==='3d'){status.textContent='GLB : textures manquantes — '+id;status.title=data.materialWarnings.join('\n')}
+   }
+   realGlbBuffers.set(id,{status:'ready',parts,geometry:data,normalizedSize:data.normalizedSize,triangles:data.triangleCount,materialWarnings:data.materialWarnings||[]});
   }).catch(error=>{
    const message=String(error.message||error);
    realGlbBuffers.set(id,{status:'error',message});

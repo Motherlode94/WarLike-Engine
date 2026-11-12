@@ -78,7 +78,9 @@ export async function registerRemoteModel(address,{category='Imported 3D',licens
  return model;
 }
 const bundledModelLookup=new Map(realModels3d.map(asset=>[asset.id,asset]));
-export const model3dById=id=>bundledModelLookup.get(id)||importedModels3d.get(id)||null;
+// Exported catalog entries override built-in remote links so packaged games load
+// their locally bundled GLB rather than fetching the original URL.
+export const model3dById=id=>importedModels3d.get(id)||bundledModelLookup.get(id)||null;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 const mul=(a,b)=>{const o=new Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)o[c*4+r]+=a[k*4+r]*b[c*4+k];return o};
 const transform=(m,p,w=1)=>[m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12]*w,m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13]*w,m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]*w];

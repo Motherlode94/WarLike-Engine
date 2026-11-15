@@ -186,7 +186,7 @@ document.addEventListener('warlike:change',()=>{
  // Compare the displayed mode too, so project changes update the shell.
  const modeChanged=document.body.dataset.workspace!==workspace.mode;
  if(viewport3d&&view3d.enabled!==(workspace.mode==='3d'))viewport3d.syncToWorkspace();
- if(modeChanged)setWorkspaceUi();
+ if(modeChanged)setWorkspaceUi();else syncTabs();
 });
 $('#duplicate').onclick=duplicateSelected;
 // Move existing controls into a single categorized library; preserve original IDs and handlers.

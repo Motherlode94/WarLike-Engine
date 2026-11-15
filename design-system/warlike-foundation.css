@@ -26,3 +26,23 @@ html[data-warlike-app] ::selection{background:var(--wl-primary);color:var(--wl-p
 .wl-card{background:var(--wl-surface);color:var(--wl-text);border:1px solid var(--wl-border);border-radius:var(--wl-radius-md)}
 .wl-button-primary{background:var(--wl-primary);color:var(--wl-primary-text);border:1px solid var(--wl-primary);border-radius:var(--wl-radius-sm)}
 .wl-input{background:var(--wl-surface);color:var(--wl-text);border:1px solid var(--wl-border);border-radius:var(--wl-radius-sm)}
+
+
+/* WarLike typography v1 — no third-party font network dependency.
+   Applications may self-host appropriately licensed font files to guarantee exact shapes. */
+:root{
+  --wl-font-ui:'Manrope','Plus Jakarta Sans','Inter','Segoe UI',system-ui,sans-serif;
+  --wl-font-technical:'Inter','Noto Sans','Segoe UI',system-ui,sans-serif;
+  --wl-font-editorial:'Playfair Display',Georgia,'Times New Roman',serif;
+  --wl-font-cjk:'Noto Sans CJK SC','Noto Sans CJK JP','Noto Sans CJK KR','Microsoft YaHei','Yu Gothic','Malgun Gothic',sans-serif;
+}
+html[data-warlike-app] body{font-family:var(--wl-font-ui),var(--wl-font-cjk)}
+html[data-warlike-app="warlike-engine"] body,
+html[data-warlike-app="warlike-studio"] body,
+html[data-warlike-app="warlike-server"] body,
+html[data-warlike-app="warlike-crypte"] body,
+html[data-warlike-app="warlike-tower"] body{font-family:var(--wl-font-technical),var(--wl-font-cjk)}
+html[data-warlike-app] :is(button,input,select,textarea){font-family:inherit}
+html[data-warlike-app] :is(h1,h2,h3){letter-spacing:-.025em}
+html[data-warlike-app="warlike-ebook"] :is(h1,h2,.book-title),
+html[data-warlike-app="warlike-books"] :is(h1,h2,.book-title){font-family:var(--wl-font-editorial),var(--wl-font-cjk)}

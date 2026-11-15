@@ -19,6 +19,7 @@ import {renderBlueprintGraph} from './blueprint-graph-editor.js';
 import {element,button,field,select,editActions,editTypedValue} from './blueprint-controls.js';
 const graphViews=new Map();
 const viewKey=id=>JSON.stringify([gameProject.id,workspace.mode,id]);
+let workspaceBrand='blueprint';
 const ui={tab:'graph',sequenceKey:null,nodeId:null,zoom:.85,search:'',category:'Toutes',objectSearch:'',functionId:null,variableName:null,memberSearch:'',compileMessages:[],compiled:false};
 export function initBlueprintWorkspace(){
  const open=document.getElementById('openBlueprint'),dialog=document.getElementById('blueprintDialog'),content=document.getElementById('blueprintContent');
@@ -30,10 +31,12 @@ export function initBlueprintWorkspace(){
  function render(){
   const owner=active(),entry=selected(owner),sequence=entry?.sequence;
   if(entry)ui.sequenceKey=entry.key;
-  content.replaceChildren();content.className='blueprint-content bp-studio-body';
+  content.replaceChildren();content.className='blueprint-content bp-studio-body'+(workspaceBrand==='warnode'?' warnode-mode':'');
+  const title=dialog.querySelector('.blueprint-heading strong');if(title)title.textContent=workspaceBrand==='warnode'?'⬡ WARNODE · VISUAL SCRIPTING':'⬡ WARLIKE BLUEPRINT';
   document.getElementById('blueprintTarget').textContent=(workspace.mode==='3d'?'3D':'2D')+' / '+(owner?.name||'Projet');
   document.getElementById('blueprintAdd').textContent='＋ Comportement';document.getElementById('blueprintAdd').disabled=!owner||state.playing;
   const sidebar=element('aside','bp-sidebar'),main=element('div','bp-main');
+  if(workspaceBrand==='warnode')sidebar.append(element('div','bp-sidebar-title','WARNODE · NŒUDS EXÉCUTABLES'),element('p','bp-hint','Même runtime que Blueprint : événements, branches, variables, ports de données et actions Animator. Enregistrable et exportable avec ton jeu.'));
   sidebar.append(element('div','bp-sidebar-title','OBJET DU BLUEPRINT'));
   const search=element('input','bp-object-search');search.type='search';search.placeholder='Rechercher un objet…';search.value=ui.objectSearch;search.setAttribute('aria-label','Rechercher un objet');sidebar.append(search);
   const objects=element('div','bp-object-list');sidebar.append(objects);
@@ -61,6 +64,12 @@ export function initBlueprintWorkspace(){
   const page=element('div','bp-tab-content');main.append(tabs,page);content.append(sidebar,main);if(ui.compileMessages.length){const results=element('details','bp-compiler-results');results.open=true;results.append(element('summary','','Résultats du compilateur · '+ui.compileMessages.length));for(const message of ui.compileMessages)results.append(element('p','',message));main.append(results)}
   if(['graph','instructions'].includes(ui.tab)){
    if(!owner||!sequence){const empty=element('div','bp-empty-state');empty.append(element('span','bp-empty-icon','⬡'),element('h2','',owner?'Ton objet attend son premier comportement':'Choisis un objet pour commencer'),element('p','',owner?'Ajoute un déclencheur ou pars d’un modèle prêt à configurer.':'Les objets de ta scène apparaissent à gauche. Chaque objet peut porter plusieurs événements et actions.'));button(empty,'Explorer les modèles',()=>{ui.tab='library';render()},'bp-primary');page.append(empty);return}
+   if(workspaceBrand==='warnode'){
+    const bar=element('div','bp-warnode-toolbar');
+    bar.append(element('strong','','WarNode · '+(sequence.name||'Graphe visuel')));
+    const jump=button(bar,'Ouvrir Animator',()=>document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:owner.id}})),'bp-secondary');
+    jump.disabled=false;page.append(bar);
+   }
    const meta=element('div','bp-sequence-meta');field(meta,{key:'name',label:'Nom du comportement',type:'text'},sequence,()=>change('Renommer'));
    field(meta,{key:'enabled',label:'Activé',type:'boolean',default:true},sequence,()=>change('Activation'));button(meta,'Dupliquer',()=>{const copy=structuredClone(sequence);copy.name=(sequence.name||labelFor(sequence.event,'event'))+' · copie';addSequence(owner,copy);change('Dupliquer le comportement')},'bp-text-button');button(meta,'Supprimer',()=>{if(entry.key===owner.id)delete owner.sequence;else owner.sequences.splice(Number(String(entry.key).split(':').at(-1)),1);ui.sequenceKey=null;ui.nodeId=null;change('Supprimer le comportement')},'bp-text-button bp-danger');const properties=element('details','bp-sequence-properties');properties.append(element('summary','','Propriétés du comportement'),meta);page.append(properties);
    if(ui.tab==='graph'){
@@ -167,7 +176,12 @@ export function initBlueprintWorkspace(){
  const show=()=>{render();dialog.hidden=false;open.setAttribute('aria-expanded','true');dialog.querySelector('.bp-tab.is-active')?.focus()};
  const hide=()=>{dialog.hidden=true;open.setAttribute('aria-expanded','false');open.focus()};
  function download(blob,name){const url=URL.createObjectURL(blob),a=element('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
- open.addEventListener('click',()=>dialog.hidden?show():hide());document.getElementById('blueprintClose').addEventListener('click',hide);
+ open.addEventListener('click',()=>{workspaceBrand='blueprint';dialog.hidden?show():hide()});
+ document.addEventListener('warlike:warnode-open',event=>{
+  workspaceBrand='warnode';ui.tab='graph';
+  if(event.detail?.ownerId){const target=state.entities.find(o=>o.id===event.detail.ownerId);if(target)state.selected=[target.id]}
+  ui.sequenceKey=null;show();
+ });document.getElementById('blueprintClose').addEventListener('click',hide);
  document.getElementById('blueprintAdd').addEventListener('click',()=>{const owner=active();if(owner&&!state.playing){addSequence(owner,{...newSequence(),name:'Nouveau comportement'});ui.tab='graph';change('Ajouter comportement')}});
  document.addEventListener('warlike:change',()=>{if(!dialog.hidden)render()});document.addEventListener('warlike:workspace',()=>{if(!dialog.hidden)render()});
  dialog.addEventListener('keydown',event=>{event.stopPropagation();if(state.playing&&['F6','F8','F10'].includes(event.key)){event.preventDefault();state.keys.clear();state.keyPresses?.clear();if(event.key==='F10')stepBlueprint();else if(event.key==='F6')resumeBlueprint();else pauseBlueprint();updateDebug();return}if(event.key==='Escape'){event.preventDefault();hide();return}if(event.key==='Tab'){const controls=[...dialog.querySelectorAll('button,input,select,textarea,a[href]')].filter(el=>!el.disabled&&el.getClientRects().length);if(!controls.length){event.preventDefault();dialog.focus();return}const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}}});

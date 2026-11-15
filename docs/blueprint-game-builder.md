@@ -107,6 +107,8 @@ les tests vérifient qu’aucun module JavaScript n’a été oublié dans le bu
 
 ## Vérification de la livraison
 
+Les chiffres ci-dessous décrivent la livraison historique de ce document. Pour les contrôles actuels du débogueur, du Play Web/C# et des ZIP autonomes, voir [le périmètre de validation et le scénario Chromium](runtime-acceptance.md). Les points d’arrêt sont conservés dans le projet mais ignorés par le jeu construit, pour éviter une pause sans débogueur.
+
 - 288 tests Node réussis, contrats TypeScript et syntaxe JavaScript vérifiés.
 - Chromium : édition des paramètres, création de conditions, connexions Oui/Non,
   détection d’un cycle et refus de Play sur un graphe invalide.

@@ -73,6 +73,7 @@ try{
   if(native){assert.ok(s.entities[0].rotation>0);assert.equal(s.nativeRotation,s.entities[0].rotation,'WarScript observes the accepted native frame');}
   await page.getByRole('button',{name:'▷ Pas à pas',exact:true}).click();s=await until(s=>s.paused&&s.score===1,'one action only');assert.equal(s.elapsed,frozen.elapsed);
   await page.getByRole('button',{name:'▷ Pas à pas',exact:true}).click();s=await until(s=>s.paused&&s.stack?.[0]?.id==='award','enter reusable function');assert.equal(s.score,1);assert.equal(s.stack[0].parameters.points,2);
+  await page.locator('#bpDebugVariables').getByText('ƒ award',{exact:true}).waitFor();
   await page.getByRole('button',{name:'▷ Pas à pas',exact:true}).click();s=await until(s=>s.paused&&s.score===3,'step function body');assert.equal(s.elapsed,frozen.elapsed);
   await page.screenshot({path:path.join(output,'debug-'+mode+'-'+(native?'native':'web')+'.png')});
   await page.getByRole('button',{name:'▶ Continuer',exact:true}).click();s=await until(s=>s.score===7&&!s.paused,'resume through Wait');assert.deepEqual(s.sequenceErrors,[]);

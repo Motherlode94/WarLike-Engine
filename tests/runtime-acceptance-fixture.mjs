@@ -22,7 +22,7 @@ export function runtimeFixture(mode,native=false){
   {type:'addVariable',key:'score',value:4}
  ]}});
  actor.sequence.graph=createGraph(actor.sequence);actor.sequence.graph.nodes[1].breakpoint=true;applyGraph(actor.sequence);
- if(native){actor.csharpScript={name:'AcceptanceSpinner',source:nativeSource,values:{Speed:90}};actor.warScripts=[{scriptId:'native-observer',name:'Observer.wls',source:'Update(){Set("nativeRotation",transform.rotation.y);}',values:{}}];}
+ if(native){actor.csharpScript={name:'AcceptanceSpinner',source:nativeSource,values:{Speed:90}};actor.warScripts=[{scriptId:'native-observer',name:'Observer.wls',source:'Update(){Set("nativeRotation",transform.rotation.'+(mode==='3d'?'y':'z')+');}',values:{}}];}
  const floor={...prefab3d('primitive-platform',2,128,128),name:'Sol QA',w:640,depth3d:640,h:32,elevation3d:-.5,collision3d:true,solid3d:true};
  return {mode,entities:mode==='3d'?[actor,floor]:[actor],camera:{x:0,y:0,zoom:1},project};
 }

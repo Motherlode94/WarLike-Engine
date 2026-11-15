@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createChambre07Scene} from '../js/core/chambre-07-scene.js';
 import {restoreGameProject,freshGameProject} from '../js/core/game-project.js';
-import {gameSession} from '../js/core/game-session.js';
+import {gameSession,saveGameSlot,queueLoadGame} from '../js/core/game-session.js';
 import {updateSequences,resetSequences,sequenceRuntime,queueSequenceInteraction,chooseSequenceDialogue} from '../js/core/logic-sequences.js';
 import {adventureTarget} from '../js/core/adventure-runtime.js';
 import {interactionCenter} from '../js/core/interaction-range.js';
@@ -11,10 +11,11 @@ function boot(){
  const scene=createChambre07Scene('3d');
  restoreGameProject({...freshGameProject(),id:'chambre-gameplay',title:'CHAMBRE 07',genre:'horror'});
  resetSequences();
- const player=scene.entities.find(o=>o.playable3d);
- const tick=()=>updateSequences(.1,{playing:true,mode:'3d',entities:scene.entities,player,keys:new Set()});
+ const data=new Map(),storage={getItem:key=>data.get(key),setItem:(key,value)=>data.set(key,value)};
+ const context=()=>({playing:true,mode:'3d',entities:scene.entities,player:scene.entities.find(o=>o.playable3d),globals:sequenceRuntime.globals,fired:sequenceRuntime.fired,keys:new Set(),storage});
+ const tick=()=>updateSequences(.1,context());
  tick();
- return {scene,player,tick};
+ return {scene,get player(){return scene.entities.find(o=>o.playable3d)},tick,context};
 }
 function interact(f,name){
  const target=f.scene.entities.find(o=>o.name===name);
@@ -45,5 +46,37 @@ for(const answer of [0,1])test('CHAMBRE 07 native mission: three memories → Li
  interact(f,'Porte de sortie');
  assert.equal(gameSession.phase,'won');
  assert.equal(gameSession.objectives['chambre:exit']?.status,'complete');
+ assert.equal(sequenceRuntime.errors.length,0,JSON.stringify(sequenceRuntime.errors));
+});
+
+function coldResume(f){
+ saveGameSlot(f.context());
+ resetSequences();f.scene.entities.splice(0,f.scene.entities.length,...createChambre07Scene('3d').entities);
+ queueLoadGame(f.context());f.tick();f.tick();
+}
+
+for(const answer of [0,1])test('CHAMBRE 07 cold resume preserves memories, dialogue, chase and ending '+answer,()=>{
+ const f=boot();f.player.legacyExtension={version:1,customValue:'keep'};
+ interact(f,'Porte de sortie');assert.equal(gameSession.phase,'playing');
+ interact(f,'Lia · la voix');assert.equal(gameSession.dialogue,null,'Lia is gated by the three memories');
+ for(const [name,key] of [['01 · Photographie','chambrePhoto'],['02 · Cassette','chambreTape'],['03 · Lettre','chambreLetter']]){
+  interact(f,name);const position={x:f.player.x,y:f.player.y};coldResume(f);
+  assert.equal(sequenceRuntime.globals[key],1);
+  assert.equal(gameSession.objectives['chambre:'+key].status,'complete');
+  assert.equal(f.scene.entities.find(o=>o.name===name).visible,false);
+  assert.deepEqual({x:f.player.x,y:f.player.y},position);
+  assert.deepEqual(f.player.legacyExtension,{version:1,customValue:'keep'});
+ }
+ interact(f,'Lia · la voix');const oldDialogueId=gameSession.dialogue.id;coldResume(f);
+ assert.notEqual(gameSession.dialogue.id,oldDialogueId);
+ assert.equal(chooseSequenceDialogue(answer,{id:oldDialogueId,actorId:f.player.id}),false);
+ assert.equal(chooseSequenceDialogue(answer,{id:gameSession.dialogue.id,actorId:f.player.id}),true);f.tick();f.tick();
+ coldResume(f);assert.equal(sequenceRuntime.globals.chambreChoice,answer+1);
+ assert.equal(f.scene.entities.find(o=>o.tags?.includes('chambre07-hunter')).ai.enabled,true);
+ assert.equal(gameSession.objectives['chambre:exit'].status,'active');
+ interact(f,'Porte de sortie');const ending=gameSession.notice;
+ assert.match(ending,answer===0?/LA MÉMOIRE/:/LA RUPTURE/);coldResume(f);
+ assert.equal(gameSession.phase,'won');assert.equal(gameSession.notice,ending);
+ assert.equal(gameSession.objectives['chambre:exit'].status,'complete');
  assert.equal(sequenceRuntime.errors.length,0,JSON.stringify(sequenceRuntime.errors));
 });

@@ -6,7 +6,7 @@ const P=(name,accent,surface,menu,toolbar,panel,header,button,border,muted,scene
  name,accent,surface,menu,toolbar,panel,header,button,border,muted,scene,footer,text,font:'default',fontSize:12,fontWeight:'500'
 });
 export const editorThemePresets={
- graphite:P('Unity Graphite','#4c88b7','#292929','#222222','#303030','#383838','#303030','#484848','#242424','#b8b8b8','#242424','#292929','#dedede'),
+ graphite:P('Unity Graphite','#c5c5a9','#292929','#222222','#303030','#383838','#303030','#484848','#242424','#b8b8b8','#242424','#292929','#dedede'),
  scifi:P('Science-fiction','#50dce9','#0c1720','#09121b','#12232f','#152936','#1c3a4b','#244554','#316375','#a8c6cf','#071119','#09121b','#e2f7fa'),
  fantasy:P('Fantastique','#d3b579','#201b18','#211a18','#302923','#383027','#463a2c','#50412f','#786448','#c6b899','#17140f','#211a18','#f1e6cd'),
  nature:P('Nature','#8aba82','#18221d','#15201a','#223129','#2a3a2f','#354b3b','#3c5541','#56755b','#b2c5ae','#101c14','#15201a','#e4eee0'),

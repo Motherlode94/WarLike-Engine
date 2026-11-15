@@ -1,0 +1,4 @@
+/* Existing editor presets and manual palettes retain ownership of editor chrome. */
+:root[data-warlike-app="warlike-engine"]:not(:has(body.hub-open)){
+--wl-bg:var(--warlike-palette-surface,#292929);--wl-surface:var(--warlike-palette-panel,#383838);--wl-text:var(--warlike-palette-text,#dedede);--wl-text-muted:var(--warlike-palette-muted,#b8b8b8);--wl-border:var(--warlike-palette-border,#242424);--wl-accent:var(--editor-accent,#C5C5A9);--wl-focus:var(--editor-accent,#C5C5A9)}
+html[data-warlike-app="warlike-engine"] body.hub-open :is(.hub-window,.hub-heading,.hub-create,.hub-list){background:var(--wl-surface);border-color:var(--wl-border);color:var(--wl-text)}

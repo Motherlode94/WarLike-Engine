@@ -1,3 +1,4 @@
+import {MAX_IMPORTED_GLB_BYTES} from './model-capacity.js';
 import {kaykitModels3d} from './kaykit-game-assets.js';
 import {packageGlb,imageResource} from './glb-package.js';
 import {packagedModels3d} from './imported-models-3d.js';
@@ -40,10 +41,10 @@ export const realModels3d=[...freeModels3d,...quaterniusModels3d,...kaykitModels
 ];
 export const importedModels3d=new Map(packagedModels3d.map(asset=>[asset.id,asset]));
 const modelCache=new Map();
-const maxBytes=25*1024*1024;
+const maxBytes=MAX_IMPORTED_GLB_BYTES;
 export function registerLocalModel(file,{id=null,license='Fichier local, licence à vérifier'}={}){
  if(!file||!/.glb$/i.test(file.name))throw Error('Format requis : .glb (glTF binaire).');
- if(file.size>maxBytes)throw Error('Fichier trop volumineux (maximum 25 Mo).');
+ if(file.size>maxBytes)throw Error('Fichier trop volumineux (maximum 64 Mo).');
  if(id!==null&&!/^library-[a-f0-9]{24}$/.test(id))throw Error('Identifiant de modèle Library invalide.');
  const modelId=id||'local-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
  const item={id:modelId,name:file.name.replace(/\.glb$/i,''),category:'Imported 3D',shape:'glb',license,file};
@@ -57,14 +58,14 @@ export async function registerRemoteModel(address,{category='Imported 3D',licens
  const response=await fetch(url.href,{mode:'cors',credentials:'omit',redirect:'follow'});
  if(!response.ok)throw Error('Téléchargement GLB : HTTP '+response.status);
  const declared=Number(response.headers.get('content-length')||0);
- if(declared>maxBytes)throw Error('Modèle trop volumineux (25 Mo maximum)');
+ if(declared>maxBytes)throw Error('Modèle trop volumineux (64 Mo maximum)');
  const chunks=[];let loaded=0;
  if(response.body){
   const reader=response.body.getReader();
-  try{while(true){const {done,value}=await reader.read();if(done)break;loaded+=value.byteLength;if(loaded>maxBytes){await reader.cancel();throw Error('Modèle trop volumineux (25 Mo maximum)')}chunks.push(value)}}
+  try{while(true){const {done,value}=await reader.read();if(done)break;loaded+=value.byteLength;if(loaded>maxBytes){await reader.cancel();throw Error('Modèle trop volumineux (64 Mo maximum)')}chunks.push(value)}}
   finally{reader.releaseLock()}
  }else{
-  const data=new Uint8Array(await response.arrayBuffer());loaded=data.byteLength;if(loaded>maxBytes)throw Error('Modèle trop volumineux (25 Mo maximum)');chunks.push(data);
+  const data=new Uint8Array(await response.arrayBuffer());loaded=data.byteLength;if(loaded>maxBytes)throw Error('Modèle trop volumineux (64 Mo maximum)');chunks.push(data);
  }
  const bytes=new Uint8Array(loaded);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength}
  const packed=await packageGlb(bytes.buffer,async uri=>{const address=new URL(uri,url);if(address.protocol!=='https:'&&!/^data:image\/(png|jpeg|webp);base64,/i.test(uri))throw Error('URL de texture non autorisée.');return imageResource(await fetch(address.href,{mode:'cors',credentials:'omit'}));});
@@ -128,7 +129,7 @@ export function resolveGlbTextureUrl(uri,baseUrl){
  }catch{return null}
 }
 export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
- if(buffer.byteLength>maxBytes)throw Error('GLB supérieur à 25 Mo');
+ if(buffer.byteLength>maxBytes)throw Error('GLB supérieur à 64 Mo');
  const v=new DataView(buffer);if(buffer.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==buffer.byteLength)throw Error('GLB 2.0 invalide');
  let offset=12,json=null,binary=null;
  while(offset+8<=buffer.byteLength){const length=v.getUint32(offset,true),type=v.getUint32(offset+4,true);offset+=8;if(offset+length>buffer.byteLength)throw Error('Chunk GLB incomplet');
@@ -258,11 +259,11 @@ export async function getModelGeometry(id){
    catch(error){throw Error('Accès réseau/CORS au GLB impossible : '+String(error?.message||error))}
    if(!result.ok)throw Error('Téléchargement du GLB : HTTP '+result.status);
    const declared=Number(result.headers.get('content-length')||0);
-   if(declared>maxBytes)throw Error('GLB de plus de 25 Mo — import refusé');
+   if(declared>maxBytes)throw Error('GLB de plus de 64 Mo — import refusé');
    if(result.body){
     const reader=result.body.getReader(),chunks=[];let length=0;
     try{while(true){const {done,value}=await reader.read();if(done)break;length+=value.byteLength;
-     if(length>maxBytes){await reader.cancel();throw Error('GLB de plus de 25 Mo — import refusé')}
+     if(length>maxBytes){await reader.cancel();throw Error('GLB de plus de 64 Mo — import refusé')}
      chunks.push(value)
     }}finally{reader.releaseLock()}
     const bytes=new Uint8Array(length);let offset=0;

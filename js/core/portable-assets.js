@@ -1,6 +1,7 @@
+import {MAX_SCENE_MODEL_BYTES,MAX_MODEL_BASE64_LENGTH} from '../assets/model-capacity.js';
 import {importedModels3d,model3dById,parseGlb,embeddedGlbImage} from '../assets/real-models-3d.js';
 import {persistLocalModels} from './local-asset-library.js';
-const MAX_TOTAL=100*1024*1024;
+const MAX_TOTAL=MAX_SCENE_MODEL_BYTES;
 const safeId=id=>typeof id==='string'&&/^(?:local-[-a-zA-Z0-9]{1,100}|library-[a-f0-9]{24})$/.test(id);
 export function referencedLocalModels(value){
  const found=new Map();
@@ -25,7 +26,7 @@ export function portableModelDescriptor(asset){
 export async function encodeProjectAssets(payload){
  const assets=[];let total=0;
  for(const asset of referencedLocalModels(payload)){
-  const bytes=await portableModelBytes(asset);total+=bytes.length;if(total>MAX_TOTAL)throw Error('Assets du projet supérieurs à 100 Mo.');
+  const bytes=await portableModelBytes(asset);total+=bytes.length;if(total>MAX_TOTAL)throw Error('Assets du projet supérieurs à 256 Mo.');
   let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
   assets.push({...portableModelDescriptor(asset),fileName:asset.file.name,data:btoa(binary)});
  }
@@ -36,8 +37,8 @@ export async function restoreProjectAssets(entries,{persist=persistLocalModels}=
  if(!Array.isArray(entries)||entries.length>256)throw Error('Catalogue d’assets invalide.');
  const models=[],ids=new Set();let total=0;
  for(const entry of entries){
-  if(!entry||!safeId(entry.id)||ids.has(entry.id)||typeof entry.data!=='string'||entry.data.length>35*1024*1024||typeof entry.name!=='string')throw Error('Asset du projet invalide.');
-  ids.add(entry.id);const binary=atob(entry.data);total+=binary.length;if(total>MAX_TOTAL)throw Error('Assets du projet supérieurs à 100 Mo.');
+  if(!entry||!safeId(entry.id)||ids.has(entry.id)||typeof entry.data!=='string'||entry.data.length>MAX_MODEL_BASE64_LENGTH||typeof entry.name!=='string')throw Error('Asset du projet invalide.');
+  ids.add(entry.id);const binary=atob(entry.data);total+=binary.length;if(total>MAX_TOTAL)throw Error('Assets du projet supérieurs à 256 Mo.');
   const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
   const model={...portableModelDescriptor(entry),file:new File([bytes],entry.id+'.glb',{type:'model/gltf-binary'})};
   await portableModelBytes(model);models.push(model);

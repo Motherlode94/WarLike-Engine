@@ -1,9 +1,10 @@
+import {MAX_IMPORTED_GLB_BYTES} from '../assets/model-capacity.js';
 import {packageGlb,imageResource} from '../assets/glb-package.js';
 import {embeddedGlbImage,resolveGlbTextureUrl} from '../assets/real-models-3d.js';
 
 // A remote model is portable only when the GLB and every sidecar image are
 // included in the exported archive. No implicit network fallback at runtime.
-const maxRemoteGlb=25*1024*1024;
+const maxRemoteGlb=MAX_IMPORTED_GLB_BYTES;
 export function portableRemoteModelDescriptor(asset){
  if(!asset||!/^[a-zA-Z0-9_-]{1,120}$/.test(asset.id))
   throw Error('Identifiant de modèle distant invalide.');

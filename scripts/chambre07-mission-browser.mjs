@@ -6,7 +6,7 @@ import path from 'node:path';
 export async function verifyChambre07Missions(browser,{origin,output}){
  const results=[];
  for(const answer of [0,1]){
-  const context=await browser.newContext({viewport:{width:1440,height:900}}),errors=[],failed=[],external=[];
+  const context=await browser.newContext({viewport:{width:960,height:640}}),errors=[],failed=[],external=[];
   try{
    await context.route('**/*',route=>{
     const url=new URL(route.request().url());
@@ -55,6 +55,14 @@ export async function verifyChambre07Missions(browser,{origin,output}){
      return state.playing&&gameSession.pending===null&&Object.keys(gameSession.objectives).length>=4;
     });
    };
+   const quickResume=async()=>{
+    await page.evaluate(async()=>{const {state}=await import('/js/core/state.js');globalThis.__chambreSavedEntity=state.entities[0];});
+    await page.keyboard.press('F9');
+    await wait(async()=>{
+     const {state}=await import('/js/core/state.js'),{gameSession}=await import('/js/core/game-session.js');
+     return gameSession.pending===null&&state.entities[0]!==globalThis.__chambreSavedEntity;
+    });
+   };
    await page.goto(origin,{waitUntil:'domcontentloaded'});
    await page.getByRole('button',{name:'Jouer',exact:true}).click();
    await wait(async()=>{const {sequenceRuntime}=await import('/js/core/logic-sequences.js');return sequenceRuntime.globals.chambrePhoto===0;});
@@ -63,7 +71,7 @@ export async function verifyChambre07Missions(browser,{origin,output}){
    for(const [name,key] of [['01 · Photographie','chambrePhoto'],['02 · Cassette','chambreTape'],['03 · Lettre','chambreLetter']]){
     await approach(name);
     await page.waitForFunction(async key=>{const {sequenceRuntime}=await import('/js/core/logic-sequences.js');return sequenceRuntime.globals[key]===1;},key);
-    await save();await resume();
+    await save();if(key==='chambrePhoto')await resume();else await quickResume();
     const restored=await snapshot();assert.equal(restored.globals[key],1);assert.equal(restored.objectives['chambre:'+key]?.status,'complete');
    }
    assert.equal((await snapshot()).visible,0);
@@ -74,10 +82,10 @@ export async function verifyChambre07Missions(browser,{origin,output}){
    assert.notEqual((await snapshot()).dialogue.id,oldDialogue);
    await page.locator('[data-dialogue-choice="'+answer+'"]').click();
    await page.waitForFunction(async choice=>{const {sequenceRuntime}=await import('/js/core/logic-sequences.js');return sequenceRuntime.globals.chambreChoice===choice;},answer+1);
-   await wait(async()=>{const {state}=await import('/js/core/state.js');return state.entities.find(o=>o.tags?.includes('chambre07-hunter'))?.ai?.enabled===true;});
    const savedChase=await save();
-   assert.equal(savedChase.entities.find(o=>o.tags?.includes('chambre07-hunter'))?.ai?.enabled,true,'F5 did not persist the active hunter: '+JSON.stringify({globals:savedChase.globals,fired:savedChase.fired,dialogue:savedChase.session.dialogue}));
-   await resume();
+   assert.ok(savedChase.entities.find(o=>o.tags?.includes('chambre07-hunter'))?.ai?.enabled||savedChase.sequenceSignals?.queue.includes('chambre:chase'),'F5 lost the active or pending chase');
+   await quickResume();
+   await wait(async()=>{const {state}=await import('/js/core/state.js');return state.entities.find(o=>o.tags?.includes('chambre07-hunter'))?.ai?.enabled===true;});
    const chase=await snapshot();assert.equal(chase.globals.chambreChoice,answer+1);assert.equal(chase.hunter,true,'Reload lost hunter: '+JSON.stringify(chase));
    assert.equal(chase.objectives['chambre:exit']?.status,'active');
    await approach('Porte de sortie');
@@ -90,7 +98,7 @@ export async function verifyChambre07Missions(browser,{origin,output}){
    assert.equal(final.objectives['chambre:exit']?.status,'complete');assert.deepEqual(final.errors,[]);
    assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);assert.deepEqual(external,[]);
    await page.screenshot({path:path.join(output,'chambre07-ending-'+answer+'.png'),timeout:20000});
-   results.push({answer,ending,phase:final.phase,completed:Object.values(final.objectives).filter(o=>o.status==='complete').length,coldResumes:6});
+   results.push({answer,ending,phase:final.phase,completed:Object.values(final.objectives).filter(o=>o.status==='complete').length,coldResumes:3,quickLoads:3});
   }finally{await context.close();}
  }
  return results;

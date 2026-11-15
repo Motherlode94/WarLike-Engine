@@ -12,7 +12,7 @@ function boot(){
  restoreGameProject({...freshGameProject(),id:'chambre-gameplay',title:'CHAMBRE 07',genre:'horror'});
  resetSequences();
  const data=new Map(),storage={getItem:key=>data.get(key),setItem:(key,value)=>data.set(key,value)};
- const context=()=>({playing:true,mode:'3d',entities:scene.entities,player:scene.entities.find(o=>o.playable3d),globals:sequenceRuntime.globals,fired:sequenceRuntime.fired,keys:new Set(),storage});
+ const context=()=>({playing:true,mode:'3d',entities:scene.entities,player:scene.entities.find(o=>o.playable3d),globals:sequenceRuntime.globals,fired:sequenceRuntime.fired,signals:sequenceRuntime.signals,signalActors:sequenceRuntime.signalActors,keys:new Set(),storage});
  const tick=()=>updateSequences(.1,context());
  tick();
  return {scene,get player(){return scene.entities.find(o=>o.playable3d)},tick,context};
@@ -79,4 +79,16 @@ for(const answer of [0,1])test('CHAMBRE 07 cold resume preserves memories, dialo
  assert.equal(gameSession.phase,'won');assert.equal(gameSession.notice,ending);
  assert.equal(gameSession.objectives['chambre:exit'].status,'complete');
  assert.equal(sequenceRuntime.errors.length,0,JSON.stringify(sequenceRuntime.errors));
+});
+
+test('saving on the frame after answering Lia preserves the pending chase signal',()=>{
+ const f=boot();
+ for(const name of ['01 · Photographie','02 · Cassette','03 · Lettre'])interact(f,name);
+ interact(f,'Lia · la voix');
+ chooseSequenceDialogue(0,{id:gameSession.dialogue.id,actorId:f.player.id});f.tick();
+ assert.equal(sequenceRuntime.globals.chambreChoice,1);
+ assert.equal(f.scene.entities.find(o=>o.tags?.includes('chambre07-hunter')).ai.enabled,false);
+ assert.ok(sequenceRuntime.signals.includes('chambre:chase'));
+ coldResume(f);
+ assert.equal(f.scene.entities.find(o=>o.tags?.includes('chambre07-hunter')).ai.enabled,true,'the queued chase must resume after loading');
 });

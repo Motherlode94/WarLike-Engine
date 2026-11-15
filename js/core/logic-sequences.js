@@ -288,9 +288,14 @@ export function updateSequences(dt,ctx){
   if(blueprintDebugger.step){const job=blueprintDebugger.current?.job||rt.jobs[0];if(job&&rt.jobs.includes(job)){execute(job,ctx,1);if(blueprintDebugger.step)afterBlueprintAction(job,ctx.entities.find(o=>o.id===job.objectId));rt.jobs=rt.jobs.filter(j=>j.index<j.steps.length)}else{blueprintDebugger.paused=false;updateSequences(0,ctx);blueprintDebugger.paused=true;blueprintDebugger.step=false}}
   return;
  }
- ctx={...ctx,globals:rt.globals,fired:rt.fired};
+ ctx={...ctx,globals:rt.globals,fired:rt.fired,signals:rt.signals,signalActors:rt.signalActors};
  const change=applySessionChange(ctx);
- if(change){rt.interactions=[];rt.signals=[];rt.signalActors.clear();rt.time=gameSession.elapsed;rt.jobs=[];rt.inside.clear();rt.cooldowns.clear();rt.observed.clear();rt.fired=new Set(change.fired||[]);if(change.kind==='restore')for(const o of ctx.entities)for(const entry of sequenceEntries(o))if(entry.sequence.event==='start')rt.cooldowns.set('start:'+entry.key,Infinity);emitSequenceSignal(change.kind==='restore'?'game:loaded':'scene:loaded');ctx.onSceneChange?.(change);ctx.pressedKeys?.clear();return}
+ if(change){
+  rt.interactions=[];rt.signals=change.sequenceSignals?.queue||[];rt.signalActors=new Map(change.sequenceSignals?.actors||[]);
+  rt.time=gameSession.elapsed;rt.jobs=[];rt.inside.clear();rt.cooldowns.clear();rt.observed.clear();rt.fired=new Set(change.fired||[]);
+  if(change.kind==='restore')for(const o of ctx.entities)for(const entry of sequenceEntries(o))if(entry.sequence.event==='start')rt.cooldowns.set('start:'+entry.key,Infinity);
+  emitSequenceSignal(change.kind==='restore'?'game:loaded':'scene:loaded');ctx.onSceneChange?.(change);ctx.pressedKeys?.clear();return;
+ }
  const running=gameIsRunning();dt=running?Math.min(.1,Math.max(0,number(dt))):0;rt.time+=dt;
  for(const signal of tickGameSession(dt))emitSequenceSignal(signal);
  // Shared race clock for racing Blueprints; advances only while a race is active.

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {restoreGameProject,freshGameProject} from '../js/core/game-project.js';
 import {gameSession,setGamePhase,saveGameSlot,readGameSlot,queueLoadGame,validateGameSave} from '../js/core/game-session.js';
-import {resetSequences,updateSequences,sequenceRuntime} from '../js/core/logic-sequences.js';
+import {resetSequences,updateSequences,sequenceRuntime,emitSequenceSignal} from '../js/core/logic-sequences.js';
 
 function fixture(){
   restoreGameProject({...freshGameProject(),id:'saved-outcome'});resetSequences();
@@ -47,4 +47,24 @@ test('invalid saved phase or ending text is rejected before the live scene chang
     assert.throws(()=>validateGameSave(broken),/partie|fin de partie/);
     assert.equal(f.entities[0].x,0);assert.equal(gameSession.phase,'playing');
   }
+});
+
+test('pending signals retain the interacting actor and execute only once after reload',()=>{
+ const f=fixture();f.entities.push({id:2,type:'player',name:'Guest',x:0,y:0,w:32,h:32,hp:100});
+ f.entities[0].sequences=[{enabled:true,event:'signal',signal:'reward',once:true,instructions:[{type:'giveItem',targetRole:'player',key:'token',value:1}]}];
+ emitSequenceSignal('reward',2);
+ saveGameSlot({...f.context(),signals:sequenceRuntime.signals,signalActors:sequenceRuntime.signalActors});
+ const saved=readGameSlot(f.context());assert.deepEqual(saved.sequenceSignals,{version:1,queue:['reward'],actors:[['reward',2]]});
+ resetSequences();queueLoadGame(f.context());f.tick();f.tick();f.tick();
+ assert.equal(f.entities[0].inventory,undefined);
+ assert.equal(f.entities[1].inventory.items[0].count,1);
+ assert.equal(sequenceRuntime.errors.length,0);
+});
+
+test('malformed queued signals are rejected without mutating the live scene',()=>{
+ const f=fixture();saveGameSlot(f.context());
+ for(const state of [{version:2,queue:[],actors:[]},{version:1,queue:['x'.repeat(61)],actors:[]},{version:1,queue:['a'],actors:[['missing',1]]},{version:1,queue:['a'],actors:[['a',-1]]},{version:1,queue:Array(65).fill('a'),actors:[]}]){
+  const broken=readGameSlot(f.context());broken.sequenceSignals=state;
+  assert.throws(()=>validateGameSave(broken),/Signaux/);assert.equal(f.entities[0].x,0);
+ }
 });

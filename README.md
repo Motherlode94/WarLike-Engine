@@ -1,3 +1,5 @@
+> **WarLike Corps — propriété des créations originales : Hardi MBANVU.** © 2026 Hardi MBANVU. Tous droits réservés sur les éléments originaux détenus par le titulaire. Voir [Titularité et droits](PROPRIETARY.md) et [Licences des composants tiers](THIRD_PARTY_NOTICES.md). Les dépendances et assets externes conservent leurs licences ; la publication du dépôt ne protège pas la confidentialité du code.
+
 ## Reprise des parties et fins — novembre 2026
 
 Les sauvegardes conservent maintenant l'état gagné/perdu et le texte de fin. Le parcours automatisé de CHAMBRE 07 vérifie ses deux fins avec reprise après les souvenirs, le dialogue et la poursuite ; une ancienne sauvegarde 2D est aussi contrôlée. [Comportement, compatibilité et limites](docs/game-save-outcomes.md).

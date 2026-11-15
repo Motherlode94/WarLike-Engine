@@ -47,3 +47,17 @@ body.reference-engine #blueprintDialog .bp-node-port{color:#e7edf2!important;bac
 body.reference-engine #blueprintDialog .bp-wire:not(.is-data){stroke:#e7edf2;stroke-width:2.3}
 body.reference-engine #blueprintDialog .bp-node-inspector :is(input,select,textarea){min-height:27px!important;border-radius:2px!important;padding:4px 7px!important;font-size:11px!important}
 body.reference-engine #blueprintDialog .bp-node-inspector .bp-field{gap:4px;margin-bottom:10px}
+
+/* Assets stay visible even in a shallow Project dock. Metadata and filters are contextual. */
+body.reference-engine #warlikeVisualPacks .free-asset-toolbar{height:28px;min-height:28px;padding:2px 0;gap:4px;flex-wrap:nowrap}
+body.reference-engine #warlikeVisualPacks .free-asset-toolbar>strong{display:none}
+body.reference-engine #warlikeVisualPacks .free-asset-toolbar>select{max-width:190px;min-width:90px;font-size:10px}
+body.reference-engine #warlikeVisualPacks .free-asset-toolbar>input{min-width:80px;flex:1}
+.reference-asset-options{position:relative;flex:none}.reference-asset-options>summary{list-style:none;cursor:pointer;font-size:10px;padding:4px 7px;border:1px solid var(--wl-theme-border)}.reference-asset-options>div{position:absolute;right:0;top:100%;width:330px;max-height:135px;overflow:auto;z-index:200;padding:8px;border:1px solid var(--wl-theme-border);background:var(--wl-theme-panel);box-shadow:0 6px 18px #0008}.reference-asset-options #visualPackInfo{font-size:10px;margin:5px 0;line-height:1.4}
+body.reference-engine #warlikeVisualPacks .free-asset-pager{min-height:23px;height:23px;padding:1px 0;gap:5px;border-top:1px solid var(--wl-theme-border)}
+body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list){grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:4px;padding:3px}
+body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list) .free-asset-card{min-height:86px;border-radius:2px;border:0!important}
+body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list) .free-asset-preview{height:86px!important;min-height:86px!important;padding:3px!important;gap:2px!important}
+body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list) img{height:52px!important;max-height:52px;object-fit:contain}
+body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list) .free-asset-name{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list) :is(.free-asset-meta,.free-asset-file){display:none}

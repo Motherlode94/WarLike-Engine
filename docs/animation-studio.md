@@ -1,5 +1,25 @@
 # Animation Studio et Animator
 
+## Animator de personnage — modèles GLB / Meshy
+
+Sélectionne un modèle **GLB possédant de vrais clips d'animation** dans la Hiérarchie, puis ouvre **Animator · Graphe et mélanges** depuis le menu Animation. Le bouton **GLB → Contrôleur personnage** (ou **Créer un contrôleur depuis les clips GLB**) analyse le vrai nom et la durée des animations fournies par le modèle.
+
+Le constructeur identifie les clips **Idle, Walk, Run, Jump, Fall, Attack et Death**, les associe à des états de jeu et construit une locomotion **Blend Tree 1D** pilotée par `speed` si les clips correspondants sont présents. Les transitions utilisent les paramètres réels `grounded`, `vertical`, `attacking` et `dead`. Les clips absents sont signalés ; aucune animation n'est inventée. La génération remplace le graphe existant uniquement après confirmation.
+
+Le panneau comporte les **paramètres à gauche**, le graphe des états au centre et l'inspecteur de l'état sélectionné à droite, avec transitions conditionnelles, fondu, temps de sortie et entrée, glisser-déposer des états, **Blend Tree 1D / 2D**, couches par os et lecture dans Play. Les clips du GLB continuent d'être évalués par le runtime de pose/squelette existant, dans l'éditeur comme dans l'export Web.
+
+**Prérequis :** un modèle Meshy 3D statique, même exporté en GLB, ne contient pas nécessairement de rig ni d'animation. L'Animator ne crée pas automatiquement d'armature, de skinning ni de mouvement à partir d'un mesh statique. Il faut importer un GLB animé ou préparer les clips dans le studio Squelette. Certains GLB compressés ou extensions glTF nécessitent encore un import compatible.
+
+## WarNode — visual scripting
+
+Dans **Outils → WarNode · Visual Scripting**, ouvre l'espace WarNode sur l'objet sélectionné. WarNode réutilise délibérément le **compilateur et le runtime d'exécution du Blueprint WarLike**, et non un simple dessin : créer des nœuds, connecter les ports, ajouter des conditions, variables, événements, appels de fonctions et actions Animator (`playAnimatorState`, `setAnimatorParameter`). Le clic droit ouvre la palette d'actions.
+
+**Ouvrir Animator** permet de basculer du graphe logique WarNode vers le contrôleur d'animations du même objet. Les graphes WarNode sont enregistrés dans les séquences existantes et joués dans Play et l'export Web par le runtime de séquences actuel ; cela évite de dupliquer un deuxième système d'exécution. Le débogueur avec points d'arrêt et pas à pas demeure celui du moteur Blueprint existant.
+
+WarNode est un nom et un espace de travail propre à WarLike : la compatibilité d'import des graphes natifs Unreal Engine n'est **pas** prise en charge.
+
+---
+
 ## Créer des clips de transformation
 
 Sélectionne un objet et ouvre **Animation → Animation Studio**. Crée un clip, règle sa durée, puis **Enregistrer la pose** à deux instants de la timeline après avoir modifié la transformation de l’objet. Les losanges permettent de retrouver les clés ; le tableau permet de déplacer leur instant, changer leur interpolation ou les supprimer. Un nouvel enregistrement au même instant remplace la clé.

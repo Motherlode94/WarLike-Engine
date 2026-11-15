@@ -2,11 +2,19 @@ import {MAX_IMPORTED_GLB_BYTES} from './model-capacity.js';
 // Convert a GLB with sidecar images into a self-contained GLB before storage/export.
 const maximum=MAX_IMPORTED_GLB_BYTES;
 export async function packageGlb(buffer,resolve){
+ if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>maximum)throw Error('GLB invalide ou supérieur à 64 Mo.');
  const view=new DataView(buffer);
  if(buffer.byteLength<20||view.getUint32(0,true)!==0x46546c67||view.getUint32(4,true)!==2||view.getUint32(8,true)!==buffer.byteLength)throw Error('GLB 2.0 invalide');
- let json,bin;
- for(let offset=12;offset+8<=buffer.byteLength;){const length=view.getUint32(offset,true),type=view.getUint32(offset+4,true);offset+=8;if(offset+length>buffer.byteLength)throw Error('Chunk GLB incomplet');if(type===0x4e4f534a)json=JSON.parse(new TextDecoder().decode(new Uint8Array(buffer,offset,length)));if(type===0x004e4942)bin=new Uint8Array(buffer,offset,length);offset+=length;}
- if(!json||!bin)throw Error('GLB sans géométrie intégrée');
+ let json,bin,chunkCount=0,offset=12;
+ for(;offset<buffer.byteLength;){
+  if(offset+8>buffer.byteLength)throw Error('En-tête de chunk GLB incomplet');
+  const length=view.getUint32(offset,true),type=view.getUint32(offset+4,true);offset+=8;
+  if(length%4!==0||offset+length>buffer.byteLength)throw Error('Chunk GLB incomplet ou non aligné');
+  if(type===0x4e4f534a){if(chunkCount!==0||json)throw Error('Chunk JSON GLB invalide');json=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(new Uint8Array(buffer,offset,length)));}
+  if(type===0x004e4942){if(bin)throw Error('Plusieurs chunks binaires GLB');bin=new Uint8Array(buffer,offset,length);}
+  offset+=length;chunkCount++;
+ }
+ if(!json||!bin||json.asset?.version!=='2.0'||!Array.isArray(json.buffers)||json.buffers.length!==1||!Number.isSafeInteger(json.buffers[0].byteLength)||json.buffers[0].byteLength>bin.byteLength)throw Error('GLB sans géométrie intégrée ou structure invalide');
  if(json.buffers?.some(b=>b.uri))throw Error('Buffers externes : exporter un GLB avec géométrie intégrée.');
  const chunks=[bin];let size=bin.byteLength;const images=new Map();
  for(const image of json.images||[]){
@@ -14,7 +22,7 @@ export async function packageGlb(buffer,resolve){
   let saved=images.get(image.uri);
   if(!saved){
    if(!resolve)throw Error('Texture externe manquante : '+image.uri+'. Importe le dossier complet.');
-   const resource=await resolve(image.uri),bytes=new Uint8Array(resource.bytes);
+   const resource=await resolve(image.uri);if(!resource||!(resource.bytes instanceof Uint8Array||resource.bytes instanceof ArrayBuffer))throw Error('Texture externe invalide : '+image.uri);const bytes=new Uint8Array(resource.bytes);
    const mimeType=resource.mimeType?.split(';')[0];
    if(!['image/png','image/jpeg','image/webp'].includes(mimeType)||!bytes.length)throw Error('Texture non prise en charge : '+image.uri);
    const padding=(4-size%4)%4;size+=padding;chunks.push(new Uint8Array(padding),bytes);

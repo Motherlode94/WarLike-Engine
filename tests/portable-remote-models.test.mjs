@@ -81,6 +81,7 @@ test('portable Web ZIP includes a local remote GLB and replaces the remote catal
   if(value.endsWith('/runtime-files.json'))return resource(JSON.stringify({files}),'application/json');
   if(value.endsWith('/index.html'))return resource('<html><head><title>Engine</title></head><body><script type="module" src="./js/editor.js"></script></body></html>','text/html');
   if(value.endsWith('/js/assets/imported-models-3d.js'))return resource('export const packagedModels3d=[];','text/javascript');
+  if(value.endsWith('/design-system/warlike-foundation.css')||value.endsWith('/design-system/warlike-shell.css'))return resource('/* Local WarLike design-system CSS */','text/css');
   const remote='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/SpecularTest.glb';
   if(value===remote){calls.push(value);return resource(externalTextureGlb())}
   if(value==='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/textures/paint.png?revision=2'){
@@ -94,6 +95,8 @@ test('portable Web ZIP includes a local remote GLB and replaces the remote catal
  const result=await exportGamePackage({entities:scene,mode:'3d',project:{...freshGameProject(),genre:'sandbox'}},{fetcher});
  const bytes=new Uint8Array(await result.blob.arrayBuffer()),str=new TextDecoder('latin1').decode(bytes);
  assert.ok(str.includes('assets/remote/real-specular-test.glb'),'ZIP must contain locally packed model');
+ assert.ok(str.includes('design-system/warlike-foundation.css'),'ZIP must package the foundation stylesheet');
+ assert.ok(str.includes('design-system/warlike-shell.css'),'ZIP must package the shell stylesheet');
  assert.ok(str.includes('./assets/remote/real-specular-test.glb'),'Packaged catalog must point to local copy');
  assert.deepEqual(scene,original,'Build must not mutate editor scene');
  assert.deepEqual(calls,['https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/SpecularTest.glb','https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF-Binary/textures/paint.png?revision=2']);

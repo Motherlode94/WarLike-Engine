@@ -1,4 +1,5 @@
 /* Authoring shell based on the supplied Unity reference: one menu, one toolbar. */
+.reference-engine #viewport>#gameFlowUi{position:absolute;inset:0;z-index:40}.reference-engine #viewport>#gameFlowUi .game-menu-veil{overflow:auto}.reference-engine #viewport>#gameFlowUi .game-menu-card{max-height:100%;overflow:auto}
 @media(min-width:1101px){
 body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build){--left-pane-width:inherit!important;--right-pane-width:inherit!important;--warlike-menubar-height:56px!important;--warlike-toolbar-height:0px!important}
 body.reference-engine.warlike-toolbar-expanded{--warlike-toolbar-height:42px!important}

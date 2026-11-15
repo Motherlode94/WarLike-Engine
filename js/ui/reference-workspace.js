@@ -5,6 +5,8 @@ export function initReferenceWorkspace(){
  if(globalThis.__WARLIKE_BUILD__||document.body.classList.contains('reference-engine'))return;
  document.body.classList.add('reference-engine');
  const $=id=>document.getElementById(id),menus=$('studioMenus'),more=$('studioMoreMenus');
+ // In the editor, game menus belong to the Game view. Keep Stop and Pause usable.
+ if($('gameFlowUi'))$('viewport').append($('gameFlowUi'));
  const windowMenu=[...more?.querySelectorAll('.studio-more-popover>details')||[]].find(n=>n.querySelector('summary')?.textContent==='Window');
  if(windowMenu)$('openAnimationStudio')&&windowMenu.querySelector('.studio-dropdown').append($('openAnimationStudio'));
  for(const group of [...more?.querySelectorAll('.studio-more-popover>details')||[]])menus.append(group);

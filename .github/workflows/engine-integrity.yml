@@ -7,6 +7,29 @@ on:
 permissions:
   contents: read
 jobs:
+  runtime-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: npm install --no-package-lock
+      - run: dotnet build csharp/WarLike.Bridge --configuration Release
+      - run: npx playwright install --with-deps chromium
+      - name: Real debugger, shared C# Play and isolated exports in Chromium
+        run: node scripts/test-runtime-acceptance-browser.mjs
+      - name: Upload runtime acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-acceptance
+          path: .validation-tools/runtime-acceptance/
+          if-no-files-found: ignore
   core-and-export:
     runs-on: ubuntu-latest
     timeout-minutes: 20

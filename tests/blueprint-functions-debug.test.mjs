@@ -9,6 +9,15 @@ import {resolveBlueprintValue,validateFunctionDefinitions} from '../js/core/blue
 const ref=(name,type='number',source='parameter')=>({$ref:source,name,type});
 const setup=(instructions,functions=[],variables=[])=>{restoreGameProject({functions,variables});resetSequences();const o={id:1,x:0,y:0,w:32,h:32,sequence:{event:'start',instructions}};return {o,ctx:{playing:true,entities:[o],keys:new Set(),player:o}}};
 const echo={id:'echo',parameters:[{name:'amount',type:'number',value:1}],returnType:'number',instructions:[{type:'wait',value:.2},{type:'returnFunction',value:ref('amount')}]};
+test('standalone games ignore saved breakpoints in graphs and functions without changing their metadata',t=>{
+ const previous=globalThis.__WARLIKE_BUILD__;t.after(()=>{if(previous===undefined)delete globalThis.__WARLIKE_BUILD__;else globalThis.__WARLIKE_BUILD__=previous;resetSequences()});
+ globalThis.__WARLIKE_BUILD__=true;
+ const fn={id:'award',parameters:[],returnType:'void',instructions:[{type:'addVariable',key:'score',value:2,breakpoint:true}]};
+ const {o,ctx}=setup([{type:'setVariable',key:'score',value:1},{type:'callFunction',functionId:'award'},{type:'wait',value:.05},{type:'addVariable',key:'score',value:4}],[fn]);
+ o.sequence.graph=createGraph(o.sequence);o.sequence.graph.nodes[1].breakpoint=true;applyGraph(o.sequence);const authored=structuredClone(o.sequence);
+ updateSequences(.01,ctx);assert.equal(sequenceRuntime.globals.score,3);assert.equal(blueprintDebugger.paused,false);
+ updateSequences(.1,ctx);assert.equal(sequenceRuntime.globals.score,7);assert.deepEqual(o.sequence,authored);assert.equal(gameProject.functions[0].instructions[0].breakpoint,true);
+});
 test('functions pass typed parameters, suspend at Wait and return isolated results to callers',()=>{
  const {o,ctx}=setup([{type:'callFunction',functionId:'echo',arguments:{amount:3},resultKey:'result'},{type:'setVariable',key:'score',value:ref('result','number','local')}],[echo],[{name:'score',type:'number',value:0}]);
  updateSequences(.01,ctx);assert.equal(sequenceRuntime.globals.score,0);assert.equal(sequenceRuntime.jobs[0].frames[0].parameters.amount,3);

@@ -6,6 +6,9 @@ export function resumeBlueprint(){const d=blueprintDebugger;d.skip=d.current?{jo
 export function stepBlueprint(){if(!blueprintDebugger.paused)return;resumeBlueprint();blueprintDebugger.paused=true;blueprintDebugger.step=true}
 export function blueprintLocation(job,action,owner){return {job,index:job.index,objectId:job.objectId,sequenceKey:job.sequenceKey,nodeId:action?._nodeId||null,type:action?.type||'fin',functionId:job.frames?.at(-1)?.id||null,stack:(job.frames||[]).map(f=>({id:f.id,parameters:structuredClone(f.parameters),locals:structuredClone(f.locals)})),locals:structuredClone(job.frames?.at(-1)?.locals||owner?.sequenceLocal||{})}}
 export function beforeBlueprintAction(job,action,owner){
+ // Breakpoints are authoring metadata, never a reason to suspend a shipped game.
+ // Keep them in the project so reopening it in the editor retains debugging.
+ if(globalThis.__WARLIKE_BUILD__===true)return false;
  const d=blueprintDebugger,location=blueprintLocation(job,action,owner),skip=d.skip?.job===job&&d.skip.index===job.index;
  if(skip)d.skip=null;
  if(d.paused&&!d.step)return true;
@@ -13,5 +16,6 @@ export function beforeBlueprintAction(job,action,owner){
  d.current=location;return false;
 }
 export function afterBlueprintAction(job,owner){
+ if(globalThis.__WARLIKE_BUILD__===true)return false;
  const d=blueprintDebugger;if(!d.step)return false;d.step=false;d.paused=true;d.reason='Pas à pas';d.current=blueprintLocation(job,job.steps[job.index],owner);d.revision++;return true;
 }

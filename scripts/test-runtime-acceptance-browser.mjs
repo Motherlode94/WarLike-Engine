@@ -60,7 +60,7 @@ try{
    const {runtimeFixture}=await import('/tests/runtime-acceptance-fixture.mjs'),{createProject,saveProject}=await import('/js/core/project-hub.js');
    const {restoreWorkspaces}=await import('/js/core/workspaces.js'),{state,notify}=await import('/js/core/state.js');
    const fixture=runtimeFixture(mode,native),id=createProject('QA '+mode+' '+(native?'C#':'Web'),mode);
-   const slot={entities:fixture.entities,selected:[1],nextId:3,camera:fixture.camera,game:{...fixture.project,id}};
+   const slot={entities:fixture.entities,selected:[1],nextId:4,camera:fixture.camera,game:{...fixture.project,id}};
    restoreWorkspaces({workspaceMode:mode,workspaces:{'2d':mode==='2d'?slot:{entities:[],selected:[],nextId:1,camera:fixture.camera},'3d':mode==='3d'?slot:{entities:[],selected:[],nextId:1,camera:fixture.camera}}});
    saveProject();notify();return JSON.parse(JSON.stringify(state.entities));
   },{mode,native});
@@ -70,7 +70,7 @@ try{
   // Wait across rendered frames to demonstrate that simulation time and C# are frozen.
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))));
   const frozen=await snapshot();assert.equal(frozen.elapsed,s.elapsed);assert.equal(frozen.entities[0].rotation,s.entities[0].rotation);
-  if(native){assert.ok(s.entities[0].rotation>0);assert.equal(s.nativeRotation,s.entities[0].rotation,'WarScript observes the accepted native frame');}
+  if(native){const rotation=s.entities.find(e=>e.id===3).rotation;assert.ok(rotation>0);assert.equal(s.nativeRotation,rotation,'WarScript observes the accepted native frame');assert.equal(frozen.entities.find(e=>e.id===3).rotation,rotation);}
   // Edit a breakpoint on an action already copied into this running job.
   await page.getByRole('button',{name:'⬡ Graphe',exact:true}).click();await page.locator('[data-node-id="action4"]').click();
   await page.getByRole('button',{name:'○ Ajouter un point d’arrêt',exact:true}).click();await page.getByRole('button',{name:'⌁ Débogage',exact:true}).click();

@@ -22,7 +22,13 @@ export function runtimeFixture(mode,native=false){
   {type:'addVariable',key:'score',value:4}
  ]}});
  actor.sequence.graph=createGraph(actor.sequence);actor.sequence.graph.nodes[1].breakpoint=true;applyGraph(actor.sequence);
- if(native){actor.csharpScript={name:'AcceptanceSpinner',source:nativeSource,values:{Speed:90}};actor.warScripts=[{scriptId:'native-observer',name:'Observer.wls',source:'Update(){Set("nativeRotation",transform.rotation.'+(mode==='3d'?'y':'z')+');}',values:{}}];}
  const floor={...prefab3d('primitive-platform',2,128,128),name:'Sol QA',w:640,depth3d:640,h:32,elevation3d:-.5,collision3d:true,solid3d:true};
- return {mode,entities:mode==='3d'?[actor,floor]:[actor],camera:{x:0,y:0,zoom:1},project};
+ const entities=mode==='3d'?[actor,floor]:[actor];
+ if(native){
+  // The browser character controller owns the player's facing direction.
+  // Give native rotation a separate actor so two controllers do not compete.
+  const probe=mode==='3d'?prefab3d('primitive-cube',3,320,128):{id:3,type:'object',x:320,y:128,w:40,h:40,color:'#e3a96b'};
+  Object.assign(probe,{name:'Rotation C# observée',rotation:0,csharpScript:{name:'AcceptanceSpinner',source:nativeSource,values:{Speed:90}},warScripts:[{scriptId:'native-observer',name:'Observer.wls',source:'Update(){Set("nativeRotation",transform.rotation.'+(mode==='3d'?'y':'z')+');}',values:{}}]});entities.push(probe);
+ }
+ return {mode,entities,camera:{x:0,y:0,zoom:1},project};
 }

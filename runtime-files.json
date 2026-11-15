@@ -16413,6 +16413,7 @@
     "js/core/portable-models.js",
     "js/core/portable-remote-models.js",
     "js/core/prefab-library.js",
+    "js/core/project-date.js",
     "js/core/project-diagnostics.js",
     "js/core/project-format-v2.js",
     "js/core/project-hub.js",

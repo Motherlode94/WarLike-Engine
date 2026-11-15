@@ -21,7 +21,16 @@ export async function verifyChambre07Missions(browser,{origin,output}){
     const p=state.entities.find(o=>o.playable3d);
     return {phase:gameSession.phase,notice:gameSession.notice,globals:{...sequenceRuntime.globals},objectives:gameSession.objectives,dialogue:gameSession.dialogue,player:{id:p.id,x:p.x,y:p.y},hunter:state.entities.find(o=>o.tags?.includes('chambre07-hunter'))?.ai?.enabled,visible:state.entities.filter(o=>o.tags?.includes('chambre07-memory')&&o.visible!==false).length,errors:sequenceRuntime.errors};
    });
-   const wait=fn=>page.waitForFunction(fn,null,{timeout:15000});
+   // Observe imported runtime modules in the same page world as snapshots and
+   // controls. A separate polling world can expose a different module instance.
+   const wait=async(fn,arg=null,{timeout=15000}={})=>{
+    const started=Date.now();
+    while(Date.now()-started<timeout){
+     if(await page.evaluate(fn,arg))return;
+     await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    throw Error('Mission state did not settle: '+JSON.stringify(await snapshot()));
+   };
    const approach=async name=>{
     const id=await page.evaluate(async name=>{
      const {state}=await import('/js/core/state.js'),{adventureTarget}=await import('/js/core/adventure-runtime.js'),{interactionCenter}=await import('/js/core/interaction-range.js');
@@ -34,7 +43,7 @@ export async function verifyChambre07Missions(browser,{origin,output}){
      }
      throw Error('No clear approach to '+name);
     },name);
-    await page.waitForFunction(async id=>{
+    await wait(async id=>{
      const {state}=await import('/js/core/state.js'),{adventureTarget}=await import('/js/core/adventure-runtime.js');
      return adventureTarget(state.entities.find(o=>o.playable3d),state.entities,{mode:'3d'})?.id===id;
     },id,{timeout:5000});
@@ -70,8 +79,9 @@ export async function verifyChambre07Missions(browser,{origin,output}){
    await approach('Lia · la voix');assert.equal((await snapshot()).dialogue,null);
    for(const [name,key] of [['01 · Photographie','chambrePhoto'],['02 · Cassette','chambreTape'],['03 · Lettre','chambreLetter']]){
     await approach(name);
-    await page.waitForFunction(async key=>{const {sequenceRuntime}=await import('/js/core/logic-sequences.js');return sequenceRuntime.globals[key]===1;},key);
-    await save();if(key==='chambrePhoto')await resume();else await quickResume();
+    await wait(async key=>{const {sequenceRuntime}=await import('/js/core/logic-sequences.js');return sequenceRuntime.globals[key]===1;},key);
+    const saved=await save();assert.equal(saved.globals[key],1,'F5 did not save '+key);
+    if(key==='chambrePhoto')await resume();else await quickResume();
     const restored=await snapshot();assert.equal(restored.globals[key],1);assert.equal(restored.objectives['chambre:'+key]?.status,'complete');
    }
    assert.equal((await snapshot()).visible,0);
@@ -81,7 +91,7 @@ export async function verifyChambre07Missions(browser,{origin,output}){
    await page.locator('[data-dialogue-choice="'+answer+'"]').waitFor();
    assert.notEqual((await snapshot()).dialogue.id,oldDialogue);
    await page.locator('[data-dialogue-choice="'+answer+'"]').click();
-   await page.waitForFunction(async choice=>{const {sequenceRuntime}=await import('/js/core/logic-sequences.js');return sequenceRuntime.globals.chambreChoice===choice;},answer+1);
+   await wait(async choice=>{const {sequenceRuntime}=await import('/js/core/logic-sequences.js');return sequenceRuntime.globals.chambreChoice===choice;},answer+1);
    const savedChase=await save();
    assert.ok(savedChase.entities.find(o=>o.tags?.includes('chambre07-hunter'))?.ai?.enabled||savedChase.sequenceSignals?.queue.includes('chambre:chase'),'F5 lost the active or pending chase');
    await quickResume();

@@ -264,7 +264,7 @@ export function initDocking(){
  });
  bindColumnSplitter('leftSplitter','left');bindColumnSplitter('rightSplitter','right');
  for(const kind of Object.keys(panelMap))bindFloating(kind);
- const bindWindows=()=>document.querySelectorAll('.blueprint-window,.warlike-animation-studio,.csharp-runtime-panel,.render-quality-panel').forEach(panel=>makeWindowResizable(panel,{minWidth:panel.classList.contains('blueprint-window')?480:300,minHeight:240,storageKey:panel.id?'warlike.window.bounds.'+panel.id:undefined}));
+ const bindWindows=()=>document.querySelectorAll('.blueprint-window,.warlike-animation-studio,.csharp-runtime-panel,.render-quality-panel').forEach(panel=>makeWindowResizable(panel,{enabled:()=>panel.id!=='blueprintDialog'||!document.body.classList.contains('reference-engine'),minWidth:panel.classList.contains('blueprint-window')?480:300,minHeight:240,storageKey:panel.id?'warlike.window.bounds.'+panel.id:undefined}));
  bindWindows();new MutationObserver(bindWindows).observe(document.body,{childList:true,subtree:true});
  applyLayout();window.addEventListener('resize',()=>applyLayout());
 }

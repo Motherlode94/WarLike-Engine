@@ -30,6 +30,8 @@ jobs:
         run: npm run test:export
       - name: Install headless Chromium
         run: npx playwright install --with-deps chromium
+      - name: Reference editor, Blueprint and old/new project round trips
+        run: node scripts/test-reference-editor-browser.mjs
       - name: CHAMBRE 07 export and isolated Play
         run: npm run test:chambre07:browser
         env:
@@ -45,6 +47,7 @@ jobs:
         with:
           name: chambre07-export-play-screenshot
           path: |
+            .validation-tools/reference-editor/*.png
             .validation-tools/chambre07/chambre07-play.png
             .validation-tools/chambre07/chambre07-ending-*.png
             .validation-tools/chambre07/legacy-2d-outcome.png

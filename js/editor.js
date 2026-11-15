@@ -1,3 +1,4 @@
+import {initReferenceWorkspace} from './ui/reference-workspace.js';
 import {restoreLocalModels} from './core/local-asset-library.js';
 import {initSkeletalStudio} from './ui/skeletal-studio.js';
 import {initDemoBrowser} from './ui/demo-browser.js';
@@ -331,3 +332,5 @@ initLanPanel();
 initCreativeStudios();initSkeletalStudio();initCreativeRuntime();initSurvivalUi();initAdventureUi();
 
 document.addEventListener('warlike:script-log',event=>log(event.detail.message,event.detail.level));
+
+initReferenceWorkspace();

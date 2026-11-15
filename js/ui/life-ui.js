@@ -17,7 +17,7 @@ export function initLifeUi(){
  const clock=el('div','life-clock'),time=el('strong'),day=el('small');clock.append(time,day);
  const controls=el('div','life-controls'),pause=button('Ⅱ Pause',()=>{const s=ensureLifeState(actor());s.paused=!s.paused});
  const speeds=el('div','life-speeds'),speedButtons=[1,2,4].map(rate=>{const b=button('×'+rate,()=>{ensureLifeState(actor()).speed=rate});b.setAttribute('aria-label','Vitesse ×'+rate);speeds.append(b);return b});
- const context=()=>({entities:state.entities,globals:sequenceRuntime.globals,fired:sequenceRuntime.fired});
+ const context=()=>({entities:state.entities,globals:sequenceRuntime.globals,fired:sequenceRuntime.fired,signals:sequenceRuntime.signals,signalActors:sequenceRuntime.signalActors});
  const save=button('Sauvegarder',()=>{try{saveGameSlot(context(),'life');ensureLifeState(actor()).notice='Ta journée et tes relations sont sauvegardées.'}catch(error){ensureLifeState(actor()).notice=error.message}});
  const load=button('Reprendre',()=>{try{queueLoadGame(context(),'life')}catch(error){ensureLifeState(actor()).notice=error.message}});load.setAttribute('aria-label','Charger ma partie Liens de vie');
  controls.append(pause,speeds,save,load);top.append(brand,clock,controls);hud.append(top);

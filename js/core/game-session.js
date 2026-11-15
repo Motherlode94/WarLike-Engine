@@ -5,6 +5,10 @@ import {gameProject,safeKey,validEntities,sceneDefinition} from './game-project.
 import {savedSceneEntities,carrySceneParty} from './scene-progress.js';
 const clone=value=>structuredClone(value);
 const finite=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
+const ended=phase=>phase==='won'||phase==='lost';
+function validateSequenceSignals(value){
+ if(!value||value.version!==1||!Array.isArray(value.queue)||value.queue.length>64||value.queue.some(s=>typeof s!=='string'||!s||s.length>60)||!Array.isArray(value.actors)||value.actors.length>64||value.actors.some(pair=>!Array.isArray(pair)||pair.length!==2||!value.queue.includes(pair[0])||!Number.isSafeInteger(pair[1])||pair[1]<=0))throw Error('Signaux de sauvegarde invalides.');
+}
 export const freshSession=()=>({phase:'playing',elapsed:0,currentSceneId:gameProject.activeSceneId,sceneProgress:{},objectives:{},timers:{},dialogue:null,checkpoint:null,pending:null,notice:'',revision:0});
 export const gameSession=freshSession();
 export function resetGameSession(){Object.assign(gameSession,freshSession())}
@@ -42,14 +46,20 @@ function storageFor(ctx){try{return ctx.storage??globalThis.localStorage}catch{t
 function saveKey(slot){if(!safeKey(slot))throw Error('Nom de sauvegarde invalide.');return 'warlike.save.v1:'+encodeURIComponent(gameProject.id)+':'+slot}
 export function captureGameSave(ctx){
  if(!validEntities(ctx.entities))throw Error('La scène ne peut pas être sauvegardée.');
+ const sequenceSignals=ctx.signals===undefined?null:{version:1,queue:clone(ctx.signals),actors:[...(ctx.signalActors?.entries?.()||[])]};
+ if(sequenceSignals)validateSequenceSignals(sequenceSignals);
  return {format:'warlike.save.v1',projectId:gameProject.id,sceneId:gameSession.currentSceneId,
+  ...(sequenceSignals?{sequenceSignals}:{}),
   entities:savedSceneEntities(ctx.entities),sceneProgress:clone(gameSession.sceneProgress),globals:clone(ctx.globals||{}),fired:[...(ctx.fired||[])],
-  session:clone({phase:gameSession.phase,elapsed:gameSession.elapsed,objectives:gameSession.objectives,timers:gameSession.timers,dialogue:gameSession.dialogue})};
+  session:clone({phase:gameSession.phase,notice:ended(gameSession.phase)?gameSession.notice:'',elapsed:gameSession.elapsed,objectives:gameSession.objectives,timers:gameSession.timers,dialogue:gameSession.dialogue})};
 }
 export function validateGameSave(data,{checkpoint=false}={}){
  if(data?.format!=='warlike.save.v1'||data.projectId!==gameProject.id||!validEntities(data.entities))throw Error('Sauvegarde incompatible avec ce jeu.');
  if(!safeKey(data.sceneId))throw Error('Identifiant de scène sauvegardée invalide.');
  if(!data.globals||typeof data.globals!=='object'||Array.isArray(data.globals)||!data.session||typeof data.session!=='object')throw Error('Données de sauvegarde invalides.');
+ if(Object.hasOwn(data.session,'phase')&&!['playing','paused','won','lost'].includes(data.session.phase))throw Error('État de partie sauvegardé invalide.');
+ if(Object.hasOwn(data.session,'notice')&&(typeof data.session.notice!=='string'||data.session.notice.length>240))throw Error('Texte de fin de partie invalide.');
+ if(Object.hasOwn(data,'sequenceSignals'))validateSequenceSignals(data.sequenceSignals);
  for(const key of Object.keys(data.globals))if(!safeKey(key))throw Error('Variable de sauvegarde invalide.');
  for(const collection of ['objectives','timers']){
   const record=data.session[collection];if(!record||typeof record!=='object'||Array.isArray(record)||Object.keys(record).length>256)throw Error('Progression invalide.');
@@ -71,7 +81,7 @@ export function saveGameSlot(ctx,slot='quick'){
  const storage=storageFor(ctx);if(!storage?.setItem)throw Error('Le stockage des sauvegardes est indisponible.');
  const json=JSON.stringify({...captureGameSave(ctx),checkpoint:clone(gameSession.checkpoint)});if(json.length>8*1024*1024)throw Error('Sauvegarde trop volumineuse.');
  try{storage.setItem(saveKey(slot),json)}catch{throw Error('Impossible de sauvegarder : le stockage est indisponible ou plein.')}
- gameSession.notice='Partie sauvegardée';gameSession.revision++;return true;
+ if(!ended(gameSession.phase))gameSession.notice='Partie sauvegardée';gameSession.revision++;return true;
 }
 export function readGameSlot(ctx,slot='quick'){
  const json=storageFor(ctx)?.getItem(saveKey(slot));if(!json)throw Error('Aucune sauvegarde dans cet emplacement.');
@@ -97,6 +107,11 @@ export function applySessionChange(ctx){
  const data=validateGameSave(pending.data);
  ctx.entities.splice(0,ctx.entities.length,...clone(data.entities));
  for(const key of Object.keys(ctx.globals))delete ctx.globals[key];Object.assign(ctx.globals,clone(data.globals));
- Object.assign(gameSession,{elapsed:data.session.elapsed,sceneProgress:clone(data.sceneProgress||{}),objectives:clone(data.session.objectives),timers:clone(data.session.timers),checkpoint:Object.hasOwn(data,'checkpoint')?clone(data.checkpoint):gameSession.checkpoint,phase:'playing',currentSceneId:data.sceneId,pending:null,dialogue:data.session.dialogue?makeGameDialogue(data.session.dialogue,{actorId:data.session.dialogue.actorId}):null,revision:gameSession.revision+1});
- return {kind:'restore',fired:data.fired};
+ // Paused saves resume normally, but a completed game must keep its outcome.
+ // Legacy v1 saves have no notice (and some have no phase): read them without
+ // migrating storage or rewriting the source snapshot.
+ const phase=ended(data.session.phase)?data.session.phase:'playing';
+ const notice=ended(phase)?data.session.notice||(phase==='won'?'Mission accomplie.':'Partie terminée.'):'';
+ Object.assign(gameSession,{elapsed:data.session.elapsed,sceneProgress:clone(data.sceneProgress||{}),objectives:clone(data.session.objectives),timers:clone(data.session.timers),checkpoint:Object.hasOwn(data,'checkpoint')?clone(data.checkpoint):gameSession.checkpoint,phase,notice,currentSceneId:data.sceneId,pending:null,dialogue:data.session.dialogue?makeGameDialogue(data.session.dialogue,{actorId:data.session.dialogue.actorId}):null,revision:gameSession.revision+1});
+ return {kind:'restore',fired:data.fired,sequenceSignals:data.sequenceSignals?clone(data.sequenceSignals):null};
 }

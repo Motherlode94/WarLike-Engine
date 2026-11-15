@@ -1,3 +1,7 @@
+## Reprise des parties et fins — novembre 2026
+
+Les sauvegardes conservent maintenant l'état gagné/perdu et le texte de fin. Le parcours automatisé de CHAMBRE 07 vérifie ses deux fins avec reprise après les souvenirs, le dialogue et la poursuite ; une ancienne sauvegarde 2D est aussi contrôlée. [Comportement, compatibilité et limites](docs/game-save-outcomes.md).
+
 ## Snapping avancé et Bone Sockets — novembre 2026
 
 **Snapping 3D :** la barre des Gizmos permet de choisir `Grille`, `Sommet`, `Arête` ou `Surface`, avec activation et pas configurables. Le moteur utilise les triangles réels des GLB chargés, calcule la position du sommet le plus proche ou la projection sur l'arête la plus proche dans une tolérance proportionnelle à la distance caméra, et conserve le placement de surface. Les Gizmos déplacent l'objet le long de leur axe, y compris en mode Local. La barre Scene et les Gizmos partagent l'état enregistré `warlike.snap3d.enabled`. Les modes Sommet/Arête ne sont pas re-quantifiés sur la grille.

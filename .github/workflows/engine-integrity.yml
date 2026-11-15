@@ -46,5 +46,9 @@ jobs:
           name: chambre07-export-play-screenshot
           path: |
             .validation-tools/chambre07/chambre07-play.png
+            .validation-tools/chambre07/chambre07-ending-*.png
+            .validation-tools/chambre07/legacy-2d-outcome.png
             .validation-tools/chambre07-rapier/chambre07-play.png
+            .validation-tools/chambre07-rapier/chambre07-ending-*.png
+            .validation-tools/chambre07-rapier/legacy-2d-outcome.png
           if-no-files-found: ignore

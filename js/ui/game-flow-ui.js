@@ -7,7 +7,7 @@ import {gameSession,gameIsRunning,setGamePhase,saveGameSlot,queueLoadGame,hasGam
 import {sequenceRuntime,chooseSequenceDialogue} from '../core/logic-sequences.js';
 import {togglePlay} from '../core/scene.js';
 import {element} from './blueprint-controls.js';
-const context=()=>({entities:state.entities,globals:sequenceRuntime.globals,fired:sequenceRuntime.fired});
+const context=()=>({entities:state.entities,globals:sequenceRuntime.globals,fired:sequenceRuntime.fired,signals:sequenceRuntime.signals,signalActors:sequenceRuntime.signalActors});
 export function initGameFlowUi(){
  const root=element('div','game-flow-ui');root.id='gameFlowUi';document.body.append(root);let signature='',last=0,objectiveHud=null,pendingDialogue=null,lastDialogueId=null;
  const action=(parent,label,fn,className='')=>{const b=element('button',className,label);b.type='button';b.onclick=()=>{unlockAudio();playSound('click');try{fn();signature=''}catch(error){gameSession.notice=error.message;signature=''}};parent.append(b);return b};

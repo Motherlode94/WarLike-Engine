@@ -16313,6 +16313,7 @@
     "js/core/animation-studio.js",
     "js/core/animator-advanced.js",
     "js/core/animator-graph.js",
+    "js/core/animator-model-template.js",
     "js/core/annotations.js",
     "js/core/arcade-driving.js",
     "js/core/asset-browser.js",

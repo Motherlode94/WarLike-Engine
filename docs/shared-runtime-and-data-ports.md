@@ -35,7 +35,7 @@ Le cycle natif exécute les pas FixedUpdate avant Update, puis LateUpdate. Awake
 
 Play et l’export consultent la même table de capacités. L’export contrôle toutes les scènes, signale les composants natifs et bloque un ZIP qui perdrait leur comportement. Les données et calculs des nouveaux graphes sont inclus dans le manifest du runtime.
 
-Les scripts C# libres ne sont pas compilés automatiquement. Il faut les compiler et enregistrer leur composant dans le pont avant leur prise en charge ; un simple fichier source attaché déclenche un diagnostic. Le ZIP Web ne contient pas d’exécuteur .NET.
+Les sources MonoBehaviour attachées et activées sont compilées par Roslyn au démarrage de Play C# local, si le pont annonce `native-script-compiler`. Les erreurs de compilation interrompent ce Play avec un diagnostic ; le navigateur ne remplace pas silencieusement le script par du JavaScript. La source doit être disponible dans le projet et employer les API prises en charge par WarLike. Le ZIP Web ne contient pas d’exécuteur .NET et refuse les comportements natifs actifs.
 
 Le protocole de frames natif accepte une structure d’acteurs stable. Une création ou suppression d’acteur effectuée côté navigateur pendant ce Play nécessite actuellement de redémarrer la session ; le pont refuse la structure incohérente au lieu de continuer avec deux mondes divergents. Les suppressions effectuées par le monde natif sont répercutées au navigateur.
 

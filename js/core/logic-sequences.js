@@ -155,7 +155,8 @@ function execute(job,ctx,actionsLeft){
   if(gameSession.phase!=='playing'&&!job.runWhenPaused)return count;
   const raw=job.steps[job.index];
   if(raw?.type==='_functionEnd'){job.index++;try{finishFunction(job,undefined,entity)}catch(error){traceAction(job,raw,'error',error.message);job.steps=[];job.index=0}continue}
-  if(beforeBlueprintAction(job,raw,entity))return count;
+  const debugGraph=job.frames?.length?gameProject.functions.find(f=>f.id===job.frames.at(-1).id)?.graph:jobSequence(entity,job)?.graph;
+  if(beforeBlueprintAction(job,raw,entity,{graph:debugGraph}))return count;
   job.index++;count++;let a;try{a=resolveBlueprintAction(raw,scopeFor(job,entity,ctx))}catch(error){traceAction(job,raw,'error',error.message);if(afterBlueprintAction(job,entity))return count;continue}
   if(!a||a.disabled||typeof a.type!=='string')continue;
   recordEngineEvent('blueprint',String(a.type)+' · '+String(entity.name||entity.id));

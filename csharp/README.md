@@ -1,6 +1,6 @@
 # WarLike C# · composants et escouades tactiques
 
-Le runtime **.NET 8** exécute les comportements C# dans un processus local. Studio communique avec lui par un bridge HTTP sur `127.0.0.1:8765`. Le Play Web reste indépendant.
+Le runtime **.NET 8** exécute les comportements C# dans un processus local. L’éditeur communique avec lui par un bridge HTTP sur `127.0.0.1:8765`. Le mode **Web + C# local** de Blueprint → Projet & export orchestre un pas .NET puis les composants et Blueprints Web sur les mêmes objets. Le mode **Web** n’exécute pas le C# natif.
 
 ## Démarrer
 

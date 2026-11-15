@@ -212,7 +212,9 @@ python3 python/warlike.py build-native
 python3 python/warlike.py csharp
 ```
 
-Dans **Window → C# Runtime**, connecter le bridge, synchroniser la scène puis lancer une étape ou **Aperçu C# continu**. L’aperçu effectue au maximum 30 étapes par seconde sans empiler les requêtes. Il s’arrête à la fermeture du panneau ou au démarrage du Play Web. Les scripts C# enregistrés doivent être intégrés et compilés dans le projet .NET pour être exécutés ; ils ne sont pas compilés par le navigateur.
+Dans **Window → C# Runtime**, connecter le bridge, synchroniser la scène puis lancer une étape ou **Aperçu C# continu**. L’aperçu effectue au maximum 30 étapes par seconde sans empiler les requêtes. Il s’arrête à la fermeture du panneau ou au démarrage de Play. **Blueprint → Projet & export → Exécution de Play → Web + C# local** compile les sources MonoBehaviour attachées avec Roslyn dans le bridge .NET, puis synchronise les étapes natives avec les composants et Blueprints Web. Le navigateur ne compile pas lui-même le C# ; l’export Web refuse les comportements natifs actifs.
+
+[Débogueur, Play 2D/3D et export : contrôles reproductibles et limites](docs/runtime-acceptance.md). Les points d’arrêt restent dans le projet éditable et sont ignorés dans le jeu Web livré.
 
 [Runtime C#](csharp/README.md) · [Systèmes C++](native/README.md) · [Pipeline des modèles](docs/complete-model-library.md)
 

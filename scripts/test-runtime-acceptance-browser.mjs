@@ -73,14 +73,14 @@ try{
   if(native){const rotation=s.entities.find(e=>e.id===3).rotation;assert.ok(rotation>0);assert.equal(s.nativeRotation,rotation,'WarScript observes the accepted native frame');assert.equal(frozen.entities.find(e=>e.id===3).rotation,rotation);}
   // Edit a breakpoint on an action already copied into this running job.
   await page.getByRole('button',{name:'⬡ Graphe',exact:true}).click();await page.locator('[data-node-id="action4"]').dispatchEvent('click');
-  await page.getByRole('button',{name:'○ Ajouter un point d’arrêt',exact:true}).click();await page.getByRole('button',{name:'⌁ Débogage',exact:true}).click();
+  await page.getByRole('button',{name:'○ Ajouter un point d’arrêt',exact:true}).dispatchEvent('click');await page.getByRole('button',{name:'⌁ Débogage',exact:true}).click();
   await page.getByRole('button',{name:'▷ Pas à pas',exact:true}).click();s=await until(s=>s.paused&&s.score===1,'one action only');assert.equal(s.elapsed,frozen.elapsed);
   await page.getByRole('button',{name:'▷ Pas à pas',exact:true}).click();s=await until(s=>s.paused&&s.stack?.[0]?.id==='award','enter reusable function');assert.equal(s.score,1);assert.equal(s.stack[0].parameters.points,2);
   await page.locator('#bpDebugVariables').getByText('ƒ award',{exact:true}).waitFor();
   await page.getByRole('button',{name:'▷ Pas à pas',exact:true}).click();s=await until(s=>s.paused&&s.score===3,'step function body');assert.equal(s.elapsed,frozen.elapsed);
   await page.screenshot({path:path.join(output,'debug-'+mode+'-'+(native?'native':'web')+'.png')});
   await page.getByRole('button',{name:'▶ Continuer',exact:true}).click();s=await until(s=>s.paused&&s.node==='action4','live breakpoint after Wait');assert.equal(s.score,3);
-  await page.getByRole('button',{name:'⬡ Graphe',exact:true}).click();await page.locator('[data-node-id="action4"]').dispatchEvent('click');await page.getByRole('button',{name:'● Retirer le point d’arrêt',exact:true}).click();
+  await page.getByRole('button',{name:'⬡ Graphe',exact:true}).click();await page.locator('[data-node-id="action4"]').dispatchEvent('click');await page.getByRole('button',{name:'● Retirer le point d’arrêt',exact:true}).dispatchEvent('click');
   await page.getByRole('button',{name:'▶ Continuer',exact:true}).click();s=await until(s=>s.score===7&&!s.paused,'resume after removing live breakpoint');assert.deepEqual(s.sequenceErrors,[]);
   await page.getByRole('button',{name:'■ Arrêter',exact:true}).click();assert.deepEqual((await snapshot()).entities,authored,'Stop restores authored scene and debugging metadata');
   await page.locator('#blueprintClose').click();await page.reload({waitUntil:'load'});

@@ -35,7 +35,7 @@ export async function packageGlb(buffer,resolve){
  json.buffers=[{byteLength:size}];const text=new TextEncoder().encode(JSON.stringify(json)),jsonSize=Math.ceil(text.length/4)*4,binSize=Math.ceil(size/4)*4,total=28+jsonSize+binSize;
  if(total>maximum)throw Error('GLB et textures : maximum 64 Mo.');
  const result=new Uint8Array(total),header=new DataView(result.buffer);header.setUint32(0,0x46546c67,true);header.setUint32(4,2,true);header.setUint32(8,total,true);header.setUint32(12,jsonSize,true);header.setUint32(16,0x4e4f534a,true);result.fill(32,20,20+jsonSize);result.set(text,20);header.setUint32(20+jsonSize,binSize,true);header.setUint32(24+jsonSize,0x004e4942,true);
- let offset=28+jsonSize;for(const chunk of chunks){result.set(chunk,offset);offset+=chunk.length;}return result.buffer;
+ let outputOffset=28+jsonSize;for(const chunk of chunks){result.set(chunk,outputOffset);outputOffset+=chunk.length;}return result.buffer;
 }
 export async function imageResource(response){
  if(!response.ok)throw Error('Texture : HTTP '+response.status);

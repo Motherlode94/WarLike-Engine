@@ -1,3 +1,4 @@
+import {MAX_SCENE_MODEL_BYTES} from '../assets/model-capacity.js';
 import {portableModelBytes,portableModelDescriptor} from './portable-assets.js';
 import {portableRemoteModelBytes,portableRemoteModelDescriptor} from './portable-remote-models.js';
 import {animationEditorPreview} from './animation-clips.js';
@@ -103,7 +104,7 @@ export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}=
  const localDescriptors=[];
  for(const asset of models){
   const bytes=await portableModelBytes(asset);
-  importedBytes+=bytes.length;if(importedBytes>100*1024*1024)throw Error('Assets importés supérieurs à 100 Mo.');
+  importedBytes+=bytes.length;if(importedBytes>MAX_SCENE_MODEL_BYTES)throw Error('Assets importés supérieurs à 256 Mo.');
   const descriptor=portableModelDescriptor(asset);
   localDescriptors.push(descriptor);
   importedEntries.push({name:descriptor.url.slice(2),data:bytes});
@@ -111,7 +112,7 @@ export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}=
  const remoteDescriptors=[];
  for(const asset of remote){
   const {descriptor,bytes}=await portableRemoteModelBytes(asset,{fetcher});
-  importedBytes+=bytes.length;if(importedBytes>100*1024*1024)throw Error('GLB et textures exportés supérieurs à 100 Mo.');
+  importedBytes+=bytes.length;if(importedBytes>MAX_SCENE_MODEL_BYTES)throw Error('GLB et textures exportés supérieurs à 100 Mo.');
   remoteDescriptors.push(descriptor);
   importedEntries.push({name:descriptor.url.slice(2),data:bytes});
  }

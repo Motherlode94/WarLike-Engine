@@ -9,6 +9,14 @@ import {resolveBlueprintValue,validateFunctionDefinitions} from '../js/core/blue
 const ref=(name,type='number',source='parameter')=>({$ref:source,name,type});
 const setup=(instructions,functions=[],variables=[])=>{restoreGameProject({functions,variables});resetSequences();const o={id:1,x:0,y:0,w:32,h:32,sequence:{event:'start',instructions}};return {o,ctx:{playing:true,entities:[o],keys:new Set(),player:o}}};
 const echo={id:'echo',parameters:[{name:'amount',type:'number',value:1}],returnType:'number',instructions:[{type:'wait',value:.2},{type:'returnFunction',value:ref('amount')}]};
+for(const initial of [false,true])test('pending jobs observe '+(initial?'removed':'new')+' breakpoints in their live graph',()=>{
+ const {o,ctx}=setup([{type:'wait',value:.05},{type:'setVariable',key:'score',value:1}]);
+ o.sequence.graph=createGraph(o.sequence);const node=o.sequence.graph.nodes.find(n=>n.id==='action2');node.breakpoint=initial;applyGraph(o.sequence);
+ updateSequences(.01,ctx);node.breakpoint=!initial;updateSequences(.1,ctx);
+ assert.equal(blueprintDebugger.paused,!initial);assert.equal(sequenceRuntime.globals.score,initial?1:undefined);
+ if(!initial){resumeBlueprint();updateSequences(.01,ctx);assert.equal(sequenceRuntime.globals.score,1);}
+ resetSequences();
+});
 test('standalone games ignore saved breakpoints in graphs and functions without changing their metadata',t=>{
  const previous=globalThis.__WARLIKE_BUILD__;t.after(()=>{if(previous===undefined)delete globalThis.__WARLIKE_BUILD__;else globalThis.__WARLIKE_BUILD__=previous;resetSequences()});
  globalThis.__WARLIKE_BUILD__=true;

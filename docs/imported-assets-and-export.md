@@ -4,7 +4,7 @@
 
 Les imports de fichiers GLB, de dossiers et d’URL sont conservés dans IndexedDB. Le moteur attend la restauration de cette bibliothèque avant d’ouvrir un projet. Les données restent propres à ce navigateur et à cette origine : pour transférer un projet, utiliser Export JSON.
 
-Les exports JSON de scène et les sauvegardes globales du Hub incluent désormais les fichiers GLB importés référencés par leurs scènes. Import JSON restaure les modèles avant de résoudre les objets, avec les mêmes identifiants. Une archive de scène accepte au maximum 100 Mo de modèles ; chaque GLB reste limité à 25 Mo. Les quotas IndexedDB du navigateur restent applicables.
+Les exports JSON de scène et les sauvegardes globales du Hub incluent désormais les fichiers GLB importés référencés par leurs scènes. Import JSON restaure les modèles avant de résoudre les objets, avec les mêmes identifiants. Une archive de scène accepte au maximum 256 Mo de modèles ; chaque GLB reste limité à 64 Mo. Les quotas IndexedDB du navigateur restent applicables.
 
 ## Textures
 

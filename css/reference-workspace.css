@@ -63,3 +63,5 @@ body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list)
 body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list) :is(.free-asset-meta,.free-asset-file){display:none}
 
 body.reference-engine #blueprintDialog .bp-run-button{border-color:#609776!important;color:#c7edd7!important}body.reference-engine #blueprintDialog .bp-run-button[aria-pressed=true]{border-color:#bf7474!important;color:#ffd0cc!important}
+
+body.reference-engine #projectAdvancedFiles:not([open]){padding:0!important;margin:0!important;border:0!important;min-height:0!important}body.reference-engine #projectAdvancedFiles:not([open])>summary{display:none}body.reference-engine #projectAdvancedFiles[open]>summary{cursor:pointer;min-height:27px;padding:5px 8px;font-size:11px}

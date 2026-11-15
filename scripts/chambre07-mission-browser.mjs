@@ -75,8 +75,10 @@ export async function verifyChambre07Missions(browser,{origin,output}){
    await page.locator('[data-dialogue-choice="'+answer+'"]').click();
    await page.waitForFunction(async choice=>{const {sequenceRuntime}=await import('/js/core/logic-sequences.js');return sequenceRuntime.globals.chambreChoice===choice;},answer+1);
    await wait(async()=>{const {state}=await import('/js/core/state.js');return state.entities.find(o=>o.tags?.includes('chambre07-hunter'))?.ai?.enabled===true;});
-   await save();await resume();
-   const chase=await snapshot();assert.equal(chase.globals.chambreChoice,answer+1);assert.equal(chase.hunter,true);
+   const savedChase=await save();
+   assert.equal(savedChase.entities.find(o=>o.tags?.includes('chambre07-hunter'))?.ai?.enabled,true,'F5 did not persist the active hunter: '+JSON.stringify({globals:savedChase.globals,fired:savedChase.fired,dialogue:savedChase.session.dialogue}));
+   await resume();
+   const chase=await snapshot();assert.equal(chase.globals.chambreChoice,answer+1);assert.equal(chase.hunter,true,'Reload lost hunter: '+JSON.stringify(chase));
    assert.equal(chase.objectives['chambre:exit']?.status,'active');
    await approach('Porte de sortie');
    await wait(async()=>{const {gameSession}=await import('/js/core/game-session.js');return gameSession.phase==='won';});

@@ -119,7 +119,7 @@ export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}=
  data.importedModels=localDescriptors;
  data.packagedRemoteModels=remoteDescriptors;
  const importedCatalog='export const packagedModels3d='+JSON.stringify([...localDescriptors,...remoteDescriptors])+';\n';
- const files=gameRuntimeFiles(manifest.files,data);
+ // Standalone games need their local design-system stylesheets even if the runtime manifest is stale.\n const sharedStyles=['design-system/warlike-foundation.css','design-system/warlike-shell.css'];\n const files=gameRuntimeFiles([...new Set([...manifest.files,...sharedStyles])],data);
  const entries=new Array(files.length);let cursor=0,completed=0;
  const worker=async()=>{while(cursor<files.length){const i=cursor++,name=files[i];const response=await get(name);entries[i]={name,data:name==='js/assets/imported-models-3d.js'?importedCatalog:name==='index.html'?gameBuildHtml(await response.text(),data):['js/assets/free-game-assets.js','js/assets/quaternius-game-assets.js','js/assets/kaykit-game-assets.js'].includes(name)?gameBuildModelCatalog(name,await response.text(),data):await response.arrayBuffer()};onProgress(++completed,files.length)}};
  await Promise.all(Array.from({length:6},worker));

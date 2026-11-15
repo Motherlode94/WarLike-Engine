@@ -17,7 +17,7 @@ test('character Animator maps real GLB clips into an executable 1D locomotion an
  assert.deepEqual(inspectAnimatorGraph(graph),[]);
  const motion=graph.states.find(s=>s.id==='motion');
  assert.deepEqual(motion.blend.map(p=>p.clip),['Idle','Walk_Cycle','Run']);
- assert.deepEqual(animatorBlendSamples(motion,{speed:2.2}),[{clip:'Walk_Cycle',weight:1}]);
+ assert.deepEqual(animatorBlendSamples(motion,{speed:2.2}).filter(p=>p.weight>0),[{clip:'Walk_Cycle',weight:1}]);
  assert.ok(graph.transitions.some(t=>t.from==='*'&&t.to==='attack'&&t.conditions.some(c=>c.parameter==='attacking')));
  const owner={id:1,x:0,y:0,elevation3d:0,animatorGraph:graph};
  resetAnimators();

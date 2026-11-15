@@ -1,3 +1,4 @@
+import {MAX_IMPORTED_GLB_BYTES} from './model-capacity.js';
 import {kaykitModels3d} from './kaykit-game-assets.js';
 import {packageGlb,imageResource} from './glb-package.js';
 import {packagedModels3d} from './imported-models-3d.js';
@@ -40,10 +41,10 @@ export const realModels3d=[...freeModels3d,...quaterniusModels3d,...kaykitModels
 ];
 export const importedModels3d=new Map(packagedModels3d.map(asset=>[asset.id,asset]));
 const modelCache=new Map();
-const maxBytes=25*1024*1024;
+const maxBytes=MAX_IMPORTED_GLB_BYTES;
 export function registerLocalModel(file,{id=null,license='Fichier local, licence à vérifier'}={}){
  if(!file||!/.glb$/i.test(file.name))throw Error('Format requis : .glb (glTF binaire).');
- if(file.size>maxBytes)throw Error('Fichier trop volumineux (maximum 25 Mo).');
+ if(file.size>maxBytes)throw Error('Fichier trop volumineux (maximum 64 Mo).');
  if(id!==null&&!/^library-[a-f0-9]{24}$/.test(id))throw Error('Identifiant de modèle Library invalide.');
  const modelId=id||'local-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
  const item={id:modelId,name:file.name.replace(/\.glb$/i,''),category:'Imported 3D',shape:'glb',license,file};
@@ -128,7 +129,7 @@ export function resolveGlbTextureUrl(uri,baseUrl){
  }catch{return null}
 }
 export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
- if(buffer.byteLength>maxBytes)throw Error('GLB supérieur à 25 Mo');
+ if(buffer.byteLength>maxBytes)throw Error('GLB supérieur à 64 Mo');
  const v=new DataView(buffer);if(buffer.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==buffer.byteLength)throw Error('GLB 2.0 invalide');
  let offset=12,json=null,binary=null;
  while(offset+8<=buffer.byteLength){const length=v.getUint32(offset,true),type=v.getUint32(offset+4,true);offset+=8;if(offset+length>buffer.byteLength)throw Error('Chunk GLB incomplet');

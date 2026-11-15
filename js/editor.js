@@ -1,3 +1,4 @@
+import {initReferenceWorkspace} from './ui/reference-workspace.js';
 import {restoreLocalModels} from './core/local-asset-library.js';
 import {initSkeletalStudio} from './ui/skeletal-studio.js';
 import {initDemoBrowser} from './ui/demo-browser.js';
@@ -180,7 +181,13 @@ $('#workspace3d').onclick=()=>{if(state.playing||hub.projectId&&hub.type!=='3d')
 $('#view3dToggle').addEventListener('click',setWorkspaceUi);
 setWorkspaceUi();
 document.addEventListener('warlike:project',setWorkspaceUi);
-document.addEventListener('warlike:change',()=>{if(viewport3d&&view3d.enabled!==(workspace.mode==='3d')){viewport3d.syncToWorkspace();setWorkspaceUi()}});
+document.addEventListener('warlike:change',()=>{
+ // The viewport's earlier listener may already have changed view3d.enabled.
+ // Compare the displayed mode too, so project changes update the shell.
+ const modeChanged=document.body.dataset.workspace!==workspace.mode;
+ if(viewport3d&&view3d.enabled!==(workspace.mode==='3d'))viewport3d.syncToWorkspace();
+ if(modeChanged)setWorkspaceUi();else syncTabs();
+});
 $('#duplicate').onclick=duplicateSelected;
 // Move existing controls into a single categorized library; preserve original IDs and handlers.
 const relocateTools=(targetId,ids)=>{
@@ -331,3 +338,5 @@ initLanPanel();
 initCreativeStudios();initSkeletalStudio();initCreativeRuntime();initSurvivalUi();initAdventureUi();
 
 document.addEventListener('warlike:script-log',event=>log(event.detail.message,event.detail.level));
+
+initReferenceWorkspace();

@@ -289,7 +289,7 @@ const clampProjectHeight=(height,persist=true)=>{
 };
 let storedHeight=0;
 try{storedHeight=Number(localStorage.getItem('warlike.projectHeight'))}catch{}
-clampProjectHeight(storedHeight>0?storedHeight:260,false);
+clampProjectHeight(storedHeight>0?storedHeight:205,false);
 if(typeof ResizeObserver!=='undefined'){
  new ResizeObserver(()=>{if(!projectResize.isDragging()){clampProjectHeight(parseFloat(getComputedStyle(center).getPropertyValue('--project-height')),false);projectResize.refresh()}}).observe(center);
 }

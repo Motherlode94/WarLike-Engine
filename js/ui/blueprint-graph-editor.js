@@ -16,7 +16,7 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
   const empty=element('div','bp-empty-state');empty.append(element('span','bp-empty-icon','⬡'),element('h2','','Donne une forme à ta logique'),element('p','','Transforme les instructions de ce comportement en nœuds reliés. Les conditions deviennent des chemins Oui / Non.'));
   button(empty,'Créer le graphe',()=>{sequence.graph=createGraph(sequence);save('Créer le graphe')},'bp-primary');root.append(empty);host.append(root);return;
  }
- const graph=sequence.graph;let selected=options.selectedNodeId||graph.nodes[0]?.id,pending=null,zoom=options.zoom||1;
+ const graph=sequence.graph;let selected=graph.nodes.some(n=>n.id===options.selectedNodeId)?options.selectedNodeId:graph.nodes[0]?.id,pending=null,zoom=options.zoom||1;
  const portElements=new Map(),portKey=p=>JSON.stringify([p.nodeId,p.kind,p.port,p.direction]);
  const tagPort=(el,nodeId,kind,port,direction)=>{const info={nodeId,kind,port,direction};el.dataset.bpDirection=direction;el._blueprintPort=info;portElements.set(portKey(info),el);return el;};
  const validation=element('span','bp-graph-validation'),layout=element('div','bp-graph-layout'),board=element('div','bp-canvas'),world=element('div','bp-world'),inspector=element('aside','bp-node-inspector');

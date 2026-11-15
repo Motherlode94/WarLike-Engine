@@ -61,3 +61,5 @@ body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list)
 body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list) img{height:52px!important;max-height:52px;object-fit:contain}
 body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list) .free-asset-name{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list) :is(.free-asset-meta,.free-asset-file){display:none}
+
+body.reference-engine #blueprintDialog .bp-run-button{border-color:#609776!important;color:#c7edd7!important}body.reference-engine #blueprintDialog .bp-run-button[aria-pressed=true]{border-color:#bf7474!important;color:#ffd0cc!important}

@@ -13,6 +13,11 @@ export function initFocusMenu(){
  for(const entry of sections)contents.append(entry);
  const animator=document.getElementById('openAnimationStudio');
  if(animator)contents.append(animator);
+ const warNode=document.createElement('button');
+ warNode.type='button';warNode.id='openWarNode';warNode.textContent='⬡ WarNode · Visual Scripting';
+ warNode.setAttribute('aria-label','Ouvrir WarNode · Visual Scripting');
+ warNode.addEventListener('click',()=>{more.open=false;document.dispatchEvent(new Event('warlike:warnode-open'))});
+ contents.append(warNode);
  bar.append(more);
  const setCompact=()=>{
   document.body.classList.add('warlike-focus-menu');

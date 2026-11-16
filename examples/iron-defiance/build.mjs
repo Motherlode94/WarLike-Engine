@@ -10,6 +10,7 @@ let html=await readFile(path.join(root,'index.html'),'utf8');
 html=html.replace(/<script type="importmap">[\s\S]*?<\/script>/,'');
 await writeFile(path.join(out,'index.html'),html);
 await copyFile(path.join(root,'game-rules.js'),path.join(out,'game-rules.js'));
-const models=path.join(root,'models');
-try{for(const name of await readdir(models)){if(name.toLowerCase().endsWith('.glb')&&name.startsWith('ID-')){await mkdir(path.join(out,'models'),{recursive:true});await copyFile(path.join(models,name),path.join(out,'models',name));}}}catch(e){if(e.code!=='ENOENT')throw e}
+const models=path.join(root,'models'),installed=[];
+try{for(const name of await readdir(models)){if(/^ID-(INF|ARM|LOG|DRN|ENV)-\d{2}\.glb$/i.test(name)){await mkdir(path.join(out,'models'),{recursive:true});await copyFile(path.join(models,name),path.join(out,'models',name));installed.push(name);}}}catch(e){if(e.code!=='ENOENT')throw e}
+if(installed.length)await writeFile(path.join(out,'models/manifest.json'),JSON.stringify({version:1,files:installed})+'\n');
 const stats=await stat(path.join(out,'game.js'));console.log('CENDRE-01 offline Web bundle generated: '+stats.size+' bytes');

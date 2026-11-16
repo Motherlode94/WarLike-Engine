@@ -39,8 +39,10 @@ def sandbox_command(command, folder, *, mounts=(), managed=False, writable=False
     memory = 4*1024**3 if managed else 512*1024**2
     # Limits also apply to compilers and descendants. The PID namespace is killed
     # when its bwrap init dies, including children that detach their session.
-    return [prlimit, "--as=" + str(memory), "--cpu=" + ("300" if managed else "15"),
-            "--nproc=64", "--nofile=128", "--fsize=16777216", "--core=0", "--"] + options + ["--"] + translated
+    # Apply RLIMIT_NPROC AFTER entering the user namespace. Applying it to
+    # bwrap itself incorrectly counts unrelated host-user build-server threads.
+    return options + ["--", prlimit, "--as=" + str(memory), "--cpu=" + ("300" if managed else "15"),
+                      "--nproc=64", "--nofile=128", "--fsize=16777216", "--core=0", "--"] + translated
 
 
 def kill_tree(process):

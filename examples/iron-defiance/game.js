@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {clone as cloneSkinned} from 'three/addons/utils/SkeletonUtils.js';
 import {MAP,obstacles,specs,createMission,live,giveOrder,findPath,tick,serialize,restore,MISSION_KEY} from './game-rules.js';
 const $=id=>document.getElementById(id),canvas=$('battlefield');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
@@ -28,26 +29,37 @@ const materials={friendly:new THREE.MeshStandardMaterial({color:0x639b82,roughne
 let mission=createMission(),paused=false,selection=new Set(),objects=new Map(),loadedTemplates=new Map(),muzzleFlashes=[],messageTime=0;
 const orbital={x:0,z:0,zoom:58,azimuth:.65},keys=new Set();let rotate=false;
 function soldier(group,mat,scale=1){
- const c=new THREE.Group();group.add(c);const body=new THREE.Mesh(new THREE.CapsuleGeometry(.3,.72,4,8),mat);body.position.y=1.05;body.castShadow=true;c.add(body);
- const head=new THREE.Mesh(new THREE.SphereGeometry(.23,12,9),mat);head.position.y=1.82;c.add(head);
- geom(.17,.7,.2,materials.steel,-.22,.52,0,c);geom(.17,.7,.2,materials.steel,.22,.52,0,c);
+ const c=new THREE.Group();group.add(c);
+ const body=new THREE.Mesh(new THREE.CapsuleGeometry(.31,.65,4,8),mat);body.position.y=1.2;body.castShadow=true;c.add(body);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.23,12,9),mat);head.position.y=1.88;c.add(head);
+ const limbs=[];
+ for(const side of [-1,1]){
+  const arm=new THREE.Group();arm.position.set(side*.39,1.56,0);c.add(arm);
+  geom(.18,.62,.19,mat,0,-.31,.04,arm);limbs.push(arm);
+  const leg=new THREE.Group();leg.position.set(side*.2,.9,0);c.add(leg);
+  geom(.2,.7,.23,materials.steel,0,-.34,0,leg);limbs.push(leg);
+ }
  geom(.55,.1,.13,materials.steel,.23,1.3,.35,c);c.scale.setScalar(scale);
+ group.userData.proceduralRig={kind:'humanoid',limbs};
 }
 function vehicle(group,type,mat){
  const tank=type==='tank'||type==='enemyArmor',truck=type==='supply'||type==='convoy',apc=type==='apc',drone=type==='drone';
- if(drone){geom(1,.45,1,mat,0,1.0,0,group);for(const x of [-.65,.65])for(const z of [-.65,.65])geom(.12,.1,.95,materials.steel,x,1.0,z,group);return}
- const w=tank?3.7:truck?2.65:apc?3.1:2.15, l=tank?5.5:truck?5.1:apc?4.5:3.8,h=tank?1.18:truck?1.7:1.24;
+ if(drone){geom(1,.45,1,mat,0,1,0,group);for(const x of [-.65,.65])for(const z of [-.65,.65])geom(.12,.1,.95,materials.steel,x,1.0,z,group);return}
+ const w=tank?3.7:truck?2.65:apc?3.1:2.15,l=tank?5.5:truck?5.1:apc?4.5:3.8,h=tank?1.18:truck?1.7:1.24;
  geom(w,h,l,mat,0,.95,0,group);geom(w*.85,.28,l*.75,materials.steel,0,1.55,0,group);
- const positions=tank?[-2.1,-.8,.8,2.1]:[-1.5,0,1.5];
+ const wheels=[],positions=tank?[-2.1,-.8,.8,2.1]:[-1.5,0,1.5];
  for(const z of positions)for(const x of [-w/2-.05,w/2+.05]){
-  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.27,12),materials.track);wheel.rotation.z=Math.PI/2;wheel.position.set(x,.53,z);group.add(wheel);
+  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.27,12),materials.track);
+  wheel.rotation.z=Math.PI/2;wheel.position.set(x,.53,z);group.add(wheel);wheels.push(wheel);
  }
+ let turret=null;
  if(tank||apc||type==='scout'){
-  const turret=new THREE.Group();turret.name='Turret_Pivot';turret.position.y=1.87;group.add(turret);
+  turret=new THREE.Group();turret.name='Turret_Pivot';turret.position.y=1.87;group.add(turret);
   geom(tank?1.5:1,.5,tank?1.8:1.1,mat,0,0,0,turret);
   geom(.22,.2,tank?2.8:1.65,materials.steel,0,.02,1.2,turret);
  }
  if(truck){geom(w*.82,1.07,2.7,mat,0,1.5,-.9,group);geom(w*.85,.47,.14,materials.glass,0,1.9,2.05,group)}
+ group.userData.proceduralRig={kind:'vehicle',wheels,turret};
 }
 function createVisual(u){
  const root=new THREE.Group();root.userData.unitId=u.id;scene.add(root);const mat=materials[u.team],primitive=new THREE.Group();root.add(primitive);
@@ -57,7 +69,7 @@ function createVisual(u){
  const bar=new THREE.Group();bar.position.set(0,u.type==='infantry'?2.35:3.15,0);const back=geom(1.45,.11,.08,new THREE.MeshBasicMaterial({color:0x1b2526}),0,0,0,bar);back.castShadow=false;
  const fill=geom(1.4,.12,.09,new THREE.MeshBasicMaterial({color:u.team==='friendly'?0x72edb3:0xff7e7a}),0,.01,.02,bar);fill.castShadow=false;root.add(bar);
  root.traverse(n=>{if(n.isMesh)n.userData.unitId=u.id});
- objects.set(u.id,{root,primitive,outline,bar,fill});
+ objects.set(u.id,{root,primitive,outline,bar,fill,lastX:u.x,lastZ:u.z,mixer:null});
  return root;
 }
 function syncUnits(){
@@ -67,6 +79,11 @@ function syncUnits(){
   o.root.visible=u.alive;o.root.position.set(u.x,0,u.z);o.root.rotation.y=u.yaw;
   o.outline.visible=u.alive&&selection.has(u.id);
   o.fill.scale.x=Math.max(.001,u.hp/specs[u.type].hp);o.fill.position.x=-.7*(1-u.hp/specs[u.type].hp);
+  const walked=Math.hypot(u.x-o.lastX,u.z-o.lastZ),moving=walked>.002;
+  const rig=o.primitive.userData.proceduralRig;
+  if(rig?.kind==='humanoid'){rig.limbs.forEach((part,i)=>{part.rotation.x=moving?Math.sin(mission.time*11+i*Math.PI)*.4:0})}
+  if(rig?.kind==='vehicle'){for(const wheel of rig.wheels)wheel.rotation.x+=walked/Math.max(.2,.48);if(rig.turret){const target=live(mission).filter(v=>v.team!==u.team).sort((a,b)=>Math.hypot(u.x-a.x,u.z-a.z)-Math.hypot(u.x-b.x,u.z-b.z))[0];if(target)rig.turret.rotation.y=Math.atan2(target.x-u.x,target.z-u.z)-u.yaw}}
+  o.lastX=u.x;o.lastZ=u.z;
   if(o.modelLoaded){o.primitive.visible=false;o.modelLoaded.visible=true;}
  }
 }
@@ -82,10 +99,14 @@ async function assignAsset(file,assetId){
   if(!Number.isFinite(size.y)||size.length()<.00001)throw Error('Modèle GLB sans géométrie.');
   original.position.sub(center);original.position.y+=size.y/2;const scale=(assetId.startsWith('ID-INF')?2:assetId.startsWith('ID-DRN')?1.5:assetId.startsWith('ID-ENV')?2.2:3.5)/Math.max(size.x,size.y,size.z);
   original.scale.setScalar(scale);
-  loadedTemplates.set(assetId,original);
+  let skinned=0;const joints=[];original.traverse(node=>{if(node.isSkinnedMesh)skinned++;if(/turret|wheel|rotor|barrel|gun_pivot|track/i.test(node.name||''))joints.push(node.name)});
+  loadedTemplates.set(assetId,{original,skinned,joints,animations:gltf.animations});
   for(const u of mission.units.filter(u=>typeToAsset[u.type]===assetId)){const o=objects.get(u.id);if(o?.modelLoaded)o.root.remove(o.modelLoaded);
-   const clone=original.clone(true);o.root.add(clone);o.modelLoaded=clone;o.primitive.visible=false;
+   const clone=cloneSkinned(original);o.root.add(clone);o.modelLoaded=clone;o.primitive.visible=false;
+   if(o.mixer)o.mixer.stopAllAction();o.mixer=null;
+   if(gltf.animations.length){o.mixer=new THREE.AnimationMixer(clone);o.mixer.clipAction(gltf.animations[0]).play()};
   }
+  announce(assetId+' installé · '+skinned+' mesh(es) skinné(s), '+joints.length+' pivots nommés, '+gltf.animations.length+' animation(s). Les articulations absentes doivent être préparées dans Rig Studio.');
   return original;
  }finally{URL.revokeObjectURL(url)}
 }
@@ -151,7 +172,7 @@ let last=performance.now(),frame=0;
 function draw(now){const dt=Math.min(.05,(now-last)/1000);last=now;updateCamera(dt);
  if(!paused&&mission.phase==='playing'){tick(mission,dt);for(const shot of mission.shots){if(!shot.visualized){shot.visualized=true;shotEffect(shot,now)}}}
  if(now-messageTime>5000&&mission.phase==='playing')$('status').textContent=mission.message;
- syncUnits();
+ syncUnits();for(const o of objects.values())if(o.mixer&&!paused)o.mixer.update(dt);
  for(const x of muzzleFlashes){const t=Math.min(1,(now-x.born)/1000/x.life);x.mesh.position.lerpVectors(x.from,x.to,t);if(t>=1){scene.remove(x.mesh);x.done=true}}
  muzzleFlashes=muzzleFlashes.filter(x=>!x.done);
  if(++frame%8===0)updateHud();

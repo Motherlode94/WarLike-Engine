@@ -33,7 +33,7 @@ export const specs=Object.freeze({
 });
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
-const unit=(id,team,type,x,z)=>{const s=specs[type];return {id,team,type,x,z,radius:s.radius,hp:s.hp,ammo:s.ammo,reserve:s.reserve,reload:0,cooldown:0,yaw:0,order:null,path:[],pathAge:0,vet:0,selected:false,alive:true,component:{tracks:100,engine:100,weapon:100},service:0};};
+const unit=(id,team,type,x,z)=>{const s=specs[type];return {id,team,type,x,z,radius:s.radius,hp:s.hp,ammo:s.ammo,reserve:s.reserve,reload:0,cooldown:0,yaw:0,order:null,path:[],pathAge:0,vet:0,selected:false,alive:true,component:{tracks:100,engine:100,weapon:100},service:0,retaliateAgainst:null,retaliationUntil:0};};
 export function createMission(){
  const units=[
  unit('alpha1','friendly','infantry',-26,-3),unit('alpha2','friendly','infantry',-24,-4),
@@ -108,6 +108,7 @@ export function applyDamage(m,target,rawDamage,attacker){
  const {armor}=mitigation(target,attacker),cover=target.type==='infantry'||target.type==='medic'||target.type==='engineer'||target.type==='bot'?coverAt(target):0;
  const effective=Math.max(1,Math.round((rawDamage-armor)*(1-cover)));
  target.hp=clamp(target.hp-effective,0,specs[target.type].hp);
+ if(target.team==='friendly'&&attacker?.team==='enemy'&&attacker?.id){target.retaliateAgainst=attacker.id;target.retaliationUntil=(Number(m.time)||0)+8;}
  if(target.hp<=0){target.alive=false;target.order=null;target.path=[];if(target.team==='enemy')m.kills++;else m.losses++;}
  if(target.type==='tank'||target.type==='apc'||target.type==='enemyArmor'){
   target.component.weapon=clamp(target.component.weapon-effective*.12,0,100);
@@ -176,7 +177,13 @@ export function tick(m,dt){
     if(ally.service>=2.5){ally.service=0;ally.reserve=Math.min(spec.reserve,ally.reserve+Math.max(8,Math.round(spec.mag*.5)));ally.hp=Math.min(spec.hp,ally.hp+7);ally.component.engine=Math.min(100,ally.component.engine+5);}
    }
   }
-  const target=acquire(m,u),s=specs[u.type];
+  let target=acquire(m,u),s=specs[u.type];
+  if(u.team==='friendly'){
+   // Engagement requires a player's attack order; an attacked unit may defend itself.
+   const ordered=m.units.find(v=>v.id===u.order?.targetId&&v.alive&&v.team==='enemy');
+   const retaliation=m.time<(u.retaliationUntil||0)?m.units.find(v=>v.id===u.retaliateAgainst&&v.alive&&v.team==='enemy'):null;
+   target=[ordered,retaliation].find(v=>v&&distance(u,v)<s.range&&lineClear(u,v))||null;
+  }
   if(target&&s.damage>0&&u.cooldown===0&&u.reload===0&&u.ammo>0&&u.component.weapon>10){
    u.ammo--;u.cooldown=s.rate;
    m.shots.push({x:u.x,z:u.z,toX:target.x,toZ:target.z,target:target.id,attacker:u.id,team:u.team,damage:s.damage,life:distance(u,target)/s.projectileSpeed});

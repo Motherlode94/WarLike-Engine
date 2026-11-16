@@ -41,6 +41,8 @@ def sandbox_command(command, folder, *, mounts=(), managed=False, writable=False
     # when its bwrap init dies, including children that detach their session.
     # Apply RLIMIT_NPROC AFTER entering the user namespace. Applying it to
     # bwrap itself incorrectly counts unrelated host-user build-server threads.
+    # CoreCLR creates sparse 2-TiB W^X memfds, including for dynamic code.
+    # Ordinary writable .NET files remain confined to the 64-MiB private tmpfs.
     return options + ["--", prlimit, "--as=" + str(memory), "--cpu=" + ("300" if managed else "15"),
                       "--nproc=64", "--nofile=128", "--fsize=" + (str(2*1024**4) if managed else "16777216"), "--core=0", "--"] + translated
 

@@ -15,10 +15,6 @@ if (!args.Contains("--isolated-worker")) {
     Console.CancelKeyPress += (_, e) => { e.Cancel=true; if(!supervisor.HasExited)supervisor.Kill(entireProcessTree:true); };
     await supervisor.WaitForExitAsync();return;
 }
-// CoreCLR creates its sparse W^X memfd during startup. Only this trusted
-// bootstrap needs the large initial file limit; lower the HARD limit before IPC
-// or any user assembly is parsed. Keep W^X enabled.
-NativeProcessLimits.RestrictFiles();
 using var protocolOutput=new StreamWriter(Console.OpenStandardOutput(),new UTF8Encoding(false)){AutoFlush=true};
 // Console output from a user assembly must not corrupt the protocol stream.
 Console.SetOut(TextWriter.Null);
@@ -198,7 +194,7 @@ async Task Handle(BridgeContext ctx) {
         res.StatusCode=404;await Reply(new {error="Not found"});
     }catch(InvalidDataException e){res.StatusCode=413;await Reply(new {error=e.Message});}
     catch(KeyNotFoundException e){res.StatusCode=404;await Reply(new {error=e.Message});}
-    catch(Exception e){res.StatusCode=400;await Reply(new {error=e.Message});}
+    catch(Exception e){res.StatusCode=400;var root=e.GetBaseException();string reason=root.GetType().Name+": "+root.Message;await Reply(new {error=reason.Length>4096?reason[..4096]:reason});}
     finally{res.Close();}
     async Task<string> ReadBody(int limit) {
         if(req.ContentLength64>limit) throw new InvalidDataException("Request too large.");

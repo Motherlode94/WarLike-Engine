@@ -87,18 +87,40 @@ function defaultsForVehicle(id){
  return result;
 }
 // Actual GLB geometry for supported starter prefabs; procedural primitives remain explicit tools.
-const defaultRealModel={
+// Prefer verified bundled GLB models over procedural placeholder geometry.
+// Keep IDs stable so existing scenes/scripts and game exports remain compatible.
+// Never substitute a civilian car for a tank, or an unrigged figure for a soldier.
+export const defaultRealModel={
  'character-hero':'free-mini-characters-character-male-a',
  'character-soldier':'free-mini-characters-character-male-b',
  'character-civilian':'free-mini-characters-character-female-a',
  'vehicle-truck':'free-car-kit-truck',
  'vehicle-van':'free-car-kit-sedan',
+ 'vehicle-sedan':'kaykit-city-builder-bits-car-sedan',
+ 'vehicle-police':'kaykit-city-builder-bits-car-police',
+ 'vehicle-taxi':'kaykit-city-builder-bits-car-taxi',
+ 'vehicle-suv':'kaykit-city-builder-bits-car-stationwagon',
  'vehicle-toycar':'real-toycar',
- 'building-lamp':'real-lantern'
+ 'building-house':'kaykit-city-builder-bits-building-a',
+ 'building-garage':'kaykit-space-base-bits-basemodule-garage',
+ 'building-lamp':'kaykit-city-builder-bits-streetlight',
+ 'prop-crate':'kaykit-city-builder-bits-box-a',
+ 'prop-container':'kaykit-space-base-bits-containers-a',
+ 'prop-bench':'kaykit-city-builder-bits-bench',
+ 'prop-table':'kaykit-furniture-bits-table-medium',
+ 'nature-bush':'kaykit-city-builder-bits-bush',
+ 'nature-rock':'kaykit-space-base-bits-rock-a',
+ 'nature-boulder':'kaykit-space-base-bits-rock-b'
+};
+// Returns null when the right GLB is unavailable: an honest procedural fallback
+// is safer than displaying a wrong vehicle class or missing geometry.
+export const defaultRealModelFor=id=>{
+ const modelId=defaultRealModel[id];
+ return modelId&&model3dById(modelId)?modelId:null;
 };
 export function prefab3d(id,nextId=1,x=120,y=120){
  const a=get3dAsset(id);if(!a)return null;
- const size=dimensions3d(a),realId=defaultRealModel[a.id],real=realId&&model3dById(realId);return {id:nextId,name:a.name+' '+nextId,type:'mesh3d',assetId:a.id,
+ const size=dimensions3d(a),realId=defaultRealModelFor(a.id),real=realId&&model3dById(realId);return {id:nextId,name:a.name+' '+nextId,type:'mesh3d',assetId:a.id,
  x,y,w:size.w,h:size.h,depth3d:size.d,meshShape:real?'glb':a.shape,elevation3d:0,color:a.color||'#ffffff',rotation:0,
  collision3d:!['water','ground','road','lamp','bush'].includes(a.shape),...(real?{model3dId:realId}:a.shape==='glb'?{model3dId:a.id}:{}),...(a.category==='Characters'?{playable3d:true}:{})};
 }

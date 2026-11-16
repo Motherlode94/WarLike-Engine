@@ -26,7 +26,7 @@ const galleryModels=['free-mini-characters-character-male-a','free-car-kit-sedan
 // Resolve IDs through the real catalogue, never substitute a primitive.
 const gallery=[];
 for(let i=0;i<galleryModels.length;i++){
- const o=prefab3d(galleryModels[i],i+1,-240+i*240,0);assert(o,'Missing representative GLB: '+galleryModels[i]);Object.assign(o,{name:['Humanoïde','Véhicule','Objet texturé'][i],w:128,h:160,depth3d:128,collision3d:false,solid3d:false});gallery.push(o);
+ const o=prefab3d(galleryModels[i],i+1,-240+i*240,0);assert(o,'Missing representative GLB: '+galleryModels[i]);Object.assign(o,{name:['Humanoïde','Véhicule','Objet texturé'][i],w:128,h:160,depth3d:128,playable3d:false,collision3d:false,solid3d:false});gallery.push(o);
 }
 gallery.push({id:4,name:'Sonde PBR',type:'mesh3d',assetId:probe.id,model3dId:probe.id,x:-30,y:260,w:120,h:120,depth3d:120,elevation3d:1.7,collision3d:false});
 gallery.push({id:5,name:'Observateur',type:'player',playable3d:true,x:16,y:620,w:32,h:96,depth3d:32,elevation3d:0,rotation:180,controller3d:{walkSpeed:0,gravity:0},cameraRig:{mode:'firstPerson'}});
@@ -73,8 +73,15 @@ try{
  for(const name of ['gallery','gallery-normal-zero']){
   mark(name);await open(name);await wait(async()=>{const {view3d}=await import('./js/core/viewport-3d.js');const models=view3d.modelDiagnostics();return models.length>=4&&models.every(o=>o.status==='ready')});
   const status=await snapshot();assert.equal(status.glError,0);assert.equal(status.renderError,null);assert.ok(status.models.every(o=>o.triangles>0&&o.warnings.length===0),JSON.stringify(status.models));assert.equal(status.models.find(o=>o.id.startsWith('local-')).maps[0].length,4);
-  report[name]=status;await page.screenshot({path:path.join(output,name+'.png')});
-  report[name].pixels=await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(async()=>{const {view3d}=await import('./js/core/viewport-3d.js');const gl=view3d.gl,w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,bytes=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,bytes);const crop=[];for(let y=Math.floor(h*.2);y<Math.floor(h*.8);y++)for(let x=Math.floor(w*.3);x<Math.floor(w*.7);x++){const i=(y*w+x)*4;crop.push(bytes[i],bytes[i+1],bytes[i+2],bytes[i+3])}resolve(crop);})));
+  report[name]=status;const screenshot=await page.screenshot({path:path.join(output,name+'.png')});
+  // Read the captured, composited PNG. WebGL's default drawing buffer can
+  // already be cleared when an asynchronous readPixels callback executes.
+  report[name].pixels=await page.evaluate(async base64=>{
+   const image=new Image();image.src='data:image/png;base64,'+base64;await image.decode();
+   const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
+   const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
+   return Array.from(ctx.getImageData(Math.floor(image.width*.3),Math.floor(image.height*.2),Math.floor(image.width*.4),Math.floor(image.height*.6)).data);
+  },screenshot.toString('base64'));
   await context.close();
  }
  const a=report.gallery.pixels,b=report['gallery-normal-zero'].pixels;assert.equal(a.length,b.length);let changed=0;for(let i=0;i<a.length;i+=4)if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>6)changed++;

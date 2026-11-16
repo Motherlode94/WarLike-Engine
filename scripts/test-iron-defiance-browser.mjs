@@ -18,7 +18,7 @@ try{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(url,{waitUntil:'domcontentloaded'});
  await page.getByText('MISSION ACTIVE').waitFor({timeout:15000});
- await page.waitForFunction(()=>document.querySelector('#allies')?.textContent==='8',{timeout:15000});
+ await page.waitForFunction(()=>document.querySelector('#allies')?.textContent==='10',{timeout:15000});
  await page.keyboard.press('g');
  await page.waitForFunction(()=>Number(document.getElementById('selectionCount').textContent)>=6,{timeout:12000});
  const selected=Number(await page.locator('#selectionCount').textContent());assert.ok(selected>=6);
@@ -26,7 +26,7 @@ try{
  await page.getByRole('button',{name:'Sauvegarder'}).click();
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('warlike.iron-defiance.cendre01.v1')));
  assert.ok(saved.orders>=6,'Group move order not recorded');
- assert.equal(saved.units.length,14);
+ assert.equal(saved.units.length,17);
  await page.reload({waitUntil:'domcontentloaded'});
  await page.getByRole('button',{name:'Reprendre'}).click();
  await page.getByText('Mission reprise.').waitFor({timeout:10000});

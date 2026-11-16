@@ -26,8 +26,8 @@ test('Each team terminal has a native executable Blueprint graph',()=>{
 test('WarScript Academy sample compiles against the real WarScript interpreter',()=>{
  const source=readFileSync(new URL('../examples/iron-defiance/training/SignalEquipe.wls',import.meta.url),'utf8');
  const result=compileWarScript(source);
- assert.ok(result);
- // The compiler returns a structured result; do not assume JS/.NET compilation.
+ assert.equal(result.ok,true,JSON.stringify(result.diagnostics));
+ // The interpreter validates WarScript without compiling .NET code.
 });
 test('training scene is reachable from the engine demo browser',()=>{
  const sceneSource=readFileSync(new URL('../js/core/scene.js',import.meta.url),'utf8');

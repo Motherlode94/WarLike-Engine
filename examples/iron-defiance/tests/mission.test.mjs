@@ -46,3 +46,14 @@ test('victory, defeat and full save roundtrip are deterministic',()=>{
  const loss=createMission();loss.units.find(u=>u.id==='convoy').alive=false;tick(loss,.01);assert.equal(loss.phase,'lost');
  assert.throws(()=>restore('{"version":9,"units":[]}'));
 });
+
+test('12 generated Meshy assets have explicit rig/collider profiles',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const path=new URL('../../../assets/iron-defiance-military/rig-profiles.json',import.meta.url);
+ const r=JSON.parse(readFileSync(path,'utf8'));
+ assert.equal(r.profiles.length,12);
+ assert.equal(new Set(r.profiles.map(x=>x.id)).size,12);
+ for(const p of r.profiles){assert.ok(p.collider,'Collider specification missing: '+p.id);assert.ok(p.controller);assert.ok(p.kind)}
+ const source=readFileSync(new URL('../game.js',import.meta.url),'utf8');
+ for(const p of r.profiles)assert.ok(source.includes(p.id),'No CENDRE-01 mapping for '+p.id);
+});

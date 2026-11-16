@@ -2,7 +2,7 @@
 
 **Deux parcours distincts :**
 - `examples/iron-defiance/index.html` : RTS Three.js CENDRE-01 indépendant, **non éditable** dans Hierarchy/Inspector.
-- `Game → Scènes démo jouables → Iron Defiance · Academy native` : scène native **éditable**, avec 12 soldats de démonstration en Alpha (5), Beta (4), Delta (3), et trois terminaux interactifs Blueprint. Ce laboratoire ne simule pas encore la bataille RTS complète.
+- `Game → Scènes démo jouables → Iron Defiance · Academy native` : scène native **éditable**, avec 12 soldats de démonstration en Alpha (5), Beta (4), Delta (3), et trois terminaux interactifs Blueprint qui ordonnent réellement des déplacements RTS natifs. Ce laboratoire ne simule pas encore la bataille RTS complète.
 
 ## 1. Apprendre l'éditeur
 
@@ -10,7 +10,7 @@
 2. Charger **Iron Defiance · Academy native** depuis le menu **Game → Scènes démo jouables…**.
 3. Dans **Hierarchy**, inspecter `Escouade 01 / Alpha`, `Beta`, `Delta` : les 12 soldats sont de vrais objets de scène, pas des clones rendus uniquement par Three.js.
 4. Sélectionner `Terminal · Alpha` puis ouvrir **Inspector → Blueprint / WarNode**. Modifier son texte de message ou sa logique en conservant les actions et conditions.
-5. Lancer **Play** : ZQSD/WASD, souris, **E** près de chaque terminal Alpha, Beta et Delta. Terminer au terminal **Synthèse**.
+5. Lancer **Play** : ZQSD/WASD, souris, **E** près de chaque terminal Alpha, Beta et Delta. Chaque terminal émet un signal Blueprint, et les soldats de l'équipe correspondante se déplacent vers une zone de regroupement par les fonctions natives `rtsOrder` / `updateRtsOrders`. Terminer au terminal **Synthèse**.
 6. Arrêter Play, enregistrer le projet et vérifier que les objets et leurs comportements sont conservés.
 
 Les personnages de ce laboratoire utilisent des **prefabs 3D de démonstration**, pas les GLB militaires Meshy importés. Ne pas confondre avec une validation des assets, des animations ou de l'IA de bataille.
@@ -50,3 +50,9 @@ node --test tests/iron-defiance-training.test.mjs
 cd examples/iron-defiance && npm test && npm run build
 ```
 Puis ouvrir la scène dans un vrai navigateur. La compatibilité des anciennes sauvegardes et l'export doivent encore être contrôlés selon `AGENTS.md`.
+
+## 5. Première liaison réelle Blueprint → RTS natif
+
+Pour chaque équipe, le terminal exécute une séquence compilée en graphe : `interact → setVariable → message → emitSignal`. Chaque soldat possède une séquence `signal` portant le même nom `iron:team:alpha`, `iron:team:beta` ou `iron:team:delta`, puis l'action `rtsOrder` avec `value: move` et une destination individuelle. Les soldats utilisent le composant existant `tacticalUnit` avec `autoAttack: false`, conformément à l'autorisation de tir contrôlée par le joueur.
+
+Ce parcours est destiné à montrer une **commande RTS réellement interprétée par Engine** dans Hierarchy, Inspector, Blueprint / WarNode et Play. La sélection de groupes à la souris, les vrais modèles Meshy, les combats et le basculement d'un soldat RTS en FPS nécessitent encore leur propre intégration. Aucun changement destructif des sauvegardes n'est nécessaire.

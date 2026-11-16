@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {MAP,obstacles,specs,createMission,live,walkable,findPath,lineClear,giveOrder,applyDamage,tick,serialize,restore} from '../game-rules.js';
 test('battlefield coordinates are navigable and initial units have positive radii',()=>{
  const m=createMission();
- assert.equal(m.units.length,14);
+ assert.equal(m.units.length,17);
  for(const u of m.units){assert.ok(u.radius>0,u.id);assert.ok(walkable(u.x,u.z,u.radius),'Unit overlaps world geometry: '+u.id)}
- assert.equal(m.units.filter(x=>x.team==='friendly').length,8);
- assert.equal(m.units.filter(x=>x.team==='enemy').length,6);
+ assert.equal(m.units.filter(x=>x.team==='friendly').length,10);
+ assert.equal(m.units.filter(x=>x.team==='enemy').length,7);
 });
 test('A* route finds walkable waypoints around buildings',()=>{
  const path=findPath({x:-20,z:-25},{x:29,z:22},1.4);

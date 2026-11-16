@@ -74,6 +74,8 @@ jobs:
         with:
           name: chambre07-export-play-screenshot
           path: |
+            .validation-tools/script-security/*.png
+            .validation-tools/script-security/report.json
             .validation-tools/reference-editor/*.png
             .validation-tools/chambre07/chambre07-play.png
             .validation-tools/chambre07/chambre07-ending-*.png

@@ -29,3 +29,9 @@ test('native requests use the launch token on mutations and never reveal it in h
  setNativeBridgeToken('test-session-secret');await nativeBridgeRequest('/scene',{entities:[]});await nativeBridgeRequest('/health');clearNativeBridgeToken();await nativeBridgeRequest('/stop',{revision:1});
  assert.equal(requests[0].options.headers['X-WarLike-Token'],'test-session-secret');assert.deepEqual(requests[1].options.headers,{});assert.equal(requests[2].options.headers['X-WarLike-Token'],'');assert.ok(requests.every(r=>!r.url.includes('secret')));
 });
+
+test('sandbox deadline terminates the worker and propagates an explicit frame error',async t=>{
+ const {IsolatedWebScripts}=await import('../js/core/web-script-sandbox.js');t.mock.timers.enable({apis:['setTimeout']});
+ const sandbox=new IsolatedWebScripts();sandbox.active=true;sandbox.port={postMessage(){},close(){}};sandbox.ctx={entities:[],globals:{},keys:new Set(),pressedKeys:new Set()};
+ const pending=sandbox.phase('update',.02,sandbox.ctx);t.mock.timers.tick(2001);await assert.rejects(pending,/Délai/);assert.equal(sandbox.active,false);assert.ok(sandbox.failure);assert.equal(sandbox.port,null);
+});

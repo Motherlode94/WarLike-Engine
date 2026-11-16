@@ -1,0 +1,143 @@
+{
+  "pack": "Iron Defiance – Military Assets Vol. 1",
+  "version": "0.1.0",
+  "owner": "WarLike Corps / Hardi MBANVU",
+  "licenseNote": "Les modèles générés et leurs droits d'utilisation sont soumis aux conditions du service Meshy ; les noms, concept et codes originaux WarLike sont distincts.",
+  "source": "Meshy text-to-3D, geometry meshy-t2/t2.5, textured meshy-6 2k PBR",
+  "target": "WarLike Engine / WarLike Rig Studio / Iron Defiance",
+  "state": "Meshy generation tasks recorded; GLB import and in-engine validation pending",
+  "assets": [
+    {
+      "id": "ID-INF-01",
+      "name": "Fusilier",
+      "category": "infantry",
+      "previewTaskId": "01a1e5bf-6dae-7474-874f-b5c751318099",
+      "refineTaskId": "01a1e5c0-f227-70f0-91cb-ee5943a27898",
+      "targetFaces": 7500,
+      "riggingNotes": "humanoid A-pose; rigging required",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-INF-02",
+      "name": "Médecin",
+      "category": "infantry",
+      "previewTaskId": "01a1e5bf-8102-775a-96c8-d1a588175b41",
+      "refineTaskId": "01a1e5c1-0780-74ee-a06b-844b5cc72ae0",
+      "targetFaces": 7500,
+      "riggingNotes": "humanoid A-pose; rigging required",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-INF-03",
+      "name": "Ingénieur",
+      "category": "infantry",
+      "previewTaskId": "01a1e5bf-932e-730c-a31a-7d64fc564941",
+      "refineTaskId": "01a1e5c1-1936-711b-8075-062682154005",
+      "targetFaces": 7500,
+      "riggingNotes": "humanoid A-pose; rigging required",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-ARM-01",
+      "name": "Transport blindé 6×6",
+      "category": "armor",
+      "previewTaskId": "01a1e5bf-a4b6-7594-a1d4-99516e226ab3",
+      "refineTaskId": "01a1e5c1-2fea-7552-8c64-66c11a949c77",
+      "targetFaces": 5500,
+      "riggingNotes": "wheel pivots and hull separation required",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-ARM-02",
+      "name": "Char lourd",
+      "category": "armor",
+      "previewTaskId": "01a1e5bf-b7d8-768b-8000-3396461a55ed",
+      "refineTaskId": "01a1e5c1-4351-7078-9201-20f6babb107e",
+      "targetFaces": 7500,
+      "riggingNotes": "turret/cannon/track articulation required",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-ARM-03",
+      "name": "Reconnaissance blindée",
+      "category": "armor",
+      "previewTaskId": "01a1e5bf-cc8b-70e1-a96e-035c1dbe20fe",
+      "refineTaskId": "01a1e5c1-53dc-726b-944c-c503147a629e",
+      "targetFaces": 5000,
+      "riggingNotes": "four wheel pivots required",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-LOG-01",
+      "name": "Camion logistique",
+      "category": "logistics",
+      "previewTaskId": "01a1e5bf-de82-77cf-83f5-d2d36c1c3290",
+      "refineTaskId": "01a1e5c1-66e7-74da-af44-a786ae8618b7",
+      "targetFaces": 5500,
+      "riggingNotes": "wheel pivots; cargo open/close optional",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-LOG-02",
+      "name": "Ambulance",
+      "category": "logistics",
+      "previewTaskId": "01a1e5bf-f1b9-77c8-b181-d3b620f26b90",
+      "refineTaskId": "01a1e5c1-775c-7531-a8ae-c0d8147dbddb",
+      "targetFaces": 5000,
+      "riggingNotes": "wheel pivots required",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-DRN-01",
+      "name": "Drone quadrupède",
+      "category": "drone",
+      "previewTaskId": "01a1e5c0-02c0-7354-8f84-46a1ba4d8f56",
+      "refineTaskId": "01a1e5c1-87f8-7360-afc2-b3262298ad64",
+      "targetFaces": 4500,
+      "riggingNotes": "articulated leg joints needed",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-DRN-02",
+      "name": "Drone aérien",
+      "category": "drone",
+      "previewTaskId": "01a1e5c0-1583-71c7-908d-f5c01517f62c",
+      "refineTaskId": "01a1e5c1-9a05-752d-b15b-70e09c1d3fb3",
+      "targetFaces": 4000,
+      "riggingNotes": "four rotor pivots needed",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-ENV-01",
+      "name": "Barricade béton",
+      "category": "environment",
+      "previewTaskId": "01a1e5c0-268a-7406-a68e-b7e5279cde30",
+      "refineTaskId": null,
+      "targetFaces": 2000,
+      "riggingNotes": "static cover; collision box or convex hull",
+      "glbPath": null,
+      "validated": false
+    },
+    {
+      "id": "ID-ENV-02",
+      "name": "Tour de contrôle",
+      "category": "environment",
+      "previewTaskId": "01a1e5c0-3f52-73a3-b11d-c6d475c25f86",
+      "refineTaskId": null,
+      "targetFaces": 6500,
+      "riggingNotes": "static cover; staircase and landing collision",
+      "glbPath": null,
+      "validated": false
+    }
+  ]
+}

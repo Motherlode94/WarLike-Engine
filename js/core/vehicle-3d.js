@@ -1,4 +1,5 @@
 import {solidBody3d,moveBody3d} from './collision-3d.js';
+import {collisionBackend3d} from './collision-backend-3d.js';
 import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle} from './vehicle-components.js';
 import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle-weapons-3d.js';
 import {recordEngineEvent} from './engine-diagnostics.js';
@@ -30,7 +31,8 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
     {x:car.x-width-12,y:car.y+((car.depth3d||car.h||32)-depth)/2},
     {x:car.x+(car.w||32)+12,y:car.y+((car.depth3d||car.h||32)-depth)/2}
    ];
-   const free=exits.find(pos=>!entities.some(o=>solid(o,car,player)&&intersects({...player,depth3d:depth},pos.x,pos.y,o)));
+   const backend=collisionBackend3d();
+   const free=exits.find(pos=>backend?.owns(player)?backend.canPlace(player,{...pos,elevation3d:car.elevation3d||0},{ignore:car}):!entities.some(o=>solid(o,car,player)&&intersects({...player,depth3d:depth},pos.x,pos.y,o)));
    if(free){player._vehicleInputConsumed=true;recordEngineEvent('vehicle-exit',car.name);player.x=free.x;player.y=free.y;player.elevation3d=car.elevation3d||0;player._hiddenInVehicle=false;player.animation='idle';vehicleComponents(car).seats.driverId=null;resetDriving3d()}
   }else if(player){
    const p=center(player);
@@ -59,9 +61,22 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
  const handbrake=keys.has(' ')||keys.has('space');
  const state=stepArcadeVehicle({speed:driving3d.speed,steer:driving3d.steer,rotation:drivingCar.rotation||0},
   {throttle,steer,handbrake},step,drivingCar);
- driving3d.speed=state.speed;driving3d.steer=state.steer;drivingCar.rotation=state.rotation;
+ driving3d.speed=state.speed;driving3d.steer=state.steer;
+ const backend=collisionBackend3d(),oldRotation=drivingCar.rotation||0;
+ if(backend?.owns(drivingCar)){
+  // Test intermediate orientations too: rotating a long vehicle must not
+  // sweep its nose through a thin wall between two accepted poses.
+  const steps=Math.max(1,Math.ceil(Math.abs(state.rotation-oldRotation)/3));
+  for(let i=1;i<=steps;i++){
+   const rotation=oldRotation+(state.rotation-oldRotation)*i/steps;
+   if(!backend.canPlace(drivingCar,{rotation},{ignore:player}))break;
+   drivingCar.rotation=rotation;
+  }
+ }else drivingCar.rotation=state.rotation;
  tickVehicleSystems(drivingCar,step,{speed:state.speed,throttle});
  const startX=drivingCar.x,startY=drivingCar.y;
+ const heading=(drivingCar.rotation||0)*Math.PI/180;
+ state.dx=Math.sin(heading)*state.speed*step;state.dy=-Math.cos(heading)*state.speed*step;
  const contacts=moveBody3d(drivingCar,state.dx,state.dy,0,entities,{ignore:player});
  const move={collision:contacts.blockedX||contacts.blockedY};
  const articulated=vehicleConfiguration(drivingCar);

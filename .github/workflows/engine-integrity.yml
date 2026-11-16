@@ -78,3 +78,25 @@ jobs:
             .validation-tools/chambre07-rapier/chambre07-ending-*.png
             .validation-tools/chambre07-rapier/legacy-2d-outcome.png
           if-no-files-found: ignore
+
+  complete-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npx playwright install --with-deps chromium
+      - name: Complete keyboard route and GLB material rendering
+        run: node scripts/test-complete-3d-browser.mjs
+      - name: Upload complete 3D route and material evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: complete-3d-route-and-materials
+          path: |
+            .validation-tools/complete-3d/*.png
+            .validation-tools/complete-3d/report.json
+          if-no-files-found: ignore

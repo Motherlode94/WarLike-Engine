@@ -183,39 +183,41 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
    const color=pbr.baseColorFactor||[1,1,1,1];
    const roughness=Math.max(.04,Math.min(1,Number(pbr.roughnessFactor??1)));
    const metallic=Math.max(0,Math.min(1,Number(pbr.metallicFactor??1)));
-   const textureInfo=pbr.baseColorTexture,textureTransform=textureInfo?.extensions?.KHR_texture_transform;
-   const uvIndex=textureTransform?.texCoord??textureInfo?.texCoord??0;
-   const uvAccessor=primitive.attributes['TEXCOORD_'+uvIndex];
-   const uv=uvAccessor===undefined?null:accessor(uvAccessor);
-   const image=json.images?.[json.textures?.[textureInfo?.index]?.source];
-   let texture=null;
-   if(image&&uv){
-    const imageView=json.bufferViews?.[image.bufferView];
-    if(imageView&&(!imageView.buffer||imageView.buffer===0)&&['image/png','image/jpeg','image/webp'].includes(image.mimeType)){
-     const start=imageView.byteOffset||0,end=start+imageView.byteLength;
-     if(end>binary.byteLength)throw Error('Texture GLB incomplète');
-     const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
-     texture={bytes:binary.slice(start,end),mimeType:image.mimeType,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
+   const material=json.materials?.[primitive.material]||{};
+   const readTexture=(info,label)=>{
+    if(!info)return null;
+    const transform=info.extensions?.KHR_texture_transform,uvIndex=transform?.texCoord??info.texCoord??0;
+    const uvId=primitive.attributes['TEXCOORD_'+uvIndex],uv=uvId===undefined?null:accessor(uvId);
+    const descriptor=json.textures?.[info.index],image=json.images?.[descriptor?.source],sampler=json.samplers?.[descriptor?.sampler]||{};
+    let texture=null;
+    if(image&&uv&&uv.count===pos.count&&uv.components===2){
+     const imageView=json.bufferViews?.[image.bufferView];
+     if(imageView&&(!imageView.buffer||imageView.buffer===0)&&['image/png','image/jpeg','image/webp'].includes(image.mimeType)){
+      const start=imageView.byteOffset||0,end=start+imageView.byteLength;
+      if(start<0||end>binary.byteLength)throw Error('Texture GLB incomplète');
+      texture={bytes:binary.slice(start,end),mimeType:image.mimeType};
+     }else if(typeof image.uri==='string'&&image.uri.startsWith('data:'))texture=embeddedGlbImage(image.uri);
+     else {const url=resolveGlbTextureUrl(image.uri,baseUrl);if(url)texture={url};}
     }
-    else if(typeof image.uri==='string'&&image.uri.startsWith('data:')){
-     const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
-     texture={...embeddedGlbImage(image.uri),wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
+    if(!texture){
+     const detail=!uv?'coordonnées UV manquantes (TEXCOORD_'+uvIndex+')':!image?'image glTF absente ou source non prise en charge':'image externe introuvable ou format non pris en charge';
+     materialWarnings.push('Matériau '+String(primitive.material??0)+' : texture '+label+' non chargée — '+detail);return null;
     }
-    else {
-     const resolved=resolveGlbTextureUrl(image.uri,baseUrl);
-     if(resolved){
-      const sampler=json.samplers?.[json.textures[textureInfo.index].sampler]||{};
-      texture={url:resolved,wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497};
-     }
+    Object.assign(texture,{wrapS:sampler.wrapS||10497,wrapT:sampler.wrapT||10497});
+    const texcoords=[];
+    for(const vi of idxs){
+     const u=uv.data[vi*2],v=uv.data[vi*2+1],scale=transform?.scale||[1,1],offset=transform?.offset||[0,0],angle=transform?.rotation||0;
+     const x=u*scale[0],y=v*scale[1];texcoords.push(offset[0]+Math.cos(angle)*x-Math.sin(angle)*y,offset[1]+Math.sin(angle)*x+Math.cos(angle)*y);
     }
+    return {texture,texcoords:new Float32Array(texcoords)};
+   };
+   const baseTexture=readTexture(pbr.baseColorTexture,'de couleur');
+   const materialMaps={};
+   for(const [key,info,label] of [['normal',material.normalTexture,'normale'],['metallicRoughness',pbr.metallicRoughnessTexture,'métal/rugosité'],['occlusion',material.occlusionTexture,'occlusion'],['emissive',material.emissiveTexture,'émissive']]){
+    const map=readTexture(info,label);if(map)materialMaps[key]=map;
    }
-   if(textureInfo&&!texture){
-    const detail=!uv?'coordonnées UV manquantes (TEXCOORD_'+uvIndex+')':
-     !image?'image glTF absente ou source non prise en charge':
-     'image externe introuvable ou format non pris en charge';
-    materialWarnings.push('Matériau '+String(primitive.material??0)+' : texture de couleur non chargée — '+detail);
-   }
-   const vertices=[],texcoords=[],vertexColors=[];
+   for(const extension of Object.keys(material.extensions||{}))if(!supported.has(extension))materialWarnings.push('Matériau '+String(primitive.material??0)+' : extension '+extension+' non prise en charge.');
+   const vertices=[],vertexColors=[];
    for(let i=0;i<idxs.length;i+=3){const points=[];
     for(let j=0;j<3;j++){const vi=idxs[i+j];if(vi>=pos.count||vi<0)throw Error('Index GLB invalide');points.push(transform(m,pos.data.slice(vi*3,vi*3+3)))}
     const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
@@ -223,16 +225,11 @@ export function parseGlb(buffer,{baseUrl,allowStaticRig=false}={}){
     const len=Math.hypot(...normal)||1;const flat=normal.map(n=>n/len);
     for(let j=0;j<3;j++){let n=flat;if(norm){const raw=applyNormal(normalTransform,...norm.data.slice(idxs[i+j]*3,idxs[i+j]*3+3));const l=Math.hypot(...raw)||1;n=raw.map(z=>z/l)}vertices.push(...points[j],...n);
      if(colors){const offset=idxs[i+j]*colors.components;vertexColors.push(...colors.data.slice(offset,offset+3),colors.components===4?colors.data[offset+3]:1);}
-     if(texture){
-      let u=uv.data[idxs[i+j]*uv.components],v=uv.data[idxs[i+j]*uv.components+1];
-      const scale=textureTransform?.scale||[1,1],offset=textureTransform?.offset||[0,0],angle=textureTransform?.rotation||0;
-      const x=u*scale[0],y=v*scale[1];
-      texcoords.push(offset[0]+Math.cos(angle)*x-Math.sin(angle)*y,offset[1]+Math.sin(angle)*x+Math.cos(angle)*y);
-     }
+
     }
    }
    const motion=rig?{nodeIndex:idx,skinIndex:node.skin,indices:new Uint32Array(idxs),vertexIds:new Uint32Array([...new Set(idxs)]),positions:new Float32Array(pos.data),normals:norm?new Float32Array(norm.data):null,...(node.skin!==undefined&&primitive.attributes.JOINTS_0!==undefined?{joints:new Uint16Array(accessor(primitive.attributes.JOINTS_0).data),weights:new Float32Array(accessor(primitive.attributes.WEIGHTS_0).data),influences:accessor(primitive.attributes.JOINTS_0).components}:{})}:null;
-   if(vertices.length)parts.push({...(motion?{motion}:{}),vertices:new Float32Array(vertices),color,roughness,metallic,unlit:!!json.materials?.[primitive.material]?.extensions?.KHR_materials_unlit,emissive:(json.materials?.[primitive.material]?.emissiveFactor||[0,0,0]).map(v=>v*(json.materials?.[primitive.material]?.extensions?.KHR_materials_emissive_strength?.emissiveStrength??1)),...(colors?{vertexColors:new Float32Array(vertexColors)}:{}),...(texture?{texture,texcoords:new Float32Array(texcoords)}:{}),alphaMode:json.materials?.[primitive.material]?.alphaMode||'OPAQUE',alphaCutoff:json.materials?.[primitive.material]?.alphaCutoff??.5});
+   if(vertices.length)parts.push({...(motion?{motion}:{}),vertices:new Float32Array(vertices),color,roughness,metallic,unlit:!!json.materials?.[primitive.material]?.extensions?.KHR_materials_unlit,emissive:(json.materials?.[primitive.material]?.emissiveFactor||[0,0,0]).map(v=>v*(json.materials?.[primitive.material]?.extensions?.KHR_materials_emissive_strength?.emissiveStrength??1)),...(colors?{vertexColors:new Float32Array(vertexColors)}:{}),...(baseTexture||{}),materialMaps,normalScale:Number(material.normalTexture?.scale??1),occlusionStrength:Math.max(0,Math.min(1,Number(material.occlusionTexture?.strength??1))),alphaMode:json.materials?.[primitive.material]?.alphaMode||'OPAQUE',alphaCutoff:json.materials?.[primitive.material]?.alphaCutoff??.5});
   }
   for(const child of node.children||[])walk(child,m,depth+1);
   visiting.delete(idx);

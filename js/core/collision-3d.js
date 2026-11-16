@@ -2,6 +2,7 @@
 // elevation is meters on entities and pixels in these boxes (64 pixels = 1 m).
 import {traceNativeSegments3d} from './native-3d.js';
 import {terrainFloorAt3d} from './gaia-terrain-physics.js';
+import {collisionBackend3d} from './collision-backend-3d.js';
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const epsilon=.00001;
 const axes=[['x','w'],['y','d'],['z','h']];
@@ -19,6 +20,8 @@ export function supportBody3d(o,entities,tolerance=2.3){
 }
 // Axis sweeps prevent tunnelling independently of frame time or obstacle thickness.
 export function moveBody3d(body,dx,dy,dz,entities,{recover=true,ignore=null}={}){
+ const backend=collisionBackend3d();
+ if(backend?.owns(body)&&entities.includes(body))return backend.move(body,dx,dy,dz,{ignore,entities});
  const result={blockedX:false,blockedY:false,blockedZ:false,grounded:false,ceiling:false,hits:[]};
  if(body.enabled===false)return result;
  const solids=body.collision3d===false?[]:entities.filter(o=>o!==body&&o!==ignore&&solidBody3d(o));
@@ -59,6 +62,8 @@ export function segmentBox3d(from,to,box,padding=0){
 export function raycastScene3d(origin,direction,entities,{exclude=null,maxDistance=45,target=()=>false}={}){
  if(![origin?.[0],origin?.[1],origin?.[2],direction?.[0],direction?.[1],direction?.[2],maxDistance].every(Number.isFinite)||maxDistance<0)return null;
  const length=Math.hypot(...direction);if(!length||!Number.isFinite(length))return null;const from={x:origin[0]*64,y:origin[2]*64,z:origin[1]*64},to={x:from.x+direction[0]/length*maxDistance*64,y:from.y+direction[2]/length*maxDistance*64,z:from.z+direction[1]/length*maxDistance*64};let nearest=null,distance=Infinity;
+ const backend=collisionBackend3d();
+ if(backend?.ownsEntities(entities))return backend.raycast(origin,direction,entities,{exclude,maxDistance,target});
  const candidates=entities.filter(o=>o!==exclude&&activeBody3d(o)&&(solidBody3d(o)||target(o)));
  if(!candidates.length)return null;
  const boxes=candidates.map(collisionBox3d),accelerated=traceNativeSegments3d([{from,to}],boxes);

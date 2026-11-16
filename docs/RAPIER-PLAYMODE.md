@@ -24,9 +24,9 @@ Les ancrages sont relatifs au centre de chacun des corps, en mètres. L’ajout 
 
 ## Chargement et limites
 
-Le module officiel `@dimforge/rapier3d-compat@0.21.0` reste chargé depuis jsDelivr, via l’import map de `index.html`. Une connexion est nécessaire à son premier chargement ; les ressources Rapier ne sont pas incorporées à l’archive Web. En cas d’échec, le moteur interne prend le relais et le statut 3D le signale. Le moteur interne conserve ses collisions AABB ; il n’offre pas les capsules exactes, les pentes orientées ou les articulations de Rapier.
+Le module officiel `@dimforge/rapier3d-compat@0.21.0` est chargé localement depuis `vendor/rapier3d/rapier.mjs`, via l’import map de `index.html`. Le module, son WASM intégré et sa licence sont incorporés à l’archive Web. En cas d’échec, le moteur interne prend le relais et le statut 3D le signale. Le moteur interne conserve ses collisions AABB ; il n’offre pas les capsules exactes, les pentes orientées ou les articulations de Rapier.
 
-Le contrôleur Rapier effectue les translations et le glissement, pas une simulation de ragdoll. Les rotations des boîtes et des corps sont gérées par Rapier et affichées par le renderer. Le vol de super-héros, les véhicules, les contacts IA historiques et les requêtes caméra/tir gardent encore leurs solveurs spécifiques. Les colliders de mesh triangulé, moteurs d’articulation, ragdolls et véhicules physiques à roues ne font pas partie de cette livraison. Le runtime natif C# reste indépendant.
+Le contrôleur Rapier effectue les translations et le glissement, pas une simulation de ragdoll. Les rotations des boîtes et des corps sont gérées par Rapier et affichées par le renderer. Pendant un Play 3D Rapier, les déplacements partagés (véhicules arcade, vol, root motion et scripts Move), les déplacements et la gravité des IA, les tirs FPS et véhicules et la visibilité IA interrogent le même monde Rapier. Les ouvertures de portes sont prises en compte immédiatement par les requêtes. Les rotations et sorties de véhicules vérifient leurs volumes orientés. La direction et la vitesse des véhicules restent arcade : ce changement ne crée pas une suspension à roues. Les requêtes caméra conservent leur calcul de volumes orientés et la navigation conserve son A* sur grille. Le mode RTS Company dispose encore de sa boucle tactique propre. Les colliders de mesh triangulé, moteurs d’articulation, ragdolls et véhicules physiques à roues ne font pas partie de cette livraison. Le runtime natif C# reste indépendant.
 
 Les tests avec le vrai module WASM couvrent capsule/mur, mur orienté, pente douce en montée/descente, pente trop forte, petite marche, obstacle haut, saut, plateforme mobile, sphère, impulsion et les trois articulations. La validation visuelle 3D dépend de la disponibilité de WebGL.
 
@@ -35,3 +35,9 @@ Les tests avec le vrai module WASM couvrent capsule/mur, mur orienté, pente dou
 - [Rapier — contrôleur de personnage](https://rapier.rs/docs/user_guides/javascript/character_controller/)
 - [Rapier — articulations](https://rapier.rs/docs/user_guides/javascript/joints/)
 - [Code et licence Rapier](https://github.com/dimforge/rapier.js)
+
+## Parcours et vérifications supplémentaires
+
+`tests/complete-3d-route.test.mjs` traverse un itinéraire continu avec le vrai WASM Rapier : quatre marches, porte bloquante puis ouverte, ligne de tir et cible. Il ne téléporte pas le personnage. `tests/rapier-gameplay-queries.test.mjs` couvre également conduite, rotation, sorties, déplacement/gravité IA, tirs orientés et fermeture de la session physique.
+
+`npm run test:3d:browser` exporte de vrais ZIP isolés puis teste au clavier caméra, marches, porte, tirs, F5/F9, rechargement et fin du parcours. Il produit des captures et un rapport avec trois GLB représentatifs et une sonde de matériaux. Ce contrôle doit effectivement passer dans Chromium avant de déclarer la validation visuelle acquise. Voir [le bilan du chantier](3d-gameplay-materials-2026-11-16.md).

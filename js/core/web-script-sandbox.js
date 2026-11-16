@@ -50,7 +50,14 @@ export class IsolatedWebScripts{
   for(const c of reply.commands){const e=this.entries[c.index];if(!this.ctx.entities.includes(e.entity)||!e.entity.webScripts?.includes(e.component))continue;const api=createScriptApi(e.entity,this.ctx,{delta:this.dt||0,elapsed:0},e.component);if(c.op==='entity')e.entity[c.name]=c.args[0];else if(c.op==='write')api.write(c.name,c.args[0]);else api.call(c.name,c.args)}
   for(const s of reply.states){const c=this.entries[s.index].component;c.runtime={...c.runtime,fields:s.fields,started:s.started,awakened:s.awakened,error:s.error};if(s.error){if(this.errors.at(-1)!==s.error){this.errors.push(s.error);if(this.errors.length>64)this.errors.shift();this.ctx.log?.(s.error,'error',this.entries[s.index].entity)}}}
  }
- async phase(type,dt,ctx){if(!this.active)return;this.ctx=ctx;this.dt=Math.min(.1,Math.max(0,Number(dt)||0));const generation=this.generation;try{const reply=await this.request(type,this.snapshot(this.dt));if(generation===this.generation)this.apply(reply)}catch(error){if(generation===this.generation){this.fail(error);throw error}if(this.failure)throw this.failure}}
+ async phase(type,dt,ctx,{canApply=()=>true}={}){
+  if(!this.active)return null;this.ctx=ctx;
+  if(this.held){if(!canApply())return null;const ready=this.held;this.held=null;this.dt=ready.dt;this.apply(ready.reply);if(ready.type===type)return {dt:ready.dt,reused:true}}
+  this.dt=Math.min(.1,Math.max(0,Number(dt)||0));const generation=this.generation;
+  try{const reply=await this.request(type,this.snapshot(this.dt));if(generation!==this.generation)return null;validateScriptReply(reply,this.entries);if(!canApply()){this.held={type,dt:this.dt,reply};return null}this.apply(reply);return {dt:this.dt,reused:false}}
+  catch(error){if(generation===this.generation){this.fail(error);throw error}if(this.failure)throw this.failure;return null}
+ }
+
  fail(error){this.failure=error;this.errors.push(error.message);for(const e of this.entries){e.component.runtime??={};e.component.runtime.error=error.message}this.stop()}
- stop(){this.generation++;this.active=false;clearTimeout(this.readyTimer);this.readyReject?.(Error('Initialisation JS/TS annulée.'));this.readyReject=null;if(this.pending){clearTimeout(this.pending.timer);this.pending.reject(Error('Image JS/TS annulée.'));this.pending=null}this.port?.postMessage({terminate:true});this.port?.close();this.iframe?.remove();this.port=null;this.iframe=null;this.entries=[];}
+ stop(){this.generation++;this.active=false;this.held=null;clearTimeout(this.readyTimer);this.readyReject?.(Error('Initialisation JS/TS annulée.'));this.readyReject=null;if(this.pending){clearTimeout(this.pending.timer);this.pending.reject(Error('Image JS/TS annulée.'));this.pending=null}this.port?.postMessage({terminate:true});this.port?.close();this.iframe?.remove();this.port=null;this.iframe=null;this.entries=[];}
 }

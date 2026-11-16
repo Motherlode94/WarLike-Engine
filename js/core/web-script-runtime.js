@@ -55,14 +55,14 @@ export class WebScriptRuntime {
  }
  invoke(entry,hook,cleanup=false){if(entry.failed&&!cleanup)return;try{const method=hooks[hook].map(key=>entry.module[key]).find(f=>typeof f==='function');if(method){const result=method(entry.binding);if(result?.then)throw Error('Les méthodes de cycle de vie JS/TS doivent être synchrones.');}serializable(entry.binding.fields);entry.component.runtime.fields=structuredClone(entry.binding.fields)}catch(error){this.report(entry,error)}}
  phase(entry,method){try{if(method==='activation')entry.lifecycle.refresh();else if(method)entry.lifecycle.run(method);else entry.lifecycle.start()}catch(error){this.report(entry,error)}}
- update(dt,ctx){if(this.sandbox?.failure)throw this.sandbox.failure;if(this.isolated)return this.sandbox.phase('update',dt,ctx);const delta=Math.min(.1,Math.max(0,Number(dt)||0));this.elapsed+=delta;this.fixed+=delta;
+ update(dt,ctx,options){if(this.sandbox?.failure)throw this.sandbox.failure;if(this.isolated)return this.sandbox.phase('update',dt,ctx,options);const delta=Math.min(.1,Math.max(0,Number(dt)||0));this.elapsed+=delta;this.fixed+=delta;
   this.instances=this.instances.filter(entry=>{Object.assign(entry.context,ctx);entry.binding.entities=ctx.entities;entry.clock.elapsed=this.elapsed;entry.clock.delta=delta;if(!entry.attached()){entry.lifecycle.dispose();return false}return true});
   for(const entry of this.instances)this.phase(entry,'activation');
   for(const entry of this.instances)this.phase(entry);
   while(this.fixed>=.02-1e-8){this.fixed-=.02;for(const entry of this.instances){entry.clock.delta=.02;this.phase(entry,'FixedUpdate')}}
   for(const entry of this.instances){entry.clock.delta=delta;this.phase(entry,'Update')}
  }
- late(){if(this.isolated)return this.sandbox.phase('late',0,this.sandbox.ctx);for(const entry of this.instances)this.phase(entry,'LateUpdate')}
+ late(options){if(this.isolated)return this.sandbox.phase('late',this.sandbox.dt,this.sandbox.ctx,options);for(const entry of this.instances)this.phase(entry,'LateUpdate')}
  stop(){this.sandbox?.stop();this.sandbox=null;this.generation++;for(const entry of this.instances)entry.lifecycle.dispose();this.instances=[];this.elapsed=0;this.fixed=0;this.context=null;this.errors=[]}
 }
 export const webScriptRuntime=new WebScriptRuntime();

@@ -42,7 +42,7 @@ def sandbox_command(command, folder, *, mounts=(), managed=False, writable=False
     # Apply RLIMIT_NPROC AFTER entering the user namespace. Applying it to
     # bwrap itself incorrectly counts unrelated host-user build-server threads.
     return options + ["--", prlimit, "--as=" + str(memory), "--cpu=" + ("300" if managed else "15"),
-                      "--nproc=64", "--nofile=128", "--fsize=16777216", "--core=0", "--"] + translated
+                      "--nproc=64", "--nofile=128", "--fsize=" + (str(2*1024**4) if managed else "16777216"), "--core=0", "--"] + translated
 
 
 def kill_tree(process):

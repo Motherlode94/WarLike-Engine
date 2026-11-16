@@ -15,6 +15,10 @@ if (!args.Contains("--isolated-worker")) {
     Console.CancelKeyPress += (_, e) => { e.Cancel=true; if(!supervisor.HasExited)supervisor.Kill(entireProcessTree:true); };
     await supervisor.WaitForExitAsync();return;
 }
+// CoreCLR creates its sparse W^X memfd during startup. Only this trusted
+// bootstrap needs the large initial file limit; lower the HARD limit before IPC
+// or any user assembly is parsed. Keep W^X enabled.
+NativeProcessLimits.RestrictFiles();
 using var protocolOutput=new StreamWriter(Console.OpenStandardOutput(),new UTF8Encoding(false)){AutoFlush=true};
 // Console output from a user assembly must not corrupt the protocol stream.
 Console.SetOut(TextWriter.Null);

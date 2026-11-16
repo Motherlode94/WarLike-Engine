@@ -40,8 +40,15 @@ export function stopRuntimeSession(){
 // Late responses are never applied after Stop, scene replacement or reconnect.
 const scriptContext=()=>({entities:state.entities,project:gameProject,mode:workspace.mode,globals:sequenceRuntime.globals,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,signal:emitSequenceSignal,log:(message,level,entity)=>globalThis.document?.dispatchEvent(new CustomEvent('warlike:script-log',{detail:{message:(entity.name||'GameObject')+' · '+message,level}}))});
 const animationEvent=(event,owner)=>{if(event.type==='signal')emitSequenceSignal(String(event.value||'animation:event').slice(0,100),owner.id);else if(event.type==='fx')emitFx(event.value||'energy',heroCenter(owner,workspace.mode),{...event.options,color:event.color||event.options?.color,mode:workspace.mode,ownerId:owner.id});else if(event.type==='sound')playSound(String(event.value||'impact'),{gain:.5,cooldown:.08});};
-function browserFrame(dt,update,run){if(run&&!isLanGuest()&&webScriptRuntime.isolated)return isolatedBrowserFrame(dt,update);return finishBrowserFrame(dt,update,run)}
-async function isolatedBrowserFrame(dt,update){const generation=runtimeSession.generation,entities=state.entities;await webScriptRuntime.update(dt,scriptContext());if(generation!==runtimeSession.generation||state.entities!==entities)return;finishBrowserFrame(dt,update,true,true);if(generation===runtimeSession.generation)await webScriptRuntime.late()}
+function browserFrame(dt,update,run,canRun=gameIsRunning){if(run&&!isLanGuest()&&webScriptRuntime.isolated)return isolatedBrowserFrame(dt,update,canRun);return finishBrowserFrame(dt,update,run)}
+async function isolatedBrowserFrame(dt,update,canRun){
+ const generation=runtimeSession.generation,entities=state.entities;
+ const canApply=()=>generation===runtimeSession.generation&&state.entities===entities&&canRun();
+ const ready=await webScriptRuntime.update(dt,scriptContext(),{canApply});if(!ready||!canApply())return;
+ if(ready.reused&&runtimeSession.backend==='web')webElapsed=Math.min(.1,webElapsed+dt);
+ finishBrowserFrame(ready.dt,update,true,true);if(generation===runtimeSession.generation)await webScriptRuntime.late({canApply});
+}
+
 function finishBrowserFrame(dt,update,run,isolated=false){if(run){if(!isLanGuest()){if(!isolated)webScriptRuntime.update(dt,scriptContext());warScriptRuntime.update(dt,scriptContext());}updateComponentRuntime(dt)}update?.(dt);if(run&&!isLanGuest()){stepEntityAnimations(state.entities,dt,{mode:workspace.mode,onEvent:animationEvent});warScriptRuntime.late();if(!isolated)webScriptRuntime.late();}captureWebComponents(state.entities,sequenceRuntime.globals)}
 export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
  if(!state.playing||runtimeSession.phase==='error')return false;
@@ -54,7 +61,7 @@ export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
   }else webScriptRuntime.stop();
  }
  if(webLoading)return false;
- if(runtimeSession.backend==='web'||!canRun()){const run=canRun();if(webScriptRuntime.isolated&&run)webElapsed=Math.min(.1,webElapsed+Math.max(0,Number(dt)||0));if(!runtimeSession.busy){const generation=runtimeSession.generation,delta=webScriptRuntime.isolated&&run?webElapsed:dt;webElapsed=0;const result=browserFrame(delta,update,run);if(result?.then){runtimeSession.busy=true;runtimeSession.completion=result.catch(error=>{if(generation===runtimeSession.generation){runtimeSession.phase='error';runtimeSession.error='Scripts JS/TS : '+error.message;announce()}}).finally(()=>{if(generation===runtimeSession.generation)runtimeSession.busy=false});return false}}return true}
+ if(runtimeSession.backend==='web'||!canRun()||webScriptRuntime.sandbox?.held?.type==='update'){const run=canRun();if(webScriptRuntime.isolated&&run)webElapsed=Math.min(.1,webElapsed+Math.max(0,Number(dt)||0));if(!runtimeSession.busy){const generation=runtimeSession.generation,delta=webScriptRuntime.isolated&&run?webElapsed:dt;webElapsed=0;const result=browserFrame(delta,update,run,canRun);if(result?.then){runtimeSession.busy=true;runtimeSession.completion=result.catch(error=>{if(generation===runtimeSession.generation){runtimeSession.phase='error';runtimeSession.error='Scripts JS/TS : '+error.message;announce()}}).finally(()=>{if(generation===runtimeSession.generation)runtimeSession.busy=false});return false}}return true}
  elapsed=Math.min(.1,elapsed+Math.max(0,Number(dt)||0));
  if(runtimeSession.busy)return false;
  // Hold a completed native frame while the debugger or game is paused.
@@ -86,7 +93,7 @@ export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
   for(const message of result.response.logs||[])scriptContext().log(String(message),'info',{name:'C#'});
   applyCsharpFrame(entities,result.response.actors,{expected:result.submitted});
   const living=new Set(result.response.actors.map(a=>a.id));for(let i=entities.length-1;i>=0;i--)if(result.submitted.some(a=>a.id===entities[i].id)&&!living.has(entities[i].id))entities.splice(i,1);
-  runtimeSession.phase='ready';return browserFrame(result.delta,update,true);
+  runtimeSession.phase='ready';return browserFrame(result.delta,update,true,canRun);
  }).catch(error=>{
   if(generation!==runtimeSession.generation||!state.playing)return;
   runtimeSession.phase='error';runtimeSession.error='Play C# interrompu : '+error.message;announce();

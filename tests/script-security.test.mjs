@@ -35,3 +35,10 @@ test('sandbox deadline terminates the worker and propagates an explicit frame er
  const sandbox=new IsolatedWebScripts();sandbox.active=true;sandbox.port={postMessage(){},close(){}};sandbox.ctx={entities:[],globals:{},keys:new Set(),pressedKeys:new Set()};
  const pending=sandbox.phase('update',.02,sandbox.ctx);t.mock.timers.tick(2001);await assert.rejects(pending,/Délai/);assert.equal(sandbox.active,false);assert.ok(sandbox.failure);assert.equal(sandbox.port,null);
 });
+
+test('paused sandbox replies are held and committed once when simulation resumes',async()=>{
+ const {IsolatedWebScripts}=await import('../js/core/web-script-sandbox.js');const sandbox=new IsolatedWebScripts();sandbox.active=true;sandbox.ctx={entities:[],globals:{},keys:new Set(),pressedKeys:new Set()};let resolve,commits=0,canApply=true;
+ sandbox.request=()=>new Promise(r=>resolve=r);sandbox.apply=()=>commits++;
+ const pending=sandbox.phase('update',.02,sandbox.ctx,{canApply:()=>canApply});canApply=false;resolve({commands:[],states:[]});assert.equal(await pending,null);assert.equal(commits,0);
+ canApply=true;const resumed=await sandbox.phase('update',.03,sandbox.ctx,{canApply:()=>canApply});assert.equal(resumed.dt,.02);assert.equal(resumed.reused,true);assert.equal(commits,1);assert.equal(sandbox.held,null);sandbox.stop();
+});

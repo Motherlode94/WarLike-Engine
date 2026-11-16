@@ -72,27 +72,27 @@ export function createChambre07Scene(mode='3d'){
   ],{conditions:[eq(key,0)],elseInstructions:[say('Ce souvenir est déjà enregistré.')]});
   return o;
  };
- const photo=memory('01 · Photographie',300,210,'chambrePhoto','La silhouette a été découpée de cette photographie.','#d59bac');
- const tape=memory('02 · Cassette',950,330,'chambreTape','Une bande porte ta voix : « Ne laisse pas la chambre choisir. »','#83a9d4');
- const letter=memory('03 · Lettre',220,760,'chambreLetter','Elle a peur d’être oubliée. Mais pourquoi te retient-elle ici ?','#e5c68d');
+ const photo=memory('01 · Photographie',300,210,'chambrePhoto','PHOTO · 2009. Sept personnes devant la porte 07. La huitième silhouette a été découpée ; au dos : « Si tu vois ton visage, ne te souviens pas de ton nom. »','#d59bac');
+ const tape=memory('02 · Cassette',950,330,'chambreTape','CASSETTE · 03:07. Ta propre voix annonce : « Sujet sept : reconstruction réussie. Si Lia se souvient, ne laisse pas la chambre choisir à ta place. » L’enregistrement est daté de 2009.','#83a9d4');
+ const letter=memory('03 · Lettre',220,760,'chambreLetter','LETTRE · « Je n’ai pas peur de mourir. J’ai peur que tu me fabriques encore et que tu appelles cela me sauver. » Signé : Lia. L’écriture de la réponse est la tienne.','#e5c68d');
  const lia=add('character-civilian','Lia · la voix',980,680,{
   hierarchyGroup:'Personnages',collision3d:false,solid3d:false,
   stats:defaultStats(),tags:['chambre07-npc'],
   adventureInteractable:{label:'Parler à Lia',radius:155,lockedHint:'Retrouve les trois souvenirs avant de lui parler.'}
  });
  lia.sequence=interact([{
-  type:'showDialogue',speaker:'Lia',value:'Tu as tout retrouvé. Crois-tu encore ma voix ?',
+  type:'showDialogue',speaker:'Lia',value:'Tu as retrouvé les trois preuves. En 2009, tu as accepté de reconstruire les disparus avec leurs souvenirs. Moi aussi. La chambre t’a reconstruit à ton tour. Tu peux porter cette vérité… ou sortir sans elle. Que choisis-tu ?',
   choices:[
-   {label:'Je veux comprendre.',signal:'chambre:trust'},
-   {label:'Tu me mens.',signal:'chambre:reject'}
+   {label:'Je garde la vérité, même si elle me poursuit.',signal:'chambre:trust'},
+   {label:'Je refuse de devenir un autre souvenir.',signal:'chambre:reject'}
   ]
  }],{
   once:false,conditions:[eq('chambrePhoto'),eq('chambreTape'),eq('chambreLetter'),eq('chambreChoice',0)],
   elseInstructions:[say('Lia attend que tu rassembles les trois souvenirs.')]
  });
  lia.sequences=[
-  listen('chambre:trust',[set('chambreChoice',1),done('chambre:lia'),goal('chambre:exit','Rejoins la sortie avant que la chambre ne se referme.'),say('Lia : « Tu peux encore partir. »'),emit('chambre:chase')]),
-  listen('chambre:reject',[set('chambreChoice',2),done('chambre:lia'),goal('chambre:exit','Fuis la chambre et retrouve la vraie sortie.'),say('Lia : « Alors cours. »'),emit('chambre:chase')])
+  listen('chambre:trust',[set('chambreChoice',1),done('chambre:lia'),goal('chambre:exit','Rejoins la sortie avant que la chambre ne se referme.'),say('Lia : « Alors emporte nos noms. La porte s’ouvrira, mais la chose qui porte ton ancien visage te suivra. »'),emit('chambre:chase')]),
+  listen('chambre:reject',[set('chambreChoice',2),done('chambre:lia'),goal('chambre:exit','Fuis la chambre et retrouve la vraie sortie.'),say('Lia : « Tu peux partir sans la mémoire. Mais dehors, tu ne sauras plus pourquoi mon nom te fait pleurer. Cours. »'),emit('chambre:chase')])
  ];
  const hunter=add('character-zombie','Ombre · poursuivant',1030,780,{
   hierarchyGroup:'Menaces',collision3d:true,solid3d:false,
@@ -100,7 +100,7 @@ export function createChambre07Scene(mode='3d'){
   ai:{...defaultAi(),enabled:false,state:'idle',detection:1200,fieldOfView:360,
    speed:78,patrolRadius:0,attackRange:60,attackDamage:5,attackCooldown:2.5,
    pathfinding:true,requireLineOfSight:false,homeX:1030,homeY:780},
-  sequences:[listen('chambre:chase',[{type:'setAiEnabled',value:true},say('Quelque chose s’éveille derrière toi…')])]
+  sequences:[listen('chambre:chase',[{type:'setAiEnabled',value:true},say('Dans le couloir, des pas imitent exactement les tiens. L’ombre a ton ancienne silhouette. Elle connaît déjà le chemin. Ne te retourne pas.')])]
  });
  const exit=add('primitive-cube','Porte de sortie',1050,75,{
   hierarchyGroup:'Objectifs',w:55,depth3d:18,h:160,color:'#97d8c8',materialRoughness:.24,materialMetallic:.5,
@@ -109,14 +109,14 @@ export function createChambre07Scene(mode='3d'){
  exit.sequence=interact([],{
   once:false,
   branches:[
-   {conditions:[eq('chambreChoice',1)],instructions:[done('chambre:exit'),{type:'winGame',value:'FIN · LA MÉMOIRE — Tu conserves les fragments de vérité.'}]},
-   {conditions:[eq('chambreChoice',2)],instructions:[done('chambre:exit'),{type:'winGame',value:'FIN · LA RUPTURE — Tu t’échappes en refusant la voix.'}]}
+   {conditions:[eq('chambreChoice',1)],instructions:[done('chambre:exit'),{type:'winGame',value:'FIN · LA MÉMOIRE — Tu franchis la porte avec les sept noms. Au matin, tu reconnais Lia sur la photo. Puis ton reflet, dans la vitre, tarde une seconde à te suivre. La chambre t’a laissé sortir… mais elle n’a pas cessé de te reconstruire.'}]},
+   {conditions:[eq('chambreChoice',2)],instructions:[done('chambre:exit'),{type:'winGame',value:'FIN · LA RUPTURE — Tu te réveilles dehors, libre et sans souvenirs. Dans ta poche : une photographie blanche. Au dos, une écriture familière : « Cette fois, n’ouvre pas. » Ton téléphone affiche 03:07. Appel entrant : Lia.'}]}
   ],
   elseInstructions:[say('La porte est verrouillée. Cherche les souvenirs puis parle à Lia.')]
  });
  player.adventure={title:'CHAMBRE 07 · La Voix',combatEnabled:false,items:[],notes:[],
   demo:{id:'chambre07native',title:'CHAMBRE 07 · scène 3D native',
-   description:'Explore un appartement 3D, récupère les souvenirs, choisis une réponse et échappe-toi.',
+   description:'2009 : sept disparus. À 03:07, une voix t’appelle depuis un appartement absent des plans. Retrouve trois preuves, confronte Lia, puis choisis quelle vérité franchira la porte avec toi.',
    features:['Scène éditable','Caméra FPS','Collisions 3D','Blueprint','IA de poursuite','Deux fins'],
    steps:[
     {goal:'chambre:chambrePhoto',targetId:photo.id},
@@ -133,7 +133,7 @@ export function createChambre07Scene(mode='3d'){
   goal('chambre:chambreTape','Retrouver la cassette'),
   goal('chambre:chambreLetter','Retrouver la lettre'),
   goal('chambre:lia','Comprendre la voix de Lia'),
-  say('CHAMBRE 07 · ZQSD / souris : explorer · E : examiner · J : journal · F5/F9 : sauvegarder / charger.')
+  say('03:07. Une voix derrière le mur : « Tu m’avais promis de ne plus revenir. » CHAMBRE 07 · ZQSD / souris : explorer · E : examiner · J : journal · F5/F9 : sauvegarder / charger.')
  ]};
  return {entities,selected:[player.id],nextId:entities.length+1,playerId:player.id,
   genre:'horror',camera:{x:70,y:60,zoom:.8},

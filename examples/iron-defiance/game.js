@@ -110,6 +110,20 @@ async function assignAsset(file,assetId){
   return original;
  }finally{URL.revokeObjectURL(url)}
 }
+async function preloadBundledModels(){
+ try{
+  const r=await fetch('./models/manifest.json',{cache:'no-store'});if(!r.ok)return;
+  const manifest=await r.json();if(manifest.version!==1||!Array.isArray(manifest.files))return;
+  let count=0;
+  for(const fileName of manifest.files.slice(0,12)){
+   if(!/^ID-(INF|ARM|LOG|DRN|ENV)-\d{2}\.glb$/i.test(fileName))continue;
+   const response=await fetch('./models/'+encodeURIComponent(fileName));if(!response.ok)continue;
+   const file=new File([await response.blob()],fileName,{type:'model/gltf-binary'});
+   try{await assignAsset(file,fileName.slice(0,-4).toUpperCase());count++}catch(error){console.warn('Iron Defiance asset import skipped:',fileName,error)}
+  }
+  if(count)announce(count+' GLB installés dans la mission depuis le bundle Web.');
+ }catch(e){console.warn('Modèles Web non chargés :',e)}
+}
 const rayGround=new THREE.Plane(new THREE.Vector3(0,1,0),0),mouse=new THREE.Vector2(),intersection=new THREE.Vector3();
 function pointerGround(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(mouse,camera);return raycaster.ray.intersectPlane(rayGround,intersection)?{x:intersection.x,z:intersection.z}:null}
 function pick(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(mouse,camera);
@@ -180,4 +194,4 @@ function draw(now){const dt=Math.min(.05,(now-last)/1000);last=now;updateCamera(
  if(canvas.width!==Math.round(w*renderer.getPixelRatio())||canvas.height!==Math.round(h*renderer.getPixelRatio()))renderer.setSize(w,h,false);
  camera.aspect=w/h;camera.updateProjectionMatrix();renderer.render(scene,camera);requestAnimationFrame(draw);
 }
-syncUnits();updateHud();announce('Sélectionnez vos unités ; clic droit sur la route pour donner un ordre.');requestAnimationFrame(draw);
+syncUnits();updateHud();announce('Sélectionnez vos unités ; clic droit sur la route pour donner un ordre.');preloadBundledModels();requestAnimationFrame(draw);

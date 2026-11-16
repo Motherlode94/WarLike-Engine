@@ -14,7 +14,7 @@ Les modèles utilisent leurs couleurs par sommet `COLOR_0`, leur couleur et text
 
 Le rendu charge aussi les normal maps (avec leur facteur `scale`), les textures métal/rugosité (canaux B/G linéaires), l’occlusion (canal R et `strength`) et les textures émissives (couleur sRGB). Chaque carte conserve son jeu d’UV et sa transformation KHR_texture_transform. L’occlusion agit sur l’éclairage ambiant. Les normal maps demandent OES_standard_derivatives ; son absence est signalée dans les diagnostics du modèle.
 
-Ce rendu conserve son éclairage approximatif ; ce n’est pas une implémentation PBR glTF complète. Transmission, clearcoat, textures compressées et réflexion IBL restent hors de ce chantier. Les extensions de matériaux optionnelles non prises en charge produisent désormais un diagnostic ; les extensions requises inconnues bloquent l’import. La vérification visuelle des nouvelles cartes doit être exécutée dans Chromium.
+Ce rendu conserve son éclairage approximatif ; ce n’est pas une implémentation PBR glTF complète. Transmission, clearcoat, textures compressées et réflexion IBL restent hors de ce chantier. Les extensions de matériaux optionnelles non prises en charge produisent désormais un diagnostic ; les extensions requises inconnues bloquent l’import. Le contrôle Chromium du 16 novembre vérifie le chargement des quatre cartes, compare les captures de deux facteurs de normal map et contrôle trois GLB représentatifs ; les captures ont été examinées. Cela ne constitue pas une validation sur tous les GPU et navigateurs. Voir [le bilan](3d-gameplay-materials-2026-11-16.md).
 
 ## Export du jeu
 

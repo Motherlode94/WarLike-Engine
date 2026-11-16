@@ -8,12 +8,13 @@ export const obstacles=[
  {x:8,z:14,w:13,d:8,h:6,cover:0.65,type:'building'},
  {x:25,z:-18,w:12,d:8,h:5,cover:0.6,type:'building'},
  {x:23,z:18,w:9,d:8,h:5,cover:0.6,type:'building'},
- {x:-12,z:0,w:3,d:2,h:1.5,cover:0.45,type:'barricade'},
+ {x:-12,z:0,w:3,d:2,h:1.5,cover:0.45,type:'barricade',assetId:'ID-ENV-01'},
  {x:12,z:-8,w:3,d:2,h:1.5,cover:0.45,type:'barricade'},
  {x:17,z:7,w:3,d:2,h:1.5,cover:0.45,type:'barricade'},
  {x:-3,z:12,w:3,d:2,h:1.5,cover:0.45,type:'barricade'},
  {x:-20,z:21,w:4,d:2,h:1.4,cover:0.5,type:'barricade'},
- {x:1,z:-15,w:3,d:2,h:1.4,cover:0.45,type:'barricade'}
+ {x:1,z:-15,w:3,d:2,h:1.4,cover:0.45,type:'barricade'},
+ {x:-31,z:23,w:4,d:4,h:6,cover:0.55,type:'building',assetId:'ID-ENV-02'}
 ];
 export const specs=Object.freeze({
  infantry:{speed:4.8,radius:.42,range:12,damage:9,rate:.55,ammo:28,mag:28,reserve:84,hp:90,armor:0,projectileSpeed:33},
@@ -24,6 +25,8 @@ export const specs=Object.freeze({
  scout:{speed:7,radius:1,range:15,damage:12,rate:.6,ammo:30,mag:30,reserve:75,hp:210,armor:5,projectileSpeed:45},
  supply:{speed:4.3,radius:1.3,range:0,damage:0,rate:1,ammo:0,mag:0,reserve:0,hp:280,armor:5,projectileSpeed:0},
  convoy:{speed:3.2,radius:1.4,range:0,damage:0,rate:1,ammo:0,mag:0,reserve:0,hp:300,armor:3,projectileSpeed:0},
+ ambulance:{speed:4,radius:1.2,range:0,damage:0,rate:1,ammo:0,mag:0,reserve:0,hp:240,armor:4,projectileSpeed:0},
+ airDrone:{speed:7.2,radius:.7,range:12,damage:8,rate:.8,ammo:100,mag:100,reserve:0,hp:85,armor:1,projectileSpeed:40},
  drone:{speed:5.8,radius:.8,range:13,damage:12,rate:1.1,ammo:100,mag:100,reserve:0,hp:100,armor:2,projectileSpeed:35},
  bot:{speed:3.8,radius:.55,range:11,damage:8,rate:.85,ammo:100,mag:100,reserve:0,hp:115,armor:3,projectileSpeed:28},
  enemyArmor:{speed:2.9,radius:1.5,range:19,damage:25,rate:2.1,ammo:30,mag:30,reserve:0,hp:300,armor:11,projectileSpeed:35}
@@ -37,9 +40,10 @@ export function createMission(){
  unit('alpha3','friendly','medic',-25,-6),unit('alpha4','friendly','engineer',-28,-6),
  unit('apc','friendly','apc',-30,-10),unit('tank','friendly','tank',-20,-13),
  unit('supply','friendly','supply',-33,-10),unit('convoy','friendly','convoy',-33,-25),
+ unit('scout1','friendly','scout',-18,-7),unit('ambulance1','friendly','ambulance',-33,-2),
  unit('drone1','enemy','drone',8,-8),unit('drone2','enemy','drone',19,-1),
  unit('bot1','enemy','bot',2,3),unit('bot2','enemy','bot',18,13),
- unit('bot3','enemy','bot',25,-8),unit('armor1','enemy','enemyArmor',27,2)
+ unit('bot3','enemy','bot',25,-8),unit('armor1','enemy','enemyArmor',27,2),unit('flyer1','enemy','airDrone',0,19)
  ];
  return {version:1,phase:'playing',time:0,units,shots:[],kills:0,losses:0,orders:0,
   objective:'Sécurisez la route, protégez le convoi et atteignez la zone d’extraction.',

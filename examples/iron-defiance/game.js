@@ -142,7 +142,11 @@ let down=null;
 canvas.addEventListener('pointerdown',e=>{if(e.button===2){rotate=true;down={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,button:2};return}if(e.button!==0)return;down={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,button:0};canvas.setPointerCapture(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(rotate&&down){orbital.azimuth+=(e.clientX-down.x)*.006;orbital.zoom=Math.max(20,orbital.zoom+(e.clientY-down.y)*.04);down.x=e.clientX;down.y=e.clientY}
  if(down?.button===0&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>8){const box=$('selectionBox');box.hidden=false;box.style.left=Math.min(e.clientX,down.x)+'px';box.style.top=Math.min(e.clientY,down.y)+'px';box.style.width=Math.abs(e.clientX-down.x)+'px';box.style.height=Math.abs(e.clientY-down.y)+'px'}});
-canvas.addEventListener('pointerup',e=>{if(!down)return;if(down.button===2){if(Math.hypot(e.clientX-down.startX,e.clientY-down.startY)<6){const pt=pointerGround(e);if(pt){giveOrder(mission,[...selection],pt,{append:e.shiftKey});announce('Ordre de déplacement transmis.')}}rotate=false;down=null;return}
+canvas.addEventListener('pointerup',e=>{if(!down)return;if(down.button===2){if(Math.hypot(e.clientX-down.startX,e.clientY-down.startY)<6){
+   const id=pick(e),enemy=mission.units.find(u=>u.id===id&&u.team==='enemy'&&u.alive);
+   if(enemy&&selection.size){giveOrder(mission,[...selection],{x:enemy.x,z:enemy.z},{attack:enemy.id});announce('Engagement autorisé sur '+enemy.id+'.');}
+   else{const pt=pointerGround(e);if(pt){giveOrder(mission,[...selection],pt,{append:e.shiftKey});announce('Ordre de déplacement transmis.');}}
+  }rotate=false;down=null;return}
  const distanceDragged=Math.hypot(e.clientX-down.x,e.clientY-down.y),box=$('selectionBox');box.hidden=true;
  if(distanceDragged<8){const id=pick(e);select(id?[id]:[],e.shiftKey);}
  else{const rect=canvas.getBoundingClientRect();const minx=Math.min(down.x,e.clientX),maxx=Math.max(down.x,e.clientX),miny=Math.min(down.y,e.clientY),maxy=Math.max(down.y,e.clientY);

@@ -1,0 +1,41 @@
+name: Iron Defiance mission and offline export
+on:
+  push:
+    paths:
+      - 'examples/iron-defiance/**'
+      - '.github/workflows/iron-defiance.yml'
+  pull_request:
+    paths:
+      - 'examples/iron-defiance/**'
+      - '.github/workflows/iron-defiance.yml'
+permissions:
+  contents: read
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate rules
+        run: node --test examples/iron-defiance/tests/*.test.mjs
+      - name: Install dependencies for isolated game
+        working-directory: examples/iron-defiance
+        run: npm install --no-package-lock --ignore-scripts
+      - name: Generate portable Web bundle
+        working-directory: examples/iron-defiance
+        run: npm run build
+      - name: Check portable bundle exists and contains Three.js
+        run: |
+          test -s examples/iron-defiance/dist/game.js
+          test -s examples/iron-defiance/dist/index.html
+          ! grep -q 'cdn.jsdelivr.net' examples/iron-defiance/dist/index.html
+          grep -q 'MISSION ACTIVE' examples/iron-defiance/dist/index.html
+      - name: Upload Web build for browser testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: iron-defiance-cendre01-web
+          path: examples/iron-defiance/dist/
+          retention-days: 7

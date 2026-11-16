@@ -4,6 +4,7 @@ import {prefab3d} from '../assets/catalog-3d.js';
 import {defaultController,defaultStats,defaultInventory} from './gameplay-components.js';
 import {createGraph} from './blueprint-graph.js';
 import {defaultTacticalUnit} from './rts-orders.js';
+import {createUniform,applyUniform} from './iron-defiance-uniforms.js';
 const set=(key,value)=>({type:'setVariable',key,value});
 const say=value=>({type:'message',value});
 const emit=value=>({type:'emitSignal',value});
@@ -29,6 +30,7 @@ export function createIronDefianceTrainingScene(mode='3d'){
     tacticalUnit:{...defaultTacticalUnit(),autoAttack:false,speed:95,passFriendlyUnits:true}
    });
    soldier.ironTraining={squad:'Escouade 01',team:t.name,slot:i+1,nominal:t.count,editable:true};
+   applyUniform(soldier,createUniform('rdc',{role:i===0?'officer':'infantry',environment:'forest',rankMark:i===0?'team-leader':'none'}));
    // Native RTS movement is triggered by the same Blueprint signal as the team terminal.
    // Each soldier owns its order; destinations retain team formation spacing.
    soldier.sequence={enabled:true,event:'signal',signal:'iron:team:'+t.name.toLowerCase(),once:false,

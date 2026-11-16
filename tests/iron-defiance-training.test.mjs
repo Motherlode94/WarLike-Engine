@@ -23,6 +23,23 @@ test('Each team terminal has a native executable Blueprint graph',()=>{
  const finish=terminals.find(e=>e.name.includes('Synthèse'));
  assert.equal(finish.sequence.conditions.length,3);
 });
+test('Each Alpha, Beta and Delta soldier receives a native RTS move order from a Blueprint signal',()=>{
+ const entities=scene().entities;
+ const soldiers=entities.filter(e=>e.tags?.includes('iron-soldier'));
+ const byTeam={Alpha:5,Beta:4,Delta:3};
+ for(const [team,count] of Object.entries(byTeam)){
+  const group=soldiers.filter(e=>e.ironTraining.team===team);
+  assert.equal(group.length,count);
+  for(const soldier of group){
+   assert.equal(soldier.tacticalUnit.enabled,true);
+   assert.equal(soldier.tacticalUnit.autoAttack,false);
+   assert.equal(soldier.sequence.event,'signal');
+   assert.equal(soldier.sequence.signal,'iron:team:'+team.toLowerCase());
+   assert.equal(soldier.sequence.instructions[0].type,'rtsOrder');
+   assert.equal(soldier.sequence.instructions[0].value,'move');
+  }
+ }
+});
 test('WarScript Academy sample compiles against the real WarScript interpreter',()=>{
  const source=readFileSync(new URL('../examples/iron-defiance/training/SignalEquipe.wls',import.meta.url),'utf8');
  const result=compileWarScript(source);

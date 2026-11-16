@@ -21,7 +21,34 @@ export function validateScriptReply(reply,entries){
 }
 // The iframe has an opaque origin (NO allow-same-origin). Its Worker inherits a
 // deny-by-default CSP. Only the private MessagePort reaches the editor.
-const bootstrap=`addEventListener('message',event=>{if(event.source!==parent||!event.ports[0])return;const port=event.ports[0];const worker=new Worker(URL.createObjectURL(new Blob([event.data],{type:'text/javascript'})));worker.onmessage=e=>port.postMessage(e.data);worker.onerror=()=>port.postMessage({fatal:'Erreur du Worker isolé.'});port.onmessage=e=>{if(e.data.terminate){worker.terminate();port.close()}else worker.postMessage(e.data)};port.start()},{once:true});`;
+function sandboxDocumentMain(){
+ addEventListener('message',event=>{
+  if(event.source!==parent||!event.ports[0])return;
+  const port=event.ports[0],worker=new Worker(URL.createObjectURL(new Blob([event.data],{type:'text/javascript'})));let expected=null,ready=false;
+  const fail=()=>{worker.terminate();port.postMessage({fatal:'Message du Worker hors limites.'})};
+  worker.onmessage=event=>{
+   const data=event.data;if(data?.ready===true&&!ready){ready=true;port.postMessage({ready:true});return}
+   if(expected===null||data?.id!==expected)return;
+   // Bound the data BEFORE forwarding it across the editor boundary. Walk
+   // incrementally; do not stringify an unbounded user-generated object.
+   let count=0,total=0;
+   function valid(value,depth=0){
+    if(++count>8192||depth>10)return false;
+    if(typeof value==='string'){total+=value.length+2;return value.length<=4096&&total<=262144}
+    if(value===null||typeof value==='boolean'||typeof value==='number'&&Number.isFinite(value)){total+=24;return total<=262144}
+    if(!value||typeof value!=='object'||!Array.isArray(value)&&Object.getPrototypeOf(value)!==Object.prototype)return false;
+    const keys=Object.keys(value);if(keys.length>2048)return false;
+    for(const key of keys){total+=key.length+4;if(total>262144||['__proto__','constructor','prototype'].includes(key)||!valid(value[key],depth+1))return false}return true;
+   }
+   if(!valid(data)||JSON.stringify(data).length>262144){fail();return}
+   expected=null;port.postMessage(data);
+  };
+  worker.onerror=fail;
+  port.onmessage=event=>{if(event.data.terminate){worker.terminate();port.close()}else{expected=event.data.id;worker.postMessage(event.data)}};port.start();
+ },{once:true});
+}
+const bootstrap='('+sandboxDocumentMain.toString()+')()';
+
 export class IsolatedWebScripts{
  constructor(){this.entries=[];this.sequence=0;this.pending=null;this.generation=0;this.errors=[];this.active=false}
  async prepare(ctx,records){

@@ -44,7 +44,7 @@ def sandbox_command(command, folder, *, mounts=(), managed=False, writable=False
     # CoreCLR creates sparse 2-TiB W^X memfds, including for dynamic code.
     # Ordinary writable .NET files remain confined to the 64-MiB private tmpfs.
     return options + ["--", prlimit, "--as=" + str(memory), "--cpu=" + ("300" if managed else "15"),
-                      "--nproc=64", "--nofile=128", "--fsize=" + (str(2*1024**4) if managed else "16777216"), "--core=0", "--"] + translated
+                      "--nproc=64", "--nofile=" + ("512" if managed else "128"), "--fsize=" + (str(2*1024**4) if managed else "16777216"), "--core=0", "--"] + translated
 
 
 def kill_tree(process):

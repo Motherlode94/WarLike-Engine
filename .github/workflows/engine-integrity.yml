@@ -45,6 +45,8 @@ jobs:
         run: npm run build:runtime
       - name: Reject an outdated committed runtime manifest
         run: git diff --exit-code -- runtime-files.json
+      - name: Verify portable Web module dependency closure
+        run: node scripts/check-runtime-module-closure.mjs
       - name: Check runtime files required by native CHAMBRE 07
         run: node scripts/check-chambre07-runtime-manifest.mjs
       - name: Check TypeScript definitions

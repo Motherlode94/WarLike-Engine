@@ -10,13 +10,13 @@ const walk=async dir=>{
  for(const entry of entries){
   if(entry.isSymbolicLink())continue;
   const name=dir+'/'+entry.name;
-  if(entry.isDirectory())result.push(...await walk(name));
+  if(entry.isDirectory()&&!['node_modules','dist','.cache'].includes(entry.name))result.push(...await walk(name));
   else if(entry.isFile()&&/\.(html|js|mjs|wasm|css|svg|png|jpg|jpeg|webp|glb|json|md|txt|ogg|mp3|wav)$/i.test(name))result.push(name);
  }
  return result;
 };
 const requiredFiles=['index.html','python/lan_server.py','python/warlike.py','start-warlike-multi.cmd'];
-const requiredDirs=['js','css','design-system','src','assets','vendor','examples/community','examples/worldforge','script-editor'];
+const requiredDirs=['js','css','design-system','src','assets','vendor','examples/community','examples/worldforge','examples/iron-defiance','script-editor'];
 for(const file of requiredFiles){
  const info=await lstat(path.join(root,file));
  if(!info.isFile())throw new Error('Required runtime file is not a regular file: '+file);

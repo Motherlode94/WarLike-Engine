@@ -36,14 +36,14 @@ export function createMission(){
  unit('alpha1','friendly','infantry',-26,-3),unit('alpha2','friendly','infantry',-24,-4),
  unit('alpha3','friendly','medic',-25,-6),unit('alpha4','friendly','engineer',-28,-6),
  unit('apc','friendly','apc',-30,-10),unit('tank','friendly','tank',-20,-13),
- unit('supply','friendly','supply',-31,-14),unit('convoy','friendly','convoy',-32,-22),
+ unit('supply','friendly','supply',-33,-10),unit('convoy','friendly','convoy',-33,-25),
  unit('drone1','enemy','drone',8,-8),unit('drone2','enemy','drone',19,-1),
  unit('bot1','enemy','bot',2,3),unit('bot2','enemy','bot',18,13),
  unit('bot3','enemy','bot',25,-8),unit('armor1','enemy','enemyArmor',27,2)
  ];
  return {version:1,phase:'playing',time:0,units,shots:[],kills:0,losses:0,orders:0,
   objective:'Sécurisez la route, protégez le convoi et atteignez la zone d’extraction.',
-  message:'Opération CENDRE-01 commencée.',convoyRoute:[{x:-23,z:-22},{x:-10,z:-18},{x:0,z:-8},{x:4,z:4},{x:17,z:21},{x:29,z:22}],routeIndex:0,escortEnabled:true,extraction:{x:29,z:22,r:5},result:null};
+  message:'Opération CENDRE-01 commencée.',convoyRoute:[{x:-20,z:-25},{x:-10,z:-18},{x:0,z:-8},{x:4,z:4},{x:17,z:21},{x:29,z:22}],routeIndex:0,escortEnabled:true,extraction:{x:29,z:22,r:5},result:null};
 }
 export const live=m=>m.units.filter(u=>u.alive);
 export function walkable(x,z,r=.5){
@@ -168,7 +168,7 @@ export function tick(m,dt){
  }
  for(const shot of m.shots){shot.life-=dt;if(shot.life<=0&&!shot.done){
   const target=m.units.find(u=>u.id===shot.target&&u.alive),source=m.units.find(u=>u.id===shot.attacker);
-  if(target&&source&&distance(target,{x:shot.toX,z:shot.toZ})<Math.max(2,target.radius*2))applyDamage(m,target,shot.damage,source);
+  if(target&&source&&distance(target,{x:shot.toX,z:shot.toZ})<Math.max(2,specs[target.type].radius*2))applyDamage(m,target,shot.damage,source);
   shot.done=true;
  }}
  m.shots=m.shots.filter(s=>!s.done);

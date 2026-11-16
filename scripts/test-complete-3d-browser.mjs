@@ -28,7 +28,7 @@ const gallery=[];
 for(let i=0;i<galleryModels.length;i++){
  const o=prefab3d(galleryModels[i],i+1,-240+i*240,0);assert(o,'Missing representative GLB: '+galleryModels[i]);Object.assign(o,{name:['Humanoïde','Véhicule','Objet texturé'][i],w:128,h:160,depth3d:128,collision3d:false,solid3d:false});gallery.push(o);
 }
-gallery.push({id:4,name:'Sonde PBR',type:'mesh3d',assetId:probe.id,model3dId:probe.id,x:-30,y:260,w:120,h:120,depth3d:120,elevation3d:0,collision3d:false});
+gallery.push({id:4,name:'Sonde PBR',type:'mesh3d',assetId:probe.id,model3dId:probe.id,x:-30,y:260,w:120,h:120,depth3d:120,elevation3d:1.7,collision3d:false});
 gallery.push({id:5,name:'Observateur',type:'player',playable3d:true,x:16,y:620,w:32,h:96,depth3d:32,elevation3d:0,rotation:180,controller3d:{walkSpeed:0,gravity:0},cameraRig:{mode:'firstPerson'}});
 const galleryInput={mode:'3d',entities:gallery,camera:{x:0,y:0,zoom:1},project:{...freshGameProject(),id:'material-gallery',title:'GLB — contrôle visuel',genre:'sandbox'}};
 await build('gallery',galleryInput);

@@ -18,8 +18,8 @@ geom(72,.25,58,groundMat,0,-.2,0);
 geom(8,.06,56,roadMat,0,.01,0);geom(63,.06,7,roadMat,0,.025,-19);
 for(let z=-27;z<28;z+=6)geom(.14,.015,2.8,new THREE.MeshBasicMaterial({color:0xa1a4a6}),0,.06,z);
 for(let x=-30;x<32;x+=8)geom(3,.017,.13,new THREE.MeshBasicMaterial({color:0x90939a}),x,.075,-19);
-const covers=[];
-for(const o of obstacles){const material=o.type==='barricade'?new THREE.MeshStandardMaterial({color:0x9c9b93,roughness:1}):wallMat;geom(o.w,o.h,o.d,material,o.x,o.h/2,o.z);if(o.type==='building'){geom(o.w+.35,.24,o.d+.35,roofMat,o.x,o.h+.12,o.z);for(let z=-o.d/2+1;z<o.d/2-1;z+=2){geom(.08,1.25,.8,new THREE.MeshBasicMaterial({color:0x233443}),o.x+o.w/2+.06,2.4,o.z+z);}}covers.push(o);}
+const covers=[],staticTargets=new Map();
+for(const o of obstacles){const material=o.type==='barricade'?new THREE.MeshStandardMaterial({color:0x9c9b93,roughness:1}):wallMat;const body=geom(o.w,o.h,o.d,material,o.x,o.h/2,o.z);const fallback=[body];if(o.type==='building'){fallback.push(geom(o.w+.35,.24,o.d+.35,roofMat,o.x,o.h+.12,o.z));for(let z=-o.d/2+1;z<o.d/2-1;z+=2){geom(.08,1.25,.8,new THREE.MeshBasicMaterial({color:0x233443}),o.x+o.w/2+.06,2.4,o.z+z);}}if(o.assetId)staticTargets.set(o.assetId,{obstacle:o,fallback,model:null});covers.push(o);}
 const exit=new THREE.Mesh(new THREE.RingGeometry(4.3,4.8,64),new THREE.MeshBasicMaterial({color:0x6fffc8,side:THREE.DoubleSide,transparent:true,opacity:.88}));exit.rotation.x=-Math.PI/2;exit.position.set(29,.12,22);scene.add(exit);
 const exitLamp=new THREE.PointLight(0x66ffc0,2.5,16);exitLamp.position.set(29,4,22);scene.add(exitLamp);
 const roadMarks=[[-28,-22],[-22,-21],[-14,-19],[-7,-17],[-1,-10],[3,-2],[7,6],[15,16],[29,22]];
@@ -43,7 +43,7 @@ function soldier(group,mat,scale=1){
  group.userData.proceduralRig={kind:'humanoid',limbs};
 }
 function vehicle(group,type,mat){
- const tank=type==='tank'||type==='enemyArmor',truck=type==='supply'||type==='convoy',apc=type==='apc',drone=type==='drone';
+ const tank=type==='tank'||type==='enemyArmor',truck=type==='supply'||type==='convoy'||type==='ambulance',apc=type==='apc',drone=type==='drone'||type==='airDrone';
  if(drone){geom(1,.45,1,mat,0,1,0,group);for(const x of [-.65,.65])for(const z of [-.65,.65])geom(.12,.1,.95,materials.steel,x,1.0,z,group);return}
  const w=tank?3.7:truck?2.65:apc?3.1:2.15,l=tank?5.5:truck?5.1:apc?4.5:3.8,h=tank?1.18:truck?1.7:1.24;
  geom(w,h,l,mat,0,.95,0,group);geom(w*.85,.28,l*.75,materials.steel,0,1.55,0,group);
@@ -76,7 +76,7 @@ function syncUnits(){
  const active=new Set(mission.units.map(u=>u.id));
  for(const [id,o] of objects)if(!active.has(id)){scene.remove(o.root);objects.delete(id)}
  for(const u of mission.units){let o=objects.get(u.id);if(!o){createVisual(u);o=objects.get(u.id)}
-  o.root.visible=u.alive;o.root.position.set(u.x,0,u.z);o.root.rotation.y=u.yaw;
+  o.root.visible=u.alive;o.root.position.set(u.x,u.type==='airDrone'?2.5:0,u.z);o.root.rotation.y=u.yaw;
   o.outline.visible=u.alive&&selection.has(u.id);
   o.fill.scale.x=Math.max(.001,u.hp/specs[u.type].hp);o.fill.position.x=-.7*(1-u.hp/specs[u.type].hp);
   const walked=Math.hypot(u.x-o.lastX,u.z-o.lastZ),moving=walked>.002;
@@ -87,7 +87,7 @@ function syncUnits(){
   if(o.modelLoaded){o.primitive.visible=false;o.modelLoaded.visible=true;}
  }
 }
-const typeToAsset={infantry:'ID-INF-01',medic:'ID-INF-02',engineer:'ID-INF-03',apc:'ID-ARM-01',tank:'ID-ARM-02',scout:'ID-ARM-03',supply:'ID-LOG-01',convoy:'ID-LOG-01',drone:'ID-DRN-01',bot:'ID-DRN-01',enemyArmor:'ID-ARM-02'};
+const typeToAsset={infantry:'ID-INF-01',medic:'ID-INF-02',engineer:'ID-INF-03',apc:'ID-ARM-01',tank:'ID-ARM-02',scout:'ID-ARM-03',supply:'ID-LOG-01',convoy:'ID-LOG-01',drone:'ID-DRN-01',bot:'ID-DRN-01',airDrone:'ID-DRN-02',ambulance:'ID-LOG-02',enemyArmor:'ID-ARM-02'};
 async function assignAsset(file,assetId){
  if(!file||!file.name.toLowerCase().endsWith('.glb'))throw Error('Un fichier GLB est nécessaire.');
  if(file.size>32*1024*1024)throw Error('Maximum 32 Mo par GLB pour ce prototype.');
@@ -97,7 +97,7 @@ async function assignAsset(file,assetId){
   original.updateMatrixWorld(true);
   const bounds=new THREE.Box3().setFromObject(original),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
   if(!Number.isFinite(size.y)||size.length()<.00001)throw Error('Modèle GLB sans géométrie.');
-  original.position.sub(center);original.position.y+=size.y/2;const scale=(assetId.startsWith('ID-INF')?2:assetId.startsWith('ID-DRN')?1.5:assetId.startsWith('ID-ENV')?2.2:3.5)/Math.max(size.x,size.y,size.z);
+  original.position.sub(center);original.position.y+=size.y/2;const scale=(assetId.startsWith('ID-INF')?2:assetId.startsWith('ID-DRN')?1.5:assetId==='ID-ENV-02'?6:assetId==='ID-ENV-01'?3:3.5)/Math.max(size.x,size.y,size.z);
   original.scale.setScalar(scale);
   let skinned=0;const joints=[];original.traverse(node=>{if(node.isSkinnedMesh)skinned++;if(/turret|wheel|rotor|barrel|gun_pivot|track/i.test(node.name||''))joints.push(node.name)});
   loadedTemplates.set(assetId,{original,skinned,joints,animations:gltf.animations});
@@ -107,6 +107,11 @@ async function assignAsset(file,assetId){
    if(gltf.animations.length){o.mixer=new THREE.AnimationMixer(clone);o.mixer.clipAction(gltf.animations[0]).play()};
   }
   announce(assetId+' installé · '+skinned+' mesh(es) skinné(s), '+joints.length+' pivots nommés, '+gltf.animations.length+' animation(s). Les articulations absentes doivent être préparées dans Rig Studio.');
+  const staticTarget=staticTargets.get(assetId);
+  if(staticTarget){if(staticTarget.model)scene.remove(staticTarget.model);
+   const decor=cloneSkinned(original);decor.position.x=staticTarget.obstacle.x;decor.position.z=staticTarget.obstacle.z;
+   scene.add(decor);staticTarget.model=decor;staticTarget.fallback.forEach(item=>item.visible=false);
+  }
   return original;
  }finally{URL.revokeObjectURL(url)}
 }

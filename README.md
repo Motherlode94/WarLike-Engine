@@ -373,3 +373,7 @@ Le modèle est téléchargé depuis le même domaine, vérifié (entête GLB ver
 Les rayons sont alimentés par les **manifestes Kenney et Quaternius déjà intégrés**. Ils proposent recherche, tri et filtre par auteur et pack. Les sections Armes/Maisons relient directement au modèle et à son prefab natif. Le rayon Animations ne présente que les entrées dont la liste de clips est non vide. Le rayon Matériaux agrège les chemins de texture déclarés dans les manifestes GLB ; seuls les chemins locaux sous `assets/free/textures/` au format image sont acceptés, avec un téléchargement individuel. Les images sont des textures, **pas des matériaux Unity .mat ni des shaders autonomes**.
 
 Le moteur contient un seul store principal et des départements spécialisés, sans dupliquer les fichiers. Les catégories basées sur la désignation peuvent contenir des accessoires associés, non des modèles strictement identiques. Syntaxe des pages vérifiée ; contrôles réels dans le navigateur non effectués.
+
+## Correctif — identité du paquet npm (novembre 2026)
+
+Le paquet `package.json` s'appelait `warlike-studio` alors qu'il représente WarLike Engine. Le nom est désormais `warlike-engine` afin d'éviter les collisions entre logiciels, métadonnées de build et outils d'intégration. Les scripts de test, export et validation de jeux restent inchangés. Le test `tests/engine-package-identity.test.mjs` empêche une régression. Cela ne change ni le runtime 2D/3D ni l'état réel des exports.

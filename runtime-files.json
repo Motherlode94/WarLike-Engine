@@ -16275,6 +16275,7 @@
     "examples/community/warlike-cuisine-commerce.json",
     "examples/community/warlike-objectifs-arcade.json",
     "examples/community/warlike-quete-livraison.json",
+    "examples/iron-defiance/README.md",
     "examples/iron-defiance/build.mjs",
     "examples/iron-defiance/game-rules.js",
     "examples/iron-defiance/game.js",

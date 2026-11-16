@@ -3,6 +3,7 @@
 import {prefab3d} from '../assets/catalog-3d.js';
 import {defaultController,defaultStats,defaultInventory} from './gameplay-components.js';
 import {createGraph} from './blueprint-graph.js';
+import {defaultTacticalUnit} from './rts-orders.js';
 const set=(key,value)=>({type:'setVariable',key,value});
 const say=value=>({type:'message',value});
 const emit=value=>({type:'emitSignal',value});
@@ -24,9 +25,14 @@ export function createIronDefianceTrainingScene(mode='3d'){
   for(let i=0;i<t.count;i++){
    const soldier=add('character-civilian',t.name+' · Soldat '+(i+1),t.x+(i%3)*54,310+Math.floor(i/3)*95,{
     hierarchyGroup:'Escouade 01 / '+t.name,tags:['iron-soldier','iron-'+t.name.toLowerCase()],team:1,
-    color:t.color,stats:defaultStats(),collision3d:true,solid3d:false
+    color:t.color,stats:defaultStats(),collision3d:true,solid3d:false,
+    tacticalUnit:{...defaultTacticalUnit(),autoAttack:false,speed:95,passFriendlyUnits:true}
    });
    soldier.ironTraining={squad:'Escouade 01',team:t.name,slot:i+1,nominal:t.count,editable:true};
+   // Native RTS movement is triggered by the same Blueprint signal as the team terminal.
+   // Each soldier owns its order; destinations retain team formation spacing.
+   soldier.sequence={enabled:true,event:'signal',signal:'iron:team:'+t.name.toLowerCase(),once:false,
+    instructions:[{type:'rtsOrder',value:'move',x:t.x+35+(i%3)*55,y:535+Math.floor(i/3)*65}]};
   }
   const console=add('primitive-cube','Terminal · '+t.name,t.x,190,{
    w:48,h:85,depth3d:45,elevation3d:.65,color:t.color,collision3d:false,solid3d:false,
@@ -34,7 +40,7 @@ export function createIronDefianceTrainingScene(mode='3d'){
   });
   const sequence=interact([
    set('iron_'+t.name.toLowerCase(),1),
-   say('Équipe '+t.name+' enregistrée. Ouvre cet objet dans Blueprint / WarNode pour modifier la logique.'),
+   say('Équipe '+t.name+' : ordre de mouvement transmis par Blueprint aux '+t.count+' soldats.'),
    emit('iron:team:'+t.name.toLowerCase())
   ]);
   sequence.graph=createGraph(sequence);
@@ -55,10 +61,10 @@ export function createIronDefianceTrainingScene(mode='3d'){
  ]};
  player.adventure={title:'IRON DEFIANCE · Academy',combatEnabled:false,items:[],notes:[],
   demo:{id:'irondefiancetraining',title:'Iron Defiance · Academy native',
-   description:'Manipule 12 soldats répartis Alpha 5 / Beta 4 / Delta 3 et trois terminaux Blueprint.',
+   description:'Commande 12 soldats (Alpha 5 / Beta 4 / Delta 3) : signaux Blueprint vers ordres RTS natifs.',
    features:['Hierarchy / Inspector','Blueprint / WarNode','Exemple WarScript séparé','Caméra FPS','Scène native éditable'],
    steps:[{goal:'iron:academy',targetId:finish.id}]}
  };
  return {entities,selected:[player.id],nextId:entities.length+1,playerId:player.id,genre:'rts',
-  camera:{x:70,y:60,zoom:.8},guide:'Iron Defiance Academy · Ouvre Hierarchy et Inspector, puis Blueprint / WarNode sur les trois terminaux. En Play : ZQSD + souris, E pour activer Alpha, Beta, Delta et la synthèse.'};
+  camera:{x:70,y:60,zoom:.8},guide:'Iron Defiance Academy · En Play, E sur chaque terminal transmet un signal Blueprint et déclenche le déplacement RTS natif de son équipe. Ouvre les soldats dans Inspector et leur séquence signal.'};
 }

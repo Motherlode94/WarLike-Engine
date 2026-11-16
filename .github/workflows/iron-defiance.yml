@@ -33,6 +33,19 @@ jobs:
           test -s examples/iron-defiance/dist/index.html
           ! grep -q 'cdn.jsdelivr.net' examples/iron-defiance/dist/index.html
           grep -q 'MISSION ACTIVE' examples/iron-defiance/dist/index.html
+      - name: Install browser testing tools
+        run: |
+          npm install --no-package-lock --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Play the exported mission in Chromium
+        run: node scripts/test-iron-defiance-browser.mjs
+      - name: Upload mission screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iron-defiance-browser-evidence
+          path: outputs/iron-defiance/
+          if-no-files-found: ignore
       - name: Upload Web build for browser testing
         uses: actions/upload-artifact@v4
         with:

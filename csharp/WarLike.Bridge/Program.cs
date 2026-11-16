@@ -194,7 +194,19 @@ async Task Handle(BridgeContext ctx) {
         res.StatusCode=404;await Reply(new {error="Not found"});
     }catch(InvalidDataException e){res.StatusCode=413;await Reply(new {error=e.Message});}
     catch(KeyNotFoundException e){res.StatusCode=404;await Reply(new {error=e.Message});}
-    catch(Exception e){res.StatusCode=400;var root=e.GetBaseException();string reason=root.GetType().Name+": "+root.Message;await Reply(new {error=reason.Length>4096?reason[..4096]:reason});}
+    catch(Exception e){res.StatusCode=400;var root=e.GetBaseException();string reason=root.GetType().Name+": "+root.Message;
+        if(req.Url?.AbsolutePath=="/scripts/compile" && (root is FileNotFoundException || root is OutOfMemoryException)) {
+            try {
+                reason+=" · "+string.Join("; ",File.ReadLines("/proc/self/status").Where(line=>line.StartsWith("VmSize:")||line.StartsWith("VmRSS:")||line.StartsWith("Threads:")));
+                reason+="; descriptors="+Directory.GetFiles("/proc/self/fd").Length+"; GC="+GC.GetTotalMemory(false);
+                if(root is FileNotFoundException missing && missing.FileName is not null) {
+                    string file=Path.Combine(System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory(),missing.FileName.Split(',')[0]+".dll");
+                    reason+="; runtimeFileExists="+File.Exists(file);
+                    using var probe=File.OpenRead(file);reason+="; runtimeFileReadable="+(probe.ReadByte()>=0);
+                }
+            } catch(Exception diagnostic) { reason+="; diagnostics="+diagnostic.GetType().Name+":"+diagnostic.Message; }
+        }
+        await Reply(new {error=reason.Length>4096?reason[..4096]:reason});}
     finally{res.Close();}
     async Task<string> ReadBody(int limit) {
         if(req.ContentLength64>limit) throw new InvalidDataException("Request too large.");

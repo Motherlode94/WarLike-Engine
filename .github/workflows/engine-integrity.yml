@@ -57,6 +57,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Hostile JavaScript isolation and trust in Chromium
         run: node scripts/test-script-security-browser.mjs
+      - name: Portable export with isolated JavaScript in Chromium
+        run: npm run test:export:browser
       - name: Reference editor, Blueprint and old/new project round trips
         run: node scripts/test-reference-editor-browser.mjs
       - name: CHAMBRE 07 export and isolated Play
@@ -74,6 +76,7 @@ jobs:
         with:
           name: chambre07-export-play-screenshot
           path: |
+            .validation-tools/export-browser/*.png
             .validation-tools/script-security/*.png
             .validation-tools/script-security/report.json
             .validation-tools/reference-editor/*.png

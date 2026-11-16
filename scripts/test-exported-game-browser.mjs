@@ -72,7 +72,7 @@ try{
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('warlike.save.v1:export-verification:quick'))),savedHero=saved.entities.find(o=>o.playable3d);
  assert.equal(savedHero.model3dId,initial.hero.assetId);
  await page.getByRole('button',{name:'Reprendre la partie',exact:true}).click();await page.keyboard.down('s');await page.waitForTimeout(300);await page.keyboard.up('s');
- await page.close();page=await open();await page.getByRole('button',{name:'Continuer la sauvegarde',exact:true}).click();
+ await page.close();page=await open();await page.getByRole('button',{name:'Continuer la sauvegarde',exact:true}).click();await page.locator('#scriptTrustAllow').click();
  await page.waitForFunction(async()=>{const {state}=await import('/js/core/state.js'),{runtimeSession}=await import('/js/core/runtime-session.js');return state.playing&&runtimeSession.phase==='ready';});
  await page.waitForTimeout(150);await page.keyboard.press('Escape');const loaded=await snapshot();
  assert(Math.hypot(loaded.hero.x-savedHero.x,loaded.hero.y-savedHero.y)<.1);assert.equal(loaded.hero.assetId,initial.hero.assetId);assert.equal(loaded.glError,0);

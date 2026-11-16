@@ -16,13 +16,18 @@ const walk=async dir=>{
  return result;
 };
 const requiredFiles=['index.html','python/lan_server.py','python/warlike.py','start-warlike-multi.cmd'];
-const requiredDirs=['js','css','design-system','src','assets','vendor','examples/community','examples/worldforge','examples/iron-defiance','script-editor'];
+const requiredDirs=['js','css','design-system','src','assets','vendor','examples/community','examples/worldforge','script-editor'];
 for(const file of requiredFiles){
  const info=await lstat(path.join(root,file));
  if(!info.isFile())throw new Error('Required runtime file is not a regular file: '+file);
 }
 const files=[...requiredFiles];
 for(const dir of requiredDirs)files.push(...await walk(dir));
+// Optional standalone demos should not be mandatory in minimal export fixtures.
+try{
+ const info=await lstat(path.join(root,'examples/iron-defiance'));
+ if(info.isDirectory())files.push(...await walk('examples/iron-defiance'));
+}catch(error){if(error?.code!=='ENOENT')throw error;}
 try{
  const info=await lstat(path.join(root,'native/dist'));
  if(info.isDirectory())files.push(...await walk('native/dist'));

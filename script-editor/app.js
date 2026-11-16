@@ -1,3 +1,5 @@
+import {nativeBridgeRequest,setNativeBridgeToken} from '../js/core/native-bridge-client.js';
+import {authorizeScripts} from '../js/core/script-trust.js';
 import {compileWarScript,runWarScriptPreview} from './warscript.js';
 import {convertWarScriptToCSharp} from './warscript-to-csharp.js';
 import {ScriptDocument,MAX_SOURCE,newId,languageFor,templates,templateFor,readLinkedFile,saveLinkedFile} from './core.js';
@@ -152,7 +154,7 @@ $('runNativeScript').onclick=async()=>{
  if(!['python','cpp'].includes(d.language))
   return status('Ouvre un script .py ou .cpp pour utiliser ce service local.',true);
  if(!scriptRunnerToken){
-  const supplied=prompt('Démarre start-warlike-script-runner.cmd sur ton PC, puis colle la CLÉ DE SESSION affichée dans son terminal. Le code sera exécuté avec les permissions de ton utilisateur Windows. N’exécute que tes propres scripts de confiance.');
+  const supplied=prompt('Démarre start-warlike-script-runner.cmd sur ton PC, puis colle la CLÉ DE SESSION affichée dans son terminal. L’exécution nécessite l’isolation Linux (bubblewrap et prlimit). Windows/macOS sont bloqués tant qu’aucune isolation système n’est disponible.');
   if(supplied===null)return;
   if(!/^[a-zA-Z0-9_-]{20,128}$/.test(supplied.trim()))return status('Clé de session du service local invalide.',true);
   scriptRunnerToken=supplied.trim();
@@ -162,6 +164,7 @@ $('runNativeScript').onclick=async()=>{
  $('outputTab').click();status('Exécution locale '+(language==='cpp'?'C++17':'Python')+' en cours…');
  log('▶ '+d.name+' · '+(language==='cpp'?'compilation C++17 puis exécution':'exécution Python')+' sur le PC local');
  try{
+  await authorizeScripts([{language,name:d.name,source}]);
   const response=await fetch('http://127.0.0.1:8891/run',{
    method:'POST',
    headers:{'Content-Type':'application/json','X-WarLike-Token':scriptRunnerToken},
@@ -237,7 +240,9 @@ $('checkScript').onclick=async()=>{
  if(d.language!=='csharp'){status('Choisis .wls pour WarScript ou .cs pour C# natif.');return}
  $('checkScript').disabled=true;status('Compilation C# dans le bridge .NET local…');
  try{const scripts=[...docs.values()].filter(doc=>doc.language==='csharp').map(doc=>({name:doc.name.replace(/\.cs$/i,''),source:doc.text}));
- const response=await fetch('http://127.0.0.1:8765/scripts/compile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scripts}),signal:AbortSignal.timeout(10000)}),result=await response.json();
+ await authorizeScripts(scripts.map(s=>({language:'csharp',name:s.name,source:s.source})));
+ const health=await nativeBridgeRequest('/health');if(health.authenticationRequired!==true||health.isolationRequired!==true)throw Error('Pont ancien non sécurisé : mets à jour le superviseur.');
+ const result=await nativeBridgeRequest('/scripts/compile',{scripts});
  for(const doc of docs.values())if(doc.language==='csharp')doc.nativeDiagnostics=(result.diagnostics||[]).filter(m=>m.file===doc.name);
  if(!result.ok&&!result.diagnostics?.length)d.nativeDiagnostics=[{line:1,column:1,message:result.error||'Compilation refusée.'}];
  updateProblems();$('problemsTab').click();status(result.ok?'✓ C# natif compilé · Ctrl+S puis Play C# local pour exécuter.':result.error||'Erreur de compilation C#.',!result.ok);
@@ -271,3 +276,5 @@ async function loadMonaco(){
  }catch(error){$('editorEngine').textContent='Éditeur texte · Monaco hors connexion';log('Éditeur texte disponible : '+error.message);status('Éditeur texte disponible. Monaco nécessite l’accès à son CDN.')}
 }
 loadMonaco();
+
+const csharpToken=document.createElement('input');csharpToken.id='csharpSessionToken';csharpToken.type='password';csharpToken.autocomplete='off';csharpToken.placeholder='Clé de session C# (terminal)';csharpToken.setAttribute('aria-label','Clé de session C#');$('executionHint').after(csharpToken);csharpToken.addEventListener('change',()=>{setNativeBridgeToken(csharpToken.value);csharpToken.value='';status('Clé C# mémorisée pour cet onglet.')});

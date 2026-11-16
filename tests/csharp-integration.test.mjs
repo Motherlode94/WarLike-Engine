@@ -11,7 +11,7 @@ test('WarLike exposes C# connection, scene sync and step controls',()=>{
 test('C# bridge uses loopback and executes scene through JSON API',()=>{
  const ui=read('js/ui/csharp-runtime.js');
  const native=read('csharp/WarLike.Bridge/Program.cs');
- assert.match(ui,/http:\/\/127\.0\.0\.1:8765/);
+ assert.match(read('js/core/native-bridge-client.js'),/http:\/\/127\.0\.0\.1:8765/);
  assert.match(ui,/request\('\/scene','POST',currentScene\(\)\)/);
  assert.match(ui,/request\('\/tick','POST',\{dt\}\)/);
  assert.match(ui,/second\.addEventListener\('click',\(\)=>simulate\(1\)\)/);

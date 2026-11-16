@@ -59,7 +59,7 @@ try{
  });
  await page.getByRole('button',{name:'Jouer',exact:true}).waitFor();
  await page.screenshot({path:path.join(output,'menu.png'),timeout:20000});
- await page.getByRole('button',{name:'Jouer',exact:true}).click();
+ await page.getByRole('button',{name:'Jouer',exact:true}).click();await page.locator('#scriptTrustAllow').click();
  await page.waitForFunction(async()=>{const {runtimeSession}=await import('/js/core/runtime-session.js');return runtimeSession.phase==='ready';});
  await page.waitForTimeout(300);const initial=await snapshot();assert(initial.playing);assert(initial.rapier.ready);assert.equal(initial.glError,0);
  await page.keyboard.down('w');await page.waitForTimeout(1400);await page.keyboard.up('w');

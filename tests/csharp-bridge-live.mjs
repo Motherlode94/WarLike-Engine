@@ -24,8 +24,10 @@ test('real .NET bridge: typed parameters, tactical orders, revisions, origin and
   await delay(50);
  }
  assert.ok(healthy,'Bridge did not start: '+logs);
+ const token=logs.match(/CLÉ DE SESSION C# : ([A-Za-z0-9_-]+)/)?.[1];assert.ok(token,'launch token required');
+ for(const path of ['/scripts/compile','/scene','/frame','/stop','/tick','/components/set']){const denied=await fetch(base+path,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:'{}'});assert.equal(denied.status,401)}
  const call=async(path,data,expected=200)=>{
-  const response=await fetch(base+path,{method:data===undefined?'GET':'POST',headers:{Origin:origin,...(data===undefined?{}:{'Content-Type':'application/json'})},...(data===undefined?{}:{body:JSON.stringify(data)}),signal:AbortSignal.timeout(path==='/scripts/compile'?30000:3000)});
+  const response=await fetch(base+path,{method:data===undefined?'GET':'POST',headers:{Origin:origin,'X-WarLike-Token':token,...(data===undefined?{}:{'Content-Type':'application/json'})},...(data===undefined?{}:{body:JSON.stringify(data)}),signal:AbortSignal.timeout(path==='/scripts/compile'?30000:3000)});
   const body=await response.json();assert.equal(response.status,expected,JSON.stringify(body));return body;
  };
  const health=await call('/health');assert.equal(health.protocol,3);

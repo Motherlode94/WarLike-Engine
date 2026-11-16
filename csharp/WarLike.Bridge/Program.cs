@@ -3,10 +3,21 @@ using System.Text;
 using System.Text.Json;
 using WarLike.Runtime;
 
-var builder = new HttpListener();
-builder.Prefixes.Add("http://127.0.0.1:8765/");
-builder.Start();
-Console.WriteLine("WarLike C# bridge listening on http://127.0.0.1:8765/");
+// Public HTTP/auth lives in the supervisor; user assemblies get private stdio
+// inside a Linux namespace sandbox. There is no unsandboxed HTTP execution mode.
+if (!args.Contains("--isolated-worker")) {
+    string python = OperatingSystem.IsWindows() ? "python" : "python3";
+    var launch = new System.Diagnostics.ProcessStartInfo(python) { UseShellExecute=false };
+    launch.ArgumentList.Add(Path.Combine(AppContext.BaseDirectory,"native_bridge.py"));
+    launch.ArgumentList.Add("--assembly");launch.ArgumentList.Add(typeof(NativeScriptCompiler).Assembly.Location);
+
+    using var supervisor=System.Diagnostics.Process.Start(launch) ?? throw new InvalidOperationException("Python 3 requis pour le superviseur C#.");
+    Console.CancelKeyPress += (_, e) => { e.Cancel=true; if(!supervisor.HasExited)supervisor.Kill(entireProcessTree:true); };
+    await supervisor.WaitForExitAsync();return;
+}
+using var protocolOutput=new StreamWriter(Console.OpenStandardOutput(),new UTF8Encoding(false)){AutoFlush=true};
+// Console output from a user assembly must not corrupt the protocol stream.
+Console.SetOut(TextWriter.Null);
 var world = new GameWorld();
 using var scriptCompiler = new NativeScriptCompiler();
 long revision = 0;
@@ -15,11 +26,14 @@ var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingP
 var gate = new SemaphoreSlim(1,1);
 const int MaxSceneBytes = 2*1024*1024;
 var permittedOrigins = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "http://localhost:8000", "http://127.0.0.1:8000", "http://localhost:8765", "http://127.0.0.1:8765", "https://warlike-engine.pages.dev" };
-while (true) {
-    var context = await builder.GetContextAsync();
-    _ = Handle(context);
+while (await Console.In.ReadLineAsync() is { } line) {
+    using var input=JsonDocument.Parse(line);
+    var context=new BridgeContext(input.RootElement.GetProperty("path").GetString()!,input.RootElement.GetProperty("body").GetString()!);
+    await Handle(context);
+    string data=Encoding.UTF8.GetString(context.Response.OutputStream.ToArray());
+    await protocolOutput.WriteLineAsync(JsonSerializer.Serialize(new {status=context.Response.StatusCode,data=JsonSerializer.Deserialize<JsonElement>(data)},jsonOptions));
 }
-async Task Handle(HttpListenerContext ctx) {
+async Task Handle(BridgeContext ctx) {
     var req=ctx.Request;var res=ctx.Response;
     var origin=req.Headers["Origin"];
     if (origin is not null && !permittedOrigins.Contains(origin)) { res.StatusCode=403; res.Close(); return; }
@@ -194,4 +208,25 @@ async Task Handle(HttpListenerContext ctx) {
     async Task<JsonDocument> ReadJson() => JsonDocument.Parse(await ReadBody(32768));
     static int RequiredInt(JsonElement input,string key) => input.TryGetProperty(key,out var value) && value.TryGetInt32(out int number) ? number : throw new ArgumentException($"Expected integer {key}.");
     async Task Reply(object payload){var data=Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload,jsonOptions));res.ContentType="application/json; charset=utf-8";res.ContentLength64=data.Length;await res.OutputStream.WriteAsync(data);}
+}
+
+// Private IPC adapter, never listens on a socket or opens files supplied by a project.
+sealed class BridgeContext(string path,string body) {
+    public BridgeRequest Request { get; } = new(path,body);
+    public BridgeResponse Response { get; } = new();
+}
+sealed class BridgeRequest(string path,string body) {
+    public string HttpMethod => path=="/health"?"GET":"POST";
+    public Uri Url { get; } = new("http://127.0.0.1:8765"+path);
+    public WebHeaderCollection Headers { get; } = new();
+    public long ContentLength64 => Encoding.UTF8.GetByteCount(body);
+    public Stream InputStream { get; } = new MemoryStream(Encoding.UTF8.GetBytes(body));
+}
+sealed class BridgeResponse {
+    public int StatusCode { get; set; } = 200;
+    public WebHeaderCollection Headers { get; } = new();
+    public string ContentType { get; set; } = "application/json";
+    public long ContentLength64 { get; set; }
+    public MemoryStream OutputStream { get; } = new();
+    public void Close() { }
 }

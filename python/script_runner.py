@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-"""Opt-in local WarLike Script Studio runner. NOT A SECURITY SANDBOX.
-
-Only run code you trust. Python and compiled C++ run with your OS user permissions.
-This service is loopback-only, uses a random launch token, restricts browser Origins
-and never runs code automatically. Python 3.10+, C++17 compiler (g++/clang++) optional.
+"""Authenticated loopback runner. User code requires the Linux OS sandbox.
+Unsupported or restricted hosts fail closed, with project sources preserved.
 """
 import argparse
 import hmac
@@ -15,6 +12,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+from native_sandbox import invoke, SandboxUnavailable, LimitedHTTPServer
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 MAX_REQUEST = 128 * 1024
@@ -53,23 +52,6 @@ def command_for(language, folder):
     return [str(executable)], [compiler, "-std=c++17", "-O0", "-Wall", "-Wextra", str(folder / "main.cpp"), "-o", str(executable)]
 
 
-def invoke(command, cwd, seconds):
-    try:
-        result = subprocess.run(
-            command, cwd=str(cwd), input="", capture_output=True,
-            text=True, errors="replace", timeout=seconds,
-            env={**os.environ, "PYTHONUNBUFFERED": "1"},
-            shell=False,
-        )
-        stdout = result.stdout[:MAX_OUTPUT]
-        stderr = result.stderr[:MAX_OUTPUT]
-        return {"ok": result.returncode == 0, "exitCode": result.returncode,
-                "stdout": stdout, "stderr": stderr,
-                "truncated": len(result.stdout) > MAX_OUTPUT or len(result.stderr) > MAX_OUTPUT}
-    except subprocess.TimeoutExpired:
-        return {"ok": False, "exitCode": None, "stdout": "", "stderr": "Délai d'exécution dépassé.", "truncated": False}
-
-
 def execute(language, source):
     with tempfile.TemporaryDirectory(prefix="warlike-script-") as directory:
         folder = Path(directory)
@@ -77,7 +59,7 @@ def execute(language, source):
         run_command, compile_command = command_for(language, folder)
         compile_result = None
         if compile_command:
-            compile_result = invoke(compile_command, folder, 12)
+            compile_result = invoke(compile_command, folder, 12, writable=True)
             if not compile_result["ok"]:
                 return {"ok": False, "stage": "compile", "compile": compile_result, "run": None}
         run_result = invoke(run_command, folder, 4)
@@ -86,6 +68,7 @@ def execute(language, source):
 
 def serve(port=PORT):
     token = secrets.token_urlsafe(32)
+    execution_gate = threading.BoundedSemaphore(1)
 
     class Handler(BaseHTTPRequestHandler):
         def cors(self):
@@ -108,10 +91,10 @@ def serve(port=PORT):
             self.wfile.write(encoded)
 
         def allowed(self):
-            return self.headers.get("Origin") in ALLOWED_ORIGINS or (
-                self.headers.get("Origin") is None and
-                self.client_address[0] == "127.0.0.1"
-            )
+            port = self.server.server_port
+            return self.headers.get("Host") in ("127.0.0.1:"+str(port), "localhost:"+str(port)) and (
+                self.headers.get("Origin") in ALLOWED_ORIGINS or (
+                    self.headers.get("Origin") is None and self.client_address[0] == "127.0.0.1"))
 
         def do_OPTIONS(self):
             if not self.allowed():
@@ -127,23 +110,31 @@ def serve(port=PORT):
             if self.path != "/health":
                 return self.reply(404, {"ok": False, "error": "Route inconnue."})
             self.reply(200, {"ok": True, "service": "WarLike local script runner", "languages": ["python", "cpp"],
-                             "sandboxed": False, "authenticationRequired": True})
+                             "sandboxed": None, "isolationRequired": True, "isolation": "linux-bubblewrap-required", "authenticationRequired": True})
 
         def do_POST(self):
             if not self.allowed():
                 return self.reply(403, {"ok": False, "error": "Origin interdit."})
             if self.path != "/run":
                 return self.reply(404, {"ok": False, "error": "Route inconnue."})
+            self.connection.settimeout(5)
             supplied = self.headers.get("X-WarLike-Token", "")
-            if not hmac.compare_digest(supplied, token):
+            if not hmac.compare_digest(supplied.encode("utf8"), token.encode("ascii")):
                 return self.reply(401, {"ok": False, "error": "Clé locale invalide."})
+            if self.headers.get("Content-Type", "").split(";")[0].strip() != "application/json":
+                return self.reply(415, {"ok": False, "error": "application/json requis."})
             try:
                 size = int(self.headers.get("Content-Length", "0"))
                 if size <= 0 or size > MAX_REQUEST:
                     raise ValueError("Requête trop volumineuse.")
                 language, source = check_payload(json.loads(self.rfile.read(size).decode("utf8")))
-                result = execute(language, source)
-                self.reply(200, result)
+                if not execution_gate.acquire(blocking=False):
+                    return self.reply(429, {"ok": False, "error": "Une exécution native est déjà en cours."})
+                try:
+                    result = execute(language, source)
+                    self.reply(200, result)
+                finally:
+                    execution_gate.release()
             except (ValueError, UnicodeError, json.JSONDecodeError) as error:
                 self.reply(400, {"ok": False, "error": str(error)})
             except OSError as error:
@@ -154,8 +145,8 @@ def serve(port=PORT):
 
     print("WarLike Python/C++ local runner : http://127.0.0.1:" + str(port), flush=True)
     print("CLÉ DE SESSION (à coller dans Script Studio) : " + token, flush=True)
-    print("ATTENTION : seuls les scripts de confiance doivent être exécutés ; pas de sandbox OS.", flush=True)
-    with ThreadingHTTPServer(("127.0.0.1", port), Handler) as server:
+    print("Isolation Linux obligatoire : sans bubblewrap/prlimit fonctionnels, aucun script ne sera exécuté.", flush=True)
+    with LimitedHTTPServer(("127.0.0.1", port), Handler) as server:
         server.serve_forever()
 
 

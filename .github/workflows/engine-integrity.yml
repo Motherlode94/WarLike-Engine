@@ -19,6 +19,8 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - run: npm install --no-package-lock
+      - name: Install native OS isolation tools
+        run: sudo apt-get update && sudo apt-get install -y bubblewrap util-linux
       - run: dotnet build csharp/WarLike.Bridge --configuration Release
       - run: npx playwright install --with-deps chromium
       - name: Real debugger, shared C# Play and isolated exports in Chromium
@@ -53,6 +55,8 @@ jobs:
         run: npm run test:export
       - name: Install headless Chromium
         run: npx playwright install --with-deps chromium
+      - name: Hostile JavaScript isolation and trust in Chromium
+        run: node scripts/test-script-security-browser.mjs
       - name: Reference editor, Blueprint and old/new project round trips
         run: node scripts/test-reference-editor-browser.mjs
       - name: CHAMBRE 07 export and isolated Play

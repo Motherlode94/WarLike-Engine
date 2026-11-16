@@ -1,3 +1,5 @@
+import {nativeBridgeRequest,setNativeBridgeToken} from '../core/native-bridge-client.js';
+import {authorizeScripts} from '../core/script-trust.js';
 import {nativeScriptEntities,nativeScriptSources} from '../core/csharp-sources.js';
 import {gameProject} from '../core/game-project.js';
 import {runtimeSession} from '../core/runtime-session.js';
@@ -9,19 +11,8 @@ import {workspace} from '../core/workspaces.js';
 // WarLike C# local bridge controls. C# executes only in a separately started .NET process.
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
-const base='http://127.0.0.1:8765';
-const timeout=4500;
 const ui={connected:false,ready:false,inspector:false,revision:null};
-async function request(path,method='GET',payload){
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),path==='/scripts/compile'?30000:timeout);
- try{
-  const response=await fetch(base+path,{method,mode:'cors',cache:'no-store',signal:controller.signal,
-   ...(payload===undefined?{}:{headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})});
-  const data=await response.json();
-  if(!response.ok)throw Error(data.error||'HTTP '+response.status);
-  return data;
- }finally{clearTimeout(timer)}
-}
+const request=(path,method='GET',payload)=>nativeBridgeRequest(path,payload);
 const currentScene=()=>bridgeScene(nativeScriptEntities(state.entities,gameProject));
 export function initCSharpBridge(){
  const dialog=document.getElementById('csharpRuntimePanel'),button=document.getElementById('openCsharpRuntime');
@@ -30,6 +21,9 @@ export function initCSharpBridge(){
  const tick=document.getElementById('csharpRuntimeTick'),second=document.getElementById('csharpRuntimeSecond'),template=document.getElementById('csharpRuntimeTemplate');
  if(!dialog||!button||!close||!status||!connect||!sync||!tick||!second||!template)return;
  dialog.querySelector('.csharp-runtime-actions').after(status);
+ const credential=document.createElement('label');credential.textContent='Clé de session affichée dans le terminal du pont ';
+ const tokenInput=document.createElement('input');tokenInput.id='csharpSessionToken';tokenInput.type='password';tokenInput.autocomplete='off';tokenInput.placeholder='Clé de session C#';credential.append(tokenInput);status.before(credential);
+ tokenInput.addEventListener('change',()=>{setNativeBridgeToken(tokenInput.value);tokenInput.value='';ui.connected=false;ui.ready=false;announce('Clé mise à jour. Reconnecte le pont.');buttons()});
  const runtimeNotice=document.createElement('div');runtimeNotice.className='warlike-runtime-notice';runtimeNotice.hidden=true;runtimeNotice.setAttribute('role','status');document.body.append(runtimeNotice);
  document.addEventListener('warlike:runtime',()=>{const r=runtimeSession;runtimeNotice.hidden=!state.playing||r.backend!=='native'&&!['error','connecting'].includes(r.phase);runtimeNotice.classList.toggle('has-error',r.phase==='error');runtimeNotice.textContent=r.phase==='error'?r.error+' · Arrête Play pour corriger.':r.phase==='connecting'?(r.backend==='native'?'Connexion du Play au runtime C# local…':'Chargement des modules JavaScript / TypeScript…'):'Play C# local · composants et blueprints synchronisés';});
  const announce=(message,ok=false)=>{status.textContent=message;status.dataset.ok=String(ok)};
@@ -58,7 +52,7 @@ export function initCSharpBridge(){
  connect.addEventListener('click',async()=>{
   if(busy||streaming)return;busy=true;ui.inspector=false;buttons();sceneToken++;syncedScene=null;
   announce('Recherche du runtime C# local…');
-  try{const health=await request('/health');ui.connected=health.ready===true;ui.ready=false;ui.inspector=health.protocol>=2&&health.capabilities?.includes('component-inspector');announce(ui.connected?'Connecté : '+(health.engine||'.NET 8'):'Runtime non prêt',ui.connected)}
+  try{const health=await request('/health');if(health.authenticationRequired!==true||health.isolationRequired!==true)throw Error('Pont ancien non sécurisé : mets à jour et redémarre le superviseur.');ui.connected=health.ready===true;ui.ready=false;ui.inspector=health.protocol>=2&&health.capabilities?.includes('component-inspector');announce(ui.connected?'Connecté : '+(health.engine||'.NET 8'):'Runtime non prêt',ui.connected)}
   catch(error){ui.connected=false;ui.ready=false;announce('Runtime inaccessible. Démarre : dotnet run --project csharp/WarLike.Bridge — '+error.message)}
   busy=false;buttons();inspector?.clear(ui.inspector?'Connecté. Envoie la scène pour inspecter les composants.':'Bridge ancien : mets à jour le dépôt et redémarre .NET pour l’Inspector et les escouades.');
  });
@@ -66,7 +60,7 @@ export function initCSharpBridge(){
   if(state.playing||busy||streaming)return;busy=true;ui.ready=false;buttons();const token=++sceneToken,before=fingerprint();
   announce('Chargement de la scène dans .NET…');
   try{
-   const scripts=nativeScriptSources(state.entities,gameProject);if(scripts.length)await request('/scripts/compile','POST',{scripts});
+   const scripts=nativeScriptSources(state.entities,gameProject);if(scripts.length){await authorizeScripts(scripts.map(s=>({project:gameProject.id||'',language:'csharp',name:s.name,source:s.source})));await request('/scripts/compile','POST',{scripts});}
    const response=await request('/scene','POST',currentScene());
    if(token!==sceneToken||state.playing||before!==fingerprint())throw Error('La scène a changé pendant l’envoi. Envoie-la à nouveau.');
    ui.revision=response.revision;ui.ready=response.ok===true;markSynced();

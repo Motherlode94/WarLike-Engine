@@ -23,7 +23,7 @@ const exit=new THREE.Mesh(new THREE.RingGeometry(4.3,4.8,64),new THREE.MeshBasic
 const exitLamp=new THREE.PointLight(0x66ffc0,2.5,16);exitLamp.position.set(29,4,22);scene.add(exitLamp);
 const roadMarks=[[-28,-22],[-22,-21],[-14,-19],[-7,-17],[-1,-10],[3,-2],[7,6],[15,16],[29,22]];
 const pathLine=new THREE.BufferGeometry().setFromPoints(roadMarks.map(([x,z])=>new THREE.Vector3(x,.15,z)));
-scene.add(new THREE.Line(pathLine,new THREE.LineDashedMaterial({color:0x88cabb,dashSize:.8,gapSize:.65,transparent:true,opacity:.65}))).computeLineDistances?.();
+const routeVisual=new THREE.Line(pathLine,new THREE.LineDashedMaterial({color:0x88cabb,dashSize:.8,gapSize:.65,transparent:true,opacity:.65}));routeVisual.computeLineDistances();scene.add(routeVisual);
 const materials={friendly:new THREE.MeshStandardMaterial({color:0x639b82,roughness:.75}),enemy:new THREE.MeshStandardMaterial({color:0xaa5b57,roughness:.68}),steel:new THREE.MeshStandardMaterial({color:0x323c3e,metalness:.38,roughness:.66}),track:new THREE.MeshStandardMaterial({color:0x262a2d,roughness:.95}),glass:new THREE.MeshStandardMaterial({color:0x86b9cb,metalness:.3,roughness:.22})};
 let mission=createMission(),paused=false,selection=new Set(),objects=new Map(),loadedTemplates=new Map(),muzzleFlashes=[],messageTime=0;
 const orbital={x:0,z:0,zoom:58,azimuth:.65},keys=new Set();let rotate=false;
@@ -99,10 +99,10 @@ function pick(e){const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-
 }
 function select(ids,append=false){if(!append)selection.clear();ids.forEach(id=>{const u=mission.units.find(x=>x.id===id&&x.alive&&x.team==='friendly'&&x.type!=='convoy');if(u)selection.add(u.id)});updateHud()}
 let down=null;
-canvas.addEventListener('pointerdown',e=>{if(e.button===2){rotate=true;down={x:e.clientX,y:e.clientY,button:2};return}if(e.button!==0)return;down={x:e.clientX,y:e.clientY,button:0};canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointerdown',e=>{if(e.button===2){rotate=true;down={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,button:2};return}if(e.button!==0)return;down={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,button:0};canvas.setPointerCapture(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(rotate&&down){orbital.azimuth+=(e.clientX-down.x)*.006;orbital.zoom=Math.max(20,orbital.zoom+(e.clientY-down.y)*.04);down.x=e.clientX;down.y=e.clientY}
  if(down?.button===0&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>8){const box=$('selectionBox');box.hidden=false;box.style.left=Math.min(e.clientX,down.x)+'px';box.style.top=Math.min(e.clientY,down.y)+'px';box.style.width=Math.abs(e.clientX-down.x)+'px';box.style.height=Math.abs(e.clientY-down.y)+'px'}});
-canvas.addEventListener('pointerup',e=>{if(!down)return;if(down.button===2){if(Math.hypot(e.clientX-down.x,e.clientY-down.y)<6){const pt=pointerGround(e);if(pt){giveOrder(mission,[...selection],pt,{append:e.shiftKey});announce('Ordre de déplacement transmis.')}}rotate=false;down=null;return}
+canvas.addEventListener('pointerup',e=>{if(!down)return;if(down.button===2){if(Math.hypot(e.clientX-down.startX,e.clientY-down.startY)<6){const pt=pointerGround(e);if(pt){giveOrder(mission,[...selection],pt,{append:e.shiftKey});announce('Ordre de déplacement transmis.')}}rotate=false;down=null;return}
  const distanceDragged=Math.hypot(e.clientX-down.x,e.clientY-down.y),box=$('selectionBox');box.hidden=true;
  if(distanceDragged<8){const id=pick(e);select(id?[id]:[],e.shiftKey);}
  else{const rect=canvas.getBoundingClientRect();const minx=Math.min(down.x,e.clientX),maxx=Math.max(down.x,e.clientX),miny=Math.min(down.y,e.clientY),maxy=Math.max(down.y,e.clientY);
@@ -146,13 +146,13 @@ function updateCamera(dt){
 }
 function shotEffect(shot,now){const source=mission.units.find(u=>u.id===shot.attacker),target=mission.units.find(u=>u.id===shot.target);
  if(!source||!target)return;const mesh=new THREE.Mesh(new THREE.SphereGeometry(.12,7,6),new THREE.MeshBasicMaterial({color:shot.team==='friendly'?0xffd06b:0xff7774}));
- mesh.position.set(source.x,source.type==='tank'?2:1.3,source.z);scene.add(mesh);muzzleFlashes.push({mesh,born:now,to:new THREE.Vector3(target.x,1.2,target.z),life:Math.max(.05,shot.life)});}
+ mesh.position.set(source.x,source.type==='tank'?2:1.3,source.z);scene.add(mesh);muzzleFlashes.push({mesh,born:now,from:mesh.position.clone(),to:new THREE.Vector3(target.x,1.2,target.z),life:Math.max(.05,shot.life)});}
 let last=performance.now(),frame=0;
 function draw(now){const dt=Math.min(.05,(now-last)/1000);last=now;updateCamera(dt);
- if(!paused&&mission.phase==='playing'){tick(mission,dt);}
+ if(!paused&&mission.phase==='playing'){tick(mission,dt);for(const shot of mission.shots){if(!shot.visualized){shot.visualized=true;shotEffect(shot,now)}}}
  if(now-messageTime>5000&&mission.phase==='playing')$('status').textContent=mission.message;
  syncUnits();
- for(const x of muzzleFlashes){const t=Math.min(1,(now-x.born)/1000/x.life);x.mesh.position.lerpVectors(x.mesh.position.clone(),x.to,t);if(t>=1){scene.remove(x.mesh);x.done=true}}
+ for(const x of muzzleFlashes){const t=Math.min(1,(now-x.born)/1000/x.life);x.mesh.position.lerpVectors(x.from,x.to,t);if(t>=1){scene.remove(x.mesh);x.done=true}}
  muzzleFlashes=muzzleFlashes.filter(x=>!x.done);
  if(++frame%8===0)updateHud();
  const rect=canvas.getBoundingClientRect(),w=Math.max(1,rect.width|0),h=Math.max(1,rect.height|0);

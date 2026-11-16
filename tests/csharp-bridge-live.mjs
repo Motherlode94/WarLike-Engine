@@ -131,12 +131,13 @@ public sealed class NativeSpinner : MonoBehaviour {
    bool network=false,readonlyMount=false;
    try{using var tcp=new TcpClient();tcp.Connect("127.0.0.1",8765);}catch{network=true;}
    try{File.WriteAllText("/app/forbidden.txt","bad");}catch{readonlyMount=true;}
+   Debug.Log("managed-budget:"+GC.GetGCMemoryInfo().TotalAvailableMemoryBytes);
    Debug.Log("isolated:"+(!File.Exists(${JSON.stringify(secretPath)}))+":"+String.IsNullOrEmpty(Environment.GetEnvironmentVariable("WARLIKE_TEST_SECRET"))+":"+network+":"+readonlyMount);
   }
  }`;
  await call('/scripts/compile',{scripts:[{name:'IsolationProbe',source:probe}]});
  const probeScene=await call('/scene',{entities:[{id:96,csharpScript:{name:'IsolationProbe',source:probe}}]});
- const probeFrame=await call('/frame',{revision:probeScene.revision,frame:1,dt:.02,actors:[{id:96,x:0,y:0,elevation3d:0,rotation:0,hp:100,enabled:true}]});assert.ok(probeFrame.logs.includes('isolated:True:True:True:True'),JSON.stringify(probeFrame.logs));
+ const probeFrame=await call('/frame',{revision:probeScene.revision,frame:1,dt:.02,actors:[{id:96,x:0,y:0,elevation3d:0,rotation:0,hp:100,enabled:true}]});assert.ok(probeFrame.logs.includes('isolated:True:True:True:True'),JSON.stringify(probeFrame.logs));assert.ok(probeFrame.logs.includes('managed-budget:268435456'),JSON.stringify(probeFrame.logs));
  // A hung callback is killed by the supervisor rather than holding the HTTP
  // world lock forever. The browser's authored project remains external.
  const loop='using WarLike.Runtime; public sealed class Loop : MonoBehaviour { void Update(){while(true){}} }';

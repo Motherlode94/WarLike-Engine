@@ -42,3 +42,9 @@ test('paused sandbox replies are held and committed once when simulation resumes
  const pending=sandbox.phase('update',.02,sandbox.ctx,{canApply:()=>canApply});canApply=false;resolve({commands:[],states:[]});assert.equal(await pending,null);assert.equal(commits,0);
  canApply=true;const resumed=await sandbox.phase('update',.03,sandbox.ctx,{canApply:()=>canApply});assert.equal(resumed.dt,.02);assert.equal(resumed.reused,true);assert.equal(commits,1);assert.equal(sandbox.held,null);sandbox.stop();
 });
+
+test('detached scripts retain bounded cleanup signals without editing a replacement actor',async()=>{
+ const {IsolatedWebScripts}=await import('../js/core/web-script-sandbox.js');const sandbox=new IsolatedWebScripts(),old={id:1,x:0},component={};sandbox.entries=[{entity:old,component}];const replacement={id:1,x:20},signals=[];
+ sandbox.ctx={entities:[replacement],globals:{},signal:(...args)=>signals.push(args)};
+ sandbox.apply({commands:[{index:0,op:'entity',name:'x',args:[999]},{index:0,op:'call',name:'Set',args:['cleaned',true]},{index:0,op:'call',name:'Signal',args:['destroyed']}],states:[]});assert.equal(replacement.x,20);assert.equal(old.x,0);assert.equal(sandbox.ctx.globals.cleaned,true);assert.deepEqual(signals,[['destroyed',1]]);sandbox.stop();
+});

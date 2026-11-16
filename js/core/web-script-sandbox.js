@@ -36,7 +36,7 @@ function sandboxDocumentMain(){
     if(++count>8192||depth>10)return false;
     if(typeof value==='string'){total+=value.length+2;return value.length<=4096&&total<=262144}
     if(value===null||typeof value==='boolean'||typeof value==='number'&&Number.isFinite(value)){total+=24;return total<=262144}
-    if(!value||typeof value!=='object'||!Array.isArray(value)&&Object.getPrototypeOf(value)!==Object.prototype)return false;
+    if(!value||typeof value!=='object'||Array.isArray(value)&&value.length>2048||!Array.isArray(value)&&Object.getPrototypeOf(value)!==Object.prototype)return false;
     const keys=Object.keys(value);if(keys.length>2048)return false;
     for(const key of keys){total+=key.length+4;if(total>262144||['__proto__','constructor','prototype'].includes(key)||!valid(value[key],depth+1))return false}return true;
    }
@@ -74,7 +74,7 @@ export class IsolatedWebScripts{
  request(type,payload,timeout=2000){if(this.pending)return Promise.reject(Error('Une image JS/TS est déjà en cours.'));return new Promise((resolve,reject)=>{const id=++this.sequence,timer=setTimeout(()=>{this.pending=null;reject(Error('Délai JS/TS dépassé : Worker arrêté.'))},timeout);this.pending={id,resolve,reject,timer};this.port.postMessage({id,type,payload})})}
  apply(reply){
   validateScriptReply(reply,this.entries);
-  for(const c of reply.commands){const e=this.entries[c.index];if(!this.ctx.entities.includes(e.entity)||!e.entity.webScripts?.includes(e.component))continue;const api=createScriptApi(e.entity,this.ctx,{delta:this.dt||0,elapsed:0},e.component);if(c.op==='entity')e.entity[c.name]=c.args[0];else if(c.op==='write')api.write(c.name,c.args[0]);else api.call(c.name,c.args)}
+  for(const c of reply.commands){const e=this.entries[c.index];if((!this.ctx.entities.includes(e.entity)||!e.entity.webScripts?.includes(e.component))&&!(c.op==='call'&&['Set','Signal','Log'].includes(c.name)))continue;const api=createScriptApi(e.entity,this.ctx,{delta:this.dt||0,elapsed:0},e.component);if(c.op==='entity')e.entity[c.name]=c.args[0];else if(c.op==='write')api.write(c.name,c.args[0]);else api.call(c.name,c.args)}
   for(const s of reply.states){const c=this.entries[s.index].component;c.runtime={...c.runtime,fields:s.fields,started:s.started,awakened:s.awakened,error:s.error};if(s.error){if(this.errors.at(-1)!==s.error){this.errors.push(s.error);if(this.errors.length>64)this.errors.shift();this.ctx.log?.(s.error,'error',this.entries[s.index].entity)}}}
  }
  async phase(type,dt,ctx,{canApply=()=>true}={}){

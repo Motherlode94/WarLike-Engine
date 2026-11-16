@@ -36,7 +36,7 @@ def sandbox_command(command, folder, *, mounts=(), managed=False, writable=False
                 "--setenv", "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "1", "--setenv", "DOTNET_GCHeapHardLimit", "10000000",
                 "--setenv", "DOTNET_EnableDiagnostics", "0", "--setenv", "DOTNET_PROCESSOR_COUNT", "2"]
     translated = [str(arg).replace(folder + "/", "/work/") for arg in command]
-    memory = 4*1024**3 if managed else 512*1024**2
+    memory = 8*1024**3 if managed else 512*1024**2
     # Limits also apply to compilers and descendants. The PID namespace is killed
     # when its bwrap init dies, including children that detach their session.
     # Apply RLIMIT_NPROC AFTER entering the user namespace. Applying it to

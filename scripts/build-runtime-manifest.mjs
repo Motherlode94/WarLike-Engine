@@ -1,4 +1,4 @@
-import {readdir,writeFile,access,stat} from 'node:fs/promises';
+import {readdir,writeFile,lstat} from 'node:fs/promises';
 import path from 'node:path';
 
 // Generate only files located inside the project: linked files and directories
@@ -18,13 +18,13 @@ const walk=async dir=>{
 const requiredFiles=['index.html','python/lan_server.py','python/warlike.py','start-warlike-multi.cmd'];
 const requiredDirs=['js','css','design-system','src','assets','vendor','examples/community','examples/worldforge','script-editor'];
 for(const file of requiredFiles){
- const info=await stat(path.join(root,file));
+ const info=await lstat(path.join(root,file));
  if(!info.isFile())throw new Error('Required runtime file is not a regular file: '+file);
 }
 const files=[...requiredFiles];
 for(const dir of requiredDirs)files.push(...await walk(dir));
 try{
- const info=await stat(path.join(root,'native/dist'));
+ const info=await lstat(path.join(root,'native/dist'));
  if(info.isDirectory())files.push(...await walk('native/dist'));
 }catch(error){if(error?.code!=='ENOENT')throw error;}
 const unique=[...new Set(files)].sort();

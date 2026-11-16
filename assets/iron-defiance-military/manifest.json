@@ -5,7 +5,7 @@
   "licenseNote": "Les modèles générés et leurs droits d'utilisation sont soumis aux conditions du service Meshy ; les noms, concept et codes originaux WarLike sont distincts.",
   "source": "Meshy text-to-3D, geometry meshy-t2/t2.5, textured meshy-6 2k PBR",
   "target": "WarLike Engine / WarLike Rig Studio / Iron Defiance",
-  "state": "Meshy generation tasks recorded; GLB import and in-engine validation pending",
+  "state": "All 12 Meshy geometries and PBR 2K refine tasks succeeded on 2026-11-16; GLB import, review and in-engine validation pending",
   "assets": [
     {
       "id": "ID-INF-01",
@@ -16,7 +16,9 @@
       "targetFaces": 7500,
       "riggingNotes": "humanoid A-pose; rigging required",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-INF-02",
@@ -27,7 +29,9 @@
       "targetFaces": 7500,
       "riggingNotes": "humanoid A-pose; rigging required",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-INF-03",
@@ -38,7 +42,9 @@
       "targetFaces": 7500,
       "riggingNotes": "humanoid A-pose; rigging required",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-ARM-01",
@@ -49,7 +55,9 @@
       "targetFaces": 5500,
       "riggingNotes": "wheel pivots and hull separation required",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-ARM-02",
@@ -60,7 +68,9 @@
       "targetFaces": 7500,
       "riggingNotes": "turret/cannon/track articulation required",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-ARM-03",
@@ -71,7 +81,9 @@
       "targetFaces": 5000,
       "riggingNotes": "four wheel pivots required",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-LOG-01",
@@ -82,7 +94,9 @@
       "targetFaces": 5500,
       "riggingNotes": "wheel pivots; cargo open/close optional",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-LOG-02",
@@ -93,7 +107,9 @@
       "targetFaces": 5000,
       "riggingNotes": "wheel pivots required",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-DRN-01",
@@ -104,7 +120,9 @@
       "targetFaces": 4500,
       "riggingNotes": "articulated leg joints needed",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-DRN-02",
@@ -115,7 +133,9 @@
       "targetFaces": 4000,
       "riggingNotes": "four rotor pivots needed",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-ENV-01",
@@ -126,7 +146,9 @@
       "targetFaces": 2000,
       "riggingNotes": "static cover; collision box or convex hull",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     },
     {
       "id": "ID-ENV-02",
@@ -137,7 +159,9 @@
       "targetFaces": 6500,
       "riggingNotes": "static cover; staircase and landing collision",
       "glbPath": null,
-      "validated": false
+      "validated": false,
+      "meshyGeometryStatus": "SUCCEEDED",
+      "meshyTextureStatus": "SUCCEEDED"
     }
   ]
 }

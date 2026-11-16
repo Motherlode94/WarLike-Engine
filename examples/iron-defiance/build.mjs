@@ -2,7 +2,8 @@
 import {build} from 'esbuild';
 import {mkdir,copyFile,readFile,writeFile,readdir,stat} from 'node:fs/promises';
 import path from 'node:path';
-const root=path.dirname(new URL(import.meta.url).pathname),out=path.join(root,'dist');
+import {fileURLToPath} from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url)),out=path.join(root,'dist');
 await mkdir(out,{recursive:true});
 await build({entryPoints:[path.join(root,'game.js')],bundle:true,format:'esm',outfile:path.join(out,'game.js'),target:['es2022'],minify:true,legalComments:'inline',loader:{'.glb':'file'}});
 let html=await readFile(path.join(root,'index.html'),'utf8');

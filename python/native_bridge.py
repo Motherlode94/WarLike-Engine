@@ -59,6 +59,10 @@ class NativeWorld:
                 selector.register(self.process.stdout, selectors.EVENT_READ, "out")
                 selector.register(self.process.stderr, selectors.EVENT_READ, "err")
                 while time.monotonic() < deadline:
+                    if not selector.get_map():
+                        self.process.wait(timeout=.2)
+                        detail = (diagnostic + response).decode("utf8", errors="replace")[:1500]
+                        raise ValueError("Worker C# arrêté ("+str(self.process.returncode)+") : "+detail)
                     for key, _ in selector.select(min(.1, max(0, deadline-time.monotonic()))):
                         if key.data == "write":
                             size = os.write(key.fileobj.fileno(), encoded[:8192])
@@ -68,7 +72,13 @@ class NativeWorld:
                         else:
                             chunk = os.read(key.fileobj.fileno(), 8192)
                             if not chunk:
-                                raise ValueError("Worker C# arrêté : "+diagnostic.decode("utf8", errors="replace")[:1000])
+                                selector.unregister(key.fileobj)
+                                # Drain both output streams before reporting startup errors;
+                                # stdout can reach EOF before stderr has been read.
+                                if self.process.poll() is not None and not selector.get_map():
+                                    detail = (diagnostic + response).decode("utf8", errors="replace")[:1500]
+                                    raise ValueError("Worker C# arrêté ("+str(self.process.returncode)+") : "+detail)
+                                continue
                             target = response if key.data == "out" else diagnostic
                             target.extend(chunk)
                             if len(response) > 4*LIMIT or len(diagnostic) > 48*1024:
@@ -76,8 +86,11 @@ class NativeWorld:
                             if key.data == "out" and b"\n" in response:
                                 result = json.loads(response)
                                 return int(result["status"]), result["data"]
+                if self.process.poll() is not None:
+                    detail = (diagnostic + response).decode("utf8", errors="replace")[:1500]
+                    raise ValueError("Worker C# arrêté ("+str(self.process.returncode)+") : "+detail)
                 raise ValueError("Délai C# dépassé : processus isolé arrêté.")
-        except (OSError, ValueError, SandboxUnavailable) as error:
+        except (OSError, ValueError, SandboxUnavailable, subprocess.TimeoutExpired) as error:
             self.broken = True
             if self.process:
                 kill_tree(self.process)

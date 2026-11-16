@@ -21,7 +21,7 @@ import {applyCsharpFrame} from './csharp-frame.js';
 import {nativePlayEntities,initializeWebComponents,captureWebComponents} from './runtime-capabilities.js';
 
 export const runtimeSession={generation:0,phase:'stopped',backend:'web',frame:0,error:'',busy:false};
-let requestNative=nativeBridgeRequest,revision=null,initializedScene=null,pending=null,elapsed=0,nativeCanStop=false,webScene=null,webLoading=false;
+let requestNative=nativeBridgeRequest,revision=null,initializedScene=null,pending=null,elapsed=0,nativeCanStop=false,webScene=null,webLoading=false,webElapsed=0;
 const defaultRequest=nativeBridgeRequest;
 export function setRuntimeTransport(transport=defaultRequest){requestNative=transport}
 const sameEntities=(snapshot,entities)=>snapshot?.length===entities.length&&entities.every((entity,index)=>entity===snapshot[index]);
@@ -33,7 +33,7 @@ export function startRuntimeSession(){
  startComponentRuntime();initializeWebComponents(state.entities,sequenceRuntime.globals);announce();
 }
 export function stopRuntimeSession(){
- resetAnimationRuntime();webScriptRuntime.stop();webScene=null;webLoading=false;if(runtimeSession.backend==='native'&&nativeCanStop&&revision!==null)requestNative('/stop',{revision}).catch(()=>{});warScriptRuntime.stop();runtimeSession.generation++;runtimeSession.phase='stopped';runtimeSession.busy=false;revision=null;initializedScene=null;pending=null;elapsed=0;nativeCanStop=false;resetComponentRuntime();announce();
+ resetAnimationRuntime();webScriptRuntime.stop();webScene=null;webLoading=false;webElapsed=0;if(runtimeSession.backend==='native'&&nativeCanStop&&revision!==null)requestNative('/stop',{revision}).catch(()=>{});warScriptRuntime.stop();runtimeSession.generation++;runtimeSession.phase='stopped';runtimeSession.busy=false;revision=null;initializedScene=null;pending=null;elapsed=0;nativeCanStop=false;resetComponentRuntime();announce();
 }
 // A frame has one writer. Native callbacks finish before browser components,
 // gameplay and Blueprint actions run against the same state.entities objects.
@@ -54,7 +54,7 @@ export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
   }else webScriptRuntime.stop();
  }
  if(webLoading)return false;
- if(runtimeSession.backend==='web'||!canRun()){if(!runtimeSession.busy){const generation=runtimeSession.generation;const result=browserFrame(dt,update,canRun());if(result?.then){runtimeSession.busy=true;runtimeSession.completion=result.catch(error=>{if(generation===runtimeSession.generation){runtimeSession.phase='error';runtimeSession.error='Scripts JS/TS : '+error.message;announce()}}).finally(()=>{if(generation===runtimeSession.generation)runtimeSession.busy=false});return false}}return true}
+ if(runtimeSession.backend==='web'||!canRun()){const run=canRun();if(webScriptRuntime.isolated&&run)webElapsed=Math.min(.1,webElapsed+Math.max(0,Number(dt)||0));if(!runtimeSession.busy){const generation=runtimeSession.generation,delta=webScriptRuntime.isolated&&run?webElapsed:dt;webElapsed=0;const result=browserFrame(delta,update,run);if(result?.then){runtimeSession.busy=true;runtimeSession.completion=result.catch(error=>{if(generation===runtimeSession.generation){runtimeSession.phase='error';runtimeSession.error='Scripts JS/TS : '+error.message;announce()}}).finally(()=>{if(generation===runtimeSession.generation)runtimeSession.busy=false});return false}}return true}
  elapsed=Math.min(.1,elapsed+Math.max(0,Number(dt)||0));
  if(runtimeSession.busy)return false;
  // Hold a completed native frame while the debugger or game is paused.

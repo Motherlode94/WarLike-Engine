@@ -35,7 +35,7 @@ import {sequenceRuntime} from './logic-sequences.js';
 import {updateHorror,updateHorrorPerception,horror} from './horror-survival.js';
 import {renderQuality,viewportPixelSize} from './render-quality.js';
 import {stepPhysics3d} from './physics-3d.js';
-import {rapierStatus,loadRapier3d,createRapierScene,moveRapierCharacter3d,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
+import {rapierStatus,loadRapier3d,createRapierScene,activateRapierQueries3d,moveRapierCharacter3d,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
 import {getModelGeometry,getTextureImage,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences} from './logic-sequences.js';
@@ -121,14 +121,16 @@ const shader=(gl,type,text)=>{
  if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh)||'Erreur shader');return sh;
 };
 const program3d=gl=>{
+ const derivatives=!!gl.getExtension("OES_standard_derivatives");
  const vs=`precision highp float;
  attribute vec3 aPosition;attribute vec3 aNormal;attribute vec2 aTexcoord;varying vec2 vTexcoord;attribute vec4 aVertexColor;varying vec4 vVertexColor;
+ attribute vec4 aMaterialUV0,aMaterialUV1;varying vec4 vMaterialUV0,vMaterialUV1;
  uniform vec3 uEye,uRight,uUp,uForward,uPosition,uScale;
  uniform vec4 uRotation;uniform float uAspect;uniform bool uViewModel,uUseAffine;uniform mat3 uViewBasis,uAffineNormal;uniform mat4 uAffineMatrix;
  vec3 rotateQ(vec3 v){return v+2.0*cross(uRotation.xyz,cross(uRotation.xyz,v)+uRotation.w*v);}
  varying vec3 vNormal,vWorld;
  void main(){
- vTexcoord=aTexcoord;vVertexColor=aVertexColor;vec3 q=aPosition*uScale;
+ vMaterialUV0=aMaterialUV0;vMaterialUV1=aMaterialUV1;vTexcoord=aTexcoord;vVertexColor=aVertexColor;vec3 q=aPosition*uScale;
  q=uViewModel?uViewBasis*q:rotateQ(q);
  vec3 worldPosition=q+uPosition;
  if(uUseAffine)worldPosition=(uAffineMatrix*vec4(worldPosition,1.0)).xyz;
@@ -140,7 +142,11 @@ const program3d=gl=>{
  gl_Position=vec4(dot(rel,uRight)*f/uAspect,dot(rel,uUp)*f,clipZ,d);
  
  }`;
- const fs=`precision highp float;
+ const fs=`${derivatives?"#extension GL_OES_standard_derivatives : enable\n":""}precision highp float;
+ varying vec4 vMaterialUV0,vMaterialUV1;
+ uniform sampler2D uNormalMap,uMetallicRoughnessMap,uOcclusionMap,uEmissiveMap;
+ uniform bool uHasNormalMap,uHasMetallicRoughnessMap,uHasOcclusionMap,uHasEmissiveMap;
+ uniform float uNormalScale,uOcclusionStrength;
  varying vec4 vVertexColor;uniform bool uUnlit;uniform vec3 uEmissive;
  uniform vec4 uColor;uniform sampler2D uBaseColorTexture;uniform bool uUseTexture;uniform float uAlphaCutoff;varying vec2 vTexcoord;
  uniform vec3 uEye;
@@ -155,15 +161,27 @@ const program3d=gl=>{
  varying vec3 vNormal,vWorld;
  void main(){
  vec4 baseColor=uColor*vVertexColor;if(uUseTexture){vec4 texel=texture2D(uBaseColorTexture,vTexcoord);baseColor*=vec4(pow(texel.rgb,vec3(2.2)),texel.a);}if(uAlphaCutoff<0.)baseColor.a=1.;else if(baseColor.a<uAlphaCutoff)discard;
+ float roughness=uRoughness,metallic=uMetallic;
+ if(uHasMetallicRoughnessMap){vec4 mr=texture2D(uMetallicRoughnessMap,vMaterialUV0.xy);roughness*=mr.g;metallic*=mr.b;}
+ roughness=clamp(roughness,.04,1.);metallic=clamp(metallic,0.,1.);
  vec3 normal=normalize(vNormal);
  if(!gl_FrontFacing)normal=-normal;
+ ${derivatives?`if(uHasNormalMap){
+  vec3 dp1=dFdx(vWorld),dp2=dFdy(vWorld);vec2 duv1=dFdx(vMaterialUV0.zw),duv2=dFdy(vMaterialUV0.zw);
+  vec3 dp2perp=cross(dp2,normal),dp1perp=cross(normal,dp1);
+  vec3 T=dp2perp*duv1.x+dp1perp*duv2.x,B=dp2perp*duv1.y+dp1perp*duv2.y;
+  float determinant=max(dot(T,T),dot(B,B));
+  if(determinant>1e-12){float inv=inversesqrt(determinant);vec3 sampled=texture2D(uNormalMap,vMaterialUV0.zw).xyz*2.-1.;sampled.xy*=uNormalScale;normal=normalize(mat3(T*inv,B*inv,normal)*sampled);}
+ }`:''}
  vec3 skyLight=vec3(.60,.73,.91),groundLight=vec3(.24,.27,.32);
- vec3 irradiance=mix(groundLight,skyLight,clamp(normal.y*.5+.5,0.,1.))*uAmbient;
+ float ao=uHasOcclusionMap?mix(1.,texture2D(uOcclusionMap,vMaterialUV1.xy).r,uOcclusionStrength):1.;
+ vec3 ambientLight=mix(groundLight,skyLight,clamp(normal.y*.5+.5,0.,1.))*uAmbient*ao;
+ vec3 irradiance=ambientLight;
  irradiance+=uSunColor*uSunIntensity*max(0.,dot(normal,normalize(uSunDir)));
  vec3 viewDir=normalize(uEye-vWorld);
  vec3 localSpecular=vec3(0.);
- vec3 specularTint=mix(vec3(.04),baseColor.rgb,clamp(uMetallic,0.,1.));
- float specularExponent=mix(96.,8.,clamp(uRoughness,0.04,1.));
+ vec3 specularTint=mix(vec3(.04),baseColor.rgb,clamp(metallic,0.,1.));
+ float specularExponent=mix(96.,8.,clamp(roughness,0.04,1.));
  for(int i=0;i<8;i++){
   if(i>=uLightCount)break;
   vec3 displacement=uLightPos[i]-vWorld;
@@ -188,9 +206,10 @@ const program3d=gl=>{
  float flashFalloff=pow(max(0.,1.-flashDist/16.),2.);
  irradiance+=vec3(1.,.92,.72)*uFlashPower*flashCone*flashFalloff*max(0.,dot(normal,-normalize(flashRay)));
  vec3 reflected=reflect(-normalize(uSunDir),normal);
- float gloss=pow(max(0.,dot(reflected,viewDir)),mix(48.,5.,clamp(uRoughness,0.04,1.)));
- vec3 specular=mix(vec3(.18),baseColor.rgb,clamp(uMetallic,0.,1.))*gloss*uSunIntensity*(1.-uRoughness*.75);
- vec3 lit=(uUnlit?baseColor.rgb:baseColor.rgb*clamp(irradiance,0.,3.0)+specular+specularTint*localSpecular*(1.-uRoughness*.65))+uEmissive;
+ float gloss=pow(max(0.,dot(reflected,viewDir)),mix(48.,5.,clamp(roughness,0.04,1.)));
+ vec3 specular=mix(vec3(.18),baseColor.rgb,clamp(metallic,0.,1.))*gloss*uSunIntensity*(1.-roughness*.75);
+ vec3 emissive=uEmissive;if(uHasEmissiveMap)emissive*=pow(texture2D(uEmissiveMap,vMaterialUV1.zw).rgb,vec3(2.2));
+ vec3 lit=(uUnlit?baseColor.rgb:baseColor.rgb*(1.-metallic)*clamp(irradiance,0.,3.0)+specular+specularTint*localSpecular*(1.-roughness*.65)+specularTint*ambientLight*.25)+emissive;
  float fog=1.-exp(-pow(max(0.,length(uEye-vWorld)-22.)*uFogDensity,2.));
  vec3 fogged=mix(lit,vec3(.24,.34,.43),clamp(fog,0.,.87));
  vec3 exposed=fogged*uExposure;
@@ -290,32 +309,49 @@ export function init3d(canvas,host,buttons){
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal'),aTexcoord=gl.getAttribLocation(program,'aTexcoord');
  const aVertexColor=gl.getAttribLocation(program,'aVertexColor'),unlitUniform=loc('uUnlit'),emissiveUniform=loc('uEmissive');
  const textureUniform=loc('uBaseColorTexture'),useTexture=loc('uUseTexture'),alphaCutoff=loc('uAlphaCutoff');
+ const normalScaleUniform=loc('uNormalScale'),occlusionStrengthUniform=loc('uOcclusionStrength');
+ const mapSlots=[['metallicRoughness','uMetallicRoughnessMap','uHasMetallicRoughnessMap'],['normal','uNormalMap','uHasNormalMap'],['occlusion','uOcclusionMap','uHasOcclusionMap'],['emissive','uEmissiveMap','uHasEmissiveMap']].map(([key,sampler,enabled],index)=>({key,unit:index+1,sampler:loc(sampler),enabled:loc(enabled)}));
+ const materialUVAttributes=[gl.getAttribLocation(program,'aMaterialUV0'),gl.getAttribLocation(program,'aMaterialUV1')];
+ const uploadTexture=async descriptor=>{
+  const image=await getTextureImage(descriptor),texture=gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
+  const pot=value=>(value&(value-1))===0,repeat=pot(image.width)&&pot(image.height);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,repeat?descriptor.wrapS:gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,repeat?descriptor.wrapT:gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);return texture;
+ };
  const makeBuffer=(data,dynamic=false)=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,dynamic?gl.DYNAMIC_DRAW:gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
  const cubes=makeBuffer(cubeVerts()),sphere=makeBuffer(curvedVerts('sphere')),cylinder=makeBuffer(curvedVerts('cylinder')),cone=makeBuffer(curvedVerts('cone')),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
  const waterMesh=makeBuffer(new Float32Array(0),true);
  const realGlbBuffers=new Map(),animationStates=new WeakMap(),animatedHitVertices=new WeakMap();
+ view3d.modelDiagnostics=()=>[...realGlbBuffers].map(([id,value])=>({id,status:value.status,triangles:value.triangles||0,warnings:value.materialWarnings||[],message:value.message||null,maps:value.parts?.map(p=>Object.keys(p.mesh.materialMaps||{}))||[]}));
  const ensureModel=id=>{
   if(realGlbBuffers.has(id))return;
   realGlbBuffers.set(id,{status:'loading'});
   getModelGeometry(id).then(async data=>{
    const textureWarnings=[...(data.materialWarnings||[])];
+   if(!gl.getExtension('OES_standard_derivatives')&&data.parts.some(part=>part.materialMaps?.normal))textureWarnings.push('Normal maps indisponibles : extension WebGL OES_standard_derivatives absente.');
    const parts=await Promise.all(data.parts.map(async part=>{
     const mesh=makeBuffer(part.vertices,!!data.rig);
-    if(part.texture){try{
-     const image=await getTextureImage(part.texture),texture=gl.createTexture();
-     gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
-     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
-     const powerOfTwo=value=>(value&(value-1))===0;
-     const repeat=powerOfTwo(image.width)&&powerOfTwo(image.height);
-     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,repeat?part.texture.wrapS:gl.CLAMP_TO_EDGE);
-     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,repeat?part.texture.wrapT:gl.CLAMP_TO_EDGE);
-     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-     const uvBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,uvBuffer);gl.bufferData(gl.ARRAY_BUFFER,part.texcoords,gl.STATIC_DRAW);
-     Object.assign(mesh,{texture,uvBuffer});
-    }catch(error){
-     textureWarnings.push('Impossible de charger une texture : '+String(error?.message||error));
-     console.warn('[WarLike GLB] Texture indisponible, couleur du matériau conservée :',id,error)
-    }}
+    mesh.materialMaps={};
+    const maps={base:part.texture?{texture:part.texture,texcoords:part.texcoords}:null,...part.materialMaps};
+    for(const [key,map] of Object.entries(maps))if(map){
+     try{
+      const texture=await uploadTexture(map.texture);
+      if(key==='base'){
+       const uvBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,uvBuffer);gl.bufferData(gl.ARRAY_BUFFER,map.texcoords,gl.STATIC_DRAW);Object.assign(mesh,{texture,uvBuffer});
+      }else mesh.materialMaps[key]=texture;
+     }catch(error){textureWarnings.push('Texture '+key+' : '+String(error?.message||error));}
+    }
+    mesh.materialUVBuffers=[['metallicRoughness','normal'],['occlusion','emissive']].map(keys=>{
+     if(!keys.some(key=>mesh.materialMaps[key]))return null;
+     const values=new Float32Array(mesh.count*4);
+     for(let i=0;i<mesh.count;i++)for(let j=0;j<2;j++){
+      const uv=part.materialMaps?.[keys[j]]?.texcoords;values[i*4+j*2]=uv?.[i*2]||0;values[i*4+j*2+1]=uv?.[i*2+1]||0;
+     }
+     const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,values,gl.STATIC_DRAW);return buffer;
+    });
+    mesh.normalScale=part.normalScale??1;mesh.occlusionStrength=part.occlusionStrength??1;
     if(part.vertexColors){mesh.colorBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,mesh.colorBuffer);gl.bufferData(gl.ARRAY_BUFFER,part.vertexColors,gl.STATIC_DRAW);}
     Object.assign(mesh,{alphaMode:part.alphaMode,alphaCutoff:part.alphaCutoff,unlit:part.unlit,emissive:part.emissive});
     return {mesh,color:part.color,roughness:part.roughness,metallic:part.metallic};
@@ -341,6 +377,16 @@ export function init3d(canvas,host,buttons){
  const bind=mesh=>{gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aNormal);
   gl.uniform1i(unlitUniform,mesh.unlit?1:0);gl.uniform3fv(emissiveUniform,mesh.emissive||[0,0,0]);
   if(mesh.colorBuffer){gl.bindBuffer(gl.ARRAY_BUFFER,mesh.colorBuffer);gl.vertexAttribPointer(aVertexColor,4,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(aVertexColor)}else{gl.disableVertexAttribArray(aVertexColor);gl.vertexAttrib4f(aVertexColor,1,1,1,1)}
+  gl.uniform1f(normalScaleUniform,mesh.normalScale??1);gl.uniform1f(occlusionStrengthUniform,mesh.occlusionStrength??1);
+  for(const slot of mapSlots){
+   const texture=mesh.materialMaps?.[slot.key];gl.uniform1i(slot.enabled,texture?1:0);gl.uniform1i(slot.sampler,slot.unit);
+   gl.activeTexture(gl.TEXTURE0+slot.unit);gl.bindTexture(gl.TEXTURE_2D,texture||null);
+  }
+  for(let i=0;i<materialUVAttributes.length;i++){
+   const attribute=materialUVAttributes[i];if(attribute<0)continue;
+   if(mesh.materialUVBuffers?.[i]){gl.bindBuffer(gl.ARRAY_BUFFER,mesh.materialUVBuffers[i]);gl.vertexAttribPointer(attribute,4,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(attribute)}
+   else{gl.disableVertexAttribArray(attribute);gl.vertexAttrib4f(attribute,0,0,0,0)}
+  }
   gl.uniform1i(useTexture,mesh.texture?1:0);gl.uniform1f(alphaCutoff,mesh.alphaMode==='OPAQUE'?-1:mesh.alphaMode==='MASK'?mesh.alphaCutoff:.01);
   if(mesh.texture){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,mesh.texture);gl.uniform1i(textureUniform,0);gl.bindBuffer(gl.ARRAY_BUFFER,mesh.uvBuffer);gl.vertexAttribPointer(aTexcoord,2,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(aTexcoord)}
   else{gl.disableVertexAttribArray(aTexcoord);gl.vertexAttrib2f(aTexcoord,0,0)}
@@ -391,7 +437,7 @@ export function init3d(canvas,host,buttons){
    if(!synchronizeRapierScene(physicsSession,state.entities)){
     const api=physicsSession.api;
     disposeRapierScene(physicsSession);
-    try{physicsSession=createRapierScene(api,state.entities);physicsAccumulator=0;for(const warning of physicsSession.errors)console.warn('[WarLike] Collision Rapier : '+warning)}
+    try{physicsSession=createRapierScene(api,state.entities);activateRapierQueries3d(physicsSession);physicsAccumulator=0;for(const warning of physicsSession.errors)console.warn('[WarLike] Collision Rapier : '+warning)}
     catch(error){console.warn('[WarLike] Rapier scene rebuild failed',error);physicsSession=null}
    }
   }
@@ -453,7 +499,7 @@ export function init3d(canvas,host,buttons){
   const token=++physicsGeneration;
   loadRapier3d().then(api=>{
    if(!api||token!==physicsGeneration||!state.playing||workspace.mode!=='3d')return;
-   try{physicsSession=createRapierScene(api,state.entities);for(const error of physicsSession.errors)console.warn('[WarLike] Collision Rapier : '+error)}
+   try{physicsSession=createRapierScene(api,state.entities);activateRapierQueries3d(physicsSession);for(const error of physicsSession.errors)console.warn('[WarLike] Collision Rapier : '+error)}
    catch(error){console.warn('[WarLike] Rapier unavailable, using built-in physics',error);physicsSession=null}
   });
  };

@@ -6,6 +6,7 @@ import {stepHeroFlight} from './hero-movement.js';
 import {cameraFacingDegrees} from './character-facing.js';
 import {findEnginePath as findPath} from './native-3d.js';
 import {healthOf,actorDistance,isHostileTo,isAiObstacle,hasLineOfSight,perceiveTarget} from './ai-perception.js';
+import {collisionBackend3d} from './collision-backend-3d.js';
 // Configurable gameplay components. Positions use WarLike's existing 2D ground coordinates.
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -33,6 +34,8 @@ export function updateAi(entities,player,dt){
   if(e.sequenceEnabled===false||e._sequenceDestroyed){ai.targetId=null;ai.memoryRemaining=0;ai.searchRemaining=0;continue}
   ai.homeX??=e.x;ai.homeY??=e.y;
   ai.clock=n(ai.clock)+frame;
+  const rapier=collisionBackend3d()?.owns(e)===true;
+  if(rapier)e._aiVerticalVelocity3d=n(e._aiVerticalVelocity3d)-Math.max(0,n(ai.gravity,15))*frame;
   // A Blueprint target is authoritative; a missing/dead target must never
   // silently redirect attacks to the player. Null restores automatic targeting.
   const explicit=e.aiTargetId!=null&&n(e.aiTargetId)>0;
@@ -94,6 +97,11 @@ export function updateAi(entities,player,dt){
    if(length>2){
     const ux=dx/length,uy=dy/length,distanceStep=Math.min(step,length);
     // Substeps prevent fast AI tunnelling through thin walls.
+    if(rapier){
+     const before={x:e.x,y:e.y};
+     moveBody3d(e,ux*distanceStep,uy*distanceStep,0,entities);
+     if(Math.hypot(e.x-before.x,e.y-before.y)>1e-5)e.rotation=Math.atan2(uy,ux)*180/Math.PI;
+    }else{
     const count=Math.max(1,Math.ceil(distanceStep/Math.max(4,Math.min(n(e.w,32),n(e.depth3d,e.h||32))*.3)));
     for(let i=0;i<count;i++)for(const [cx,cy] of [[ux,uy],[ux,0],[0,uy],[-uy,ux],[uy,-ux]]){
      if(!cx&&!cy)continue;
@@ -102,9 +110,14 @@ export function updateAi(entities,player,dt){
       e.x=x;e.y=y;e.rotation=Math.atan2(cy,cx)*180/Math.PI;break;
      }
     }
+    }
    }
    e.animation=ai.state==='chase'?'run':'walk';
   }else e.animation=ai.state==='attack'?'attack':'idle';
+  if(rapier){
+   const contact=moveBody3d(e,0,0,e._aiVerticalVelocity3d*frame*64,entities);
+   if(contact.grounded||contact.ceiling)e._aiVerticalVelocity3d=0;
+  }
   if(ai.state==='attack'&&target&&ai.cooldown===0&&hasLineOfSight(e,target,entities)){
    damage(target,n(ai.attackDamage,8));noteAnimatorAction(e,'attack',.4);ai.cooldown=Math.max(.1,n(ai.attackCooldown,1.2));
   }

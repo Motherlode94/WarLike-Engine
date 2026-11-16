@@ -1,4 +1,5 @@
-import {collisionBox3d,segmentBox3d,activeBody3d} from './collision-3d.js';
+import {collisionBox3d,segmentBox3d,activeBody3d,raycastScene3d} from './collision-3d.js';
+import {collisionBackend3d} from './collision-backend-3d.js';
 import {traceNativeSegments3d} from './native-3d.js';
 // Shared ground-plane perception for AI, combat and Blueprint conditions.
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
@@ -27,6 +28,11 @@ export function hasLineOfSight(actor,target,entities){
  if(!actor||!target)return false;
  if(spatialActor3d(actor)||spatialActor3d(target)){
   const center=o=>{const b=collisionBox3d(o);return {x:b.x+b.w/2,y:b.y+b.d/2,z:b.z+b.h*.6}},from=center(actor),to=center(target);
+  if(collisionBackend3d()?.owns(actor)){
+   const origin=[from.x/64,from.z/64,from.y/64],direction=[(to.x-from.x)/64,(to.z-from.z)/64,(to.y-from.y)/64];
+   const obstacles=entities.filter(o=>isAiObstacle(o,actor,target));
+   return !raycastScene3d(origin,direction,obstacles,{maxDistance:Math.hypot(...direction)});
+  }
   const boxes=entities.filter(o=>isAiObstacle(o,actor,target)).map(collisionBox3d);
   if(!boxes.length)return true;
   const accelerated=traceNativeSegments3d([{from,to}],boxes);

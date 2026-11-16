@@ -30,7 +30,7 @@ export const specs=Object.freeze({
 });
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
-const unit=(id,team,type,x,z)=>{const s=specs[type];return {id,team,type,x,z,hp:s.hp,ammo:s.ammo,reserve:s.reserve,reload:0,cooldown:0,yaw:0,order:null,path:[],pathAge:0,vet:0,selected:false,alive:true,component:{tracks:100,engine:100,weapon:100},service:0};};
+const unit=(id,team,type,x,z)=>{const s=specs[type];return {id,team,type,x,z,radius:s.radius,hp:s.hp,ammo:s.ammo,reserve:s.reserve,reload:0,cooldown:0,yaw:0,order:null,path:[],pathAge:0,vet:0,selected:false,alive:true,component:{tracks:100,engine:100,weapon:100},service:0};};
 export function createMission(){
  const units=[
  unit('alpha1','friendly','infantry',-26,-3),unit('alpha2','friendly','infantry',-24,-4),
@@ -111,10 +111,22 @@ export function applyDamage(m,target,rawDamage,attacker){
  }
  return effective;
 }
+// Solid buildings block sight; low barricades provide partial damage cover instead.
+export function lineClear(a,b){
+ for(const o of obstacles.filter(x=>x.type==='building')){
+  let lo=0,hi=1;
+  for(const [start,end,min,max] of [[a.x,b.x,o.x-o.w/2,o.x+o.w/2],[a.z,b.z,o.z-o.d/2,o.z+o.d/2]]){
+   const delta=end-start;if(Math.abs(delta)<1e-8){if(start>=min&&start<=max)continue;lo=2;break}
+   let x=(min-start)/delta,y=(max-start)/delta;if(x>y)[x,y]=[y,x];lo=Math.max(lo,x);hi=Math.min(hi,y);
+  }
+  if(lo<=hi&&hi>.08&&lo<.92)return false;
+ }
+ return true;
+}
 function acquire(m,u){
  const foes=live(m).filter(v=>v.team!==u.team);
  let best=null,bestDist=Infinity;
- for(const v of foes){const d=distance(u,v);if(d<specs[u.type].range&&d<bestDist){best=v;bestDist=d}}return best;
+ for(const v of foes){const d=distance(u,v);if(d<specs[u.type].range&&d<bestDist&&lineClear(u,v)){best=v;bestDist=d}}return best;
 }
 function moveUnit(u,target,dt){
  if(!target)return;

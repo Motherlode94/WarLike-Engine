@@ -57,3 +57,9 @@ test('12 generated Meshy assets have explicit rig/collider profiles',async()=>{
  const source=readFileSync(new URL('../game.js',import.meta.url),'utf8');
  for(const p of r.profiles)assert.ok(source.includes(p.id),'No CENDRE-01 mapping for '+p.id);
 });
+
+test('the initial APC really escorts the convoy out of its starting position',()=>{
+ const m=createMission(),convoy=m.units.find(u=>u.id==='convoy'),initialX=convoy.x,initialZ=convoy.z;
+ for(let n=0;n<90;n++)tick(m,.05);
+ assert.ok(Math.hypot(convoy.x-initialX,convoy.z-initialZ)>1.3,'Convoy remained stuck at spawn despite its escort');
+});

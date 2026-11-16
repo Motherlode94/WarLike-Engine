@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
+import {mkdtemp,writeFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
 import {setTimeout as delay} from 'node:timers/promises';
 import {applyCsharpFrame} from '../js/core/csharp-frame.js';
 import {createCsharpSquadDemo} from '../js/core/csharp-tactical-scene.js';
@@ -10,7 +13,7 @@ test('real .NET bridge: typed parameters, tactical orders, revisions, origin and
  const base='http://127.0.0.1:8765',origin='https://warlike-engine.pages.dev';
  // Refuse to reuse an unrelated local bridge or test against an old process.
  try{await fetch(base+'/health',{signal:AbortSignal.timeout(300)});assert.fail('Port 8765 is already occupied.')}catch(error){if(error.code==='ERR_ASSERTION')throw error}
- const child=spawn(process.env.WARLIKE_DOTNET_CMD||'dotnet',['csharp/WarLike.Bridge/bin/Release/net8.0/WarLike.Bridge.dll'],{cwd:new URL('..',import.meta.url),env:process.env,stdio:['ignore','pipe','pipe']});
+ const child=spawn(process.env.WARLIKE_DOTNET_CMD||'dotnet',['csharp/WarLike.Bridge/bin/Release/net8.0/WarLike.Bridge.dll'],{cwd:new URL('..',import.meta.url),env:{...process.env,WARLIKE_TEST_SECRET:'host-only-secret'},stdio:['ignore','pipe','pipe']});
  let logs='';child.stdout.on('data',data=>{logs+=data});child.stderr.on('data',data=>{logs+=data});
  t.after(async()=>{child.kill();if(child.exitCode===null)await Promise.race([new Promise(resolve=>child.once('exit',resolve)),delay(2000).then(()=>child.kill('SIGKILL'))])});
  let spawnError;child.on('error',error=>{spawnError=error});
@@ -24,8 +27,10 @@ test('real .NET bridge: typed parameters, tactical orders, revisions, origin and
   await delay(50);
  }
  assert.ok(healthy,'Bridge did not start: '+logs);
+ const token=logs.match(/CLÉ DE SESSION C# : ([A-Za-z0-9_-]+)/)?.[1];assert.ok(token,'launch token required');
+ for(const path of ['/scripts/compile','/scene','/frame','/stop','/tick','/components/set']){const denied=await fetch(base+path,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:'{}'});assert.equal(denied.status,401)}
  const call=async(path,data,expected=200)=>{
-  const response=await fetch(base+path,{method:data===undefined?'GET':'POST',headers:{Origin:origin,...(data===undefined?{}:{'Content-Type':'application/json'})},...(data===undefined?{}:{body:JSON.stringify(data)}),signal:AbortSignal.timeout(path==='/scripts/compile'?30000:3000)});
+  const response=await fetch(base+path,{method:data===undefined?'GET':'POST',headers:{Origin:origin,'X-WarLike-Token':token,...(data===undefined?{}:{'Content-Type':'application/json'})},...(data===undefined?{}:{body:JSON.stringify(data)}),signal:AbortSignal.timeout(path==='/scripts/compile'?35000:4500)});
   const body=await response.json();assert.equal(response.status,expected,JSON.stringify(body));return body;
  };
  const health=await call('/health');assert.equal(health.protocol,3);
@@ -116,5 +121,27 @@ public sealed class NativeSpinner : MonoBehaviour {
  await call('/components/set',{id:95,revision:custom.revision,index:0,property:'Label',value:'changed'});
  const again=await call('/frame',{revision:custom.revision,frame:2,dt:.1,actors:customFrame.actors});assert.equal(again.actors[0].x,64);assert.ok(Math.abs(again.actors[0].rotation-6)<.001);
  const stop=await call('/stop',{revision:custom.revision});assert.ok(stop.logs.includes('native-destroyed'));await call('/stop',{revision:custom.revision},409);
+ // A real user assembly cannot see host files, environment credentials or the
+ // HTTP supervisor, and cannot write to its mounted assemblies.
+ const secretFolder=await mkdtemp(path.join(tmpdir(),'warlike-host-secret-'));t.after(()=>rm(secretFolder,{recursive:true,force:true}));const secretPath=path.join(secretFolder,'secret.txt');await writeFile(secretPath,'host-only-file');
+ const probe=`using WarLike.Runtime; using System; using System.IO; using System.Net.Sockets;
+ public sealed class IsolationProbe : MonoBehaviour {
+  bool done;
+  void Update(){if(done)return;done=true;
+   bool network=false,readonlyMount=false;
+   try{using var tcp=new TcpClient();tcp.Connect("127.0.0.1",8765);}catch{network=true;}
+   try{File.WriteAllText("/app/forbidden.txt","bad");}catch{readonlyMount=true;}
+   Debug.Log("managed-budget:"+GC.GetGCMemoryInfo().TotalAvailableMemoryBytes);
+   Debug.Log("isolated:"+(!File.Exists(${JSON.stringify(secretPath)}))+":"+String.IsNullOrEmpty(Environment.GetEnvironmentVariable("WARLIKE_TEST_SECRET"))+":"+network+":"+readonlyMount);
+  }
+ }`;
+ await call('/scripts/compile',{scripts:[{name:'IsolationProbe',source:probe}]});
+ const probeScene=await call('/scene',{entities:[{id:96,csharpScript:{name:'IsolationProbe',source:probe}}]});
+ const probeFrame=await call('/frame',{revision:probeScene.revision,frame:1,dt:.02,actors:[{id:96,x:0,y:0,elevation3d:0,rotation:0,hp:100,enabled:true}]});assert.ok(probeFrame.logs.includes('isolated:True:True:True:True'),JSON.stringify(probeFrame.logs));assert.ok(probeFrame.logs.includes('managed-budget:268435456'),JSON.stringify(probeFrame.logs));
+ // A hung callback is killed by the supervisor rather than holding the HTTP
+ // world lock forever. The browser's authored project remains external.
+ const loop='using WarLike.Runtime; public sealed class Loop : MonoBehaviour { void Update(){while(true){}} }';
+ await call('/scripts/compile',{scripts:[{name:'Loop',source:loop}]});const loopScene=await call('/scene',{entities:[{id:97,csharpScript:{name:'Loop',source:loop}}]});
+ const started=Date.now();const hung=await call('/frame',{revision:loopScene.revision,frame:1,dt:.02,actors:[{id:97,x:0,y:0,elevation3d:0,rotation:0,hp:100,enabled:true}]},503);assert.match(hung.error,/Délai/);assert.ok(Date.now()-started<4500);await call('/tick',{dt:0},503);
 
 });

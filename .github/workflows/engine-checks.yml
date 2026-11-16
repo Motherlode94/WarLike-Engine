@@ -40,6 +40,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install native OS isolation tools
+        run: sudo apt-get update && sudo apt-get install -y bubblewrap util-linux
       - name: Verify the real local .NET bridge API
         run: node --test tests/csharp-bridge-live.mjs
         env:

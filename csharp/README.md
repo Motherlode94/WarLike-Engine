@@ -10,7 +10,7 @@ Installer le SDK .NET 8, mettre le dépôt à jour puis lancer depuis sa racine 
 dotnet run --project csharp/WarLike.Bridge
 ```
 
-Sous Windows, `start-warlike-csharp.cmd` lance la même commande. Dans Studio : **Window → C# Runtime (.NET 8)**, **Connexion locale**, puis **Envoyer la scène**. Après une mise à jour du code C#, redémarrer le bridge.
+Le superviseur nécessite Python 3, Linux et bubblewrap ≥ 0.8 avec les espaces de noms autorisés. Sous Windows/macOS ou sur un hôte qui refuse cette isolation, l’exécution native est bloquée sans altérer les sources. Dans Studio : **Window → C# Runtime (.NET 8)**, **Clé de session** (affichée dans le terminal), **Connexion locale**, puis **Envoyer la scène**. La clé reste en mémoire de l’onglet et change au redémarrage du pont. Après une mise à jour du code C#, redémarrer le bridge.
 
 ## Inspector C# typé
 
@@ -115,6 +115,8 @@ Les méthodes privées ou publiques `void Awake()`, `OnEnable()`, `Start()`, `Fi
 
 Les champs publics modifiables et les champs privés `[SerializeField]` de type `float`, `int`, `bool`, `string` ou `Vector3` apparaissent dans **C# Runtime → Inspecter la sélection**. Les remplacements sont enregistrés dans `csharpScript.values` avant `Awake`. Les membres retirés d’un script ne cassent pas une ancienne scène. Les propriétés annotées `[InspectorField]` des composants natifs existants gardent leur validation.
 
-Le C# s’exécute avec les droits du processus local : utiliser des sources de confiance. L’export Web bloque les scripts natifs actifs et explique comment revenir à WarScript. Cette API rapproche le workflow d’Unity, sans fournir `UnityEngine` ni rendre tous ses packages compatibles. Référence : [ordre des événements Unity](https://docs.unity3d.com/6000.1/Documentation/Manual/execution-order.html).
+Le C# s’exécute dans un processus isolé, sans réseau ni dossier personnel, sous la supervision d’un service HTTP authentifié. Le service exige `X-WarLike-Token` sur chaque mutation et ne transmet jamais ce secret au processus de scripts. Une autorisation de confiance du code est également demandée dans l’éditeur. L’export Web bloque les scripts natifs actifs et explique comment revenir à WarScript. Cette API rapproche le workflow d’Unity, sans fournir `UnityEngine` ni rendre tous ses packages compatibles. Référence : [ordre des événements Unity](https://docs.unity3d.com/6000.1/Documentation/Manual/execution-order.html).
 
 Le bridge ajoute `POST /scripts/compile` (sources, classes, diagnostics) et `POST /stop` (révision attendue). `GET /health` reste au protocole 3 et annonce `native-script-compiler` et `mono-behaviour`. Les sources compilées sont limitées à 32 fichiers de 64 Ko ; les erreurs de compilation conservent la dernière compilation réussie. La position, la rotation Y, la santé et l’activation des acteurs sont synchronisées par `/frame`, avec les touches de l’image. Les transformations X/Z de rotation et les champs privés arbitraires ne constituent pas une sauvegarde native complète.
+
+Voir [la politique d’exécution et les limites de compatibilité](../docs/script-security.md).

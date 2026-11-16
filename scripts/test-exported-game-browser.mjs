@@ -11,7 +11,7 @@ import {freshGameProject} from '../js/core/game-project.js';
 import {registerLocalModel} from '../js/assets/real-models-3d.js';
 import {prefab3d} from '../js/assets/catalog-3d.js';
 const root=path.resolve(import.meta.dirname,'..');
-const output=await mkdtemp(path.join(tmpdir(),'warlike-export-'));
+const output=process.env.WARLIKE_EXPORT_BROWSER_OUTPUT_DIR?path.resolve(process.env.WARLIKE_EXPORT_BROWSER_OUTPUT_DIR):await mkdtemp(path.join(tmpdir(),'warlike-export-'));await mkdir(output,{recursive:true});
 const playwright=await import(process.env.WARLIKE_PLAYWRIGHT_MODULE||'playwright');
 const demo=createAnimationDemo(),project=freshGameProject();
 Object.assign(project,{id:'export-verification',title:'Atelier du mouvement',genre:'adventure'});
@@ -59,7 +59,7 @@ try{
  });
  await page.getByRole('button',{name:'Jouer',exact:true}).waitFor();
  await page.screenshot({path:path.join(output,'menu.png'),timeout:20000});
- await page.getByRole('button',{name:'Jouer',exact:true}).click();
+ await page.getByRole('button',{name:'Jouer',exact:true}).click();await page.locator('#scriptTrustAllow').click();
  await page.waitForFunction(async()=>{const {runtimeSession}=await import('/js/core/runtime-session.js');return runtimeSession.phase==='ready';});
  await page.waitForTimeout(300);const initial=await snapshot();assert(initial.playing);assert(initial.rapier.ready);assert.equal(initial.glError,0);
  await page.keyboard.down('w');await page.waitForTimeout(1400);await page.keyboard.up('w');
@@ -72,7 +72,7 @@ try{
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('warlike.save.v1:export-verification:quick'))),savedHero=saved.entities.find(o=>o.playable3d);
  assert.equal(savedHero.model3dId,initial.hero.assetId);
  await page.getByRole('button',{name:'Reprendre la partie',exact:true}).click();await page.keyboard.down('s');await page.waitForTimeout(300);await page.keyboard.up('s');
- await page.close();page=await open();await page.getByRole('button',{name:'Continuer la sauvegarde',exact:true}).click();
+ await page.close();page=await open();await page.getByRole('button',{name:'Continuer la sauvegarde',exact:true}).click();await page.locator('#scriptTrustAllow').click();
  await page.waitForFunction(async()=>{const {state}=await import('/js/core/state.js'),{runtimeSession}=await import('/js/core/runtime-session.js');return state.playing&&runtimeSession.phase==='ready';});
  await page.waitForTimeout(150);await page.keyboard.press('Escape');const loaded=await snapshot();
  assert(Math.hypot(loaded.hero.x-savedHero.x,loaded.hero.y-savedHero.y)<.1);assert.equal(loaded.hero.assetId,initial.hero.assetId);assert.equal(loaded.glError,0);

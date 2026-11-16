@@ -64,7 +64,8 @@ try{
    restoreWorkspaces({workspaceMode:mode,workspaces:{'2d':mode==='2d'?slot:{entities:[],selected:[],nextId:1,camera:fixture.camera},'3d':mode==='3d'?slot:{entities:[],selected:[],nextId:1,camera:fixture.camera}}});
    saveProject();notify();return JSON.parse(JSON.stringify(state.entities));
   },{mode,native});
-  await page.locator('#hubClose').click();await page.locator('#play').click();
+  await page.evaluate(async token=>(await import('/js/core/native-bridge-client.js')).setNativeBridgeToken(token),bridgeLog.match(/CLÉ DE SESSION C# : ([A-Za-z0-9_-]+)/)?.[1]||'');
+  await page.locator('#hubClose').click();await page.locator('#play').click();if(native)await page.locator('#scriptTrustAllow').click();
   let s=await until(s=>s.paused&&s.node==='action1','break before first side effect');assert.equal(s.score,0);assert.equal(s.phase,'ready');
   await page.locator('#blueprintDialog').waitFor({state:'visible'});await page.locator('#bpDebugStatus').getByText(/Point d’arrêt/).waitFor();
   // Wait across rendered frames to demonstrate that simulation time and C# are frozen.

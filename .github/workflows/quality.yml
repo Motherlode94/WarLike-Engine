@@ -18,8 +18,12 @@ jobs:
       - name: Refresh runtime file manifest
         run: node scripts/build-runtime-manifest.mjs
       - run: npm test
+      - name: Install native OS isolation tools
+        run: sudo apt-get update && sudo apt-get install -y bubblewrap util-linux
       - name: Verify local Python and C++ Script Studio runner
-        run: python3 -m unittest discover -s tests -p 'script_runner_test.py' -v
+        run: python3 -m unittest discover -s tests -p '*_test.py' -v
+        env:
+          WARLIKE_REQUIRE_SANDBOX: '1'
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'

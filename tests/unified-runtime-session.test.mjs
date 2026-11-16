@@ -1,3 +1,5 @@
+import {authorizeScripts} from '../js/core/script-trust.js';
+import {gameProject} from '../js/core/game-project.js';
 import {webScriptRuntime} from '../js/core/web-script-runtime.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,19 +13,20 @@ for(const scenario of [
  {name:'cold native compilation may take longer than a normal frame request',path:'/scripts/compile',elapsed:5000,complete:true},
  {name:'unresponsive native compilation still stops Play after its extended deadline',path:'/scripts/compile',elapsed:30001,complete:false},
  {name:'ordinary native requests retain their short deadline',path:'/health',elapsed:4501,complete:false}
-])test(scenario.name,async t=>{
+])test(scenario.name,{timeout:10000},async t=>{
  setup();setRuntimeTransport();state.entities[0].csharpScript={name:'Spinner',source:'public class Spinner : MonoBehaviour {}'};
- let heldSignal,release;
+ await authorizeScripts([{project:gameProject.id||'',language:'csharp',name:'Spinner',source:state.entities[0].csharpScript.source}],{ask:async()=>true});
+ let heldSignal,release,observed;const requestObserved=new Promise(resolve=>observed=resolve);
  t.mock.timers.enable({apis:['setTimeout']});
  t.mock.method(globalThis,'fetch',async(url,options)=>{
   const path=new URL(url).pathname;
-  if(path===scenario.path){heldSignal=options.signal;return new Promise((resolve,reject)=>{release=()=>resolve(Response.json({ok:true}));options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true})});}
-  if(path==='/health')return Response.json({protocol:3,capabilities:['shared-play-frame','native-script-compiler']});
+  if(path===scenario.path){heldSignal=options.signal;observed();return new Promise((resolve,reject)=>{release=()=>resolve(Response.json({ok:true}));options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true})});}
+  if(path==='/health')return Response.json({protocol:3,authenticationRequired:true,isolationRequired:true,capabilities:['shared-play-frame','native-script-compiler']});
   if(path==='/scene')return Response.json({revision:4});
   const input=JSON.parse(options.body);return Response.json({revision:4,frame:input.frame,actors:input.actors});
  });
  try{
-  runRuntimeFrame(.02,{canRun:()=>true});await new Promise(resolve=>setImmediate(resolve));assert.ok(heldSignal);
+  runRuntimeFrame(.02,{canRun:()=>true});await Promise.race([requestObserved,runtimeSession.completion.then(()=>{throw Error(runtimeSession.error||'Expected native request was not sent')})]);assert.ok(heldSignal);
   t.mock.timers.tick(scenario.elapsed);
   if(scenario.complete){assert.equal(heldSignal.aborted,false);release();await runtimeSession.completion;assert.equal(runtimeSession.phase,'ready');}
   else {await runtimeSession.completion;assert.equal(heldSignal.aborted,true);assert.equal(runtimeSession.phase,'error');}
@@ -68,7 +71,7 @@ test('Web modules load before a frame and JS, WarScript and gameplay share one w
 test('a scene containing only disabled Web scripts can activate them during Play',async()=>{
  setup('web');const entity=state.entities[0];entity.csharpComponents=[];entity.webScripts=[{scriptId:'disabled',name:'Disabled.js',language:'javascript',enabled:false,source:'export function OnEnable(ctx){ctx.Rotate(10)} export function Update(ctx){ctx.Rotate(1)}',values:{}}];
  const previous=webScriptRuntime.load;webScriptRuntime.load=source=>import('data:text/javascript,'+encodeURIComponent(source));
- try{runRuntimeFrame(.02,{canRun:()=>true});await runtimeSession.completion;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,undefined);entity.webScripts[0].enabled=true;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,11);entity.webScripts[0].enabled=false;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,11);}finally{finish();webScriptRuntime.load=previous}
+ try{runRuntimeFrame(.02,{canRun:()=>true});await runtimeSession.completion;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,undefined);entity.webScripts[0].enabled=true;runRuntimeFrame(.02,{canRun:()=>true});await runtimeSession.completion;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,11);entity.webScripts[0].enabled=false;runRuntimeFrame(.02,{canRun:()=>true});assert.equal(entity.rotation,11);}finally{finish();webScriptRuntime.load=previous}
 });
 
 test('gameplay filtering does not reload surviving Web modules or repeat activation',async()=>{

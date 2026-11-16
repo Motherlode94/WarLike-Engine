@@ -10,7 +10,7 @@ const walk=async dir=>{
  for(const entry of entries){
   if(entry.isSymbolicLink())continue;
   const name=dir+'/'+entry.name;
-  if(entry.isDirectory())result.push(...await walk(name));
+  if(entry.isDirectory()&&!['node_modules','dist','.cache'].includes(entry.name))result.push(...await walk(name));
   else if(entry.isFile()&&/\.(html|js|mjs|wasm|css|svg|png|jpg|jpeg|webp|glb|json|md|txt|ogg|mp3|wav)$/i.test(name))result.push(name);
  }
  return result;
@@ -23,6 +23,11 @@ for(const file of requiredFiles){
 }
 const files=[...requiredFiles];
 for(const dir of requiredDirs)files.push(...await walk(dir));
+// Optional standalone demos should not be mandatory in minimal export fixtures.
+try{
+ const info=await lstat(path.join(root,'examples/iron-defiance'));
+ if(info.isDirectory())files.push(...await walk('examples/iron-defiance'));
+}catch(error){if(error?.code!=='ENOENT')throw error;}
 try{
  const info=await lstat(path.join(root,'native/dist'));
  if(info.isDirectory())files.push(...await walk('native/dist'));

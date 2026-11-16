@@ -1,0 +1,299 @@
+{
+  "schema": "warlike.iron-defiance.rig-profiles.v1",
+  "coordinateSystem": "right-handed, Y-up, +Z forward, metres",
+  "note": "Expected authoring contracts only. Meshy downloads are not assumed rigged or mechanically separated.",
+  "profiles": [
+    {
+      "id": "ID-INF-01",
+      "kind": "humanoid",
+      "controller": "InfantryController",
+      "targetHeightM": 1.8,
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "UpperArm_L",
+        "LowerArm_L",
+        "Hand_L",
+        "UpperArm_R",
+        "LowerArm_R",
+        "Hand_R",
+        "UpperLeg_L",
+        "LowerLeg_L",
+        "Foot_L",
+        "UpperLeg_R",
+        "LowerLeg_R",
+        "Foot_R"
+      ],
+      "animationStates": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Aim",
+        "Shoot",
+        "Reload",
+        "Death"
+      ],
+      "collider": {
+        "type": "capsule",
+        "height": 1.7,
+        "radius": 0.4
+      },
+      "sockets": [
+        "RightHand_Weapon",
+        "LeftHand_Grip",
+        "Backpack"
+      ],
+      "required": true
+    },
+    {
+      "id": "ID-INF-02",
+      "kind": "humanoid",
+      "controller": "MedicController",
+      "targetHeightM": 1.8,
+      "bones": "@ID-INF-01",
+      "animationStates": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Treat",
+        "Death"
+      ],
+      "collider": {
+        "type": "capsule",
+        "height": 1.7,
+        "radius": 0.4
+      },
+      "sockets": [
+        "Medkit",
+        "RightHand"
+      ],
+      "required": true
+    },
+    {
+      "id": "ID-INF-03",
+      "kind": "humanoid",
+      "controller": "EngineerController",
+      "targetHeightM": 1.8,
+      "bones": "@ID-INF-01",
+      "animationStates": [
+        "Idle",
+        "Walk",
+        "Repair",
+        "Build",
+        "Death"
+      ],
+      "collider": {
+        "type": "capsule",
+        "height": 1.7,
+        "radius": 0.43
+      },
+      "sockets": [
+        "Toolkit",
+        "RightHand"
+      ],
+      "required": true
+    },
+    {
+      "id": "ID-ARM-01",
+      "kind": "vehicle",
+      "controller": "TrackedWheeledVehicleController",
+      "targetLengthM": 5.8,
+      "parts": [
+        "Hull",
+        "Wheel_FL",
+        "Wheel_FR",
+        "Wheel_ML",
+        "Wheel_MR",
+        "Wheel_RL",
+        "Wheel_RR"
+      ],
+      "collider": {
+        "type": "box",
+        "size": [
+          2.6,
+          1.8,
+          5.8
+        ]
+      },
+      "required": true
+    },
+    {
+      "id": "ID-ARM-02",
+      "kind": "tank",
+      "controller": "TankController",
+      "targetLengthM": 7,
+      "parts": [
+        "Hull",
+        "Turret_Pivot",
+        "Gun_Pivot",
+        "Barrel",
+        "Track_L",
+        "Track_R"
+      ],
+      "collider": {
+        "type": "box",
+        "size": [
+          3.2,
+          1.7,
+          6.5
+        ]
+      },
+      "required": true
+    },
+    {
+      "id": "ID-ARM-03",
+      "kind": "vehicle",
+      "controller": "ScoutController",
+      "targetLengthM": 4.8,
+      "parts": [
+        "Hull",
+        "Wheel_FL",
+        "Wheel_FR",
+        "Wheel_RL",
+        "Wheel_RR",
+        "Sensor_Pivot"
+      ],
+      "collider": {
+        "type": "box",
+        "size": [
+          2.5,
+          1.6,
+          4.8
+        ]
+      },
+      "required": true
+    },
+    {
+      "id": "ID-LOG-01",
+      "kind": "vehicle",
+      "controller": "SupplyController",
+      "targetLengthM": 6.5,
+      "parts": [
+        "Cab",
+        "Cargo",
+        "Wheel_FL",
+        "Wheel_FR",
+        "Wheel_ML",
+        "Wheel_MR",
+        "Wheel_RL",
+        "Wheel_RR"
+      ],
+      "collider": {
+        "type": "box",
+        "size": [
+          2.7,
+          2.5,
+          6.5
+        ]
+      },
+      "required": true
+    },
+    {
+      "id": "ID-LOG-02",
+      "kind": "vehicle",
+      "controller": "AmbulanceController",
+      "targetLengthM": 5.5,
+      "parts": [
+        "Hull",
+        "Wheel_FL",
+        "Wheel_FR",
+        "Wheel_RL",
+        "Wheel_RR",
+        "Rear_Door_L",
+        "Rear_Door_R"
+      ],
+      "collider": {
+        "type": "box",
+        "size": [
+          2.5,
+          2.3,
+          5.5
+        ]
+      },
+      "required": true
+    },
+    {
+      "id": "ID-DRN-01",
+      "kind": "quadruped",
+      "controller": "DroneGroundController",
+      "targetLengthM": 1.4,
+      "parts": [
+        "Body",
+        "Hip_FL",
+        "Knee_FL",
+        "Hip_FR",
+        "Knee_FR",
+        "Hip_RL",
+        "Knee_RL",
+        "Hip_RR",
+        "Knee_RR",
+        "Camera_Pivot"
+      ],
+      "collider": {
+        "type": "box",
+        "size": [
+          1,
+          1,
+          1.4
+        ]
+      },
+      "required": true
+    },
+    {
+      "id": "ID-DRN-02",
+      "kind": "aircraft",
+      "controller": "QuadDroneController",
+      "targetWidthM": 1.1,
+      "parts": [
+        "Hull",
+        "Rotor_FL",
+        "Rotor_FR",
+        "Rotor_RL",
+        "Rotor_RR",
+        "Camera_Pivot"
+      ],
+      "collider": {
+        "type": "sphere",
+        "radius": 0.7
+      },
+      "required": true
+    },
+    {
+      "id": "ID-ENV-01",
+      "kind": "static",
+      "controller": "CoverCollider",
+      "parts": [
+        "Main"
+      ],
+      "collider": {
+        "type": "box",
+        "size": [
+          3,
+          1.5,
+          1.4
+        ]
+      },
+      "cover": 0.45,
+      "required": false
+    },
+    {
+      "id": "ID-ENV-02",
+      "kind": "static",
+      "controller": "CompoundStaticColliders",
+      "parts": [
+        "Structure",
+        "Stairs",
+        "Platform",
+        "Railings"
+      ],
+      "collider": {
+        "type": "compound",
+        "note": "Each stair/platform requires validated geometry for navigation"
+      },
+      "required": false
+    }
+  ]
+}

@@ -19,6 +19,7 @@ async function build(name,input){
  return {files:result.files,bytes:result.blob.size};
 }
 const route=complete3dRoute(),archive=await build('route',route);
+const cameraFixture=structuredClone(route);cameraFixture.entities.find(o=>o.playable3d).cameraRig.mode='thirdPerson';await build('camera',cameraFixture);
 const probe=registerLocalModel(new File([materialProbeGlb()],'PBR-probe.glb'));
 const neutralProbe=registerLocalModel(new File([materialProbeGlb({normalScale:0})],'PBR-normal-zero.glb'));
 const galleryModels=['free-mini-characters-character-male-a','free-car-kit-sedan','free-survival-kit-barrel'];
@@ -52,11 +53,13 @@ const snapshot=()=>page.evaluate(async()=>{const {state}=await import('./js/core
 async function walkUntil(key,fn){await page.keyboard.down(key);try{await wait(fn)}finally{await page.keyboard.up(key)}}
 try{
  browser=await chromium.launch({headless:true,...(process.env.WARLIKE_CHROMIUM?{executablePath:process.env.WARLIKE_CHROMIUM}:{}),args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--in-process-gpu']});
- mark('offline exported route');await open('route');report.start=await snapshot();
- mark('mouse camera and pause');const canvas=page.locator('#canvas3d'),rect=await canvas.boundingBox();const cx=rect.x+rect.width/2,cy=rect.y+rect.height/2;
- await page.mouse.click(cx,cy);await wait(()=>!!document.pointerLockElement);await page.mouse.move(cx+40,cy);await wait(async initial=>{const {view3d}=await import('./js/core/viewport-3d.js');return Math.abs(view3d.yaw-initial)>.01},report.start.yaw);
- await page.mouse.move(cx,cy);await page.evaluate(()=>document.exitPointerLock());assert.ok(Math.abs((await snapshot()).yaw-report.start.yaw)<.03);
+ mark('third-person mouse camera and pause');await open('camera');const cameraStart=await snapshot();
+ const canvas=page.locator('#canvas3d'),rect=await canvas.boundingBox(),cx=rect.x+rect.width/2,cy=rect.y+rect.height/2;
+ await page.mouse.move(cx,cy);await page.mouse.down({button:'right'});await page.mouse.move(cx+40,cy,{steps:8});await page.mouse.up({button:'right'});
+ await wait(async initial=>{const {view3d}=await import('./js/core/viewport-3d.js');return Math.abs(view3d.yaw-initial)>.1},cameraStart.yaw);
  await page.keyboard.press('Escape');await page.getByRole('button',{name:'Reprendre la partie',exact:true}).click();
+ report.camera=await snapshot();await page.screenshot({path:path.join(output,'route-camera.png')});await context.close();
+ mark('offline exported FPS route');await open('route');report.start=await snapshot();
  mark('walk up four real steps');await walkUntil('w',async()=>{const {state}=await import('./js/core/state.js');return state.entities.find(o=>o.playable3d).y<310});
  const stairs=await snapshot();assert.ok(stairs.player.height>.7&&stairs.player.height<.85);report.stairs=stairs;await page.screenshot({path:path.join(output,'route-stairs.png')});
  mark('closed door blocks player and shots');await page.keyboard.down('w');await page.waitForTimeout(1200);await page.keyboard.up('w');const blocked=await snapshot();assert.ok(blocked.player.y>=185&&blocked.player.y<240);await page.keyboard.down('f');await page.waitForTimeout(600);await page.keyboard.up('f');assert.equal((await snapshot()).enemyHp,100);

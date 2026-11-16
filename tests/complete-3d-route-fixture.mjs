@@ -2,7 +2,7 @@ import {defaultController,defaultStats,defaultAi} from '../js/core/gameplay-comp
 import {freshGameProject} from '../js/core/game-project.js';
 export function complete3dRoute(){
  const entities=[];
- const add=(name,x,y,w,h,depth3d,extra={})=>{const o={id:entities.length+1,type:'mesh3d',assetId:'primitive-cube',model3dId:'primitive-cube',name,x,y,w,h,depth3d,elevation3d:0,color:'#658294',colorCustomized:true,collision3d:true,solid3d:true,...extra};entities.push(o);return o;};
+ const add=(name,x,y,w,h,depth3d,extra={})=>{const o={id:entities.length+1,type:'mesh3d',assetId:'primitive-cube',name,x,y,w,h,depth3d,elevation3d:0,color:'#658294',colorCustomized:true,collision3d:true,solid3d:true,...extra};entities.push(o);return o;};
  add('Sol réel',-320,-500,640,16,1400,{elevation3d:-.25,tags:['ai-walkable']});
  add('Mur gauche',-160,-450,16,220,1350);add('Mur droit',176,-450,16,220,1350);
  for(let i=0;i<4;i++)add('Marche '+(i+1),-144,480-i*48,320,12*(i+1),48,{tags:['ai-walkable']});

@@ -16402,6 +16402,7 @@
     "js/core/hero-movement.js",
     "js/core/history.js",
     "js/core/horror-audio.js",
+    "js/core/horror-creatures.js",
     "js/core/horror-pursuit-3d-demo.js",
     "js/core/horror-pursuit-demo.js",
     "js/core/horror-survival.js",

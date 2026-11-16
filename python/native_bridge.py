@@ -7,6 +7,7 @@ import argparse
 import hmac
 import json
 import os
+import queue
 from pathlib import Path
 import secrets
 import selectors
@@ -29,8 +30,17 @@ class NativeWorld:
         self.folder = tempfile.TemporaryDirectory(prefix="warlike-dotnet-")
         self.lock = threading.Lock()
         self.broken = False
+        self.jobs = queue.Queue(maxsize=1)
+        # bwrap's parent-death signal follows the creating THREAD on Linux.
+        # A short-lived HTTP handler must never own a persistent worker.
+        self.owner = threading.Thread(target=self.own_process, daemon=True)
+        self.owner.start()
 
     def close(self):
+        if self.process:
+            kill_tree(self.process)
+        self.jobs.put(None)
+        self.owner.join(timeout=3)
         if self.process:
             kill_tree(self.process)
             for stream in (self.process.stdin, self.process.stdout, self.process.stderr):
@@ -38,11 +48,35 @@ class NativeWorld:
             self.process = None
         self.folder.cleanup()
 
+    def own_process(self):
+        while (job := self.jobs.get()) is not None:
+            path, body, response = job
+            try:
+                response.put(self.perform(path, body))
+            except Exception as error:
+                self.broken = True
+                if self.process:
+                    kill_tree(self.process)
+                response.put((503, {"error": "Runtime isolé interrompu : "+str(error)[:1000]}))
+
     def request(self, path, body):
-        if self.broken:
-            return 503, {"error": "Runtime isolé interrompu. Redémarre le pont ; la scène du navigateur est conservée."}
         if not self.lock.acquire(blocking=False):
             return 429, {"error": "Une requête C# est déjà en cours."}
+        try:
+            response = queue.Queue(maxsize=1)
+            self.jobs.put((path, body, response))
+            return response.get(timeout=35)
+        except queue.Empty:
+            self.broken = True
+            if self.process:
+                kill_tree(self.process)
+            return 503, {"error": "Superviseur C# expiré ; redémarre le pont."}
+        finally:
+            self.lock.release()
+
+    def perform(self, path, body):
+        if self.broken:
+            return 503, {"error": "Runtime isolé interrompu. Redémarre le pont ; la scène du navigateur est conservée."}
         try:
             if not self.process:
                 command = sandbox_command([str(self.dotnet), "/app/"+self.assembly.name, "--isolated-worker"], self.folder.name,
@@ -95,8 +129,6 @@ class NativeWorld:
             if self.process:
                 kill_tree(self.process)
             return 503, {"error": str(error)}
-        finally:
-            self.lock.release()
 
 
 def serve(assembly, dotnet):

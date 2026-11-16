@@ -8,9 +8,11 @@ import selectors
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
 from native_sandbox import sandbox_command, SandboxUnavailable
+from native_bridge import NativeWorld
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -28,6 +30,26 @@ class SecurityTests(unittest.TestCase):
             self.assertNotIn("--share-net", command)
             self.assertNotIn(str(Path.home()), command)
             self.assertIn("--as=536870912", command)
+
+    def test_native_worker_has_a_persistent_owner_across_http_threads(self):
+        world = NativeWorld('/missing/bridge.dll', sys.executable)
+        owner_ids, caller_ids = [], []
+        world.perform = lambda *_: (owner_ids.append(threading.get_ident()) or 200, {})
+        def client():
+            caller_ids.append(threading.get_ident())
+            self.assertEqual(world.request('/scene', '{}')[0], 200)
+        try:
+            for _ in range(2):
+                thread = threading.Thread(target=client)
+                thread.start()
+                thread.join(timeout=2)
+                self.assertFalse(thread.is_alive())
+            self.assertEqual(owner_ids, [world.owner.ident, world.owner.ident])
+            self.assertTrue(all(value != world.owner.ident for value in caller_ids))
+            self.assertTrue(world.owner.is_alive())
+        finally:
+            world.close()
+        self.assertFalse(world.owner.is_alive())
 
     def test_csharp_http_mutations_require_launch_token_before_reading_body(self):
         process = subprocess.Popen([sys.executable, str(ROOT / "python/native_bridge.py"), "--assembly", "/missing/WarLike.Bridge.dll", "--dotnet", sys.executable], stdout=subprocess.PIPE, stderr=subprocess.PIPE)

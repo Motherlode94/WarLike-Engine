@@ -56,3 +56,18 @@ Puis ouvrir la scène dans un vrai navigateur. La compatibilité des anciennes s
 Pour chaque équipe, le terminal exécute une séquence compilée en graphe : `interact → setVariable → message → emitSignal`. Chaque soldat possède une séquence `signal` portant le même nom `iron:team:alpha`, `iron:team:beta` ou `iron:team:delta`, puis l'action `rtsOrder` avec `value: move` et une destination individuelle. Les soldats utilisent le composant existant `tacticalUnit` avec `autoAttack: false`, conformément à l'autorisation de tir contrôlée par le joueur.
 
 Ce parcours est destiné à montrer une **commande RTS réellement interprétée par Engine** dans Hierarchy, Inspector, Blueprint / WarNode et Play. La sélection de groupes à la souris, les vrais modèles Meshy, les combats et le basculement d'un soldat RTS en FPS nécessitent encore leur propre intégration. Aucun changement destructif des sauvegardes n'est nécessaire.
+
+## 6. Compagnies natives complètes — sept factions
+
+Le navigateur des démos affiche également sept scènes alternatives `Iron Defiance · [faction]`. Elles sont générées par `js/core/iron-defiance-company-scene.js`.
+
+- Chaque scène charge **une** compagnie de 108 soldats, trois pelotons, neuf escouades, vingt-sept équipes Alpha/Beta/Delta.
+- Le même générateur prend `rdc`, `china`, `russia`, `usa`, `france`, `ukraine`, `japan` ; aucun chargement simultané automatique de 756 soldats.
+- Les neuf escouades portent un rôle parmi assaut, reconnaissance, antichar, appui-feu, génie et médical. Ces rôles sont pour l'instant **des données de formation** : leurs armes, soins, comportements spécialisés et véhicules ne sont pas encore entièrement codés.
+- Dans Hierarchy, chaque soldat a une affiliation peloton/escouade/équipe ; Inspector conserve ses données de faction, sa configuration d'uniforme et son `tacticalUnit` avec tir automatique désactivé.
+- Chaque escouade dispose d'un terminal Blueprint à trois signaux ; chaque signal déclenche les `rtsOrder` de ses 5/4/3 soldats via le runtime natif.
+- Les uniformes fictifs utilisent des couleurs de primitives ; les textures PBR, écussons et drapeaux visibles sur les meshes GLB ne sont pas encore installés. Pour la RDC, la tenue principale est noire avec une accentuation dorée.
+- Le commandant FPS est un personnage pédagogique supplémentaire **hors des 108 soldats d'escouades**. Les états-majors, personnels logistiques, équipages de véhicules et réservistes ne sont pas encore modélisés dans le calcul de la compagnie.
+- Pour limiter le coût de l'éditeur, conserver l'Academy 12 soldats pour le débogage rapproché. Les compagnies 108 nécessitent un test de performances en Play et sur appareils modestes.
+
+Tests ciblés : `node --test tests/iron-defiance-company.test.mjs tests/iron-defiance-training.test.mjs tests/iron-defiance-uniforms.test.mjs`. L'export, les anciennes sauvegardes et le FPS/RTS hybride doivent toujours être testés en navigateur.

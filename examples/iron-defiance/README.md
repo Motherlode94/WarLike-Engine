@@ -12,7 +12,7 @@ Depuis la racine d'Engine, servir le dépôt sur un serveur HTTP. Le fichier sou
 
 ## Systèmes
 - Carte 3D polygonale avec routes, bâtiments statiques, barricades et couvertures ; A* sur grille 2 mètres.
-- 8 unités amies dont un convoi civil, 6 unités ennemies ; distances, orientation, tir, projectiles, armures directionnelles, composants véhicule, ravitaillement.
+- 10 unités amies dont un convoi civil, 7 unités ennemies ; distances, orientation, tir, projectiles, armures directionnelles, composants véhicule, ravitaillement.
 - IA hostile de détection et engagement ; tirs bloqués par les bâtiments. Logistique et munitions limitées.
 - Animation procédurale des membres et roues ; pivot simplifié de tourelle ; vrai rig humanoïde et maillage de tourelle séparé **non garantis** pour les GLB Meshy.
 - Sauvegarde locale versionnée, victoire et défaite ; aucune synchronisation Cloud active.

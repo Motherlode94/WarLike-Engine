@@ -38,7 +38,7 @@ export function createMission(){
  const units=[
  unit('alpha1','friendly','infantry',-26,-3),unit('alpha2','friendly','infantry',-24,-4),
  unit('alpha3','friendly','medic',-25,-6),unit('alpha4','friendly','engineer',-28,-6),
- unit('apc','friendly','apc',-30,-10),unit('tank','friendly','tank',-20,-13),
+ unit('apc','friendly','apc',-34,-19),unit('tank','friendly','tank',-20,-13),
  unit('supply','friendly','supply',-33,-10),unit('convoy','friendly','convoy',-33,-25),
  unit('scout1','friendly','scout',-18,-7),unit('ambulance1','friendly','ambulance',-33,-2),
  unit('drone1','enemy','drone',8,-8),unit('drone2','enemy','drone',19,-1),

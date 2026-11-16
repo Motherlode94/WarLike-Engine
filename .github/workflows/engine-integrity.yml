@@ -59,6 +59,8 @@ jobs:
         run: node scripts/test-script-security-browser.mjs
       - name: Portable export with isolated JavaScript in Chromium
         run: npm run test:export:browser
+        env:
+          WARLIKE_EXPORT_BROWSER_OUTPUT_DIR: .validation-tools/export-browser
       - name: Reference editor, Blueprint and old/new project round trips
         run: node scripts/test-reference-editor-browser.mjs
       - name: CHAMBRE 07 export and isolated Play

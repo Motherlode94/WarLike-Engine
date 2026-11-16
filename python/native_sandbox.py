@@ -33,7 +33,7 @@ def sandbox_command(command, folder, *, mounts=(), managed=False, writable=False
     options += ["--proc", "/proc", "--dev", "/dev", "--size", str(64*1024*1024), "--tmpfs", "/tmp",
                 ("--bind" if writable else "--ro-bind"), folder, "/work", "--chdir", "/tmp", "--clearenv", "--setenv", "PATH", "/usr/bin:/bin",
                 "--setenv", "HOME", "/tmp", "--setenv", "TMPDIR", "/tmp", "--setenv", "PYTHONUNBUFFERED", "1",
-                "--setenv", "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "1", "--setenv", "DOTNET_GCHeapHardLimit", "10000000",
+                "--setenv", "DOTNET_ROOT", "/runtime", "--setenv", "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "1", "--setenv", "DOTNET_GCHeapHardLimit", "10000000",
                 "--setenv", "DOTNET_EnableDiagnostics", "0", "--setenv", "DOTNET_PROCESSOR_COUNT", "2"]
     translated = [str(arg).replace(folder + "/", "/work/") for arg in command]
     memory = 8*1024**3 if managed else 512*1024**2

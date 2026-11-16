@@ -11,7 +11,7 @@ import {freshGameProject} from '../js/core/game-project.js';
 import {registerLocalModel} from '../js/assets/real-models-3d.js';
 import {prefab3d} from '../js/assets/catalog-3d.js';
 const root=path.resolve(import.meta.dirname,'..');
-const output=await mkdtemp(path.join(tmpdir(),'warlike-export-'));
+const output=process.env.WARLIKE_EXPORT_BROWSER_OUTPUT_DIR?path.resolve(process.env.WARLIKE_EXPORT_BROWSER_OUTPUT_DIR):await mkdtemp(path.join(tmpdir(),'warlike-export-'));await mkdir(output,{recursive:true});
 const playwright=await import(process.env.WARLIKE_PLAYWRIGHT_MODULE||'playwright');
 const demo=createAnimationDemo(),project=freshGameProject();
 Object.assign(project,{id:'export-verification',title:'Atelier du mouvement',genre:'adventure'});

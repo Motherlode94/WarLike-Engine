@@ -79,8 +79,11 @@ class NativeWorld:
             return 503, {"error": "Runtime isolé interrompu. Redémarre le pont ; la scène du navigateur est conservée."}
         try:
             if not self.process:
-                command = sandbox_command([str(self.dotnet), "/app/"+self.assembly.name, "--isolated-worker"], self.folder.name,
-                                          mounts=[(self.assembly.parent, "/app"), (self.dotnet.parent, str(self.dotnet.parent))], managed=True)
+                runtime = self.dotnet.parent
+                command = sandbox_command(["/runtime/dotnet", "/app/"+self.assembly.name, "--isolated-worker"], self.folder.name,
+                                          mounts=[(self.assembly.parent, "/app"), (self.dotnet, "/runtime/dotnet"),
+                                                  (runtime / "host", "/runtime/host"),
+                                                  (runtime / "shared/Microsoft.NETCore.App", "/runtime/shared/Microsoft.NETCore.App")], managed=True)
                 self.process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                                 env={}, start_new_session=True, bufsize=0)
             deadline = time.monotonic() + (30 if path == "/scripts/compile" else 3)

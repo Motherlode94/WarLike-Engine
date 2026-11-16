@@ -1,7 +1,7 @@
 // Iron Defiance — fictional uniforms for seven playable factions.
 // Pure serializable data. These symbols are original, not official insignias.
 export const FACTIONS=Object.freeze({
- rdc:{name:'RDC',title:'Léopards du Congo',flag:'leopard-river',colors:{forest:'#355D42',urban:'#50666C',desert:'#AD9870',night:'#22363C'},accent:'#E3B847',patch:'leopard'},
+ rdc:{name:'RDC',title:'Léopards du Congo',flag:'leopard-river',colors:{forest:'#17191A',urban:'#202225',desert:'#282626',winter:'#33363A',night:'#0D0F12'},accent:'#E3B847',patch:'leopard'},
  china:{name:'Chine',title:'Dragon de l’Aube',flag:'dawn-dragon',colors:{forest:'#52664A',urban:'#4F5960',desert:'#B19B72',night:'#33373B'},accent:'#D9B255',patch:'dragon'},
  russia:{name:'Russie',title:'Garde Boréale',flag:'boreal-bear',colors:{forest:'#566653',urban:'#66717A',desert:'#A59A7E',night:'#34454A',winter:'#C7CDD2'},accent:'#B3D6E3',patch:'polar-bear'},
  usa:{name:'USA',title:'Liberty Vanguard',flag:'liberty-eagle',colors:{forest:'#5D6651',urban:'#6D7372',desert:'#B2A07B',night:'#303C4D'},accent:'#CEDAE5',patch:'eagle'},

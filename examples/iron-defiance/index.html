@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Iron Defiance — CENDRE-01 | WarLike Engine</title>
+<meta name="description" content="Iron Defiance, prototype RTS 3D : escorte, unités, IA, logistique, sauvegarde."/>
+<style>
+:root{color-scheme:dark;font:14px system-ui,Segoe UI,Arial,sans-serif;color:#e9f0ef;background:#07111a}
+*{box-sizing:border-box}body{margin:0;overflow:hidden}#battlefield{display:block;width:100vw;height:100vh;touch-action:none}
+.hud{position:fixed;inset:0;pointer-events:none}.panel{background:#0d1924eb;border:1px solid #3c5561;box-shadow:0 10px 25px #0008;border-radius:14px;backdrop-filter:blur(8px);padding:14px;pointer-events:auto}
+.top{position:absolute;top:14px;left:14px;right:14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.brand strong{font-weight:800;letter-spacing:.13em;color:#7defc8;font-size:12px}.brand h1{font-size:22px;margin:5px 0}.metrics{display:flex;gap:13px;flex-wrap:wrap}.metrics b{color:#c4fbe6}
+.right{max-width:340px}.right h2{font-size:14px;color:#89ebc7;margin:0 0 7px}.right p{color:#b7c9d3;margin:4px 0 10px;line-height:1.4}
+.bar{position:absolute;left:14px;bottom:14px;right:14px;display:flex;justify-content:space-between;gap:15px;align-items:end}
+.tools{max-width:810px}.tools h2{font-size:14px;color:#7defc8;margin:0 0 7px}.buttons{display:flex;gap:7px;flex-wrap:wrap}button,.button{border:1px solid #496677;background:#1c3341;color:white;border-radius:9px;padding:9px 12px;font:inherit;cursor:pointer;min-height:38px;display:inline-flex;align-items:center;gap:5px}
+button:hover,.button:hover{background:#31505c}button:focus-visible,.button:focus-visible{outline:2px solid #7defc8;outline-offset:3px}
+button.primary{background:#73dcba;color:#09251e;border:0;font-weight:750}#assetFile{display:none}
+.controls{font-size:12px;color:#aabec9;margin:10px 0 0;max-width:720px}
+#selectionBox{position:fixed;border:1px solid #88f5d0;background:#75e3bc33;z-index:10;pointer-events:none}
+#status{color:#ffc184;min-height:18px;max-width:600px;margin-top:7px}
+#selectedNames{font-size:12px;color:#9acbc6;max-height:55px;overflow:auto}
+#phase{font-weight:850;letter-spacing:.12em;color:#aaf0d0}
+#ending{position:fixed;inset:0;display:grid;place-items:center;background:#031018b5;pointer-events:auto}
+#ending[hidden],#selectionBox[hidden]{display:none}
+#ending>div{background:#122735;max-width:480px;border:1px solid #5b7d84;border-radius:20px;text-align:center;padding:30px}
+#endingTitle{font-size:26px;color:#b0f2ce}.sub{font-size:11px;color:#92acb8}
+@media(max-width:760px){.top{left:8px;right:8px;top:8px}.brand h1{font-size:16px}.right{max-width:190px}.metrics{gap:6px;font-size:11px}.bar{left:8px;right:8px;bottom:8px;flex-wrap:wrap}.tools{width:100%}.panel{padding:9px}.controls{font-size:10px}.buttons button,.buttons .button{padding:7px 9px;min-height:33px;font-size:11px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}</script>
+</head><body><canvas id="battlefield" aria-label="Champ de bataille tactique en 3D"></canvas>
+<div id="selectionBox" hidden></div><div class="hud">
+<header class="top"><div class="panel brand"><strong>WARLIKE ENGINE · RTS 3D</strong><h1>IRON DEFIANCE <span class="sub">CENDRE-01</span></h1>
+<div class="metrics"><span>Alliés : <b id="allies">8</b></span><span>Ennemis : <b id="hostiles">6</b></span><span>Convoi : <b id="convoyHp">100 %</b></span><span>Route : <b id="route">0/6</b></span><span>Temps : <b id="time">00:00</b></span></div></div>
+<div class="panel right"><h2 id="phase">MISSION ACTIVE</h2><p>Escorter le convoi jusqu’à la zone verte. Le camion de ravitaillement répare et recharge les unités proches.</p><p>Ennemis automatisés, couvertures et munitions limitées.</p></div>
+</header>
+<footer class="bar"><div class="panel tools"><h2>Commandement tactique · <span id="selectionCount">0</span> unités sélectionnées</h2>
+<div class="buttons"><button id="escort">Convoi : automatique</button><button id="resupply">Ravitaillement</button><button id="save">Sauvegarder</button><button id="load">Reprendre</button><button id="restart">Recommencer</button><label class="button" for="assetFile">Importer GLB Meshy</label><input type="file" id="assetFile" accept=".glb,model/gltf-binary" multiple></div>
+<p class="controls">Clic : sélectionner · Glisser : sélectionner plusieurs · Clic droit : déplacer · Maj : ajouter un ordre · ZQSD/WASD/flèches : déplacer la caméra · Maintenir clic droit + glisser : tourner · Molette : zoom · G : toutes les unités · Espace : pause</p>
+<div id="selectedNames" aria-live="polite"></div><div id="status" role="status" aria-live="polite"></div></div>
+<div class="panel"><strong>WARLIKE CORPS</strong><p class="sub">Prototype Web · modèles Meshy importables par fichier</p></div>
+</footer></div>
+<div id="ending" hidden><div><div class="sub">IRON DEFIANCE · RAPPORT DE MISSION</div><h2 id="endingTitle">Mission terminée</h2><p id="endingText"></p><button class="primary" onclick="document.getElementById('restart').click()">Nouvelle opération</button><p class="sub">Enregistrez la partie pour conserver sa conclusion.</p></div></div>
+<script type="module" src="./game.js"></script>
+</body></html>

@@ -136,8 +136,10 @@ function resetGaiaSelection(){
  gaiaStatus('');
 }
 $('#gaiaLoad').onclick=()=>{
- if(state.playing){gaiaStatus('Arrête le mode Play avant d’importer un terrain.',true);return;}
- resetGaiaSelection();gaiaDialog.showModal();
+ resetGaiaSelection();
+ $('#gaiaChoose').disabled=state.playing;
+ gaiaDialog.showModal();
+ if(state.playing)gaiaStatus('Arrête le mode Play avant d’importer un terrain.',true);
 };
 $('#gaiaChoose').onclick=()=>$('#gaiaFile').click();
 $('#gaiaCancel').onclick=()=>gaiaDialog.close();

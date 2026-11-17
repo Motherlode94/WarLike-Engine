@@ -2,7 +2,7 @@ import {WVC_PROTOCOL,allowedWvcOrigin,checkIncomingFile,validSession,validReques
 
 // Called only by the standalone Script Studio window opened explicitly from
 // W Visual Code. The Engine scene is never mutated by these imports.
-export function setupWvcBridge({query=location.search,opener=window.opener,confirmAccess=message=>window.confirm(message),importSource,status=()=>{},log=()=>{}}={}){
+export function setupWvcBridge({environment=globalThis.window,query=environment?.location?.search||'',opener=environment?.opener,confirmAccess=message=>environment.confirm(message),importSource,status=()=>{},log=()=>{}}={}){
  const params=new URLSearchParams(query),origin=params.get('wvcOrigin');
  if(!opener||!allowedWvcOrigin(origin))return ()=>{};
  let session=null,authorized=false,ended=false;
@@ -25,8 +25,8 @@ export function setupWvcBridge({query=location.search,opener=window.opener,confi
    }catch(e){send({type:'wvc:ack',session,requestId:msg.requestId,ok:false,error:String(e.message||'Import refusé').slice(0,180)})}
   }
  };
- window.addEventListener('message',receive);
+ environment.addEventListener('message',receive);
  // Delayed until the Script Studio module has its listener installed.
  send({type:'wvc:ready'});
- return ()=>{if(ended)return;send({type:'wvc:disconnect',session});ended=true;window.removeEventListener('message',receive)};
+ return ()=>{if(ended)return;send({type:'wvc:disconnect',session});ended=true;environment.removeEventListener('message',receive)};
 }

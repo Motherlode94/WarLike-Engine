@@ -29,6 +29,8 @@ export function createScriptApi(entity,ctx,clock,component){
   'world.timeScale':['survivalWorld','timeScale',0,3600]
  };
  const read=name=>{
+  if(name==='interaction.actorId')return component?.runtime?.interaction?.actorId??0;
+  if(name==='interaction.actorName')return component?.runtime?.interaction?.actorName??'';
   if(name==='collision.otherId'||name==='trigger.otherId')return component?.runtime?.physicsContact?.kind===name.split('.')[0]?component.runtime.physicsContact.otherId:0;
   if(name==='collision.otherName'||name==='trigger.otherName')return component?.runtime?.physicsContact?.kind===name.split('.')[0]?component.runtime.physicsContact.otherName:'';
   if(name==='Time.deltaTime')return clock.delta;if(name==='Time.fixedDeltaTime')return .02;if(name==='Time.time')return clock.elapsed;
@@ -90,6 +92,19 @@ export class WarScriptRuntime {
   for(const entry of this.instances.values())if(entry.lifecycle)this.phase(entry);
   while(this.fixed>=.02-1e-8){this.fixed-=.02;for(const entry of this.instances.values())if(entry.lifecycle){entry.clock.delta=.02;this.phase(entry,'FixedUpdate')}}
   for(const entry of this.instances.values())if(entry.lifecycle){entry.clock.delta=delta;this.phase(entry,'Update')}
+ }
+ interact(actor,target){
+  if(!actor||!target||!Number.isSafeInteger(actor.id)||target.interactable?.enabled===false)return false;
+  let delivered=false;
+  for(const entry of this.instances.values()){
+   if(entry.entity!==target||!entry.lifecycle||entry.failed)continue;
+   entry.lifecycle.refresh();
+   if(!entry.lifecycle.active)continue;
+   entry.component.runtime.interaction={actorId:actor.id,actorName:String(actor.name||'').slice(0,100)};
+   try{this.invoke(entry,'OnInteract');delivered=true}
+   finally{delete entry.component.runtime.interaction}
+  }
+  return delivered;
  }
  contact(event){
   const hooks={trigger:{enter:'OnTriggerEnter2D',stay:'OnTriggerStay2D',exit:'OnTriggerExit2D'},collision:{enter:'OnCollisionEnter2D',stay:'OnCollisionStay2D',exit:'OnCollisionExit2D'}};

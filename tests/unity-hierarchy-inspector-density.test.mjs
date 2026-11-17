@@ -35,3 +35,10 @@ test('Production HTML and export include the same hierarchy/Inspector layout CSS
  assert.match(content,/\.inspector-component/);
  assert.match(content,/@media\(max-width:1050px\)/);
 });
+
+test('Inspector identity metadata is editable and static is editor-only',()=>{
+ const inspector=read('js/ui/inspector.js');
+ for(const term of ["['layer','Layer'","o.layer=v||'Default'","staticToggle.checked=o.isStatic===true","o.isStatic=staticToggle.checked","ne remplace pas le type du Rigidbody"])assert.ok(inspector.includes(term),term);
+ const css=read('css/unity-hierarchy-inspector-density.css');
+ for(const term of ['.unity-object-metadata-field','.unity-object-static-field','container:hierarchy-pane / inline-size','@container hierarchy-pane','min-height:0','overflow:hidden'])assert.ok(css.includes(term),term);
+});

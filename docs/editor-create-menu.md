@@ -31,3 +31,11 @@ Ils sont conservés sous `warlike.editor.assets.v1:<project-id>` dans `localStor
 - Tests navigateur sur deux modes, Play/Stop, Undo, sauvegardes, migration et export.
 
 Ne jamais présenter les documents JSON comme équivalents complets à des `.unity`, `.mat` ou `.controller` tant que leur exploitation runtime n'est pas implémentée.
+
+## Caméra native de scène
+
+Le menu **Créer → Main Camera** ajoute un GameObject portant `sceneCamera3d`, sélectionnable dans la Hierarchy et par un marqueur de la Scene View. Le composant peut également être ajouté depuis le navigateur de composants. En Play, la Camera active de priorité la plus élevée produit la vue Game, avec projection FOV et distances de clipping. Trois modes sont disponibles dans Inspector : `fixed` (position/orientation du GameObject), `follow` (la position de la Camera est un offset autour du GameObject ciblé, avec visée automatique), `firstPerson` (vue des yeux du personnage ciblé, orientation souris). `targetId` correspond à l'identifiant du GameObject ciblé ; à défaut, le personnage joueur est choisi.
+
+Le joystick/souris en première personne pilote l'orientation et le déplacement se fait selon la direction horizontale de la Camera active. Les projets historiques sans Camera continuent à utiliser leur ancien rig de caméra. La `Scene View` de l'éditeur reste indépendante : ajouter une Camera ne remplace pas la caméra d'édition.
+
+**À améliorer :** inspecteur de Camera avec sélecteur de cible par nom, gizmo frustum, prévisualisation miniature, gestion orthographique, culling masks, profondeur de plusieurs caméras, cinématique/Timeline et rendu 2D. Les modes et propriétés existants ne sont pas une équivalence complète avec Unity Camera.

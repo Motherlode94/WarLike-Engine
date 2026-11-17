@@ -18,9 +18,10 @@ const primitiveIds={cube:'primitive-cube',sphere:'primitive-sphere',cylinder:'pr
 export function createSceneItem(kind,{openBlueprint=()=>{}}={}){
  if(kind==='blueprint'){openBlueprint();return true;}
  if(state.playing)return false;
+ if(primitiveIds[kind]&&workspace.mode!=='3d')return false;
  const id=state.nextId++;
  let o;
- if(primitiveIds[kind]&&workspace.mode==='3d'){
+ if(primitiveIds[kind]){
   o=prefab3d(primitiveIds[kind],id,120+(id%10)*25,120+(id%7)*25);
   if(!o){state.nextId--;return false;}
   Object.assign(o,{name:kind==='plane'?'Sol '+id:kind+' '+id,w:kind==='plane'?640:64,h:kind==='plane'?16:64,depth3d:kind==='plane'?640:64,collision3d:true,solid3d:true});

@@ -10,6 +10,7 @@ import {defaultSimulationNode} from './simulation-nodes.js';
 import {defaultTacticalUnit} from './rts-orders.js';
 import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
 import {defaultCameraRig} from './play-camera.js';
+import {defaultEditorCamera3d} from './editor-camera-frustum-3d.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController} from './gameplay-components.js';
 import {defaultRigidbody3d} from './physics-3d.js';
 import {newSequence} from './logic-sequences.js';
@@ -32,6 +33,7 @@ export const webComponentDefinitions=[
  {id:'rigidbody2d',name:'Rigidbody 2D',category:'Physique',description:'Gravité, vitesse, rebond et friction.',modes:['2d'],create:defaultRigidbody2d},
  {id:'controller2d',name:'Contrôleur de personnage 2D',category:'Personnage',description:'Vue du dessus ou plateforme avec gravité et saut.',modes:['2d'],create:defaultController2d},
  {id:'cameraRig',name:'Caméra de jeu',category:'Caméra',description:'Suivi fluide, distance, sensibilité et évitement des obstacles.',create:defaultCameraRig},
+ {id:'cameraView3d',name:'Camera 3D · aperçu Scene',category:'Caméra',modes:['3d'],description:'Volume de caméra, champ de vision et clipping dans la scène. Aperçu de l’éditeur ; pas encore une caméra active en Play.',create:defaultEditorCamera3d},
  {id:'stats',name:'Stats · Santé et endurance',category:'Personnage',description:'Santé, endurance et régénération.',create:defaultStats},
  {id:'inventory',name:'Inventaire',category:'Personnage',description:'Objets, capacité et équipement.',create:defaultInventory},
  {id:'ai',name:'IA · Perception et navigation',category:'Intelligence artificielle',description:'Vision, mémoire, patrouille, poursuite et combat.',create:defaultAi},
@@ -47,8 +49,8 @@ export const webComponentDefinitions=[
  {id:'worldInfectedConfig',name:'Infecté · Horde',category:'Intelligence artificielle',description:'Poursuite du joueur à proximité.',create:()=>({enabled:true,range:300,speed:53})}
 ];
 // Stable Inspector metadata: classification never depends on translated display names.
-export const inspectorCoreComponentIds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','cameraRig']);
-export function inspectorComponentGroup(id){return inspectorCoreComponentIds.has(id)?(id==='cameraRig'?'render':'physics'):'extension'}
+export const inspectorCoreComponentIds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','cameraRig','cameraView3d']);
+export function inspectorComponentGroup(id){return inspectorCoreComponentIds.has(id)?(['cameraRig','cameraView3d'].includes(id)?'render':'physics'):'extension'}
 export const componentDependencies=Object.freeze({
  // Rigidbody 2D may legitimately run without a Collider 2D.
  collider3d:['rigidbody3d','joint3d','controller3d'],

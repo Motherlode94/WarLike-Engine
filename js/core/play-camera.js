@@ -1,5 +1,6 @@
 // Pure camera math shared by the play viewport and regression tests.
 import {colliderGeometry3d,colliderPosition3d,rotationQuaternion3d} from './collider-3d.js';
+import {quaternionRotate3} from './math-kernel.js';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const cameraDamping=(sharpness,dt)=>1-Math.exp(-Math.max(0,sharpness)*Math.max(0,dt));
 export const defaultCameraRig=()=>({mode:'thirdPerson',distance:4.8,height:.72,followSharpness:10,sensitivity:.0026,collision:true});
@@ -12,12 +13,7 @@ export function cameraTargetFor(bounds,rig){return [bounds.x,bounds.y-bounds.h/2
 // Exact ray versus oriented BoxCollider. Other shapes use conservative bounds.
 // A quaternion is used rather than Euler-only yaw so tilted walls and ceilings
 // do not clip the third-person camera.
-const rotate=(point,q)=>{
- const t=[2*(q.y*point[2]-q.z*point[1]),2*(q.z*point[0]-q.x*point[2]),2*(q.x*point[1]-q.y*point[0])];
- return [point[0]+q.w*t[0]+q.y*t[2]-q.z*t[1],
-         point[1]+q.w*t[1]+q.z*t[0]-q.x*t[2],
-         point[2]+q.w*t[2]+q.x*t[1]-q.y*t[0]];
-};
+const rotate=(point,q)=>quaternionRotate3([q.x,q.y,q.z,q.w],point);
 const validBox=box=>box&&[box.x,box.y,box.z,box.w,box.h,box.d].every(Number.isFinite)&&box.w>0&&box.h>0&&box.d>0;
 export function cameraObstacleForEntity(entity){
  const g=colliderGeometry3d(entity),p=colliderPosition3d(entity,g),q=rotationQuaternion3d(entity);

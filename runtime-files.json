@@ -16489,6 +16489,7 @@
     "js/core/viewport-3d.js",
     "js/core/visual-logic.js",
     "js/core/war-script-runtime.js",
+    "js/core/warnode-editor-operations.js",
     "js/core/web-script-runtime.js",
     "js/core/web-script-sandbox.js",
     "js/core/web-script-worker.js",

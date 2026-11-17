@@ -60,6 +60,8 @@ import {autoSave,recoverLocal,hasLocalSave,backupLocalSave,beginAutoSave,connect
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo,renderHistory} from './core/history.js';
 import {addEntity,addPrefab,addLogicHotspot,loadLogicDemo,loadRpgDemo,loadCombatDemo,loadDrivingDemo,load3dBetaDemo,addLight,addAudioEmitter,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
+import {sceneCreateItems,createSceneItem} from './core/editor-create-catalog.js';
+import {mountProjectCreateBrowser} from './ui/project-create-browser.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
@@ -268,19 +270,26 @@ initDocking();
 // The primary toolbar favors creation over an extra visibility toggle.
 document.body.classList.add('warlike-compact-editor');
 const quickCreate=document.getElementById('studioQuickCreate');
+const createMenu=quickCreate?.querySelector('.studio-quick-create-menu');
+if(createMenu){
+ createMenu.replaceChildren();
+ const title=document.createElement('strong');title.textContent='Ajouter à la scène';createMenu.append(title);
+ for(const group of sceneCreateItems){
+  const section=document.createElement('section');section.className='warlike-create-category';
+  const heading=document.createElement('h4');heading.textContent=group.group;section.append(heading);
+  for(const [kind,label] of group.items){
+   const button=document.createElement('button');button.type='button';button.dataset.quickCreate=kind;button.textContent=label;section.append(button);
+  }createMenu.append(section);
+ }
+}
 quickCreate?.addEventListener('click',event=>{
- const button=event.target.closest('[data-quick-create]');
- if(!button)return;
- const actions={
-  object:()=>addEntity('object'),
-  character:()=>addEntity('character'),
-  light:()=>document.getElementById('newPointLight')?.click(),
-  audio:()=>document.getElementById('newAudioSource')?.click(),
-  blueprint:()=>document.getElementById('openBlueprint')?.click()
- };
- actions[button.dataset.quickCreate]?.();
- quickCreate.open=false;
+ const button=event.target.closest('[data-quick-create]');if(!button)return;
+ const kind=button.dataset.quickCreate;
+ const created=createSceneItem(kind,{openBlueprint:()=>document.getElementById('openBlueprint')?.click()});
+ if(!created&&kind.startsWith('ui-'))window.alert('Crée ou sélectionne d’abord un Canvas.');
+ if(created)quickCreate.open=false;
 });
+mountProjectCreateBrowser();
 document.addEventListener('pointerdown',event=>{if(quickCreate?.open&&!quickCreate.contains(event.target))quickCreate.open=false});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&quickCreate?.open)quickCreate.open=false});
 document.getElementById('quickCreateObject')?.addEventListener('click',()=>addEntity('object'));

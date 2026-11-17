@@ -11,7 +11,7 @@ a{color:#78dcbf}#status{padding:12px 0}
 <main><p>Test matériel du shader WGSL, non utilisé dans le rendu de production. Repli WebGL si WebGPU est indisponible.</p>
 <div id="status" role="status">Initialisation...</div><canvas id="preview" width="960" height="540" aria-label="Triangle de validation GPU"></canvas></main>
 <script type="module">
-const canvas=document.querySelector('#preview'),status=document.querySelector('#status');
+let canvas=document.querySelector('#preview');const status=document.querySelector('#status');
 const vertices=new Float32Array([
   0,.7,0,1,.3,.3,1,
   -.7,-.7,0,.3,1,.6,1,
@@ -56,6 +56,10 @@ try {
  let ok=false;
  try{ok=await webgpu()}catch(e){status.textContent='WebGPU indisponible : '+e.message;}
  if(ok)status.textContent='WebGPU actif — shader WGSL chargé et exécuté';
- else{webgl();status.textContent+=' · repli WebGL actif';}
+ else{
+  // A canvas that initialized WebGPU cannot be reused for WebGL.
+  const replacement=canvas.cloneNode(false);canvas.replaceWith(replacement);canvas=replacement;
+  webgl();status.textContent+=' · repli WebGL actif';
+ }
 }catch(error){status.textContent='Prévisualisation impossible : '+error.message;}
 </script></body></html>

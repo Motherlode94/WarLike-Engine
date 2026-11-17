@@ -1,5 +1,6 @@
 import {decideCreatureAction} from './horror-creatures.js';
-import {damage,healthOf} from './gameplay-components.js';
+import {damage} from './gameplay-components.js';
+import {healthOf} from './ai-perception.js';
 // Shared optional survival-horror state for both original WarLike workspaces.
 export const horror={enabled:false,flashlight:true,battery:100,fear:0,threat:0,toggleHeld:false,noise:0,alerts:[],jumpscare:0};
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));

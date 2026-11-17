@@ -24,6 +24,7 @@ import {tickFxRuntime,emitFx} from './fx-runtime.js';
 import {isTypingTarget} from './editor-clipboard.js';
 import {sampleRigPose,deformGlbParts,animationClipForState} from './gltf-animation.js';
 import {cameraObstacleForEntity,cameraRigFor,cameraTargetFor,resolveCameraBoom,cameraPose,cameraDamping} from './play-camera.js';
+import {activeSceneCamera,sceneCameraView,cameraMovementYaw} from './scene-camera-3d.js';
 import {gameIsRunning,gameSession} from './game-session.js';
 import {updateHorrorAudio} from './horror-audio.js';
 import {tickEngineDiagnostics} from './engine-diagnostics.js';
@@ -438,7 +439,7 @@ export function init3d(canvas,host,buttons){
   tickEngineDiagnostics(dt);
   const p=playableActor(state.entities),input=p&&healthOf(p)<=0?new Set():gameplayKeys(state.keys);
   if(gameplayInputBlocked())state.keyPresses?.clear();
-  tickHeroRuntime(state.entities,p,dt,{mode:'3d',sceneId:gameSession.currentSceneId,keys:state.keys,pressedKeys:state.keyPresses,yaw:view3d.yaw,inputBlocked:gameplayInputBlocked()});
+  tickHeroRuntime(state.entities,p,dt,{mode:'3d',sceneId:gameSession.currentSceneId,keys:state.keys,pressedKeys:state.keyPresses,yaw:(cameraMovementYaw(sceneCameraView(activeSceneCamera(state.entities),state.entities))??view3d.yaw),inputBlocked:gameplayInputBlocked()});
   if(p)p._vehicleInputConsumed=false;
   updateStats(state.entities,dt);
   updateOpenWorld(dt,p,state.entities,sequenceRuntime.globals);
@@ -460,15 +461,16 @@ export function init3d(canvas,host,buttons){
   if(!p)return;
   updateHorror(dt,p,state.entities,input);updateHorrorPerception(dt,p,state.entities,input);updateHorrorAudio(dt,p,state.entities,input,horror);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
   const inVehicle=updateDriving3d(state.entities,p,input,dt,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses});
-  if(!inVehicle)updateController3d(p,input,dt,view3d.yaw,state.entities,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,moveCharacter:physicsSession?.actors.get(p.id)?.controller?(actor,dx,dy,dz,options)=>moveRapierCharacter3d(physicsSession,actor,dx,dy,dz,options):null});
+  if(!inVehicle)updateController3d(p,input,dt,(cameraMovementYaw(sceneCameraView(activeSceneCamera(state.entities),state.entities))??view3d.yaw),state.entities,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,moveCharacter:physicsSession?.actors.get(p.id)?.controller?(actor,dx,dy,dz,options)=>moveRapierCharacter3d(physicsSession,actor,dx,dy,dz,options):null});
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);
   if(fpsMouseDown&&document.pointerLockElement===canvas&&!inVehicle&&isFps()&&p._attackCooldown===0)shootFps();
   if(p.adventure?.combatEnabled!==false&&!inVehicle&&healthOf(p)>0&&(input.has('f')||!gameplayInputBlocked()&&state.keyPresses?.has('f'))&&p._attackCooldown===0){if(isFps()){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit){p.animation='attack';emitFx('electric',heroCenter(hit,'3d'),{mode:'3d',color:'#ffd899',count:16,ring:true,lifetime:.3,scale:.7})}}
  };
- const isFps=()=>state.playing&&workspace.mode==='3d'&&!currentVehicle3d(state.entities)&&cameraRigFor(playableActor(state.entities)).mode==='firstPerson';
+ const isFps=()=>state.playing&&workspace.mode==='3d'&&!activeSceneCamera(state.entities)&&!currentVehicle3d(state.entities)&&cameraRigFor(playableActor(state.entities)).mode==='firstPerson';
  let boomDistance=null,cameraFrame=1/60,lastCameraActor=null,lastCameraScene=null;
  const camera=()=>{
+  if(state.playing){const sceneCam=sceneCameraView(activeSceneCamera(state.entities),state.entities);if(sceneCam)return sceneCam;}
   if(!isFps()){
    const desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
    if(!state.playing||companyController(state.entities))return desired;
@@ -503,7 +505,7 @@ export function init3d(canvas,host,buttons){
  const enterPlay=()=>{
   resetBattlefield(state.entities);fpsMouseDown=false;
   editorCamera={yaw:view3d.yaw,pitch:view3d.pitch,radius:view3d.radius,target:view3d.target.slice()};view3d.drag=null;boomDistance=null;resetDriving3d();
-  const p=playableActor(state.entities),pt=playerTarget(),rig=cameraRigFor(p);view3d.followPlayer=!!pt;if(pt){view3d.target=pt.slice();view3d.radius=rig.distance;view3d.yaw=Math.PI-(Number(p.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18}
+  const p=playableActor(state.entities),pt=playerTarget(),rig=cameraRigFor(p);view3d.followPlayer=!!pt&&!activeSceneCamera(state.entities);if(pt){view3d.target=pt.slice();view3d.radius=rig.distance;view3d.yaw=Math.PI-(Number(p.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18}
   if(companyController(state.entities)){view3d.followPlayer=false;view3d.target=[14,0,14];view3d.radius=32;view3d.pitch=.92;view3d.yaw=-.55;return}
   if(gameProject.physics3d==='builtin')return;
   const token=++physicsGeneration;
@@ -716,7 +718,7 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent=companyController(state.entities)?'RTS · clic : escouade · clic droit : ordre · flèches : caméra':'3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}if(state.playing)buttons.status.textContent+=companyController(state.entities)?' · Navigation A* et collisions internes':' · Physique : '+(physicsSession?'Rapier'+(physicsSession.skipped?.size?' · '+physicsSession.skipped.size+' collider(s) incompatible(s)':''):gameProject.physics3d==='builtin'?'interne':rapierStatus().error?'interne (Rapier indisponible)':'chargement Rapier');
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
   const solar=sunAt();gl.clearColor(...solar.sky,1);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-  if(state.playing&&!isFps()&&!companyController(state.entities)){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities)),desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);boomDistance=rig.collision?resolveCameraBoom(view3d.target,desired.eye,state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(cameraObstacleForEntity),{previousDistance:boomDistance,dt:cameraFrame}).distance:view3d.radius}
+  if(state.playing&&!activeSceneCamera(state.entities)&&!isFps()&&!companyController(state.entities)){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities)),desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);boomDistance=rig.collision?resolveCameraBoom(view3d.target,desired.eye,state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(cameraObstacleForEntity),{previousDistance:boomDistance,dt:cameraFrame}).distance:view3d.radius}
   gl.useProgram(program);const cam=camera();updateBattlefieldHud(state,{camera:cam,width:w,height:h,project:project3d});updateCompanyMarkers({camera:cam,width:w,height:h,project:project3d});
   gl.uniform3fv(u.flashPos,cam.eye);gl.uniform3fv(u.flashDir,cam.forward);
   gl.uniform1f(u.flashPower,state.playing&&horror.enabled&&horror.flashlight&&horror.battery>0?3.1:0);

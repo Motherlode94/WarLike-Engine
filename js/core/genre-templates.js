@@ -121,7 +121,7 @@ function createGenreSceneContent(genre,mode='3d'){
     {type:'variable',key:'labWalk',operator:'==',value:1},
     {type:'variable',key:'labInteract',operator:'==',value:1},
     {type:'variable',key:'labDrive',operator:'==',value:1}
-   ],instructions:[variable('labCompleted',1),signal('lab:complete'),msg('FIELD LAB : 3 / 3 vérifications réussies !')]}],
+   ],instructions:[variable('labCompleted',1),signal('lab:complete'),msg('FIELD LAB : 3 / 3 vérifications réussies !'),{type:'winGame',value:'FIELD LAB : circuit de marche, interaction et conduite validé.'}]}],
    elseInstructions:[msg('Diagnostic incomplet : valide marche, interaction et conduite.')]
   },'#83d3a9');
   const threat=object('character-zombie','Sentinelle hostile · test IA',1175,520,{

@@ -16443,6 +16443,7 @@
     "js/core/native-3d.js",
     "js/core/native-bridge-client.js",
     "js/core/nature-demo-layout.js",
+    "js/core/object-interaction-targeting.js",
     "js/core/open-world-systems.js",
     "js/core/pathfinding.js",
     "js/core/physics-2d.js",

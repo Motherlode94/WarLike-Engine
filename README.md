@@ -1,5 +1,9 @@
 # WarLike Engine + WarLike Editor — un moteur et son éditeur dans un seul dépôt
 
+## Mode 2D — caméra et création d'objets
+
+WarLike Editor dispose d'un catalogue **Objets 2D** : Main Camera 2D, joueur, sprite/rectangle, plateforme, trigger et corps physique. La **Camera2D** est un GameObject natif de la scène : elle peut rester fixe ou suivre un personnage avec zoom et lissage, sans remplacer la vue d'édition. Ces premières commandes sont intégrées à la [PR #63](https://github.com/Motherlode94/WarLike-Engine/pull/63), dont les tests restent à valider. Consulter le [guide WarLike 2D et les limites actuelles](docs/editor-2d-workflow.md).
+
 ## Découvrir WarScript — le langage de gameplay de WarLike
 
 **WarScript**, écrit **`.wls`**, permet de donner un comportement aux objets d'un jeu WarLike sans avoir besoin de connaître tout JavaScript ou C#. Par exemple : faire tourner une porte, déplacer un personnage, réagir à une touche ou déclencher un événement de gameplay.

@@ -1,5 +1,6 @@
 import {updateAffineEditorPose3d,updateEditorEntityHierarchy3d,gizmoAxis3d,snap3d} from './scene-graph-v2.js';
 import {rotationQuaternion3d} from './collider-3d.js';
+import {projectedAxisDrag3d,alignSceneObjects3d,snapSelected3d} from './scene-editing-3d-tools.js';
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
 const el=(tag,props={})=>{const node=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(props))node.setAttribute(k,String(v));return node};
@@ -25,7 +26,12 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  for(const [value,label] of [['grid','Grille'],['vertex','Sommet'],['edge','Arête'],['surface','Surface']]){const opt=document.createElement('option');opt.value=value;opt.textContent=label;snapMode.append(opt)}
  snapMode.value=localStorage.getItem('warlike.snap3d.mode')||'grid';
  snapMode.onchange=()=>localStorage.setItem('warlike.snap3d.mode',snapMode.value);
- options.append(mode,snap,document.createTextNode('Snap'),step,snapMode);host.append(options);
+ const action=(label,title,run)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.title=title;b.style.cssText='background:#303944;color:inherit;border:1px solid #566c70;border-radius:4px;padding:4px 8px;cursor:pointer';b.onclick=()=>{if(state.playing||!state.selected.length)return;const changed=run();if(changed){updateEditorEntityHierarchy3d(state.entities,{worldOverrideIds:new Set(state.selected)});record(title);notify();redraw()}};return b};
+ const gridButton=action('Aligner grille','Aligner les objets sélectionnés sur la grille de l’éditeur',()=>snapSelected3d(state.entities,state.selected,{step:Math.max(.01,Number(step.value)||.5)}));
+ const floorButton=action('Y = 0','Poser les objets au niveau zéro de la grille (repère visuel, pas un Collider)',()=>{let count=0;for(const o of state.entities.filter(o=>state.selected.includes(o.id))){if((o.elevation3d||0)!==0){o.elevation3d=0;count++}}return count});
+ const alignX=action('Aligner X','Aligner les objets sélectionnés sur la position X du premier',()=>alignSceneObjects3d(state.entities,state.selected,{axis:'x'}));
+ const alignZ=action('Aligner Z','Aligner les objets sélectionnés sur la position Z du premier',()=>alignSceneObjects3d(state.entities,state.selected,{axis:'y'}));
+ options.append(mode,snap,document.createTextNode('Snap'),step,snapMode,gridButton,floorButton,alignX,alignZ);options.style.flexWrap='wrap';options.style.maxWidth='min(650px,75%)';host.append(options);
  let drag=null,lastTool='';
  const tool=()=>document.querySelector('.scene-tools [data-tool].active')?.dataset.tool||'move';
  const center=()=>{
@@ -64,15 +70,18 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   const selected=state.entities.filter(o=>state.selected.includes(o.id));
   if(!selected.length)return;
   event.preventDefault();event.stopPropagation();
+  const cam=getCamera(),rect=canvas.getBoundingClientRect(),pivot=center(),first=selected[0];
+  const direction=axisVector(axis,first),pivotScreen=pivot&&project3d(pivot,cam,rect.width,rect.height);
+  const endScreen=pivot&&project3d(pivot.map((v,i)=>v+direction[i]),cam,rect.width,rect.height);
   drag={pointer:event.pointerId,axis,startX:event.clientX,startY:event.clientY,mode:lastTool,
+   pivotScreen,endScreen,
    objects:selected.map(o=>({id:o.id,x:o.x,y:o.y,elevation3d:o.elevation3d||0,w:o.w,h:o.h,depth3d:o.depth3d??o.h,rotation:o.rotation||0,rotationX3d:o.rotationX3d||0,rotationZ3d:o.rotationZ3d||0,worldMatrix3d:Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,matrixReference3d:Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null}))};
   event.target.setPointerCapture(event.pointerId);
  });
  layer.addEventListener('pointermove',event=>{
   if(!drag||event.pointerId!==drag.pointer)return;
   const dx=event.clientX-drag.startX,dy=event.clientY-drag.startY;
-  const scale=Math.max(.05,view3d.radius/Math.max(140,canvas.clientHeight))*60;
-  const amount=(dx-dy)*scale/64,snapStep=snap.checked?Math.max(.01,Number(step.value)||.5):0;
+  const amount=projectedAxisDrag3d(drag.pivotScreen,drag.endScreen,dx,dy),snapStep=snap.checked?Math.max(.01,Number(step.value)||.5):0;
   const surfaceHit=snap.checked&&drag.mode==='move'&&snapMode.value!=='grid'?
    view3d.surfaceAt?.(event.clientX,event.clientY,{excludeIds:drag.objects.map(o=>o.id),groundFallback:snapMode.value==='surface'}):null;
   const quant=(value,increment)=>snapStep?snap3d(value,increment??snapStep):value;

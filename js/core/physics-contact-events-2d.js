@@ -6,7 +6,7 @@ const finite=n=>Number.isFinite(Number(n))?Number(n):0;
 const touches=(a,b,epsilon=.12)=>a.x<=b.x+b.w+epsilon&&a.x+a.w>=b.x-epsilon&&a.y<=b.y+b.h+epsilon&&a.y+a.h>=b.y-epsilon;
 const overlaps=(a,b)=>a.x<b.x+b.w-1e-5&&a.x+a.w>b.x+1e-5&&a.y<b.y+b.h-1e-5&&a.y+a.h>b.y+1e-5;
 const box=o=>colliderRect2d(o);
-const involved=e=>e.enabled!==false&&e.visible!==false&&!e._sequenceDestroyed&&e.collider2d?.enabled!==false;
+const involved=e=>e.enabled!==false&&!e._sequenceDestroyed&&e.collider2d?.enabled!==false;
 const dynamic=e=>e.type==='player'||e.type==='character'||e.controller2d||e.rigidbody2d?.enabled||e.playable2d;
 const key=(kind,a,b)=>kind+':'+Math.min(a,b)+':'+Math.max(a,b);
 export class ContactEvents2d {

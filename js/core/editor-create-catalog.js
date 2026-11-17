@@ -32,7 +32,7 @@ export function createSceneItem(kind,{openBlueprint=()=>{}}={}){
   Object.assign(o,{name:kind==='plane'?'Sol '+id:kind+' '+id,w:kind==='plane'?640:64,h:kind==='plane'?16:64,depth3d:kind==='plane'?640:64,collision3d:true,solid3d:true});
  }else{
   o={id,name:kind+' '+id,type:'object',x:120+(id%10)*25,y:120+(id%7)*25,w:64,h:64,depth3d:64,elevation3d:0,color:'#8195ef',visible:true};
-  if(kind==='camera-2d'){Object.assign(o,{name:'Main Camera 2D '+id,x:0,y:0,w:0,h:0,visible:false,collision3d:false,camera2d:defaultSceneCamera2d()})}
+  if(kind==='camera-2d'){Object.assign(o,{name:'Main Camera 2D '+id,x:120,y:120,w:32,h:24,visible:false,collision3d:false,camera2d:defaultSceneCamera2d()})}
   if(kind==='player-2d'){Object.assign(o,{name:'Player 2D '+id,type:'player',w:38,h:38,color:'#41cdb5',controller2d:{...defaultController2d(),mode:'topDown'},collider2d:defaultCollider2d(),solid2d:false})}
   if(kind==='sprite-2d'){Object.assign(o,{name:'Sprite 2D '+id,type:'object',color:'#85a9ea',solid2d:false,collision3d:false})}
   if(kind==='platform-2d'){Object.assign(o,{name:'Platform 2D '+id,w:256,h:28,color:'#657486',solid2d:true,collider2d:defaultCollider2d()})}

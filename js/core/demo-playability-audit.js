@@ -16,7 +16,9 @@ export function inspectBundledGame(scene,mode,{genre=scene?.genre}={}){
  if(genre!=='sandbox'){
   const activePlayer=actors.find(o=>o.id===scene.playerId)||actors[0];
   if(!activePlayer)issues.push({severity:'error',code:'player',message:'Personnage principal manquant.'});
-  if(!entities.some(o=>o.sequence?.enabled||o.sequences?.some(s=>s.enabled)))issues.push({severity:'error',code:'mission',message:'Aucun événement de gameplay natif.'});
+  const hasSequence=entities.some(o=>o.sequence?.enabled||o.sequences?.some(s=>s.enabled));
+  const hasSpecializedRuntime=entities.some(o=>o.lifeSim||o.company||o.battlefield||o.survivalWorld||o.survival||o.superhero);
+  if(!hasSequence&&!hasSpecializedRuntime)issues.push({severity:'error',code:'mission',message:'Aucun événement ou runtime de gameplay natif.'});
   const cameraKey=mode==='3d'?'sceneCamera3d':'camera2d';
   const specialDirector=mode==='3d'&&['rts','company','battlefield'].includes(genre);
   if(!specialDirector&&!entities.some(o=>o[cameraKey]))issues.push({severity:'error',code:'camera',message:'Caméra native introuvable.'});

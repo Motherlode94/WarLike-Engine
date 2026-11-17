@@ -1,3 +1,5 @@
+> **Frontière de build :** les tests ci-dessous portent sur **WarLike Engine** (runtime), pas sur l'embarquement de **WarLike Editor** dans un jeu. L'éditeur reste dans le même dépôt, mais doit être exclu de l'archive autonome. Voir [architecture UnityEngine / UnityEditor adaptée au Web](unity-6000-6-web-architecture.md).
+
 # Débogueur, Play et export : périmètre vérifié
 
 Le workflow **Engine integrity and Web export** exécute un contrôle `runtime-acceptance` dans Chromium avec WebGL logiciel et un vrai processus .NET 8. Son rapport JSON et ses captures sont joints à chaque exécution GitHub Actions. Il ne remplace pas une validation sur tous les appareils et tous les jeux.

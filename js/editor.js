@@ -55,6 +55,7 @@ import {initWorkspace,log} from './ui/workspace.js';
 import {catalog,urlFor} from './assets/catalog.js';
 import {state,notify} from './core/state.js';
 import {gaiaWorldToEntities} from './core/gaia-terrain-physics.js';
+import {readGaiaWorldFile} from './core/gaia-world-import-preview.js';
 import {autoSave,recoverLocal,hasLocalSave,backupLocalSave,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo,renderHistory} from './core/history.js';
@@ -121,19 +122,60 @@ $('#undo').onclick=undo;
 $('#redo').onclick=redo;
 $('#play').onclick=()=>{try{togglePlay()}catch(error){console.error('[WarLike Play]',error);const message='Play impossible : '+(error?.message||String(error));log(message);window.alert(message)}};
 $('#save').onclick=()=>exportScene().catch(error=>alert('Export impossible : '+error.message));
-$('#gaiaLoad').onclick=()=>{if(state.playing){alert('Quitte Play avant d’importer les colliders Gaia.');return}$('#gaiaFile').click()};
+// Gaia remains a native WarLike Engine module. Preview first, import only on confirmation.
+const gaiaDialog=$('#gaiaDialog'),gaiaFeedback=$('#gaiaFeedback'),gaiaConfirm=$('#gaiaConfirm'),gaiaTiles=$('#gaiaTileList');
+let selectedGaia=null;
+function gaiaStatus(message,isError=false){
+ gaiaFeedback.textContent=message;
+ gaiaFeedback.dataset.error=String(isError);
+}
+function resetGaiaSelection(){
+ selectedGaia=null;gaiaConfirm.disabled=true;gaiaTiles.replaceChildren();
+ $('#gaiaSummary').textContent='Sélectionne un fichier pour voir sa résolution et ses dimensions avant de l’importer.';
+ $('#gaiaFileName').textContent='Aucun fichier sélectionné';
+ gaiaStatus('');
+}
+$('#gaiaLoad').onclick=()=>{
+ resetGaiaSelection();
+ $('#gaiaChoose').disabled=state.playing;
+ gaiaDialog.showModal();
+ if(state.playing)gaiaStatus('Arrête le mode Play avant d’importer un terrain.',true);
+};
+$('#gaiaChoose').onclick=()=>$('#gaiaFile').click();
+$('#gaiaCancel').onclick=()=>gaiaDialog.close();
+$('#gaiaClose').onclick=()=>gaiaDialog.close();
 $('#gaiaFile').onchange=async event=>{
+ const file=event.target.files?.[0];
+ gaiaConfirm.disabled=true;selectedGaia=null;gaiaTiles.replaceChildren();
+ if(!file)return;
+ $('#gaiaFileName').textContent=file.name;
  try{
-  const file=event.target.files?.[0];if(!file)return;
-  if(file.size>24*1024*1024)throw Error('Monde Gaia trop volumineux (24 Mo maximum).');
-  const world=JSON.parse(await file.text());
-  if(state.playing)throw Error('Import indisponible pendant Play.');
-  const entities=gaiaWorldToEntities(world,{firstId:state.nextId});
+  const {world,preview}=await readGaiaWorldFile(file);
+  selectedGaia={world,preview};
+  $('#gaiaSummary').textContent=preview.count+' tuile(s) · '+preview.sampleCount.toLocaleString('fr')+' points de hauteur · altitude '+preview.overallMinMeters.toFixed(1)+' à '+preview.overallMaxMeters.toFixed(1)+' m';
+  for(const tile of preview.tiles){
+   const card=document.createElement('div');card.className='gaia-tile';card.setAttribute('role','listitem');
+   const title=document.createElement('strong');title.textContent=tile.name;
+   const details=document.createElement('span');
+   details.textContent=tile.resolution+' × '+tile.resolution+' · '+tile.sizeMeters+' m · hauteur '+tile.minMeters.toFixed(1)+'–'+tile.maxMeters.toFixed(1)+' m';
+   card.append(title,details);gaiaTiles.append(card);
+  }
+  gaiaConfirm.disabled=false;gaiaStatus('Terrain vérifié : confirme pour l’ajouter à la scène.');
+ }catch(error){gaiaStatus('Import indisponible : '+error.message,true);$('#gaiaSummary').textContent='Le fichier n’a pas pu être validé.';}
+ finally{event.target.value='';}
+};
+gaiaConfirm.onclick=()=>{
+ if(!selectedGaia||state.playing){gaiaStatus('Quitte Play et sélectionne un terrain valide.',true);return;}
+ try{
+  // Validate twice before mutation; the existing heightfield collision contract is authoritative.
+  const entities=gaiaWorldToEntities(selectedGaia.world,{firstId:state.nextId});
+  if(!entities.length)throw Error('Aucun terrain à importer.');
   state.entities.push(...entities);state.nextId+=entities.length;state.selected=[entities[0].id];
   record('Importer '+entities.length+' colliders Gaia');notify();
   document.getElementById('workspace3d')?.click();
-  log(entities.length+' terrains Gaia importés : collisions du sol disponibles en Play.');
- }catch(error){alert('Import Gaia impossible : '+error.message)}finally{event.target.value=''}
+  log(entities.length+' terrains Gaia importés : collisions heightfield disponibles en Play.');
+  gaiaDialog.close();
+ }catch(error){gaiaStatus('Import impossible : '+error.message,true);}
 };
 $('#load').onclick=()=>$('#file').click();
 $('#file').onchange=async e=>{try{await importScene(e.target.files?.[0])}catch(error){alert('Impossible de charger la scène : '+error.message)}finally{e.target.value=''}};

@@ -12,7 +12,9 @@ export function editorCameraSettings3d(value={}){
   previewDistance:finite('previewDistance',.1,100),
   showFrustum:src.showFrustum!==false};
 }
-// Read the same sceneCamera3d lens used in Play. Legacy editor-only fields remain readable.\nexport function nativeCameraFrustumSettings(value={}){return editorCameraSettings3d({...value,near:value.nearClip??value.near,far:value.farClip??value.far});}\nexport function cameraFrustumCorners3d(origin,rotation,settings,aspect=16/9){
+// Read the same sceneCamera3d lens used in Play. Legacy editor-only fields remain readable.
+export function nativeCameraFrustumSettings(value={}){return editorCameraSettings3d({...value,near:value.nearClip??value.near,far:value.farClip??value.far});}
+export function cameraFrustumCorners3d(origin,rotation,settings,aspect=16/9){
  const c=nativeCameraFrustumSettings(settings);
  if(!Array.isArray(origin)||origin.length!==3||origin.some(n=>!Number.isFinite(n))||!Number.isFinite(aspect)||aspect<=0)throw Error('Paramètres de caméra invalides');
  const degrees=Array.isArray(rotation)&&rotation.length===3?rotation:[0,0,0];

@@ -1,0 +1,29 @@
+/* Editor-only Unity-inspired hierarchy and inspector density (no gameplay changes). */
+body:not(.hub-open) #hierarchyPanel #objects{min-width:0;overflow:auto}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-quicktools{display:flex;align-items:center;gap:3px;position:sticky;top:0;z-index:5;background:var(--wl-theme-panel,#303136);padding:3px 6px;border-bottom:1px solid var(--wl-theme-border,#41464a)}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-quicktools button{flex:none;width:24px;min-height:22px!important;height:22px;padding:0!important;font-size:13px}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-total{margin-left:auto;color:var(--wl-text-muted,#aeb6bd);font-size:10px}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-row{display:flex;align-items:center;gap:2px;min-width:0;min-height:23px;height:23px;font-size:11px;white-space:nowrap}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-row.selected{background:#345679!important;color:#f5fbff}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-row.hierarchy-static .hierarchy-object-name{opacity:.83}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-row .hierarchy-object-label{display:flex;align-items:center;gap:4px;flex:1;min-width:0;overflow:hidden;min-height:22px!important;height:22px!important;padding:1px 2px!important;text-align:left}
+body:not(.hub-open) #hierarchyPanel .hierarchy-object-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:20px}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-row :is(.hierarchy-eye,.hierarchy-tree-toggle){padding:0!important;min-height:19px!important;height:19px!important;min-width:19px!important;width:19px!important;flex:none}
+body:not(.hub-open) #hierarchyPanel .hierarchy-row-metadata{display:flex;align-items:center;gap:3px;flex:none;max-width:145px;overflow:hidden;margin-left:auto;padding-right:4px;color:#a5b6c5}
+body:not(.hub-open) #hierarchyPanel .hierarchy-row-tag,body:not(.hub-open) #hierarchyPanel .hierarchy-row-layer{display:block;max-width:62px;overflow:hidden;text-overflow:ellipsis;font-size:9px;opacity:.76}
+body:not(.hub-open) #hierarchyPanel .hierarchy-row-tag{display:none}
+body:not(.hub-open) #hierarchyPanel .hierarchy-row-static{font-size:9px;background:#4c685c;color:#e4fff3;border-radius:3px;padding:0 3px}
+body:not(.hub-open) #hierarchyPanel .hierarchy-script-icon{font-size:12px;color:#8ecac1}
+body:not(.hub-open) #hierarchyPanel .hierarchy-component-mark{font-size:9px;flex:none}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-group-title{min-height:22px!important;padding:3px 8px!important;font-size:10px!important;text-transform:uppercase;letter-spacing:.025em;font-weight:750}
+body:not(.hub-open) #hierarchyPanel .unity-scene-root{position:sticky;top:29px;z-index:3;min-height:24px;font-size:11px;background:var(--wl-theme-header,#37383d)}
+body:not(.hub-open) #properties .unity-object-labels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px!important}
+body:not(.hub-open) #properties .unity-object-labels label{flex:initial;min-width:0;font-size:10px}
+body:not(.hub-open) #properties .unity-object-labels input{width:100%;min-width:0}
+body:not(.hub-open) #properties .inspector-component>summary{min-height:27px!important;padding:4px 8px!important}
+body:not(.hub-open) #properties .inspector-component .component-content{padding:8px 10px!important}
+body:not(.hub-open) #properties .inspector-component-actions{z-index:30}
+body:not(.hub-open) #properties .inspector-axis input{font-variant-numeric:tabular-nums}
+@container (max-width:290px){body:not(.hub-open) #properties .unity-object-labels{grid-template-columns:1fr}}
+@media(min-width:1400px){body:not(.hub-open) #hierarchyPanel .hierarchy-row-tag{display:block}}
+@media(max-width:1050px){body:not(.hub-open) #hierarchyPanel .hierarchy-row-layer{display:none}body:not(.hub-open) #hierarchyPanel .hierarchy-row-metadata{max-width:46px}}

@@ -1,4 +1,5 @@
 import {nativeBridgeRequest,setNativeBridgeToken} from '../js/core/native-bridge-client.js';
+import {setupWvcBridge} from './wvc-bridge.js';
 import {authorizeScripts} from '../js/core/script-trust.js';
 import {compileWarScript,runWarScriptPreview} from './warscript.js';
 import {convertWarScriptToCSharp} from './warscript-to-csharp.js';
@@ -278,3 +279,21 @@ async function loadMonaco(){
 loadMonaco();
 
 const csharpToken=document.createElement('input');csharpToken.id='csharpSessionToken';csharpToken.type='password';csharpToken.autocomplete='off';csharpToken.placeholder='Clé de session C# (terminal)';csharpToken.setAttribute('aria-label','Clé de session C#');$('executionHint').after(csharpToken);csharpToken.addEventListener('change',()=>{setNativeBridgeToken(csharpToken.value);csharpToken.value='';status('Clé C# mémorisée pour cet onglet.')});
+
+const closeWvcBridge=setupWvcBridge({
+ importSource(item){
+  if(docs.size>=64)throw Error('Script Studio limite ce projet à 64 scripts.');
+  const existing=[...docs.values()].find(doc=>doc.name===item.name&&doc.text===item.source);
+  if(existing){activate(existing.id);status('Fichier déjà présent : '+item.name);return}
+  // Never replace a dirty or linked document: create a unique new import.
+  let name=item.name;const used=new Set([...docs.values()].map(doc=>doc.name.toLowerCase()));
+  if(used.has(name.toLowerCase())){
+   const dot=name.lastIndexOf('.'),base=dot>=0?name.slice(0,dot):name,ext=dot>=0?name.slice(dot):'';
+   for(let n=2;n<1000;n++){const candidate=base+'-'+n+ext;if(!used.has(candidate.toLowerCase())){name=candidate;break}}
+  }
+  const doc=addRecord({id:newId(),name,source:item.source,revision:0});
+  preserve();status('✓ Script importé de W Visual Code : '+doc.name+' (pas encore attaché à une scène)');
+ },
+ status,log
+});
+window.addEventListener('pagehide',closeWvcBridge,{once:true});

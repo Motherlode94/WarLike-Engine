@@ -49,6 +49,7 @@ import {record} from './history.js';
 import {getAsset} from '../assets/catalog.js';
 import {game} from './gameplay.js';
 import {initSceneGizmo3d} from './gizmos-3d.js';
+import {glbVisualPlacement3d} from './glb-visual-transform-3d.js';
 import {orderRtsMove,orderRtsGroup,isRtsUnit,updateRtsOrders} from './rts-orders.js';
 
 export const view3d={enabled:false,yaw:-.68,pitch:.62,radius:25,target:[9,0,6],drag:null,gl:null,error:null,followPlayer:true};
@@ -550,12 +551,12 @@ export function init3d(canvas,host,buttons){
    const id=entity.model3dId||entity.assetId,loaded=realGlbBuffers.get(id);
    if(loaded?.status!=='ready')continue;
    const box=objectBounds3d(entity),size=loaded.normalizedSize||[1,1,1];
-   const factor=Math.min(box.w/size[0],box.h/size[1],box.d/size[2]);
-   const renderY=(Number(entity.elevation3d)||0)+size[1]*factor/2;
+   const {position:glbPosition,scale:glbScale}=glbVisualPlacement3d(box,Number(entity.elevation3d)||0,size);
+   const renderY=glbPosition[1];
    const q=rotationQuaternion3d(entity),qx=q.x,qy=q.y,qz=q.z,qw=q.w;
    let correction=null;try{correction=affineCorrection3d(entity)}catch{}
    const transform=pos=>{
-    const v=pos.map(n=>n*factor);
+    const v=pos.map((n,i)=>n*glbScale[i]);
     const t=[2*(qy*v[2]-qz*v[1]),2*(qz*v[0]-qx*v[2]),2*(qx*v[1]-qy*v[0])];
     const rotated=[v[0]+qw*t[0]+qy*t[2]-qz*t[1],v[1]+qw*t[1]+qz*t[0]-qx*t[2],v[2]+qw*t[2]+qx*t[1]-qy*t[0]];
     const world=[rotated[0]+box.x,rotated[1]+renderY,rotated[2]+box.z];
@@ -859,8 +860,8 @@ export function init3d(canvas,host,buttons){
      for(const [partIndex,part] of cached.parts.entries()){
       const vertices=posed?.[partIndex]||(rig?cached.geometry.parts[partIndex].vertices:null);
       const material=o.colorCustomized?color:part.color;
-      const size=cached.normalizedSize||[1,1,1],scale=Math.min(b.w/size[0],b.h/size[1],b.d/size[2]);
-      drawShape(part.mesh,[b.x,(Number(o.elevation3d)||0)+size[1]*scale/2,b.z],[scale,scale,scale],material,{
+      const {position,scale}=glbVisualPlacement3d(b,Number(o.elevation3d)||0,cached.normalizedSize||[1,1,1]);
+      drawShape(part.mesh,position,scale,material,{
        roughness:o.materialRoughness??part.roughness??1,metallic:o.materialMetallic??part.metallic??0,vertices
       });
      }

@@ -76,11 +76,11 @@ export const sceneCamera3d=(target,yaw,pitch,radius)=>{
 export const project3d=(p,cam,width,height)=>{
  const rel=V.sub(p,cam.eye),d=V.dot(rel,cam.forward);
  if(d<=.1)return null;
- const f=1/Math.tan(Math.PI/6);
+ const f=1/Math.tan((cam.fieldOfView||60)*Math.PI/360);
  return {x:width/2+V.dot(rel,cam.right)*f*height/(2*d),y:height/2-V.dot(rel,cam.up)*f*height/(2*d),depth:d};
 };
 export const groundHit3d=(sx,sy,cam,width,height)=>{
- const f=1/Math.tan(Math.PI/6),r=V.norm(V.add(cam.forward,V.add(V.mul(cam.right,(sx-width/2)*2/(height*f)),V.mul(cam.up,(height/2-sy)*2/(height*f)))));
+ const f=1/Math.tan((cam.fieldOfView||60)*Math.PI/360),r=V.norm(V.add(cam.forward,V.add(V.mul(cam.right,(sx-width/2)*2/(height*f)),V.mul(cam.up,(height/2-sy)*2/(height*f)))));
  if(Math.abs(r[1])<1e-5)return null;
  const t=-cam.eye[1]/r[1];return t>0?V.add(cam.eye,V.mul(r,t)):null;
 };
@@ -105,13 +105,13 @@ export function raycastTriangles3d(origin,direction,vertices,transform,{maxDista
  return result;
 }
 export function sceneRay3d(x,y,cam,width,height){
- const f=1/Math.tan(Math.PI/6);
+ const f=1/Math.tan((cam.fieldOfView||60)*Math.PI/360);
  const direction=V.norm(V.add(cam.forward,V.add(V.mul(cam.right,(x-width/2)*2/(height*f)),V.mul(cam.up,(height/2-y)*2/(height*f)))));
  return {origin:[...cam.eye],direction};
 }
 // Ray against oriented scene boxes. Thin ground tiles cannot swallow actor clicks.
 export function pickEntity3d(entities,point,cam,{playing=false}={}){
- const f=1/Math.tan(Math.PI/6),direction=V.norm(V.add(cam.forward,V.add(V.mul(cam.right,(point.x-point.w/2)*2/(point.h*f)),V.mul(cam.up,(point.h/2-point.y)*2/(point.h*f)))));let selected=null,distance=300;
+ const f=1/Math.tan((cam.fieldOfView||60)*Math.PI/360),direction=V.norm(V.add(cam.forward,V.add(V.mul(cam.right,(point.x-point.w/2)*2/(point.h*f)),V.mul(cam.up,(point.h/2-point.y)*2/(point.h*f)))));let selected=null,distance=300;
  for(const o of entities){if(!playing&&o.editorHidden||playing&&(o.enabled===false||o.visible===false||o.sequenceEnabled===false||o._hiddenInVehicle||o._sequenceDestroyed))continue;const b=objectBounds3d(o),angle=(Number(o.rotation)||0)*Math.PI/180,cs=Math.cos(angle),sn=Math.sin(angle),dx=cam.eye[0]-b.x,dy=cam.eye[1]-b.y,dz=cam.eye[2]-b.z;
   const origin=[dx*cs+dz*sn,dy,-dx*sn+dz*cs],ray=[direction[0]*cs+direction[2]*sn,direction[1],-direction[0]*sn+direction[2]*cs],extents=[b.w/2,b.h/2,b.d/2];let near=0,far=distance,hit=true;
   for(let a=0;a<3;a++){if(Math.abs(ray[a])<1e-8){if(Math.abs(origin[a])>extents[a]){hit=false;break}}else{const t1=(-extents[a]-origin[a])/ray[a],t2=(extents[a]-origin[a])/ray[a];near=Math.max(near,Math.min(t1,t2));far=Math.min(far,Math.max(t1,t2));if(near>far){hit=false;break}}}
@@ -128,7 +128,7 @@ export const program3d=gl=>{
  attribute vec3 aPosition;attribute vec3 aNormal;attribute vec2 aTexcoord;varying vec2 vTexcoord;attribute vec4 aVertexColor;varying vec4 vVertexColor;
  attribute vec4 aMaterialUV0,aMaterialUV1;varying vec4 vMaterialUV0,vMaterialUV1;
  uniform vec3 uEye,uRight,uUp,uForward,uPosition,uScale;
- uniform vec4 uRotation;uniform float uAspect;uniform bool uViewModel,uUseAffine;uniform mat3 uViewBasis,uAffineNormal;uniform mat4 uAffineMatrix;
+ uniform vec4 uRotation;uniform float uAspect,uProjectionFactor,uNearClip,uFarClip;uniform bool uViewModel,uUseAffine;uniform mat3 uViewBasis,uAffineNormal;uniform mat4 uAffineMatrix;
  vec3 rotateQ(vec3 v){return v+2.0*cross(uRotation.xyz,cross(uRotation.xyz,v)+uRotation.w*v);}
  varying vec3 vNormal,vWorld;
  void main(){
@@ -139,8 +139,8 @@ export const program3d=gl=>{
  vec3 rel=worldPosition-uEye;
  vWorld=worldPosition;vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vec3 worldNormal=uViewModel?uViewBasis*scaledNormal:rotateQ(scaledNormal);vNormal=normalize(uUseAffine?uAffineNormal*worldNormal:worldNormal);
  float d=max(0.01,dot(rel,uForward));
- float f=1.7320508;
- float clipZ=d*1.00066689-0.20006669;
+ float f=uProjectionFactor;
+ float clipZ=d*(uFarClip+uNearClip)/(uFarClip-uNearClip)-2.0*uFarClip*uNearClip/(uFarClip-uNearClip);
  gl_Position=vec4(dot(rel,uRight)*f/uAspect,dot(rel,uUp)*f,clipZ,d);
  
  }`;
@@ -314,7 +314,7 @@ export function init3d(canvas,host,buttons){
  let program;
  try{program=program3d(gl)}catch(err){renderFailure('Compilation shader : '+String(err.message||err));return {setEnabled:()=>false,focus:()=>{},syncToWorkspace:()=>renderFailure(view3d.error)}}
  const loc=n=>gl.getUniformLocation(program,n);
- const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
+ const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),projectionFactor:loc('uProjectionFactor'),nearClip:loc('uNearClip'),farClip:loc('uFarClip'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
  const viewModelUniform=loc('uViewModel'),viewBasisUniform=loc('uViewBasis');
  const useAffineUniform=loc('uUseAffine'),affineMatrixUniform=loc('uAffineMatrix'),affineNormalUniform=loc('uAffineNormal');
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal'),aTexcoord=gl.getAttribLocation(program,'aTexcoord');
@@ -723,6 +723,9 @@ export function init3d(canvas,host,buttons){
   gl.uniform3fv(u.flashPos,cam.eye);gl.uniform3fv(u.flashDir,cam.forward);
   gl.uniform1f(u.flashPower,state.playing&&horror.enabled&&horror.flashlight&&horror.battery>0?3.1:0);
   gl.uniform3fv(u.eye,cam.eye);gl.uniform3fv(u.forward,cam.forward);gl.uniform3fv(u.right,cam.right);gl.uniform3fv(u.up,cam.up);gl.uniform1f(u.aspect,w/h);
+  gl.uniform1f(u.projectionFactor,1/Math.tan((cam.fieldOfView||60)*Math.PI/360));
+  gl.uniform1f(u.nearClip,cam.nearClip||.1);
+  gl.uniform1f(u.farClip,cam.farClip||300);
   gl.uniform3fv(u.sunDir,solar.direction);gl.uniform3fv(u.sunColor,solar.color);
   gl.uniform1f(u.exposure,renderQuality.exposure3d);gl.uniform1f(u.fogDensity,renderQuality.fog3d);
   gl.uniform1f(u.sunIntensity,solar.intensity);gl.uniform1f(u.ambient,solar.ambient);

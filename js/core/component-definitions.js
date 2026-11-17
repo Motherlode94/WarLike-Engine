@@ -11,6 +11,7 @@ import {defaultTacticalUnit} from './rts-orders.js';
 import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
 import {defaultCameraRig} from './play-camera.js';
 import {defaultSpriteAnimation2d} from './sprite-animation-2d.js';
+import {defaultTilemap2d} from './tilemap-2d.js';
 import {defaultSceneCamera2d} from './scene-camera-2d.js';
 import {defaultSceneCamera} from './scene-camera-3d.js';
 import {defaultUiCanvas,defaultUiRect,defaultUiElement} from './ui-canvas-layout.js';
@@ -32,6 +33,7 @@ export const webComponentDefinitions=[
  {id:'fxEmitter',name:'Émetteur FX',category:'Effets visuels',description:'Énergie, feu, électricité, fumée, soin et portail en 2D/3D.',create:defaultFxEmitter},
  {id:'simulationNode',name:'Simulation · Réseau et monde',category:'Simulation',description:'Destruction, matériaux, réparation, réseau énergétique et civils.',create:defaultSimulationNode},
  {id:'tacticalUnit',name:'Unité tactique RTS',category:'RTS',description:'Déplacement A*, suivi, défense et attaque d’escouade.',create:defaultTacticalUnit},
+ {id:'tilemap2d',name:'Tilemap 2D',category:'Rendering',description:'Grille de tuiles native avec pinceau, dimensions et collisions par cellule.',modes:['2d'],create:defaultTilemap2d},
  {id:'spriteAnimation2d',name:'Sprite Animation 2D',category:'Animation',description:'Animation d’une Sprite Sheet horizontale PNG, configurable dans Inspector.',modes:['2d'],create:defaultSpriteAnimation2d},
  {id:'spriteRenderer2d',name:'Sprite Renderer 2D',category:'Rendering',description:'Ordre de dessin et opacité du sprite/rectangle de l’objet 2D.',modes:['2d'],create:()=>({enabled:true,sortingOrder:0,opacity:1})},
  {id:'collider2d',name:'Box Collider 2D',category:'Physique',description:'Collision solide ou trigger, dimensions et décalage.',modes:['2d'],create:defaultCollider2d},

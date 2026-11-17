@@ -1,4 +1,5 @@
 import {createGarageDemo} from './authored-demo-scenes.js';
+import {ensureDemoGameCamera} from './demo-native-camera.js';
 import {createLifeScene} from './life-scene.js';
 import {createCompanyScene} from './company-scene.js';
 import {createAdventureCampaign} from './adventure-campaign.js';
@@ -24,7 +25,7 @@ const inc=(key,value)=>({type:'addVariable',key,value});
 const signal=value=>({type:'emitSignal',value});
 const item=(key,value=1)=>({type:'giveItem',targetRole:'player',key,value});
 
-export function createGenreScene(genre,mode='3d'){
+function createGenreSceneContent(genre,mode='3d'){
  if(!['2d','3d'].includes(mode))throw new Error('Type de projet invalide.');
  if(!genreCompatible(genre,mode))throw new Error('Ce type de jeu est incompatible avec le projet '+mode.toUpperCase()+'.');
  const chosen=normalizeGenre(genre),threeD=mode==='3d';
@@ -176,4 +177,10 @@ export function createGenreScene(genre,mode='3d'){
  // All starter projects retain at least one playable actor. The sandbox template
  // adds nothing else; it must stay small.
  return finishStarterScene(chosen,mode,objects,player);
+}
+
+// Guarantee a camera in all first-party scene templates (except specialized RTS directors).
+export function createGenreScene(genre,mode='3d'){
+ const result=createGenreSceneContent(genre,mode);
+ return ensureDemoGameCamera(result,mode,{genre:normalizeGenre(genre)});
 }

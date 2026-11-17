@@ -1,4 +1,5 @@
 import {getAsset} from '../assets/catalog.js';
+import {tilemapColliders2d} from './tilemap-2d.js';
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const defaultCollider2d=()=>({enabled:true,isTrigger:false,offsetX:0,offsetY:0,width:0,height:0});
@@ -14,6 +15,7 @@ export function controllerMode2d(player,entities){
 export function colliderRect2d(o){const c=o.collider2d||{};return {x:n(o.x)+n(c.offsetX),y:n(o.y)+n(c.offsetY),w:Math.max(.01,n(c.width)>0?n(c.width):n(o.w,32)),h:Math.max(.01,n(c.height)>0?n(c.height):n(o.h,32))}}
 export function solidCollider2d(o){
  if(!o||o.enabled===false||o._sequenceDestroyed||o.sequenceEnabled===false||o.lightType||o.audioEnabled)return false;
+ if(o.tilemap2d)return false; // Solid cells are individual collision rectangles.
  if(o.collider2d)return o.collider2d.enabled!==false&&!o.collider2d.isTrigger;
  if(o.collision3d===false)return false;
  if(o.collision3d===true||o.solid2d===true||o.type==='object')return true;
@@ -27,7 +29,7 @@ export function moveBody2d(body,dx,dy,entities){
  const result={blockedX:false,blockedY:false,grounded:false,ceiling:false,hits:[]};
  if(body.collider2d?.enabled===false||!body.collider2d&&body.collision3d===false||body.collider2d?.isTrigger){body.x+=n(dx);body.y+=n(dy);body.grounded2d=false;return result}
  if(body.enabled===false)return result;
- const obstacles=entities.filter(o=>o!==body&&solidCollider2d(o));
+ const obstacles=[...entities.filter(o=>o!==body&&solidCollider2d(o)),...tilemapColliders2d(entities.filter(o=>o!==body))];
  // Recover an object placed partly inside a collider before Play.
  for(let iteration=0;iteration<8;iteration++){
   const start=colliderRect2d(body),hit=obstacles.find(o=>{const b=colliderRect2d(o);return overlapAxis(start,b,'x')&&overlapAxis(start,b,'y')});if(!hit)break;

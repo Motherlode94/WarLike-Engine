@@ -61,6 +61,7 @@ import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo,renderHistory} from './core/history.js';
 import {addEntity,addPrefab,addLogicHotspot,loadLogicDemo,loadRpgDemo,loadCombatDemo,loadDrivingDemo,load3dBetaDemo,addLight,addAudioEmitter,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
 import {sceneCreateItems,createSceneItem} from './core/editor-create-catalog.js';
+import {initTilemapEditor2d} from './ui/tilemap-editor-2d.js';
 import {mountProjectCreateBrowser} from './ui/project-create-browser.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
@@ -185,6 +186,7 @@ $('#zoomIn').onclick=()=>zoomAt(1.25,{x:host.clientWidth/2,y:host.clientHeight/2
 $('#zoomOut').onclick=()=>zoomAt(.8,{x:host.clientWidth/2,y:host.clientHeight/2});
 $('#resetView').onclick=resetCamera;
 attachInput(canvas,host);
+initTilemapEditor2d(canvas);
 bindGameInput(canvas);
 initializeRpgUi();
 bindModeInput();

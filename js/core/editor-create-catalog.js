@@ -7,11 +7,13 @@ import {prefab3d} from '../assets/catalog-3d.js';
 import {defaultUiCanvas,defaultUiRect,defaultUiElement} from './ui-canvas-layout.js';
 import {defaultSceneCamera} from './scene-camera-3d.js';
 import {defaultSceneCamera2d} from './scene-camera-2d.js';
+import {defaultTilemap2d} from './tilemap-2d.js';
+import {defaultSpriteAnimation2d} from './sprite-animation-2d.js';
 import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
 
 export const sceneCreateItems=[
  {group:'Essentiels',items:[['empty','GameObject vide'],['character','Personnage'],['main-camera','Main Camera'],['camera','Rig de caméra (pour joueur)']]},
- {group:'Objets 2D',items:[['camera-2d','Main Camera 2D'],['player-2d','Joueur 2D'],['sprite-2d','Sprite / Rectangle'],['platform-2d','Plateforme solide'],['trigger-2d','Zone Trigger 2D'],['physics-2d','Corps physique 2D']]},
+ {group:'Objets 2D',items:[['camera-2d','Main Camera 2D'],['player-2d','Joueur 2D'],['sprite-2d','Sprite / Rectangle'],['platform-2d','Plateforme solide'],['trigger-2d','Zone Trigger 2D'],['physics-2d','Corps physique 2D'],['tilemap-2d','Tilemap 2D']]},
  {group:'Objets 3D',items:[['cube','Cube'],['sphere','Sphère'],['cylinder','Cylindre'],['cone','Cône'],['plane','Plan / Sol'],['ramp','Rampe']]},
  {group:'Éclairage et audio',items:[['point-light','Point Light'],['spot-light','Spot Light'],['audio-source','Audio Source']]},
  {group:'Interface du jeu (uGUI)',items:[['canvas','Canvas'],['ui-panel','Panel'],['ui-text','Text'],['ui-button','Button']]},
@@ -23,7 +25,7 @@ export function createSceneItem(kind,{openBlueprint=()=>{}}={}){
  if(kind==='blueprint'){openBlueprint();return true;}
  if(state.playing)return false;
  if(primitiveIds[kind]&&workspace.mode!=='3d')return false;
- if(['camera-2d','player-2d','sprite-2d','platform-2d','trigger-2d','physics-2d'].includes(kind)&&workspace.mode!=='2d')return false;
+ if(['camera-2d','player-2d','sprite-2d','platform-2d','trigger-2d','physics-2d','tilemap-2d'].includes(kind)&&workspace.mode!=='2d')return false;
  const id=state.nextId++;
  let o;
  if(primitiveIds[kind]){
@@ -32,9 +34,10 @@ export function createSceneItem(kind,{openBlueprint=()=>{}}={}){
   Object.assign(o,{name:kind==='plane'?'Sol '+id:kind+' '+id,w:kind==='plane'?640:64,h:kind==='plane'?16:64,depth3d:kind==='plane'?640:64,collision3d:true,solid3d:true});
  }else{
   o={id,name:kind+' '+id,type:'object',x:120+(id%10)*25,y:120+(id%7)*25,w:64,h:64,depth3d:64,elevation3d:0,color:'#8195ef',visible:true};
+  if(kind==='tilemap-2d'){const tilemap2d=defaultTilemap2d();Object.assign(o,{name:'Tilemap 2D '+id,type:'tilemap',x:0,y:0,w:tilemap2d.columns*tilemap2d.tileSize,h:tilemap2d.rows*tilemap2d.tileSize,solid2d:false,collision3d:false,tilemap2d})}
   if(kind==='camera-2d'){Object.assign(o,{name:'Main Camera 2D '+id,x:120,y:120,w:32,h:24,visible:false,collision3d:false,camera2d:defaultSceneCamera2d()})}
   if(kind==='player-2d'){Object.assign(o,{name:'Player 2D '+id,type:'player',w:38,h:38,color:'#41cdb5',controller2d:{...defaultController2d(),mode:'topDown'},collider2d:defaultCollider2d(),solid2d:false})}
-  if(kind==='sprite-2d'){Object.assign(o,{name:'Sprite 2D '+id,type:'object',color:'#85a9ea',solid2d:false,collision3d:false,spriteRenderer2d:{enabled:true,sortingOrder:0,opacity:1}})}
+  if(kind==='sprite-2d'){Object.assign(o,{name:'Sprite 2D '+id,type:'object',color:'#85a9ea',solid2d:false,collision3d:false,spriteRenderer2d:{enabled:true,sortingOrder:0,opacity:1},spriteAnimation2d:defaultSpriteAnimation2d()})}
   if(kind==='platform-2d'){Object.assign(o,{name:'Platform 2D '+id,w:256,h:28,color:'#657486',solid2d:true,collider2d:defaultCollider2d()})}
   if(kind==='trigger-2d'){Object.assign(o,{name:'Trigger 2D '+id,w:128,h:128,color:'#ad8be1',solid2d:false,collider2d:{...defaultCollider2d(),isTrigger:true}})}
   if(kind==='physics-2d'){Object.assign(o,{name:'Physics Body 2D '+id,collider2d:defaultCollider2d(),rigidbody2d:defaultRigidbody2d(),color:'#e5ab68'})}

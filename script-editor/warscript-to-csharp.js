@@ -138,6 +138,10 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
    if(node.value)fail(node,'Les méthodes WarScript sont void ; return avec valeur non convertible');
    return pad+'return;';
   }
+  if(node.kind==='while'){
+   const bodyScope=new Set(scope);
+   return pad+'while ('+expr(node.condition,scope)+') {\n'+node.body.map(n=>statement(n,bodyScope,indent+1)).join('\n')+'\n'+pad+'}';
+  }
   if(node.kind==='if'){
    const thenScope=new Set(scope),elseScope=new Set(scope);
    const yes=node.yes.map(n=>statement(n,thenScope,indent+1)).join('\n');

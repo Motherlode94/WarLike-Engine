@@ -9,7 +9,7 @@ export function checkPbrPixels(){
  const vector=(name,v)=>uniform(name,'uniform3fv',v);
  vector('uEye',[0,0,2]);vector('uRight',[1,0,0]);vector('uUp',[0,1,0]);vector('uForward',[0,0,-1]);
  vector('uPosition',[0,0,0]);vector('uScale',[1,1,1]);uniform('uRotation','uniform4fv',[0,0,0,1]);
- uniform('uAspect','uniform1f',1);uniform('uAlphaCutoff','uniform1f',-1);uniform('uExposure','uniform1f',1);
+ uniform('uAspect','uniform1f',1);uniform('uProjectionFactor','uniform1f',1/Math.tan(Math.PI/6));uniform('uNearClip','uniform1f',.1);uniform('uFarClip','uniform1f',300);uniform('uAlphaCutoff','uniform1f',-1);uniform('uExposure','uniform1f',1);
  vector('uFlashDir',[0,0,-1]);vector('uEmissive',[0,0,0]);
  // Large front-facing triangle, flat normal. The centre pixel samples a
  // nearly aligned view/light half-vector and isolates material response.

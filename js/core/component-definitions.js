@@ -10,6 +10,7 @@ import {defaultSimulationNode} from './simulation-nodes.js';
 import {defaultTacticalUnit} from './rts-orders.js';
 import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
 import {defaultCameraRig} from './play-camera.js';
+import {defaultUiCanvas,defaultUiRect,defaultUiElement} from './ui-canvas-layout.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController} from './gameplay-components.js';
 import {defaultRigidbody3d} from './physics-3d.js';
 import {newSequence} from './logic-sequences.js';
@@ -31,6 +32,9 @@ export const webComponentDefinitions=[
  {id:'collider2d',name:'Box Collider 2D',category:'Physique',description:'Collision solide ou trigger, dimensions et décalage.',modes:['2d'],create:defaultCollider2d},
  {id:'rigidbody2d',name:'Rigidbody 2D',category:'Physique',description:'Gravité, vitesse, rebond et friction.',modes:['2d'],create:defaultRigidbody2d},
  {id:'controller2d',name:'Contrôleur de personnage 2D',category:'Personnage',description:'Vue du dessus ou plateforme avec gravité et saut.',modes:['2d'],create:defaultController2d},
+ {id:'uiCanvas',name:'UI Canvas · Overlay',category:'Interface du jeu',description:'Racine de l’interface de jeu, échelle responsive. Phase initiale : structure éditable ; rendu de jeu non encore relié.',create:defaultUiCanvas},
+ {id:'uiRect',name:'UI RectTransform',category:'Interface du jeu',description:'Ancres, pivot, taille et position d’un objet UI rattaché au Canvas.',create:defaultUiRect},
+ {id:'uiElement',name:'UI Element · Panel / Text / Button',category:'Interface du jeu',description:'Données du contrôle UI ; boutons et événements ne sont pas encore activés en Play.',create:defaultUiElement},
  {id:'cameraRig',name:'Caméra de jeu',category:'Caméra',description:'Suivi fluide, distance, sensibilité et évitement des obstacles.',create:defaultCameraRig},
  {id:'stats',name:'Stats · Santé et endurance',category:'Personnage',description:'Santé, endurance et régénération.',create:defaultStats},
  {id:'inventory',name:'Inventaire',category:'Personnage',description:'Objets, capacité et équipement.',create:defaultInventory},

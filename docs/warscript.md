@@ -51,6 +51,33 @@ Les conditions `if` / `else`, `return`, affectations `=`, `+=`, `-=`, `*=`, `/=`
 
 Un composant désactivé ne reçoit plus les mises à jour. Pause suspend le traitement ; les menus et journaux filtrent les touches lorsque l’interface accapare les entrées. Les champs d’instance sont sérialisés dans la sauvegarde de partie, et Stop restaure la scène d’édition. En coop, seul l’hôte exécute les WarScripts.
 
+## Mode Unity — classe MonoBehaviour compatible
+
+WarScript accepte désormais la forme **C# inspirée d'Unity** suivante, toujours interprétée par la VM WarScript bornée :
+
+```csharp
+public class HeroController : MonoBehaviour {
+    [SerializeField] private float speed = 3;
+    public int steps = 0;
+
+    void Awake() { Log("Hero prêt"); }
+    void Start() { Log("Début"); }
+    void Update() {
+        transform.Translate(speed * Time.deltaTime, 0, 0);
+        steps++;
+    }
+    void OnDestroy() { Log("Fin"); }
+}
+```
+
+- **MonoBehaviour** est le seul type de base explicitement accepté pour cette forme. Ce n'est pas un compilateur Unity/.NET.
+- `[SerializeField]` permet d'exposer à la configuration du composant un champ `private` sans rendre tous les champs privés modifiables ; les `public` restent configurables.
+- `Awake`, `OnEnable`, `Start`, `FixedUpdate`, `Update`, `LateUpdate`, `OnDisable` et `OnDestroy` conservent les garanties du runtime WarScript actuel.
+- La conversion `WarScript → C#` conserve `[SerializeField]` et génère une classe `WarLike.Runtime.MonoBehaviour` ; elle échoue explicitement pour les API non compatibles.
+- Les véritables APIs `GetComponent<T>()`, `AddComponent<T>()`, `Transform` et les messages du framework existent dans **WarLike.Runtime C#**. Leur syntaxe générique n'est **pas** interprétée dans les fichiers `.wls`. Utiliser un composant `.cs` natif pour ces besoins.
+
+**Limitation importante :** l'exécution native C# nécessite le pont local autorisé. L'export Web autonome exécute WarScript, pas automatiquement l'assemblage C#/.NET. Les contraintes d'isolation et de confiance des scripts restent obligatoires.
+
 ## API v1
 
 | API | Utilisation |

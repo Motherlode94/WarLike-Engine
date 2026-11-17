@@ -1,5 +1,9 @@
 # WarLike Engine + WarLike Editor — un moteur et son éditeur dans un seul dépôt
 
+## Collision et Trigger2D — événements WarScript / WarNode
+
+Le moteur émet désormais les événements natifs `Enter`, `Stay` et `Exit` pour les **BoxCollider2D solides** et **zones Trigger2D**. WarScript prend en charge les callbacks sans paramètres `OnTriggerEnter2D()` et `OnCollisionEnter2D()` (ainsi que Stay/Exit), avec `trigger.otherId`, `trigger.otherName`, `collision.otherId` et `collision.otherName`. WarNode/Blueprint propose les événements `triggerEnter2d`, `triggerStay2d`, `triggerExit2d`, `collisionEnter2d`, `collisionStay2d`, `collisionExit2d` sur l'objet qui possède le collider. Les scènes sans script conservent leurs collisions. [Guide complet Physics2D](docs/physics2d-contact-events.md). La prise en charge des formes Circle/Capsule reste à développer.
+
 ## Tilemap Editor et Sprite Animation 2D
 
 Dans WarLike Editor, le mode 2D dispose désormais d'une palette **Tilemap** pour peindre et effacer des cellules directement dans la scène ; les murs et pierres possèdent des collisions réelles en Play. Le moteur sait également lire une **Sprite Sheet PNG horizontale** avec vitesse d'animation, boucle et prévisualisation. Ces ajouts font partie de la [PR complémentaire au chantier #63](https://github.com/Motherlode94/WarLike-Engine/pulls) ; leur validation CI/navigateur reste requise. Lire le [guide Tilemap et animation 2D](docs/tilemap-and-sprite-animation-2d.md).

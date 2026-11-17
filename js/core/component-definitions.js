@@ -10,6 +10,7 @@ import {defaultSimulationNode} from './simulation-nodes.js';
 import {defaultTacticalUnit} from './rts-orders.js';
 import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
 import {defaultCameraRig} from './play-camera.js';
+import {defaultSceneCamera} from './scene-camera-3d.js';
 import {defaultUiCanvas,defaultUiRect,defaultUiElement} from './ui-canvas-layout.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController} from './gameplay-components.js';
 import {defaultRigidbody3d} from './physics-3d.js';
@@ -35,6 +36,7 @@ export const webComponentDefinitions=[
  {id:'uiCanvas',name:'UI Canvas · Overlay',category:'Interface du jeu',description:'Racine de l’interface de jeu, échelle responsive. Phase initiale : structure éditable ; rendu de jeu non encore relié.',create:defaultUiCanvas},
  {id:'uiRect',name:'UI RectTransform',category:'Interface du jeu',description:'Ancres, pivot, taille et position d’un objet UI rattaché au Canvas.',create:defaultUiRect},
  {id:'uiElement',name:'UI Element · Panel / Text / Button',category:'Interface du jeu',description:'Données du contrôle UI ; boutons et événements ne sont pas encore activés en Play.',create:defaultUiElement},
+ {id:'sceneCamera3d',name:'Camera · Scene (Main Camera)',category:'Caméra',description:'Caméra native de scène, priorités, projection perspective et modes fixe/suivi. Active en Game/Play et export.',modes:['3d'],create:defaultSceneCamera},
  {id:'cameraRig',name:'Caméra de jeu',category:'Caméra',description:'Suivi fluide, distance, sensibilité et évitement des obstacles.',create:defaultCameraRig},
  {id:'stats',name:'Stats · Santé et endurance',category:'Personnage',description:'Santé, endurance et régénération.',create:defaultStats},
  {id:'inventory',name:'Inventaire',category:'Personnage',description:'Objets, capacité et équipement.',create:defaultInventory},

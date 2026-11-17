@@ -16381,6 +16381,8 @@
     "js/core/csharp-tactical-scene.js",
     "js/core/demo-catalog.js",
     "js/core/demo-guidance.js",
+    "js/core/demo-native-camera.js",
+    "js/core/demo-playability-audit.js",
     "js/core/demo-war-scripts.js",
     "js/core/editor-camera-frustum-3d.js",
     "js/core/editor-clipboard.js",

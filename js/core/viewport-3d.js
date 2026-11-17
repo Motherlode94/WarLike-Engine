@@ -747,33 +747,36 @@ export function init3d(canvas,host,buttons){
   // Draw opaque surfaces first, then alpha surfaces across ALL entities.
   // Camera-space depth (not radial distance) keeps side-on surfaces ordered.
   const transparentDraws=[];
-  const submit=(position,draw,transparent=false)=>{
-   if(transparent)transparentDraws.push({depth:V.dot(V.sub(position,cam.eye),cam.forward),draw});else draw();
+  const submit=(position,draw,transparent=false,object=null)=>{
+   if(transparent){
+    // Use the same affine correction as the vertex shader for parented meshes.
+    let world=position;
+    try{const m=object&&affineCorrection3d(object);if(m)world=[0,1,2].map(i=>m[i]*position[0]+m[i+4]*position[1]+m[i+8]*position[2]+m[i+12])}catch{}
+    transparentDraws.push({depth:V.dot(V.sub(world,cam.eye),cam.forward),draw});
+   }else draw();
   };
   bind(cubes);
   for(const o of objects){
    const b=objectBounds3d(o),color=assetColor(o),asset=getAsset(o.assetId),category=asset?.category;
    const angle=(o.rotation||0)*Math.PI/180;
-   gl.uniform1f(u.roughness,Math.max(.04,Math.min(1,Number(o.materialRoughness??.7))));
-   gl.uniform1f(u.metallic,Math.max(0,Math.min(1,Number(o.materialMetallic??0))));
    if(o.water3d?.enabled){
     submit([b.x,Number(o.elevation3d)||0,b.z],()=>{
-    const water=waterSettings(o.water3d),surface=waterSurface3d(b.w,b.d,now/1000,water);
-    gl.bindBuffer(gl.ARRAY_BUFFER,waterMesh.buffer);gl.bufferData(gl.ARRAY_BUFFER,surface,gl.DYNAMIC_DRAW);waterMesh.count=surface.length/6;
-    bind(waterMesh);gl.uniform1i(useTexture,0);gl.uniform1f(alphaCutoff,.01);gl.uniform1i(unlitUniform,0);gl.uniform3fv(emissiveUniform,water.style==='magic'?[.09,.18,.22]:[.015,.045,.08]);
-    gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
-    gl.uniform1f(u.roughness,.2);gl.uniform1f(u.metallic,.08);
-    model([b.x,Number(o.elevation3d)||0,b.z],[1,1,1],waterColor(water.color,water.opacity),(o.rotation||0)*Math.PI/180,o);
-    gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
-    if(water.foam>0){
-     // Pale translucent crest layer with lower wave amplitude; visible
-     // on the entire surface without adding a second material/shader.
-     gl.uniform3fv(emissiveUniform,[.075,.11,.13]);
-     model([b.x,(Number(o.elevation3d)||0)+.015,b.z],[1,1,1],waterColor(water.foamColor,water.opacity*water.foam*.17),(o.rotation||0)*Math.PI/180,o);
+     const water=waterSettings(o.water3d),surface=waterSurface3d(b.w,b.d,now/1000,water);
+     gl.bindBuffer(gl.ARRAY_BUFFER,waterMesh.buffer);gl.bufferData(gl.ARRAY_BUFFER,surface,gl.DYNAMIC_DRAW);waterMesh.count=surface.length/6;
+     bind(waterMesh);gl.uniform1i(useTexture,0);gl.uniform1f(alphaCutoff,.01);gl.uniform1i(unlitUniform,0);gl.uniform3fv(emissiveUniform,water.style==='magic'?[.09,.18,.22]:[.015,.045,.08]);
+     gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
+     gl.uniform1f(u.roughness,.2);gl.uniform1f(u.metallic,.08);
+     model([b.x,Number(o.elevation3d)||0,b.z],[1,1,1],waterColor(water.color,water.opacity),(o.rotation||0)*Math.PI/180,o);
      gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
-    }
-    gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform3fv(emissiveUniform,[0,0,0]);
-    },true);
+     if(water.foam>0){
+      // Pale translucent crest layer with lower wave amplitude; visible
+      // on the entire surface without adding a second material/shader.
+      gl.uniform3fv(emissiveUniform,[.075,.11,.13]);
+      model([b.x,(Number(o.elevation3d)||0)+.015,b.z],[1,1,1],waterColor(water.foamColor,water.opacity*water.foam*.17),(o.rotation||0)*Math.PI/180,o);
+      gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
+     }
+     gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform3fv(emissiveUniform,[0,0,0]);
+    },true,o);
     continue;
    }
    const shape=o.model3dId?'glb':get3dAsset(o.assetId)?.shape;
@@ -785,7 +788,7 @@ export function init3d(canvas,host,buttons){
      gl.uniform1f(u.roughness,clamp(Number(roughness),.04,1));gl.uniform1f(u.metallic,clamp(Number(metallic),0,1));
      bind(mesh);if(o._survivalPreview){gl.uniform1f(alphaCutoff,.01);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}
      model(p,scale,o._survivalPreview?[...shade.slice(0,3),.5]:shade,angle,o);gl.drawArrays(gl.TRIANGLES,0,mesh.count);
-    },mesh.alphaMode==='BLEND'||!!o._survivalPreview);
+    },mesh.alphaMode==='BLEND'||!!o._survivalPreview,o);
    };
    const cube=(p,scale,shade)=>drawShape(cubes,p,scale,shade);
    const round=(p,scale,shade)=>drawShape(sphere,p,scale,shade);

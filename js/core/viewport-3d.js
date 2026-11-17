@@ -519,6 +519,28 @@ export function init3d(canvas,host,buttons){
  const selectionRect=document.createElement('div');selectionRect.className='scene-selection-rectangle';selectionRect.hidden=true;host.append(selectionRect);const editorKeys=new Set();
  document.addEventListener('keydown',e=>{if(state.playing||!view3d.enabled||view3d.drag?.nav!=='look'||isTypingTarget(e.target))return;if(['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();editorKeys.add(e.code)}});document.addEventListener('keyup',e=>editorKeys.delete(e.code));window.addEventListener('blur',()=>{editorKeys.clear();view3d.drag=null;selectionRect.hidden=true});
  const updateGizmos=initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBounds3d,getCamera:camera,record,notify});
+ const sceneCameraMarkers=document.createElement('div');
+ sceneCameraMarkers.className='warlike-scene-camera-markers';
+ sceneCameraMarkers.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:10;overflow:hidden';
+ host.append(sceneCameraMarkers);
+ const renderSceneCameraMarkers=()=>{
+  sceneCameraMarkers.replaceChildren();
+  if(state.playing||!view3d.enabled)return;
+  const rect=canvas.getBoundingClientRect(),cam=camera();
+  for(const actor of state.entities.filter(o=>o.sceneCamera3d)){
+   const pos=[(Number(actor.x)||0)/64,(Number(actor.elevation3d)||0),(Number(actor.y)||0)/64];
+   const point=project3d(pos,cam,rect.width,rect.height);
+   if(!point)continue;
+   const label=document.createElement('button');label.type='button';
+   label.textContent='▣ '+actor.name;
+   label.title='Sélectionner la Camera · réglages dans Inspector';
+   label.style.cssText='position:absolute;pointer-events:auto;transform:translate(-50%,-50%);padding:3px 7px;border-radius:5px;background:#182838dd;border:1px solid #7fc8e8;color:#e7faff;font:11px system-ui;cursor:pointer';
+   label.style.left=point.x+'px';label.style.top=point.y+'px';
+   label.onclick=()=>{state.selected=[actor.id];notify();};
+   sceneCameraMarkers.append(label);
+  }
+ };
+
  const rectPoint=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,w:r.width,h:r.height}};
  const meshSnapCache=new WeakMap();
  const nearbySnap=(hit,contexts,mode)=>{
@@ -699,7 +721,7 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&workspace.mode==='3d'&&!isLanGuest()){runRuntimeFrame(dt,{update(dt){update3dPlay(dt);updateSequences(dt,{mode:'3d',yaw:view3d.yaw,playing:true,entities:state.entities,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}});}
   if(state.playing&&gameIsRunning()&&view3d.followPlayer){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),pt=playerTarget();if(pt){const cut=actor!==lastCameraActor||gameSession.currentSceneId!==lastCameraScene||Math.hypot(...V.sub(pt,view3d.target))>12,t=cut?1:cameraDamping(cameraRigFor(actor).followSharpness,dt);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t));if(cut)boomDistance=null}lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;}
   if(!view3d.enabled){updateGizmos();return}
-  updateGenreHud(state);updateBattlefieldHud(state);updateGizmos();
+  updateGenreHud(state);updateBattlefieldHud(state);updateGizmos();renderSceneCameraMarkers();
   const vehicleHud=document.getElementById('warlikeVehicle3dHud');
   if(vehicleHud){
    const car=currentVehicle3d(state.entities);

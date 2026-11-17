@@ -151,6 +151,7 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
   'public sealed class '+className+' : MonoBehaviour','{'];
  for(const f of ast.fields){
   if(f.type==='var'){fail(f,'Les champs var WarScript ne disposent pas de type C# statique. Utilise float/int/bool/string/Vector3.');continue}
+  if(f.serialized&&!f.public)out.push('    [SerializeField]');
   out.push('    '+(f.public?'public':'private')+' '+typeName(f.type)+' '+f.name+' = '+expr(f.value,new Set(fields.keys()))+';');
  }
  if(ast.fields.length)out.push('');

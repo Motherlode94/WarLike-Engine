@@ -1,5 +1,6 @@
 import {survivalPlacement} from './survival-building.js';
 import {drawWater2d} from './stylized-water.js';
+import {renderTilemap2d} from './tilemap-2d.js';
 import {isLanGuest} from './lan-state.js';
 import {drawFx2d,tickFxRuntime} from './fx-runtime.js';
 import {colliderRect2d,solidCollider2d,actor2d} from './physics-2d.js';
@@ -30,6 +31,7 @@ function resolveImportedSprite(source){
  return importedSprites.get(source);
 }
 export function startRenderer(canvas,host){const ctx=canvas.getContext('2d');function resize(){const d=Math.min(2,window.devicePixelRatio||1),width=Math.max(1,Math.round(host.clientWidth*d)),height=Math.max(1,Math.round(host.clientHeight*d));if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}ctx.setTransform(d,0,0,d,0,0)}new ResizeObserver(resize).observe(host);resize();let last=performance.now();function loop(now){if(document.hidden||workspace.mode!=='2d'){last=now;requestAnimationFrame(loop);return}const dt=Math.min((now-last)/1000,.05);last=now;if(!state.playing)tickFxRuntime(state.entities.filter(o=>o.fxEmitter?.preview),dt,'2d');updateGenreHud(state);const w=host.clientWidth,h=host.clientHeight,c=state.camera;ctx.clearRect(0,0,w,h);ctx.save();ctx.translate(c.x,c.y);ctx.scale(c.zoom,c.zoom);const left=-c.x/c.zoom,right=(w-c.x)/c.zoom,top=-c.y/c.zoom,bottom=(h-c.y)/c.zoom;ctx.strokeStyle='#1e2a3a';ctx.lineWidth=1/c.zoom;const step=32;for(let x=Math.floor(left/step)*step;toolsState.grid&&x<=right;x+=step){ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke()}for(let y=Math.floor(top/step)*step;toolsState.grid&&y<=bottom;y+=step){ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(right,y);ctx.stroke()}for(const o of [...state.entities,...(state.playing&&survivalPlacement.active&&survivalPlacement.entity?[survivalPlacement.entity]:[])].sort((a,b)=>(Number(a.spriteRenderer2d?.sortingOrder)||0)-(Number(b.spriteRenderer2d?.sortingOrder)||0))){if(!state.playing&&o.editorHidden)continue;
+ if(o.tilemap2d){if(o.visible!==false&&o.enabled!==false)renderTilemap2d(ctx,o,{editor:!state.playing});continue;}
   // Camera2D is a scene tool: show its marker in Editor, not in the game output.
   if(o.camera2d){
    if(!state.playing){

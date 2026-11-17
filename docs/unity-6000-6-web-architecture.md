@@ -151,3 +151,8 @@ Les noms Unity servent de **référence de conception**, pas de promesse d'API s
 - Les tableaux de parité distinguent **implémenté**, **testé**, **partiel**, **absent** et **objectif** avec preuves datées.
 - Ne pas créer une seconde base de code `WarLike Editor` concurrente : appliquer la séparation au dépôt unique.
 - Conserver et respecter `AGENTS.md`, `PROPRIETARY.md`, `THIRD_PARTY_NOTICES.md` et les licences des dépendances.
+
+
+## 8. Outillage complémentaire optionnel (Rust / Python / WGSL)
+
+Voir [la toolchain et ses limites](engine-toolchain-rust-python-wgsl.md). Ces modules expérimentaux ne changent ni la séparation WarLike Engine / WarLike Editor ni la liste des capacités actuellement livrées. Python reste côté outillage ; Rust ne remplace pas automatiquement la physique existante ; WGSL ne remplace pas WebGL sans backend testé.

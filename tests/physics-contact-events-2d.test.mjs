@@ -43,3 +43,14 @@ test('WarScript contact callbacks compile and can inspect read-only otherId',()=
  assert.deepEqual(log,[2,'Wall']);
  assert.equal(compileWarScript('Update(){ trigger.otherId = 3; }').ok,false);
 });
+
+test('WarNode triggerEnter2d event targets the Collider owner and runs connected action',()=>{
+ resetSequences();
+ const sequence={enabled:true,event:'triggerEnter2d',once:false,instructions:[{type:'setVariable',key:'enteredZone',value:1}]};
+ sequence.graph=createGraph(sequence);applyGraph(sequence);
+ const sensor={id:41,type:'object',x:0,y:0,w:48,h:48,sequence};
+ const hero={id:42,type:'player',x:8,y:8,w:24,h:24};
+ emitSequenceSignal('physics2d:trigger:enter:41',42);
+ updateSequences(.016,{playing:true,entities:[sensor,hero],player:hero,keys:new Set()});
+ assert.equal(sequenceRuntime.globals.enteredZone,1);
+});

@@ -1,0 +1,17 @@
+/* Categorized creation tools — project assets and scene objects remain separate. */
+.studio-quick-create-menu{max-height:min(75vh,650px);overflow:auto;min-width:245px}
+.warlike-create-category{padding:6px 0;border-top:1px solid #ffffff18}
+.warlike-create-category h4{margin:4px 8px 6px;color:#9fb3c5;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.045em}
+.warlike-create-category button{display:block;width:100%;text-align:left;margin:2px 0;padding:8px 12px}
+.warlike-project-create{position:relative;flex-shrink:0}
+.warlike-project-create summary{cursor:pointer;white-space:nowrap;padding:7px;background:#29313d;border:1px solid #475262;border-radius:4px;color:#e1e9f5;font-size:12px;list-style:none}
+.warlike-project-create summary::-webkit-details-marker{display:none}
+.warlike-project-create-options{position:absolute;top:100%;left:0;z-index:120;min-width:225px;max-height:55vh;overflow:auto;background:#202732;border:1px solid #4e5f72;border-radius:5px;box-shadow:0 10px 20px #0007;padding:6px}
+.warlike-project-create-options button{display:block;width:100%;text-align:left;min-height:30px;background:transparent;border:0;color:#e4edf6;border-radius:3px;padding:5px 10px;cursor:pointer}
+.warlike-project-create-options button:hover{background:#35516c}
+.warlike-project-documents{padding:8px;border-top:1px solid #44505d}
+.warlike-project-documents h4{font-size:12px;margin:3px 0 8px;color:#b5c8d8}
+.warlike-project-document-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px}
+.warlike-project-document{display:flex;align-items:center;gap:6px;background:#252f3d;border:1px solid #4b5a6b;border-radius:5px;padding:7px}
+.warlike-project-document span{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.warlike-project-document button{cursor:pointer;font-size:11px;background:#33465b;color:#e9f3ff;border:1px solid #52657a;border-radius:3px;padding:4px}

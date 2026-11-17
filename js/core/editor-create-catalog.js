@@ -5,9 +5,10 @@ import {record} from './history.js';
 import {workspace} from './workspaces.js';
 import {prefab3d} from '../assets/catalog-3d.js';
 import {defaultUiCanvas,defaultUiRect,defaultUiElement} from './ui-canvas-layout.js';
+import {defaultSceneCamera} from './scene-camera-3d.js';
 
 export const sceneCreateItems=[
- {group:'Essentiels',items:[['empty','GameObject vide'],['character','Personnage'],['camera','Rig de caméra (pour joueur)']]},
+ {group:'Essentiels',items:[['empty','GameObject vide'],['character','Personnage'],['main-camera','Main Camera'],['camera','Rig de caméra (pour joueur)']]},
  {group:'Objets 3D',items:[['cube','Cube'],['sphere','Sphère'],['cylinder','Cylindre'],['cone','Cône'],['plane','Plan / Sol'],['ramp','Rampe']]},
  {group:'Éclairage et audio',items:[['point-light','Point Light'],['spot-light','Spot Light'],['audio-source','Audio Source']]},
  {group:'Interface du jeu (uGUI)',items:[['canvas','Canvas'],['ui-panel','Panel'],['ui-text','Text'],['ui-button','Button']]},
@@ -29,6 +30,7 @@ export function createSceneItem(kind,{openBlueprint=()=>{}}={}){
   o={id,name:kind+' '+id,type:'object',x:120+(id%10)*25,y:120+(id%7)*25,w:64,h:64,depth3d:64,elevation3d:0,color:'#8195ef',visible:true};
   if(kind==='empty'){Object.assign(o,{name:'GameObject '+id,visible:false,collision3d:false})}
   if(kind==='character'){Object.assign(o,{name:'Character '+id,type:'character',w:64,h:96,skin:'scout',animation:'idle'})}
+  if(kind==='main-camera'){Object.assign(o,{name:'Main Camera '+id,x:0,y:320,elevation3d:2,rotation:0,rotationX3d:0,visible:false,collision3d:false,sceneCamera3d:defaultSceneCamera()})}
   if(kind==='camera'){Object.assign(o,{name:'Camera Rig '+id,visible:false,collision3d:false,cameraRig:{mode:'thirdPerson',distance:5,height:.75,collision:true}})}
   if(kind==='point-light'||kind==='spot-light'){Object.assign(o,{name:kind==='spot-light'?'Spot Light':'Point Light',lightType:kind==='spot-light'?'spot':'point',lightEnabled:true,lightColor:'#ffcd8a',lightIntensity:3,lightRange:13,lightAngle:45,elevation3d:2.5})}
   if(kind==='audio-source'){Object.assign(o,{name:'Audio Source',visible:false,collision3d:false,audioEnabled:true,audioClip:'vehicle',audioGain:.55,audioRange:18,audioInterval:3,audioLoop:true,audioSpatial:true})}

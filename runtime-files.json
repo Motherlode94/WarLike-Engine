@@ -16578,6 +16578,8 @@
     "script-editor/style.css",
     "script-editor/warscript-to-csharp.js",
     "script-editor/warscript.js",
+    "script-editor/wvc-bridge.js",
+    "script-editor/wvc-protocol.js",
     "src/math/clamp.js",
     "start-warlike-multi.cmd",
     "vendor/dom-to-image-more/LICENSE.txt",

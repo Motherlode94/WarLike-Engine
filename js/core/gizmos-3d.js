@@ -8,7 +8,7 @@ const el=(tag,props={})=>{const node=document.createElementNS(ns,tag);for(const 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBounds3d,getCamera,record,notify}){
  // Optional: enable math acceleration only if the Rust WASM build is present.
- void initializeRustGizmo();
+ if(!globalThis.__WARLIKE_BUILD__&&localStorage.getItem('warlike.gizmo.rust.enabled')==='true')void initializeRustGizmo();
  const layer=el('svg',{class:'warlike-gizmo-3d','aria-label':'Gizmo de transformation 3D'});
  layer.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:12;overflow:visible';
  const lines=['x','y','z'].map(axis=>{
@@ -34,7 +34,12 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const floorButton=action('Y = 0','Poser les objets au niveau zéro de la grille (repère visuel, pas un Collider)',()=>{let count=0;for(const o of state.entities.filter(o=>state.selected.includes(o.id))){if((o.elevation3d||0)!==0){o.elevation3d=0;count++}}return count});
  const alignX=action('Aligner X','Aligner les objets sélectionnés sur la position X du premier',()=>alignSceneObjects3d(state.entities,state.selected,{axis:'x'}));
  const alignZ=action('Aligner Z','Aligner les objets sélectionnés sur la position Z du premier',()=>alignSceneObjects3d(state.entities,state.selected,{axis:'y'}));
- options.append(mode,snap,document.createTextNode('Snap'),step,snapMode,gridButton,floorButton,alignX,alignZ);options.style.flexWrap='wrap';options.style.maxWidth='min(650px,75%)';host.append(options);
+ const rustToggle=document.createElement('input');rustToggle.type='checkbox';
+ rustToggle.setAttribute('aria-label','Accélération Rust expérimentale des Gizmos');
+ rustToggle.title='Activer les calculs Rust/WASM optionnels, repli JavaScript si indisponible';
+ rustToggle.checked=localStorage.getItem('warlike.gizmo.rust.enabled')==='true';
+ rustToggle.onchange=()=>{localStorage.setItem('warlike.gizmo.rust.enabled',String(rustToggle.checked));if(rustToggle.checked)void initializeRustGizmo()};
+ options.append(mode,snap,document.createTextNode('Snap'),step,snapMode,gridButton,floorButton,alignX,alignZ,document.createTextNode('Rust'),rustToggle);options.style.flexWrap='wrap';options.style.maxWidth='min(650px,75%)';host.append(options);
  let drag=null,lastTool='';
  const tool=()=>document.querySelector('.scene-tools [data-tool].active')?.dataset.tool||'move';
  const center=()=>{

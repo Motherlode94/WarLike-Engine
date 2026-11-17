@@ -16,7 +16,7 @@ function tokenize(source){
   if((match=/^"(?:[^"\\\r\n]|\\["\\nrt])*"/.exec(rest))){token.kind='literal';token.value=JSON.parse(match[0]);advance(match[0])}
   else if((match=/^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?f?/.exec(rest))){token.kind='literal';token.value=Number(match[0].replace(/f$/,''));if(!Number.isFinite(token.value))throw failure(token,'Nombre non fini.');advance(match[0])}
   else if((match=/^[A-Za-z_][A-Za-z_0-9]*/.exec(rest))){token.kind='id';token.value=match[0];if(blocked.has(token.value))throw failure(token,'Identifiant réservé.');advance(match[0])}
-  else if((match=/^(?:==|!=|<=|>=|&&|\|\||\+=|-=|\*=|\/=|\+\+|--|[\[\]{}();,.=+*/%!<>-])/.exec(rest))){token.kind='symbol';token.value=match[0];advance(match[0])}
+  else if((match=/^(?:==|!=|<=|>=|&&|\|\||\+=|-=|\*=|\/=|\+\+|--|[\[\]{}();,:.=+*/%!<>-])/.exec(rest))){token.kind='symbol';token.value=match[0];advance(match[0])}
   else throw failure(token,'Caractère ou chaîne non reconnu : '+rest[0]);
   tokens.push(token);if(tokens.length>12000)throw failure(token,'Trop de symboles dans ce script.');
  }

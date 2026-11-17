@@ -22,7 +22,7 @@ export function sceneCameraView(camera,entities,{yaw=0,pitch=0}={}){
    (entities||[]).find(e=>e.playable3d===true||e.type==='player');
   if(targetObject)target=[
    (Number(targetObject.x)||0)/64+(Number(targetObject.w)||0)/128,
-   (Number(targetObject.elevation3d)||0)+(Number(targetObject.h)||0)/128,
+   (Number(targetObject.elevation3d)||0)+(Number(targetObject.h)||0)*(settings.mode==='firstPerson'?.85:.5)/64,
    (Number(targetObject.y)||0)/64+(Number(targetObject.depth3d??targetObject.h)||0)/128
   ];
  }

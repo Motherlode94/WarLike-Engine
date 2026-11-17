@@ -1,5 +1,90 @@
 # WarLike Engine + WarLike Editor — un moteur et son éditeur dans un seul dépôt
 
+## Découvrir WarScript — le langage de gameplay de WarLike
+
+**WarScript**, écrit **`.wls`**, permet de donner un comportement aux objets d'un jeu WarLike sans avoir besoin de connaître tout JavaScript ou C#. Par exemple : faire tourner une porte, déplacer un personnage, réagir à une touche ou déclencher un événement de gameplay.
+
+Il est **inspiré de la syntaxe C# et du cycle de vie MonoBehaviour de Unity**, mais **ce n'est ni C# complet ni le moteur Unity**. WarLike Engine interprète WarScript directement dans le navigateur, pendant **Play** et dans les **jeux Web exportés**. L'outil permettant de l'écrire se trouve dans **WarLike Editor → Script Studio**. Un seul dépôt contient le moteur et l'éditeur.
+
+### Premier exemple : faire tourner un GameObject
+
+Voici un fichier `Tourner.wls` complet :
+
+```csharp
+public float speed = 45;
+
+Start() {
+    Log("La rotation commence !");
+}
+
+Update() {
+    Rotate(speed * Time.deltaTime);
+}
+```
+
+**Explication, ligne par ligne :**
+
+- `public float speed = 45;` définit une vitesse de rotation en **degrés par seconde**. Le champ est réglable pour chaque GameObject depuis l'Inspector.
+- `Start()` s'exécute **une seule fois** au lancement du comportement actif.
+- `Log(...)` affiche un message dans la Console du moteur.
+- `Update()` s'exécute à chaque image de simulation active.
+- `Time.deltaTime` est le temps écoulé (en secondes) depuis l'image précédente : multiplier la vitesse par cette durée évite de dépendre directement des FPS.
+- `Rotate(...)` fait tourner l'objet auquel le script est attaché.
+
+### Tester ce script en cinq étapes
+
+1. Dans **WarLike Editor**, ouvrir une scène et sélectionner un GameObject dans la **Hierarchy** (ou créer un Cube dans une scène 3D).
+2. Dans l'**Inspector**, choisir **Ajouter un composant → Jeu Web → WarScript · C# simplifié**.
+3. Cliquer sur **Modifier le WarScript** pour ouvrir **Script Studio**, puis écrire ou coller le code ci-dessus dans un fichier `.wls`.
+4. Cliquer sur **Vérifier / compiler**, enregistrer avec **Ctrl+S**, puis ajuster la valeur `speed` dans l'Inspector.
+5. Cliquer sur **Play** : l'objet tourne et la Console affiche le message. **Stop** rétablit la scène d'édition. En cas d'erreur, la Console indique le nom de l'objet ainsi que la ligne et la colonne du script.
+
+### Un deuxième exemple : répondre à la touche E
+
+```csharp
+public bool opened = false;
+
+Update() {
+    if (Input.GetKeyDown("e")) {
+        opened = !opened;
+        Log(opened);
+        Signal("door:toggle");
+    }
+}
+```
+
+La touche **E** change la valeur `opened` et émet un **signal** nommé `door:toggle`. Un graphe **WarNode / Blueprint** configuré pour écouter ce signal peut réagir. **Cet exemple ne crée pas automatiquement une animation d'ouverture de porte** : il faut encore relier le signal à une action de gameplay.
+
+### Les notions essentielles
+
+| Notion | Sens pour un débutant |
+| --- | --- |
+| **GameObject** | Un objet de la scène, par exemple un personnage, un cube ou une porte |
+| **Component** | Une capacité attachée à cet objet : Collider, Audio, Animator, WarScript… |
+| **WarScript** | Un composant dont le comportement est écrit en `.wls` |
+| **Inspector** | Le panneau où l'on règle les valeurs propres à cet objet |
+| **`Awake()` / `Start()`** | Initialisation du comportement |
+| **`Update()` / `FixedUpdate()`** | Logique par image / logique au pas de simulation |
+| **`Input.GetKeyDown("e")`** | Détecte le moment où l'utilisateur presse la touche E |
+| **`Move(x,y,z)`** | Déplace l'objet en mètres avec les règles de collision du moteur |
+| **`transform.position`** | Position de l'objet dans la scène, en mètres |
+| **`Get` / `Set` / `Signal`** | Échange de données et d'événements avec le système Blueprint |
+
+### WarScript, JavaScript, TypeScript ou C# ?
+
+| Langage | Quand le choisir | Dans un export Web autonome ? |
+| --- | --- | --- |
+| **WarScript `.wls`** | Apprendre et programmer rapidement le gameplay avec une syntaxe proche de C# | **Oui**, par l'interpréteur WarScript intégré |
+| **JavaScript `.js`** | Créer des comportements Web avec les APIs de script prises en charge par WarLike | **Oui**, dans le périmètre du runtime Web |
+| **TypeScript `.ts`** | Profiter du typage et des diagnostics pendant l'édition | **Oui**, après compilation en JavaScript à jour |
+| **C# natif `.cs`** | Utiliser le bridge local .NET et l'API MonoBehaviour native | **Non**, les composants C# actifs bloquent actuellement l'export autonome |
+
+**Limites à connaître avant de commencer :** WarScript est volontairement plus petit que C#. Il ne prend pas encore en charge les boucles `for` / `foreach`, les tableaux, les coroutines, les méthodes à paramètres, les classes héritées personnalisées ou les bibliothèques .NET. Les scripts sont bornés en taille et en temps d'exécution pour éviter de bloquer la simulation. Un `.wls` ne peut pas utiliser directement `using UnityEngine;`.
+
+**Pour aller plus loin :** [Guide complet WarScript : syntaxe, API, cycles de vie et restrictions](docs/warscript.md) · [Comparatif des langages de scripts](docs/script-languages.md) · [WarLike Engine vs WarLike Editor](docs/unity-6000-6-web-architecture.md).
+
+---
+
 ## Toolchain complémentaire — Rust, Python, WGSL (expérimental)
 
 WarLike Engine et WarLike Editor restent des applications Web TypeScript/JavaScript. Des outils **optionnels**, non utilisés automatiquement par le runtime, sont disponibles : [Rust (noyau géométrique), Python (audit GLB) et WGSL (shader WebGPU pilote)](docs/engine-toolchain-rust-python-wgsl.md). L'objectif est de valider leur valeur avant intégration, sans imposer de dépendance au navigateur ni modifier le build actuel.

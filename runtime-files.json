@@ -16358,6 +16358,7 @@
     "js/core/building-system.js",
     "js/core/bundled-physics-scene.js",
     "js/core/bundled-test-scene.js",
+    "js/core/camera-transition-3d.js",
     "js/core/camera.js",
     "js/core/chambre-07-scene.js",
     "js/core/character-facing.js",

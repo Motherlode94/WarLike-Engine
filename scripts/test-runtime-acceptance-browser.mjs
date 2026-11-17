@@ -24,6 +24,14 @@ for(const mode of ['2d','3d']){
   assert.ok(!name.startsWith('/')&&!name.split('/').includes('..')&&start+size<=zip.length);
   const file=path.join(built,mode,name);await mkdir(path.dirname(file),{recursive:true});await writeFile(file,zip.subarray(start,start+size));offset=start+size;
  }
+ // Explicitly verify the extracted Web runtime before the browser tests.
+ const base=path.join(built,mode);
+ const html=await readFile(path.join(base,'index.html'),'utf8');
+ assert.match(html,/src=["']\.\/js\/game-build-player\.js["']/,'Portable '+mode+' HTML must load its own bootstrap');
+ for(const required of ['js/game-build-player.js','js/editor.js','js/core/runtime-session.js']){
+  const bytes=await readFile(path.join(base,required)).catch(()=>null);
+  assert.ok(bytes?.byteLength,'Missing '+required+' in isolated '+mode+' export');
+ }
 }
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.png':'image/png','.glb':'model/gltf-binary','.wasm':'application/wasm','.svg':'image/svg+xml','.jpg':'image/jpeg','.webp':'image/webp'};
 const server=createServer(async(req,res)=>{
@@ -98,8 +106,13 @@ try{
  for(const mode of ['2d','3d']){
   mark('isolated export '+mode);const offline=await browser.newContext({viewport:{width:1440,height:960}}),external=[],failed=[];
   const origin='http://127.0.0.1:8000';await offline.route('**/*',route=>{const url=new URL(route.request().url());if(url.origin===origin&&url.pathname.startsWith('/exports/'+mode+'/')||['blob:','data:'].includes(url.protocol))return route.continue();external.push(url.href);return route.abort();});
-  const game=await offline.newPage();game.on('pageerror',e=>errors.push(e.message));game.on('response',r=>{if(r.status()>=400)failed.push(r.url());});
-  await game.goto(origin+'/exports/'+mode+'/',{waitUntil:'load'});await game.getByRole('button',{name:'Jouer',exact:true}).click();
+  const game=await offline.newPage();game.on('pageerror',e=>errors.push(e.message));game.on('response',r=>{if(r.status()>=400)failed.push(r.status()+' '+r.url());});
+  game.on('requestfailed',r=>{failed.push('NETWORK '+r.url()+' '+(r.failure()?.errorText||''))});
+  await game.goto(origin+'/exports/'+mode+'/',{waitUntil:'load'});
+  const play=game.getByRole('button',{name:'Jouer',exact:true});
+  try{await play.waitFor({state:'visible',timeout:15000})}
+  catch(error){throw Error('P0 isolated export '+mode+': missing Jouer button; page errors='+JSON.stringify(errors)+'; failed resources='+JSON.stringify(failed)+'; external='+JSON.stringify(external)+'; cause='+error.message)}
+  await play.click();
   let result;const deadline=Date.now()+30000;do{result=await game.evaluate(async()=>{const base='./js/core/',{sequenceRuntime}=await import(base+'logic-sequences.js'),{blueprintDebugger}=await import(base+'blueprint-debugger.js'),{view3d}=await import(base+'viewport-3d.js');return {score:sequenceRuntime.globals.score,paused:blueprintDebugger.paused,errors:sequenceRuntime.errors,glError:view3d.gl?.getError(),renderError:view3d.error};});if(result.score===7)break;await delay(50);}while(Date.now()<deadline);
   assert.equal(result.score,7,'shipped graph must run through saved breakpoints');assert.equal(result.paused,false);assert.deepEqual(result.errors,[]);
   if(mode==='3d'){assert.equal(result.glError,0);assert.ok(!result.renderError);}

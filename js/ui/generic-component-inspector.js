@@ -9,7 +9,7 @@ import {workspace} from '../core/workspaces.js';
 const dedicated=new Set([
  'webScripts','warScripts','sequence','animatorGraph',
  'collider2d','rigidbody2d','controller2d','collider3d','rigidbody3d','joint3d',
- 'controller3d','cameraRig','stats','inventory','ai',
+ 'controller3d','cameraRig','uiCanvas','uiRect','uiElement','stats','inventory','ai',
  'adventure','adventureInteractable','survival','survivalNode','survivalWorld',
  'superhero','rpgProgression','fxEmitter','simulationNode','tacticalUnit'
 ]);

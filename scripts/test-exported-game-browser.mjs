@@ -72,10 +72,25 @@ try{
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('warlike.save.v1:export-verification:quick'))),savedHero=saved.entities.find(o=>o.playable3d);
  assert.equal(savedHero.model3dId,initial.hero.assetId);
  await page.getByRole('button',{name:'Reprendre la partie',exact:true}).click();await page.keyboard.down('s');await page.waitForTimeout(300);await page.keyboard.up('s');
- await page.close();page=await open();await page.getByRole('button',{name:'Continuer la sauvegarde',exact:true}).click();await page.locator('#scriptTrustAllow').click();
+ await page.close();page=await open();
+ // Observe the exact restore boundary before physics and AI advance the player.
+ // The previous 150 ms sleep made this a frame-rate-dependent assertion.
+ await page.evaluate(()=>{
+  document.addEventListener('warlike:save-restored',async()=>{
+   const {state}=await import('/js/core/state.js');
+   const hero=state.entities.find(o=>o.playable3d);
+   window.__warlikeRestoredHero=hero?{x:hero.x,y:hero.y,assetId:hero.assetId}:null;
+  },{once:true});
+ });
+ await page.getByRole('button',{name:'Continuer la sauvegarde',exact:true}).click();await page.locator('#scriptTrustAllow').click();
+ await page.waitForFunction(()=>window.__warlikeRestoredHero!==undefined);
+ const restored=await page.evaluate(()=>window.__warlikeRestoredHero);
+ assert(restored,'Restored scene must contain a playable character');
+ assert(Math.hypot(restored.x-savedHero.x,restored.y-savedHero.y)<.1,JSON.stringify({saved:{x:savedHero.x,y:savedHero.y},restored}));
+ assert.equal(restored.assetId,initial.hero.assetId);
  await page.waitForFunction(async()=>{const {state}=await import('/js/core/state.js'),{runtimeSession}=await import('/js/core/runtime-session.js');return state.playing&&runtimeSession.phase==='ready';});
- await page.waitForTimeout(150);await page.keyboard.press('Escape');const loaded=await snapshot();
- assert(Math.hypot(loaded.hero.x-savedHero.x,loaded.hero.y-savedHero.y)<.1);assert.equal(loaded.hero.assetId,initial.hero.assetId);assert.equal(loaded.glError,0);
+ await page.keyboard.press('Escape');const loaded=await snapshot();
+ assert.equal(loaded.hero.assetId,initial.hero.assetId);assert.equal(loaded.glError,0);
  await page.screenshot({path:path.join(output,'restored.png'),timeout:20000});
  assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);assert.deepEqual(external,[]);
  // Verify IndexedDB conservation and project JSON on a fresh editor startup.

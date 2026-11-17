@@ -4,6 +4,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {chromium} from 'playwright';
 import {complete3dRoute} from '../tests/complete-3d-route-fixture.mjs';
+import {transparentSceneFixture} from '../tests/transparent-scene-fixture.mjs';
 import {materialProbeGlb} from '../tests/material-probe-fixture.mjs';
 import {registerLocalModel} from '../js/assets/real-models-3d.js';
 import {prefab3d} from '../js/assets/catalog-3d.js';
@@ -34,6 +35,8 @@ const galleryInput={mode:'3d',entities:gallery,camera:{x:0,y:0,zoom:1},project:{
 await build('gallery',galleryInput);
 const neutral=structuredClone(galleryInput);neutral.entities.find(o=>o.id===4).assetId=neutral.entities.find(o=>o.id===4).model3dId=neutralProbe.id;
 await build('gallery-normal-zero',neutral);
+const alphaScene=transparentSceneFixture();await build('alpha-near-first',alphaScene);
+const reversedAlpha=structuredClone(alphaScene);reversedAlpha.entities.reverse();await build('alpha-far-first',reversedAlpha);
 if(process.argv.includes('--package-only')){console.log(JSON.stringify({result:'PACKAGED',output,archive}));process.exit(0);}
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.glb':'model/gltf-binary','.wasm':'application/wasm','.svg':'image/svg+xml'};
 const server=createServer(async(req,res)=>{const file=path.resolve(output,'.'+decodeURIComponent(new URL(req.url,'http://local').pathname));if(file!==output&&!file.startsWith(output+path.sep)){res.writeHead(403).end();return;}try{const target=path.extname(file)?file:path.join(file,'index.html');res.setHeader('Content-Type',mime[path.extname(target)]||'application/octet-stream');res.end(await readFile(target));}catch{res.writeHead(404).end();}});
@@ -86,5 +89,22 @@ try{
  }
  const a=report.gallery.pixels,b=report['gallery-normal-zero'].pixels;assert.equal(a.length,b.length);let changed=0;for(let i=0;i<a.length;i+=4)if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>6)changed++;
  assert.ok(changed>150,'Normal-map scale must change actual rendered pixels: '+changed);delete report.gallery.pixels;delete report['gallery-normal-zero'].pixels;report.normalMapChangedPixels=changed;
+ // Order must not depend on the scene's authored entity order. Capture
+ // the composed frame rather than WebGL's discardable drawing buffer.
+ const alphaPixels=[];
+ for(const name of ['alpha-near-first','alpha-far-first']){
+  mark(name);await open(name);await wait(async()=>{const {view3d}=await import('./js/core/viewport-3d.js');const models=view3d.modelDiagnostics();return models.length===3&&models.every(m=>m.status==='ready')});
+  const status=await snapshot();assert.equal(status.glError,0);assert.equal(status.renderError,null);
+  const shot=await page.screenshot({path:path.join(output,name+'.png')});
+  const pixel=await page.evaluate(async base64=>{
+   const image=new Image();image.src='data:image/png;base64,'+base64;await image.decode();const c=document.createElement('canvas');c.width=image.width;c.height=image.height;const ctx=c.getContext('2d');ctx.drawImage(image,0,0);
+   // Away from the FPS crosshair and HUD, inside all three layers.
+   return Array.from(ctx.getImageData(Math.floor(image.width*.52),Math.floor(image.height*.45),1,1).data);
+  },shot.toString('base64'));alphaPixels.push(pixel);await context.close();
+ }
+ assert.deepEqual(alphaPixels[0],alphaPixels[1],'Changing entity order must not change alpha composition');
+ assert.ok(alphaPixels[0][0]>alphaPixels[0][1]+15&&alphaPixels[0][0]>alphaPixels[0][2]+15,'Front red must composite over rear blue and opaque green: '+alphaPixels[0]);
+ assert.ok(alphaPixels[0][1]>30&&alphaPixels[0][2]>30,'Both the rear blue layer and opaque green background must remain visible');
+ report.alphaOrder={result:'PASS',pixels:alphaPixels};
  assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);assert.deepEqual(external,[]);report.result='PASS';await writeFile(path.join(output,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 }catch(error){if(page&&!page.isClosed())await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});console.error('Stage:',stage,'Page errors:',errors,'Snapshot:',await snapshot().catch(()=>null));throw error;}finally{clearTimeout(watchdog);await browser?.close();server.closeAllConnections();await new Promise(r=>server.close(r));}

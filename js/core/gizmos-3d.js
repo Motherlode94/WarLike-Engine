@@ -1,11 +1,14 @@
 import {updateAffineEditorPose3d,updateEditorEntityHierarchy3d,gizmoAxis3d,snap3d} from './scene-graph-v2.js';
 import {rotationQuaternion3d} from './collider-3d.js';
 import {projectedAxisDrag3d,alignSceneObjects3d,snapSelected3d} from './scene-editing-3d-tools.js';
+import {initializeRustGizmo,axisRayParameter,gizmoPointerRay} from './rust-gizmo-acceleration.js';
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
 const el=(tag,props={})=>{const node=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(props))node.setAttribute(k,String(v));return node};
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBounds3d,getCamera,record,notify}){
+ // Optional: enable math acceleration only if the Rust WASM build is present.
+ void initializeRustGizmo();
  const layer=el('svg',{class:'warlike-gizmo-3d','aria-label':'Gizmo de transformation 3D'});
  layer.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:12;overflow:visible';
  const lines=['x','y','z'].map(axis=>{
@@ -75,13 +78,22 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   const endScreen=pivot&&project3d(pivot.map((v,i)=>v+direction[i]),cam,rect.width,rect.height);
   drag={pointer:event.pointerId,axis,startX:event.clientX,startY:event.clientY,mode:lastTool,
    pivotScreen,endScreen,
+   rustStart:(()=>{
+    if(!pivot||lastTool!=='move')return null;
+    const ray=gizmoPointerRay(event.clientX,event.clientY,rect,cam);
+    return ray?axisRayParameter(ray.origin,ray.direction,pivot,direction):null;
+   })(),
+   rustPivot:pivot,rustAxis:direction,
    objects:selected.map(o=>({id:o.id,x:o.x,y:o.y,elevation3d:o.elevation3d||0,w:o.w,h:o.h,depth3d:o.depth3d??o.h,rotation:o.rotation||0,rotationX3d:o.rotationX3d||0,rotationZ3d:o.rotationZ3d||0,worldMatrix3d:Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,matrixReference3d:Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null}))};
   event.target.setPointerCapture(event.pointerId);
  });
  layer.addEventListener('pointermove',event=>{
   if(!drag||event.pointerId!==drag.pointer)return;
   const dx=event.clientX-drag.startX,dy=event.clientY-drag.startY;
-  const amount=projectedAxisDrag3d(drag.pivotScreen,drag.endScreen,dx,dy),snapStep=snap.checked?Math.max(.01,Number(step.value)||.5):0;
+  const rect=canvas.getBoundingClientRect(),cam=getCamera();
+  const ray=drag.rustStart!==null&&drag.rustPivot?gizmoPointerRay(event.clientX,event.clientY,rect,cam):null;
+  const current=ray?axisRayParameter(ray.origin,ray.direction,drag.rustPivot,drag.rustAxis):null;
+  const amount=current!==null&&drag.rustStart!==null?current-drag.rustStart:projectedAxisDrag3d(drag.pivotScreen,drag.endScreen,dx,dy),snapStep=snap.checked?Math.max(.01,Number(step.value)||.5):0;
   const surfaceHit=snap.checked&&drag.mode==='move'&&snapMode.value!=='grid'?
    view3d.surfaceAt?.(event.clientX,event.clientY,{excludeIds:drag.objects.map(o=>o.id),groundFallback:snapMode.value==='surface'}):null;
   const quant=(value,increment)=>snapStep?snap3d(value,increment??snapStep):value;

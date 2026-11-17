@@ -10,7 +10,7 @@ test('origin allowlist rejects unrelated hosts, tricks and insecure HTTP',()=>{
 });
 test('protocol bounds scripts and accepts only supported source formats',()=>{
  const valid=checkIncomingFile({path:'Scripts/Hero.wls',source:'Update() {}',language:'warscript'});
- assert.equal(valid.name,'Scripts/Hero.wls');
+ assert.equal(valid.name,'Hero.wls');assert.equal(valid.path,'Scripts/Hero.wls');
  for(const file of [
   {path:'../bad.wls',source:'',language:'warscript'},
   {path:'bad.cs',source:'',language:'javascript'},

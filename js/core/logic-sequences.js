@@ -5,6 +5,8 @@ import {typedValue,resolveBlueprintValue,resolveBlueprintAction} from './bluepri
 import {blueprintDebugger,resetBlueprintDebugger,beforeBlueprintAction,afterBlueprintAction} from './blueprint-debugger.js';
 import {questItemCount,consumeQuestItem} from './quest-inventory.js';
 import {adventureTarget} from './adventure-runtime.js';
+import {selectObjectInteraction} from './object-interaction-targeting.js';
+import {warScriptRuntime} from './war-script-runtime.js';
 import {survivalToolStatus} from './survival-tools.js';
 import {survivalAction,survivalMilestones} from './survival-runtime.js';
 import {playAnimatorState,setAnimatorParameter} from './animator-graph.js';
@@ -308,6 +310,12 @@ export function updateSequences(dt,ctx){
  if(number(rt.globals.raceStarted)===1&&number(rt.globals.raceFinished)!==1)rt.globals.raceElapsed=Math.round((number(rt.globals.raceElapsed)+dt)*1000)/1000;
  const keys=ctx.keys instanceof Set?ctx.keys:new Set(),player=ctx.player||null,objects=Array.isArray(ctx.entities)?ctx.entities:[];
  const signals=rt.signals.splice(0,MAX_SIGNALS),signalActors=new Map(rt.signalActors),interactions=rt.interactions.splice(0,8);rt.signalActors.clear();let budget=MAX_ACTIONS;
+const interactPressed=ctx.pressedKeys?.has('e')||(keys.has('e')&&!rt.pressed.has('e'));
+const interactionRay=ctx.interactionRay;
+const selected=running&&player&&interactPressed&&!player._vehicleInputConsumed
+ ?selectObjectInteraction(player,objects,{mode:ctx.mode||'2d',maxDistance:3,
+  origin:interactionRay?.origin,direction:interactionRay?.direction}):null;
+if(selected)warScriptRuntime.interact(player,selected.entity);
  for(const owner of objects)if(!initializedBlueprints.has(owner)){initializeBlueprintVariables(owner,{preserveRuntime:true});initializedBlueprints.add(owner)}
  // Only jobs suspended before this frame spend dt. Newly started Wait actions
  // must receive their full requested delay, even on the first frame.
@@ -342,7 +350,7 @@ export function updateSequences(dt,ctx){
   let trigger=false,eventPlayer=player;
   switch(s.event){
   case 'start':trigger=!rt.cooldowns.has('start:'+sequenceKey);rt.cooldowns.set('start:'+sequenceKey,Infinity);break;
-  case 'interact':if(o.adventureInteractable){if(gameSession.dialogue)break;const request=interactions.find(r=>r.targetId===o.id);eventPlayer=request?objects.find(p=>p.id===request.actorId):player;trigger=!!(request||newKey)&&adventureTarget(eventPlayer,objects,{mode:ctx.mode||'2d'})===o}else trigger=isInside&&newKey&&!ctx.player?._vehicleInputConsumed;break;
+  case 'interact':if(o.interactable){trigger=selected?.entity===o&&newKey;break;}if(o.adventureInteractable){if(gameSession.dialogue)break;const request=interactions.find(r=>r.targetId===o.id);eventPlayer=request?objects.find(p=>p.id===request.actorId):player;trigger=!!(request||newKey)&&adventureTarget(eventPlayer,objects,{mode:ctx.mode||'2d'})===o}else trigger=isInside&&newKey&&!ctx.player?._vehicleInputConsumed;break;
   case 'keyDown':trigger=newKey;break;
   case 'enter':{
    // A gate can become valid while the player remains inside (e.g. mounting

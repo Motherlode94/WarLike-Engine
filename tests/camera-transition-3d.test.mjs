@@ -29,7 +29,8 @@ test('switching between cameras and FPS/TPS enters timed blend then completes',(
  assert.equal(transition.update(a,viewA,.01),viewA);
  const blended=transition.update(b,viewB,.1);
  assert.notDeepEqual(blended.eye,viewB.eye);
- assert.deepEqual(transition.update(b,viewB,.1).eye,blendCameraPose3d(viewA,viewB,.104).eye===undefined?[]:transition.last.eye);
+ const next=transition.update(b,viewB,.1);
+ assert.ok(next.eye.some((n,i)=>Math.abs(n-blended.eye[i])>1e-6));
  for(let i=0;i<14;i++)transition.update(b,viewB,.1);
  assert.deepEqual(transition.last.eye,viewB.eye);
  transition.reset();assert.equal(transition.last,null);

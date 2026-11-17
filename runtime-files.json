@@ -16419,6 +16419,7 @@
     "js/core/lan-play.js",
     "js/core/lan-state.js",
     "js/core/lan-survivors.js",
+    "js/core/last-light-scene.js",
     "js/core/library-bundle.js",
     "js/core/library-transfer.js",
     "js/core/life-scene.js",

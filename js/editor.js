@@ -185,6 +185,7 @@ $('#zoomIn').onclick=()=>zoomAt(1.25,{x:host.clientWidth/2,y:host.clientHeight/2
 $('#zoomOut').onclick=()=>zoomAt(.8,{x:host.clientWidth/2,y:host.clientHeight/2});
 $('#resetView').onclick=resetCamera;
 attachInput(canvas,host);
+initTilemapEditor2d(canvas);
 bindGameInput(canvas);
 initializeRpgUi();
 bindModeInput();

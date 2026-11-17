@@ -25,6 +25,7 @@ import {isTypingTarget} from './editor-clipboard.js';
 import {sampleRigPose,deformGlbParts,animationClipForState} from './gltf-animation.js';
 import {cameraObstacleForEntity,cameraRigFor,cameraTargetFor,resolveCameraBoom,cameraPose,cameraDamping} from './play-camera.js';
 import {activeSceneCamera,sceneCameraView,cameraMovementYaw} from './scene-camera-3d.js';
+import {CameraTransition3d} from './camera-transition-3d.js';
 import {gameIsRunning,gameSession} from './game-session.js';
 import {updateHorrorAudio} from './horror-audio.js';
 import {tickEngineDiagnostics} from './engine-diagnostics.js';
@@ -431,7 +432,9 @@ export function init3d(canvas,host,buttons){
  document.addEventListener('warlike:change',syncProjectView);
  syncProjectView();
  const fxRenderer=createFxRenderer3d(gl);view3d.fxStats=fxRenderer.stats;
- const currentSceneCameraPose=()=>sceneCameraView(activeSceneCamera(state.entities),state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});
+ const cameraTransition=new CameraTransition3d();
+ let transitionPose=null;
+ const currentSceneCameraPose=()=>transitionPose||sceneCameraView(activeSceneCamera(state.entities),state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});
  const update3dPlay=dt=>{
   if(!gameIsRunning()||companyController(state.entities))return;
   tickBattlefield(state.entities,dt,{keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,onPlayerRespawn:resetDriving3d});
@@ -721,6 +724,11 @@ export function init3d(canvas,host,buttons){
   wasPlaying=state.playing;
   if(state.playing&&workspace.mode==='3d'&&!isLanGuest()){runRuntimeFrame(dt,{update(dt){update3dPlay(dt);updateSequences(dt,{mode:'3d',yaw:view3d.yaw,playing:true,entities:state.entities,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}});}
   if(state.playing&&gameIsRunning()&&view3d.followPlayer){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),pt=playerTarget();if(pt){const cut=actor!==lastCameraActor||gameSession.currentSceneId!==lastCameraScene||Math.hypot(...V.sub(pt,view3d.target))>12,t=cut?1:cameraDamping(cameraRigFor(actor).followSharpness,dt);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t));if(cut)boomDistance=null}lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;}
+  if(state.playing&&workspace.mode==='3d'){
+   const selectedCamera=activeSceneCamera(state.entities);
+   const desired=sceneCameraView(selectedCamera,state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});
+   transitionPose=cameraTransition.update(selectedCamera,desired,dt);
+  }else{cameraTransition.reset();transitionPose=null}
   if(!view3d.enabled){updateGizmos();return}
   updateGenreHud(state);updateBattlefieldHud(state);updateGizmos();renderSceneCameraMarkers();
   const vehicleHud=document.getElementById('warlikeVehicle3dHud');

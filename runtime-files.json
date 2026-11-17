@@ -16428,6 +16428,7 @@
     "js/core/local-asset-library.js",
     "js/core/logic-sequences.js",
     "js/core/mode-advanced.js",
+    "js/core/narrative-director.js",
     "js/core/native-3d.js",
     "js/core/native-bridge-client.js",
     "js/core/nature-demo-layout.js",

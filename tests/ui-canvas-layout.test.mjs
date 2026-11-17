@@ -27,7 +27,7 @@ test('invalid UI properties fail explicitly without unsafe HTML or scripts',()=>
 test('Canvas renders nested elements in native parent-child hierarchy',()=>{
  const entities=[
   {id:1,uiCanvas:defaultUiCanvas()},
-  {id:2,parentId:1,uiRect:{anchorMin:[0,0],anchorMax:[0,0],pivot:[0,0],anchoredPosition:[20,-30],sizeDelta:[250,140]},uiElement:{kind:'panel',color:'#123456'}},
+  {id:2,parentId:1,uiRect:{anchorMin:[0,1],anchorMax:[0,1],pivot:[0,1],anchoredPosition:[20,-30],sizeDelta:[250,140]},uiElement:{kind:'panel',color:'#123456'}},
   {id:3,parentId:2,uiRect:{anchorMin:[.5,.5],anchorMax:[.5,.5],sizeDelta:[100,40]},uiElement:{kind:'button',text:'Jouer'}},
   {id:4,parentId:100,uiRect:defaultUiRect(),uiElement:{kind:'text',text:'Detached'}}
  ];

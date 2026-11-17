@@ -110,3 +110,22 @@ WarScript v2 n’est pas un compilateur C#. Il prend en charge les **boucles `wh
 Chaque script est limité à 64 Ko, 64 champs et 32 méthodes ; chaque appel de cycle de vie a un budget de 4096 opérations et une profondeur de 8 appels. Maximum : 8 scripts attachés par objet et 64 actifs par scène. Une erreur arrête le composant concerné et s’affiche dans Console ; les autres composants continuent. Corriger puis relancer Play.
 
 Voir aussi : [Animation Studio et API Animator](animation-studio.md).
+
+## Interaction GameObject — OnInteract
+
+Le composant `interactable: {enabled:true,maxDistance:3}` (portée en mètres) permet au runtime des séquences de sélectionner un objet lors de l'appui sur **E**. Le même événement cible :
+- les séquences / graphes WarNode utilisant l'événement `interact`, via `updateSequences` ;
+- les scripts WarScript attachés à l'objet cible et définissant `OnInteract()`.
+
+```csharp
+public int uses = 0;
+OnInteract() {
+    uses++;
+    Log("Utilisé par " + interaction.actorName);
+    Set("lastActorId", interaction.actorId);
+}
+```
+
+`interaction.actorId` (entier) et `interaction.actorName` (texte) sont disponibles **uniquement pendant OnInteract** (valeurs neutres autrement). Aucune API navigateur supplémentaire n'est exposée. Le callback est sans paramètres, conformément à la VM WarScript actuelle.
+
+**Périmètre actuel :** la détection 2D de proximité est raccordée. Le raycast 3D existe, mais les contrôleurs caméra doivent encore fournir `interactionRay` au contexte des séquences pour garantir une interaction dirigée par la visée. L'Inspector, les animations Grab/Drop et les tests de jeu exporté restent à terminer.

@@ -100,6 +100,8 @@ jobs:
           node-version: '22'
       - run: npm install --no-package-lock
       - run: npx playwright install --with-deps chromium
+      - name: Production GGX shader pixel checks
+        run: node scripts/test-3d-pbr-browser.mjs
       - name: Complete keyboard route and GLB material rendering
         run: node scripts/test-complete-3d-browser.mjs
       - name: Upload complete 3D route and material evidence
@@ -110,4 +112,5 @@ jobs:
           path: |
             .validation-tools/complete-3d/*.png
             .validation-tools/complete-3d/report.json
+            .validation-tools/3d-pbr/report.json
           if-no-files-found: ignore

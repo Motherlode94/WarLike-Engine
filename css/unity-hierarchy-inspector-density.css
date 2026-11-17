@@ -1,0 +1,241 @@
+/* Editor-only Unity-inspired hierarchy and inspector density (no gameplay changes). */
+body:not(.hub-open) #hierarchyPanel #objects{min-width:0;overflow:auto}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-quicktools{display:flex;align-items:center;gap:3px;position:sticky;top:0;z-index:5;background:var(--wl-theme-panel,#303136);padding:3px 6px;border-bottom:1px solid var(--wl-theme-border,#41464a)}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-quicktools button{flex:none;width:24px;min-height:22px!important;height:22px;padding:0!important;font-size:13px}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-total{margin-left:auto;color:var(--wl-text-muted,#aeb6bd);font-size:10px}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-row{display:flex;align-items:center;gap:2px;min-width:0;min-height:23px;height:23px;font-size:11px;white-space:nowrap}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-row.selected{background:#345679!important;color:#f5fbff}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-row.hierarchy-static .hierarchy-object-name{opacity:.83}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-row .hierarchy-object-label{display:flex;align-items:center;gap:4px;flex:1;min-width:0;overflow:hidden;min-height:22px!important;height:22px!important;padding:1px 2px!important;text-align:left}
+body:not(.hub-open) #hierarchyPanel .hierarchy-object-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:20px}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-row :is(.hierarchy-eye,.hierarchy-tree-toggle){padding:0!important;min-height:19px!important;height:19px!important;min-width:19px!important;width:19px!important;flex:none}
+body:not(.hub-open) #hierarchyPanel .hierarchy-row-metadata{display:flex;align-items:center;gap:3px;flex:none;max-width:145px;overflow:hidden;margin-left:auto;padding-right:4px;color:#a5b6c5}
+body:not(.hub-open) #hierarchyPanel .hierarchy-row-tag,body:not(.hub-open) #hierarchyPanel .hierarchy-row-layer{display:block;max-width:62px;overflow:hidden;text-overflow:ellipsis;font-size:9px;opacity:.76}
+body:not(.hub-open) #hierarchyPanel .hierarchy-row-tag{display:none}
+body:not(.hub-open) #hierarchyPanel .hierarchy-row-static{font-size:9px;background:#4c685c;color:#e4fff3;border-radius:3px;padding:0 3px}
+body:not(.hub-open) #hierarchyPanel .hierarchy-script-icon{font-size:12px;color:#8ecac1}
+body:not(.hub-open) #hierarchyPanel .hierarchy-component-mark{font-size:9px;flex:none}
+body:not(.hub-open) #hierarchyPanel .unity-hierarchy-group-title{min-height:22px!important;padding:3px 8px!important;font-size:10px!important;text-transform:uppercase;letter-spacing:.025em;font-weight:750}
+body:not(.hub-open) #hierarchyPanel .unity-scene-root{position:sticky;top:29px;z-index:3;min-height:24px;font-size:11px;background:var(--wl-theme-header,#37383d)}
+body:not(.hub-open) #properties .unity-object-labels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px!important}
+body:not(.hub-open) #properties .unity-object-labels label{flex:initial;min-width:0;font-size:10px}
+body:not(.hub-open) #properties .unity-object-labels input{width:100%;min-width:0}
+body:not(.hub-open) #properties .inspector-component>summary{min-height:27px!important;padding:4px 8px!important}
+body:not(.hub-open) #properties .inspector-component .component-content{padding:8px 10px!important}
+body:not(.hub-open) #properties .inspector-component-actions{z-index:30}
+body:not(.hub-open) #properties .inspector-axis input{font-variant-numeric:tabular-nums}
+@container (max-width:290px){body:not(.hub-open) #properties .unity-object-labels{grid-template-columns:1fr}}
+@media(min-width:1400px){body:not(.hub-open) #hierarchyPanel .hierarchy-row-tag{display:block}}
+@media(max-width:1050px){body:not(.hub-open) #hierarchyPanel .hierarchy-row-layer{display:none}body:not(.hub-open) #hierarchyPanel .hierarchy-row-metadata{max-width:46px}}
+
+
+/* Layout contract — five work zones: hierarchy | scene | inspector, with
+   Project / Console docked beneath Scene. Never reposition the canvas by
+   absolute coordinates and never override a user-resized pane width. */
+body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .workspace{
+ align-items:stretch;
+ min-width:0;
+ min-height:0;
+ column-gap:0;
+}
+body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .center-stack{
+ min-width:0;
+ min-height:0;
+ overflow:hidden;
+}
+body.reference-engine:not(.hub-open) .center-stack #viewport{
+ min-width:0;
+ min-height:0;
+ overflow:hidden;
+}
+body.reference-engine:not(.hub-open) #projectPanel,
+body.reference-engine:not(.hub-open) #inspectorPanel,
+body.reference-engine:not(.hub-open) #hierarchyPanel{
+ min-width:0;
+ min-height:0;
+ box-sizing:border-box;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel{
+ display:flex;
+ flex-direction:column;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel>.panel-title,
+body.reference-engine:not(.hub-open) #hierarchyPanel>.warlike-create-bar,
+body.reference-engine:not(.hub-open) #hierarchyPanel>#hierarchySearch{
+ flex-shrink:0;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel #objects{
+ flex:1 1 auto;
+ min-height:50px;
+ overscroll-behavior:contain;
+ scrollbar-width:thin;
+ scrollbar-color:#596775 transparent;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel>.hierarchy-history{
+ flex-shrink:0;
+ max-height:28%;
+ overflow-y:auto;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-row{
+ border-left:2px solid transparent;
+ border-bottom:1px solid #ffffff06;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-row:hover:not(.selected){
+ background:#ffffff0b;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-row.selected{
+ border-left-color:var(--editor-accent,#7fcac9);
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel :is(.hierarchy-eye,.hierarchy-tree-toggle){
+ line-height:1;
+ color:#a5afbb;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .hierarchy-object-icon{
+ flex:none;
+ color:#9ab1be;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-group-title{
+ position:relative;
+ background:#ffffff0e;
+ border-left:3px solid #768b9a;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-group:nth-of-type(3n+1)>.unity-hierarchy-group-title{border-left-color:#668cb7}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-group:nth-of-type(3n+2)>.unity-hierarchy-group-title{border-left-color:#78a18b}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-group:nth-of-type(3n)>.unity-hierarchy-group-title{border-left-color:#b59876}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-group>summary:focus-visible{
+ outline:2px solid var(--editor-accent,#8bc4da);
+ outline-offset:-2px;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .hierarchy-row-tag,
+body.reference-engine:not(.hub-open) #hierarchyPanel .hierarchy-row-layer{
+ font-variant-numeric:tabular-nums;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .hierarchy-row-metadata{
+ pointer-events:none;
+}
+/* Prefer dock width, not device width: a resized Hierarchy must not lose
+   half its available width to low-priority technical badges. */
+body.reference-engine:not(.hub-open) #hierarchyPanel{container:hierarchy-pane / inline-size}
+@container hierarchy-pane (max-width:265px){
+ .unity-hierarchy-row .hierarchy-row-tag,
+ .unity-hierarchy-row .hierarchy-row-layer{display:none!important}
+ .unity-hierarchy-row .hierarchy-row-metadata{max-width:35px}
+ .unity-hierarchy-row .hierarchy-component-mark{display:none}
+}
+@container hierarchy-pane (min-width:370px){
+ .unity-hierarchy-row .hierarchy-row-tag,
+ .unity-hierarchy-row .hierarchy-row-layer{display:block!important}
+ .unity-hierarchy-row .hierarchy-row-metadata{max-width:185px}
+}
+/* Inspector: object identity, Transform, components, then Add Component.
+   Each section scrolls with Inspector; no floating control overlaps the Scene. */
+body.reference-engine:not(.hub-open) #inspectorPanel #properties{
+ min-height:0;
+ flex:1 1 auto;
+ overflow:auto;
+ scrollbar-width:thin;
+ scrollbar-color:#60717b transparent;
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-identity{
+ display:flex;
+ align-items:center;
+ gap:7px;
+ min-width:0;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-object-name{
+ flex:1;
+ min-width:0;
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-meta{
+ font-size:10px;
+ opacity:.7;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component{
+ border-left:2px solid transparent;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component[open]{
+ border-left-color:var(--editor-accent,#72bcb3);
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component>summary{
+ display:flex;
+ align-items:center;
+ gap:5px;
+ cursor:pointer;
+ line-height:1.35;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component>summary:hover{
+ background:#ffffff11!important;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component:focus-within>summary{
+ outline:1px solid #78b8c0;
+ outline-offset:-1px;
+}
+body.reference-engine:not(.hub-open) #properties .component-content{
+ overflow-wrap:anywhere;
+}
+body.reference-engine:not(.hub-open) #properties :is(input,select,textarea){
+ max-width:100%;
+ box-sizing:border-box;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-extensions-toggle{
+ position:relative;
+ clear:both;
+}
+/* Project/Console occupy the bottom dock, never an overlay atop the scene. */
+body.reference-engine:not(.hub-open) #projectPanel{
+ overflow:hidden;
+ display:flex;
+ flex-direction:column;
+}
+body.reference-engine:not(.hub-open) #projectPanel>.bottom-tabs{
+ flex:0 0 auto;
+ display:flex;
+ align-items:center;
+ min-height:28px;
+}
+body.reference-engine:not(.hub-open) #projectPanel>#projectContent{
+ flex:1 1 auto;
+ min-height:0;
+ overflow:hidden;
+}
+body.reference-engine:not(.hub-open) #projectPanel .asset-body{
+ min-height:0;
+}
+body.reference-engine:not(.hub-open) #projectPanel .asset-content{
+ min-width:0;
+ min-height:0;
+}
+body.reference-engine:not(.hub-open) .scene-header .scene-tabs{
+ flex:0 0 auto;
+}
+body.reference-engine:not(.hub-open) .scene-header .scene-actions{
+ min-width:0;
+}
+/* Never force narrow desktop panes into impossible 3-column layouts. */
+@media(max-width:850px){
+ body.reference-engine:not(.hub-open) #hierarchyPanel .hierarchy-row-metadata{max-width:32px}
+ body.reference-engine:not(.hub-open) #properties .unity-object-labels{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+ body.reference-engine:not(.hub-open) :is(#hierarchyPanel,#inspectorPanel,#projectPanel) *{
+  scroll-behavior:auto!important;
+ }
+}
+
+/* Editable object identity metadata mirrors the Hierarchy columns. */
+body.reference-engine:not(.hub-open) #properties .unity-object-metadata-field{
+ display:flex;flex-direction:column;gap:3px;min-width:0;
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-metadata-field>span{
+ color:var(--wl-text-muted,#bdc5d0);font-size:10px;
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-metadata-field>input{
+ width:100%;min-width:0;height:27px!important;
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-static-field{
+ display:flex;align-items:center;gap:7px;grid-column:1/-1;margin:1px 0 0;
+ font-size:10px;color:var(--wl-text-muted,#bec6ce);
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-static-field>input{
+ width:14px!important;height:14px!important;min-height:14px!important;margin:0;
+}

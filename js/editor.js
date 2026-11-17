@@ -288,6 +288,7 @@ quickCreate?.addEventListener('click',event=>{
  const created=createSceneItem(kind,{openBlueprint:()=>document.getElementById('openBlueprint')?.click()});
  if(!created&&kind.startsWith('ui-'))window.alert('Crée ou sélectionne d’abord un Canvas.');
  else if(!created&&['cube','sphere','cylinder','cone','plane','ramp'].includes(kind))window.alert('Active la vue 3D avant de créer cette primitive.');
+ else if(!created&&['camera-2d','player-2d','sprite-2d','platform-2d','trigger-2d','physics-2d'].includes(kind))window.alert('Active la vue 2D avant de créer cet objet.');
  if(created)quickCreate.open=false;
 });
 mountProjectCreateBrowser();

@@ -105,7 +105,7 @@ Le moteur conserve 64 unités de scène par mètre. WarScript agit sur les même
 
 ## Périmètre
 
-WarScript v1 n’est pas un compilateur C#. Il n’implémente pas les imports, bibliothèques .NET, boucles, tableaux, héritage, paramètres de méthodes, coroutines ni callbacks de collision. Pour du C# complet, choisir `.cs` et `MonoBehaviour` dans le runtime .NET.
+WarScript v2 n’est pas un compilateur C#. Il prend en charge les **boucles `while` bornées** par le budget d'exécution ainsi que la forme `class ... : MonoBehaviour`, mais n’implémente pas les imports, bibliothèques .NET, boucles `for` / `foreach`, tableaux, héritages personnalisés, paramètres de méthodes, coroutines ni callbacks de collision. Une boucle sans terminaison échoue avec un diagnostic de ligne/colonne plutôt que de bloquer l’éditeur. La conversion C# génère un compteur de sécurité pour les boucles `while`. Pour du C# complet, choisir `.cs` et `MonoBehaviour` dans le runtime .NET.
 
 Chaque script est limité à 64 Ko, 64 champs et 32 méthodes ; chaque appel de cycle de vie a un budget de 4096 opérations et une profondeur de 8 appels. Maximum : 8 scripts attachés par objet et 64 actifs par scène. Une erreur arrête le composant concerné et s’affiche dans Console ; les autres composants continuent. Corriger puis relancer Play.
 

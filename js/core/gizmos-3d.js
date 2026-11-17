@@ -2,6 +2,7 @@ import {updateAffineEditorPose3d,updateEditorEntityHierarchy3d,gizmoAxis3d,snap3
 import {rotationQuaternion3d} from './collider-3d.js';
 import {projectedAxisDrag3d,alignSceneObjects3d,snapSelected3d} from './scene-editing-3d-tools.js';
 import {cameraFrustumCorners3d} from './editor-camera-frustum-3d.js';
+import {sceneCameraView} from './scene-camera-3d.js';
 import {initializeRustGizmo,axisRayParameter,gizmoPointerRay} from './rust-gizmo-acceleration.js';
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
@@ -19,6 +20,13 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const frustum=el('g',{'data-scene-camera-frustum':'true','stroke':'#8bd8e6','stroke-width':1.7,'fill':'none','stroke-dasharray':'6 4'});layer.append(frustum);
  const hub=el('circle',{r:7,fill:'#ffe48b',stroke:'#14202a','stroke-width':2});layer.append(hub);
  host.append(layer);
+ const preview=document.createElement('canvas');
+ preview.width=320;preview.height=180;
+ preview.className='warlike-camera-frame-preview';
+ preview.style.cssText='position:absolute;right:14px;bottom:14px;z-index:13;width:min(320px,42%);height:auto;aspect-ratio:16/9;border:1px solid #6fbcd1;border-radius:7px;background:#152638;box-shadow:0 5px 20px #0009;pointer-events:none';
+ preview.setAttribute('aria-label','Aperçu schématique du cadrage Camera 3D, vue filaire');
+ host.append(preview);
+
  const options=document.createElement('div');
  options.style.cssText='position:absolute;right:12px;top:12px;z-index:14;display:flex;gap:5px;align-items:center;background:#222832e8;border:1px solid #455363;border-radius:7px;padding:5px;color:#e5eaf1;font:12px Segoe UI,sans-serif';
  const mode=document.createElement('button');mode.type='button';mode.textContent='Global';mode.title='Basculer repère Local / Global';mode.setAttribute('aria-label','Repère Gizmo');mode.style.cssText='background:#303944;color:inherit;border:1px solid #455363;border-radius:4px;padding:4px 9px;cursor:pointer';mode.onclick=()=>{mode.textContent=mode.textContent==='Global'?'Local':'Global'};
@@ -61,6 +69,35 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   const rect=canvas.getBoundingClientRect();if(rect.width<1||rect.height<1)return;
   layer.setAttribute('viewBox','0 0 '+rect.width+' '+rect.height);
   const cam=getCamera(),p=project3d(selected,cam,rect.width,rect.height);if(!p){layer.style.display='none';return}
+  // Scene-only framing aid. This uses actual 3D camera projection, not a second game renderer.
+  const selectedCam=state.entities.find(o=>state.selected.includes(o.id)&&o.sceneCamera3d);
+  preview.hidden=!selectedCam||selectedCam.sceneCamera3d.showPreview===false||state.playing||!view3d.enabled;
+  if(!preview.hidden){
+   const ctx=preview.getContext('2d'),w=preview.width,h=preview.height;
+   ctx.clearRect(0,0,w,h);ctx.fillStyle='#142536';ctx.fillRect(0,0,w,h);
+   const view=sceneCameraView(selectedCam,state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});
+   if(view){
+    ctx.strokeStyle='#5b879d';ctx.lineWidth=1;
+    ctx.strokeRect(1,1,w-2,h-2);
+    const boxes=state.entities.filter(e=>e!==selectedCam&&e.enabled!==false&&e.visible!==false).slice(0,160);
+    for(const entity of boxes){
+     const b=objectBounds3d(entity);
+     if(!b||!Number.isFinite(b.x+b.y+b.z))continue;
+     const points=[[b.x-b.w/2,b.y-b.h/2,b.z-b.d/2],[b.x+b.w/2,b.y-b.h/2,b.z-b.d/2],
+      [b.x+b.w/2,b.y+b.h/2,b.z-b.d/2],[b.x-b.w/2,b.y+b.h/2,b.z-b.d/2],
+      [b.x-b.w/2,b.y-b.h/2,b.z+b.d/2],[b.x+b.w/2,b.y-b.h/2,b.z+b.d/2],
+      [b.x+b.w/2,b.y+b.h/2,b.z+b.d/2],[b.x-b.w/2,b.y+b.h/2,b.z+b.d/2]]
+      .map(q=>project3d(q,view,w,h));
+     ctx.strokeStyle=state.selected.includes(entity.id)?'#f1cb78':'#9cb9c9';
+     for(let j=0;j<4;j++)for(const [a,c] of [[j,(j+1)%4],[j+4,((j+1)%4)+4],[j,j+4]]){
+      if(!points[a]||!points[c])continue;
+      ctx.beginPath();ctx.moveTo(points[a].x,points[a].y);ctx.lineTo(points[c].x,points[c].y);ctx.stroke();
+     }
+    }
+    ctx.strokeStyle='#b1d8e6';ctx.beginPath();ctx.moveTo(w/2-6,h/2);ctx.lineTo(w/2+6,h/2);ctx.moveTo(w/2,h/2-6);ctx.lineTo(w/2,h/2+6);ctx.stroke();
+   }
+   ctx.fillStyle='#e1eff4';ctx.font='11px system-ui';ctx.fillText('CAMERA · CADRAGE FILAIRE',9,16);
+  }
   frustum.replaceChildren();
   if(showingCamera){
    const b=objectBounds3d(selectedObject);

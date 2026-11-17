@@ -29,6 +29,8 @@ export function createScriptApi(entity,ctx,clock,component){
   'world.timeScale':['survivalWorld','timeScale',0,3600]
  };
  const read=name=>{
+  if(name==='collision.otherId'||name==='trigger.otherId')return component?.runtime?.physicsContact?.kind===name.split('.')[0]?component.runtime.physicsContact.otherId:0;
+  if(name==='collision.otherName'||name==='trigger.otherName')return component?.runtime?.physicsContact?.kind===name.split('.')[0]?component.runtime.physicsContact.otherName:'';
   if(name==='Time.deltaTime')return clock.delta;if(name==='Time.fixedDeltaTime')return .02;if(name==='Time.time')return clock.elapsed;
   if(name==='transform.position')return position();if(name.startsWith('transform.position.'))return position()[name.at(-1)];
   if(name.startsWith('transform.rotation.'))return Number(entity[{x:'rotationX3d',y:three?'rotation':'rotationY3d',z:three?'rotationZ3d':'rotation'}[name.at(-1)]]||0);
@@ -88,6 +90,16 @@ export class WarScriptRuntime {
   for(const entry of this.instances.values())if(entry.lifecycle)this.phase(entry);
   while(this.fixed>=.02-1e-8){this.fixed-=.02;for(const entry of this.instances.values())if(entry.lifecycle){entry.clock.delta=.02;this.phase(entry,'FixedUpdate')}}
   for(const entry of this.instances.values())if(entry.lifecycle){entry.clock.delta=delta;this.phase(entry,'Update')}
+ }
+ contact(event){
+  const hooks={trigger:{enter:'OnTriggerEnter2D',stay:'OnTriggerStay2D',exit:'OnTriggerExit2D'},collision:{enter:'OnCollisionEnter2D',stay:'OnCollisionStay2D',exit:'OnCollisionExit2D'}};
+  const method=hooks[event.kind]?.[event.stage];if(!method)return;
+  for(const entry of this.instances.values()){
+   if(entry.entity.id!==event.ownerId||!entry.lifecycle||entry.failed)continue;
+   entry.lifecycle.refresh();if(!entry.lifecycle.active)continue;
+   entry.component.runtime.physicsContact={kind:event.kind,otherId:event.otherId,otherName:event.otherName};
+   try{this.invoke(entry,method)}finally{delete entry.component.runtime.physicsContact}
+  }
  }
  late(){for(const entry of this.instances.values())if(entry.lifecycle)this.phase(entry,'LateUpdate')}
  stop(){for(const entry of this.instances.values())entry.lifecycle?.dispose();this.instances.clear();this.elapsed=0;this.fixed=0;this.context=null;this.errors=[]}

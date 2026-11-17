@@ -1,5 +1,10 @@
 # WarLike Engine + WarLike Editor — un moteur et son éditeur dans un seul dépôt
 
+## Toolchain complémentaire — Rust, Python, WGSL (expérimental)
+
+WarLike Engine et WarLike Editor restent des applications Web TypeScript/JavaScript. Des outils **optionnels**, non utilisés automatiquement par le runtime, sont disponibles : [Rust (noyau géométrique), Python (audit GLB) et WGSL (shader WebGPU pilote)](docs/engine-toolchain-rust-python-wgsl.md). L'objectif est de valider leur valeur avant intégration, sans imposer de dépendance au navigateur ni modifier le build actuel.
+
+
 **Référence de conception : UnityEngine / UnityEditor 6000.6, réinterprétés pour le Web.** Le dépôt `Motherlode94/WarLike-Engine` contient deux modules logiques : **WarLike Engine**, runtime qui doit faire fonctionner les jeux dans le navigateur et leurs exports, et **WarLike Editor**, application Web de création de scènes, scripts, assets et builds. L'Editor dépend de l'Engine ; **le jeu exporté ne dépend pas de l'Editor**. Il ne s'agit ni d'un second dépôt ni d'une compatibilité binaire avec Unity.
 
 **Documentation centrale :** [Architecture Web Unity 6000.6 et différence Engine / Editor](docs/unity-6000-6-web-architecture.md) · [Architecture du dépôt](ARCHITECTURE.md) · [Scripts et leurs limites](docs/script-languages.md) · [Tests Play et export](docs/runtime-acceptance.md).

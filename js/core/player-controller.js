@@ -2,6 +2,7 @@ import {stepHeroFlight} from './hero-movement.js';
 import {controllerMode2d,walkPlatformer2d,moveBody2d} from './physics-2d.js';
 import {faceMovement2d} from './character-facing.js';
 import {followCamera2d} from './play-camera.js';
+import {activeSceneCamera2d,cameraView2d} from './scene-camera-2d.js';
 import {playSound} from './audio.js';
 // WarLike 2D foot controller with solid collisions and an optional chase camera.
 import {state} from './state.js';
@@ -23,6 +24,20 @@ export function walkPlayer(player,dt,keys=state.keys,{pressedKeys=state.keyPress
  return {moving:length>0,sprinting:sprint};
 }
 export function followPlayer(player,canvas,dt){
- if(!motion.cameraFollow||!player||!canvas)return;
+ if(!canvas)return;
+ const cam=activeSceneCamera2d(state.entities);
+ if(cam){
+  const viewport={width:canvas.clientWidth,height:canvas.clientHeight};
+  const target=cameraView2d(cam,state.entities,viewport,dt,{
+   snap:!motion.cameraInitialized||motion.lastCameraId!==cam.id,
+   previous:state.camera
+  });
+  if(target)Object.assign(state.camera,target);
+  motion.lastCameraId=cam.id;
+  motion.cameraInitialized=true;
+  return;
+ }
+ motion.lastCameraId=null;
+ if(!motion.cameraFollow||!player)return;
  Object.assign(state.camera,followCamera2d(state.camera,player,{width:canvas.clientWidth,height:canvas.clientHeight},dt,{snap:!motion.cameraInitialized}));motion.cameraInitialized=true;
 }

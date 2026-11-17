@@ -39,7 +39,7 @@ export function renderGenericComponents(root,entity){
    const cameraMode=definition.id==='sceneCamera3d'&&path.length===1&&path[0]==='mode';
    const input=document.createElement(cameraMode?'select':'input');
    if(cameraMode){
-    for(const [kind,label] of [['fixed','Fixed · caméra libre'],['follow','Follow · cible'],['firstPerson','First Person · joueur']]){
+    for(const [kind,label] of [['fixed','Fixed · caméra libre'],['thirdPerson','Third Person · orbite / souris'],['follow','Follow (ancien mode)'],['firstPerson','First Person · joueur']]){
      const option=document.createElement('option');option.value=kind;option.textContent=label;input.append(option);
     }
    }else input.type=typeof value==='boolean'?'checkbox':'text';

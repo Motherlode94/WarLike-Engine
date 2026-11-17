@@ -32,7 +32,10 @@ export function sceneCameraView(camera,entities){
   target=[position[0]-Math.sin(yaw)*Math.cos(pitch),position[1]-Math.sin(pitch),position[2]-Math.cos(yaw)*Math.cos(pitch)];
  }
  if(Math.hypot(...target.map((n,i)=>n-position[i]))<1e-5)return null;
- return cameraPose(target,position);
+ const pose=cameraPose(target,position);
+ return {...pose,fieldOfView:Math.max(20,Math.min(120,Number(settings.fieldOfView)||60)),
+ nearClip:Math.max(.01,Math.min(10,Number(settings.nearClip)||.1)),
+ farClip:Math.max(20,Math.min(10000,Number(settings.farClip)||1000))};
 }
 export function cameraMovementYaw(view){
  if(!view)return null;

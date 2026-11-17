@@ -161,6 +161,10 @@ Vérification : `tests/sheared-box-rapier.test.mjs` comporte les coordonnées de
 - **Limite physique importante :** Rapier ne représente pas directement le *shear* dans la pose d'un rigidbody. Les BoxColliders cisaillés possèdent désormais un convex hull exact du volume de la boîte transformée ; les capsules, sphères et GLB concaves ne sont pas couverts par ce mécanisme. Le moteur ne doit pas annoncer une collision exacte sous *shear*.
 - **Validation :** `tests/affine-render-3d.test.mjs`, `tests/editor-hierarchy-3d-runtime.test.mjs` et `tests/affine-rapier-3d.test.mjs`. Vérifier également le rendu visuel sur les modèles GLB riggés et les colliders réels dans un navigateur WebGL.
 
+## Noyau mathématique 3D de WarLike Engine
+
+Le **[Math Core v1](docs/math-core-v1.md)** fournit des opérations de vecteurs, quaternions, matrices 4×4 column-major, inversion à pivot partiel, intersections rayon/boîte, barycentres, géométrie de segments et accumulation du temps physique. Les hiérarchies de Transform du Scene Graph v2, les déplacements des gizmos et les offsets de collision de caméra utilisent ce noyau commun. Des tests de précision, de stabilité numérique et d'intégration couvrent le module.
+
 ## Transformations hiérarchiques 3D — noyau matriciel
 
 Le graphe de scène v2 (`js/core/scene-graph-v2.js`) fournit désormais des matrices 4×4 affines **column-major** : `composeTransformMatrix`, `multiplyMatrix4`, `invertMatrix4`, `worldTransformMatrices`, `setLocalTransform` et `reparent(scene,id,parentId,{keepWorld:true})`. Les matrices mondiales sont calculées à partir des transformations locales et des parents. Le changement de parent préserve **exactement** la matrice monde ; si l'échelle non uniforme produit du *shear*, le Transform conserve une matrice affine `matrix` / `matrixMode:'affine'` plutôt que de perdre l'information dans une décomposition TRS. Un parent non inversible entraîne une erreur et ne change pas la scène. Les éditions TRS explicites effacent la surcharge affine.

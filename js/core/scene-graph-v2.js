@@ -1,3 +1,4 @@
+import {multiplyMatrix4Math,invertMatrix4Math} from './math-kernel.js';
 // WarLike Core V2 — independent, versioned scene graph. No browser dependency.
 const clone=value=>structuredClone(value);
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
@@ -24,22 +25,10 @@ export function addComponent(object,component){
 // scene graph. Matrix overrides preserve affine shear after Keep World reparent.
 export const identityMatrix4=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 export function multiplyMatrix4(a,b){
- if(!Array.isArray(a)||!Array.isArray(b)||a.length!==16||b.length!==16||![...a,...b].every(finite))throw Error('Matrices invalides');
- const out=Array(16).fill(0);
- for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)out[c*4+r]+=a[k*4+r]*b[c*4+k];
- return out;
+ try{return multiplyMatrix4Math(a,b)}catch{throw Error('Matrices invalides')}
 }
 export function invertMatrix4(input){
- if(!Array.isArray(input)||input.length!==16||!input.every(finite))throw Error('Matrice invalide');
- const rows=Array.from({length:4},(_,r)=>Array.from({length:8},(_,c)=>c<4?input[c*4+r]:Number(c-4===r)));
- for(let c=0;c<4;c++){
-  let pivot=c;for(let r=c+1;r<4;r++)if(Math.abs(rows[r][c])>Math.abs(rows[pivot][c]))pivot=r;
-  if(Math.abs(rows[pivot][c])<1e-10)throw Error('Transform parent non inversible (échelle nulle ou matrice singulière)');
-  [rows[c],rows[pivot]]=[rows[pivot],rows[c]];
-  const value=rows[c][c];for(let j=0;j<8;j++)rows[c][j]/=value;
-  for(let r=0;r<4;r++)if(r!==c){const v=rows[r][c];for(let j=0;j<8;j++)rows[r][j]-=v*rows[c][j]}
- }
- return Array.from({length:16},(_,i)=>rows[i%4][4+Math.floor(i/4)]);
+ try{return invertMatrix4Math(input)}catch{throw Error('Transform parent non inversible (échelle nulle ou matrice singulière)')}
 }
 export function composeTransformMatrix(position=[0,0,0],rotation=[0,0,0],scale=[1,1,1]){
  if(![position,rotation,scale].every(v=>Array.isArray(v)&&v.length===3&&v.every(finite)))throw Error('Transform TRS invalide');

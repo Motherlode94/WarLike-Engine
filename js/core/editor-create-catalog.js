@@ -7,7 +7,7 @@ import {prefab3d} from '../assets/catalog-3d.js';
 import {defaultUiCanvas,defaultUiRect,defaultUiElement} from './ui-canvas-layout.js';
 
 export const sceneCreateItems=[
- {group:'Essentiels',items:[['empty','GameObject vide'],['character','Personnage'],['camera','Caméra de jeu']]},
+ {group:'Essentiels',items:[['empty','GameObject vide'],['character','Personnage'],['camera','Rig de caméra (pour joueur)']]},
  {group:'Objets 3D',items:[['cube','Cube'],['sphere','Sphère'],['cylinder','Cylindre'],['cone','Cône'],['plane','Plan / Sol'],['ramp','Rampe']]},
  {group:'Éclairage et audio',items:[['point-light','Point Light'],['spot-light','Spot Light'],['audio-source','Audio Source']]},
  {group:'Interface du jeu (uGUI)',items:[['canvas','Canvas'],['ui-panel','Panel'],['ui-text','Text'],['ui-button','Button']]},
@@ -26,8 +26,9 @@ export function createSceneItem(kind,{openBlueprint=()=>{}}={}){
   Object.assign(o,{name:kind==='plane'?'Sol '+id:kind+' '+id,w:kind==='plane'?640:64,h:kind==='plane'?16:64,depth3d:kind==='plane'?640:64,collision3d:true,solid3d:true});
  }else{
   o={id,name:kind+' '+id,type:'object',x:120+(id%10)*25,y:120+(id%7)*25,w:64,h:64,depth3d:64,elevation3d:0,color:'#8195ef',visible:true};
+  if(kind==='empty'){Object.assign(o,{name:'GameObject '+id,visible:false,collision3d:false})}
   if(kind==='character'){Object.assign(o,{name:'Character '+id,type:'character',w:64,h:96,skin:'scout',animation:'idle'})}
-  if(kind==='camera'){Object.assign(o,{name:'Camera '+id,cameraRig:{mode:'thirdPerson',distance:5,height:.75,collision:true}})}
+  if(kind==='camera'){Object.assign(o,{name:'Camera Rig '+id,visible:false,collision3d:false,cameraRig:{mode:'thirdPerson',distance:5,height:.75,collision:true}})}
   if(kind==='point-light'||kind==='spot-light'){Object.assign(o,{name:kind==='spot-light'?'Spot Light':'Point Light',lightType:kind==='spot-light'?'spot':'point',lightEnabled:true,lightColor:'#ffcd8a',lightIntensity:3,lightRange:13,lightAngle:45,elevation3d:2.5})}
   if(kind==='audio-source'){Object.assign(o,{name:'Audio Source',visible:false,collision3d:false,audioEnabled:true,audioClip:'vehicle',audioGain:.55,audioRange:18,audioInterval:3,audioLoop:true,audioSpatial:true})}
   if(kind==='trigger'){Object.assign(o,{name:'Trigger '+id,collision3d:true,solid3d:false,collider3d:{shape:'box',isTrigger:true}})}

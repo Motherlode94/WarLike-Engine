@@ -295,7 +295,12 @@ export function updateSequences(dt,ctx){
   rt.interactions=[];rt.signals=change.sequenceSignals?.queue||[];rt.signalActors=new Map(change.sequenceSignals?.actors||[]);
   rt.time=gameSession.elapsed;rt.jobs=[];rt.inside.clear();rt.cooldowns.clear();rt.observed.clear();rt.fired=new Set(change.fired||[]);
   if(change.kind==='restore')for(const o of ctx.entities)for(const entry of sequenceEntries(o))if(entry.sequence.event==='start')rt.cooldowns.set('start:'+entry.key,Infinity);
-  emitSequenceSignal(change.kind==='restore'?'game:loaded':'scene:loaded');ctx.onSceneChange?.(change);ctx.pressedKeys?.clear();return;
+  emitSequenceSignal(change.kind==='restore'?'game:loaded':'scene:loaded');
+  // The load boundary is observable before the next gameplay/physics frame.
+  // This allows editor tooling and export tests to inspect the exact restored
+  // state rather than measuring it after a variable amount of simulation.
+  if(change.kind==='restore')globalThis.document?.dispatchEvent(new Event('warlike:save-restored'));
+  ctx.onSceneChange?.(change);ctx.pressedKeys?.clear();return;
  }
  const running=gameIsRunning();dt=running?Math.min(.1,Math.max(0,number(dt))):0;rt.time+=dt;
  for(const signal of tickGameSession(dt))emitSequenceSignal(signal);

@@ -1,4 +1,5 @@
 import {connectBlueprintPorts} from '../core/blueprint-connections.js';
+import {duplicateWarNode,removeWarNode,summarizeWarNodeGraph} from '../core/warnode-editor-operations.js';
 import {dataOperations,dataNodePorts,canConnectData} from '../core/blueprint-ports.js';
 import {editDataNode} from './blueprint-data-editor.js';
 import {installBlueprintGraphMenu} from './blueprint-graph-menu.js';
@@ -22,7 +23,7 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
  const validation=element('span','bp-graph-validation'),layout=element('div','bp-graph-layout'),board=element('div','bp-canvas'),world=element('div','bp-world'),inspector=element('aside','bp-node-inspector');
  board.tabIndex=0;board.setAttribute('aria-label','Graphe Blueprint : sélectionner, déplacer et connecter les nœuds');
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('bp-connections');world.append(svg);board.append(world);layout.append(board,inspector);
- const update=label=>{const errors=inspectGraph(graph);if(!errors.length)applyGraph(sequence);save(label)};
+ const update=label=>{const errors=inspectGraph(graph);if(!errors.length)applyGraph(sequence);refreshTopology();save(label)};
  const node=id=>graph.nodes.find(n=>n.id===id);
  const add=(kind,actionType='message',position=null)=>{
   const chosen=node(pending?.from||selected),source=chosen?.kind!=='data'&&chosen||graph.nodes.findLast(n=>n.kind==='action')||graph.nodes.find(n=>n.kind==='event'),port=pending?.port||(source?.kind==='condition'?'true':'next');
@@ -37,6 +38,19 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
  };
  button(toolbar,'＋ Donnée',()=>{const anchor=node(selected)||graph.nodes[0],id='data-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);graph.version=3;graph.nodes.push({id,kind:'data',op:'constant',valueType:'number',value:0,x:anchor.x,y:anchor.y+260,inputs:{}});selected=id;options.onSelect?.(id);update('Ajouter un nœud de données')},'bp-secondary');
  const palette=installBlueprintGraphMenu(board,(type,position)=>{if(!state.playing)add('action',type,position)},{getZoom:()=>zoom});button(toolbar,'＋ Ajouter un nœud',()=>palette.show(),'bp-secondary');button(toolbar,'＋ Action',()=>add('action'),'bp-text-button');button(toolbar,'◇ Condition',()=>add('condition'),'bp-secondary');
+ const duplicateSelected=()=>{
+  if(state.playing)return;
+  const result=duplicateWarNode(graph,selected);
+  if(!result.ok){validation.textContent=result.error;return}
+  selected=result.id;options.onSelect?.(selected);update('Dupliquer le nœud sans connexion implicite');
+ };
+ button(toolbar,'⧉ Dupliquer',duplicateSelected,'bp-text-button').disabled=state.playing;
+ button(toolbar,'＋ Rechercher',()=>palette.show(),'bp-secondary').disabled=state.playing;
+ const topology=element('span','bp-graph-stats'),refreshTopology=()=>{
+  const summary=summarizeWarNodeGraph(graph);
+  topology.textContent=summary.nodes+' nœuds · '+summary.exec+' liens logiques · '+summary.data+' liens typés'+(summary.disconnected?' · '+summary.disconnected+' hors flux':'');
+ };
+ toolbar.append(topology);
  button(toolbar,'Réorganiser',()=>{const visited=new Set();let row=0;const place=(id,column)=>{if(visited.has(id))return;visited.add(id);const n=node(id);n.x=56+column*310;n.y=70+row*205;const edges=graph.links.filter(e=>e.kind!=='data'&&e.from===id).sort((a,b)=>graphPort(a)==='false'?1:-1);for(const [i,edge] of edges.entries()){if(i)row++;place(edge.to,column+1)}};place(graph.nodes.find(n=>n.kind==='event').id,0);update('Réorganiser le graphe')},'bp-text-button');
  const zoomLabel=element('label','bp-zoom'),slider=element('input');slider.type='range';slider.min='40';slider.max='150';slider.value=String(zoom*100);slider.setAttribute('aria-label','Zoom du graphe');const zoomValue=element('span','',Math.round(zoom*100)+' %');zoomLabel.append(slider,zoomValue);toolbar.append(zoomLabel,validation);
  const boxes=new Map();
@@ -73,7 +87,7 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
   field(inspector,{key:'comment',label:'Commentaire du nœud',type:'text'},n,change);inspector.append(element('small','bp-node-id','Nœud '+n.id));
  }
  function selectNode(id){selected=id;options.onSelect?.(id);for(const [key,box] of boxes)box.classList.toggle('is-selected',id===key);details()}
- function removeSelected(){const n=node(selected);if(!n||n.kind==='event'||state.playing)return;graph.nodes=graph.nodes.filter(v=>v!==n);graph.links=graph.links.filter(e=>e.from!==n.id&&e.to!==n.id);options.onSelect?.(graph.nodes[0]?.id);update('Supprimer le nœud')}
+ function removeSelected(){if(state.playing)return;const result=removeWarNode(graph,selected);if(!result.ok){validation.textContent=result.error;return}selected=graph.nodes[0]?.id;options.onSelect?.(selected);update('Supprimer le nœud')}
  for(const n of graph.nodes){
   const box=element('article','bp-node-v2'),header=element('div','bp-node-drag'),kind=element('span','bp-node-kind',n.kind==='data'?'DONNÉE':n.kind==='event'?'ÉVÉNEMENT':n.kind==='condition'?'CONDITION':'ACTION');box.classList.toggle('has-breakpoint',!!n.breakpoint);box.dataset.nodeId=n.id;box.dataset.kind=n.kind;box.style.left=n.x+'px';box.style.top=n.y+'px';header.append(kind,element('span','bp-node-menu','⠿'));box.append(header);
   box.append(element('strong','bp-node-label',n.kind==='data'?dataOperations[n.op]:n.kind==='condition'?'Si / Sinon':labelFor(n.kind==='event'?n.event:n.action?.type,n.kind)),element('span','bp-node-description',n.kind==='data'?dataNodePorts(n).outputs[0]?.type:n.kind==='condition'?(n.conditions?.length||0)+' condition(s)':n.kind==='event'?(sequence.signal||sequence.key||'Début du comportement'):summaryValue((n.action?.functionId?gameProject.functions?.find(f=>f.id===n.action.functionId)?.name||n.action.functionId:null)||n.action?.key||n.action?.value).slice(0,60)));
@@ -92,10 +106,10 @@ export function renderBlueprintGraph(host,sequence,save,options={}){
   header.addEventListener('pointerdown',event=>{if(state.playing||event.button!==0)return;event.preventDefault();selectNode(n.id);const sx=event.clientX,sy=event.clientY,x=n.x,y=n.y,displayScale=zoom*board.getBoundingClientRect().width/Math.max(1,board.offsetWidth);header.setPointerCapture(event.pointerId);const move=e=>{n.x=Math.max(20,x+(e.clientX-sx)/displayScale);n.y=Math.max(20,y+(e.clientY-sy)/displayScale);box.style.left=n.x+'px';box.style.top=n.y+'px';wires();size()};const done=()=>{header.removeEventListener('pointermove',move);header.removeEventListener('pointerup',done);header.removeEventListener('pointercancel',done);update('Déplacer le nœud')};header.addEventListener('pointermove',move);header.addEventListener('pointerup',done);header.addEventListener('pointercancel',done)});
   world.append(box);boxes.set(n.id,box);
  }
- const frameSelection=()=>{const n=node(selected);if(n){board.scrollLeft=Math.max(0,(n.x+width/2)*zoom-board.clientWidth/2);board.scrollTop=Math.max(0,(n.y+height/2)*zoom-board.clientHeight/2)}};button(toolbar,'Cadrer · F',frameSelection,'bp-text-button').disabled=false;board.addEventListener('keydown',event=>{if(event.key.toLowerCase()==='f'&&!event.target.closest('input,textarea,select')){event.preventDefault();frameSelection()}if(event.key==='Escape'){pending=null;cable?.path.remove();cable=null;board.classList.remove('is-connecting');validation.textContent='Connexion annulée.';event.stopPropagation();}if(event.key==='Delete'&&!['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName)){event.preventDefault();removeSelected()}});
+ const frameSelection=()=>{const n=node(selected);if(n){board.scrollLeft=Math.max(0,(n.x+width/2)*zoom-board.clientWidth/2);board.scrollTop=Math.max(0,(n.y+height/2)*zoom-board.clientHeight/2)}};button(toolbar,'Cadrer · F',frameSelection,'bp-text-button').disabled=false;board.addEventListener('keydown',event=>{if(event.key.toLowerCase()==='f'&&!event.target.closest('input,textarea,select')){event.preventDefault();frameSelection()}if(event.key==='Escape'){pending=null;cable?.path.remove();cable=null;board.classList.remove('is-connecting');validation.textContent='Connexion annulée.';event.stopPropagation();}if(event.key==='Delete'&&!['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName)){event.preventDefault();removeSelected()}if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='d'&&!['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName)){event.preventDefault();duplicateSelected()}});
  const issues=inspectGraphDetailed(graph);validation.textContent=issues[0]?issues[0].message+(issues.length>1?' (+'+(issues.length-1)+')':''):'✓ Graphe valide';validation.classList.toggle('has-error',!!issues.length);
  for(const issue of issues)boxes.get(issue.nodeId)?.classList.add('has-graph-error');
  const firstBad=issues.find(issue=>boxes.has(issue.nodeId));if(firstBad){const focusIssue=()=>{selectNode(firstBad.nodeId);boxes.get(firstBad.nodeId)?.scrollIntoView({block:'nearest',inline:'center'})};validation.style.cursor='pointer';validation.title='Sélectionner le nœud concerné';validation.setAttribute('role','button');validation.tabIndex=0;validation.onclick=focusIssue;validation.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();focusIssue()}}}
  const last=sequenceRuntime.trace.at(-1);if(last?.nodeId)boxes.get(last.nodeId)?.classList.add(last.status==='error'?'has-runtime-error':'was-executed');
- root.append(toolbar,layout);host.append(root);size();details();requestAnimationFrame(()=>{if(!board.isConnected)return;board.scrollLeft=options.view?.left||0;board.scrollTop=options.view?.top||0;wires();});
+ root.append(toolbar,layout);host.append(root);refreshTopology();size();details();requestAnimationFrame(()=>{if(!board.isConnected)return;board.scrollLeft=options.view?.left||0;board.scrollTop=options.view?.top||0;wires();});
 }

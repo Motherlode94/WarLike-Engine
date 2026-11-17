@@ -15,42 +15,19 @@ La scène utilise des primitives polygonales 3D et les composants natifs : **Tra
 **Limites à valider :** le prologue utilise pour l'instant des personnages et du mobilier génériques, sans doublages, cinématiques ni animation faciale dédiée. Le trajet du poursuivant entre cloisons, les collisions réelles, le déclenchement des signaux de dialogue et l'export web complet exigent un test navigateur et un test de build. La scène n'est pas encore une reproduction complète de l'expérience du prototype HTML ; elle est la première conversion native.
 
 
-## CHAMBRE 07 · La Voix — prototype HTML historique
+## Politique officielle : démos uniquement natives
 
-Dans un projet **3D**, ouvrir **Game → Scènes démo jouables… → CHAMBRE 07 → Jouer dans Engine**. La démo s'ouvre dans une fenêtre intégrée. Elle est aussi accessible par le raccourci du **Hub de projets**, ou directement via `examples/chambre-07/index.html`.
+Une démo distribuée dans **Game → Scènes démo jouables** doit charger ses entités avec `loadAuthoredDemo` et utiliser **Hierarchy, Inspector, WarNode/Blueprint, Play/Stop et export Web** de WarLike Engine. Il est interdit de présenter un jeu autonome dans une iframe ou un lien externe comme une démo faite avec Engine.
 
-Le parcours consiste à retrouver trois souvenirs, parler à Lia et atteindre la sortie. Commandes : **ZQSD/WASD**, souris ou flèches pour regarder, **E** pour interagir, **Maj** pour courir et **Échap** pour la pause. Deux fins narratives et une sauvegarde locale sont prévues.
+**État actuel :**
+- **CHAMBRE 07 · Scène 3D native** : scène éditable, mais critères de validation finale du moteur 3D encore ouverts.
+- **Iron Defiance · Academy native** : entraînement de 12 soldats utilisant le runtime natif, pas la bataille CENDRE-01 complète.
+- **Iron Defiance · Compagnie** : 108 soldats éditables par faction et ordres RTS natifs, sans conversion complète de la bataille.
+- **CENDRE-01 autonome** (`examples/iron-defiance/`) : prototype historique **non conforme au catalogue Engine**, maintenu comme source de logique à migrer.
+- **Worldforge autonome** (`examples/worldforge/`) : prototype historique **non conforme au catalogue Engine**, maintenu pour migrer ses règles de simulation vers des composants natifs 2D.
+- **CHAMBRE 07 HTML historique** (`examples/chambre-07/`) : référence non distribuée comme démo Engine ; poursuivre la conversion native.
 
-**Limite :** démo Web autonome avec rendu **2.5D raycast**. Il ne s'agit pas encore d'une scène native Engine modifiable dans Hierarchy/Inspector. Les modèles 3D animés, l'IA de poursuite avec navigation et l'export natif Engine restent à développer. Le rendu et les parcours doivent être vérifiés dans un navigateur réel.
-
-
-## Worldforge · Forge des mondes — simulation de monde jouable
-
-Ouvrir un projet **2D**, puis **Game → Scènes démo jouables… → Worldforge → Jouer dans Engine**. Le jeu est présenté dans une fenêtre intégrée, sans remplacer la scène de l'éditeur. Il est également disponible en ouvrant `examples/worldforge/index.html` via un serveur HTTP local.
-
-Worldforge est un **jeu original de god game**, inspiré des simulations de mondes à la WorldBox, sans reprendre ses assets ni son code. Le joueur peut modifier le terrain (eau, plages, plaines, forêts et montagnes), créer quatre peuples, déclencher des pluies, des incendies ou des météorites, puis observer la croissance des villes. L'IA simule les ressources, la nourriture, les habitations, la natalité, la mortalité, la colonisation et les conflits frontaliers entre peuples distincts.
-
-**Commandes :** clic gauche pour peindre ou sélectionner une ville ; clic droit ou Maj + glisser pour déplacer la carte ; molette pour zoomer ; Espace pour suspendre/reprendre ; F pour recentrer. Les boutons règlent la vitesse (pause, 1×, 2×, 5×), la taille du pinceau, le peuple et les événements. **Sauvegarder / Charger** emploie localStorage dans le navigateur ; **Exporter JSON** fournit les données du monde. La simulation ne communique avec aucun serveur.
-
-**Portée du prototype :** c'est un exemple Web autonome lancé depuis l'interface Engine, **pas encore une scène native modifiable dans Inspector, ni un projet exportable avec le pipeline de scènes Engine**. Les agents et les guerres sont simulés au niveau des villes et des ressources, sans unités individuelles contrôlables. La physique 3D, la diplomatie approfondie, la faune et les animations de combat ne sont pas encore implémentées.
-
-Tests de simulation : `node --test tests/worldforge-demo.test.mjs` valide notamment la reproductibilité du monde, les civilisations, le cycle économique, les outils divins, la sérialisation et la présence du jeu dans le navigateur des démos. Les résultats des tests automatisés ne remplacent pas un parcours visuel du jeu dans le navigateur.
-
-
-Dans un projet 2D ou 3D, choisir **Scènes démo** dans la barre d’outils ou **Game → Scènes démo jouables…**. Le chargement remplace la scène courante et reste annulable avec Ctrl+Z. Sauvegarder le projet pour conserver ses modifications. La fiche repliable en haut de la scène ouvre Play ou un comportement Blueprint.
-
-| Scène | Parcours | Systèmes présentés |
-| --- | --- | --- |
-| Quartier du Canal · 2D / 3D | Accepter la mission de Mara, prendre le fusible devant l’atelier, réparer le relais au nord, secourir l’éclaireur et revenir à Mara. | Dialogue à choix, inventaire, conditions, signal, collision de barrière, lumière, son, FX, objectifs et victoire. |
-| Première aube · 2D / 3D | Récolter sur les sentiers, construire le feu et l’abri dans la clairière, cuisiner et survivre jusqu’à l’aube. | Besoins, récolte, fabrication, placement libre, dangers nocturnes, sauvegarde et progression de survie. |
-| Piste d’essais · 2D / 3D | Lire le briefing aux stands, monter dans le prototype et passer est → nord → ouest → arrivée. | Conduite, freinage, collisions, quatre checkpoints ordonnés, chronomètre et victoire. Un passage à pied ne valide pas la course. |
-| Courrier des toits · 2D | Sauter sur les toits pour collecter trois colis, atteindre les gemmes de reprise et livrer au bureau. | Gravité, saut, caisses dynamiques, collecte, objectifs, reprise après chute et victoire. |
-
-**Commandes :** ZQSD / WASD ou flèches pour se déplacer, Maj pour courir, E pour interagir ou monter/descendre du véhicule. En plateforme : Q/D ou flèches horizontales et Espace/Z/W pour sauter. En conduite : Espace pour le frein à main. J ouvre le journal des scènes d’aventure ; I ouvre l’inventaire/fabrication de survie. F5/F9 sauvegardent et chargent la progression dans le navigateur.
-
-Les scènes utilisent les composants et le runtime ordinaires du moteur. Les quêtes, checkpoint et interactions sont stockés sur leurs objets ; ouvrir leur composant **Déclencheur** ou **Blueprint** dans Inspector pour les modifier. Les décors utilisent les ressources Kenney livrées avec le dépôt et des modèles GLB intégrés en 3D. La Jeep 2D conserve son illustration SVG historique. Les sols 2D sont des compositions reproductibles de tuiles Tiny Town CC0 : `python scripts/assets/build-demo-maps.py` (Pillow nécessaire).
-
-Pour tester l’export, enregistrer le projet puis **Exporter le jeu**, décompresser et servir le dossier en HTTP. Le contrôle de compatibilité de l’export doit rester sans erreur. Les sauvegardes du navigateur sont propres à l’adresse où le jeu est servi.
+**Règle de validation** : le rendu seul n'est pas une preuve d'intégration. Tout nouveau jeu doit être modifiable depuis Hierarchy/Inspector, conserver son gameplay en Play, restaurer l'état après Stop, persister au rechargement et fonctionner dans l'export Web sans moteur parallèle.
 
 ## WarScript dans les quatre scènes
 

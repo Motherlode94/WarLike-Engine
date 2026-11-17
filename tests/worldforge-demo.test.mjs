@@ -60,16 +60,15 @@ test("JSON saved worlds round-trip and corrupt data is rejected",()=>{
  assert.throws(()=>verifyWorld({...w,fire:[-1,...w.fire.slice(1)]}));
  assert.throws(()=>verifyWorld({...w,width:200,height:300}));
 });
-test("Worldforge is reachable through the Engine demo browser",()=>{
+test("Worldforge legacy prototype is not presented as a native Engine scene",()=>{
  const browser=readFileSync(new URL("../js/ui/demo-browser.js",import.meta.url),"utf8");
  const html=readFileSync(new URL("../examples/worldforge/index.html",import.meta.url),"utf8");
  const client=readFileSync(new URL("../examples/worldforge/game.js",import.meta.url),"utf8");
- assert.match(browser,/id:'worldforge'/);
- assert.match(browser,/externalUrl:'examples\/worldforge\/index.html'/);
- assert.match(browser,/iframe\.src=new URL/);
- for(const id of ["world","civilization","speed","newWorld","saveWorld","loadWorld","playPause","eventLog"]){
-  assert.match(html,new RegExp('id="'+id+'"'));
- }
+ assert.doesNotMatch(browser,/id:'worldforge'/);
+ assert.doesNotMatch(browser,/externalUrl:/);
+ assert.doesNotMatch(browser,/iframe\.src=new URL/);
+ // Keep simulation prototype tests for porting its algorithms, not as an Engine demo.
+ for(const id of ["world","civilization","speed","newWorld","saveWorld","loadWorld","playPause","eventLog"])assert.match(html,new RegExp('id="'+id+'"'));
  assert.match(client,/requestAnimationFrame\(loop\)/);
  assert.equal(FACTIONS.length,4);
 });

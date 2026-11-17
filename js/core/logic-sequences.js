@@ -25,7 +25,7 @@ import {inventoryAdd,inventoryRemove,inventoryCount,equipItem,damage,setHealth,e
 import {healthOf,sameFaction,isHostileTo} from './ai-perception.js';
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
-export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal','healthChanged','death','variableChanged','objectiveCompleted','timerExpired'];
+export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal','healthChanged','death','variableChanged','objectiveCompleted','timerExpired','triggerEnter2d','triggerStay2d','triggerExit2d','collisionEnter2d','collisionStay2d','collisionExit2d'];
 export const sequenceConditions=['dataBoolean','inventoryHasRoom','questItemAtLeast','survivalToolUsable','survivalToolDurabilityBelow','survivalMilestone','survivalPartyDefeated','survivalNeedBelow','survivalBuilt','survivalNightsAtLeast','animatorStateIs','heroEnergyAbove','heroPowerReady','heroFlightActive','rpgLevelAtLeast','heroReputationAtLeast','simulationPowered','simulationRescued','always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists','aiStateIs','aiAwarenessAbove','aiCanSeeTarget','aiHasTarget','sameFaction','isHostile','weaponAmmoAbove','weaponReady','vehicleDriveable','vehicleFuelBelow','vehicleHealthBelow','vehicleHasDriver','objectiveActive','objectiveComplete','timerRunning','timerExpired','gamePhaseIs','saveExists'];
 export const sequenceInstructions=['callFunction','returnFunction','consumeQuestItem','repairSurvivalTool','survivalInteract','craftSurvivalItem','consumeSurvivalItem','playAnimatorState','setAnimatorParameter','emitOwnedFx','castHeroPower','restoreHeroEnergy','giveExperience','upgradeHeroSkill','emitFx','repairSimulationNode','rtsOrder','message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState','setAiState','setAiFaction','setAiTarget','setAiDetection','setAiAttackRange','setAiPatrolPoint','setWeaponAmmo','addWeaponAmmo','reloadWeapon','setWeaponDamage','fireVehicleWeapon','repairVehicle','refuelVehicle','setVehicleEngine','setVehicleGear','setVehicleWeapon','clearAiTarget','setAiEnabled','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration','branch','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
@@ -357,6 +357,15 @@ export function updateSequences(dt,ctx){
    break;
   }
   case 'exit':trigger=!isInside&&wasInside;break;
+  case 'triggerEnter2d':case 'triggerStay2d':case 'triggerExit2d':
+  case 'collisionEnter2d':case 'collisionStay2d':case 'collisionExit2d':{
+   const triggerType=s.event.startsWith('trigger')?'trigger':'collision';
+   const stage=s.event.endsWith('Enter2d')?'enter':s.event.endsWith('Stay2d')?'stay':'exit';
+   const signal='physics2d:'+triggerType+':'+stage+':'+o.id;
+   trigger=signals.includes(signal);
+   if(trigger&&signalActors.has(signal))eventPlayer=objects.find(p=>p.id===signalActors.get(signal))||player;
+   break;
+  }
   case 'signal':trigger=signals.includes(String(s.signal||''));if(trigger&&signalActors.has(String(s.signal||'')))eventPlayer=objects.find(p=>p.id===signalActors.get(String(s.signal||'')))||player;break;
   case 'healthChanged':case 'death':{const hp=healthOf(o),previous=rt.observed.get(sequenceKey);trigger=previous!==undefined&&(s.event==='death'?previous>0&&hp<=0:previous!==hp);rt.observed.set(sequenceKey,hp);break}
   case 'variableChanged':{const value=rt.globals[s.variable||'score'],previous=rt.observed.get(sequenceKey);trigger=rt.observed.has(sequenceKey)&&previous!==value;rt.observed.set(sequenceKey,value);break}

@@ -16442,6 +16442,7 @@
     "js/core/pathfinding.js",
     "js/core/physics-2d.js",
     "js/core/physics-3d.js",
+    "js/core/physics-contact-events-2d.js",
     "js/core/play-camera.js",
     "js/core/player-controller.js",
     "js/core/portable-assets.js",

@@ -8,6 +8,7 @@ import {heroCenter} from './hero-movement.js';
 import {webScriptRuntime} from './web-script-runtime.js';
 import {nativeScriptEntities,nativeScriptSources} from './csharp-sources.js';
 import {warScriptRuntime} from './war-script-runtime.js';
+import {physicsContactEvents2d} from './physics-contact-events-2d.js';
 import {workspace} from './workspaces.js';
 import {gameplayKeys,gameplayInputBlocked} from './gameplay-input.js';
 import {isLanGuest} from './lan-state.js';
@@ -33,6 +34,7 @@ export function startRuntimeSession(){
  startComponentRuntime();initializeWebComponents(state.entities,sequenceRuntime.globals);announce();
 }
 export function stopRuntimeSession(){
+ physicsContactEvents2d.reset();
  resetAnimationRuntime();webScriptRuntime.stop();webScene=null;webLoading=false;webElapsed=0;if(runtimeSession.backend==='native'&&nativeCanStop&&revision!==null)requestNative('/stop',{revision}).catch(()=>{});warScriptRuntime.stop();runtimeSession.generation++;runtimeSession.phase='stopped';runtimeSession.busy=false;revision=null;initializedScene=null;pending=null;elapsed=0;nativeCanStop=false;resetComponentRuntime();announce();
 }
 // A frame has one writer. Native callbacks finish before browser components,
@@ -49,7 +51,14 @@ async function isolatedBrowserFrame(dt,update,canRun){
  finishBrowserFrame(ready.dt,update,true,true);if(generation===runtimeSession.generation)await webScriptRuntime.late({canApply});
 }
 
-function finishBrowserFrame(dt,update,run,isolated=false){if(run){if(!isLanGuest()){if(!isolated)webScriptRuntime.update(dt,scriptContext());warScriptRuntime.update(dt,scriptContext());}updateComponentRuntime(dt)}update?.(dt);if(run&&!isLanGuest()){stepEntityAnimations(state.entities,dt,{mode:workspace.mode,onEvent:animationEvent});warScriptRuntime.late();if(!isolated)webScriptRuntime.late();}captureWebComponents(state.entities,sequenceRuntime.globals)}
+function finishBrowserFrame(dt,update,run,isolated=false){if(run){if(!isLanGuest()){if(!isolated)webScriptRuntime.update(dt,scriptContext());warScriptRuntime.update(dt,scriptContext());}updateComponentRuntime(dt)}update?.(dt);
+ if(run&&!isLanGuest()&&workspace.mode==='2d'&&gameIsRunning()){
+  for(const event of physicsContactEvents2d.update(state.entities)){
+   warScriptRuntime.contact(event);
+   emitSequenceSignal('physics2d:'+event.kind+':'+event.stage+':'+event.ownerId,event.otherId);
+  }
+ }
+ if(run&&!isLanGuest()){stepEntityAnimations(state.entities,dt,{mode:workspace.mode,onEvent:animationEvent});warScriptRuntime.late();if(!isolated)webScriptRuntime.late();}captureWebComponents(state.entities,sequenceRuntime.globals)}
 export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
  if(!state.playing||runtimeSession.phase==='error')return false;
  if(runtimeSession.phase==='stopped'){update?.(dt);return true} // standalone tools/tests

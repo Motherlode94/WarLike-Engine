@@ -10,6 +10,7 @@ import {defaultSimulationNode} from './simulation-nodes.js';
 import {defaultTacticalUnit} from './rts-orders.js';
 import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
 import {defaultCameraRig} from './play-camera.js';
+import {defaultSceneCamera2d} from './scene-camera-2d.js';
 import {defaultSceneCamera} from './scene-camera-3d.js';
 import {defaultUiCanvas,defaultUiRect,defaultUiElement} from './ui-canvas-layout.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController} from './gameplay-components.js';
@@ -37,6 +38,7 @@ export const webComponentDefinitions=[
  {id:'uiRect',name:'UI RectTransform',category:'Interface du jeu',description:'Ancres, pivot, taille et position d’un objet UI rattaché au Canvas.',create:defaultUiRect},
  {id:'uiElement',name:'UI Element · Panel / Text / Button',category:'Interface du jeu',description:'Données du contrôle UI ; boutons et événements ne sont pas encore activés en Play.',create:defaultUiElement},
  {id:'sceneCamera3d',name:'Camera · Scene (Main Camera)',category:'Caméra',description:'Caméra native de scène, priorités, projection perspective et modes fixe/suivi. Active en Game/Play et export.',modes:['3d'],create:defaultSceneCamera},
+ {id:'camera2d',name:'Camera 2D · Scène',category:'Caméra',description:'Caméra native orthographique pour scène 2D : suivi joueur, zoom, décalage et pixel perfect.',modes:['2d'],create:defaultSceneCamera2d},
  {id:'cameraRig',name:'Caméra de jeu',category:'Caméra',description:'Suivi fluide, distance, sensibilité et évitement des obstacles.',create:defaultCameraRig},
  {id:'stats',name:'Stats · Santé et endurance',category:'Personnage',description:'Santé, endurance et régénération.',create:defaultStats},
  {id:'inventory',name:'Inventaire',category:'Personnage',description:'Objets, capacité et équipement.',create:defaultInventory},

@@ -120,7 +120,7 @@ const shader=(gl,type,text)=>{
  const sh=gl.createShader(type);gl.shaderSource(sh,text);gl.compileShader(sh);
  if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh)||'Erreur shader');return sh;
 };
-const program3d=gl=>{
+export const program3d=gl=>{
  const derivatives=!!gl.getExtension("OES_standard_derivatives");
  const vs=`precision highp float;
  attribute vec3 aPosition;attribute vec3 aNormal;attribute vec2 aTexcoord;varying vec2 vTexcoord;attribute vec4 aVertexColor;varying vec4 vVertexColor;
@@ -159,6 +159,23 @@ const program3d=gl=>{
  uniform vec3 uLightPos[8],uLightColor[8],uLightDir[8];
  uniform float uLightPower[8],uLightRange[8],uLightCone[8],uLightSpot[8];
  varying vec3 vNormal,vWorld;
+ // glTF metallic-roughness: GGX specular distribution, correlated Smith visibility,
+ // Schlick Fresnel. All direct sources use this same energy-conserving BRDF.
+ vec3 directBRDF(vec3 base, float metal, float rough, vec3 N, vec3 V, vec3 L){
+  float NoL=max(dot(N,L),0.),NoV=max(dot(N,V),0.);
+  if(NoL<=0.||NoV<=0.)return vec3(0.);
+  vec3 H=(L+V)/max(length(L+V),.00001);
+  float NoH=max(dot(N,H),0.),VoH=max(dot(V,H),0.);
+  float alpha=rough*rough,a2=alpha*alpha;
+  // The cross product avoids cancellation at very small roughness.
+  vec3 NxH=cross(N,H);float d=dot(NxH,NxH)+NoH*NoH*a2;
+  float D=a2/(3.14159265*max(d*d,1e-14));
+  float visibility=.5/max(NoL*sqrt(NoV*NoV*(1.-a2)+a2)+NoV*sqrt(NoL*NoL*(1.-a2)+a2),.000001);
+  vec3 F0=mix(vec3(.04),base,metal);
+  vec3 F=F0+(vec3(1.)-F0)*pow(1.-VoH,5.);
+  vec3 diffuse=(vec3(1.)-F)*(1.-metal)*base/3.14159265;
+  return (diffuse+F*D*visibility)*NoL;
+ }
  void main(){
  vec4 baseColor=uColor*vVertexColor;if(uUseTexture){vec4 texel=texture2D(uBaseColorTexture,vTexcoord);baseColor*=vec4(pow(texel.rgb,vec3(2.2)),texel.a);}if(uAlphaCutoff<0.)baseColor.a=1.;else if(baseColor.a<uAlphaCutoff)discard;
  float roughness=uRoughness,metallic=uMetallic;
@@ -176,12 +193,11 @@ const program3d=gl=>{
  vec3 skyLight=vec3(.60,.73,.91),groundLight=vec3(.24,.27,.32);
  float ao=uHasOcclusionMap?mix(1.,texture2D(uOcclusionMap,vMaterialUV1.xy).r,uOcclusionStrength):1.;
  vec3 ambientLight=mix(groundLight,skyLight,clamp(normal.y*.5+.5,0.,1.))*uAmbient*ao;
- vec3 irradiance=ambientLight;
- irradiance+=uSunColor*uSunIntensity*max(0.,dot(normal,normalize(uSunDir)));
- vec3 viewDir=normalize(uEye-vWorld);
- vec3 localSpecular=vec3(0.);
- vec3 specularTint=mix(vec3(.04),baseColor.rgb,clamp(metallic,0.,1.));
- float specularExponent=mix(96.,8.,clamp(roughness,0.04,1.));
+ vec3 viewDir=(uEye-vWorld)/max(length(uEye-vWorld),.00001);
+ vec3 F0=mix(vec3(.04),baseColor.rgb,metallic);
+ // The hemisphere remains an approximation, not prefiltered environment IBL.
+ vec3 indirect=ambientLight*(baseColor.rgb*(1.-metallic)+F0*.25);
+ vec3 direct=directBRDF(baseColor.rgb,metallic,roughness,normal,viewDir,normalize(uSunDir))*uSunColor*uSunIntensity;
  for(int i=0;i<8;i++){
   if(i>=uLightCount)break;
   vec3 displacement=uLightPos[i]-vWorld;
@@ -190,26 +206,19 @@ const program3d=gl=>{
   float decay=pow(max(0.,1.-dist/max(uLightRange[i],.01)),2.);
   float cone=1.;
   if(uLightSpot[i]>.5){
-   float alignment=dot(normalize(-L),normalize(uLightDir[i]));
+   float alignment=dot(-L,normalize(uLightDir[i]));
    cone=smoothstep(uLightCone[i]-.12,uLightCone[i],alignment);
   }
-  float NdotL=max(0.,dot(normal,L));
-  irradiance+=uLightColor[i]*uLightPower[i]*NdotL*decay*cone;
-  // The original shader added specular highlights for the sun only.
-  // Point and spot sources now illuminate roughness/metallic materials too.
-  vec3 halfVector=normalize(L+viewDir);
-  localSpecular+=uLightColor[i]*uLightPower[i]*pow(max(0.,dot(normal,halfVector)),specularExponent)*NdotL*decay*cone;
+  direct+=directBRDF(baseColor.rgb,metallic,roughness,normal,viewDir,L)*uLightColor[i]*uLightPower[i]*decay*cone;
  }
  vec3 flashRay=vWorld-uFlashPos;
  float flashDist=length(flashRay);
- float flashCone=smoothstep(.78,.94,dot(normalize(flashRay),normalize(uFlashDir)));
+ vec3 flashDirection=flashRay/max(flashDist,.001);
+ float flashCone=smoothstep(.78,.94,dot(flashDirection,normalize(uFlashDir)));
  float flashFalloff=pow(max(0.,1.-flashDist/16.),2.);
- irradiance+=vec3(1.,.92,.72)*uFlashPower*flashCone*flashFalloff*max(0.,dot(normal,-normalize(flashRay)));
- vec3 reflected=reflect(-normalize(uSunDir),normal);
- float gloss=pow(max(0.,dot(reflected,viewDir)),mix(48.,5.,clamp(roughness,0.04,1.)));
- vec3 specular=mix(vec3(.18),baseColor.rgb,clamp(metallic,0.,1.))*gloss*uSunIntensity*(1.-roughness*.75);
+ direct+=directBRDF(baseColor.rgb,metallic,roughness,normal,viewDir,-flashDirection)*vec3(1.,.92,.72)*uFlashPower*flashCone*flashFalloff;
  vec3 emissive=uEmissive;if(uHasEmissiveMap)emissive*=pow(texture2D(uEmissiveMap,vMaterialUV1.zw).rgb,vec3(2.2));
- vec3 lit=(uUnlit?baseColor.rgb:baseColor.rgb*(1.-metallic)*clamp(irradiance,0.,3.0)+specular+specularTint*localSpecular*(1.-roughness*.65)+specularTint*ambientLight*.25)+emissive;
+ vec3 lit=(uUnlit?baseColor.rgb:indirect+direct)+emissive;
  float fog=1.-exp(-pow(max(0.,length(uEye-vWorld)-22.)*uFogDensity,2.));
  vec3 fogged=mix(lit,vec3(.24,.34,.43),clamp(fog,0.,.87));
  vec3 exposed=fogged*uExposure;
@@ -735,33 +744,52 @@ export function init3d(canvas,host,buttons){
    objects.sort((a,b)=>depth(a)-depth(b)||order.get(a.id)-order.get(b.id));
   }
   if(state.playing&&survivalPlacement.active&&survivalPlacement.entity)objects.push(survivalPlacement.entity);
-  // Depth buffering resolves overlapping faces, including the composite mesh parts.
+  // Draw opaque surfaces first, then alpha surfaces across ALL entities.
+  // Camera-space depth (not radial distance) keeps side-on surfaces ordered.
+  const transparentDraws=[];
+  const submit=(position,draw,transparent=false,object=null)=>{
+   if(transparent){
+    // Use the same affine correction as the vertex shader for parented meshes.
+    let world=position;
+    try{const m=object&&affineCorrection3d(object);if(m)world=[0,1,2].map(i=>m[i]*position[0]+m[i+4]*position[1]+m[i+8]*position[2]+m[i+12])}catch{}
+    transparentDraws.push({depth:V.dot(V.sub(world,cam.eye),cam.forward),draw});
+   }else draw();
+  };
   bind(cubes);
   for(const o of objects){
    const b=objectBounds3d(o),color=assetColor(o),asset=getAsset(o.assetId),category=asset?.category;
    const angle=(o.rotation||0)*Math.PI/180;
-   gl.uniform1f(u.roughness,Math.max(.04,Math.min(1,Number(o.materialRoughness??.7))));
-   gl.uniform1f(u.metallic,Math.max(0,Math.min(1,Number(o.materialMetallic??0))));
    if(o.water3d?.enabled){
-    const water=waterSettings(o.water3d),surface=waterSurface3d(b.w,b.d,now/1000,water);
-    gl.bindBuffer(gl.ARRAY_BUFFER,waterMesh.buffer);gl.bufferData(gl.ARRAY_BUFFER,surface,gl.DYNAMIC_DRAW);waterMesh.count=surface.length/6;
-    bind(waterMesh);gl.uniform1i(useTexture,0);gl.uniform1f(alphaCutoff,.01);gl.uniform1i(unlitUniform,0);gl.uniform3fv(emissiveUniform,water.style==='magic'?[.09,.18,.22]:[.015,.045,.08]);
-    gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
-    gl.uniform1f(u.roughness,.2);gl.uniform1f(u.metallic,.08);
-    model([b.x,Number(o.elevation3d)||0,b.z],[1,1,1],waterColor(water.color,water.opacity),(o.rotation||0)*Math.PI/180,o);
-    gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
-    if(water.foam>0){
-     // Pale translucent crest layer with lower wave amplitude; visible
-     // on the entire surface without adding a second material/shader.
-     gl.uniform3fv(emissiveUniform,[.075,.11,.13]);
-     model([b.x,(Number(o.elevation3d)||0)+.015,b.z],[1,1,1],waterColor(water.foamColor,water.opacity*water.foam*.17),(o.rotation||0)*Math.PI/180,o);
+    submit([b.x,Number(o.elevation3d)||0,b.z],()=>{
+     const water=waterSettings(o.water3d),surface=waterSurface3d(b.w,b.d,now/1000,water);
+     gl.bindBuffer(gl.ARRAY_BUFFER,waterMesh.buffer);gl.bufferData(gl.ARRAY_BUFFER,surface,gl.DYNAMIC_DRAW);waterMesh.count=surface.length/6;
+     bind(waterMesh);gl.uniform1i(useTexture,0);gl.uniform1f(alphaCutoff,.01);gl.uniform1i(unlitUniform,0);gl.uniform3fv(emissiveUniform,water.style==='magic'?[.09,.18,.22]:[.015,.045,.08]);
+     gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
+     gl.uniform1f(u.roughness,.2);gl.uniform1f(u.metallic,.08);
+     model([b.x,Number(o.elevation3d)||0,b.z],[1,1,1],waterColor(water.color,water.opacity),(o.rotation||0)*Math.PI/180,o);
      gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
-    }
-    gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform3fv(emissiveUniform,[0,0,0]);
+     if(water.foam>0){
+      // Pale translucent crest layer with lower wave amplitude; visible
+      // on the entire surface without adding a second material/shader.
+      gl.uniform3fv(emissiveUniform,[.075,.11,.13]);
+      model([b.x,(Number(o.elevation3d)||0)+.015,b.z],[1,1,1],waterColor(water.foamColor,water.opacity*water.foam*.17),(o.rotation||0)*Math.PI/180,o);
+      gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
+     }
+     gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform3fv(emissiveUniform,[0,0,0]);
+    },true,o);
     continue;
    }
    const shape=o.model3dId?'glb':get3dAsset(o.assetId)?.shape;
-   const drawShape=(mesh,p,scale,shade)=>{bind(mesh);if(o._survivalPreview){gl.uniform1f(alphaCutoff,.01);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}model(p,scale,o._survivalPreview?[...shade.slice(0,3),.5]:shade,angle,o);gl.drawArrays(gl.TRIANGLES,0,mesh.count);if(o._survivalPreview)gl.depthMask(true)};
+   const drawShape=(mesh,p,scale,shade,{roughness=o.materialRoughness??.7,metallic=o.materialMetallic??0,vertices=null}={})=>{
+    // Shared GLB buffers may belong to differently posed instances. Upload the
+    // captured pose at draw time, including in the delayed transparency pass.
+    submit(p,()=>{
+     if(vertices){gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,vertices)}
+     gl.uniform1f(u.roughness,clamp(Number(roughness),.04,1));gl.uniform1f(u.metallic,clamp(Number(metallic),0,1));
+     bind(mesh);if(o._survivalPreview){gl.uniform1f(alphaCutoff,.01);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}
+     model(p,scale,o._survivalPreview?[...shade.slice(0,3),.5]:shade,angle,o);gl.drawArrays(gl.TRIANGLES,0,mesh.count);
+    },mesh.alphaMode==='BLEND'||!!o._survivalPreview,o);
+   };
    const cube=(p,scale,shade)=>drawShape(cubes,p,scale,shade);
    const round=(p,scale,shade)=>drawShape(sphere,p,scale,shade);
    const cyl=(p,scale,shade)=>drawShape(cylinder,p,scale,shade);
@@ -828,14 +856,13 @@ export function init3d(canvas,host,buttons){
       }
      }
      if(posed){animatedHitVertices.set(o,posed);meshSnapCache.delete(o)}else animatedHitVertices.delete(o);
-     for(const [partIndex,part] of [...cached.parts.entries()].sort(([,a],[,b])=>Number(a.mesh.alphaMode==='BLEND')-Number(b.mesh.alphaMode==='BLEND'))){
-      if(posed){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,posed[partIndex])}
-      else if(rig){gl.bindBuffer(gl.ARRAY_BUFFER,part.mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,cached.geometry.parts[partIndex].vertices)}
+     for(const [partIndex,part] of cached.parts.entries()){
+      const vertices=posed?.[partIndex]||(rig?cached.geometry.parts[partIndex].vertices:null);
       const material=o.colorCustomized?color:part.color;
-      gl.uniform1f(u.roughness,Math.max(.04,Math.min(1,Number(o.materialRoughness??part.roughness??1))));
-      gl.uniform1f(u.metallic,Math.max(0,Math.min(1,Number(o.materialMetallic??part.metallic??0))));
       const size=cached.normalizedSize||[1,1,1],scale=Math.min(b.w/size[0],b.h/size[1],b.d/size[2]);
-      drawShape(part.mesh,[b.x,(Number(o.elevation3d)||0)+size[1]*scale/2,b.z],[scale,scale,scale],material);
+      drawShape(part.mesh,[b.x,(Number(o.elevation3d)||0)+size[1]*scale/2,b.z],[scale,scale,scale],material,{
+       roughness:o.materialRoughness??part.roughness??1,metallic:o.materialMetallic??part.metallic??0,vertices
+      });
      }
     }else{
      // Never substitute an unrelated cube for an actual GLB asset.
@@ -923,6 +950,9 @@ export function init3d(canvas,host,buttons){
     for(const x of [-.2,.2])cube([b.x+b.w*x,b.y-b.h*.53,b.z],[b.w*.27,b.h*.38,b.d*.28],[.24,.32,.38,1]);
    }
   }
+  transparentDraws.sort((a,b)=>b.depth-a.depth);
+  for(const entry of transparentDraws)entry.draw();
+  gl.depthMask(true);gl.disable(gl.BLEND);
   if(!state.playing)tickFxRuntime(state.entities.filter(o=>o.fxEmitter?.preview),dt,'3d');
   fxRenderer.draw(cam,w,h,state.playing?state.entities:[]);
   if(!state.playing){gl.useProgram(program);bind(outline);for(const o of objects.filter(o=>state.selected.includes(o.id))){const b=objectBounds3d(o);model([b.x,b.y,b.z],[b.w*1.03,b.h*1.03,b.d*1.03],[.32,1,.8,1],(o.rotation||0)*Math.PI/180,o);gl.drawArrays(gl.LINES,0,outline.count)}}

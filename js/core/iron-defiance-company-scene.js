@@ -3,6 +3,7 @@
 import {prefab3d} from '../assets/catalog-3d.js';
 import {defaultStats,defaultController,defaultInventory} from './gameplay-components.js';
 import {defaultTacticalUnit} from './rts-orders.js';
+import {IRON_DOCTRINES,factionTacticalConfig} from './iron-defiance-doctrines.js';
 import {FACTIONS,createUniform,applyUniform} from './iron-defiance-uniforms.js';
 import {createSquad,appoint,TEAM_NAMES,STANDARD_SQUAD} from '../../examples/iron-defiance/force-organization.js';
 export const SQUAD_SPECIALTIES=Object.freeze(['assault','recon','anti-tank','fire-support','engineer','medic']);
@@ -12,7 +13,7 @@ const medal=role=>role==='medic'?'medic':role==='engineer'?'engineer':'infantry'
 export function createIronDefianceCompanyScene(mode='3d',faction='rdc'){
  if(mode!=='3d')throw Error('Iron Defiance Company exige un projet 3D.');
  if(!FACTIONS[faction])throw Error('Faction inconnue : '+faction);
- const entities=[],squads=[],company={id:'company-01',faction,platoons:[]};
+ const entities=[],squads=[],company={id:'company-01',faction,doctrine:IRON_DOCTRINES[faction].signature,platoons:[]};
  function add(asset,name,x,y,props={}){
   const object=prefab3d(asset,entities.length+1,x,y);if(!object)throw Error('Ressource 3D manquante : '+asset);
   Object.assign(object,{id:entities.length+1,name,hierarchyGroup:'Iron Defiance / Compagnie',hideLabelInPlay:true,playable3d:false,...props});
@@ -48,7 +49,7 @@ export function createIronDefianceCompanyScene(mode='3d',faction='rdc'){
       hierarchyGroup:group+' / '+team,
       tags:['iron-soldier','iron-'+team.toLowerCase(),'iron-company-unit','iron-'+specialty],
       team:1,stats:defaultStats(),collision3d:true,solid3d:false,
-      tacticalUnit:{...defaultTacticalUnit(),autoAttack:false,passFriendlyUnits:true,speed:95}
+      tacticalUnit:factionTacticalConfig(faction,specialty,{...defaultTacticalUnit(),autoAttack:false,passFriendlyUnits:true,speed:95})
      });
      applyUniform(soldier,createUniform(faction,{
       role:index===0?'officer':medal(role),
@@ -82,7 +83,7 @@ export function createIronDefianceCompanyScene(mode='3d',faction='rdc'){
  }
  commander.adventure={title:'IRON DEFIANCE · '+FACTIONS[faction].title,combatEnabled:false,items:[],notes:[],
   demo:{id:'ironcompany-'+faction,title:'Iron Defiance · Compagnie '+FACTIONS[faction].name,
-   description:'3 pelotons, 9 escouades, 108 soldats natifs éditables ; 7 factions disponibles comme scènes alternatives.',
+   description:'3 pelotons, 9 escouades, 108 soldats. Doctrine '+IRON_DOCTRINES[faction].style+' ; 7 factions aux statistiques distinctes.',
    features:['108 soldats','3 pelotons','9 escouades','Alpha 5 / Beta 4 / Delta 3','WarNode → RTS'],
    steps:[]}};
  commander.sequence={enabled:true,event:'start',once:true,instructions:[

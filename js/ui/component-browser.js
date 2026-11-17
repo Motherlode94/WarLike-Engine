@@ -5,7 +5,7 @@ import {workspace} from '../core/workspaces.js';
 const make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;return el};
 // The Add Component picker lists every component supported by the current
 // project mode. Existing entities and unknown legacy component data are untouched.
-const featuredKinds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','cameraRig','controller2d','controller3d','animatorGraph','ai','sequence','stats','inventory','webScripts','warScripts']);
+const featuredKinds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','cameraRig','controller2d','controller3d','animatorGraph','ai','sequence','stats','inventory','webScripts','warScripts','interactable']);
 const nativePrimaryKinds=new Set(['Rigidbody']);
 export const componentBrowserCategory=option=>{
  if(option.id==='script')return 'Scripts';

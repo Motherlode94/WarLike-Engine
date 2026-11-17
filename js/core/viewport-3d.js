@@ -435,6 +435,17 @@ export function init3d(canvas,host,buttons){
  const cameraTransition=new CameraTransition3d();
  let transitionPose=null;
  const currentSceneCameraPose=()=>transitionPose||sceneCameraView(activeSceneCamera(state.entities),state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});
+ // The interaction ray starts at the actor's eye, not behind the character's TPS camera.
+ const interactionRay3d=()=>{
+  const actor=playableActor(state.entities);
+  if(!actor)return null;
+  const pose=currentSceneCameraPose();
+  const yaw=view3d.yaw,pitch=view3d.pitch;
+  const direction=pose?.forward||[-Math.sin(yaw)*Math.cos(pitch),-Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];
+  return {origin:[(Number(actor.x)||0)/64+(Number(actor.w)||0)/128,
+    (Number(actor.elevation3d)||0)+(Number(actor.h)||64)/64*.85,
+    (Number(actor.y)||0)/64+(Number(actor.depth3d??actor.h)||64)/128],direction};
+ };
  const update3dPlay=dt=>{
   if(!gameIsRunning()||companyController(state.entities))return;
   tickBattlefield(state.entities,dt,{keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,onPlayerRespawn:resetDriving3d});
@@ -722,7 +733,7 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&!wasPlaying)enterPlay();
   if(!state.playing&&wasPlaying){view3d.followPlayer=false;view3d.drag=null;if(editorCamera)Object.assign(view3d,editorCamera);editorCamera=null;if(document.pointerLockElement===canvas)document.exitPointerLock?.();resetDriving3d();stopRapier();}
   wasPlaying=state.playing;
-  if(state.playing&&workspace.mode==='3d'&&!isLanGuest()){runRuntimeFrame(dt,{update(dt){update3dPlay(dt);updateSequences(dt,{mode:'3d',yaw:view3d.yaw,playing:true,entities:state.entities,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}});}
+  if(state.playing&&workspace.mode==='3d'&&!isLanGuest()){runRuntimeFrame(dt,{update(dt){update3dPlay(dt);updateSequences(dt,{mode:'3d',yaw:view3d.yaw,interactionRay:interactionRay3d(),playing:true,entities:state.entities,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}});}
   if(state.playing&&gameIsRunning()&&view3d.followPlayer){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),pt=playerTarget();if(pt){const cut=actor!==lastCameraActor||gameSession.currentSceneId!==lastCameraScene||Math.hypot(...V.sub(pt,view3d.target))>12,t=cut?1:cameraDamping(cameraRigFor(actor).followSharpness,dt);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t));if(cut)boomDistance=null}lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;}
   if(state.playing&&workspace.mode==='3d'){
    const selectedCamera=activeSceneCamera(state.entities);

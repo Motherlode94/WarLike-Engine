@@ -21,7 +21,7 @@ export class CameraTransition3d {
  reset(){this.activeId=null;this.from=null;this.elapsed=0;this.last=null}
  update(camera,desired,dt){
   if(!desired){this.reset();return null}
-  const id=camera?.id??null;
+  const id=camera?String(camera.id)+':'+String(camera.sceneCamera3d?.mode||'fixed'):null;
   if(this.activeId!==id){
    this.from=this.last;
    this.activeId=id;this.elapsed=0;

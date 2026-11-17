@@ -10,7 +10,7 @@ Dans **WarLike Editor → 2D → + Créer → Objets 2D** :
 | --- | --- |
 | **Main Camera 2D** | GameObject portant `camera2d`, repère visible et sélectionnable en Scene View |
 | **Joueur 2D** | `type: player`, `controller2d` top-down et `collider2d` |
-| **Sprite / Rectangle** | Rectangle 2D avec couleur réglable ; un véritable SpriteRenderer avec asset importé reste à compléter |
+| **Sprite / Rectangle** | Rectangle 2D avec composant **SpriteRenderer2D** (ordre de dessin et opacité) ; la prise en charge complète des matériaux/sprite sheets reste à développer |
 | **Plateforme solide** | Rectangle large + `collider2d` |
 | **Zone Trigger 2D** | Collider 2D `isTrigger: true` pour les interactions futures |
 | **Corps physique 2D** | Objet avec `rigidbody2d` et `collider2d` |
@@ -36,7 +36,7 @@ WarLike dispose déjà de `collider2d`, `rigidbody2d`, `controller2d`, avec mode
 
 ## À compléter pour atteindre Unity 2D
 
-1. Un **SpriteRenderer typé**, avec références d'assets, ordre de rendu, flip, tint et matériau.
+1. Compléter **SpriteRenderer2D** : le composant expose désormais ordre de dessin et opacité ; il manque les références d'assets, flip typé, tint et matériaux.
 2. Un véritable **Tilemap Editor** (palette, pinceau, effaceur, grille, collisions, calques, Undo et export).
 3. **Camera2D dédiée dans l'Inspector** : choix de cible par nom/Hierarchy, limites de suivi, viewport preview, parallax et zoom cinématique.
 4. Animation de sprites : Sprite Sheet slicer, clips, frame events, Animator 2D et transitions.
@@ -48,3 +48,7 @@ Les modèles et fonctions manquantes ne sont pas annoncés comme déjà opérati
 ## Tests
 
 `tests/scene-camera-2d.test.mjs` couvre priorité de Camera2D, activation, choix de la cible, suivi, zoom et interpolation. Compléter par des tests en navigateur pour les vues d'édition, Play/Stop, Inspector, export et collisions.
+
+### Renderer 2D : ordre de dessin
+
+Le composant `spriteRenderer2d` expose `sortingOrder` (nombre ; valeurs faibles derrière, élevées devant), `opacity` entre `0` et `1` et `enabled`. Le Canvas2D respecte cet ordre de dessin sur les entités de la scène tout en conservant l'ordre d'insertion lorsque les valeurs sont identiques. La valeur de l'Inspector n'est pas encore une couche Unity `SortingLayer` complète.

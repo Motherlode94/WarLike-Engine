@@ -32,7 +32,7 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
  const fields=new Map(ast.fields.map(f=>[f.name,f.type]));
  const methods=new Set(Object.keys(ast.methods));
  for(const name of [...fields.keys(),...methods]){
-  if(!validIdent(name))errors.push({severity:'error',line:1,column:1,message:'Identifiant non compatible C# : '+name});
+  if(!validIdent(name)||name==='__warLikeLoopBudget')errors.push({severity:'error',line:1,column:1,message:'Identifiant non compatible C# : '+name});
  }
  const read=(node,scope)=>{
   if(scope.has(node.name)||fields.has(node.name))return node.name;
@@ -138,6 +138,10 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
    if(node.value)fail(node,'Les méthodes WarScript sont void ; return avec valeur non convertible');
    return pad+'return;';
   }
+  if(node.kind==='while'){
+   const bodyScope=new Set(scope);
+   return pad+'while ('+expr(node.condition,scope)+') {\n'+pad+'    if (--__warLikeLoopBudget < 0) throw new InvalidOperationException("WarScript loop budget exceeded");\n'+node.body.map(n=>statement(n,bodyScope,indent+1)).join('\n')+'\n'+pad+'}';
+  }
   if(node.kind==='if'){
    const thenScope=new Set(scope),elseScope=new Set(scope);
    const yes=node.yes.map(n=>statement(n,thenScope,indent+1)).join('\n');
@@ -151,12 +155,15 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
   'public sealed class '+className+' : MonoBehaviour','{'];
  for(const f of ast.fields){
   if(f.type==='var'){fail(f,'Les champs var WarScript ne disposent pas de type C# statique. Utilise float/int/bool/string/Vector3.');continue}
+  if(f.serialized&&!f.public)out.push('    [SerializeField]');
   out.push('    '+(f.public?'public':'private')+' '+typeName(f.type)+' '+f.name+' = '+expr(f.value,new Set(fields.keys()))+';');
  }
  if(ast.fields.length)out.push('');
  for(const [name,body] of Object.entries(ast.methods)){
   out.push('    '+(['Awake','Start','Update','FixedUpdate','LateUpdate','OnEnable','OnDisable','OnDestroy'].includes(name)?'private':'public')+' void '+name+'()','    {');
   const scope=new Set(fields.keys());
+  const containsWhile=nodes=>nodes.some(n=>n.kind==='while'||n.kind==='if'&&(containsWhile(n.yes)||containsWhile(n.no)));
+  if(containsWhile(body))out.push('        int __warLikeLoopBudget = 4096;');
   for(const n of body)out.push(statement(n,scope));
   out.push('    }','');
  }

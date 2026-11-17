@@ -51,6 +51,33 @@ Les conditions `if` / `else`, `return`, affectations `=`, `+=`, `-=`, `*=`, `/=`
 
 Un composant désactivé ne reçoit plus les mises à jour. Pause suspend le traitement ; les menus et journaux filtrent les touches lorsque l’interface accapare les entrées. Les champs d’instance sont sérialisés dans la sauvegarde de partie, et Stop restaure la scène d’édition. En coop, seul l’hôte exécute les WarScripts.
 
+## Mode Unity — classe MonoBehaviour compatible
+
+WarScript accepte désormais la forme **C# inspirée d'Unity** suivante, toujours interprétée par la VM WarScript bornée :
+
+```csharp
+public class HeroController : MonoBehaviour {
+    [SerializeField] private float speed = 3;
+    public int steps = 0;
+
+    void Awake() { Log("Hero prêt"); }
+    void Start() { Log("Début"); }
+    void Update() {
+        transform.Translate(speed * Time.deltaTime, 0, 0);
+        steps++;
+    }
+    void OnDestroy() { Log("Fin"); }
+}
+```
+
+- **MonoBehaviour** est le seul type de base explicitement accepté pour cette forme. Ce n'est pas un compilateur Unity/.NET.
+- `[SerializeField]` permet d'exposer à la configuration du composant un champ `private` sans rendre tous les champs privés modifiables ; les `public` restent configurables.
+- `Awake`, `OnEnable`, `Start`, `FixedUpdate`, `Update`, `LateUpdate`, `OnDisable` et `OnDestroy` conservent les garanties du runtime WarScript actuel.
+- La conversion `WarScript → C#` conserve `[SerializeField]` et génère une classe `WarLike.Runtime.MonoBehaviour` ; elle échoue explicitement pour les API non compatibles.
+- Les véritables APIs `GetComponent<T>()`, `AddComponent<T>()`, `Transform` et les messages du framework existent dans **WarLike.Runtime C#**. Leur syntaxe générique n'est **pas** interprétée dans les fichiers `.wls`. Utiliser un composant `.cs` natif pour ces besoins.
+
+**Limitation importante :** l'exécution native C# nécessite le pont local autorisé. L'export Web autonome exécute WarScript, pas automatiquement l'assemblage C#/.NET. Les contraintes d'isolation et de confiance des scripts restent obligatoires.
+
 ## API v1
 
 | API | Utilisation |
@@ -78,7 +105,7 @@ Le moteur conserve 64 unités de scène par mètre. WarScript agit sur les même
 
 ## Périmètre
 
-WarScript v1 n’est pas un compilateur C#. Il n’implémente pas les imports, bibliothèques .NET, boucles, tableaux, héritage, paramètres de méthodes, coroutines ni callbacks de collision. Pour du C# complet, choisir `.cs` et `MonoBehaviour` dans le runtime .NET.
+WarScript v2 n’est pas un compilateur C#. Il prend en charge les **boucles `while` bornées** par le budget d'exécution ainsi que la forme `class ... : MonoBehaviour`, mais n’implémente pas les imports, bibliothèques .NET, boucles `for` / `foreach`, tableaux, héritages personnalisés, paramètres de méthodes, coroutines ni callbacks de collision. Une boucle sans terminaison échoue avec un diagnostic de ligne/colonne plutôt que de bloquer l’éditeur. La conversion C# génère un compteur de sécurité pour les boucles `while`. Pour du C# complet, choisir `.cs` et `MonoBehaviour` dans le runtime .NET.
 
 Chaque script est limité à 64 Ko, 64 champs et 32 méthodes ; chaque appel de cycle de vie a un budget de 4096 opérations et une profondeur de 8 appels. Maximum : 8 scripts attachés par objet et 64 actifs par scène. Une erreur arrête le composant concerné et s’affiche dans Console ; les autres composants continuent. Corriger puis relancer Play.
 

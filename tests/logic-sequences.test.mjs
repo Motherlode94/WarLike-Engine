@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resetSequences,updateSequences,emitSequenceSignal,sequenceRuntime,newSequence,chooseSequenceBranch} from '../js/core/logic-sequences.js';
+import {warScriptRuntime} from '../js/core/war-script-runtime.js';
 const obj=(id,x=100)=>({id,x,y:100,w:32,h:32,sequence:null,color:'#8195ef'});
 const ctx=(entities,keys=new Set())=>({playing:true,entities,keys,player:{id:99,x:100,y:100,w:32,h:32}});
 test('trigger enter fires once when player enters the range',()=>{
@@ -38,4 +39,29 @@ test('IF ELSE fallback runs when first branch fails',()=>{
 test('runtime does nothing outside Play',()=>{
  resetSequences();const o=obj(1);o.sequence={...newSequence(),event:'start',instructions:[{type:'destroyObject'}]};
  const c=ctx([o]);c.playing=false;updateSequences(.016,c);assert.equal(c.entities.length,1);
+});
+
+test('ObjectInteractable dispatches one E press to WarNode and WarScript OnInteract',()=>{
+ resetSequences();warScriptRuntime.stop();
+ const player={id:99,name:'Operator',type:'player',x:0,y:0,w:20,h:20};
+ const target={id:1,name:'Switch',type:'object',x:70,y:0,w:20,h:20,
+  collision3d:false,interactable:{enabled:true,maxDistance:3},
+  sequence:{...newSequence(),event:'interact',instructions:[{type:'addVariable',key:'nodeHits',value:1}]},
+  warScripts:[{scriptId:'interaction',enabled:true,source:'int count=0; OnInteract(){ count++; Set("scriptActor",interaction.actorName); Set("scriptId",interaction.actorId); }',values:{}}]};
+ const entities=[player,target],ctx={playing:true,mode:'2d',entities,player,keys:new Set(),pressedKeys:new Set()};
+ const scripts={entities,mode:'2d',project:{scripts:[]},globals:sequenceRuntime.globals,keys:ctx.keys,pressedKeys:ctx.pressedKeys,log(){},signal(){}};
+ try{
+  warScriptRuntime.update(.016,scripts);
+  ctx.keys.add('e');updateSequences(.016,ctx);
+  assert.equal(sequenceRuntime.globals.nodeHits,1);
+  assert.equal(sequenceRuntime.globals.scriptActor,'Operator');
+  assert.equal(sequenceRuntime.globals.scriptId,99);
+  assert.equal(target.warScripts[0].runtime.fields.count,1);
+  updateSequences(.016,ctx);
+  assert.equal(sequenceRuntime.globals.nodeHits,1);
+  assert.equal(target.warScripts[0].runtime.fields.count,1);
+  ctx.keys.delete('e');updateSequences(.016,ctx);
+  target.interactable.enabled=false;ctx.keys.add('e');updateSequences(.016,ctx);
+  assert.equal(target.warScripts[0].runtime.fields.count,1);
+ }finally{warScriptRuntime.stop();resetSequences()}
 });

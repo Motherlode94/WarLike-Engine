@@ -16,7 +16,7 @@ function tokenize(source){
   if((match=/^"(?:[^"\\\r\n]|\\["\\nrt])*"/.exec(rest))){token.kind='literal';token.value=JSON.parse(match[0]);advance(match[0])}
   else if((match=/^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?f?/.exec(rest))){token.kind='literal';token.value=Number(match[0].replace(/f$/,''));if(!Number.isFinite(token.value))throw failure(token,'Nombre non fini.');advance(match[0])}
   else if((match=/^[A-Za-z_][A-Za-z_0-9]*/.exec(rest))){token.kind='id';token.value=match[0];if(blocked.has(token.value))throw failure(token,'Identifiant réservé.');advance(match[0])}
-  else if((match=/^(?:==|!=|<=|>=|&&|\|\||\+=|-=|\*=|\/=|\+\+|--|[{}();,.=+*/%!<>-])/.exec(rest))){token.kind='symbol';token.value=match[0];advance(match[0])}
+  else if((match=/^(?:==|!=|<=|>=|&&|\|\||\+=|-=|\*=|\/=|\+\+|--|[\[\]{}();,.=+*/%!<>-])/.exec(rest))){token.kind='symbol';token.value=match[0];advance(match[0])}
   else throw failure(token,'Caractère ou chaîne non reconnu : '+rest[0]);
   tokens.push(token);if(tokens.length>12000)throw failure(token,'Trop de symboles dans ce script.');
  }
@@ -50,10 +50,13 @@ export function compileWarScript(source){
    const left=expression();if(['=','+=','-=','*=','/=','++','--'].includes(peek().value)){if(left.kind!=='read')throw failure(token,'Une affectation attend une variable ou une propriété.');const op=take().value,value=['++','--'].includes(op)?{kind:'literal',value:1,token}:expression();end();return {kind:'assign',name:left.name,op,value,token}}
    if(left.kind!=='call')throw failure(token,'Appel de méthode ou affectation attendu.');end();return {kind:'expression',value:left,token};
   }
-  let wrapped=false;if(at('class')){take();id();if(at(':'))throw failure(peek(),'Une classe WarScript ne nécessite pas d’héritage.');expect('{');wrapped=true}
+  let wrapped=false,className=null;if(at('public')&&tokens[cursor+1]?.value==='class')take();if(at('class')){take();className=id().value;if(at(':')){take();const parent=path();if(parent.name!=='MonoBehaviour')throw failure(parent,'WarScript accepte uniquement l’héritage MonoBehaviour (API Unity simplifiée).');}expect('{');wrapped=true}else if(className)throw failure(peek(),'Déclaration de classe attendue.');
   while(peek().kind!=='eof'&&!(wrapped&&at('}'))){
-   let exposed=true;while(['public','private','void'].includes(peek().value)){if(take().value==='private')exposed=false}
-   if(types.has(peek().value)){const field=declaration();field.public=exposed;fields.push(field);end()}
+   let exposed=true,serialized=false;
+   if(at('[')){take();const annotation=id();if(annotation.value!=='SerializeField')throw failure(annotation,'Seul [SerializeField] est pris en charge.');expect(']');serialized=true;}
+   while(['public','private','void'].includes(peek().value)){if(take().value==='private')exposed=false}
+   if(types.has(peek().value)){const field=declaration();field.public=exposed;field.serialized=serialized;fields.push(field);end()}
+   else if(serialized)throw failure(peek(),'[SerializeField] est réservé aux champs.');
    else {const name=id();expect('(');expect(')');if(Object.hasOwn(methods,name.value))throw failure(name,'Méthode déjà définie.');methods[name.value]=block()}
   }
   if(wrapped)expect('}');if(peek().kind!=='eof')throw failure(peek(),'Fin du script attendue.');
@@ -63,7 +66,7 @@ export function compileWarScript(source){
   for(const field of fields){checkExpr(field.value,names);const constant=n=>{if(n.kind==='call'&&n.name!=='Vector3')throw failure(n.token,'Une valeur initiale doit être une constante ou un Vector3.');for(const child of [n.left,n.right,n.value,...(n.args||[])])if(child&&typeof child==='object'&&child.kind)constant(child)};constant(field.value);}
   function checkBody(body,scope){for(const node of body){if(node.kind==='declare'){checkExpr(node.value,scope);if(scope.has(node.name)||readable.has(node.name))throw failure(node.token,'Variable déjà définie : '+node.name);scope.add(node.name)}else if(node.kind==='assign'){if(!scope.has(node.name)&&!writable.has(node.name))throw failure(node.token,'Propriété non modifiable ou variable inconnue : '+node.name);checkExpr(node.value,scope)}else if(node.kind==='if'){checkExpr(node.condition,scope);checkBody(node.yes,new Set(scope));checkBody(node.no,new Set(scope))}else checkExpr(node.value,scope)}}
   for(const body of Object.values(methods))checkBody(body,new Set(names));
-  const program={ok:true,fields,methods,diagnostics:[]};createWarScriptInstance(program,{read(){throw Error('Variable initialisée avant sa déclaration.');},call:warScriptBuiltin});return program;
+  const program={ok:true,className,fields,methods,diagnostics:[]};createWarScriptInstance(program,{read(){throw Error('Variable initialisée avant sa déclaration.');},call:warScriptBuiltin});return program;
  }catch(error){return {ok:false,fields:[],methods:{},diagnostics:[{severity:'error',line:error.line||1,column:error.column||1,message:error.message}]}}
 }
 function clean(value){if(typeof value==='number'&&!Number.isFinite(value))throw Error('Le résultat numérique doit être fini.');if(typeof value==='string'&&value.length>4096)throw Error('Chaîne limitée à 4096 caractères.');if(value&&typeof value==='object'){if(!['x','y','z'].every(k=>Number.isFinite(value[k])))throw Error('Vector3 invalide.');return {x:value.x,y:value.y,z:value.z}}return value}
@@ -93,7 +96,7 @@ export function createWarScriptInstance(program,api,{values={},saved=null}={}){
   else evaluate(node.value,locals);
  }catch(error){throw error.line?error:failure(node.token,error.message)}}return null}
  function invoke(name){if(++callDepth>8){callDepth--;throw Error('Profondeur de méthodes dépassée (8 appels).');}try{return execute(program.methods[name]||[],Object.create(null))?.value??null}finally{callDepth--}}
- for(const field of program.fields){const value=saved&&Object.hasOwn(saved,field.name)?saved[field.name]:field.public&&Object.hasOwn(values,field.name)?values[field.name]:evaluate(field.value,Object.create(null));fields[field.name]=warScriptValue(field.type,structuredClone(value))}
+ for(const field of program.fields){const value=saved&&Object.hasOwn(saved,field.name)?saved[field.name]:(field.public||field.serialized)&&Object.hasOwn(values,field.name)?values[field.name]:evaluate(field.value,Object.create(null));fields[field.name]=warScriptValue(field.type,structuredClone(value))}
  return {fields,run(name){budget=4096;return invoke(name)}};
 }
 export const warScriptTemplate='// WarScript · C# simplifié · rotation en degrés/seconde\npublic float speed = 45;\n\nStart() {\n    Log("WarScript prêt !");\n}\n\nUpdate() {\n    Rotate(speed * Time.deltaTime);\n}\n';

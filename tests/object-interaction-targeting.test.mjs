@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {selectObjectInteraction} from '../js/core/object-interaction-targeting.js';
+import {addObjectComponent,componentChoices} from '../js/core/component-definitions.js';
 
 const actor={id:1,type:'player',x:0,y:0,w:20,h:20,depth3d:20,elevation3d:0};
 const object=(id,x,options={})=>({id,type:'object',x,y:0,w:20,h:20,depth3d:20,elevation3d:0,collision3d:false,solid3d:false,interactable:{enabled:true,maxDistance:3},...options});
@@ -33,4 +34,14 @@ test('3D aiming honors object-specific reach and rejects invalid direction',()=>
  const options={mode:'3d',origin:[0,1,0],direction:[1,0,0],maxDistance:4};
  assert.equal(selectObjectInteraction(actor,[actor,target],options),null);
  assert.equal(selectObjectInteraction(actor,[actor,target],{...options,direction:[0,0,0]}),null);
+});
+
+test('Interactable can be added from the native component browser in 2D and 3D',()=>{
+ for(const mode of ['2d','3d']){
+  assert.ok(componentChoices(mode).some(x=>x.id==='interactable'));
+  const entity={id:35,type:'object',x:0,y:0,w:32,h:32};
+  assert.equal(addObjectComponent(entity,'interactable',mode),true);
+  assert.deepEqual(entity.interactable,{enabled:true,maxDistance:3,prompt:'Interagir'});
+  assert.equal(addObjectComponent(entity,'interactable',mode),false);
+ }
 });

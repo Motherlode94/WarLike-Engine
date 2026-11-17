@@ -1,4 +1,5 @@
 import {nativeCameraFrustumSettings} from '../core/editor-camera-frustum-3d.js';
+import {sceneCameraTargets3d} from '../core/camera-transition-3d.js';
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 // Unity-like dedicated Inspector for the actual scene Camera used in Game/Play.
@@ -43,7 +44,18 @@ export function renderEditorCameraInspector(parent,object){
  };
  choice('mode','Mode',[['fixed','Fixed'],['thirdPerson','Third Person · souris'],['firstPerson','First Person · souris']]);
  field('priority','Priorité',-100,100,1);
- field('targetId','ID de la cible',0,100000000,1);
+ const targets=sceneCameraTargets3d(state.entities,object);
+ const targetRow=document.createElement('label');targetRow.className='editor-camera-property';
+ const targetLabel=document.createElement('span');targetLabel.textContent='Cible suivie';
+ const targetSelect=document.createElement('select');targetSelect.disabled=state.playing;targetSelect.setAttribute('aria-label','Camera · Cible suivie');
+ for(const item of targets){const option=document.createElement('option');option.value=String(item.id);option.textContent=item.id===0?item.name:item.name+' · #'+item.id+' ('+item.type+')';targetSelect.append(option)}
+ const saved=Number(camera.targetId)||0;
+ if(saved!==0&&!targets.some(t=>t.id===saved)){const opt=document.createElement('option');opt.value=String(saved);opt.textContent='Cible introuvable · #'+saved;opt.disabled=true;targetSelect.append(opt)}
+ targetSelect.value=String(saved);
+ targetSelect.onchange=()=>commit('targetId',Number(targetSelect.value));
+ targetRow.append(targetLabel,targetSelect);fields.append(targetRow);
+
+ field('transitionDuration','Transition caméra (s)',0,5,.1);
  field('fieldOfView','Field of View (°)',20,120,1);
  field('nearClip','Clipping Near (m)',.01,10,.01);
  field('farClip','Clipping Far (m)',20,10000,1);
@@ -53,5 +65,6 @@ export function renderEditorCameraInspector(parent,object){
  }
  toggle('enabled','Camera active');
  toggle('showFrustum','Afficher le frustum dans Scene');
+ toggle('showPreview','Afficher l’aperçu du cadrage dans Scene');
  card.append(title,fields);parent.append(card);
 }

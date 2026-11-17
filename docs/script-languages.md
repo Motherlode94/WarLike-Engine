@@ -1,3 +1,5 @@
+> **Architecture des modules :** WarLike Engine exécute les comportements des jeux ; WarLike Editor fournit Script Studio et les outils d'édition, exclus des builds autonomes. Les deux appartiennent au **même dépôt GitHub**. Voir [Référentiel UnityEngine / UnityEditor pour WarLike Web](unity-6000-6-web-architecture.md). Le C# local n'est pas du C# directement exécutable dans les exports Web.
+
 # Langages de scripts dans WarLike
 
 Le noyau Web reste en JavaScript/TypeScript. **WarScript est le langage principal de gameplay simplifié**, et les comportements peuvent aussi être écrits en JavaScript, TypeScript ou C# natif.

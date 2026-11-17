@@ -1,3 +1,13 @@
+# WarLike Engine + WarLike Editor — un moteur et son éditeur dans un seul dépôt
+
+**Référence de conception : UnityEngine / UnityEditor 6000.6, réinterprétés pour le Web.** Le dépôt `Motherlode94/WarLike-Engine` contient deux modules logiques : **WarLike Engine**, runtime qui doit faire fonctionner les jeux dans le navigateur et leurs exports, et **WarLike Editor**, application Web de création de scènes, scripts, assets et builds. L'Editor dépend de l'Engine ; **le jeu exporté ne dépend pas de l'Editor**. Il ne s'agit ni d'un second dépôt ni d'une compatibilité binaire avec Unity.
+
+**Documentation centrale :** [Architecture Web Unity 6000.6 et différence Engine / Editor](docs/unity-6000-6-web-architecture.md) · [Architecture du dépôt](ARCHITECTURE.md) · [Scripts et leurs limites](docs/script-languages.md) · [Tests Play et export](docs/runtime-acceptance.md).
+
+> Les modules existants sont à auditer avant de déclarer une parité. Le C# natif repose actuellement sur le bridge local et ne fonctionne pas tel quel dans les exports Web autonomes.
+
+---
+
 > **WarLike Corps — propriété des créations originales : Hardi MBANVU.** © 2026 Hardi MBANVU. Tous droits réservés sur les éléments originaux détenus par le titulaire. Voir [Titularité et droits](PROPRIETARY.md) et [Licences des composants tiers](THIRD_PARTY_NOTICES.md). Les dépendances et assets externes conservent leurs licences ; la publication du dépôt ne protège pas la confidentialité du code.
 
 ## Reprise des parties et fins — novembre 2026

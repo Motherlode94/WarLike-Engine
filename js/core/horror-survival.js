@@ -1,3 +1,5 @@
+import {decideCreatureAction} from './horror-creatures.js';
+import {damage,healthOf} from './gameplay-components.js';
 // Shared optional survival-horror state for both original WarLike workspaces.
 export const horror={enabled:false,flashlight:true,battery:100,fear:0,threat:0,toggleHeld:false,noise:0,alerts:[],jumpscare:0};
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
@@ -38,7 +40,7 @@ export function updateHorrorPerception(dt,player,entities,keys=new Set()){
   const hearing=70+clamp(Number(cfg?.hearingRange??220),0,1000)*horror.noise;
   // Occlusion: a solid wall blocks sight, but not a nearby loud noise.
   const blockedSight=(entities||[]).some(o=>{
-   if(o===enemy||o===player||o.collision3d===false||!(o.type==='object'||o.type==='mesh3d'||o.solid3d===true))return false;
+   if(o===enemy||o===player||o.collision3d===false||o.tags?.includes('ai-walkable')||!(o.type==='object'||o.type==='mesh3d'||o.solid3d===true))return false;
    const x0=Number(enemy.x||0),y0=Number(enemy.y||0),x1=px,y1=py;
    let lo=0,hi=1;
    for(const [origin,delta,min,max] of [[x0,x1-x0,Number(o.x||0),Number(o.x||0)+Number(o.w||0)],[y0,y1-y0,Number(o.y||0),Number(o.y||0)+Number(o.h||0)]]){
@@ -51,12 +53,38 @@ export function updateHorrorPerception(dt,player,entities,keys=new Set()){
   const ai=enemy.horrorAI??={awareness:0,searchTimer:0,lastKnown:null};
   if(spotted||heard){ai.awareness=clamp(ai.awareness+dt*(spotted?1.1:.55),0,1);ai.lastKnown={x:px,y:py};ai.searchTimer=clamp(Number(cfg?.memorySeconds??5),.1,60)}
   else{ai.awareness=clamp(ai.awareness-dt*.18,0,1);ai.searchTimer=Math.max(0,ai.searchTimer-dt)}
+  if(enemy.horrorCreature){
+   const combat=enemy.horrorCombat||{},dead=healthOf(enemy)<=0;
+   const remaining=Math.max(0,Number(ai.attackTimer)||0),cooldown=Math.max(0,Number(ai.cooldownRemaining)||0);
+   ai.attackTimer=Math.max(0,remaining-dt);
+   ai.cooldownRemaining=Math.max(0,cooldown-dt);
+   if(remaining>0&&ai.attackTimer===0&&ai.pendingAttack===true){
+    if(!dead&&!hidden&&!blockedSight&&distance<=Math.max(0,Number(combat.attackRange)||50)&&healthOf(player)>0){
+     damage(player,Math.max(0,Number(combat.damage)||0));
+     ai.lastAttackResult='hit';
+    }else ai.lastAttackResult='miss';
+    ai.pendingAttack=false;
+   }
+   const action=decideCreatureAction(enemy.horrorCreature,{visible:spotted,heard,distance},
+    {...ai,dead});
+   ai.state=action.state;
+   // Animation names are a contract; actual skeleton clips are supplied by Library.
+   ai.animationIntent=action.animation;
+   if(action.intent==='attack'){
+    ai.attackTimer=Math.max(.01,Number(combat.windup)||.5);
+    ai.cooldownRemaining=ai.attackTimer+Math.max(.1,Number(combat.cooldown)||2);
+    ai.pendingAttack=true;
+    continue;
+   }
+   if(action.state==='dead'||action.state==='attack')continue;
+  }else{
   ai.state=ai.awareness>.65?'chase':ai.searchTimer>0?'search':'patrol';
+  }
   if(ai.state==='chase'||ai.state==='search'){
    const target=ai.state==='chase'?{x:px,y:py}:ai.lastKnown;
    if(target&&distance>25){const dx2=target.x-Number(enemy.x||0),dy2=target.y-Number(enemy.y||0),len=Math.hypot(dx2,dy2)||1,speed=ai.state==='chase'?Number(cfg?.chaseSpeed??75):Number(cfg?.searchSpeed??33);
     const nx=Number(enemy.x||0)+dx2/len*speed*dt,ny=Number(enemy.y||0)+dy2/len*speed*dt;
-    const collided=(entities||[]).some(o=>o!==enemy&&o!==player&&o.collision3d!==false&&(o.type==='object'||o.type==='mesh3d'||o.solid3d===true)&&nx<Number(o.x||0)+Number(o.w||0)&&nx+Number(enemy.w||0)>Number(o.x||0)&&ny<Number(o.y||0)+Number(o.h||0)&&ny+Number(enemy.h||0)>Number(o.y||0));
+    const collided=(entities||[]).some(o=>o!==enemy&&o!==player&&o.collision3d!==false&&!o.tags?.includes('ai-walkable')&&(o.type==='object'||o.type==='mesh3d'||o.solid3d===true)&&nx<Number(o.x||0)+Number(o.w||0)&&nx+Number(enemy.w||0)>Number(o.x||0)&&ny<Number(o.y||0)+Number(o.h||0)&&ny+Number(enemy.h||0)>Number(o.y||0));
     if(!collided){enemy.x=nx;enemy.y=ny}
    }
   }

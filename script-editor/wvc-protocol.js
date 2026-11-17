@@ -19,7 +19,9 @@ export function checkIncomingFile(file){
  const extension=path.split('.').at(-1).toLowerCase();
  const language={wls:'warscript',cs:'csharp',js:'javascript',ts:'typescript'}[extension];
  if(!language||language!==file.language)throw Error('Langage non pris en charge pour le transfert vers Engine.');
- return {name:path,source:file.source,language};
+ const name=path.split('/').at(-1);
+ if(name.length>100)throw Error('Nom de script trop long pour Engine.');
+ return {name,path,source:file.source,language};
 }
 export function validSession(value){return typeof value==='string'&&/^[a-f0-9-]{36}$/i.test(value)}
 export function validRequestId(value){return validSession(value)}

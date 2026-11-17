@@ -82,7 +82,7 @@ def main(argv=None):
             report = {'ok': all(item['ok'] for item in results), 'assets': results}
             payload = json.dumps(report, ensure_ascii=False, indent=2)
             if args.output:
-                args.output.write_text(payload + '\\n', encoding='utf-8')
+                args.output.write_text(payload + '\n', encoding='utf-8')
             print(payload)
             return int(not report['ok'])
         if args.command == 'assets':

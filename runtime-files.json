@@ -16463,6 +16463,7 @@
     "js/core/runtime-capabilities.js",
     "js/core/runtime-session.js",
     "js/core/rust-gizmo-acceleration.js",
+    "js/core/scene-camera-2d.js",
     "js/core/scene-camera-3d.js",
     "js/core/scene-commands-v2.js",
     "js/core/scene-contract.js",

@@ -4,7 +4,7 @@ import {defaultSceneCamera} from './scene-camera-3d.js';
 import {defaultSceneCamera2d} from './scene-camera-2d.js';
 
 export function ensureDemoGameCamera(scene,mode,{genre=scene?.genre}={}){
- if(!scene||!Array.isArray(scene.entities)||!['2d','3d'].includes(mode))return scene;
+ if(!scene||!Array.isArray(scene.entities)||!['2d','3d'].includes(mode)||genre==='sandbox')return scene;
  // RTS battle cameras intentionally keep their dedicated high-level camera controllers.
  if(mode==='3d'&&['rts','company','battlefield'].includes(genre))return scene;
  const prop=mode==='3d'?'sceneCamera3d':'camera2d';

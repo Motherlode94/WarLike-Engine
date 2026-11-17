@@ -52,7 +52,7 @@ test('CHAMBRE 07 is loaded through the native scene loader and demo menu',()=>{
  const browser=readFileSync(new URL('../js/ui/demo-browser.js',import.meta.url),'utf8');
  assert.match(scene,/chambre07native:createChambre07Scene/);
  assert.match(browser,/id:'chambre07native'/);
- assert.match(browser,/id:'chambre07',/); // Old raycast version remains available.
+ assert.doesNotMatch(browser,/id:'chambre07',/); // Historical raycast prototype is not an Engine demo.
 });
 test('CHAMBRE 07 rejects 2D authoring to prevent silent conversion',()=>{
  assert.throws(()=>createChambre07Scene('2d'),/projet 3D/);

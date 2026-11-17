@@ -287,6 +287,7 @@ quickCreate?.addEventListener('click',event=>{
  const kind=button.dataset.quickCreate;
  const created=createSceneItem(kind,{openBlueprint:()=>document.getElementById('openBlueprint')?.click()});
  if(!created&&kind.startsWith('ui-'))window.alert('Crée ou sélectionne d’abord un Canvas.');
+ else if(!created&&['cube','sphere','cylinder','cone','plane','ramp'].includes(kind))window.alert('Active la vue 3D avant de créer cette primitive.');
  if(created)quickCreate.open=false;
 });
 mountProjectCreateBrowser();

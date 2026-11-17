@@ -1,0 +1,40 @@
+// Camera component shared by WarLike Engine Play and WarLike Editor.
+// Legacy scenes without a Camera use their existing orbit/FPS camera logic.
+import {cameraPose} from './play-camera.js';
+
+export const defaultSceneCamera=()=>({
+ enabled:true,priority:0,mode:'fixed',targetId:0,
+ fieldOfView:60,nearClip:.1,farClip:1000,
+ clearFlags:'skybox',depth:0
+});
+
+export function activeSceneCamera(entities){
+ return (entities||[]).filter(e=>e?.sceneCamera3d?.enabled!==false&&e?.sceneCamera3d&&e.enabled!==false)
+  .sort((a,b)=>(Number(b.sceneCamera3d.priority)||0)-(Number(a.sceneCamera3d.priority)||0)||a.id-b.id)[0]||null;
+}
+export function sceneCameraView(camera,entities){
+ if(!camera?.sceneCamera3d)return null;
+ const settings=camera.sceneCamera3d;
+ const position=[(Number(camera.x)||0)/64,(Number(camera.elevation3d)||0),(Number(camera.y)||0)/64];
+ let target=null;
+ if(settings.mode==='follow'){
+  const targetObject=(entities||[]).find(e=>e.id===settings.targetId)||
+   (entities||[]).find(e=>e.playable3d===true||e.type==='player');
+  if(targetObject)target=[
+   (Number(targetObject.x)||0)/64+(Number(targetObject.w)||0)/128,
+   (Number(targetObject.elevation3d)||0)+(Number(targetObject.h)||0)/128,
+   (Number(targetObject.y)||0)/64+(Number(targetObject.depth3d??targetObject.h)||0)/128
+  ];
+ }
+ if(!target){
+  const yaw=(Number(camera.rotation)||0)*Math.PI/180;
+  const pitch=(Number(camera.rotationX3d)||0)*Math.PI/180;
+  target=[position[0]-Math.sin(yaw)*Math.cos(pitch),position[1]-Math.sin(pitch),position[2]-Math.cos(yaw)*Math.cos(pitch)];
+ }
+ if(Math.hypot(...target.map((n,i)=>n-position[i]))<1e-5)return null;
+ return cameraPose(target,position);
+}
+export function cameraMovementYaw(view){
+ if(!view)return null;
+ return Math.atan2(-view.forward[0],-view.forward[2]);
+}

@@ -1,0 +1,46 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {glbVisualScale3d,glbVisualPlacement3d} from '../js/core/glb-visual-transform-3d.js';
+import {projectedAxisDrag3d,alignSceneObjects3d,snapSelected3d} from '../js/core/scene-editing-3d-tools.js';
+import {sceneCamera3d,project3d} from '../js/core/viewport-3d.js';
+
+test('GLB renderer dimensions match Inspector/collider dimensions on all axes',()=>{
+ const bounds={x:0,y:1.5,z:0,w:4,h:3,d:2};
+ const normal=[2,2,4],placement=glbVisualPlacement3d(bounds,1,normal);
+ assert.deepEqual(placement.scale,[2,1.5,.5]);
+ assert.deepEqual(placement.position,[0,2.5,0]);
+ assert.deepEqual(placement.scale.map((s,i)=>s*normal[i]),[4,3,2]);
+ assert.deepEqual(glbVisualScale3d({...bounds,w:8},normal),[4,1.5,.5]);
+ assert.deepEqual(glbVisualScale3d({...bounds,h:6},normal),[2,3,.5]);
+ assert.deepEqual(glbVisualScale3d({...bounds,d:8},normal),[2,1.5,2]);
+});
+test('rendering and GLB surface raycasting share identical visual transform',()=>{
+ const source=readFileSync(new URL('../js/core/viewport-3d.js',import.meta.url),'utf8');
+ assert.match(source,/glbVisualPlacement3d\(box,Number\(entity\.elevation3d\)/);
+ assert.match(source,/pos\.map\(\(n,i\)=>n\*glbScale\[i\]\)/);
+ assert.match(source,/glbVisualPlacement3d\(b,Number\(o\.elevation3d\)/);
+ assert.match(source,/drawShape\(part\.mesh,position,scale,material/);
+ assert.doesNotMatch(source,/scale=Math\.min\(b\.w\/size\[0\]/);
+});
+test('camera-oriented Gizmo translates in the visual direction of its handle',()=>{
+ const pivot=[1,2,3],unit=[1,0,0];
+ for(const yaw of [-2.4,-.68,.5,2.1]){
+  const camera=sceneCamera3d([0,1,0],yaw,.6,25);
+  const a=project3d(pivot,camera,1100,800);
+  const b=project3d(pivot.map((n,i)=>n+unit[i]),camera,1100,800);
+  assert.ok(a&&b);
+  const dx=b.x-a.x,dy=b.y-a.y;
+  assert.ok(projectedAxisDrag3d(a,b,dx,dy)>.95,'Drag handle outward must move positive in world');
+  assert.ok(projectedAxisDrag3d(a,b,-dx,-dy)<-.95,'Dragging in opposite visual direction reverses world motion');
+ }
+});
+test('short axes do not jump and multi-object align and grid snap remain editor-only',()=>{
+ assert.equal(projectedAxisDrag3d({x:0,y:0},{x:.1,y:0},50,0),0);
+ const objects=[{id:1,x:25,y:90,elevation3d:1},{id:2,x:115,y:170,elevation3d:2}];
+ assert.equal(alignSceneObjects3d(objects,[1,2],{axis:'x'}),1);
+ assert.equal(objects[1].x,25);
+ assert.equal(snapSelected3d(objects,[2],{step:.5}),1);
+ assert.equal(objects[1].x,32);
+ assert.equal(objects[1].elevation3d,2);
+});

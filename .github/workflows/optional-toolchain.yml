@@ -1,0 +1,40 @@
+name: WarLike optional toolchain checks
+
+on:
+  pull_request:
+    paths:
+      - 'python/asset_audit.py'
+      - 'python/test_asset_audit.py'
+      - 'python/warlike.py'
+      - 'rust/geometry-kernel/**'
+      - 'native/build-rust-wasm.sh'
+      - 'js/core/rust-gizmo-acceleration.js'
+      - 'tests/rust-gizmo-fallback.test.mjs'
+      - '.github/workflows/optional-toolchain.yml'
+  workflow_dispatch:
+
+jobs:
+  python-glb-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m unittest discover -s python -p test_asset_audit.py
+      - run: python python/warlike.py audit-glb assets/free/kenney/mini-characters/character-male-a.glb
+
+  rust-geometry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - run: cargo test --manifest-path rust/geometry-kernel/Cargo.toml
+      - run: sh native/build-rust-wasm.sh
+      - run: test -s native/dist/warlike_geometry_kernel.wasm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/rust-gizmo-fallback.test.mjs

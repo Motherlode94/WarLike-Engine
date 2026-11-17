@@ -60,6 +60,9 @@ def main(argv=None):
     check = commands.add_parser('validate', help='Valider une scène ou un projet JSON exporté.')
     check.add_argument('file', type=Path)
     commands.add_parser('assets', help='Compter les modèles et vérifier leurs fichiers locaux.')
+    glb = commands.add_parser('audit-glb', help='Analyser les GLB Meshy/Library avant importation dans Engine.')
+    glb.add_argument('files', nargs='+', type=Path)
+    glb.add_argument('--output', type=Path, help='Écrire un rapport JSON pour la toolchain.')
     commands.add_parser('manifest', help='Reconstruire le manifeste des exports Web.')
     commands.add_parser('build-native', help='Compiler C++ en WASM (Emscripten requis).')
     commands.add_parser('csharp', help='Lancer le bridge .NET 8 local (SDK requis).')
@@ -73,6 +76,15 @@ def main(argv=None):
             errors = validate(json.loads(args.file.read_text(encoding='utf-8')))
             print(json.dumps({'ok': not errors, 'errors': errors}, ensure_ascii=False, indent=2))
             return int(bool(errors))
+        if args.command == 'audit-glb':
+            from asset_audit import inspect_glb
+            results = [inspect_glb(path) for path in args.files]
+            report = {'ok': all(item['ok'] for item in results), 'assets': results}
+            payload = json.dumps(report, ensure_ascii=False, indent=2)
+            if args.output:
+                args.output.write_text(payload + '\n', encoding='utf-8')
+            print(payload)
+            return int(not report['ok'])
         if args.command == 'assets':
             totals, missing = {}, []
             for author in ('kenney', 'quaternius'):

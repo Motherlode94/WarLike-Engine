@@ -24,7 +24,18 @@ test('follow Camera looks at selected GameObject and survives a missing target',
  const c=camera(1),player={id:7,type:'player',x:64,y:0,w:64,h:128,depth3d:64,elevation3d:0};
  c.sceneCamera3d.mode='follow';c.sceneCamera3d.targetId=7;
  const pose=sceneCameraView(c,[c,player]);
- assert.ok(pose.forward[0]>0);
+ assert.ok(pose.forward[2]<0);
+ const previousEye=[...pose.eye];player.x+=64;
+ const moved=sceneCameraView(c,[c,player]);
+ assert.ok(moved.eye[0]>previousEye[0]+.9,'Follow Camera tracks player in world space');
  c.sceneCamera3d.targetId=5000;
  assert.ok(sceneCameraView(c,[c,player]));
+});
+
+test('first-person camera tracks player eyes and respects mouse yaw',()=>{
+ const c=camera(1),player={id:4,type:'player',x:0,y:0,w:64,h:128,depth3d:64,elevation3d:0};
+ c.sceneCamera3d.mode='firstPerson';c.sceneCamera3d.targetId=4;
+ const view=sceneCameraView(c,[c,player],{yaw:Math.PI/2,pitch:0});
+ assert.ok(view.forward[0]<-.99);
+ assert.ok(Math.abs(cameraMovementYaw(view)-Math.PI/2)<1e-5);
 });

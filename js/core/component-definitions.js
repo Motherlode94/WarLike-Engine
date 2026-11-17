@@ -31,6 +31,7 @@ export const webComponentDefinitions=[
  {id:'fxEmitter',name:'Émetteur FX',category:'Effets visuels',description:'Énergie, feu, électricité, fumée, soin et portail en 2D/3D.',create:defaultFxEmitter},
  {id:'simulationNode',name:'Simulation · Réseau et monde',category:'Simulation',description:'Destruction, matériaux, réparation, réseau énergétique et civils.',create:defaultSimulationNode},
  {id:'tacticalUnit',name:'Unité tactique RTS',category:'RTS',description:'Déplacement A*, suivi, défense et attaque d’escouade.',create:defaultTacticalUnit},
+ {id:'spriteRenderer2d',name:'Sprite Renderer 2D',category:'Rendering',description:'Ordre de dessin et opacité du sprite/rectangle de l’objet 2D.',modes:['2d'],create:()=>({enabled:true,sortingOrder:0,opacity:1})},
  {id:'collider2d',name:'Box Collider 2D',category:'Physique',description:'Collision solide ou trigger, dimensions et décalage.',modes:['2d'],create:defaultCollider2d},
  {id:'rigidbody2d',name:'Rigidbody 2D',category:'Physique',description:'Gravité, vitesse, rebond et friction.',modes:['2d'],create:defaultRigidbody2d},
  {id:'controller2d',name:'Contrôleur de personnage 2D',category:'Personnage',description:'Vue du dessus ou plateforme avec gravité et saut.',modes:['2d'],create:defaultController2d},

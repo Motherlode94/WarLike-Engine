@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ContactEvents2d} from '../js/core/physics-contact-events-2d.js';
 import {compileWarScript,createWarScriptInstance} from '../script-editor/warscript.js';
+import {resetSequences,updateSequences,emitSequenceSignal,sequenceRuntime} from '../js/core/logic-sequences.js';
+import {createGraph,applyGraph} from '../js/core/blueprint-graph.js';
 
 const sensor={id:1,name:'Sensor',type:'object',x:0,y:0,w:48,h:48,collider2d:{enabled:true,isTrigger:true}};
 const actor={id:2,name:'Hero',type:'player',x:100,y:0,w:24,h:24,collider2d:{enabled:true,isTrigger:false}};

@@ -74,7 +74,10 @@ test('global editor appearance exposes full palette and typography',()=>{
 test('primary toolbar exposes actual quick creation actions',()=>{
  assert.match(html,/id="studioQuickCreate"/);
  for(const action of ['object','character','light','audio','blueprint'])assert.ok(html.includes('data-quick-create="'+action+'"'));
- assert.match(editor,/actions\[button\.dataset\.quickCreate\]\?\.\(\)/);
+ assert.match(editor,/createSceneItem\(kind,/);
+ const catalog=readFileSync(new URL('../js/core/editor-create-catalog.js',import.meta.url),'utf8');
+ for(const kind of ['empty','character','main-camera','cube','sphere','plane','point-light','spot-light','audio-source','canvas','ui-panel','ui-text','ui-button','rigidbody-cube','trigger'])
+  assert.ok(catalog.includes("['"+kind+"',"),'Missing real scene creation command: '+kind);
  assert.doesNotMatch(html,/id="studioCompactToggle"/);
 });
 

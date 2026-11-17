@@ -36,9 +36,15 @@ export function renderGenericComponents(root,entity){
    if(!['boolean','string','number'].includes(typeof value))continue;
    const row=document.createElement('div');row.className='property-row';
    const name=text('label',path.join(' · '));
-   const input=document.createElement('input');
-   input.type=typeof value==='boolean'?'checkbox':'text';
-   if(typeof value==='number')input.inputMode='decimal';
+   const cameraMode=['sceneCamera3d','camera2d'].includes(definition.id)&&path.length===1&&path[0]==='mode';
+   const input=document.createElement(cameraMode?'select':'input');
+   if(cameraMode){
+    const modes=definition.id==='camera2d'?[['fixed','Fixed · position dans la scène'],['follow','Follow · suivre la cible']]:[['fixed','Fixed · caméra libre'],['thirdPerson','Third Person · orbite / souris'],['follow','Follow (ancien mode)'],['firstPerson','First Person · joueur']];
+    for(const [kind,label] of modes){
+     const option=document.createElement('option');option.value=kind;option.textContent=label;input.append(option);
+    }
+   }else input.type=typeof value==='boolean'?'checkbox':'text';
+   if(!cameraMode&&typeof value==='number')input.inputMode='decimal';
    if(typeof value==='boolean')input.checked=value;else input.value=String(value);
    input.disabled=state.playing;
    input.onchange=()=>{

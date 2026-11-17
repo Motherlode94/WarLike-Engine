@@ -10,6 +10,8 @@ import {defaultSimulationNode} from './simulation-nodes.js';
 import {defaultTacticalUnit} from './rts-orders.js';
 import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
 import {defaultCameraRig} from './play-camera.js';
+import {defaultSceneCamera2d} from './scene-camera-2d.js';
+import {defaultSceneCamera} from './scene-camera-3d.js';
 import {defaultUiCanvas,defaultUiRect,defaultUiElement} from './ui-canvas-layout.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController} from './gameplay-components.js';
 import {defaultRigidbody3d} from './physics-3d.js';
@@ -29,12 +31,15 @@ export const webComponentDefinitions=[
  {id:'fxEmitter',name:'Émetteur FX',category:'Effets visuels',description:'Énergie, feu, électricité, fumée, soin et portail en 2D/3D.',create:defaultFxEmitter},
  {id:'simulationNode',name:'Simulation · Réseau et monde',category:'Simulation',description:'Destruction, matériaux, réparation, réseau énergétique et civils.',create:defaultSimulationNode},
  {id:'tacticalUnit',name:'Unité tactique RTS',category:'RTS',description:'Déplacement A*, suivi, défense et attaque d’escouade.',create:defaultTacticalUnit},
+ {id:'spriteRenderer2d',name:'Sprite Renderer 2D',category:'Rendering',description:'Ordre de dessin et opacité du sprite/rectangle de l’objet 2D.',modes:['2d'],create:()=>({enabled:true,sortingOrder:0,opacity:1})},
  {id:'collider2d',name:'Box Collider 2D',category:'Physique',description:'Collision solide ou trigger, dimensions et décalage.',modes:['2d'],create:defaultCollider2d},
  {id:'rigidbody2d',name:'Rigidbody 2D',category:'Physique',description:'Gravité, vitesse, rebond et friction.',modes:['2d'],create:defaultRigidbody2d},
  {id:'controller2d',name:'Contrôleur de personnage 2D',category:'Personnage',description:'Vue du dessus ou plateforme avec gravité et saut.',modes:['2d'],create:defaultController2d},
  {id:'uiCanvas',name:'UI Canvas · Overlay',category:'Interface du jeu',description:'Racine de l’interface de jeu, échelle responsive. Phase initiale : structure éditable ; rendu de jeu non encore relié.',create:defaultUiCanvas},
  {id:'uiRect',name:'UI RectTransform',category:'Interface du jeu',description:'Ancres, pivot, taille et position d’un objet UI rattaché au Canvas.',create:defaultUiRect},
  {id:'uiElement',name:'UI Element · Panel / Text / Button',category:'Interface du jeu',description:'Données du contrôle UI ; boutons et événements ne sont pas encore activés en Play.',create:defaultUiElement},
+ {id:'sceneCamera3d',name:'Camera · Scene (Main Camera)',category:'Caméra',description:'Caméra native de scène, priorités, projection perspective et modes fixe/suivi. Active en Game/Play et export.',modes:['3d'],create:defaultSceneCamera},
+ {id:'camera2d',name:'Camera 2D · Scène',category:'Caméra',description:'Caméra native orthographique pour scène 2D : suivi joueur, zoom, décalage et pixel perfect.',modes:['2d'],create:defaultSceneCamera2d},
  {id:'cameraRig',name:'Caméra de jeu',category:'Caméra',description:'Suivi fluide, distance, sensibilité et évitement des obstacles.',create:defaultCameraRig},
  {id:'stats',name:'Stats · Santé et endurance',category:'Personnage',description:'Santé, endurance et régénération.',create:defaultStats},
  {id:'inventory',name:'Inventaire',category:'Personnage',description:'Objets, capacité et équipement.',create:defaultInventory},

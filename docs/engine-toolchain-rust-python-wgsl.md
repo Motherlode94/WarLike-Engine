@@ -47,3 +47,14 @@ Le moteur dispose déjà de C++/WASM et de Rapier : ne pas dupliquer un solveur 
 ## Prochain travail à prioriser
 
 Connecter **Python** aux diagnostics d'import (outillage de build, pas navigateur), benchmarker **Rust** contre le calcul JS existant et réaliser un petit harness **WebGPU** visuel avec capture navigateur. Seules les fonctions prouvées plus utiles et fiables doivent être intégrées au runtime principal.
+
+
+## Intégrations (phase 2)
+
+- **Python relié au CLI WarLike :** `python3 python/warlike.py audit-glb ./mon-modele.glb --output ./rapport.json` produit un rapport analysable par les outils d'import. Ne requiert pas Python au sein du navigateur ; les métadonnées doivent être vérifiées par les importeurs Web avant utilisation.
+- **Rust branché aux Gizmos 3D (opt-in automatique selon disponibilité du WASM local) :** compiler avec `sh native/build-rust-wasm.sh`. Le module JS `js/core/rust-gizmo-acceleration.js` charge `native/dist/warlike_geometry_kernel.wasm` si présent ; `js/core/gizmos-3d.js` utilise alors le paramètre d'axe calculé depuis les rayons de caméra pour les translations. Si module absent, rayon dégénéré ou parallèle, l'ancien calcul `projectedAxisDrag3d` reste disponible. La valeur courante est soustraite à la valeur initiale ; aucune activation n'est forcée dans les builds sans WASM.
+- **WGSL relié à une prévisualisation de diagnostic WarLike Editor :** `tools/webgpu-preview.html` est ouvrable depuis le menu Aide ; charge `shaders/webgpu/preview-unlit.wgsl`, crée un vrai pipeline WebGPU et dessine un triangle ; en l'absence de WebGPU, dessine la même géométrie en WebGL. C'est un outil expérimental ; **le moteur de production reste WebGL**.
+
+### Limites à résoudre avant la publication
+
+Le script de compilation Rust n'est pas exécuté par défaut en CI et le binaire WASM n'est pas versionné. Il faut des tests dans un navigateur avec binaire compilé pour qualifier les déplacements sur toutes les orientations. Le diagnostic WGSL vérifie uniquement les couleurs de sommets, pas les textures PBR ni l'Animator. L'audit Python inspecte les métadonnées GLB sans valider les poids du rig ni le rendu des matériaux.

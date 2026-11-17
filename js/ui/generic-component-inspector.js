@@ -36,9 +36,14 @@ export function renderGenericComponents(root,entity){
    if(!['boolean','string','number'].includes(typeof value))continue;
    const row=document.createElement('div');row.className='property-row';
    const name=text('label',path.join(' · '));
-   const input=document.createElement('input');
-   input.type=typeof value==='boolean'?'checkbox':'text';
-   if(typeof value==='number')input.inputMode='decimal';
+   const cameraMode=definition.id==='sceneCamera3d'&&path.length===1&&path[0]==='mode';
+   const input=document.createElement(cameraMode?'select':'input');
+   if(cameraMode){
+    for(const [kind,label] of [['fixed','Fixed · caméra libre'],['follow','Follow · cible'],['firstPerson','First Person · joueur']]){
+     const option=document.createElement('option');option.value=kind;option.textContent=label;input.append(option);
+    }
+   }else input.type=typeof value==='boolean'?'checkbox':'text';
+   if(!cameraMode&&typeof value==='number')input.inputMode='decimal';
    if(typeof value==='boolean')input.checked=value;else input.value=String(value);
    input.disabled=state.playing;
    input.onchange=()=>{

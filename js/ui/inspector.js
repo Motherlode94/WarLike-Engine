@@ -238,7 +238,28 @@ const visible=document.createElement('input');visible.type='checkbox';visible.ch
 const name=document.createElement('input');name.className='inspector-object-name';name.value=o.name;name.disabled=state.playing;name.title='Nom du GameObject';name.setAttribute('aria-label','Nom du GameObject');name.onchange=()=>{o.name=name.value.trim()||o.name;record('Renommer GameObject');notify()};identity.append(icon,visible,name);
 const meta=document.createElement('small');meta.className='unity-object-meta';meta.textContent=o.type+' · #'+o.id;
 const labels=document.createElement('div');labels.className='unity-object-labels';
-for(const [key,label,value] of [['tags','Tag',o.tags?.[0]||''],['hierarchyGroup','Groupe',o.hierarchyGroup||'']]){const field=document.createElement('label');field.append(document.createTextNode(label));const input=document.createElement('input');input.type='text';input.value=value;input.placeholder=key==='tags'?'Untagged':'Aucun';input.disabled=state.playing;input.setAttribute('aria-label',label+' du GameObject');input.onchange=()=>{const v=input.value.trim().slice(0,80);if(key==='tags')o.tags=[...(v?[v]:[]),...(o.tags||[]).slice(1)];else if(v)o.hierarchyGroup=v;else delete o.hierarchyGroup;record(label+' du GameObject');notify()};field.append(input);labels.append(field)}
+for(const [key,label,value] of [['tags','Tag',o.tags?.[0]||''],['layer','Layer',o.layer||'Default'],['hierarchyGroup','Groupe',o.hierarchyGroup||'']]){
+ const control=document.createElement('label');control.className='unity-object-metadata-field';
+ const title=document.createElement('span');title.textContent=label;
+ const input=document.createElement('input');input.type='text';input.value=value;
+ input.placeholder=key==='tags'?'Untagged':key==='layer'?'Default':'Aucun';
+ input.disabled=state.playing;input.maxLength=80;input.setAttribute('aria-label',label+' du GameObject');
+ input.onchange=()=>{
+  const v=input.value.trim().slice(0,80);
+  if(key==='tags')o.tags=[...(v?[v]:[]),...(o.tags||[]).slice(1)];
+  else if(key==='layer')o.layer=v||'Default';
+  else if(v)o.hierarchyGroup=v;else delete o.hierarchyGroup;
+  record(label+' du GameObject');notify()
+ };
+ control.append(title,input);labels.append(control)
+}
+const staticField=document.createElement('label');staticField.className='unity-object-static-field';
+const staticToggle=document.createElement('input');staticToggle.type='checkbox';
+staticToggle.checked=o.isStatic===true;staticToggle.disabled=state.playing;
+staticToggle.setAttribute('aria-label','Marquer comme statique dans la Hierarchy');
+staticToggle.title='Marqueur d’organisation dans l’éditeur ; ne remplace pas le type du Rigidbody';
+staticToggle.onchange=()=>{o.isStatic=staticToggle.checked;record('Marquer objet statique : '+o.name);notify()};
+staticField.append(staticToggle,document.createTextNode('Static · éditeur'));labels.append(staticField);
 header.append(identity,labels,meta);root.append(header);renderInspectorPrefab(root,o);
 component(root,'Transform',body=>{
  const vector=(title,axes)=>{

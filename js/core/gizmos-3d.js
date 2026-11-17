@@ -1,6 +1,7 @@
 import {updateAffineEditorPose3d,updateEditorEntityHierarchy3d,gizmoAxis3d,snap3d} from './scene-graph-v2.js';
 import {rotationQuaternion3d} from './collider-3d.js';
 import {projectedAxisDrag3d,alignSceneObjects3d,snapSelected3d} from './scene-editing-3d-tools.js';
+import {cameraFrustumCorners3d} from './editor-camera-frustum-3d.js';
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
 const el=(tag,props={})=>{const node=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(props))node.setAttribute(k,String(v));return node};
@@ -12,6 +13,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   const line=el('line',{'data-gizmo-axis':axis,'stroke-width':4,'stroke-linecap':'round'});
   line.style.pointerEvents='stroke';line.style.cursor='grab';layer.append(line);return line;
  });
+ const frustum=el('g',{'data-scene-camera-frustum':'true','stroke':'#8bd8e6','stroke-width':'1.7','fill':'none','stroke-dasharray':'6 4'});layer.append(frustum);
  const hub=el('circle',{r:7,fill:'#ffe48b',stroke:'#14202a','stroke-width':2});layer.append(hub);
  host.append(layer);
  const options=document.createElement('div');
@@ -44,18 +46,34 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const axisVector=(axis,o)=>gizmoAxis3d(axis,rotationQuaternion3d(o||{}),{local:mode.textContent==='Local'});
  const colors={x:'#f36868',y:'#68d781',z:'#64a9ff'};
  const redraw=()=>{
-  const selected=center(),active=view3d.enabled&&!state.playing&&!!selected&&tool()!=='hand';
+  const selected=center(),selectedObject=state.entities.find(o=>state.selected.includes(o.id)&&o.cameraView3d);
+  const showingCamera=!!selectedObject&&selectedObject.cameraView3d.showFrustum!==false;
+  const active=view3d.enabled&&!state.playing&&!!selected&&(tool()!=='hand'||showingCamera);
   layer.style.display=active?'block':'none';if(!active)return;
   const rect=canvas.getBoundingClientRect();if(rect.width<1||rect.height<1)return;
   layer.setAttribute('viewBox','0 0 '+rect.width+' '+rect.height);
   const cam=getCamera(),p=project3d(selected,cam,rect.width,rect.height);if(!p){layer.style.display='none';return}
-  const mode=tool();lastTool=mode;
+  frustum.replaceChildren();
+  if(showingCamera){
+   const b=objectBounds3d(selectedObject);
+   try{
+    const lens=cameraFrustumCorners3d([b.x,b.y,b.z],[selectedObject.rotationX3d||0,selectedObject.rotation||0,selectedObject.rotationZ3d||0],selectedObject.cameraView3d,rect.width/rect.height);
+    const vertices=[...lens.near,...lens.far].map(v=>project3d(v,cam,rect.width,rect.height));
+    const edges=[];
+    for(let i=0;i<4;i++){edges.push([i,(i+1)%4],[i+4,(i+1)%4+4],[i,i+4])}
+    for(const [a,b] of edges){
+     const p1=vertices[a],p2=vertices[b];if(!p1||!p2)continue;
+     frustum.append(el('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y}));
+    }
+   }catch{/* A broken preview never prevents editing the scene. */}
+  }
+  const mode=tool();lastTool=mode;hub.style.display=mode==='hand'?'none':'block';
   hub.setAttribute('cx',p.x);hub.setAttribute('cy',p.y);
   hub.setAttribute('fill',mode==='rotate'?'#f2c66b':mode==='scale'||mode==='rect'?'#ffffff':'#ffe48b');
   for(let i=0;i<3;i++){
    const axis=['x','y','z'][i],line=lines[i],o=state.entities.find(x=>state.selected.includes(x.id)),v=axisVector(axis,o);
    const end=project3d(selected.map((n,j)=>n+v[j]*Math.max(.4,p.depth*.08)),cam,rect.width,rect.height);
-   if(!end){line.style.display='none';continue}
+   if(mode==='hand'||!end){line.style.display='none';continue}
    line.style.display='block';
    const dx=end.x-p.x,dy=end.y-p.y,len=Math.hypot(dx,dy)||1;
    const scale=mode==='rotate'?1.2:1;

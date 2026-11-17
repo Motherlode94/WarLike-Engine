@@ -221,3 +221,21 @@ body.reference-engine:not(.hub-open) .scene-header .scene-actions{
   scroll-behavior:auto!important;
  }
 }
+
+/* Editable object identity metadata mirrors the Hierarchy columns. */
+body.reference-engine:not(.hub-open) #properties .unity-object-metadata-field{
+ display:flex;flex-direction:column;gap:3px;min-width:0;
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-metadata-field>span{
+ color:var(--wl-text-muted,#bdc5d0);font-size:10px;
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-metadata-field>input{
+ width:100%;min-width:0;height:27px!important;
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-static-field{
+ display:flex;align-items:center;gap:7px;grid-column:1/-1;margin:1px 0 0;
+ font-size:10px;color:var(--wl-text-muted,#bec6ce);
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-static-field>input{
+ width:14px!important;height:14px!important;min-height:14px!important;margin:0;
+}

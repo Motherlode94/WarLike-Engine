@@ -16482,6 +16482,7 @@
     "js/core/scene.js",
     "js/core/script-lifecycle.js",
     "js/core/script-trust.js",
+    "js/core/shadow-map-3d.js",
     "js/core/simulation-nodes.js",
     "js/core/skeletal-animation.js",
     "js/core/skeletal-authoring.js",

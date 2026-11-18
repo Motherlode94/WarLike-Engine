@@ -86,6 +86,8 @@ document.getElementById('renderHorrorProfile')?.addEventListener('click',()=>{
   const control=document.getElementById(id);if(control)control.value=String(Math.round(renderQuality[key]*scale));
  }
 });
+const shadows3dToggle=document.getElementById('render3dShadows');
+if(shadows3dToggle){shadows3dToggle.checked=renderQuality.shadows3d;shadows3dToggle.addEventListener('change',()=>{setRenderQuality({shadows3d:shadows3dToggle.checked});saveRenderQuality()})}
 const horrorToggle=document.getElementById('horrorSurvivalToggle');
 if(horrorToggle){horrorToggle.checked=horror.enabled;horrorToggle.addEventListener('change',()=>{horror.enabled=horrorToggle.checked})}
 const enableLight=document.getElementById('render2dLight');

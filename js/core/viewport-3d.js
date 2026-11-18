@@ -36,6 +36,7 @@ import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
 import {updateHorror,updateHorrorPerception,horror} from './horror-survival.js';
 import {renderQuality,viewportPixelSize} from './render-quality.js';
+import {sunShadowFrame3d,createSunShadowMap3d} from './shadow-map-3d.js';
 import {stepPhysics3d} from './physics-3d.js';
 import {rapierStatus,loadRapier3d,createRapierScene,activateRapierQueries3d,moveRapierCharacter3d,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
@@ -131,6 +132,7 @@ export const program3d=gl=>{
  attribute vec4 aMaterialUV0,aMaterialUV1;varying vec4 vMaterialUV0,vMaterialUV1;
  uniform vec3 uEye,uRight,uUp,uForward,uPosition,uScale;
  uniform vec4 uRotation;uniform float uAspect,uProjectionFactor,uNearClip,uFarClip;uniform bool uViewModel,uUseAffine;uniform mat3 uViewBasis,uAffineNormal;uniform mat4 uAffineMatrix;
+ uniform bool uShadowPass;uniform vec3 uShadowEye,uShadowRight,uShadowUp,uShadowForward;uniform float uShadowExtent,uShadowNear,uShadowFar;
  vec3 rotateQ(vec3 v){return v+2.0*cross(uRotation.xyz,cross(uRotation.xyz,v)+uRotation.w*v);}
  varying vec3 vNormal,vWorld;
  void main(){
@@ -139,7 +141,7 @@ export const program3d=gl=>{
  vec3 worldPosition=q+uPosition;
  if(uUseAffine)worldPosition=(uAffineMatrix*vec4(worldPosition,1.0)).xyz;
  vec3 rel=worldPosition-uEye;
- vWorld=worldPosition;vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vec3 worldNormal=uViewModel?uViewBasis*scaledNormal:rotateQ(scaledNormal);vNormal=normalize(uUseAffine?uAffineNormal*worldNormal:worldNormal);
+ vWorld=worldPosition;if(uShadowPass){vec3 ray=worldPosition-uShadowEye;float d=dot(ray,uShadowForward);gl_Position=vec4(dot(ray,uShadowRight)/uShadowExtent,dot(ray,uShadowUp)/uShadowExtent,2.*(d-uShadowNear)/(uShadowFar-uShadowNear)-1.,1.);return;}vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vec3 worldNormal=uViewModel?uViewBasis*scaledNormal:rotateQ(scaledNormal);vNormal=normalize(uUseAffine?uAffineNormal*worldNormal:worldNormal);
  float d=max(0.01,dot(rel,uForward));
  float f=uProjectionFactor;
  float clipZ=d*(uFarClip+uNearClip)/(uFarClip-uNearClip)-2.0*uFarClip*uNearClip/(uFarClip-uNearClip);
@@ -159,6 +161,7 @@ export const program3d=gl=>{
  uniform float uFlashPower;
  uniform vec3 uSunDir,uSunColor;
  uniform float uSunIntensity,uAmbient;
+ uniform bool uShadowPass,uShadowsEnabled,uViewModel;uniform sampler2D uShadowMap;uniform float uShadowTexelSize,uShadowBias;uniform vec3 uShadowEye,uShadowRight,uShadowUp,uShadowForward;uniform float uShadowExtent,uShadowNear,uShadowFar;
  uniform int uLightCount;
  uniform vec3 uLightPos[8],uLightColor[8],uLightDir[8];
  uniform float uLightPower[8],uLightRange[8],uLightCone[8],uLightSpot[8];
@@ -180,8 +183,27 @@ export const program3d=gl=>{
   vec3 diffuse=(vec3(1.)-F)*(1.-metal)*base/3.14159265;
   return (diffuse+F*D*visibility)*NoL;
  }
+ // 24-bit depth packed into RGB for WebGL1; no depth texture extension needed.
+ vec3 packShadowDepth(float depth){vec3 e=fract(depth*vec3(1.,255.,65025.));e.xy-=e.yz/255.;return e;}
+ float unpackShadowDepth(vec4 p){return dot(p.rgb,vec3(1.,1./255.,1./65025.));}
+ float sunShadowVisibility(vec3 position,vec3 normal,vec3 sunDirection){
+  if(!uShadowsEnabled||uViewModel)return 1.;
+  vec3 toLight=position-uShadowEye;
+  vec2 uv=vec2(dot(toLight,uShadowRight),dot(toLight,uShadowUp))*.5/uShadowExtent+.5;
+  float depth=(dot(toLight,uShadowForward)-uShadowNear)/(uShadowFar-uShadowNear);
+  if(uv.x<=0.||uv.y<=0.||uv.x>=1.||uv.y>=1.||depth<=0.||depth>=1.)return 1.;
+  float slope=1.-max(dot(normal,normalize(sunDirection)),0.);
+  float bias=uShadowBias*(1.+slope*2.);
+  float visible=0.;
+  for(int x=0;x<2;x++)for(int y=0;y<2;y++){
+   vec2 offset=(vec2(float(x),float(y))-.5)*uShadowTexelSize;
+   float stored=unpackShadowDepth(texture2D(uShadowMap,uv+offset));
+   visible+=depth-bias<=stored?1.:0.;
+  }
+  return visible*.25;
+ }
  void main(){
- vec4 baseColor=uColor*vVertexColor;if(uUseTexture){vec4 texel=texture2D(uBaseColorTexture,vTexcoord);baseColor*=vec4(pow(texel.rgb,vec3(2.2)),texel.a);}if(uAlphaCutoff<0.)baseColor.a=1.;else if(baseColor.a<uAlphaCutoff)discard;
+ vec4 baseColor=uColor*vVertexColor;if(uUseTexture){vec4 texel=texture2D(uBaseColorTexture,vTexcoord);baseColor*=vec4(pow(texel.rgb,vec3(2.2)),texel.a);}if(uAlphaCutoff<0.)baseColor.a=1.;else if(baseColor.a<uAlphaCutoff)discard;if(uShadowPass){gl_FragColor=vec4(packShadowDepth(gl_FragCoord.z),1.);return;}
  float roughness=uRoughness,metallic=uMetallic;
  if(uHasMetallicRoughnessMap){vec4 mr=texture2D(uMetallicRoughnessMap,vMaterialUV0.xy);roughness*=mr.g;metallic*=mr.b;}
  roughness=clamp(roughness,.04,1.);metallic=clamp(metallic,0.,1.);
@@ -210,7 +232,7 @@ export const program3d=gl=>{
  vec3 indirectDiffuse=ambientLight*baseColor.rgb*(1.-metallic)*(vec3(1.)-indirectFresnel);
  vec3 indirectSpecular=reflectedSky*uAmbient*ao*indirectFresnel*specularStrength;
  vec3 indirect=indirectDiffuse+indirectSpecular;
- vec3 direct=directBRDF(baseColor.rgb,metallic,roughness,normal,viewDir,normalize(uSunDir))*uSunColor*uSunIntensity;
+ vec3 direct=directBRDF(baseColor.rgb,metallic,roughness,normal,viewDir,normalize(uSunDir))*uSunColor*uSunIntensity*sunShadowVisibility(vWorld,normal,uSunDir);
  for(int i=0;i<8;i++){
   if(i>=uLightCount)break;
   vec3 displacement=uLightPos[i]-vWorld;
@@ -325,7 +347,10 @@ export function init3d(canvas,host,buttons){
  let program;
  try{program=program3d(gl)}catch(err){renderFailure('Compilation shader : '+String(err.message||err));return {setEnabled:()=>false,focus:()=>{},syncToWorkspace:()=>renderFailure(view3d.error)}}
  const loc=n=>gl.getUniformLocation(program,n);
- const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),projectionFactor:loc('uProjectionFactor'),nearClip:loc('uNearClip'),farClip:loc('uFarClip'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]')};
+ const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),projectionFactor:loc('uProjectionFactor'),nearClip:loc('uNearClip'),farClip:loc('uFarClip'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]'),shadowPass:loc('uShadowPass'),shadowEnabled:loc('uShadowsEnabled'),shadowMap:loc('uShadowMap'),shadowTexel:loc('uShadowTexelSize'),shadowBias:loc('uShadowBias'),shadowEye:loc('uShadowEye'),shadowRight:loc('uShadowRight'),shadowUp:loc('uShadowUp'),shadowForward:loc('uShadowForward'),shadowExtent:loc('uShadowExtent'),shadowNear:loc('uShadowNear'),shadowFar:loc('uShadowFar')};
+ let shadowMap=null;
+ try{shadowMap=createSunShadowMap3d(gl,{size:1024});}
+ catch(error){console.warn('[WarLike Shadow]',error);}
  const viewModelUniform=loc('uViewModel'),viewBasisUniform=loc('uViewBasis');
  const useAffineUniform=loc('uUseAffine'),affineMatrixUniform=loc('uAffineMatrix'),affineNormalUniform=loc('uAffineNormal');
  const aPos=gl.getAttribLocation(program,'aPosition'),aNormal=gl.getAttribLocation(program,'aNormal'),aTexcoord=gl.getAttribLocation(program,'aTexcoord');
@@ -771,7 +796,7 @@ export function init3d(canvas,host,buttons){
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
   const solar=sunAt();gl.clearColor(...solar.sky,1);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   if(state.playing&&!activeSceneCamera(state.entities)&&!isFps()&&!companyController(state.entities)){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities)),desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);boomDistance=rig.collision?resolveCameraBoom(view3d.target,desired.eye,state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(cameraObstacleForEntity),{previousDistance:boomDistance,dt:cameraFrame}).distance:view3d.radius}
-  gl.useProgram(program);const cam=camera();updateBattlefieldHud(state,{camera:cam,width:w,height:h,project:project3d});updateCompanyMarkers({camera:cam,width:w,height:h,project:project3d});
+  gl.useProgram(program);gl.uniform1i(u.shadowPass,0);gl.uniform1i(u.shadowEnabled,0);const cam=camera();updateBattlefieldHud(state,{camera:cam,width:w,height:h,project:project3d});updateCompanyMarkers({camera:cam,width:w,height:h,project:project3d});
   gl.uniform3fv(u.flashPos,cam.eye);gl.uniform3fv(u.flashDir,cam.forward);
   gl.uniform1f(u.flashPower,state.playing&&horror.enabled&&horror.flashlight&&horror.battery>0?3.1:0);
   gl.uniform3fv(u.eye,cam.eye);gl.uniform3fv(u.forward,cam.forward);gl.uniform3fv(u.right,cam.right);gl.uniform3fv(u.up,cam.up);gl.uniform1f(u.aspect,w/h);
@@ -804,14 +829,14 @@ export function init3d(canvas,host,buttons){
   if(state.playing&&survivalPlacement.active&&survivalPlacement.entity)objects.push(survivalPlacement.entity);
   // Draw opaque surfaces first, then alpha surfaces across ALL entities.
   // Camera-space depth (not radial distance) keeps side-on surfaces ordered.
-  const transparentDraws=[];
+  const opaqueDraws=[],transparentDraws=[];
   const submit=(position,draw,transparent=false,object=null)=>{
    if(transparent){
     // Use the same affine correction as the vertex shader for parented meshes.
     let world=position;
     try{const m=object&&affineCorrection3d(object);if(m)world=[0,1,2].map(i=>m[i]*position[0]+m[i+4]*position[1]+m[i+8]*position[2]+m[i+12])}catch{}
     transparentDraws.push({depth:V.dot(V.sub(world,cam.eye),cam.forward),draw});
-   }else draw();
+   }else opaqueDraws.push({draw,object});
   };
   bind(cubes);
   for(const o of objects){
@@ -1008,6 +1033,39 @@ export function init3d(canvas,host,buttons){
     for(const x of [-.2,.2])cube([b.x+b.w*x,b.y-b.h*.53,b.z],[b.w*.27,b.h*.38,b.d*.28],[.24,.32,.38,1]);
    }
   }
+  // Render all opaque geometry from the sun before drawing its lit version.
+  // Reusing the exact draw commands ensures GLB animation, scale and affine
+  // transforms cast in the same places that their meshes appear.
+  const lightFrame=shadowMap&&renderQuality.shadows3d&&solar.intensity>.035&&opaqueDraws.length
+   ?sunShadowFrame3d(cam,solar.direction):null;
+  if(lightFrame){
+   // Detach the previous frame's sampling binding before writing to this texture.
+   gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,null);gl.activeTexture(gl.TEXTURE0);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,shadowMap.framebuffer);
+   gl.viewport(0,0,shadowMap.size,shadowMap.size);
+   gl.depthMask(true);gl.disable(gl.BLEND);
+   gl.clearColor(1,1,1,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+   gl.uniform1i(u.shadowPass,1);gl.uniform1i(u.shadowEnabled,0);
+   gl.uniform3fv(u.shadowEye,lightFrame.eye);
+   gl.uniform3fv(u.shadowRight,lightFrame.right);
+   gl.uniform3fv(u.shadowUp,lightFrame.up);
+   gl.uniform3fv(u.shadowForward,lightFrame.forward);
+   gl.uniform1f(u.shadowExtent,lightFrame.extent);
+   gl.uniform1f(u.shadowNear,lightFrame.near);
+   gl.uniform1f(u.shadowFar,lightFrame.far);
+   for(const entry of opaqueDraws)if(entry.object?.castShadows!==false)entry.draw();
+   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+   gl.viewport(0,0,canvas.width,canvas.height);
+   gl.depthMask(true);gl.disable(gl.BLEND);
+   gl.uniform1i(u.shadowPass,0);
+   gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,shadowMap.texture);
+   gl.uniform1i(u.shadowMap,5);
+   gl.uniform1f(u.shadowTexel,1/shadowMap.size);
+   gl.uniform1f(u.shadowBias,.0018);
+   gl.uniform1i(u.shadowEnabled,1);
+   gl.activeTexture(gl.TEXTURE0);
+  }
+  for(const entry of opaqueDraws)entry.draw();
   transparentDraws.sort((a,b)=>b.depth-a.depth);
   for(const entry of transparentDraws)entry.draw();
   gl.depthMask(true);gl.disable(gl.BLEND);

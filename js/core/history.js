@@ -4,8 +4,10 @@ import {workspace} from './workspaces.js';
 const timelines={'2d':{entries:[],cursor:-1},'3d':{entries:[],cursor:-1}};const limit=80;
 const history=()=>timelines[workspace.mode];
 export function resetHistory(){for(const t of Object.values(timelines)){t.entries.length=0;t.cursor=-1}renderHistory()}
-export function record(label){if(state.playing)return;const {entries}=history();let {cursor}=history();const snapshot=JSON.stringify({entities:state.entities,nextId:state.nextId,game:gameProject});if(entries[cursor]?.snapshot===snapshot)return;entries.splice(cursor+1);entries.push({label,snapshot});if(entries.length>limit)entries.shift();history().cursor=entries.length-1;renderHistory()}
-export function jump(index){const {entries}=history();if(state.playing||index<0||index>=entries.length)return;history().cursor=index;const snap=JSON.parse(entries[index].snapshot);state.entities=snap.entities;state.nextId=snap.nextId;if(snap.game)restoreGameProject(snap.game);// Preserve intentionally empty selection; never auto-select an unrelated GameObject.
-state.selected=state.selected.filter(id=>state.entities.some(o=>o.id===id));notify();renderHistory()}
+export function record(label){if(state.playing)return;const {entries}=history();let {cursor}=history();const snapshot=JSON.stringify({entities:state.entities,nextId:state.nextId,game:gameProject,selected:[...state.selected]});if(entries[cursor]?.snapshot===snapshot)return;entries.splice(cursor+1);entries.push({label,snapshot});if(entries.length>limit)entries.shift();history().cursor=entries.length-1;renderHistory()}
+export function jump(index){const {entries}=history();if(state.playing||index<0||index>=entries.length)return;history().cursor=index;const snap=JSON.parse(entries[index].snapshot);state.entities=snap.entities;state.nextId=snap.nextId;if(snap.game)restoreGameProject(snap.game);
+// Use the selection that belonged to this edit. Old history entries remain compatible.
+const selected=Array.isArray(snap.selected)?snap.selected:state.selected;
+state.selected=selected.filter(id=>state.entities.some(o=>o.id===id));notify();renderHistory()}
 export const undo=()=>jump(history().cursor-1);export const redo=()=>jump(history().cursor+1);
 export function renderHistory(){const {entries,cursor}=history();const panel=document.querySelector('#history');panel.replaceChildren();for(let i=0;i<entries.length;i++){const b=document.createElement('button');b.textContent=(i===cursor?'● ':'○ ')+entries[i].label;b.classList.toggle('selected',i===cursor);b.onclick=()=>jump(i);panel.append(b)}document.querySelector('#undo').disabled=state.playing||cursor<1;document.querySelector('#redo').disabled=state.playing||cursor>=entries.length-1}

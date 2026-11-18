@@ -16265,6 +16265,8 @@
     "css/unity-workspace.css",
     "design-system/warlike-foundation.css",
     "design-system/warlike-shell.css",
+    "design-system/warlike-palette-v2.css",
+    "design-system/warlike-theme-switcher-v2.js",
     "examples/community/GUIDE-PACKS-WARLIKE.md",
     "examples/community/adventure-3d.json",
     "examples/community/field-tools.json",

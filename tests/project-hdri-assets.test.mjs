@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {packPortableHdri,unpackPortableHdri,validHdriBytes} from '../js/core/project-hdri-assets.js';
+import {packPortableHdri,unpackPortableHdri,validHdriBytes,storeProjectHdri} from '../js/core/project-hdri-assets.js';
 
 test('portable HDRI binary survives base64 JSON roundtrip without a single byte changed',()=>{
  const original=Uint8Array.from({length:8192},(_,i)=>(i*37+13)&255);
@@ -30,4 +30,14 @@ test('portable scene exporter and Web game exporter both embed project HDRI',()=
  assert.match(renderer,/__WARLIKE_HDRI_INCLUDED__/);
  assert.match(build,/data\.hasEnvironmentHdri=!!hdri/);
  assert.match(build,/data\.hasEnvironmentHdri\?'globalThis\.__WARLIKE_HDRI_INCLUDED__=true;'/);
+});
+
+test('invalid Radiance bytes are rejected before IndexedDB write',async()=>{
+ const malformed=new Uint8Array(64);
+ await assert.rejects(storeProjectHdri('project-invalid-hdr','broken.hdr',malformed),/Not Radiance HDR/);
+});
+test('HDRI renderer guards against applying another project environment',()=>{
+ const renderer=readFileSync(new URL('../js/core/viewport-3d.js',import.meta.url),'utf8');
+ assert.match(renderer,/if\(!globalThis\.__WARLIKE_BUILD__&&projectId!==gameProject\.id\)return null/);
+ assert.match(renderer,/if\(operation!==hdrOperation\|\|projectId!==gameProject\.id\)return/);
 });

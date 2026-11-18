@@ -72,6 +72,6 @@ export function renderUiComponentsInspector(root,entity){
    input.onchange=()=>{const value=input.value.trim();if(['color','textColor'].includes(key)&&!/^#[0-9a-f]{6}$/i.test(value)){input.setCustomValidity('Couleur hexadécimale requise.');input.reportValidity();return}input.setCustomValidity('');save('uiElement',key,value)};
    row.append(caption,input);body.append(row);
   }
-  flag(body,'uiElement','interactable','Interactable (Play) ');
+  flag(body,'uiElement','interactable','Interactable (Play)');
  }
 }

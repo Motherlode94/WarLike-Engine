@@ -1,0 +1,230 @@
+{
+  "version": 5,
+  "mode": "3d",
+  "description": "Certification FPS/TPS, Rapier, slopes/steps/moving platform and Grab3D",
+  "entities": [
+    {
+      "id": 1,
+      "name": "Sol de certification",
+      "type": "mesh3d",
+      "x": -640,
+      "y": -640,
+      "w": 1280,
+      "h": 32,
+      "depth3d": 1280,
+      "elevation3d": -0.5,
+      "color": "#455b68",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "primitive-platform",
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Joueur FPS/TPS",
+      "type": "player",
+      "x": -270,
+      "y": -290,
+      "w": 48,
+      "h": 120,
+      "depth3d": 48,
+      "elevation3d": 0,
+      "color": "#57bfa6",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": false,
+      "playable3d": true,
+      "fpsController": true,
+      "controller3d": {
+        "enabled": true,
+        "walkSpeed": 4,
+        "sprintSpeed": 6,
+        "jumpSpeed": 5,
+        "gravity": 15,
+        "mode": "thirdPerson"
+      },
+      "collider3d": {
+        "enabled": true,
+        "shape": "capsule"
+      }
+    },
+    {
+      "id": 3,
+      "name": "Mur de collision",
+      "type": "mesh3d",
+      "x": -20,
+      "y": -140,
+      "w": 40,
+      "h": 160,
+      "depth3d": 360,
+      "elevation3d": 0,
+      "color": "#bf7272",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "primitive-cube",
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    },
+    {
+      "id": 4,
+      "name": "Rampe 18 degrés",
+      "type": "mesh3d",
+      "x": 100,
+      "y": -300,
+      "w": 280,
+      "h": 22,
+      "depth3d": 220,
+      "elevation3d": 0.5,
+      "color": "#8cb8b6",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "primitive-ramp",
+      "rotationZ3d": 18,
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    },
+    {
+      "id": 5,
+      "name": "Marche basse",
+      "type": "mesh3d",
+      "x": 150,
+      "y": 40,
+      "w": 110,
+      "h": 16,
+      "depth3d": 120,
+      "elevation3d": 0,
+      "color": "#789bc6",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "primitive-cube",
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    },
+    {
+      "id": 6,
+      "name": "Marche haute",
+      "type": "mesh3d",
+      "x": 275,
+      "y": 40,
+      "w": 110,
+      "h": 96,
+      "depth3d": 120,
+      "elevation3d": 0,
+      "color": "#b58a74",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "primitive-cube",
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    },
+    {
+      "id": 7,
+      "name": "Plateforme mobile — support",
+      "type": "mesh3d",
+      "x": -460,
+      "y": 110,
+      "w": 260,
+      "h": 48,
+      "depth3d": 180,
+      "elevation3d": 0.8,
+      "color": "#b6a46f",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "primitive-platform",
+      "rigidbody3d": {
+        "enabled": true,
+        "kinematic": true,
+        "mass": 5,
+        "vx": 0,
+        "vy": 0,
+        "vz": 0
+      },
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    },
+    {
+      "id": 8,
+      "name": "Caisse à prendre — G/T",
+      "type": "prefab",
+      "x": 40,
+      "y": 220,
+      "w": 52,
+      "h": 52,
+      "depth3d": 52,
+      "elevation3d": 1.4,
+      "color": "#d6b377",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "kaykit-city-builder-bits-box-a",
+      "rigidbody3d": {
+        "enabled": true,
+        "kinematic": false,
+        "mass": 2,
+        "gravity": 15,
+        "friction": 0.8,
+        "vx": 0,
+        "vy": 0,
+        "vz": 0
+      },
+      "grab3d": {
+        "enabled": true,
+        "maxDistance": 3,
+        "holdDistance": 1.8,
+        "throwSpeed": 8
+      },
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    },
+    {
+      "id": 9,
+      "name": "Caisse non saisissable",
+      "type": "prefab",
+      "x": 145,
+      "y": 215,
+      "w": 52,
+      "h": 52,
+      "depth3d": 52,
+      "elevation3d": 1.4,
+      "color": "#9e9e9e",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "kaykit-city-builder-bits-box-b",
+      "rigidbody3d": {
+        "enabled": true,
+        "kinematic": false,
+        "mass": 2,
+        "gravity": 15,
+        "vx": 0,
+        "vy": 0,
+        "vz": 0
+      },
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    }
+  ]
+}

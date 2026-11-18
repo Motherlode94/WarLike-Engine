@@ -8,7 +8,7 @@ import {resetBattlefield,tickBattlefield,battlefieldMatch,consumeBattlefieldShot
 import {updateBattlefieldHud} from '../ui/battlefield-hud.js';
 import {rotationQuaternion3d,quaternionEuler3d} from './collider-3d.js';
 import {affineCorrection3d,normalMatrix3d,updateEditorEntityHierarchy3d,updateAffineEditorPose3d,boneSocketTransform3d,buildMeshSnapIndex3d,nearestMeshSnapFeature3d} from './scene-graph-v2.js';
-import {gameProject} from './game-project.js';
+
 import {survivalPlacement} from './survival-building.js';
 import {animatorPoseOptions,noteAnimatorAction} from './animator-graph.js';
 import {lanActor,isLanGuest} from './lan-state.js';

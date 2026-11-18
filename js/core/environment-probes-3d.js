@@ -13,7 +13,7 @@ export function environmentProbeUniforms3d(entities,{limit=4}={}){
  const positions=new Float32Array(12),tints=new Float32Array(12),radius=new Float32Array(4),strength=new Float32Array(4);
  for(let i=0;i<count;i++){
   const o=probes[i],config=o.environmentProbe3d;
-  positions.set([(Number(o.x)||0)/64+(Number(o.w)||64)/128,(Number(o.elevation3d)||0)+(Number(o.h)||64)/128,(Number(o.y)||0)+(Number(o.depth3d??o.h)||64)/128],i*3);
+  positions.set([(Number(o.x)||0)/64+(Number(o.w)||64)/128,(Number(o.elevation3d)||0)+(Number(o.h)||64)/128,(Number(o.y)||0)/64+(Number(o.depth3d??o.h)||64)/128],i*3);
   tints.set(rgb(config.tint),i*3);
   radius[i]=clamp(Number(config.radius)||8,.25,250);
   strength[i]=clamp(Number(config.strength)||0,0,4);

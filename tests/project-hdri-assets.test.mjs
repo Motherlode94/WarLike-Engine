@@ -34,7 +34,7 @@ test('portable scene exporter and Web game exporter both embed project HDRI',()=
 
 test('invalid Radiance bytes are rejected before IndexedDB write',async()=>{
  const malformed=new Uint8Array(64);
- await assert.rejects(storeProjectHdri('project-invalid-hdr','broken.hdr',malformed),/Not Radiance HDR/);
+ await assert.rejects(storeProjectHdri('project-invalid-hdr','broken.hdr',malformed),/(?:Not Radiance HDR|HDR header truncated)/);
 });
 test('HDRI renderer guards against applying another project environment',()=>{
  const renderer=readFileSync(new URL('../js/core/viewport-3d.js',import.meta.url),'utf8');

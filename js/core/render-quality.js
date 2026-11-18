@@ -1,6 +1,6 @@
 // WarLike rendering controls shared by the existing 2D/3D workspaces.
 const KEY='warlike.render.quality.v1';
-const defaults={lighting2d:true,ambient2d:.72,lightRadius2d:210,shadows2d:true,exposure3d:1.15,fog3d:.01};
+const defaults={lighting2d:true,ambient2d:.72,lightRadius2d:210,shadows2d:true,shadows3d:true,exposure3d:1.15,fog3d:.01};
 const clamp=(v,a,b,d)=>Number.isFinite(Number(v))?Math.min(b,Math.max(a,Number(v))):d;
 export const renderQuality={...defaults};
 // Keep the 3D drawing buffer bounded on high-DPI and large screens while preserving aspect ratio.
@@ -17,6 +17,7 @@ export function applyHorrorAtmosphere(){return setRenderQuality(horrorProfile)}
 export function setRenderQuality(next){
  if('lighting2d'in next)renderQuality.lighting2d=!!next.lighting2d;
  if('shadows2d'in next)renderQuality.shadows2d=!!next.shadows2d;
+ if('shadows3d'in next)renderQuality.shadows3d=!!next.shadows3d;
  if('ambient2d'in next)renderQuality.ambient2d=clamp(next.ambient2d,.15,1,.72);
  if('lightRadius2d'in next)renderQuality.lightRadius2d=clamp(next.lightRadius2d,60,600,210);
  if('exposure3d'in next)renderQuality.exposure3d=clamp(next.exposure3d,.4,2.5,1.15);

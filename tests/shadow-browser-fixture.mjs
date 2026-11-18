@@ -35,6 +35,8 @@ export function checkSunShadowPixels(){
   if(at>=0){gl.disableVertexAttribArray(at);gl['vertexAttrib'+v.length+'fv'](at,v);}
  }
  const caster=position=>{
+  // A texture cannot remain bound for sampling when writing to its framebuffer.
+  gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,null);gl.activeTexture(gl.TEXTURE0);
   gl.bindFramebuffer(gl.FRAMEBUFFER,map.framebuffer);gl.viewport(0,0,map.size,map.size);
   gl.clearColor(1,1,1,1);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   i1('uShadowPass',1);i1('uShadowsEnabled',0);v3('uPosition',position);
@@ -55,7 +57,7 @@ export function checkSunShadowPixels(){
  const red=arr=>arr[0];
  if(red(shadowed)+35>=red(sunlit)||Math.abs(red(unobstructed)-red(sunlit))>4)
   throw Error('Dynamic sun shadow mismatch '+JSON.stringify({shadowed,sunlit,unobstructed}));
- if(gl.getError()!==gl.NO_ERROR)throw Error('WebGL error in shadow pass');
+ const glError=gl.getError();if(glError!==gl.NO_ERROR)throw Error('WebGL error in shadow pass: '+glError);
  gl.deleteBuffer(buffer);map.destroy();gl.deleteProgram(program);
  gl.getExtension('WEBGL_lose_context')?.loseContext();
  return {shadowed,sunlit,unobstructed};

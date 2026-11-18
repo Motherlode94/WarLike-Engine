@@ -1039,6 +1039,8 @@ export function init3d(canvas,host,buttons){
   const lightFrame=shadowMap&&solar.intensity>.035&&opaqueDraws.length
    ?sunShadowFrame3d(cam,solar.direction):null;
   if(lightFrame){
+   // Detach the previous frame's sampling binding before writing to this texture.
+   gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,null);gl.activeTexture(gl.TEXTURE0);
    gl.bindFramebuffer(gl.FRAMEBUFFER,shadowMap.framebuffer);
    gl.viewport(0,0,shadowMap.size,shadowMap.size);
    gl.depthMask(true);gl.disable(gl.BLEND);

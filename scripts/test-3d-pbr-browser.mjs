@@ -19,7 +19,7 @@ try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--in-process-gpu']});
  const page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port+'/');
- const pixels=await page.evaluate(async()=>{const {checkPbrPixels}=await import('/tests/pbr-browser-fixture.mjs');return checkPbrPixels()});
- assert.deepEqual(errors,[]);const report={result:'PASS',pixels};
+ const {pixels,shadows}=await page.evaluate(async()=>{const {checkPbrPixels}=await import('/tests/pbr-browser-fixture.mjs');const {checkSunShadowPixels}=await import('/tests/shadow-browser-fixture.mjs');return {pixels:checkPbrPixels(),shadows:checkSunShadowPixels()}});
+ assert.deepEqual(errors,[]);const report={result:'PASS',pixels,shadows};
  await writeFile(path.join(output,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }finally{await browser?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}

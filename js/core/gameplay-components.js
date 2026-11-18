@@ -175,7 +175,11 @@ export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()
   }
   p._verticalVelocity-=gravity*t;const contact=moveBody3d(p,0,0,p._verticalVelocity*t*64,entities,{recover:false});if(contact.blockedZ)p._verticalVelocity=0;
  }
- const standing=supportBody3d(p,entities);p.grounded3d=(moveCharacter?p.grounded3d:!!standing)&&p._verticalVelocity<=0;
+ const standing=supportBody3d(p,entities);
+ // The Rapier capsule may temporarily report airborne after being carried by a
+ // moving support. Reconcile its contact flag with the actual nearby surface.
+ // Do not invent ground when no collider is underneath the character.
+ p.grounded3d=(moveCharacter?(p.grounded3d===true||!!standing):!!standing)&&p._verticalVelocity<=0;
  p._support3d=p.grounded3d&&standing?{id:standing.id,x:n(standing.x),y:n(standing.y),z:n(standing.elevation3d)}:null;
  p.animation=p.grounded3d?(len?(sprint?'run':'walk'):'idle'):(p._verticalVelocity>0?'jump':'fall');
 }

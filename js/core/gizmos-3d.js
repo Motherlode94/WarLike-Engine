@@ -182,13 +182,13 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
      // Project the pointer-to-feature displacement on the selected gizmo axis.
      const center=[start.x/64+(start.w||64)/128,start.elevation3d+(start.h||64)/128,start.y/64+(start.depth3d||start.h||64)/128];
      const distance=direction.reduce((sum,n,i)=>sum+n*(surfaceHit.point[i]-center[i]),0);
-     o.x=Math.round((start.x/64+direction[0]*distance)*64);
+     o.x=(start.x/64+direction[0]*distance)*64;
      o.elevation3d=start.elevation3d+direction[1]*distance;
-     o.y=Math.round((start.y/64+direction[2]*distance)*64);
+     o.y=(start.y/64+direction[2]*distance)*64;
     }else{
-     o.x=Math.round(quant(start.x/64+direction[0]*amount)*64);
+     o.x=quant(start.x/64+direction[0]*amount)*64;
      o.elevation3d=quant(start.elevation3d+direction[1]*amount);
-     o.y=Math.round(quant(start.y/64+direction[2]*amount)*64);
+     o.y=quant(start.y/64+direction[2]*amount)*64;
     }
    }
    // Keep the authored affine shear instead of throwing it away when the gizmo moves.

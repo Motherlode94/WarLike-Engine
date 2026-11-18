@@ -199,8 +199,17 @@ export const program3d=gl=>{
  vec3 ambientLight=mix(groundLight,skyLight,clamp(normal.y*.5+.5,0.,1.))*uAmbient*ao;
  vec3 viewDir=(uEye-vWorld)/max(length(uEye-vWorld),.00001);
  vec3 F0=mix(vec3(.04),baseColor.rgb,metallic);
- // The hemisphere remains an approximation, not prefiltered environment IBL.
- vec3 indirect=ambientLight*(baseColor.rgb*(1.-metallic)+F0*.25);
+ // Cheap hemispherical reflection for glTF metals. This is *not* prefiltered
+ // environment-map IBL: sky/ground are sampled from the reflected eye ray.
+ // Grazing Fresnel and roughness determine response; ambient AO applies to both.
+ float NoV=max(dot(normal,viewDir),0.);
+ vec3 indirectFresnel=F0+(vec3(1.)-F0)*pow(1.-NoV,5.);
+ vec3 reflected=reflect(-viewDir,normal);
+ vec3 reflectedSky=mix(groundLight,skyLight,clamp(reflected.y*.5+.5,0.,1.));
+ float specularStrength=mix(.12,.45,1.-roughness);
+ vec3 indirectDiffuse=ambientLight*baseColor.rgb*(1.-metallic)*(vec3(1.)-indirectFresnel);
+ vec3 indirectSpecular=reflectedSky*uAmbient*ao*indirectFresnel*specularStrength;
+ vec3 indirect=indirectDiffuse+indirectSpecular;
  vec3 direct=directBRDF(baseColor.rgb,metallic,roughness,normal,viewDir,normalize(uSunDir))*uSunColor*uSunIntensity;
  for(int i=0;i<8;i++){
   if(i>=uLightCount)break;

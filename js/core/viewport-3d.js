@@ -1036,7 +1036,7 @@ export function init3d(canvas,host,buttons){
   // Render all opaque geometry from the sun before drawing its lit version.
   // Reusing the exact draw commands ensures GLB animation, scale and affine
   // transforms cast in the same places that their meshes appear.
-  const lightFrame=shadowMap&&solar.intensity>.035&&opaqueDraws.length
+  const lightFrame=shadowMap&&renderQuality.shadows3d&&solar.intensity>.035&&opaqueDraws.length
    ?sunShadowFrame3d(cam,solar.direction):null;
   if(lightFrame){
    // Detach the previous frame's sampling binding before writing to this texture.

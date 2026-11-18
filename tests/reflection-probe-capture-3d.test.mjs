@@ -30,5 +30,5 @@ test('environment probes select four closest to the active camera',()=>{
  const result=environmentProbeUniforms3d(entities,{observer:[50.5,.5,.5]});
  assert.equal(result.count,4);
  assert.equal(result.positions[0],50.5);
- assert.equal(result.positions[3],20.5);
+ assert.deepEqual(Array.from(result.positions.slice(0,12).filter((_,i)=>i%3===0)),[50.5,40.5,30.5,20.5]);
 });

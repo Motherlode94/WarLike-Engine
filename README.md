@@ -1,5 +1,25 @@
 # WarLike Engine + WarLike Editor — un moteur et son éditeur dans un seul dépôt
 
+## À l'origine de WarLike Engine — l'histoire de son créateur
+
+**WarLike Engine est un projet personnel de Hardi MBANVU (HardieBay), originaire de Kinshasa, en République démocratique du Congo.** Artiste et développeur, il réunit dans son parcours la composition, le rap, le chant, le beatmaking, la guitare, l'illustration et le développement logiciel.
+
+Sa démarche part d'un intérêt concret : **comprendre comment une idée devient un programme qui fonctionne réellement**. Après s'être investi dans la création musicale et les outils numériques, il s'est tourné vers la programmation et les moteurs de jeux pour ne plus seulement utiliser des logiciels conçus par d'autres, mais apprendre à créer les siens.
+
+WarLike Engine est né de cette ambition : disposer d'un **moteur de jeux 2D et 3D qu'il puisse comprendre, programmer et faire évoluer**, directement depuis le navigateur. Le projet s'inspire de l'ergonomie d'Unity pour la création de scènes, l'Inspector, les GameObjects, les composants, les animations et le cycle Play/Stop, tout en développant sa propre identité avec **WarScript** et **WarNode**.
+
+Pour son créateur, l'expérience de développement compte autant que la liste des fonctionnalités. Une caméra qui réagit immédiatement à la souris, un Gizmo qui déplace l'objet dans la bonne direction ou un script dont l'effet apparaît en Play sont des éléments fondamentaux. L'objectif est que **WarLike Engine donne envie d'apprendre à coder et de créer des jeux**, sans devoir constamment lutter contre l'éditeur.
+
+L'ambition dépasse un moteur isolé. WarLike Engine appartient à l'écosystème **WarLike**, aux côtés d'outils de production musicale, de création visuelle, de bibliothèques d'assets et de services Web. Ces produits sont pensés comme des logiciels complémentaires ; leurs interconnexions restent soumises à leur état réel de développement et de validation.
+
+> **« Créer sur mon propre moteur, voir mon code prendre vie et avoir encore plus envie de programmer. »** — intention de création exprimée par le fondateur, reformulée pour cette présentation.
+
+**WarLike Engine est encore en développement.** Cette histoire présente une intention et un parcours, pas une certification de parité avec Unity ni une promesse que toutes les fonctionnalités prévues sont terminées.
+
+Pour découvrir la vision et les étapes du projet, lire [l'histoire et la feuille de route du créateur](docs/founder-vision.md) et le [contrat de certification Unity Feeling](docs/unity-feeling-acceptance.md).
+
+---
+
 ## Collision et Trigger2D — événements WarScript / WarNode
 
 Le moteur émet désormais les événements natifs `Enter`, `Stay` et `Exit` pour les **BoxCollider2D solides** et **zones Trigger2D**. WarScript prend en charge les callbacks sans paramètres `OnTriggerEnter2D()` et `OnCollisionEnter2D()` (ainsi que Stay/Exit), avec `trigger.otherId`, `trigger.otherName`, `collision.otherId` et `collision.otherName`. WarNode/Blueprint propose les événements `triggerEnter2d`, `triggerStay2d`, `triggerExit2d`, `collisionEnter2d`, `collisionStay2d`, `collisionExit2d` sur l'objet qui possède le collider. Les scènes sans script conservent leurs collisions. [Guide complet Physics2D](docs/physics2d-contact-events.md). La prise en charge des formes Circle/Capsule reste à développer.

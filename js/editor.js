@@ -86,6 +86,18 @@ document.getElementById('renderHorrorProfile')?.addEventListener('click',()=>{
   const control=document.getElementById(id);if(control)control.value=String(Math.round(renderQuality[key]*scale));
  }
 });
+const hdriStatus=document.getElementById('render3dHdriStatus');
+const hdriInput=document.getElementById('render3dHdriFile');
+hdriInput?.addEventListener('change',()=>{
+ const file=hdriInput.files?.[0];if(!file)return;
+ if(!/\\.(hdr|pic)$/i.test(file.name)||file.size>64*1024*1024){if(hdriStatus)hdriStatus.textContent='Fichier HDR Radiance invalide ou trop volumineux (64 Mio maximum)';return;}
+ if(hdriStatus)hdriStatus.textContent='Décodage et préfiltrage HDRI en cours…';
+ window.dispatchEvent(new CustomEvent('warlike:hdri-import',{detail:file}));
+});
+window.addEventListener('warlike:hdri-ready',event=>{if(hdriStatus)hdriStatus.textContent='HDRI enregistré : '+event.detail.width+' × '+event.detail.height+' · '+(event.detail.persisted?'projet sauvegardé':'export autonome')});
+window.addEventListener('warlike:hdri-cleared',()=>{if(hdriStatus)hdriStatus.textContent='Environnement procédural actif'});
+window.addEventListener('warlike:hdri-error',event=>{if(hdriStatus)hdriStatus.textContent='Erreur HDRI : '+event.detail.message});
+document.getElementById('render3dHdriClear')?.addEventListener('click',()=>{window.dispatchEvent(new Event('warlike:hdri-clear'));if(hdriStatus)hdriStatus.textContent='Environnement procédural rétabli';if(hdriInput)hdriInput.value=''});
 const shadows3dToggle=document.getElementById('render3dShadows');
 if(shadows3dToggle){shadows3dToggle.checked=renderQuality.shadows3d;shadows3dToggle.addEventListener('change',()=>{setRenderQuality({shadows3d:shadows3dToggle.checked});saveRenderQuality()})}
 const horrorToggle=document.getElementById('horrorSurvivalToggle');

@@ -44,6 +44,18 @@ export function createEnvironmentIbl3d(gl,{sharpSize=32,diffuseSize=16}={}){
   gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
  };
+ // HDRI input uses GGX importance sampling for the sharp map and a
+ // cosine-weighted irradiance convolution for the broad/diffuse map.
+ const updateHdri=(hdr,prefilter)=>{
+  if(!hdr?.data||typeof prefilter!=='function')throw Error('Missing HDRI prefilter');
+  const apply=(texture,size,settings)=>{
+   gl.bindTexture(gl.TEXTURE_CUBE_MAP,texture);
+   for(let face=0;face<6;face++)gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X+face,0,gl.RGBA,size,size,0,gl.RGBA,gl.UNSIGNED_BYTE,prefilter(hdr,face,size,settings));
+  };
+  apply(sharp,sharpSize,{roughness:.13,samples:32});
+  apply(diffuse,diffuseSize,{diffuse:true,samples:48});
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP,null);
+ };
  const update=({sunDirection,sunColor,sunIntensity}={})=>{
   const options={sunDirection,sunColor,sunIntensity};
   upload(sharp,sharpSize,options);
@@ -51,5 +63,5 @@ export function createEnvironmentIbl3d(gl,{sharpSize=32,diffuseSize=16}={}){
   gl.bindTexture(gl.TEXTURE_CUBE_MAP,null);
  };
  update();
- return {sharp,diffuse,update,destroy(){gl.deleteTexture(sharp);gl.deleteTexture(diffuse)}};
+ return {sharp,diffuse,update,updateHdri,destroy(){gl.deleteTexture(sharp);gl.deleteTexture(diffuse)}};
 }

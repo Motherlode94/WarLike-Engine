@@ -36,6 +36,7 @@ import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
 import {updateHorror,updateHorrorPerception,horror} from './horror-survival.js';
 import {renderQuality,viewportPixelSize} from './render-quality.js';
+import {sunShadowFrame3d,createSunShadowMap3d} from './shadow-map-3d.js';
 import {stepPhysics3d} from './physics-3d.js';
 import {rapierStatus,loadRapier3d,createRapierScene,activateRapierQueries3d,moveRapierCharacter3d,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
@@ -131,6 +132,7 @@ export const program3d=gl=>{
  attribute vec4 aMaterialUV0,aMaterialUV1;varying vec4 vMaterialUV0,vMaterialUV1;
  uniform vec3 uEye,uRight,uUp,uForward,uPosition,uScale;
  uniform vec4 uRotation;uniform float uAspect,uProjectionFactor,uNearClip,uFarClip;uniform bool uViewModel,uUseAffine;uniform mat3 uViewBasis,uAffineNormal;uniform mat4 uAffineMatrix;
+ uniform bool uShadowPass;uniform vec3 uShadowEye,uShadowRight,uShadowUp,uShadowForward;uniform float uShadowExtent,uShadowNear,uShadowFar;
  vec3 rotateQ(vec3 v){return v+2.0*cross(uRotation.xyz,cross(uRotation.xyz,v)+uRotation.w*v);}
  varying vec3 vNormal,vWorld;
  void main(){
@@ -139,7 +141,7 @@ export const program3d=gl=>{
  vec3 worldPosition=q+uPosition;
  if(uUseAffine)worldPosition=(uAffineMatrix*vec4(worldPosition,1.0)).xyz;
  vec3 rel=worldPosition-uEye;
- vWorld=worldPosition;vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vec3 worldNormal=uViewModel?uViewBasis*scaledNormal:rotateQ(scaledNormal);vNormal=normalize(uUseAffine?uAffineNormal*worldNormal:worldNormal);
+ vWorld=worldPosition;if(uShadowPass){vec3 ray=worldPosition-uShadowEye;float d=dot(ray,uShadowForward);gl_Position=vec4(dot(ray,uShadowRight)/uShadowExtent,dot(ray,uShadowUp)/uShadowExtent,2.*(d-uShadowNear)/(uShadowFar-uShadowNear)-1.,1.);return;}vec3 scaledNormal=aNormal/max(abs(uScale),vec3(.0001));vec3 worldNormal=uViewModel?uViewBasis*scaledNormal:rotateQ(scaledNormal);vNormal=normalize(uUseAffine?uAffineNormal*worldNormal:worldNormal);
  float d=max(0.01,dot(rel,uForward));
  float f=uProjectionFactor;
  float clipZ=d*(uFarClip+uNearClip)/(uFarClip-uNearClip)-2.0*uFarClip*uNearClip/(uFarClip-uNearClip);
@@ -159,6 +161,7 @@ export const program3d=gl=>{
  uniform float uFlashPower;
  uniform vec3 uSunDir,uSunColor;
  uniform float uSunIntensity,uAmbient;
+ uniform bool uShadowPass,uShadowsEnabled,uViewModel;uniform sampler2D uShadowMap;uniform float uShadowTexelSize,uShadowBias;uniform vec3 uShadowEye,uShadowRight,uShadowUp,uShadowForward;uniform float uShadowExtent,uShadowNear,uShadowFar;
  uniform int uLightCount;
  uniform vec3 uLightPos[8],uLightColor[8],uLightDir[8];
  uniform float uLightPower[8],uLightRange[8],uLightCone[8],uLightSpot[8];
@@ -180,8 +183,27 @@ export const program3d=gl=>{
   vec3 diffuse=(vec3(1.)-F)*(1.-metal)*base/3.14159265;
   return (diffuse+F*D*visibility)*NoL;
  }
+ // 24-bit depth packed into RGB for WebGL1; no depth texture extension needed.
+ vec3 packShadowDepth(float depth){vec3 e=fract(depth*vec3(1.,255.,65025.));e.xy-=e.yz/255.;return e;}
+ float unpackShadowDepth(vec4 p){return dot(p.rgb,vec3(1.,1./255.,1./65025.));}
+ float sunShadowVisibility(vec3 position,vec3 normal,vec3 sunDirection){
+  if(!uShadowsEnabled||uViewModel)return 1.;
+  vec3 toLight=position-uShadowEye;
+  vec2 uv=vec2(dot(toLight,uShadowRight),dot(toLight,uShadowUp))*.5/uShadowExtent+.5;
+  float depth=(dot(toLight,uShadowForward)-uShadowNear)/(uShadowFar-uShadowNear);
+  if(uv.x<=0.||uv.y<=0.||uv.x>=1.||uv.y>=1.||depth<=0.||depth>=1.)return 1.;
+  float slope=1.-max(dot(normal,normalize(sunDirection)),0.);
+  float bias=uShadowBias*(1.+slope*2.);
+  float visible=0.;
+  for(int x=0;x<2;x++)for(int y=0;y<2;y++){
+   vec2 offset=(vec2(float(x),float(y))-.5)*uShadowTexelSize;
+   float stored=unpackShadowDepth(texture2D(uShadowMap,uv+offset));
+   visible+=depth-bias<=stored?1.:0.;
+  }
+  return visible*.25;
+ }
  void main(){
- vec4 baseColor=uColor*vVertexColor;if(uUseTexture){vec4 texel=texture2D(uBaseColorTexture,vTexcoord);baseColor*=vec4(pow(texel.rgb,vec3(2.2)),texel.a);}if(uAlphaCutoff<0.)baseColor.a=1.;else if(baseColor.a<uAlphaCutoff)discard;
+ vec4 baseColor=uColor*vVertexColor;if(uUseTexture){vec4 texel=texture2D(uBaseColorTexture,vTexcoord);baseColor*=vec4(pow(texel.rgb,vec3(2.2)),texel.a);}if(uAlphaCutoff<0.)baseColor.a=1.;else if(baseColor.a<uAlphaCutoff)discard;if(uShadowPass){gl_FragColor=vec4(packShadowDepth(gl_FragCoord.z),1.);return;}
  float roughness=uRoughness,metallic=uMetallic;
  if(uHasMetallicRoughnessMap){vec4 mr=texture2D(uMetallicRoughnessMap,vMaterialUV0.xy);roughness*=mr.g;metallic*=mr.b;}
  roughness=clamp(roughness,.04,1.);metallic=clamp(metallic,0.,1.);
@@ -210,7 +232,7 @@ export const program3d=gl=>{
  vec3 indirectDiffuse=ambientLight*baseColor.rgb*(1.-metallic)*(vec3(1.)-indirectFresnel);
  vec3 indirectSpecular=reflectedSky*uAmbient*ao*indirectFresnel*specularStrength;
  vec3 indirect=indirectDiffuse+indirectSpecular;
- vec3 direct=directBRDF(baseColor.rgb,metallic,roughness,normal,viewDir,normalize(uSunDir))*uSunColor*uSunIntensity;
+ vec3 direct=directBRDF(baseColor.rgb,metallic,roughness,normal,viewDir,normalize(uSunDir))*uSunColor*uSunIntensity*sunShadowVisibility(vWorld,normal,uSunDir);
  for(int i=0;i<8;i++){
   if(i>=uLightCount)break;
   vec3 displacement=uLightPos[i]-vWorld;

@@ -91,7 +91,13 @@ export function attachInput(canvas,host){
     o.y=Math.round(start.y+(drag.axis==='x'?0:dy));
    }
    if(toolsState.snap){
-    for(const axis of drag.mode==='move'?['x','y']:drag.mode==='rotate'?['rotation']:['w','h'])
+    // Snapping must never mutate a perpendicular coordinate or an unchanged size.
+    // A locked X/Y handle should preserve the other axis exactly.
+    const snapAxes=drag.mode==='move'
+     ?(drag.axis==='x'?['x']:drag.axis==='y'?['y']:['x','y'])
+     :drag.mode==='rotate'?['rotation']
+     :drag.axis==='x'?['w']:drag.axis==='y'?['h']:['w','h'];
+    for(const axis of snapAxes)
      o[axis]=Math.round(o[axis]/(axis==='rotation'?15:16))*(axis==='rotation'?15:16);
    }
   }

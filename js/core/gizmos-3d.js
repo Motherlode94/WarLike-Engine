@@ -186,9 +186,12 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
      o.elevation3d=start.elevation3d+direction[1]*distance;
      o.y=(start.y/64+direction[2]*distance)*64;
     }else{
-     o.x=quant(start.x/64+direction[0]*amount)*64;
-     o.elevation3d=quant(start.elevation3d+direction[1]*amount);
-     o.y=quant(start.y/64+direction[2]*amount)*64;
+     // Snap only the coordinates touched by this axis vector. Snapping a
+     // perpendicular coordinate would make an object jump sideways on drag.
+     const moveAxis=(base,component)=>Math.abs(component)<1e-10?base:quant(base+component*amount);
+     o.x=moveAxis(start.x/64,direction[0])*64;
+     o.elevation3d=moveAxis(start.elevation3d,direction[1]);
+     o.y=moveAxis(start.y/64,direction[2])*64;
     }
    }
    // Keep the authored affine shear instead of throwing it away when the gizmo moves.

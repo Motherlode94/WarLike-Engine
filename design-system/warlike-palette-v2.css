@@ -1,0 +1,66 @@
+/* WarLike unified palette v2 — master swatches sampled from the approved user image.
+   Keep app-specific positioning, canvas rendering, and asset previews untouched. */
+:root[data-wl-theme],html[data-warlike-app]{
+ --wl-sand:#D9D28B;--wl-olive-light:#B2BD7E;--wl-olive:#8E9162;--wl-olive-deep:#6A795D;
+ --wl-bg:#121711;--wl-surface:#1C241B;--wl-surface-raised:#263026;--wl-surface-hover:#303B2D;
+ --wl-sidebar:#192119;--wl-input:#242E22;--wl-fg:#F5F3E8;--wl-fg-muted:#BDC5B5;--wl-border:#455440;
+ --wl-accent:#D9D28B;--wl-accent-contrast:#1F251A;--wl-selected:#43563B;--wl-focus:#E9DA91;
+ --wl-success:#A5C48F;--wl-warning:#E1BE74;--wl-danger:#E5A097;--wl-info:#B6CDB8;
+ --wl-primary:var(--wl-accent);--wl-primary-text:var(--wl-accent-contrast);
+ --wl-text:var(--wl-fg);--wl-text-muted:var(--wl-fg-muted);--wl-surface-alt:var(--wl-surface-raised);
+ color-scheme:dark;
+}
+:root[data-wl-theme="sand-light"]{
+ --wl-bg:#F7F5E8;--wl-surface:#FFFDF3;--wl-surface-raised:#EFECD9;--wl-surface-hover:#E7E4CD;
+ --wl-sidebar:#EEEDDD;--wl-input:#FFFFFF;--wl-fg:#242A20;--wl-fg-muted:#515E4B;--wl-border:#B8BEA6;
+ --wl-accent:#6A795D;--wl-accent-contrast:#FFFFFF;--wl-selected:#DDE4CA;--wl-focus:#596F4B;
+ --wl-success:#27643A;--wl-warning:#835812;--wl-danger:#A33E39;--wl-info:#315F66;color-scheme:light;
+}
+:root[data-wl-theme="tactical"]{
+ --wl-bg:#101713;--wl-surface:#19251D;--wl-surface-raised:#23332A;--wl-surface-hover:#2C4234;
+ --wl-sidebar:#141F19;--wl-input:#1D2B23;--wl-fg:#EAF0E3;--wl-fg-muted:#BDCCBC;--wl-border:#415949;
+ --wl-accent:#B2BD7E;--wl-accent-contrast:#142017;--wl-selected:#385442;--wl-focus:#D9D28B;color-scheme:dark;
+}
+:root[data-wl-theme="heritage"]{
+ --wl-bg:#27291F;--wl-surface:#333627;--wl-surface-raised:#434936;--wl-surface-hover:#515943;
+ --wl-sidebar:#292E23;--wl-input:#383D2F;--wl-fg:#F5EFDB;--wl-fg-muted:#D3D0B6;--wl-border:#666E52;
+ --wl-accent:#D9D28B;--wl-accent-contrast:#2A2D1F;--wl-selected:#5B6549;--wl-focus:#E9DA91;color-scheme:dark;
+}
+html[data-warlike-app] body{background:var(--wl-bg);color:var(--wl-fg)}
+html[data-warlike-app] :is(a,button,input,select,textarea,[tabindex]):focus-visible{outline:2px solid var(--wl-focus);outline-offset:2px}
+html[data-warlike-app] :is(input[type=checkbox],input[type=radio],input[type=range]){accent-color:var(--wl-accent)}
+/* Library: bridge existing semantic variables, retain library layout and previews */
+html[data-warlike-app="warlike-library"]{
+ --bg:var(--wl-bg);--side:var(--wl-sidebar);--panel:var(--wl-surface);--line:var(--wl-border);
+ --text:var(--wl-fg);--muted:var(--wl-fg-muted);--accent:var(--wl-accent);
+}
+html[data-warlike-app="warlike-library"] :is(.topbar,.sidebar,.card,.panel,.modal-content,dialog){background:var(--wl-surface);color:var(--wl-fg);border-color:var(--wl-border)}
+html[data-warlike-app="warlike-library"] .sidebar{background:var(--wl-sidebar)}
+html[data-warlike-app="warlike-library"] :is(.search,input,select,textarea){background:var(--wl-input);color:var(--wl-fg);border-color:var(--wl-border)}
+html[data-warlike-app="warlike-library"] :is(.primary,button.primary){background:var(--wl-accent);color:var(--wl-accent-contrast);border-color:var(--wl-accent)}
+html[data-warlike-app="warlike-library"] :is(.sidebar nav button.active,.sidebar nav button:hover){background:var(--wl-selected);color:var(--wl-fg)}
+/* Engine: restyle UI shells only, never the scene canvas, viewport, game objects or shaders */
+html[data-warlike-app="warlike-engine"]{background:var(--wl-bg);color:var(--wl-fg)}
+html[data-warlike-app="warlike-engine"] :is(.studio-menubar,header.topbar,.panel,.panel-title,.scene-header,.scene-tabs,.workspace,.inspector,.hierarchy){background-color:var(--wl-surface);color:var(--wl-fg);border-color:var(--wl-border)}
+html[data-warlike-app="warlike-engine"] :is(.hierarchy,.inspector){background-color:var(--wl-sidebar)}
+html[data-warlike-app="warlike-engine"] :is(button,.studio-dropdown,select,input,textarea){border-color:var(--wl-border);color:var(--wl-fg)}
+html[data-warlike-app="warlike-engine"] :is(button,select,input,textarea){background-color:var(--wl-input)}
+html[data-warlike-app="warlike-engine"] :is(button:hover,.tab.active,button.active,#objects button.selected){background-color:var(--wl-selected);border-color:var(--wl-accent);color:var(--wl-fg)}
+html[data-warlike-app="warlike-engine"] :is(.panel-title,.studio-menubar){border-bottom-color:var(--wl-border)}
+/* Store and Extensions: keep existing grid/thumbnail dimensions and product semantics */
+html[data-warlike-app="warlike-asset-stores"] :is(.top,.header,.store-nav,.market-department-nav,main>header){background:var(--wl-sidebar);color:var(--wl-fg)}
+html[data-warlike-app="warlike-asset-stores"] :is(.hero){background:linear-gradient(115deg,var(--wl-surface-raised),var(--wl-sidebar));border-color:var(--wl-border);color:var(--wl-fg)}
+html[data-warlike-app="warlike-asset-stores"] .hero p{color:var(--wl-fg-muted)}
+html[data-warlike-app="warlike-asset-stores"] :is(.card,.market-item,.pack,.feature,.sidebar,.panel,.toolbar,.market-directory a,.vfx-card,.note,.warning){background:var(--wl-surface);border-color:var(--wl-border);color:var(--wl-fg)}
+html[data-warlike-app="warlike-asset-stores"] :is(.card h3,.card h2,.market-name,.market-directory strong,.market-item,.content h3,h2,h3){color:var(--wl-fg)}
+html[data-warlike-app="warlike-asset-stores"] :is(.card p,.market-author,.market-kind,.market-directory span,.small,.stat,.detail,.subtitle){color:var(--wl-fg-muted)}
+html[data-warlike-app="warlike-asset-stores"] :is(.visual,.market-item img,.market-placeholder){background:var(--wl-surface-raised)}
+html[data-warlike-app="warlike-asset-stores"] :is(.btn,input,select,textarea){background:var(--wl-input);border-color:var(--wl-border);color:var(--wl-fg)}
+html[data-warlike-app="warlike-asset-stores"] :is(.btn.primary,button.btn.primary,.market-search button){background:var(--wl-accent);border-color:var(--wl-accent);color:var(--wl-accent-contrast)}
+html[data-warlike-app="warlike-asset-stores"] :is(.store-nav a,.market-department-nav a){color:var(--wl-fg)}
+html[data-warlike-app="warlike-asset-stores"] :is(.store-nav a[aria-current=page],.market-department-nav a[aria-current=page]){background:var(--wl-selected);color:var(--wl-fg)}
+/* Shared accessible selector: isolated so it cannot break editor controls. */
+#warlike-theme-switcher{position:fixed;bottom:16px;right:16px;z-index:2147483000;display:flex;gap:8px;align-items:center;max-width:min(290px,calc(100vw - 24px));padding:8px 10px;border:1px solid var(--wl-border);border-radius:11px;background:var(--wl-surface);color:var(--wl-fg);box-shadow:0 7px 22px #0005;font:600 12px/1.2 Inter,system-ui,sans-serif}
+#warlike-theme-switcher label{white-space:nowrap;color:var(--wl-fg)}
+#warlike-theme-switcher select{min-width:0;max-width:155px;min-height:34px;border:1px solid var(--wl-border);background:var(--wl-input);color:var(--wl-fg);border-radius:7px;padding:6px;font:inherit}
+@media(max-width:600px){#warlike-theme-switcher{bottom:8px;right:8px;padding:5px 7px}#warlike-theme-switcher label{font-size:11px}}

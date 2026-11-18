@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {environmentProbeUniforms3d,defaultEnvironmentProbe3d} from '../js/core/environment-probes-3d.js';
-import {canonicalScene,legacyEntitiesFromScene} from '../js/core/scene-contract.js';
+import {canonicalScene} from '../js/core/scene-contract.js';
 
 test('local HDRI influence volumes use world position and color with safe limits',()=>{
  const probes=[

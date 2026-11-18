@@ -1,6 +1,7 @@
 // Exercise the production shader on a real WebGL context, not a CPU BRDF copy.
 import {program3d} from '../js/core/viewport-3d.js';
 import {createEnvironmentIbl3d} from '../js/core/environment-ibl-3d.js';
+import {prefilterHdriFace3d} from '../js/core/ibl-prefilter-3d.js';
 export function checkPbrPixels(){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=64;
  const gl=canvas.getContext('webgl',{antialias:false,preserveDrawingBuffer:true});
@@ -52,6 +53,22 @@ export function checkPbrPixels(){
  require(pixels.ambientDielectric[0]>pixels.ambientRough[0],'Dielectric must retain indirect diffuse under ambient lighting');
  require(pixels.iblSmooth[0]>pixels.iblRough[0]+3,'HDR IBL metallic highlight must react to roughness');
  require(JSON.stringify(pixels.iblUnlit)===JSON.stringify(pixels.iblDisabledUnlit),'Unlit PBR must ignore IBL');
+ // A real imported panorama (not procedural sky) must change the same shader pixels.
+ const hdrData=new Float32Array(8*4*3);
+ for(let i=0;i<hdrData.length;i+=3){hdrData[i]=4.5;hdrData[i+1]=.05;hdrData[i+2]=.05}
+ const beforeHdr=sample({metal:1,rough:.25,ambient:1,ibl:true,sun:[0,0,0],direction:[0,0,-1]});
+ environment.updateHdri({width:8,height:4,data:hdrData},prefilterHdriFace3d);
+ const afterHdr=sample({metal:1,rough:.25,ambient:1,ibl:true,sun:[0,0,0],direction:[0,0,-1]});
+ require(afterHdr.slice(0,3).some((v,i)=>Math.abs(v-beforeHdr[i])>5),'Imported HDRI must change the actual reflected RGB pixel: '+JSON.stringify({beforeHdr,afterHdr}));
+ // Spatial probe tint must affect in-range surfaces, not just exist in Inspector.
+ uniform('uProbeCount','uniform1i',1);
+ uniform('uProbePositions[0]','uniform3fv',[0,0,0]);
+ uniform('uProbeTints[0]','uniform3fv',[.2,1,1]);
+ uniform('uProbeRadius[0]','uniform1fv',[8]);
+ uniform('uProbeStrength[0]','uniform1fv',[1]);
+ const underProbe=sample({metal:1,rough:.25,ambient:1,ibl:true,sun:[0,0,0],direction:[0,0,-1]});
+ require(underProbe[0]<afterHdr[0],'A local HDRI influence volume must tint the surface');
+ uniform('uProbeCount','uniform1i',0);
  require(gl.getError()===gl.NO_ERROR,'No WebGL errors');
  environment.destroy();gl.deleteBuffer(buffer);gl.deleteProgram(program);gl.getExtension('WEBGL_lose_context')?.loseContext();
  return pixels;

@@ -41,6 +41,8 @@ import {createEnvironmentIbl3d} from './environment-ibl-3d.js';
 import {decodeRadianceHdr} from './hdr-radiance-3d.js';
 import {prefilterHdriFace3d} from './ibl-prefilter-3d.js';
 import {environmentProbeUniforms3d} from './environment-probes-3d.js';
+import {gameProject} from './game-project.js';
+import {storeProjectHdri,loadProjectHdri,deleteProjectHdri} from './project-hdri-assets.js';
 import {stepPhysics3d} from './physics-3d.js';
 import {rapierStatus,loadRapier3d,createRapierScene,activateRapierQueries3d,moveRapierCharacter3d,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
@@ -371,10 +373,49 @@ export function init3d(canvas,host,buttons){
  const loc=n=>gl.getUniformLocation(program,n);
  const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),projectionFactor:loc('uProjectionFactor'),nearClip:loc('uNearClip'),farClip:loc('uFarClip'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]'),shadowPass:loc('uShadowPass'),shadowEnabled:loc('uShadowsEnabled'),shadowMap:loc('uShadowMap'),shadowTexel:loc('uShadowTexelSize'),shadowBias:loc('uShadowBias'),shadowEye:loc('uShadowEye'),shadowRight:loc('uShadowRight'),shadowUp:loc('uShadowUp'),shadowForward:loc('uShadowForward'),shadowExtent:loc('uShadowExtent'),shadowNear:loc('uShadowNear'),shadowFar:loc('uShadowFar'),environmentEnabled:loc('uEnvironmentEnabled'),environmentSharp:loc('uEnvironmentSharp'),environmentDiffuse:loc('uEnvironmentDiffuse'),probeCount:loc('uProbeCount'),probePositions:loc('uProbePositions[0]'),probeTints:loc('uProbeTints[0]'),probeRadius:loc('uProbeRadius[0]'),probeStrength:loc('uProbeStrength[0]')};
  let environmentIbl=null,lastIblSignature='',importedHdr=null;
- // An imported panorama takes precedence over procedural sky until cleared.
- const installHdr=async file=>{const hdr=decodeRadianceHdr(await file.arrayBuffer());if(!environmentIbl)throw Error('IBL unavailable on this GPU');environmentIbl.updateHdri(hdr,prefilterHdriFace3d);importedHdr=hdr;return {width:hdr.width,height:hdr.height}};
- globalThis.window?.addEventListener('warlike:hdri-import',event=>{installHdr(event.detail).then(detail=>globalThis.window?.dispatchEvent(new CustomEvent('warlike:hdri-ready',{detail}))).catch(error=>globalThis.window?.dispatchEvent(new CustomEvent('warlike:hdri-error',{detail:{message:error.message}})))});
- globalThis.window?.addEventListener('warlike:hdri-clear',()=>{importedHdr=null;lastIblSignature=''});
+ let hdrOperation=0;
+ const announceHdri=(event,detail)=>globalThis.window?.dispatchEvent(new CustomEvent(event,{detail}));
+ const applyHdrBytes=async(bytes,{name='environment.hdr',persist=false,projectId=gameProject.id}={})=>{
+  const hdr=decodeRadianceHdr(bytes);
+  if(!environmentIbl)throw Error('IBL unavailable on this GPU');
+  environmentIbl.updateHdri(hdr,prefilterHdriFace3d);
+  if(persist)await storeProjectHdri(projectId,name,bytes);
+  importedHdr=hdr;
+  return {width:hdr.width,height:hdr.height,name,projectId,persisted:persist};
+ };
+ const restoreHdr=async(projectId=gameProject.id)=>{
+  const operation=++hdrOperation;
+  importedHdr=null;lastIblSignature='';
+  const entry=await loadProjectHdri(projectId);
+  if(operation!==hdrOperation||projectId!==gameProject.id)return;
+  if(!entry){announceHdri('warlike:hdri-cleared',{});return}
+  const result=await applyHdrBytes(entry.bytes,{name:entry.name,projectId});
+  if(operation===hdrOperation)announceHdri('warlike:hdri-ready',{...result,persisted:true});
+ };
+ const loadBundledHdr=async()=>{
+  // The exported game carries the actual HDRI in its archive, no cloud needed.
+  if(!globalThis.__WARLIKE_BUILD__)return false;
+  const response=await fetch('./assets/environment.hdr');
+  if(!response.ok)return false;
+  await applyHdrBytes(new Uint8Array(await response.arrayBuffer()));
+  return true;
+ };
+ globalThis.window?.addEventListener('warlike:hdri-import',event=>{
+  const operation=++hdrOperation,projectId=gameProject.id,file=event.detail;
+  Promise.resolve(file?.arrayBuffer()).then(data=>applyHdrBytes(new Uint8Array(data),{name:file.name,persist:true,projectId}))
+   .then(detail=>{if(operation===hdrOperation)announceHdri('warlike:hdri-ready',detail)})
+   .catch(error=>announceHdri('warlike:hdri-error',{message:error.message}));
+ });
+ globalThis.window?.addEventListener('warlike:hdri-clear',()=>{
+  ++hdrOperation;const projectId=gameProject.id;importedHdr=null;lastIblSignature='';
+  deleteProjectHdri(projectId).then(()=>announceHdri('warlike:hdri-cleared',{}))
+   .catch(error=>announceHdri('warlike:hdri-error',{message:error.message}));
+ });
+ globalThis.window?.addEventListener('warlike:hdri-project',event=>{
+  restoreHdr(event.detail?.projectId||gameProject.id).catch(error=>announceHdri('warlike:hdri-error',{message:error.message}));
+ });
+ Promise.resolve().then(async()=>{if(!await loadBundledHdr())await restoreHdr()})
+  .catch(error=>announceHdri('warlike:hdri-error',{message:error.message}));
  if((gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)||0)>=8)try{environmentIbl=createEnvironmentIbl3d(gl)}
  catch(error){console.warn('[WarLike IBL]',error)}
  let shadowMap=null;

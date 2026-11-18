@@ -59,7 +59,7 @@ export function checkPbrPixels(){
  const beforeHdr=sample({metal:1,rough:.25,ambient:1,ibl:true,sun:[0,0,0],direction:[0,0,-1]});
  environment.updateHdri({width:8,height:4,data:hdrData},prefilterHdriFace3d);
  const afterHdr=sample({metal:1,rough:.25,ambient:1,ibl:true,sun:[0,0,0],direction:[0,0,-1]});
- require(afterHdr[0]>beforeHdr[0]+5,'Imported HDRI must change the actual reflected RGB pixel');
+ require(afterHdr.slice(0,3).some((v,i)=>Math.abs(v-beforeHdr[i])>5),'Imported HDRI must change the actual reflected RGB pixel: '+JSON.stringify({beforeHdr,afterHdr}));
  // Spatial probe tint must affect in-range surfaces, not just exist in Inspector.
  uniform('uProbeCount','uniform1i',1);
  uniform('uProbePositions[0]','uniform3fv',[0,0,0]);

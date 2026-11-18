@@ -40,6 +40,7 @@ import {sunShadowFrame3d,createSunShadowMap3d} from './shadow-map-3d.js';
 import {createEnvironmentIbl3d} from './environment-ibl-3d.js';
 import {decodeRadianceHdr} from './hdr-radiance-3d.js';
 import {prefilterHdriFace3d} from './ibl-prefilter-3d.js';
+import {environmentProbeUniforms3d} from './environment-probes-3d.js';
 import {stepPhysics3d} from './physics-3d.js';
 import {rapierStatus,loadRapier3d,createRapierScene,activateRapierQueries3d,moveRapierCharacter3d,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
@@ -164,7 +165,7 @@ export const program3d=gl=>{
  uniform float uFlashPower;
  uniform vec3 uSunDir,uSunColor;
  uniform float uSunIntensity,uAmbient;
- uniform bool uEnvironmentEnabled;uniform samplerCube uEnvironmentSharp,uEnvironmentDiffuse;
+ uniform bool uEnvironmentEnabled;uniform samplerCube uEnvironmentSharp,uEnvironmentDiffuse;uniform int uProbeCount;uniform vec3 uProbePositions[4],uProbeTints[4];uniform float uProbeRadius[4],uProbeStrength[4];
  uniform bool uShadowPass,uShadowsEnabled,uViewModel;uniform sampler2D uShadowMap;uniform float uShadowTexelSize,uShadowBias;uniform vec3 uShadowEye,uShadowRight,uShadowUp,uShadowForward;uniform float uShadowExtent,uShadowNear,uShadowFar;
  uniform int uLightCount;
  uniform vec3 uLightPos[8],uLightColor[8],uLightDir[8];
@@ -239,9 +240,16 @@ export const program3d=gl=>{
  // RGBM cubemaps provide view-dependent radiance; the second face set is
  // broad and intentionally lower-frequency (not a GGX-prefiltered mip chain).
  if(uEnvironmentEnabled){
-  vec3 environmentDiffuse=rgbmEnvironment(textureCube(uEnvironmentDiffuse,normal));
-  vec3 environmentSharp=rgbmEnvironment(textureCube(uEnvironmentSharp,reflected));
-  vec3 environmentBroad=rgbmEnvironment(textureCube(uEnvironmentDiffuse,reflected));
+  vec3 probeTint=vec3(1.);
+  for(int probeIndex=0;probeIndex<4;probeIndex++){
+   if(probeIndex>=uProbeCount)break;
+   float distanceToProbe=length(vWorld-uProbePositions[probeIndex]);
+   float influence=clamp(1.-distanceToProbe/max(uProbeRadius[probeIndex],.01),0.,1.);
+   probeTint=mix(probeTint,uProbeTints[probeIndex],clamp(influence*uProbeStrength[probeIndex],0.,1.));
+  }
+  vec3 environmentDiffuse=rgbmEnvironment(textureCube(uEnvironmentDiffuse,normal))*probeTint;
+  vec3 environmentSharp=rgbmEnvironment(textureCube(uEnvironmentSharp,reflected))*probeTint;
+  vec3 environmentBroad=rgbmEnvironment(textureCube(uEnvironmentDiffuse,reflected))*probeTint;
   indirectDiffuse=environmentDiffuse*uAmbient*ao*baseColor.rgb*(1.-metallic)*(vec3(1.)-indirectFresnel);
   indirectSpecular=mix(environmentSharp,environmentBroad,roughness)*uAmbient*ao*indirectFresnel*mix(.12,.45,1.-roughness);
  }
@@ -361,7 +369,7 @@ export function init3d(canvas,host,buttons){
  let program;
  try{program=program3d(gl)}catch(err){renderFailure('Compilation shader : '+String(err.message||err));return {setEnabled:()=>false,focus:()=>{},syncToWorkspace:()=>renderFailure(view3d.error)}}
  const loc=n=>gl.getUniformLocation(program,n);
- const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),projectionFactor:loc('uProjectionFactor'),nearClip:loc('uNearClip'),farClip:loc('uFarClip'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]'),shadowPass:loc('uShadowPass'),shadowEnabled:loc('uShadowsEnabled'),shadowMap:loc('uShadowMap'),shadowTexel:loc('uShadowTexelSize'),shadowBias:loc('uShadowBias'),shadowEye:loc('uShadowEye'),shadowRight:loc('uShadowRight'),shadowUp:loc('uShadowUp'),shadowForward:loc('uShadowForward'),shadowExtent:loc('uShadowExtent'),shadowNear:loc('uShadowNear'),shadowFar:loc('uShadowFar'),environmentEnabled:loc('uEnvironmentEnabled'),environmentSharp:loc('uEnvironmentSharp'),environmentDiffuse:loc('uEnvironmentDiffuse')};
+ const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),projectionFactor:loc('uProjectionFactor'),nearClip:loc('uNearClip'),farClip:loc('uFarClip'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]'),shadowPass:loc('uShadowPass'),shadowEnabled:loc('uShadowsEnabled'),shadowMap:loc('uShadowMap'),shadowTexel:loc('uShadowTexelSize'),shadowBias:loc('uShadowBias'),shadowEye:loc('uShadowEye'),shadowRight:loc('uShadowRight'),shadowUp:loc('uShadowUp'),shadowForward:loc('uShadowForward'),shadowExtent:loc('uShadowExtent'),shadowNear:loc('uShadowNear'),shadowFar:loc('uShadowFar'),environmentEnabled:loc('uEnvironmentEnabled'),environmentSharp:loc('uEnvironmentSharp'),environmentDiffuse:loc('uEnvironmentDiffuse'),probeCount:loc('uProbeCount'),probePositions:loc('uProbePositions[0]'),probeTints:loc('uProbeTints[0]'),probeRadius:loc('uProbeRadius[0]'),probeStrength:loc('uProbeStrength[0]')};
  let environmentIbl=null,lastIblSignature='',importedHdr=null;
  // An imported panorama takes precedence over procedural sky until cleared.
  const installHdr=async file=>{const hdr=decodeRadianceHdr(await file.arrayBuffer());if(!environmentIbl)throw Error('IBL unavailable on this GPU');environmentIbl.updateHdri(hdr,prefilterHdriFace3d);importedHdr=hdr;return {width:hdr.width,height:hdr.height}};
@@ -840,6 +848,9 @@ export function init3d(canvas,host,buttons){
    gl.activeTexture(gl.TEXTURE0);
   }else gl.uniform1i(u.environmentEnabled,0);
 
+  const probes=environmentProbeUniforms3d(state.entities);
+  gl.uniform1i(u.probeCount,probes.count);
+  if(probes.count){gl.uniform3fv(u.probePositions,probes.positions);gl.uniform3fv(u.probeTints,probes.tints);gl.uniform1fv(u.probeRadius,probes.radius);gl.uniform1fv(u.probeStrength,probes.strength);}
   const lamps=visibleLights(state.entities,cam.eye,8);
   const padded=(key,def)=>Array.from({length:8},(_,i)=>lamps[i]?.[key]??def).flat();
   gl.uniform1i(u.lightCount,lamps.length);

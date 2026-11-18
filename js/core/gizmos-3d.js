@@ -1,6 +1,6 @@
 import {updateAffineEditorPose3d,updateEditorEntityHierarchy3d,gizmoAxis3d,snap3d} from './scene-graph-v2.js';
 import {rotationQuaternion3d} from './collider-3d.js';
-import {projectedAxisDrag3d,projectedAxisScale3d,alignSceneObjects3d,snapSelected3d} from './scene-editing-3d-tools.js';
+import {projectedAxisDrag3d,projectedAxisScale3d,projectedAxisRotation3d,alignSceneObjects3d,snapSelected3d} from './scene-editing-3d-tools.js';
 import {cameraFrustumCorners3d} from './editor-camera-frustum-3d.js';
 import {sceneCameraView} from './scene-camera-3d.js';
 import {initializeRustGizmo,axisRayParameter,gizmoPointerRay} from './rust-gizmo-acceleration.js';
@@ -135,6 +135,13 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   const endScreen=pivot&&project3d(pivot.map((v,i)=>v+direction[i]),cam,rect.width,rect.height);
   drag={pointer:event.pointerId,axis,startX:event.clientX,startY:event.clientY,mode:lastTool,
    pivotScreen,endScreen,
+   // Pointer position and view-facing sign are frozen for the entire drag.
+   startPointer:{x:event.clientX-rect.left,y:event.clientY-rect.top},
+   axisFacing:(()=>{
+    if(!pivot||!Array.isArray(cam?.eye))return 1;
+    const facing=direction.reduce((sum,n,i)=>sum+n*(cam.eye[i]-pivot[i]),0);
+    return facing<0?-1:1;
+   })(),
    rustStart:(()=>{
     if(!pivot||lastTool!=='move')return null;
     const ray=gizmoPointerRay(event.clientX,event.clientY,rect,cam);
@@ -157,7 +164,9 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   for(const start of drag.objects){
    const o=state.entities.find(o=>o.id===start.id);if(!o)continue;
    if(drag.mode==='rotate'){
-    const degrees=quant((dx-dy)*.75,snapStep?Math.max(1,snapStep*30):0);
+    const pointer={x:event.clientX-rect.left,y:event.clientY-rect.top};
+    const raw=projectedAxisRotation3d(drag.pivotScreen,drag.startPointer,pointer,{directionSign:drag.axisFacing});
+    const degrees=quant(raw,snapStep?Math.max(1,snapStep*30):0);
     if(drag.axis==='x')o.rotationX3d=start.rotationX3d+degrees;
     else if(drag.axis==='z')o.rotationZ3d=start.rotationZ3d+degrees;
     else o.rotation=start.rotation+degrees;
@@ -173,13 +182,13 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
      // Project the pointer-to-feature displacement on the selected gizmo axis.
      const center=[start.x/64+(start.w||64)/128,start.elevation3d+(start.h||64)/128,start.y/64+(start.depth3d||start.h||64)/128];
      const distance=direction.reduce((sum,n,i)=>sum+n*(surfaceHit.point[i]-center[i]),0);
-     o.x=Math.round((start.x/64+direction[0]*distance)*64);
+     o.x=(start.x/64+direction[0]*distance)*64;
      o.elevation3d=start.elevation3d+direction[1]*distance;
-     o.y=Math.round((start.y/64+direction[2]*distance)*64);
+     o.y=(start.y/64+direction[2]*distance)*64;
     }else{
-     o.x=Math.round(quant(start.x/64+direction[0]*amount)*64);
+     o.x=quant(start.x/64+direction[0]*amount)*64;
      o.elevation3d=quant(start.elevation3d+direction[1]*amount);
-     o.y=Math.round(quant(start.y/64+direction[2]*amount)*64);
+     o.y=quant(start.y/64+direction[2]*amount)*64;
     }
    }
    // Keep the authored affine shear instead of throwing it away when the gizmo moves.

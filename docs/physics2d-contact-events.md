@@ -50,3 +50,9 @@ Les noms de phases sont sensibles à la casse : `triggerEnter2d` contient `Enter
 La détection utilise les rectangles du BoxCollider2D et les cellules solides Tilemap ; `CircleCollider2D`, `CapsuleCollider2D`, contacts avec normales/impulsions, sous-colliders multiples et paramètres `Collision2D` Unity ne sont **pas encore** pris en charge. Un événement Collision2D signale un toucher ou un léger chevauchement rectangulaire ; un Trigger2D exige un chevauchement strict. Il n'y a pas encore de journal visuel de contacts ni de filtrage avancé par layer/matrix.
 
 Tests unitaires : `tests/physics-contact-events-2d.test.mjs`. Les tests navigateur et exports Web doivent être validés avant toute fusion.
+
+## Filtrage par couches 2D (Phase 2)
+
+Un `Collider2D` dispose désormais des propriétés facultatives `layer` (entier 0–31) et `mask` (bitmask entier non signé). Deux colliders entrent en collision uniquement si leurs masques autorisent réciproquement la couche de l'autre. Le même filtre s'applique aux obstacles physiques et aux événements de contacts/Trigger2D ; la désactivation d'une paire déjà en contact produit un événement `Exit` à la prochaine mise à jour.
+
+Les anciennes scènes sans `layer`/`mask` restent compatibles : couche par défaut `0`, masque par défaut `4294967295` (toutes couches). Le filtrage est **par Collider2D**, pas encore une matrice de couches globale comme dans Unity, et les colliders Circle/Capsule restent hors de cette passe.

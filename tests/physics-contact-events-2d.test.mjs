@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ContactEvents2d} from '../js/core/physics-contact-events-2d.js';
+import {collisionLayersAllow2d,defaultCollider2d,moveBody2d} from '../js/core/physics-2d.js';
 import {compileWarScript,createWarScriptInstance} from '../script-editor/warscript.js';
 import {resetSequences,updateSequences,emitSequenceSignal,sequenceRuntime} from '../js/core/logic-sequences.js';
 import {createGraph,applyGraph} from '../js/core/blueprint-graph.js';
@@ -75,4 +76,28 @@ test('Contact2D emits an exit when a trigger is disabled, never a phantom stay',
  assert.deepEqual(stages(contacts.update([a,b])),[]);
  a.collider2d.enabled=true;
  assert.deepEqual(stages(contacts.update([a,b])),['trigger:enter']);
+});
+
+test('2D collision layers filter both physical movement and Trigger2D callbacks',()=>{
+ const p={id:2,type:'player',x:0,y:0,w:16,h:16,collider2d:{...defaultCollider2d(),layer:1,mask:1<<2}};
+ const wall={id:3,type:'object',x:25,y:0,w:20,h:20,collider2d:{...defaultCollider2d(),layer:3,mask:0xffffffff}};
+ assert.equal(collisionLayersAllow2d(p,wall),false);
+ moveBody2d(p,40,0,[p,wall]);
+ assert.equal(p.x,40,'masked wall does not block movement');
+ p.x=0;wall.collider2d.layer=2;
+ assert.equal(collisionLayersAllow2d(p,wall),true);
+ moveBody2d(p,40,0,[p,wall]);
+ assert.ok(p.x+p.w<=wall.x+.001,'allowed layer blocks movement');
+ const trigger={id:4,name:'Sensor',type:'object',x:0,y:0,w:40,h:40,collider2d:{...defaultCollider2d(),layer:3,isTrigger:true}};
+ p.x=10;
+ const events=new ContactEvents2d();
+ assert.deepEqual(events.update([p,trigger]).filter(e=>e.kind==='trigger'),[]);
+ trigger.collider2d.layer=2;
+ assert.equal(events.update([p,trigger]).filter(e=>e.kind==='trigger'&&e.stage==='enter').length,2);
+ trigger.collider2d.mask=0;
+ assert.equal(events.update([p,trigger]).filter(e=>e.kind==='trigger'&&e.stage==='exit').length,2);
+});
+test('legacy Collider2D scenes retain all-layer collision behavior',()=>{
+ assert.equal(collisionLayersAllow2d({collider2d:{enabled:true}},{collider2d:{enabled:true}}),true);
+ assert.equal(defaultCollider2d().mask,4294967295);
 });

@@ -14,6 +14,16 @@ export function projectedAxisScale3d(origin,endpoint,dx,dy,{sensitivity=.5,min=.
  if(!Number.isFinite(sensitivity)||sensitivity<=0||!Number.isFinite(min)||min<=0||!Number.isFinite(max)||max<min)return 1;
  return Math.min(max,Math.max(min,1+metres*sensitivity));
 }
+// Rotation by the actual angular sweep of the pointer around the projected pivot.
+// directionSign reverses the on-screen winding when viewing the opposite side
+// of an axis. A tiny initial radius is ignored instead of producing large jumps.
+export function projectedAxisRotation3d(pivot,start,current,{directionSign=1}={}){
+ if(!pivot||!start||!current||![pivot.x,pivot.y,start.x,start.y,current.x,current.y,directionSign].every(Number.isFinite))return 0;
+ const sx=start.x-pivot.x,sy=start.y-pivot.y,cx=current.x-pivot.x,cy=current.y-pivot.y;
+ if(Math.hypot(sx,sy)<8||Math.hypot(cx,cy)<8)return 0;
+ const angle=Math.atan2(sx*cy-sy*cx,sx*cx+sy*cy);
+ return angle*180/Math.PI*(directionSign<0?-1:1);
+}
 export function alignSceneObjects3d(entities,ids,{axis='x',to='first'}={}){
  if(!Array.isArray(entities)||!Array.isArray(ids)||!['x','y','height'].includes(axis)||to!=='first')throw Error('Alignement invalide');
  const selected=ids.map(id=>entities.find(e=>e.id===id)).filter(Boolean);

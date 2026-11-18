@@ -1,0 +1,118 @@
+{
+  "version": 5,
+  "mode": "2d",
+  "description": "Certification 2D: top-down player, solid walls and layer-filtered Trigger2D",
+  "entities": [
+    {
+      "id": 1,
+      "name": "Joueur 2D",
+      "type": "player",
+      "x": 55,
+      "y": 140,
+      "w": 36,
+      "h": 36,
+      "color": "#46b6aa",
+      "collider2d": {
+        "enabled": true,
+        "isTrigger": false,
+        "layer": 1,
+        "mask": 5
+      },
+      "controller2d": {
+        "mode": "topdown",
+        "walkSpeed": 190,
+        "sprintSpeed": 295,
+        "jumpSpeed": 430
+      },
+      "rigidbody2d": {
+        "enabled": true,
+        "bodyType": "kinematic",
+        "gravityScale": 0,
+        "vx": 0,
+        "vy": 0
+      }
+    },
+    {
+      "id": 2,
+      "name": "Mur couche autorisée",
+      "type": "object",
+      "x": 225,
+      "y": 80,
+      "w": 28,
+      "h": 190,
+      "color": "#c08d71",
+      "collider2d": {
+        "enabled": true,
+        "isTrigger": false,
+        "layer": 2,
+        "mask": 2
+      }
+    },
+    {
+      "id": 3,
+      "name": "Déclencheur autorisé",
+      "type": "object",
+      "x": 130,
+      "y": 120,
+      "w": 55,
+      "h": 55,
+      "color": "#95bd6d",
+      "collider2d": {
+        "enabled": true,
+        "isTrigger": true,
+        "layer": 2,
+        "mask": 2
+      },
+      "sequence": {
+        "enabled": true,
+        "event": "triggerEnter2d",
+        "instructions": [
+          {
+            "type": "message",
+            "text": "Trigger2D : Enter"
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "name": "Déclencheur ignoré",
+      "type": "object",
+      "x": 130,
+      "y": 220,
+      "w": 55,
+      "h": 55,
+      "color": "#ac7bd1",
+      "collider2d": {
+        "enabled": true,
+        "isTrigger": true,
+        "layer": 3,
+        "mask": 4294967295
+      },
+      "sequence": {
+        "enabled": true,
+        "event": "triggerEnter2d",
+        "instructions": [
+          {
+            "type": "message",
+            "text": "Ce trigger devrait être ignoré"
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "name": "Obstacle décoratif sans collision",
+      "type": "object",
+      "x": 310,
+      "y": 145,
+      "w": 60,
+      "h": 65,
+      "color": "#6889bb",
+      "collider2d": {
+        "enabled": false,
+        "isTrigger": false
+      }
+    }
+  ]
+}

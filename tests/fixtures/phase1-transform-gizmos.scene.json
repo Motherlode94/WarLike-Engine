@@ -1,0 +1,148 @@
+{
+  "version": 5,
+  "mode": "3d",
+  "description": "Certification Transform, hierarchy, GLB scale/collider and snapping",
+  "entities": [
+    {
+      "id": 1,
+      "name": "Sol de certification",
+      "type": "mesh3d",
+      "x": -640,
+      "y": -640,
+      "w": 1280,
+      "h": 32,
+      "depth3d": 1280,
+      "elevation3d": -0.5,
+      "color": "#455b68",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "primitive-platform",
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Parent — GLB KayKit",
+      "type": "prefab",
+      "x": -225,
+      "y": -100,
+      "w": 128,
+      "h": 128,
+      "depth3d": 128,
+      "elevation3d": 0,
+      "color": "#6995cd",
+      "rotation": 15,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "kaykit-city-builder-bits-box-a",
+      "collider3d": {
+        "enabled": true,
+        "shape": "box",
+        "width": 0,
+        "height": 0,
+        "depth": 0
+      }
+    },
+    {
+      "id": 3,
+      "name": "Enfant — GLB KayKit",
+      "type": "prefab",
+      "x": -160,
+      "y": -40,
+      "w": 64,
+      "h": 96,
+      "depth3d": 64,
+      "elevation3d": 2,
+      "color": "#d1a876",
+      "rotation": 25,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "kaykit-city-builder-bits-box-b",
+      "parentId": 2,
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    },
+    {
+      "id": 4,
+      "name": "Petit-enfant — repère",
+      "type": "mesh3d",
+      "x": -135,
+      "y": -30,
+      "w": 32,
+      "h": 32,
+      "depth3d": 32,
+      "elevation3d": 3.2,
+      "color": "#6ab998",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "primitive-cube",
+      "parentId": 3
+    },
+    {
+      "id": 5,
+      "name": "Surface inclinée — snap",
+      "type": "mesh3d",
+      "x": 100,
+      "y": -190,
+      "w": 320,
+      "h": 24,
+      "depth3d": 250,
+      "elevation3d": 0.45,
+      "color": "#84b7c9",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "primitive-ramp",
+      "rotationZ3d": 18,
+      "collider3d": {
+        "enabled": true,
+        "shape": "box"
+      }
+    },
+    {
+      "id": 6,
+      "name": "Objet scale/Collider auto — GLB",
+      "type": "prefab",
+      "x": 165,
+      "y": 160,
+      "w": 96,
+      "h": 144,
+      "depth3d": 80,
+      "elevation3d": 0.2,
+      "color": "#a881d2",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "kaykit-city-builder-bits-box-a",
+      "collider3d": {
+        "enabled": true,
+        "shape": "box",
+        "width": 0,
+        "height": 0,
+        "depth": 0
+      }
+    },
+    {
+      "id": 7,
+      "name": "Objet référence sans snapping",
+      "type": "mesh3d",
+      "x": -240,
+      "y": 180,
+      "w": 80,
+      "h": 80,
+      "depth3d": 80,
+      "elevation3d": 0.2,
+      "color": "#bca865",
+      "rotation": 0,
+      "collision3d": true,
+      "solid3d": true,
+      "assetId": "primitive-cube"
+    }
+  ]
+}

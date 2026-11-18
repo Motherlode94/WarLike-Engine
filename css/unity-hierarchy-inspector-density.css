@@ -239,3 +239,54 @@ body.reference-engine:not(.hub-open) #properties .unity-object-static-field{
 body.reference-engine:not(.hub-open) #properties .unity-object-static-field>input{
  width:14px!important;height:14px!important;min-height:14px!important;margin:0;
 }
+
+/* Inspector readability pass: editor-only, theme-variable driven.
+   Never override global theme tokens or the render/game viewport. */
+body.reference-engine:not(.hub-open) #inspectorPanel {
+  container: inspector-pane / inline-size;
+}
+body.reference-engine:not(.hub-open) #properties {
+  min-width: 0;
+  overflow-x: hidden;
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-identity,
+body.reference-engine:not(.hub-open) #properties .unity-object-labels,
+body.reference-engine:not(.hub-open) #properties .inspector-component {
+  min-width: 0;
+  box-sizing: border-box;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component>summary {
+  min-height: 30px!important;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--wl-theme-text, inherit);
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component .component-content {
+  padding: 9px 10px!important;
+  min-width: 0;
+}
+body.reference-engine:not(.hub-open) #properties :is(input,select,textarea,button) {
+  min-width: 0;
+  font: inherit;
+}
+body.reference-engine:not(.hub-open) #properties :is(input,select,textarea):focus-visible,
+body.reference-engine:not(.hub-open) #properties button:focus-visible {
+  outline: 2px solid var(--editor-accent,#7fcac9);
+  outline-offset: 1px;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-axis {
+  min-width: 0;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-axis input {
+  width: 100%;
+  min-width: 0;
+  text-align: right;
+}
+@container inspector-pane (max-width: 305px) {
+  #properties .unity-object-labels {
+    grid-template-columns: minmax(0,1fr)!important;
+  }
+  #properties .inspector-component .component-content {
+    padding: 7px!important;
+  }
+}

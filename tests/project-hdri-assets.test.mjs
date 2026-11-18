@@ -27,4 +27,7 @@ test('portable scene exporter and Web game exporter both embed project HDRI',()=
  assert.match(scene,/restoreProjectHdri\(gameProject\.id,data\.environmentHdri\)/);
  assert.match(build,/name:'assets\/environment\.hdr'/);
  assert.match(renderer,/fetch\('\.\/assets\/environment\.hdr'\)/);
+ assert.match(renderer,/__WARLIKE_HDRI_INCLUDED__/);
+ assert.match(build,/data\.hasEnvironmentHdri=!!hdri/);
+ assert.match(build,/data\.hasEnvironmentHdri\?'globalThis\.__WARLIKE_HDRI_INCLUDED__=true;'/);
 });

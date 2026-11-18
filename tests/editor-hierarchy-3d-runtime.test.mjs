@@ -52,3 +52,36 @@ test('direct Inspector edits to parent and child survive hierarchy propagation',
  updateEditorEntityHierarchy3d(es);
  near(es[1].x,320);
 });
+
+test('nested hierarchy preserves local transforms when a selected root moves with fractional precision',()=>{
+ const es=[
+  {id:1,name:'Vehicle',x:64,y:64,elevation3d:0,rotation:0},
+  {id:2,parentId:1,name:'Turret',x:128,y:64,elevation3d:0,rotation:0},
+  {id:3,parentId:2,name:'Sight',x:160,y:64,elevation3d:.3,rotation:0}
+ ];
+ updateEditorEntityHierarchy3d(es);
+ const localTurret=[...es[1].localMatrix3d],localSight=[...es[2].localMatrix3d];
+ const amount=13.125;es[0].x+=amount;
+ updateEditorEntityHierarchy3d(es,{worldOverrideIds:new Set([1])});
+ near(es[1].x,128+amount);near(es[2].x,160+amount);
+ assert.deepEqual(es[1].localMatrix3d,localTurret);
+ assert.deepEqual(es[2].localMatrix3d,localSight);
+ updateEditorEntityHierarchy3d(es);
+ near(es[2].x,160+amount);
+});
+test('editing nested child does not change parent or sibling transform',()=>{
+ const es=[
+  {id:1,name:'Root',x:0,y:0,elevation3d:0,rotation:0},
+  {id:2,parentId:1,name:'Door',x:64,y:0,elevation3d:0,rotation:0},
+  {id:3,parentId:1,name:'Other',x:0,y:64,elevation3d:0,rotation:0}
+ ];
+ updateEditorEntityHierarchy3d(es);
+ const sibling=[es[2].x,es[2].y],parent=[es[0].x,es[0].y];
+ const child=es[1],prior=[...child.worldMatrix3d],reference=[...child.matrixReference3d];
+ child.x+=32.375;
+ updateAffineEditorPose3d(child,prior,reference);
+ updateEditorEntityHierarchy3d(es,{worldOverrideIds:new Set([2])});
+ near(child.x,96.375);
+ assert.deepEqual([es[0].x,es[0].y],parent);
+ assert.deepEqual([es[2].x,es[2].y],sibling);
+});

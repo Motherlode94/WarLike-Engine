@@ -22,3 +22,19 @@ test('player can land on a solid raised platform',()=>{
  assert.ok(Math.abs(p.elevation3d-1)<.04,'should land at height 1 meter');
  assert.equal(p.grounded3d,true);
 });
+
+test('Rapier controller retains grounded state on real support after a transient contact miss',()=>{
+ const p=player(),ground={id:99,type:'object',x:-100,y:-100,w:300,h:16,depth3d:300,elevation3d:-.25,solid3d:true};
+ // A contact query can be one frame late after a kinematic platform movement.
+ const moveCharacter=(actor,dx,dy,dz)=>{actor.x+=dx;actor.y+=dy;actor.elevation3d+=dz/64;actor.grounded3d=false;return {grounded:false,ceiling:false}};
+ updateController3d(p,new Set(),1/60,0,[p,ground],{moveCharacter});
+ assert.equal(p.grounded3d,true,'physical support must preserve grounded state');
+ assert.equal(p._support3d?.id,ground.id);
+});
+test('Rapier controller cannot invent grounded state in empty space',()=>{
+ const p=player();p.elevation3d=2;
+ const moveCharacter=(actor,dx,dy,dz)=>{actor.x+=dx;actor.y+=dy;actor.elevation3d+=dz/64;actor.grounded3d=false;return {grounded:false,ceiling:false}};
+ updateController3d(p,new Set(),1/60,0,[p],{moveCharacter});
+ assert.equal(p.grounded3d,false);
+ assert.equal(p._support3d,null);
+});

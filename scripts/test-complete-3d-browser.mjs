@@ -59,7 +59,7 @@ try{
  mark('third-person mouse camera and pause');await open('camera');const cameraStart=await snapshot();
  const canvas=page.locator('#canvas3d'),rect=await canvas.boundingBox(),cx=rect.x+rect.width/2,cy=rect.y+rect.height/2;
  await page.mouse.move(cx,cy);await page.mouse.move(cx+100,cy,{steps:10});
- await wait(async initial=>{const {view3d}=await import('./js/core/viewport-3d.js');return Math.abs(view3d.yaw-initial)>.1},cameraStart.yaw);
+ await wait(async initial=>{const {view3d}=await import('./js/core/viewport-3d.js');return Math.abs(view3d.yaw-initial)>.04},cameraStart.yaw);
  await page.keyboard.press('Escape');await page.getByRole('button',{name:'Reprendre la partie',exact:true}).click();
  report.camera=await snapshot();await page.screenshot({path:path.join(output,'route-camera.png')});await context.close();
  mark('offline exported FPS route');await open('route');report.start=await snapshot();

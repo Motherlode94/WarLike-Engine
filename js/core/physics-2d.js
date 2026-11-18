@@ -2,7 +2,7 @@ import {getAsset} from '../assets/catalog.js';
 import {tilemapColliders2d} from './tilemap-2d.js';
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-export const defaultCollider2d=()=>({enabled:true,isTrigger:false,offsetX:0,offsetY:0,width:0,height:0});
+export const defaultCollider2d=()=>({enabled:true,isTrigger:false,offsetX:0,offsetY:0,width:0,height:0,layer:0,mask:4294967295});
 export const defaultRigidbody2d=()=>({enabled:true,bodyType:'dynamic',mass:1,gravity:980,gravityScale:1,restitution:0,friction:.8,vx:0,vy:0});
 export const defaultController2d=()=>({mode:'auto',walkSpeed:190,sprintSpeed:295,jumpSpeed:430,coyoteTime:.1,jumpBuffer:.12});
 export const actor2d=o=>!!o?.controller2d||o?.type==='player'||o?.type==='character'||getAsset(o?.assetId)?.category==='Characters';
@@ -13,6 +13,12 @@ export function controllerMode2d(player,entities){
 }
 // Axis-aligned boxes, in 2D scene pixels. A zero size follows the sprite's dimensions.
 export function colliderRect2d(o){const c=o.collider2d||{};return {x:n(o.x)+n(c.offsetX),y:n(o.y)+n(c.offsetY),w:Math.max(.01,n(c.width)>0?n(c.width):n(o.w,32)),h:Math.max(.01,n(c.height)>0?n(c.height):n(o.h,32))}}
+// Layer 0..31 and unsigned bit mask. Older scenes without these fields collide normally.
+export function collisionLayersAllow2d(a,b){
+ const layer=o=>Number.isInteger(o?.collider2d?.layer)&&o.collider2d.layer>=0&&o.collider2d.layer<32?o.collider2d.layer:0;
+ const mask=o=>Number.isInteger(o?.collider2d?.mask)&&o.collider2d.mask>=0&&o.collider2d.mask<=4294967295?o.collider2d.mask>>>0:4294967295;
+ return !!(mask(a)&(1<<layer(b)))&&!!(mask(b)&(1<<layer(a)));
+}
 export function solidCollider2d(o){
  if(!o||o.enabled===false||o._sequenceDestroyed||o.sequenceEnabled===false||o.lightType||o.audioEnabled)return false;
  if(o.tilemap2d)return false; // Solid cells are individual collision rectangles.
@@ -29,7 +35,7 @@ export function moveBody2d(body,dx,dy,entities){
  const result={blockedX:false,blockedY:false,grounded:false,ceiling:false,hits:[]};
  if(body.collider2d?.enabled===false||!body.collider2d&&body.collision3d===false||body.collider2d?.isTrigger){body.x+=n(dx);body.y+=n(dy);body.grounded2d=false;return result}
  if(body.enabled===false)return result;
- const obstacles=[...entities.filter(o=>o!==body&&solidCollider2d(o)),...tilemapColliders2d(entities.filter(o=>o!==body))];
+ const obstacles=[...entities.filter(o=>o!==body&&solidCollider2d(o)&&collisionLayersAllow2d(body,o)),...tilemapColliders2d(entities.filter(o=>o!==body))];
  // Recover an object placed partly inside a collider before Play.
  for(let iteration=0;iteration<8;iteration++){
   const start=colliderRect2d(body),hit=obstacles.find(o=>{const b=colliderRect2d(o);return overlapAxis(start,b,'x')&&overlapAxis(start,b,'y')});if(!hit)break;

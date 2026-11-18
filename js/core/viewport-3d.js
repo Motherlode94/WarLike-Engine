@@ -464,7 +464,8 @@ export function init3d(canvas,host,buttons){
    let steps=0;
    while(physicsAccumulator>=fixed&&steps++<6){stepRapierScene(physicsSession,fixed);physicsAccumulator-=fixed}
   }else stepPhysics3d(state.entities,dt);
-  if(!p){releaseGrab3d(grabSession,state.entities);return;}
+  if(!p)releaseGrab3d(grabSession,state.entities);
+  if(!p)return;
   updateHorror(dt,p,state.entities,input);updateHorrorPerception(dt,p,state.entities,input);updateHorrorAudio(dt,p,state.entities,input,horror);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
   const inVehicle=updateDriving3d(state.entities,p,input,dt,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses});
   if(!inVehicle)updateController3d(p,input,dt,(cameraMovementYaw(currentSceneCameraPose())??view3d.yaw),state.entities,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,moveCharacter:physicsSession?.actors.get(p.id)?.controller?(actor,dx,dy,dz,options)=>moveRapierCharacter3d(physicsSession,actor,dx,dy,dz,options):null});

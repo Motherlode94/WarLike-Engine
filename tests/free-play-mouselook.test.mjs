@@ -8,9 +8,10 @@ test('FPS/TPS mouse rotation has an unlocked pointer path and play-only guard',(
  assert.match(source,/!companyController\(state\.entities\)/);
  assert.match(source,/view3d\.yaw-=dx\*sensitivity/);
 });
-test('FPS click only aims and no longer fires or requests pointer lock',()=>{
- assert.match(source,/if\(isFps\(\)\)\{if\(e\.button===0\|\|e\.button===2\)\{e\.preventDefault\(\);fpsAiming=true;/);
+test('left click fires, right click aims, and free-look is not tied to a click',()=>{
+ assert.match(source,/if\(isFps\(\)\)\{if\(e\.button===0\)\{e\.preventDefault\(\);fpsFiring=true;shootFps\(\)/);
+ assert.match(source,/else if\(e\.button===2\)\{e\.preventDefault\(\);fpsAiming=true/);
+ assert.match(source,/fpsFiring\|\|input\.has\('f'\)/);
  assert.doesNotMatch(source,/fpsMouseDown/);
  assert.doesNotMatch(source,/canvas\.requestPointerLock/);
- assert.match(source,/input\.has\('f'\)/);
 });

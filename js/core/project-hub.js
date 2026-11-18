@@ -79,7 +79,7 @@ export function createProject(name,type,assetPack='starter',genre='sandbox'){
  const data={workspaceMode:type,workspaces:slots};
  if(!restoreWorkspaces(data))throw Error('Impossible de créer le projet.');
  gameProject.id=id;gameProject.title=name;
- Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(assetPack),genre:chosenGenre});setHubAccent(hub.accent,{persist:false});state.demoGuide=slots[type].guide||'';resetHistory();record('Créer le projet '+name);saveProject();notify();window.dispatchEvent(new CustomEvent('warlike:hdri-project',{detail:{projectId:id}}));return id;
+ Object.assign(hub,{projectId:id,projectName:name,type,accent:hub.accent||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(assetPack),genre:chosenGenre});setHubAccent(hub.accent,{persist:false});state.demoGuide=slots[type].guide||'';resetHistory();record('Créer le projet '+name);saveProject();notify();(typeof window!=='undefined'&&typeof CustomEvent!=='undefined')&&window.dispatchEvent(new CustomEvent('warlike:hdri-project',{detail:{projectId:id}}));return id;
 }
 export function openProject(id){
  if(state.playing)throw Error('Arrête Play avant de changer de projet.');
@@ -91,7 +91,7 @@ export function openProject(id){
  const {data,source}=restored;
  if(source!=='principal')console.warn('[WarLike Hub] Projet récupéré depuis sa sauvegarde de secours sans écraser l’original :',id);
  gameProject.id=id;if(!data.workspaces?.[workspace.mode]?.game?.title)gameProject.title=meta.name;
- Object.assign(hub,{projectId:id,projectName:meta.name,type:workspace.mode,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack),genre:genreForMode(resolveGameGenre(data.workspaces?.[workspace.mode]?.game?.genre??data.genre??meta.genre,state.entities),workspace.mode)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide=source==='principal'?'':'Projet récupéré depuis une sauvegarde de secours. Vérifie son contenu et enregistre une copie.';resetHistory();record('Ouvrir le projet '+meta.name+(source==='principal'?'':' · secours'));notify();window.dispatchEvent(new CustomEvent('warlike:hdri-project',{detail:{projectId:id}}));return true;
+ Object.assign(hub,{projectId:id,projectName:meta.name,type:workspace.mode,accent:normalizeHubAccent(data.accent)||normalizeHubAccent(meta.accent)||DEFAULT_ACCENT,assetPack:sanitizeAssetPack(data.assetPack||meta.assetPack),genre:genreForMode(resolveGameGenre(data.workspaces?.[workspace.mode]?.game?.genre??data.genre??meta.genre,state.entities),workspace.mode)});setHubAccent(hub.accent,{persist:false});state.keys.clear();state.demoGuide=source==='principal'?'':'Projet récupéré depuis une sauvegarde de secours. Vérifie son contenu et enregistre une copie.';resetHistory();record('Ouvrir le projet '+meta.name+(source==='principal'?'':' · secours'));notify();(typeof window!=='undefined'&&typeof CustomEvent!=='undefined')&&window.dispatchEvent(new CustomEvent('warlike:hdri-project',{detail:{projectId:id}}));return true;
 }
 export function chooseProjectGenre(id,genre){
  if(state.playing)throw Error('Arrête Play avant de changer le type de jeu.');

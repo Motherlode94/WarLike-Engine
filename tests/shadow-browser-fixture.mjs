@@ -21,6 +21,9 @@ export function checkSunShadowPixels(){
  v3('uEmissive',[0,0,0]);i1('uLightCount',0);i1('uUseTexture',0);
  i1('uHasNormalMap',0);i1('uHasMetallicRoughnessMap',0);i1('uHasOcclusionMap',0);i1('uHasEmissiveMap',0);
  i1('uViewModel',0);i1('uUseAffine',0);i1('uUnlit',0);u1('uAlphaCutoff',-1);
+ // WebGL forbids active samplerCube/sampler2D uniforms sharing a texture unit,
+ // even when their shader branch is disabled. Reserve 6 and 7 for IBL.
+ i1('uEnvironmentEnabled',0);i1('uEnvironmentSharp',6);i1('uEnvironmentDiffuse',7);
  v3('uShadowEye',[0,0,4]);v3('uShadowRight',[1,0,0]);v3('uShadowUp',[0,1,0]);v3('uShadowForward',[0,0,-1]);
  u1('uShadowExtent',2);u1('uShadowNear',.1);u1('uShadowFar',10);
  u1('uShadowBias',.0018);u1('uShadowTexelSize',1/map.size);

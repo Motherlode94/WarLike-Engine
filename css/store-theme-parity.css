@@ -1,0 +1,69 @@
+/* WarLike Engine ↔ Store palette parity.
+   Legacy editor chrome reads its own tokens: bridge those to the shared user-selected theme. */
+html[data-warlike-app="warlike-engine"][data-wl-theme]{
+ --wl-theme-bg:var(--wl-bg);
+ --wl-theme-panel:var(--wl-surface);
+ --wl-theme-header:var(--wl-sidebar);
+ --wl-theme-button:var(--wl-input);
+ --wl-theme-border:var(--wl-border);
+ --wl-theme-fg:var(--wl-fg);
+ --wl-theme-muted:var(--wl-fg-muted);
+ --editor-accent:var(--wl-accent);
+ --warlike-palette-surface:var(--wl-bg);
+ --warlike-palette-panel:var(--wl-surface);
+ --warlike-palette-header:var(--wl-sidebar);
+ --warlike-palette-button:var(--wl-input);
+ --warlike-palette-border:var(--wl-border);
+ --warlike-palette-text:var(--wl-fg);
+ --warlike-custom-surface:var(--wl-surface);
+ --warlike-custom-text:var(--wl-fg);
+ color-scheme:dark;
+}
+html[data-warlike-app="warlike-engine"][data-wl-theme="sand-light"]{color-scheme:light}
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open){
+ --wl-theme-bg:var(--wl-bg)!important;
+ --wl-theme-panel:var(--wl-surface)!important;
+ --wl-theme-header:var(--wl-sidebar)!important;
+ --wl-theme-button:var(--wl-input)!important;
+ --wl-theme-border:var(--wl-border)!important;
+ --wl-theme-fg:var(--wl-fg)!important;
+ --wl-theme-muted:var(--wl-fg-muted)!important;
+ --editor-accent:var(--wl-accent)!important;
+ --warlike-palette-surface:var(--wl-bg)!important;
+ --warlike-palette-panel:var(--wl-surface)!important;
+ --warlike-palette-header:var(--wl-sidebar)!important;
+ --warlike-palette-button:var(--wl-input)!important;
+ --warlike-palette-border:var(--wl-border)!important;
+ --warlike-palette-text:var(--wl-fg)!important;
+ --warlike-custom-surface:var(--wl-surface)!important;
+ --warlike-custom-text:var(--wl-fg)!important;
+ background:var(--wl-bg)!important;
+ color:var(--wl-fg)!important;
+}
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.studio-menubar,.topbar,.hierarchy,.inspector,.project-panel,.center-stack,.workspace,.blueprint-window,.editor-appearance-menu,.warlike-animation-studio,.render-quality-panel,.asset-content,.asset-folders,.asset-body,#assetGrid,#properties){
+ border-color:var(--wl-border)!important;
+ color:var(--wl-fg)!important;
+}
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.studio-menubar,.topbar,.scene-header,.scene-tools,.bottom-tabs,.panel-title,.dock-title,.asset-toolbar,.console-bar,.project-footer){
+ background:var(--wl-sidebar)!important;
+ color:var(--wl-fg)!important;
+ border-color:var(--wl-border)!important;
+}
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.hierarchy,.inspector,.project-panel,.asset-content,.asset-folders,.asset-body,#assetGrid,#properties,.blueprint-window){
+ background:var(--wl-surface)!important;
+}
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.studio-menubar,.hierarchy,.inspector,.project-panel,.blueprint-window) :is(button,input,select,textarea):not([type=color]):not([type=checkbox]):not([type=range]){
+ color:var(--wl-fg)!important;
+ border-color:var(--wl-border)!important;
+}
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.studio-menubar,.hierarchy,.inspector,.project-panel,.blueprint-window) :is(input,select,textarea):not([type=color]):not([type=checkbox]):not([type=range]){
+ background:var(--wl-input)!important;
+}
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.scene-tabs .active,.bottom-tabs .active,#objects .selected,.asset-folders .active){
+ background:var(--wl-selected)!important;
+ color:var(--wl-fg)!important;
+}
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(button,input,select,textarea):focus-visible{
+ outline:2px solid var(--wl-focus)!important;
+}
+/* Preserve WebGL canvas, scene lighting and scene/game backgrounds. */

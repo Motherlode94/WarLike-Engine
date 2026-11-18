@@ -868,7 +868,7 @@ export function init3d(canvas,host,buttons){
    if(car)vehicleHud.textContent=car.name+' · '+Math.round(Math.abs(driving3d.speed)*.36)+' km/h · Rapport '+(car.vehicleSystems?.transmission?.gear??1)+' · ZQSD conduire · E sortir · Espace frein à main'+(car.vehicleWeapon?.enabled?' · F tirer':'');
    else if(nearby)vehicleHud.textContent='E — Entrer dans '+nearby.o.name;
   }
-  const crosshair=document.getElementById('fpsCrosshair');if(crosshair){crosshair.hidden=!isFps();crosshair.classList.toggle('warlike-aiming',isFps()&&fpsAiming)}
+  // No intrusive fixed center reticle; weapon aim is controlled by the camera.
   const horrorHud=document.getElementById('horror3dHud');
   if(horrorHud){
    horrorHud.hidden=!(state.playing&&horror.enabled);

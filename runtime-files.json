@@ -16470,6 +16470,7 @@
     "js/core/project-storage-guard.js",
     "js/core/quest-inventory.js",
     "js/core/rapier-physics-3d.js",
+    "js/core/reflection-probe-capture-3d.js",
     "js/core/render-quality.js",
     "js/core/renderer.js",
     "js/core/rpg-progression.js",

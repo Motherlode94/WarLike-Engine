@@ -7,6 +7,13 @@ export function projectedAxisDrag3d(origin,endpoint,dx,dy,axisLength=1){
  const metres=dot3([dx,dy,0],[sx,sy,0])/length2*axisLength;
  return Math.max(-250,Math.min(250,metres));
 }
+// Screen-space scale follows the visible handle, irrespective of camera yaw/pitch.
+// The same projected-axis contract as translation avoids inverted drags.
+export function projectedAxisScale3d(origin,endpoint,dx,dy,{sensitivity=.5,min=.1,max=8}={}){
+ const metres=projectedAxisDrag3d(origin,endpoint,dx,dy);
+ if(!Number.isFinite(sensitivity)||sensitivity<=0||!Number.isFinite(min)||min<=0||!Number.isFinite(max)||max<min)return 1;
+ return Math.min(max,Math.max(min,1+metres*sensitivity));
+}
 export function alignSceneObjects3d(entities,ids,{axis='x',to='first'}={}){
  if(!Array.isArray(entities)||!Array.isArray(ids)||!['x','y','height'].includes(axis)||to!=='first')throw Error('Alignement invalide');
  const selected=ids.map(id=>entities.find(e=>e.id===id)).filter(Boolean);

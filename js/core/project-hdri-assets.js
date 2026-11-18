@@ -1,5 +1,6 @@
 // Project-scoped binary HDRI storage shared by Editor, scene JSON and Web export.
 // IndexedDB avoids localStorage quota corruption for multi-megabyte panoramas.
+import {decodeRadianceHdr} from './hdr-radiance-3d.js';
 const DB='warlike-hdri-assets-v1',STORE='environments',LIMIT=64*1024*1024;
 const validId=id=>typeof id==='string'&&id.length>0&&id.length<160&&!/[/\\]/.test(id);
 const open=()=>new Promise((resolve,reject)=>{
@@ -21,6 +22,8 @@ export async function storeProjectHdri(id,name,input){
  if(!validId(id))throw Error('Identifiant de projet HDRI invalide');
  const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
  if(!validHdriBytes(bytes))throw Error('HDRI vide ou trop volumineux');
+ // Reject invalid Radiance payloads before they become persistent project state.
+ decodeRadianceHdr(bytes);
  await change('readwrite',store=>store.put({id,name:String(name||'environment.hdr').slice(0,120),bytes}));
  return bytes.length;
 }

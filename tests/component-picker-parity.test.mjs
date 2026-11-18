@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {componentChoices} from '../js/core/component-definitions.js';
-import {componentBrowserMatches,componentBrowserCategory,orderComponentBrowserOptions} from '../js/ui/component-browser.js';
+import {componentBrowserMatches,componentBrowserCategory,orderComponentBrowserOptions,unityComponentCategory,unityComponentCategories} from '../js/ui/component-browser.js';
 
 test('Add Component exposes every Web component supported by the active mode',()=>{
  const source=readFileSync(new URL('../js/ui/component-browser.js',import.meta.url),'utf8');
@@ -37,4 +37,22 @@ test('component category and runtime are explicit',()=>{
  const source=readFileSync(new URL('../js/ui/component-browser.js',import.meta.url),'utf8');
  assert.match(source,/option\.runtime==='dotnet'/);
  assert.match(source,/Les composants déjà présents restent intacts/);
+});
+
+test('Unity categories separate physics, layout, animation and editable gameplay components',()=>{
+ const options=componentChoices('3d').map(x=>({...x,runtime:'web'}));
+ assert.equal(unityComponentCategory(options.find(x=>x.id==='rigidbody3d')),'Physics');
+ assert.equal(unityComponentCategory(options.find(x=>x.id==='uiRect')),'Layout');
+ assert.equal(unityComponentCategory(options.find(x=>x.id==='animatorGraph')),'Animation');
+ const categories=unityComponentCategories(options);
+ assert.ok(categories.includes('Physics')&&categories.includes('Rendering')&&categories.includes('Scripts'));
+ assert.equal(new Set(options.map(x=>x.id)).size,options.length);
+});
+test('Add Component has category drill-down and no Script Studio navigation masquerading as component',()=>{
+ const source=readFileSync(new URL('../js/ui/component-browser.js',import.meta.url),'utf8');
+ assert.match(source,/component-browser-folder/);
+ assert.match(source,/activeCategory=category/);
+ assert.match(source,/activeCategory=null;render\(\)/);
+ assert.doesNotMatch(source,/options\.push\(\{id:'script'/);
+ assert.match(source,/button\.onclick=\(\)=>attach\(option\)/);
 });

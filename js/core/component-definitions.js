@@ -17,6 +17,7 @@ import {defaultSceneCamera} from './scene-camera-3d.js';
 import {defaultUiCanvas,defaultUiRect,defaultUiElement} from './ui-canvas-layout.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController} from './gameplay-components.js';
 import {defaultRigidbody3d} from './physics-3d.js';
+import {defaultGrab3d} from './grab-physics-3d.js';
 import {newSequence} from './logic-sequences.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
@@ -52,6 +53,7 @@ export const webComponentDefinitions=[
  {id:'collider3d',name:'Collider 3D',category:'Physique',description:'Boîte orientée, capsule ou sphère, dimensions et décalage en mètres.',modes:['3d'],create:defaultCollider3d},
  {id:'joint3d',name:'Articulation 3D',category:'Physique',description:'Charnière, rotule ou liaison fixe entre deux corps Rapier.',modes:['3d'],create:defaultJoint3d},
  {id:'rigidbody3d',name:'Rigidbody 3D',category:'Physique',description:'Masse, gravité, friction et rebond.',modes:['3d'],create:defaultRigidbody3d},
+ {id:'grab3d',name:'Objet saisissable 3D',category:'Interactions',description:'G saisir/déposer, T lancer. Nécessite Rigidbody3D et Collider3D ; portée, distance tenue et vitesse du lancer.',modes:['3d'],create:defaultGrab3d},
  {id:'sequence',name:'Déclencheur · Blueprint',category:'Comportements',description:'Événement → conditions → instructions. Ouvrir le graphe dans Blueprint.',multiple:true,create:newSequence},
  {id:'horrorAiConfig',name:'IA · Survival Horror',category:'Intelligence artificielle',description:'Vision, audition, poursuite et recherche.',create:()=>({enabled:true,visionRange:230,hearingRange:220,chaseSpeed:75,searchSpeed:33,memorySeconds:5})},
  {id:'horrorHideConfig',name:'Cachette',category:'Interactions',description:'Cachette utilisable par le joueur.',create:()=>({enabled:true,radius:90})},

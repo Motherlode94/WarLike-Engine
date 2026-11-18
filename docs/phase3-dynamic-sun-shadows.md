@@ -11,6 +11,8 @@ Le renderer WebGL1 crée désormais une **carte d'ombres directionnelle** 1024²
 3. Dessine la scène normale en réutilisant la carte d'ombres pour réduire **uniquement la lumière directe du soleil** lorsqu'un pixel est occulté. Une moyenne de 2 × 2 lectures (PCF) adoucit légèrement les contours.
 4. Dessine ensuite les surfaces transparentes et les effets dans leur ordre habituel.
 
+Le panneau **✦ Rendu** de l'éditeur propose maintenant le réglage **Ombres du soleil 3D**, activé par défaut et persistant dans les réglages locaux. Désactiver ce réglage supprime entièrement la passe supplémentaire pour économiser le GPU.
+
 Par défaut, les objets opaques projettent une ombre. Mettre `castShadows:false` sur un GameObject permet de l'exclure de la passe d'occultation. Les autres effets PBR (métallicité, rugosité, Fresnel, AO, émission, brouillard) restent dans le shader existant.
 
 La même passe est intégrée au module de renderer partagé par Scene, Game et l'export Web autonome. Le fichier `js/core/shadow-map-3d.js` est ajouté explicitement au manifeste d'export.

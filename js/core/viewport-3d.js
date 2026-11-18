@@ -394,7 +394,7 @@ export function init3d(canvas,host,buttons){
  };
  const loadBundledHdr=async()=>{
   // The exported game carries the actual HDRI in its archive, no cloud needed.
-  if(!globalThis.__WARLIKE_BUILD__)return false;
+  if(!globalThis.__WARLIKE_BUILD__||!globalThis.__WARLIKE_HDRI_INCLUDED__)return false;
   const response=await fetch('./assets/environment.hdr');
   if(!response.ok)return false;
   await applyHdrBytes(new Uint8Array(await response.arrayBuffer()));

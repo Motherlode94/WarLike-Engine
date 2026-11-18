@@ -16409,6 +16409,7 @@
     "js/core/gizmos-3d.js",
     "js/core/glb-visual-transform-3d.js",
     "js/core/gltf-animation.js",
+    "js/core/grab-physics-3d.js",
     "js/core/hero-forge-scene.js",
     "js/core/hero-movement.js",
     "js/core/history.js",

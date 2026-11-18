@@ -1,0 +1,22 @@
+/* WarLike Engine olive chrome — UI-only, never modifies WebGL canvases or shaders.
+   Keep the familiar Unity-like editor positions and docking dimensions. */
+html[data-warlike-app="warlike-engine"]{color-scheme:dark}
+html[data-warlike-app="warlike-engine"] body{background:var(--wl-bg)!important;color:var(--wl-fg)}
+html[data-warlike-app="warlike-engine"] :is(.studio-menubar,header.topbar,.scene-header,.panel-title,.scene-tabs,.project-toolbar,.project-header){background:var(--wl-sidebar)!important;border-color:var(--wl-border)!important;color:var(--wl-fg)!important}
+html[data-warlike-app="warlike-engine"] :is(.panel,.hierarchy,.inspector,.center-stack,.workspace,.project-panel,.assets-panel,.project-browser){background-color:var(--wl-surface)!important;border-color:var(--wl-border)!important;color:var(--wl-fg)}
+html[data-warlike-app="warlike-engine"] :is(.studio-menubar,.studio-menubar summary,.studio-menubar button,.studio-menubar a){color:var(--wl-fg)}
+html[data-warlike-app="warlike-engine"] :is(.studio-dropdown,.studio-menubar details[open] .studio-dropdown){background:var(--wl-surface-raised)!important;border-color:var(--wl-border)!important}
+html[data-warlike-app="warlike-engine"] :is(.panel-title,.scene-tabs .tab,.toolbar-group,#objects button,#history button){color:var(--wl-fg)!important}
+html[data-warlike-app="warlike-engine"] :is(.panel-title span,.hierarchy small,.brand small,.status){color:var(--wl-fg-muted)!important}
+html[data-warlike-app="warlike-engine"] :is(.hierarchy,.inspector){background:var(--wl-sidebar)!important}
+html[data-warlike-app="warlike-engine"] :is(.scene-tabs .tab.active,.toolbar-group button.active,#objects button.selected,#history button.selected,.studio-menubar summary:hover){background:var(--wl-selected)!important;border-color:var(--wl-accent)!important;color:var(--wl-fg)!important}
+html[data-warlike-app="warlike-engine"] :is(.studio-menubar button:hover,.studio-dropdown button:hover,#objects button:hover,#history button:hover){background:var(--wl-surface-hover)!important;color:var(--wl-fg)!important}
+html[data-warlike-app="warlike-engine"] :is(.panel input,.panel select,.panel textarea,header.topbar input,header.topbar select){background:var(--wl-input)!important;border-color:var(--wl-border)!important;color:var(--wl-fg)!important}
+html[data-warlike-app="warlike-engine"] :is(.panel button,.studio-menubar button,.toolbar-group button){border-color:var(--wl-border);color:var(--wl-fg)}
+html[data-warlike-app="warlike-engine"] :is(.brand strong span,.brand small b){color:var(--wl-accent)!important}
+html[data-warlike-app="warlike-engine"] :is(.status,small,.hint){color:var(--wl-fg-muted)}
+html[data-warlike-app="warlike-engine"] #warlike-theme-switcher{bottom:10px;right:10px}
+/* Project asset cells: preserve authored previews and selection, recolor only chrome. */
+html[data-warlike-app="warlike-engine"] :is(.asset-grid,.assets-grid,.project-grid,.project-list){background-color:var(--wl-surface)}
+html[data-warlike-app="warlike-engine"] :is(.asset-card,.asset-item,.project-asset){border-color:var(--wl-border);color:var(--wl-fg)}
+@media(max-width:900px){html[data-warlike-app="warlike-engine"] #warlike-theme-switcher{bottom:6px;right:6px}}

@@ -16499,6 +16499,7 @@
     "js/core/threat-intelligence.js",
     "js/core/tilemap-2d.js",
     "js/core/ui-canvas-layout.js",
+    "js/core/ui-game-overlay.js",
     "js/core/unitypackage.js",
     "js/core/vehicle-3d.js",
     "js/core/vehicle-articulation.js",

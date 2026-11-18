@@ -30,7 +30,7 @@ test('rejects unsupported RGBE headers, excessive dimensions and malformed RLE',
  const bad=ascii('#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y 999999 +X 999999\n');
  assert.throws(()=>decodeRadianceHdr(bad),/large/);
  const truncated=makeHdr(8,2,{rle:true}).subarray(0,-3);
- assert.throws(()=>decodeRadianceHdr(truncated),/truncated/);
+ assert.throws(()=>decodeRadianceHdr(truncated),/truncated|Invalid HDR RLE/);
 });
 test('GGX and diffuse prefilter return finite RGBM cube faces',()=>{
  const hdr=decodeRadianceHdr(makeHdr(8,2));

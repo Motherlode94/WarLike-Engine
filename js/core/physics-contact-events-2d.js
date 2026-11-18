@@ -1,6 +1,6 @@
 // Deterministic 2D contact state machine for Engine Play and Web exports.
 // Tracks collider pairs across completed simulation frames, not editor frames.
-import {colliderRect2d,solidCollider2d} from './physics-2d.js';
+import {colliderRect2d,solidCollider2d,collisionLayersAllow2d} from './physics-2d.js';
 import {tilemapColliders2d} from './tilemap-2d.js';
 const finite=n=>Number.isFinite(Number(n))?Number(n):0;
 const touches=(a,b,epsilon=.12)=>a.x<=b.x+b.w+epsilon&&a.x+a.w>=b.x-epsilon&&a.y<=b.y+b.h+epsilon&&a.y+a.h>=b.y-epsilon;
@@ -20,7 +20,7 @@ export class ContactEvents2d {
   for(let i=0;i<objects.length;i++){
    const a=objects[i],ab=box(a);
    for(let j=i+1;j<objects.length;j++){
-    const b=objects[j];if(!dynamic(a)&&!dynamic(b))continue;
+    const b=objects[j];if(!dynamic(a)&&!dynamic(b)||!collisionLayersAllow2d(a,b))continue;
     const trigger=a.collider2d?.isTrigger||b.collider2d?.isTrigger;
     if(trigger?!overlaps(ab,box(b)):!(solidCollider2d(a)&&solidCollider2d(b)&&touches(ab,box(b))))continue;
     const kind=trigger?'trigger':'collision',k=key(kind,a.id,b.id);
@@ -28,7 +28,7 @@ export class ContactEvents2d {
    }
    if(!dynamic(a)||a.collider2d?.isTrigger)continue;
    for(const cell of cells){
-    if(cell.id===a.id||!touches(ab,box(cell)))continue;
+    if(cell.id===a.id||!collisionLayersAllow2d(a,cell)||!touches(ab,box(cell)))continue;
     const k=key('collision',a.id,cell.id);
     if(!current.has(k))current.set(k,{kind:'collision',a,b:(entities||[]).find(e=>e.id===cell.id)||cell});
    }

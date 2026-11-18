@@ -40,7 +40,8 @@ import {stepPhysics3d} from './physics-3d.js';
 import {rapierStatus,loadRapier3d,createRapierScene,activateRapierQueries3d,moveRapierCharacter3d,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
 import {getModelGeometry,getTextureImage,model3dById} from '../assets/real-models-3d.js';
-import {updateSequences} from './logic-sequences.js';
+import {updateSequences,emitSequenceSignal} from './logic-sequences.js';
+import {createGrabSession3d,tickGrab3d,releaseGrab3d} from './grab-physics-3d.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {workspace,switchWorkspace} from './workspaces.js';
 import {sunAt,visibleLights,updateLighting} from './lighting.js';
@@ -435,6 +436,7 @@ export function init3d(canvas,host,buttons){
  const cameraTransition=new CameraTransition3d();
  let transitionPose=null;
  const currentSceneCameraPose=()=>transitionPose||sceneCameraView(activeSceneCamera(state.entities),state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});
+ const grabSession=createGrabSession3d();
  const update3dPlay=dt=>{
   if(!gameIsRunning()||companyController(state.entities))return;
   tickBattlefield(state.entities,dt,{keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,onPlayerRespawn:resetDriving3d});
@@ -462,10 +464,19 @@ export function init3d(canvas,host,buttons){
    let steps=0;
    while(physicsAccumulator>=fixed&&steps++<6){stepRapierScene(physicsSession,fixed);physicsAccumulator-=fixed}
   }else stepPhysics3d(state.entities,dt);
+  if(!p)releaseGrab3d(grabSession,state.entities);
   if(!p)return;
   updateHorror(dt,p,state.entities,input);updateHorrorPerception(dt,p,state.entities,input);updateHorrorAudio(dt,p,state.entities,input,horror);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
   const inVehicle=updateDriving3d(state.entities,p,input,dt,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses});
   if(!inVehicle)updateController3d(p,input,dt,(cameraMovementYaw(currentSceneCameraPose())??view3d.yaw),state.entities,{pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,moveCharacter:physicsSession?.actors.get(p.id)?.controller?(actor,dx,dy,dz,options)=>moveRapierCharacter3d(physicsSession,actor,dx,dy,dz,options):null});
+  // Physics pickup shares the same 3D actor, colliders and camera yaw as gameplay.
+  // G = take/drop; T = throw. Never allow picking while driving or UI blocks input.
+  const aim=[-Math.sin(view3d.yaw)*Math.cos(view3d.pitch),-Math.sin(view3d.pitch),-Math.cos(view3d.yaw)*Math.cos(view3d.pitch)];
+  const actorEye=[(Number(p.x)||0)/64+(Number(p.w)||32)/128,(Number(p.elevation3d)||0)+(Number(p.h)||96)/64*.85,(Number(p.y)||0)/64+(Number(p.depth3d??p.h)||32)/128];
+  tickGrab3d(grabSession,{actor:inVehicle?null:p,entities:state.entities,origin:actorEye,direction:aim,
+   pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,blocked:gameplayInputBlocked(),dt,
+   onEvent:(action,target)=>emitSequenceSignal('grab3d:'+action+':'+target.id)});
+
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);
   if(fpsMouseDown&&document.pointerLockElement===canvas&&!inVehicle&&isFps()&&p._attackCooldown===0)shootFps();
@@ -720,7 +731,7 @@ export function init3d(canvas,host,buttons){
   const company=state.playing&&workspace.mode==='3d'?companyController(state.entities):null;if(company&&!gameplayInputBlocked()){view3d.target=moveCompanyCamera(view3d.target,view3d.yaw,gameplayKeys(state.keys),dt,company.company.bounds)}
   updateLighting(dt,state.playing&&workspace.mode==='3d');
   if(state.playing&&!wasPlaying)enterPlay();
-  if(!state.playing&&wasPlaying){view3d.followPlayer=false;view3d.drag=null;if(editorCamera)Object.assign(view3d,editorCamera);editorCamera=null;if(document.pointerLockElement===canvas)document.exitPointerLock?.();resetDriving3d();stopRapier();}
+  if(!state.playing&&wasPlaying){view3d.followPlayer=false;view3d.drag=null;if(editorCamera)Object.assign(view3d,editorCamera);editorCamera=null;if(document.pointerLockElement===canvas)document.exitPointerLock?.();resetDriving3d();releaseGrab3d(grabSession,state.entities);stopRapier();}
   wasPlaying=state.playing;
   if(state.playing&&workspace.mode==='3d'&&!isLanGuest()){runRuntimeFrame(dt,{update(dt){update3dPlay(dt);updateSequences(dt,{mode:'3d',yaw:view3d.yaw,playing:true,entities:state.entities,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}});}
   if(state.playing&&gameIsRunning()&&view3d.followPlayer){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),pt=playerTarget();if(pt){const cut=actor!==lastCameraActor||gameSession.currentSceneId!==lastCameraScene||Math.hypot(...V.sub(pt,view3d.target))>12,t=cut?1:cameraDamping(cameraRigFor(actor).followSharpness,dt);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t));if(cut)boomDistance=null}lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;}
@@ -746,7 +757,8 @@ export function init3d(canvas,host,buttons){
    horrorHud.hidden=!(state.playing&&horror.enabled);
    if(!horrorHud.hidden)horrorHud.textContent=(horror.jumpscare>0?'⚠ DANGER !  |  ':'☾ SURVIVAL HORROR  |  ')+'L : lampe '+(horror.flashlight?'ON':'OFF')+'  |  Batterie '+Math.round(horror.battery)+'%  |  Peur '+Math.round(horror.fear)+'%';
   }
-  if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent=companyController(state.entities)?'RTS · clic : escouade · clic droit : ordre · flèches : caméra':'3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}if(state.playing)buttons.status.textContent+=companyController(state.entities)?' · Navigation A* et collisions internes':' · Physique : '+(physicsSession?'Rapier'+(physicsSession.skipped?.size?' · '+physicsSession.skipped.size+' collider(s) incompatible(s)':''):gameProject.physics3d==='builtin'?'interne':rapierStatus().error?'interne (Rapier indisponible)':'chargement Rapier');
+  if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent=companyController(state.entities)?'RTS · clic : escouade · clic droit : ordre · flèches : caméra':'3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}if(state.playing&&!companyController(state.entities))buttons.status.textContent+=grabSession.heldId!=null?' · G déposer · T lancer':' · G saisir objet physique';
+  if(state.playing)buttons.status.textContent+=companyController(state.entities)?' · Navigation A* et collisions internes':' · Physique : '+(physicsSession?'Rapier'+(physicsSession.skipped?.size?' · '+physicsSession.skipped.size+' collider(s) incompatible(s)':''):gameProject.physics3d==='builtin'?'interne':rapierStatus().error?'interne (Rapier indisponible)':'chargement Rapier');
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
   const solar=sunAt();gl.clearColor(...solar.sky,1);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   if(state.playing&&!activeSceneCamera(state.entities)&&!isFps()&&!companyController(state.entities)){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities)),desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);boomDistance=rig.collision?resolveCameraBoom(view3d.target,desired.eye,state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(cameraObstacleForEntity),{previousDistance:boomDistance,dt:cameraFrame}).distance:view3d.radius}

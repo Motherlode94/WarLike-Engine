@@ -6,8 +6,10 @@ import {colliderGeometry3d} from '../js/core/collider-3d.js';
 import {glbVisualScale3d} from '../js/core/glb-visual-transform-3d.js';
 import {supportBody3d} from '../js/core/collision-3d.js';
 import {canGrab3d} from '../js/core/grab-physics-3d.js';
+import {ContactEvents2d} from '../js/core/physics-contact-events-2d.js';
+import {collisionLayersAllow2d} from '../js/core/physics-2d.js';
 const load=name=>JSON.parse(readFileSync(new URL('./fixtures/'+name+'.scene.json',import.meta.url),'utf8'));
-const phase1=load('phase1-transform-gizmos'),phase2=load('phase2-physics-fps-tps');
+const phase1=load('phase1-transform-gizmos'),phase2=load('phase2-physics-fps-tps'),phase2d=load('phase2-physics-2d');
 const near=(actual,expected,tolerance=1e-6)=>assert.ok(Math.abs(actual-expected)<tolerance,`${actual} differs from ${expected}`);
 test('certification fixtures are importable native scene JSON with unique object IDs',()=>{
  for(const fixture of [phase1,phase2]){
@@ -67,4 +69,22 @@ test('Phase 2 has an actual dynamic pickable GLB while the control crate is not 
  assert.equal(crate.grab3d.throwSpeed,8);
  assert.equal(crate.rigidbody3d.mass,2);
  assert.ok(crate.collider3d.enabled);
+});
+
+test('2D certification fixture filters walls and triggers with reciprocal masks',()=>{
+ assert.equal(phase2d.mode,'2d');
+ const entities=structuredClone(phase2d.entities),player=entities.find(e=>e.id===1);
+ const wall=entities.find(e=>e.id===2),allowed=entities.find(e=>e.id===3),blocked=entities.find(e=>e.id===4);
+ assert.equal(collisionLayersAllow2d(player,wall),true);
+ assert.equal(collisionLayersAllow2d(player,allowed),true);
+ assert.equal(collisionLayersAllow2d(player,blocked),false);
+ assert.equal(entities.find(e=>e.id===5).collider2d.enabled,false);
+ player.x=allowed.x+10;player.y=allowed.y+10;
+ const contacts=new ContactEvents2d();
+ const entries=contacts.update(entities);
+ assert.ok(entries.some(e=>e.kind==='trigger'&&e.stage==='enter'&&e.ownerId===3));
+ assert.ok(!entries.some(e=>e.ownerId===4),'masked trigger must never fire');
+ player.x=60;player.y=130;
+ const leaves=contacts.update(entities);
+ assert.ok(leaves.some(e=>e.kind==='trigger'&&e.stage==='exit'&&e.ownerId===3));
 });

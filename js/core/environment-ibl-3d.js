@@ -1,7 +1,7 @@
 // Procedural HDR environment cubemaps for the WebGL1 GLB renderer.
 // RGBM stores linear radiance up to 8.0 in RGBA8 without float texture extensions.
 const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
-const normalize=v=>{const length=Math.hypot(...v);return length>1e-7?v.map(x=>x/length):[0,1,0]};
+const normalize=v=>{const length=Math.hypot(...v);return length>1e-7?v.map(x=>x===0?0:x/length):[0,1,0]};
 export function encodeRgbm3d(rgb,range=8){
  const max=Math.max(0,...rgb);
  const m=clamp(Math.ceil(clamp(max/range,0,1)*255)/255,1/255,1);

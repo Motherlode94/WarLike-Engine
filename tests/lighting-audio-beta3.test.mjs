@@ -26,3 +26,14 @@ test('spatial audio attenuates and includes selectable cues',()=>{
  assert.equal(distanceGain(0,10),1);assert.equal(distanceGain(10,10),0);assert.ok(distanceGain(3,10)>distanceGain(7,10));
  assert.ok(soundChoices.includes('vehicle'));
 });
+
+test('point and spot lights use ground depth3d instead of object height for world Z',()=>{
+ for(const lightType of ['point','spot']){
+  const base={x:64,y:128,w:64,h:192,depth3d:32,elevation3d:1,lightType,lightIntensity:2,lightRange:10};
+  const light=lightFromEntity(base);
+  assert.deepEqual(light.position,[1.5,4,2.25]);
+  const resized=lightFromEntity({...base,depth3d:192});
+  assert.deepEqual(resized.position,[1.5,4,3.5]);
+  assert.equal(lightFromEntity({...base,depth3d:undefined}).position[2],3.5,'old scenes keep height fallback');
+ }
+});

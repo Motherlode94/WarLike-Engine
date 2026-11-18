@@ -24,7 +24,7 @@ const unityCategories=Object.freeze({
 });
 const categoryById=new Map(Object.entries(unityCategories).flatMap(([group,ids])=>ids.map(id=>[id,group])));
 export const unityComponentCategory=option=>categoryById.get(option.id)||(
- option.runtime==='dotnet'?'Scripts':option.category==='Personnage'?'Gameplay':option.category==='Intelligence artificielle'?'Navigation':'Miscellaneous'
+ option.id?.startsWith('data-')?'Physics':option.runtime==='dotnet'?'Scripts':option.category==='Personnage'?'Gameplay':option.category==='Intelligence artificielle'?'Navigation':'Miscellaneous'
 );
 export const unityComponentCategories=options=>[...new Set(options.map(unityComponentCategory))].sort((a,b)=>a.localeCompare(b,'en'));
 

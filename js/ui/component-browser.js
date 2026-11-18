@@ -26,7 +26,11 @@ const categoryById=new Map(Object.entries(unityCategories).flatMap(([group,ids])
 export const unityComponentCategory=option=>categoryById.get(option.id)||(
  option.id?.startsWith('data-')?'Physics':option.runtime==='dotnet'?'Scripts':option.category==='Personnage'?'Gameplay':option.category==='Intelligence artificielle'?'Navigation':'Miscellaneous'
 );
-export const unityComponentCategories=options=>[...new Set(options.map(unityComponentCategory))].sort((a,b)=>a.localeCompare(b,'en'));
+const categoryOrder=['Animation','Audio','Constraints','Effects','Event','Input','Layout','Mesh','Miscellaneous','Navigation','Physics 2D','Physics','Playables','Rendering','Scripts','Gameplay'];
+export const unityComponentCategories=options=>[...new Set(options.map(unityComponentCategory))].sort((a,b)=>{
+ const ai=categoryOrder.indexOf(a),bi=categoryOrder.indexOf(b);
+ return (ai<0?999:ai)-(bi<0?999:bi)||a.localeCompare(b,'en');
+});
 
 export const componentBrowserCategory=option=>{
  if(option.id==='script')return 'Scripts';

@@ -376,11 +376,14 @@ export function init3d(canvas,host,buttons){
  let hdrOperation=0;
  const announceHdri=(event,detail)=>globalThis.window?.dispatchEvent(new CustomEvent(event,{detail}));
  const applyHdrBytes=async(bytes,{name='environment.hdr',persist=false,projectId=gameProject.id}={})=>{
+  if(!globalThis.__WARLIKE_BUILD__&&projectId!==gameProject.id)return null;
   const hdr=decodeRadianceHdr(bytes);
   if(!environmentIbl)throw Error('IBL unavailable on this GPU');
+  // A stale file read must never overwrite the active project's GPU environment.
+  if(!globalThis.__WARLIKE_BUILD__&&projectId!==gameProject.id)return null;
   environmentIbl.updateHdri(hdr,prefilterHdriFace3d);
-  if(persist)await storeProjectHdri(projectId,name,bytes);
   importedHdr=hdr;
+  if(persist)await storeProjectHdri(projectId,name,bytes);
   return {width:hdr.width,height:hdr.height,name,projectId,persisted:persist};
  };
  const restoreHdr=async(projectId=gameProject.id)=>{
@@ -390,7 +393,7 @@ export function init3d(canvas,host,buttons){
   if(operation!==hdrOperation||projectId!==gameProject.id)return;
   if(!entry){announceHdri('warlike:hdri-cleared',{});return}
   const result=await applyHdrBytes(entry.bytes,{name:entry.name,projectId});
-  if(operation===hdrOperation)announceHdri('warlike:hdri-ready',{...result,persisted:true});
+  if(operation===hdrOperation&&result)announceHdri('warlike:hdri-ready',{...result,persisted:true});
  };
  const loadBundledHdr=async()=>{
   // The exported game carries the actual HDRI in its archive, no cloud needed.
@@ -403,7 +406,7 @@ export function init3d(canvas,host,buttons){
  globalThis.window?.addEventListener('warlike:hdri-import',event=>{
   const operation=++hdrOperation,projectId=gameProject.id,file=event.detail;
   Promise.resolve(file?.arrayBuffer()).then(data=>applyHdrBytes(new Uint8Array(data),{name:file.name,persist:true,projectId}))
-   .then(detail=>{if(operation===hdrOperation)announceHdri('warlike:hdri-ready',detail)})
+   .then(detail=>{if(operation===hdrOperation&&detail)announceHdri('warlike:hdri-ready',detail)})
    .catch(error=>announceHdri('warlike:hdri-error',{message:error.message}));
  });
  globalThis.window?.addEventListener('warlike:hdri-clear',()=>{

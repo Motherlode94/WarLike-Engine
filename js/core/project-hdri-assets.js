@@ -25,7 +25,7 @@ export async function storeProjectHdri(id,name,input){
  return bytes.length;
 }
 export async function loadProjectHdri(id){
- if(!validId(id))return null;
+ if(!validId(id)||typeof indexedDB==='undefined')return null;
  const entry=await change('readonly',store=>store.get(id));
  return entry&&validHdriBytes(entry.bytes)?entry:null;
 }

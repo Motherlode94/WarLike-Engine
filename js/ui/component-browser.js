@@ -7,6 +7,27 @@ const make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.class
 // project mode. Existing entities and unknown legacy component data are untouched.
 const featuredKinds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','cameraRig','controller2d','controller3d','animatorGraph','ai','sequence','stats','inventory','webScripts','warScripts']);
 const nativePrimaryKinds=new Set(['Rigidbody']);
+const unityCategories=Object.freeze({
+ Animation:['animatorGraph','spriteAnimation2d'],
+ Audio:['audio'],
+ Constraints:['joint3d'],
+ Effects:['fxEmitter'],
+ Event:['sequence','adventureInteractable'],
+ Input:['cameraRig'],
+ Layout:['uiCanvas','uiRect','uiElement'],
+ Mesh:['spriteRenderer2d','tilemap2d'],
+ Navigation:['ai','tacticalUnit'],
+ 'Physics 2D':['collider2d','rigidbody2d','controller2d'],
+ Physics:['collider3d','rigidbody3d','controller3d','grab3d'],
+ Rendering:['light','sceneCamera3d','camera2d','environmentProbe3d'],
+ Scripts:['webScripts','warScripts']
+});
+const categoryById=new Map(Object.entries(unityCategories).flatMap(([group,ids])=>ids.map(id=>[id,group])));
+export const unityComponentCategory=option=>categoryById.get(option.id)||(
+ option.runtime==='dotnet'?'Scripts':option.category==='Personnage'?'Gameplay':option.category==='Intelligence artificielle'?'Navigation':'Miscellaneous'
+);
+export const unityComponentCategories=options=>[...new Set(options.map(unityComponentCategory))].sort((a,b)=>a.localeCompare(b,'en'));
+
 export const componentBrowserCategory=option=>{
  if(option.id==='script')return 'Scripts';
  if(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d'].includes(option.id))return 'Physique';
@@ -54,15 +75,17 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
    });
   }
  }
- // Preserve the existing Script Studio entry point, without crowding the default picker.
- options.push({id:'script',name:'Script C# local',category:'Extensions',description:'Ouvrir le script C# de cet objet dans Script Studio.',runtime:'dotnet',add:()=>{openScript();return false}});
+ // Script Studio is an editor tool, never a fake attachable component.
+ // It remains accessible through its dedicated Inspector/toolbar action.
  const popup=make('div','unity-component-popup');
  popup.setAttribute('role','dialog');popup.setAttribute('aria-label','Ajouter un composant');
  popup.hidden=true;
  const search=make('input','unity-component-search');search.type='search';search.placeholder='Rechercher : physique, IA, animation, script…';search.setAttribute('aria-label','Rechercher un composant');
  const list=make('div','component-browser-results'),hint=make('small','component-browser-hint');
+ const trail=make('nav','component-browser-breadcrumb');trail.setAttribute('aria-label','Navigation catégories');
+ let activeCategory=null;
  const title=make('div','unity-component-popup-title','Add Component');
- popup.append(title,search,list,hint);
+ popup.append(title,search,trail,list,hint);
  // A body-level popup avoids being clipped by the narrow, scrolling Inspector.
  document.body.append(popup);
  let opened=false;
@@ -90,48 +113,63 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
  };
  const outside=e=>{if(!popup.contains(e.target)&&!heading.contains(e.target))close()};
  const keyboard=e=>{
-  if(e.key==='Escape'){e.preventDefault();close()}
+  if(e.key==='Escape'){e.preventDefault();if(activeCategory&&!search.value.trim()){activeCategory=null;render()}else close()}
   if(e.key==='ArrowDown'&&document.activeElement===search){e.preventDefault();list.querySelector('button:not(:disabled)')?.focus()}
  };
- const render=()=>{
-  const query=search.value.trim().toLocaleLowerCase('fr');list.replaceChildren();let count=0;
-  const matched=orderComponentBrowserOptions(options.filter(o=>componentBrowserMatches(o,query)));
-  const categories=new Map();
-  for(const option of matched){
-   const group=featuredKinds.has(option.id)&&!query?'Essentiels':componentBrowserCategory(option);
-   if(!categories.has(group))categories.set(group,[]);
-   categories.get(group).push(option);
+ const attach=option=>{
+  close();
+  if(option.add()){
+   record('Ajouter '+option.name);notify();
+   requestAnimationFrame(()=>{
+    const card=[...document.querySelectorAll('#properties>.inspector-component')].find(el=>el.dataset.componentKey===option.id||el.dataset.componentTitle===option.name);
+    if(card){card.open=true;card.scrollIntoView({block:'nearest'})}
+   });
   }
-  for(const [category,entries] of categories){
-   list.append(make('h4','component-browser-category',category));
-   for(const option of entries){
-    const button=make('button','component-browser-option');button.type='button';button.dataset.componentId=option.id;
-    button.disabled=state.playing||!!option.attached;
-    button.title=option.description;
-    const runtimeLabel=option.runtime==='dotnet'?' · .NET local':' · Web';
-    button.append(make('strong','',option.name+(option.attached?' · ajouté':'')),make('small','',option.description+runtimeLabel));
-    button.onclick=()=>{
-     close();
-     if(option.add()){
-      record('Ajouter '+option.name);notify();
-      requestAnimationFrame(()=>{
-       const card=[...document.querySelectorAll('#properties>.inspector-component')].find(el=>el.dataset.componentKey===option.id||el.dataset.componentTitle===option.name);
-       if(card){card.open=true;card.scrollIntoView({block:'nearest'})}
-      });
-     }
-    };
-    list.append(button);count++;
-   }
-  }
-  if(!count)list.append(make('p','component-browser-empty','Aucun composant trouvé pour cette recherche.'));
-  hint.textContent=count+' composants disponibles · Web = Play navigateur ; .NET local = pont C# requis. Les composants déjà présents restent intacts.';
  };
+ const render=()=>{
+  const query=search.value.trim();list.replaceChildren();trail.replaceChildren();
+  const matched=orderComponentBrowserOptions(options.filter(o=>componentBrowserMatches(o,query)));
+  const hasQuery=!!query;
+  const back=make('button','component-browser-back',activeCategory?'‹  Composants':'Composants');
+  back.type='button';back.disabled=!activeCategory||hasQuery;
+  back.onclick=()=>{activeCategory=null;render();search.focus()};
+  trail.append(back);
+  if(activeCategory&&!hasQuery)trail.append(make('span','component-browser-current','› '+activeCategory));
+  const renderOption=option=>{
+   const button=make('button','component-browser-option');button.type='button';button.dataset.componentId=option.id;
+   button.disabled=state.playing||!!option.attached;
+   button.title=option.description;
+   const runtimeLabel=option.runtime==='dotnet'?' · .NET local':' · Web';
+   button.append(make('strong','',option.name+(option.attached?' · ajouté':'')),make('small','',option.description+runtimeLabel));
+   button.onclick=()=>attach(option);list.append(button);
+  };
+  if(!hasQuery&&!activeCategory){
+   // Unity-style home: categories first. No demos, templates or editor actions.
+   for(const category of unityComponentCategories(matched)){
+    const members=matched.filter(option=>unityComponentCategory(option)===category);
+    const button=make('button','component-browser-folder');
+    button.type='button';button.dataset.category=category;
+    button.append(make('span','',category),make('span','component-browser-chevron','›'));
+    button.title=members.length+' composants';
+    button.onclick=()=>{activeCategory=category;render()};
+    list.append(button);
+   }
+   hint.textContent=matched.length+' composants réels · Ouvre une catégorie ou recherche par nom.';
+  }else{
+   const items=activeCategory&&!hasQuery?matched.filter(option=>unityComponentCategory(option)===activeCategory):matched;
+   if(hasQuery)list.append(make('h4','component-browser-category','Résultats de recherche'));
+   for(const option of items)renderOption(option);
+   if(!items.length)list.append(make('p','component-browser-empty','Aucun composant trouvé pour cette recherche.'));
+   hint.textContent=items.length+' composants disponibles · Web = Play navigateur ; .NET local = pont C# requis. Les composants déjà présents restent intacts.';
+  }
+ };
+
  heading.addEventListener('click',e=>{
   e.preventDefault();
   if(opened){close();return}
   // Unmount the previous dialog when the Inspector has been redrawn.
   document.querySelectorAll('body > .unity-component-popup').forEach(node=>{if(node!==popup)node.remove()});
-  opened=true;root.open=false;search.value='';render();popup.hidden=false;position();
+  opened=true;root.open=false;activeCategory=null;search.value='';render();popup.hidden=false;position();
   document.addEventListener('pointerdown',outside,true);
   document.addEventListener('keydown',keyboard,true);
   window.addEventListener('resize',schedulePosition);
@@ -139,7 +177,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
   window.addEventListener('pointermove',schedulePosition,{passive:true});
   search.focus();
  });
- search.addEventListener('input',render);
+ search.addEventListener('input',()=>{if(search.value.trim())activeCategory=null;render()});
  parent.append(root);return root;
 }
 export function finishInspector(root,owner,templates,nativeCatalog,renderNative,openScript){

@@ -1,5 +1,6 @@
 import {MAX_SCENE_MODEL_BYTES} from '../assets/model-capacity.js';
 import {portableModelBytes,portableModelDescriptor} from './portable-assets.js';
+import {loadProjectHdri} from './project-hdri-assets.js';
 import {portableRemoteModelBytes,portableRemoteModelDescriptor} from './portable-remote-models.js';
 import {animationEditorPreview} from './animation-clips.js';
 import {inspectRuntimeCompatibility} from './runtime-capabilities.js';
@@ -125,6 +126,9 @@ export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}=
  const entries=new Array(files.length);let cursor=0,completed=0;
  const worker=async()=>{while(cursor<files.length){const i=cursor++,name=files[i];const response=await get(name);entries[i]={name,data:name==='js/assets/imported-models-3d.js'?importedCatalog:name==='index.html'?gameBuildHtml(await response.text(),data):['js/assets/free-game-assets.js','js/assets/quaternius-game-assets.js','js/assets/kaykit-game-assets.js'].includes(name)?gameBuildModelCatalog(name,await response.text(),data):await response.arrayBuffer()};onProgress(++completed,files.length)}};
  await Promise.all(Array.from({length:6},worker));
+ // Ship HDRI bytes with the portable game, so post-export rendering stays offline.
+ const hdri=await loadProjectHdri(data.project?.id);
+ if(hdri)importedEntries.push({name:'assets/environment.hdr',data:hdri.bytes});
  entries.push(...importedEntries);
  if(!files.includes('js/assets/imported-models-3d.js'))entries.push({name:'js/assets/imported-models-3d.js',data:importedCatalog});
  entries.push({name:'game.json',data:JSON.stringify(data,null,2)},{name:'LIRE-MOI.txt',data:'WARLIKE GAME — '+data.project.title+'\n\nDécompresse cette archive et sers ce dossier via un serveur HTTP statique. Par exemple : python -m http.server 8000, puis http://localhost:8000. Le menu de démarrage est dans index.html.\n\nLe runtime JavaScript et les modèles intégrés utilisés sont inclus. Le module C++ / WASM est livré lorsqu’il est présent dans le moteur. Les modèles GLB distants utilisés dans le jeu sont intégrés dans assets/remote avec leurs textures externes PNG/JPEG/WebP pour un jeu hors ligne. Les GLB importés et leurs textures intégrées sont inclus dans assets/imported. Les licences d’origine restent applicables. Les scripts C#/.NET ne sont pas exécutés par ce build Web.\n\nDéplacements : ZQSD/WASD. E : interaction. Échap : pause. Les sauvegardes restent sur le navigateur.\n\nCOOP LOCALE (2 à 4 joueurs)\nPython 3.10+ est nécessaire sur le PC hôte. Lance start-warlike-multi.cmd sous Windows, ou python3 python/warlike.py multiplayer. Garde le terminal ouvert. Ouvre l’adresse locale affichée, puis Coop locale > Héberger avec la clé du terminal. Les invités ouvrent l’adresse réseau affichée sur leur PC et rejoignent avec le code du salon. L’hôte simule le jeu dans son navigateur et gère pause, sauvegardes et escouades. Le serveur Python relaie les commandes et les états, sans compte ni service extérieur. 256 objets maximum ; les ressources doivent être incluses dans le même export.\n'});

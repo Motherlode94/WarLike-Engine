@@ -892,7 +892,7 @@ export function init3d(canvas,host,buttons){
    gl.activeTexture(gl.TEXTURE0);
   }else gl.uniform1i(u.environmentEnabled,0);
 
-  const probes=environmentProbeUniforms3d(state.entities);
+  const probes=environmentProbeUniforms3d(state.entities,{observer:cam.eye});
   gl.uniform1i(u.probeCount,probes.count);
   if(probes.count){gl.uniform3fv(u.probePositions,probes.positions);gl.uniform3fv(u.probeTints,probes.tints);gl.uniform1fv(u.probeRadius,probes.radius);gl.uniform1fv(u.probeStrength,probes.strength);}
   const lamps=visibleLights(state.entities,cam.eye,8);

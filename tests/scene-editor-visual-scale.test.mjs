@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {glbVisualScale3d,glbVisualPlacement3d} from '../js/core/glb-visual-transform-3d.js';
-import {projectedAxisDrag3d,projectedAxisScale3d,alignSceneObjects3d,snapSelected3d} from '../js/core/scene-editing-3d-tools.js';
+import {projectedAxisDrag3d,projectedAxisScale3d,projectedAxisRotation3d,alignSceneObjects3d,snapSelected3d} from '../js/core/scene-editing-3d-tools.js';
 import {sceneCamera3d,project3d} from '../js/core/viewport-3d.js';
+import {colliderGeometry3d} from '../js/core/collider-3d.js';
 
 test('GLB renderer dimensions match Inspector/collider dimensions on all axes',()=>{
  const bounds={x:0,y:1.5,z:0,w:4,h:3,d:2};
@@ -71,4 +72,36 @@ test('scale Gizmo stays stable with foreshortened and invalid handles',()=>{
  assert.equal(projectedAxisScale3d({x:0,y:0},{x:100,y:0},0,20),1);
  assert.equal(projectedAxisScale3d({x:0,y:0},{x:100,y:0},2000,0),8);
  assert.equal(projectedAxisScale3d({x:0,y:0},{x:100,y:0},-2000,0),.1);
+});
+
+test('Rotate Gizmo responds to orbiting around the pivot, not arbitrary dx - dy',()=>{
+ const pivot={x:100,y:100},start={x:150,y:100};
+ assert.ok(Math.abs(projectedAxisRotation3d(pivot,start,{x:100,y:150})-90)<1e-8);
+ assert.ok(Math.abs(projectedAxisRotation3d(pivot,start,{x:100,y:50})+90)<1e-8);
+ assert.ok(Math.abs(projectedAxisRotation3d(pivot,start,{x:100,y:150},{directionSign:-1})+90)<1e-8);
+ assert.equal(projectedAxisRotation3d(pivot,start,{x:200,y:100}),0,'radial drag must not rotate');
+});
+test('Rotate Gizmo rejects unstable pivot drags and takes shortest angular step',()=>{
+ const pivot={x:100,y:100};
+ assert.equal(projectedAxisRotation3d(pivot,{x:101,y:100},{x:100,y:160}),0);
+ assert.equal(projectedAxisRotation3d(null,{x:50,y:100},{x:100,y:60}),0);
+ const a={x:60,y:101},b={x:60,y:99};
+ assert.ok(Math.abs(projectedAxisRotation3d(pivot,a,b))<5,'crossing the rear axis must not rotate 360 degrees');
+});
+
+test('visual bounds and automatic BoxCollider3D dimensions stay aligned after editor resizing',()=>{
+ const object={x:0,y:0,elevation3d:0,w:64,h:128,depth3d:96,
+  collider3d:{enabled:true,shape:'box',width:0,height:0,depth:0}};
+ const expected=(width,height,depth)=>{
+  const g=colliderGeometry3d(object);
+  assert.deepEqual([g.w,g.h,g.d],[width/64,height/64,depth/64]);
+  const visual=glbVisualScale3d({x:0,y:0,z:0,w:width/64,h:height/64,d:depth/64},[1,1,1]);
+  assert.deepEqual(visual,[g.w,g.h,g.d]);
+ };
+ expected(64,128,96);
+ object.w=120;object.h=192;object.depth3d=256;
+ expected(120,192,256);
+ // Explicit custom Collider dimensions remain intentional overrides.
+ object.collider3d.width=.5;
+ assert.equal(colliderGeometry3d(object).w,.5);
 });

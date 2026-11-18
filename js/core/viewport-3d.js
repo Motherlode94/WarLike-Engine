@@ -586,7 +586,7 @@ export function init3d(canvas,host,buttons){
 
   updateAi(state.entities,p,dt);
   p._attackCooldown=Math.max(0,(p._attackCooldown||0)-dt);
-  if(fpsMouseDown&&document.pointerLockElement===canvas&&!inVehicle&&isFps()&&p._attackCooldown===0)shootFps();
+  // Aiming does not automatically shoot; F is the explicit firing action.
   if(p.adventure?.combatEnabled!==false&&!inVehicle&&healthOf(p)>0&&(input.has('f')||!gameplayInputBlocked()&&state.keyPresses?.has('f'))&&p._attackCooldown===0){if(isFps()){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit){p.animation='attack';emitFx('electric',heroCenter(hit,'3d'),{mode:'3d',color:'#ffd899',count:16,ring:true,lifetime:.3,scale:.7})}}
  };
  const isFps=()=>state.playing&&workspace.mode==='3d'&&!currentVehicle3d(state.entities)&&(activeSceneCamera(state.entities)?.sceneCamera3d?.mode==='firstPerson'||!activeSceneCamera(state.entities)&&cameraRigFor(playableActor(state.entities)).mode==='firstPerson');
@@ -607,7 +607,7 @@ export function init3d(canvas,host,buttons){
   const right=V.norm(V.cross(forward,[0,1,0])),up=V.norm(V.cross(right,forward));
   return {eye,forward,right,up};
  };
- let fpsMouseDown=false;
+ let fpsAiming=false;
  const shootFps=()=>{
   if(!isFps()||!gameIsRunning()||gameplayInputBlocked())return false;
   const player=playableActor(state.entities),cam=camera();if(player.adventure?.combatEnabled===false)return false;if(healthOf(player)<=0||(player._attackCooldown||0)>0)return false;
@@ -619,13 +619,13 @@ export function init3d(canvas,host,buttons){
   if(best){const amount=25*progressionDamageScale(player),before=best.stats?.health??best.hp??100;if(best.simulationNode?.kind==='destructible')damageSimulationNode(best,amount,player,{mode:'3d'});else{best._battlefieldThreat=player.id;damage(best,amount);if(before>0&&(best.stats?.health??best.hp)<=0)awardExperience(player,40)}best.animation='hurt';emitFx('electric',heroCenter(best,'3d'),{mode:'3d',color:'#ffd899',count:12,lifetime:.25})}
   return !!best;
  };
- canvas.addEventListener('pointerup',()=>{fpsMouseDown=false});window.addEventListener('blur',()=>{fpsMouseDown=false});document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement!==canvas)fpsMouseDown=false});
+ canvas.addEventListener('pointerup',()=>{fpsAiming=false});canvas.addEventListener('pointercancel',()=>{fpsAiming=false});window.addEventListener('pointerup',()=>{fpsAiming=false});window.addEventListener('blur',()=>{fpsAiming=false});
  const playerTarget=()=>{const vehicle=currentVehicle3d(state.entities),p=vehicle||playableActor(state.entities);return p?cameraTargetFor(objectBounds3d(p),cameraRigFor(p,!!vehicle)):null};
  let wasPlaying=false,editorCamera=null;
  let physicsSession=null,physicsGeneration=0,physicsAccumulator=0;
  const stopRapier=()=>{physicsGeneration++;disposeRapierScene(physicsSession);physicsSession=null;physicsAccumulator=0;};
  const enterPlay=()=>{
-  resetBattlefield(state.entities);fpsMouseDown=false;
+  resetBattlefield(state.entities);fpsAiming=false;
   editorCamera={yaw:view3d.yaw,pitch:view3d.pitch,radius:view3d.radius,target:view3d.target.slice()};view3d.drag=null;boomDistance=null;resetDriving3d();
   const p=playableActor(state.entities),pt=playerTarget(),rig=cameraRigFor(p);view3d.followPlayer=!!pt&&!activeSceneCamera(state.entities);if(pt){view3d.target=pt.slice();view3d.radius=rig.distance;view3d.yaw=Math.PI-(Number(p.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18}
   if(companyController(state.entities)){view3d.followPlayer=false;view3d.target=[14,0,14];view3d.radius=32;view3d.pitch=.92;view3d.yaw=-.55;return}
@@ -765,8 +765,8 @@ export function init3d(canvas,host,buttons){
    }
    if(!isFps()&&e.button===0&&!isLanGuest()){const unit=pick(p,cam);if(unit&&isRtsUnit(unit)){state.selected=e.shiftKey||e.ctrlKey||e.metaKey?(state.selected.includes(unit.id)?state.selected.filter(id=>id!==unit.id):[...state.selected,unit.id]):[unit.id];e.preventDefault();notify();return}}
    if(!isFps()&&e.button===2&&!isLanGuest()){const target=pick(p,cam);if(target&&(target.ai?.enabled||target.tags?.includes('enemy'))&&orderRtsGroup(state.entities,state.selected,'attack',target.id)){e.preventDefault();return}const hit=groundHit3d(p.x,p.y,cam,p.w,p.h);if(hit&&orderRtsMove(state.entities,state.selected,{x:hit[0]*64,y:hit[2]*64})){e.preventDefault();return}}
-   if(isFps()){if(e.button===0){fpsMouseDown=true;if(isLanGuest())state.keyPresses.add('f');else shootFps();canvas.requestPointerLock?.()}return}
-   if(e.button===2){view3d.drag={button:2,x:p.x,y:p.y,yaw:view3d.yaw,pitch:view3d.pitch,pointer:e.pointerId,selected:null,moved:false};canvas.setPointerCapture(e.pointerId)}
+   if(isFps()){if(e.button===0||e.button===2){e.preventDefault();fpsAiming=true;}return}
+   if(e.button===2){e.preventDefault();fpsAiming=true;return}
    return;
   }
   if(![0,1,2].includes(e.button))return;e.preventDefault();
@@ -781,7 +781,17 @@ export function init3d(canvas,host,buttons){
   view3d.drag={button:e.button,nav:nav||(!selected?'marquee':'move'),x:p.x,y:p.y,target:[...view3d.target],eye:cam.eye.slice(),radius:view3d.radius,yaw:view3d.yaw,pitch:view3d.pitch,start:point,baseSelection,add:e.shiftKey||e.ctrlKey||e.metaKey,selected:selected&&e.button===0?state.entities.filter(o=>state.selected.includes(o.id)).map(o=>({id:o.id,x:o.x,y:o.y,z:o.z||0,worldMatrix3d:Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,matrixReference3d:Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null})):null,moved:false,pointer:e.pointerId};
   canvas.setPointerCapture(e.pointerId);
  });
- document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&isFps()&&gameIsRunning()&&!gameplayInputBlocked()){const sensitivity=cameraRigFor(playableActor(state.entities)).sensitivity;view3d.yaw-=e.movementX*sensitivity;view3d.pitch=clamp(view3d.pitch+e.movementY*sensitivity,-1.25,1.25)}});
+ // Free mouse look in Play: no click or pointer lock required, including TPS rigs.
+ const shouldMouseLook=()=>state.playing&&workspace.mode==='3d'&&view3d.enabled&&gameIsRunning()&&!gameplayInputBlocked()&&!companyController(state.entities)&&!currentVehicle3d(state.entities)&&!!playableActor(state.entities);
+ const applyMouseLook=e=>{
+  if(!shouldMouseLook()||e.pointerType==='touch')return;
+  const rig=cameraRigFor(playableActor(state.entities));
+  const sensitivity=(Number.isFinite(rig.sensitivity)?rig.sensitivity:.003)*(fpsAiming?.65:1);
+  const dx=Number.isFinite(e.movementX)?e.movementX:0,dy=Number.isFinite(e.movementY)?e.movementY:0;
+  view3d.yaw-=dx*sensitivity;view3d.pitch=clamp(view3d.pitch+dy*sensitivity,-1.25,1.25);
+ };
+ document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas)applyMouseLook(e)});
+ canvas.addEventListener('pointermove',e=>{if(document.pointerLockElement!==canvas)applyMouseLook(e)});
  canvas.addEventListener('pointermove',e=>{
   if(!view3d.enabled)return;const p=rectPoint(e),cam=camera();
   if(state.playing){
@@ -794,7 +804,7 @@ export function init3d(canvas,host,buttons){
      Object.assign(selectionRect.style,{left:left/scale+'px',top:top/scale+'px',width:(right-left)/scale+'px',height:(bottom-top)/scale+'px'});selectionRect.hidden=false;
      let ids=d.add?[...d.baseSelection]:[];for(const unit of state.entities.filter(o=>o.companyUnit&&o.team===1&&healthOf(o)>0)){const b=objectBounds3d(unit),at=project3d([b.x,b.y,b.z],cam,p.w,p.h);if(at&&at.x>=left&&at.x<=right&&at.y>=top&&at.y<=bottom)ids=selectCompanySquad(state.entities,unit.companyUnit.squadId,{selected:ids,add:true})}state.selected=ids;
     }return;
-   }if(d?.button===2&&d.pointer===e.pointerId){view3d.yaw=d.yaw-(p.x-d.x)*.009;view3d.pitch=clamp(d.pitch+(p.y-d.y)*.006,-.22,1.15)}
+   }// No click-drag camera rotation in Play.
    return;
   }
   const drag=view3d.drag;if(!drag||drag.pointer!==e.pointerId)return;
@@ -858,13 +868,13 @@ export function init3d(canvas,host,buttons){
    if(car)vehicleHud.textContent=car.name+' · '+Math.round(Math.abs(driving3d.speed)*.36)+' km/h · Rapport '+(car.vehicleSystems?.transmission?.gear??1)+' · ZQSD conduire · E sortir · Espace frein à main'+(car.vehicleWeapon?.enabled?' · F tirer':'');
    else if(nearby)vehicleHud.textContent='E — Entrer dans '+nearby.o.name;
   }
-  const crosshair=document.getElementById('fpsCrosshair');if(crosshair)crosshair.hidden=!isFps();
+  const crosshair=document.getElementById('fpsCrosshair');if(crosshair){crosshair.hidden=!isFps();crosshair.classList.toggle('warlike-aiming',isFps()&&fpsAiming)}
   const horrorHud=document.getElementById('horror3dHud');
   if(horrorHud){
    horrorHud.hidden=!(state.playing&&horror.enabled);
    if(!horrorHud.hidden)horrorHud.textContent=(horror.jumpscare>0?'⚠ DANGER !  |  ':'☾ SURVIVAL HORROR  |  ')+'L : lampe '+(horror.flashlight?'ON':'OFF')+'  |  Batterie '+Math.round(horror.battery)+'%  |  Peur '+Math.round(horror.fear)+'%';
   }
-  if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent=companyController(state.entities)?'RTS · clic : escouade · clic droit : ordre · flèches : caméra':'3D PLAY • ZQSD/WASD pour bouger • Maj pour courir'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}if(state.playing&&!companyController(state.entities))buttons.status.textContent+=grabSession.heldId!=null?' · G déposer · T lancer':' · G saisir objet physique';
+  if(state.playing&&sequenceRuntime.messages.length){const latest=sequenceRuntime.messages.at(-1);buttons.status.textContent='3D PLAY • '+latest.text}else if(state.playing){buttons.status.textContent=companyController(state.entities)?'RTS · clic : escouade · clic droit : ordre · flèches : caméra':'3D PLAY • Souris : regarder sans clic • Clic : viser • F : tirer • ZQSD/WASD : bouger'}else{buttons.status.textContent='SCÈNE 3D • Alt+gauche : orbite • Molette centrale : déplacer • Clic droit + ZQSD : naviguer • F : cadrer'}if(state.playing&&!companyController(state.entities))buttons.status.textContent+=grabSession.heldId!=null?' · G déposer · T lancer':' · G saisir objet physique';
   if(state.playing)buttons.status.textContent+=companyController(state.entities)?' · Navigation A* et collisions internes':' · Physique : '+(physicsSession?'Rapier'+(physicsSession.skipped?.size?' · '+physicsSession.skipped.size+' collider(s) incompatible(s)':''):gameProject.physics3d==='builtin'?'interne':rapierStatus().error?'interne (Rapier indisponible)':'chargement Rapier');
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
   const solar=sunAt();gl.clearColor(...solar.sky,1);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);

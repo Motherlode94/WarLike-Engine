@@ -58,7 +58,7 @@ try{
  browser=await chromium.launch({headless:true,...(process.env.WARLIKE_CHROMIUM?{executablePath:process.env.WARLIKE_CHROMIUM}:{}),args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--in-process-gpu']});
  mark('third-person mouse camera and pause');await open('camera');const cameraStart=await snapshot();
  const canvas=page.locator('#canvas3d'),rect=await canvas.boundingBox(),cx=rect.x+rect.width/2,cy=rect.y+rect.height/2;
- await page.mouse.move(cx,cy);await page.mouse.down({button:'right'});await page.mouse.move(cx+40,cy,{steps:8});await page.mouse.up({button:'right'});
+ await page.mouse.move(cx,cy);await page.mouse.move(cx+100,cy,{steps:10});
  await wait(async initial=>{const {view3d}=await import('./js/core/viewport-3d.js');return Math.abs(view3d.yaw-initial)>.1},cameraStart.yaw);
  await page.keyboard.press('Escape');await page.getByRole('button',{name:'Reprendre la partie',exact:true}).click();
  report.camera=await snapshot();await page.screenshot({path:path.join(output,'route-camera.png')});await context.close();

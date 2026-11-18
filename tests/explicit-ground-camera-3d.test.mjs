@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {updateController3d,cameraRelativeWalk3d} from '../js/core/gameplay-components.js';
 import {stepPhysics3d} from '../js/core/physics-3d.js';
+import {defaultSceneCamera,sceneCameraView,cameraMovementYaw} from '../js/core/scene-camera-3d.js';
 const player=()=>({id:1,type:'player',x:0,y:0,w:32,h:96,depth3d:32,elevation3d:0,playable3d:true,stats:{maxHealth:100,health:100,maxStamina:100,stamina:100}});
 const ground=()=>({id:2,type:'object',x:-300,y:-300,w:600,depth3d:600,h:16,elevation3d:-.25,collision3d:true,solid3d:true});
 const tick=(p,objects,keys=[],yaw=0,frames=90)=>{for(let i=0;i<frames;i++)updateController3d(p,new Set(keys),1/60,yaw,objects)};
@@ -9,3 +10,18 @@ test('without a solid floor the 3D player falls below zero and cannot jump in mi
 test('a real floor supports the player, but moving beyond its edge causes a fall',()=>{const p=player(),floor=ground();tick(p,[p,floor],[],0,30);assert.ok(Math.abs(p.elevation3d)<.001);assert.equal(p.grounded3d,true);p.x=400;tick(p,[p,floor],[],0,60);assert.ok(p.elevation3d<0);assert.equal(p.grounded3d,false)});
 test('player orientation and forward travel follow the camera at several yaws',()=>{for(const yaw of [0,Math.PI/2,Math.PI,-Math.PI/2]){const p=player(),floor=ground(),d=cameraRelativeWalk3d(0,1,yaw);tick(p,[p,floor],['w'],yaw,20);assert.ok((p.x*d.x+p.y*d.z)>0);assert.ok(Math.abs((((p.rotation-(180-yaw*180/Math.PI))%360)+540)%360-180)<.001)}});
 test('a nonkinematic 3D body falls without a floor and lands on a real one',()=>{const body={id:3,type:'object',x:0,y:0,w:24,h:24,depth3d:24,elevation3d:1,collision3d:true,rigidbody3d:{enabled:true,gravity:15,restitution:0,friction:1,vx:0,vy:0,vz:0}};for(let i=0;i<90;i++)stepPhysics3d([body],1/60);assert.ok(body.elevation3d<0);body.elevation3d=1;body.rigidbody3d.vy=0;const floor=ground();for(let i=0;i<90;i++)stepPhysics3d([body,floor],1/60);assert.ok(Math.abs(body.elevation3d)<.01);assert.equal(body.grounded3d,true)});
+
+test('TPS gameplay movement follows authored camera yaw even with asymmetric shoulder offset',()=>{
+ for(const yaw of [-1.3,-.45,0,.8,1.8]){
+  const p=player(),floor=ground(),cam={
+   id:5,type:'camera',x:0,y:250,elevation3d:2,
+   sceneCamera3d:{...defaultSceneCamera(),mode:'thirdPerson',targetId:p.id,shoulderOffset:2.1,height:2.4}
+  };
+  const scene=[p,floor,cam],view=sceneCameraView(cam,scene,{yaw,pitch:.4});
+  const heading=cameraMovementYaw(view);
+  const expected=cameraRelativeWalk3d(0,1,yaw);
+  tick(p,scene,['w'],heading,18);
+  assert.ok(p.x*expected.x+p.y*expected.z>0,'W must move along the camera horizontal heading');
+  assert.ok(Math.abs(heading-yaw)<1e-9);
+ }
+});

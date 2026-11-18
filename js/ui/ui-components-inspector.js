@@ -64,14 +64,14 @@ export function renderUiComponentsInspector(root,entity){
  if(entity.uiElement){
   entity.uiElement={...defaultUiElement(),...entity.uiElement};
   const body=panel(root,'UI Element');
-  options(body,'uiElement','kind','Type',[['panel','Panel'],['text','Text'],['button','Button'],['image','Image']]);
-  for(const [key,label] of [['text','Texte'],['color','Fond'],['textColor','Couleur du texte'],['eventName','Événement WarNode (réservé)']]){
+  options(body,'uiElement','kind','Type',[['panel','Panel'],['text','Text'],['button','Button'],['image','Image · futur runtime']]);
+  for(const [key,label] of [['text','Texte'],['color','Fond'],['textColor','Couleur du texte'],['eventName','Signal WarNode au clic']]){
    const row=document.createElement('label');row.className='property-row';
    const caption=document.createElement('span');caption.textContent=label;
    const input=document.createElement('input');input.type='text';input.value=String(entity.uiElement[key]||'');input.maxLength=256;input.disabled=state.playing;input.setAttribute('aria-label',label);
    input.onchange=()=>{const value=input.value.trim();if(['color','textColor'].includes(key)&&!/^#[0-9a-f]{6}$/i.test(value)){input.setCustomValidity('Couleur hexadécimale requise.');input.reportValidity();return}input.setCustomValidity('');save('uiElement',key,value)};
    row.append(caption,input);body.append(row);
   }
-  flag(body,'uiElement','interactable','Interactable (futur runtime)');
+  flag(body,'uiElement','interactable','Interactable (Play)');
  }
 }

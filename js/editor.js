@@ -66,7 +66,11 @@ import {mountProjectCreateBrowser} from './ui/project-create-browser.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
+import {createGameUiOverlay} from './core/ui-game-overlay.js';
+import {emitSequenceSignal} from './core/logic-sequences.js';
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
+// One gameplay overlay serves both 2D Canvas and 3D WebGL views.
+const gameUiOverlay=createGameUiOverlay(host,{onSignal:signal=>emitSequenceSignal(signal)});
 document.getElementById('fpsScene')?.addEventListener('click',()=>{if(!window.confirm('Remplacer la scène 3D actuelle par le terrain d’entraînement FPS ? Sauvegarde d’abord ton projet.'))return;try{createFpsScene();document.getElementById('workspace3d')?.click();}catch(error){window.alert(error.message)}});
 // Make the project chooser visible before initializing optional editor systems.
 loadRenderQuality();
@@ -117,6 +121,7 @@ function audioFrame(timestamp){
  if(wasPlaying&&!state.playing)stopSources();
  wasPlaying=state.playing;
  updateAudioSources(timestamp/1000);
+ gameUiOverlay.update(state.entities,{playing:state.playing,width:host.clientWidth,height:host.clientHeight});
  if(timestamp-lastClock>300){clockText();lastClock=timestamp}
 }
 requestAnimationFrame(audioFrame);

@@ -290,3 +290,46 @@ body.reference-engine:not(.hub-open) #properties .inspector-axis input {
     padding: 7px!important;
   }
 }
+
+/* Contrast safeguard for the editor only. Several existing themes set pale
+   header/button surfaces while retaining near-white text; keep these interactive
+   surfaces readable without editing the shared theme or Store palette. */
+body.reference-engine:not(.hub-open) #inspectorPanel #properties .inspector-component>summary {
+  background-color: #303944!important;
+  color: #f1f5fa!important;
+  border-color: #526070!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties .inspector-component>summary:hover {
+  background-color: #405064!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties .inspector-component>summary :is(span,strong,small,em) {
+  color: inherit!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties :is(button,.inspector-extensions-toggle) {
+  background-color: #303944!important;
+  color: #f1f5fa!important;
+  border-color: #526070!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties button:not(:disabled):hover {
+  background-color: #405064!important;
+}
+body.reference-engine:not(.hub-open) :is(.scene-tools,.scene-header,.bottom-tabs) button {
+  color: #f1f5fa!important;
+  background-color: #303944!important;
+  border-color: #526070!important;
+}
+body.reference-engine:not(.hub-open) :is(.scene-tools,.scene-header,.bottom-tabs) button:not(:disabled):hover {
+  background-color: #405064!important;
+}
+body.reference-engine:not(.hub-open) :is(.scene-tools,.scene-header,.bottom-tabs) button:disabled {
+  opacity: .5;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties :is(input,select,textarea) {
+  background-color: #1c2230!important;
+  color: #f1f5fa!important;
+  border-color: #526070!important;
+}

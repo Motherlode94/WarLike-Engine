@@ -14,6 +14,11 @@ export function initializeWarLikeTheme(){
  return applyWarLikeTheme(stored,{persist:false});
 }
 export function mountWarLikeThemeSelector(){
+ // Engine already has its native 🎨 Éditeur appearance menu. Never add a duplicate floating control.
+ if(document.documentElement.dataset.warlikeApp==='warlike-engine'){
+  document.getElementById('warlike-theme-switcher')?.remove();
+  return null;
+ }
  const old=document.getElementById('warlike-theme-switcher');if(old)return old;
  const wrapper=document.createElement('div');wrapper.id='warlike-theme-switcher';
  const label=document.createElement('label');label.htmlFor='wl-theme-select';label.textContent='Thème WarLike';

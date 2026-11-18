@@ -38,6 +38,8 @@ import {updateHorror,updateHorrorPerception,horror} from './horror-survival.js';
 import {renderQuality,viewportPixelSize} from './render-quality.js';
 import {sunShadowFrame3d,createSunShadowMap3d} from './shadow-map-3d.js';
 import {createEnvironmentIbl3d} from './environment-ibl-3d.js';
+import {decodeRadianceHdr} from './hdr-radiance-3d.js';
+import {prefilterHdriFace3d} from './ibl-prefilter-3d.js';
 import {stepPhysics3d} from './physics-3d.js';
 import {rapierStatus,loadRapier3d,createRapierScene,activateRapierQueries3d,moveRapierCharacter3d,stepRapierScene,synchronizeRapierScene,disposeRapierScene} from './rapier-physics-3d.js';
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
@@ -360,7 +362,11 @@ export function init3d(canvas,host,buttons){
  try{program=program3d(gl)}catch(err){renderFailure('Compilation shader : '+String(err.message||err));return {setEnabled:()=>false,focus:()=>{},syncToWorkspace:()=>renderFailure(view3d.error)}}
  const loc=n=>gl.getUniformLocation(program,n);
  const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),projectionFactor:loc('uProjectionFactor'),nearClip:loc('uNearClip'),farClip:loc('uFarClip'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]'),shadowPass:loc('uShadowPass'),shadowEnabled:loc('uShadowsEnabled'),shadowMap:loc('uShadowMap'),shadowTexel:loc('uShadowTexelSize'),shadowBias:loc('uShadowBias'),shadowEye:loc('uShadowEye'),shadowRight:loc('uShadowRight'),shadowUp:loc('uShadowUp'),shadowForward:loc('uShadowForward'),shadowExtent:loc('uShadowExtent'),shadowNear:loc('uShadowNear'),shadowFar:loc('uShadowFar'),environmentEnabled:loc('uEnvironmentEnabled'),environmentSharp:loc('uEnvironmentSharp'),environmentDiffuse:loc('uEnvironmentDiffuse')};
- let environmentIbl=null,lastIblSignature='';
+ let environmentIbl=null,lastIblSignature='',importedHdr=null;
+ // An imported panorama takes precedence over procedural sky until cleared.
+ const installHdr=async file=>{const hdr=decodeRadianceHdr(await file.arrayBuffer());if(!environmentIbl)throw Error('IBL unavailable on this GPU');environmentIbl.updateHdri(hdr,prefilterHdriFace3d);importedHdr=hdr;return {width:hdr.width,height:hdr.height}};
+ globalThis.window?.addEventListener('warlike:hdri-import',event=>{installHdr(event.detail).then(detail=>globalThis.window?.dispatchEvent(new CustomEvent('warlike:hdri-ready',{detail}))).catch(error=>globalThis.window?.dispatchEvent(new CustomEvent('warlike:hdri-error',{detail:{message:error.message}})))});
+ globalThis.window?.addEventListener('warlike:hdri-clear',()=>{importedHdr=null;lastIblSignature=''});
  if((gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)||0)>=8)try{environmentIbl=createEnvironmentIbl3d(gl)}
  catch(error){console.warn('[WarLike IBL]',error)}
  let shadowMap=null;
@@ -823,7 +829,7 @@ export function init3d(canvas,host,buttons){
   gl.uniform1f(u.sunIntensity,solar.intensity);gl.uniform1f(u.ambient,solar.ambient);
   if(environmentIbl){
    const signature=[...solar.direction,...solar.color,solar.intensity].map(v=>Math.round(v*12)/12).join(',');
-   if(signature!==lastIblSignature){
+   if(!importedHdr&&signature!==lastIblSignature){
     environmentIbl.update({sunDirection:solar.direction,sunColor:solar.color,sunIntensity:solar.intensity});
     lastIblSignature=signature;
    }

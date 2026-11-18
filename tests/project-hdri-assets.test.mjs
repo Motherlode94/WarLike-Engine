@@ -15,7 +15,7 @@ test('portable HDRI binary survives base64 JSON roundtrip without a single byte 
 test('project HDRI rejects invalid files, malformed base64 payloads and oversize claims',()=>{
  assert.equal(validHdriBytes(new Uint8Array(31)),false);
  assert.equal(validHdriBytes(new Uint8Array(32)),true);
- assert.throws(()=>packPortableHdri('empty',new Uint8Array(2)),/invalide/);
+ assert.throws(()=>packPortableHdri('empty',new Uint8Array(2)),/non valide/);
  assert.throws(()=>unpackPortableHdri({encoding:'json',data:'AAAA'}),/invalide/);
  assert.throws(()=>unpackPortableHdri({encoding:'base64',data:'@@@@'}));
 });

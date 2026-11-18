@@ -35,6 +35,8 @@ export function sceneCameraView(camera,entities,{yaw=0,pitch=0}={}){
  const position=[finite(camera.x,0)/64,finite(camera.elevation3d,0),finite(camera.y,0)/64];
  let target=null;
  const mode=settings.mode==='follow'?'thirdPerson':settings.mode; // migration alias
+ // Preserve the input heading independently of camera pitch, boom height and shoulder offset.
+ // The rendered look vector still points from the real camera eye to its target.
  if(['firstPerson','thirdPerson'].includes(mode)){
   const actor=cameraTargetEntity(camera,entities);
   if(actor){
@@ -71,11 +73,13 @@ export function sceneCameraView(camera,entities,{yaw=0,pitch=0}={}){
  if(Math.hypot(...target.map((n,i)=>n-position[i]))<1e-5)return null;
  const pose=cameraPose(target,position);
  return {...pose,
+  headingYaw:['firstPerson','thirdPerson'].includes(mode)?safeYaw:null,
   fieldOfView:clamp(finite(settings.fieldOfView,60),20,120),
   nearClip:clamp(finite(settings.nearClip,.1),.01,10),
   farClip:clamp(finite(settings.farClip,1000),20,10000)};
 }
 export function cameraMovementYaw(view){
  if(!view)return null;
+ if(Number.isFinite(view.headingYaw))return view.headingYaw;
  return Math.atan2(-view.forward[0],-view.forward[2]);
 }

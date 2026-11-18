@@ -19,7 +19,7 @@ export function lightFromEntity(o){
  if(!o||!lightTypes.includes(o.lightType)||o.lightEnabled===false)return null;
  const intensity=clamp(Number(o.lightIntensity)||0,0,10),range=clamp(Number(o.lightRange)||5,.2,120);
  if(intensity<=0)return null;
- const position=[(o.x+o.w/2)/64,(Number(o.elevation3d)||0)+Math.max(.5,(Number(o.h)||64)/64), (o.y+o.h/2)/64];
+ const position=[(o.x+o.w/2)/64,(Number(o.elevation3d)||0)+Math.max(.5,(Number(o.h)||64)/64), (o.y+(Number(o.depth3d??o.h)||64)/2)/64];
  const theta=((Number(o.rotation)||0)*Math.PI)/180;
  return {position,color:colorRgb(o.lightColor||'#ffd48b'),intensity,range,
  direction:[Math.sin(theta),-.45,Math.cos(theta)],cone:Math.cos(clamp(Number(o.lightAngle)||40,5,170)*Math.PI/360),spot:o.lightType==='spot'};

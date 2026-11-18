@@ -765,6 +765,12 @@ export function init3d(canvas,host,buttons){
    }
    if(!isFps()&&e.button===0&&!isLanGuest()){const unit=pick(p,cam);if(unit&&isRtsUnit(unit)){state.selected=e.shiftKey||e.ctrlKey||e.metaKey?(state.selected.includes(unit.id)?state.selected.filter(id=>id!==unit.id):[...state.selected,unit.id]):[unit.id];e.preventDefault();notify();return}}
    if(!isFps()&&e.button===2&&!isLanGuest()){const target=pick(p,cam);if(target&&(target.ai?.enabled||target.tags?.includes('enemy'))&&orderRtsGroup(state.entities,state.selected,'attack',target.id)){e.preventDefault();return}const hit=groundHit3d(p.x,p.y,cam,p.w,p.h);if(hit&&orderRtsMove(state.entities,state.selected,{x:hit[0]*64,y:hit[2]*64})){e.preventDefault();return}}
+   // Free look starts on pointer movement, without holding a button.
+   // The first aim/fire click may capture the cursor for continuous rotation
+   // at screen edges. Pointer Lock can be denied; never block gameplay for it.
+   if((e.button===0||e.button===2)&&shouldMouseLook()&&document.pointerLockElement!==canvas&&typeof canvas.requestPointerLock==='function'){
+    try{const pending=canvas.requestPointerLock();pending?.catch?.(()=>{});}catch{/* Browser denied capture; keep free-look. */}
+   }
    if(isFps()){if(e.button===0){e.preventDefault();fpsFiring=true;shootFps()}else if(e.button===2){e.preventDefault();fpsAiming=true}return}
    if(e.button===0){e.preventDefault();fpsFiring=true;return}if(e.button===2){e.preventDefault();fpsAiming=true;return}
    return;

@@ -295,8 +295,8 @@ export function placeEntityOnSurface3d(entity,hit,{snap=0,alignNormal=false}={})
  if(!entity||!hit||!Array.isArray(hit.point)||hit.point.length!==3||!hit.point.every(Number.isFinite))throw Error('Point de placement 3D invalide');
  const [x,y,z]=hit.point;
  const width=(Number(entity.w)||64)/64,depth=(Number(entity.depth3d??entity.h)||64)/64;
- entity.x=Math.round((snap3d(x,snap)-width/2)*64);
- entity.y=Math.round((snap3d(z,snap)-depth/2)*64);
+ entity.x=(snap3d(x,snap)-width/2)*64;
+ entity.y=(snap3d(z,snap)-depth/2)*64;
  entity.elevation3d=snap3d(y,snap);
  if(alignNormal&&Array.isArray(hit.normal)&&hit.normal.length===3&&hit.normal.every(Number.isFinite)){
   const n=hit.normal,len=Math.hypot(...n);

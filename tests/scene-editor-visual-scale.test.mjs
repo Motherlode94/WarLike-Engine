@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {glbVisualScale3d,glbVisualPlacement3d} from '../js/core/glb-visual-transform-3d.js';
-import {projectedAxisDrag3d,projectedAxisScale3d,alignSceneObjects3d,snapSelected3d} from '../js/core/scene-editing-3d-tools.js';
+import {projectedAxisDrag3d,projectedAxisScale3d,projectedAxisRotation3d,alignSceneObjects3d,snapSelected3d} from '../js/core/scene-editing-3d-tools.js';
 import {sceneCamera3d,project3d} from '../js/core/viewport-3d.js';
 
 test('GLB renderer dimensions match Inspector/collider dimensions on all axes',()=>{
@@ -71,4 +71,19 @@ test('scale Gizmo stays stable with foreshortened and invalid handles',()=>{
  assert.equal(projectedAxisScale3d({x:0,y:0},{x:100,y:0},0,20),1);
  assert.equal(projectedAxisScale3d({x:0,y:0},{x:100,y:0},2000,0),8);
  assert.equal(projectedAxisScale3d({x:0,y:0},{x:100,y:0},-2000,0),.1);
+});
+
+test('Rotate Gizmo responds to orbiting around the pivot, not arbitrary dx - dy',()=>{
+ const pivot={x:100,y:100},start={x:150,y:100};
+ assert.ok(Math.abs(projectedAxisRotation3d(pivot,start,{x:100,y:150})-90)<1e-8);
+ assert.ok(Math.abs(projectedAxisRotation3d(pivot,start,{x:100,y:50})+90)<1e-8);
+ assert.ok(Math.abs(projectedAxisRotation3d(pivot,start,{x:100,y:150},{directionSign:-1})+90)<1e-8);
+ assert.equal(projectedAxisRotation3d(pivot,start,{x:200,y:100}),0,'radial drag must not rotate');
+});
+test('Rotate Gizmo rejects unstable pivot drags and takes shortest angular step',()=>{
+ const pivot={x:100,y:100};
+ assert.equal(projectedAxisRotation3d(pivot,{x:101,y:100},{x:100,y:160}),0);
+ assert.equal(projectedAxisRotation3d(null,{x:50,y:100},{x:100,y:60}),0);
+ const a={x:60,y:101},b={x:60,y:99};
+ assert.ok(Math.abs(projectedAxisRotation3d(pivot,a,b))<5,'crossing the rear axis must not rotate 360 degrees');
 });

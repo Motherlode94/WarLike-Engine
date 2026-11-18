@@ -31,3 +31,11 @@ test('local 3D axis follows the object quaternion, global axis remains unchanged
  const local=gizmoAxis3d('x',q,{local:true});
  assert.ok(Math.abs(local[0])<1e-5);assert.ok(Math.abs(Math.abs(local[2])-1)<1e-5);
 });
+
+test('precise unsnapped placement retains subpixel world coordinates and exact surface elevation',()=>{
+ const entity={w:64,h:64,depth3d:64},point=[1.123456,2.345678,-.765432];
+ placeEntityOnSurface3d(entity,{point},{snap:0});
+ assert.ok(Math.abs(entity.x/64+.5-point[0])<1e-10);
+ assert.ok(Math.abs(entity.y/64+.5-point[2])<1e-10);
+ assert.equal(entity.elevation3d,point[1]);
+});

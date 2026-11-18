@@ -56,3 +56,23 @@ test('WarNode triggerEnter2d event targets the Collider owner and runs connected
  updateSequences(.016,{playing:true,entities:[sensor,hero],player:hero,keys:new Set()});
  assert.equal(sequenceRuntime.globals.enteredZone,1);
 });
+
+test('Contact2D stages remain stable when entity order changes during a contact',()=>{
+ const contacts=new ContactEvents2d(),a=structuredClone(sensor),b=structuredClone(actor);
+ b.x=30;
+ assert.deepEqual(stages(contacts.update([a,b])),['trigger:enter']);
+ assert.deepEqual(stages(contacts.update([b,a])),['trigger:stay']);
+ b.x=100;
+ assert.deepEqual(stages(contacts.update([b,a])),['trigger:exit']);
+ assert.deepEqual(stages(contacts.update([a,b])),[]);
+});
+test('Contact2D emits an exit when a trigger is disabled, never a phantom stay',()=>{
+ const contacts=new ContactEvents2d(),a=structuredClone(sensor),b=structuredClone(actor);
+ b.x=30;
+ assert.deepEqual(stages(contacts.update([a,b])),['trigger:enter']);
+ a.collider2d.enabled=false;
+ assert.deepEqual(stages(contacts.update([a,b])),['trigger:exit']);
+ assert.deepEqual(stages(contacts.update([a,b])),[]);
+ a.collider2d.enabled=true;
+ assert.deepEqual(stages(contacts.update([a,b])),['trigger:enter']);
+});

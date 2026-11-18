@@ -58,3 +58,21 @@ test('first-person and third-person share the same horizontal heading',()=>{
  const tps=sceneCameraView(c,[c,player],{yaw:.8,pitch:.2});
  assert.ok(Math.abs(cameraMovementYaw(fps)-cameraMovementYaw(tps))<1e-6);
 });
+
+test('TPS shoulder camera offset does not steer the character or distort movement heading',()=>{
+ const c=camera(20),player={id:7,type:'player',x:64,y:64,w:64,h:128,depth3d:64,elevation3d:0};
+ c.sceneCamera3d.mode='thirdPerson';c.sceneCamera3d.targetId=7;
+ c.sceneCamera3d.shoulderOffset=1.5;c.sceneCamera3d.height=2.5;
+ for(const yaw of [-Math.PI,-1.2,0,.85,Math.PI/2,Math.PI]){
+  const pose=sceneCameraView(c,[c,player],{yaw,pitch:.65});
+  assert.ok(pose,'camera view exists');
+  assert.ok(Math.abs(cameraMovementYaw(pose)-yaw)<1e-9,'character heading must remain mouse yaw');
+  assert.ok(Math.abs(Math.hypot(...pose.forward)-1)<1e-9,'view still has normalized look vector');
+ }
+});
+test('fixed scene Camera keeps its own authored look direction, not editor yaw',()=>{
+ const c=camera(21);c.sceneCamera3d.mode='fixed';c.rotation=90;
+ const pose=sceneCameraView(c,[c],{yaw:-1.6,pitch:.9});
+ assert.equal(pose.headingYaw,null);
+ assert.ok(Math.abs(cameraMovementYaw(pose)-Math.PI/2)<1e-9);
+});

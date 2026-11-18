@@ -4,6 +4,7 @@ Deux fichiers de scènes **importables par l'éditeur** servent de scénarios re
 
 - `tests/fixtures/phase1-transform-gizmos.scene.json` : sol, trois niveaux de hiérarchie, GLB KayKit CC0 intégrés au dépôt, Collider3D à taille automatique, surface inclinée et cible de placement sans snapping.
 - `tests/fixtures/phase2-physics-fps-tps.scene.json` : joueur FPS/TPS, sol physique, mur, rampe, marches basse/haute, plateforme cinématique et caisse GLB saisissable via `grab3d` plus caisse témoin.
+- `tests/fixtures/phase2-physics-2d.scene.json` : joueur top-down, mur autorisé, Trigger2D autorisé, Trigger2D masqué et objet décoratif sans collider.
 
 ## Exécution manuelle dans l'éditeur
 
@@ -12,7 +13,8 @@ Deux fichiers de scènes **importables par l'éditeur** servent de scénarios re
 3. Déplacer le parent et vérifier que l'enfant et le petit-enfant conservent leurs positions locales. Vérifier Undo/Redo et sauvegarder, fermer puis restaurer.
 4. Charger Phase 2 : se déplacer sur le sol, la rampe et les marches ; contrôler l'absence de traversée des murs ; tester la plateforme mobile en la déplaçant.
 5. En Play FPS/TPS, viser la caisse dynamique et essayer **G** saisir, **G** déposer, **T** lancer. La caisse témoin ne doit pas être saisissable. Les commandes utilisent la caméra du joueur.
-6. Exporter chaque scène en Web autonome et répéter les essais dans l'archive réellement extraite, sans ressources distantes.
+6. Charger Phase 2 en 2D : vérifier la collision avec le mur, l'activation unique du Trigger2D autorisé et l'absence de contact avec le trigger masqué.
+7. Exporter chaque scène en Web autonome et répéter les essais dans l'archive réellement extraite, sans ressources distantes.
 
 ## Critères de sortie
 

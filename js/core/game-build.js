@@ -58,7 +58,7 @@ export function gameBuildHtml(template,data){
  const json=JSON.stringify(data).replace(/</g,'\\u003c'),title=String(data.project.title||'WarLike Game').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  let html=template.replace(/<title>[^<]*<\/title>/,()=>'<title>'+title+'</title>').replace(/<script\b[^>]*type="module"[^>]*src="[^"]*js\/editor\.js[^"]*"[^>]*><\/script>/,'<script type="module" src="./js/game-build-player.js"></script>');
  if(!html.includes('src="./js/game-build-player.js"'))throw Error('Le document de démarrage du moteur est incompatible.');
- html=html.replace('</head>',()=>'<script>globalThis.__WARLIKE_BUILD__=true;</script><script type="application/json" id="warlikeGameData">'+json+'</script></head>').replace('<body>','<body class="warlike-game-build">');
+ html=html.replace('</head>',()=>'<script>globalThis.__WARLIKE_BUILD__=true;'+(data.hasEnvironmentHdri?'globalThis.__WARLIKE_HDRI_INCLUDED__=true;':'')+'</script><script type="application/json" id="warlikeGameData">'+json+'</script></head>').replace('<body>','<body class="warlike-game-build">');
  return html;
 }
 // The editor ships the complete library. A playable export only needs models
@@ -95,6 +95,8 @@ export function gameBuildModelCatalog(name,source,data){
 }
 export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}={}){
  const data=prepareGameDefinition(input),base=new URL('../../',import.meta.url);
+ const hdri=await loadProjectHdri(data.project?.id);
+ data.hasEnvironmentHdri=!!hdri;
  const get=async path=>{const response=await fetcher(new URL(path,base));if(!response.ok)throw Error('Ressource indisponible : '+path);return response};
  const manifest=await (await get('runtime-files.json')).json();
  if(!Array.isArray(manifest.files)||manifest.files.length>25000||manifest.files.some(p=>typeof p!=='string'||!/^[-A-Za-z0-9._/]+$/.test(p)||p.startsWith('/')||p.includes('..')))throw Error('Manifest du runtime invalide.');
@@ -127,7 +129,6 @@ export async function exportGamePackage(input,{fetcher=fetch,onProgress=()=>{}}=
  const worker=async()=>{while(cursor<files.length){const i=cursor++,name=files[i];const response=await get(name);entries[i]={name,data:name==='js/assets/imported-models-3d.js'?importedCatalog:name==='index.html'?gameBuildHtml(await response.text(),data):['js/assets/free-game-assets.js','js/assets/quaternius-game-assets.js','js/assets/kaykit-game-assets.js'].includes(name)?gameBuildModelCatalog(name,await response.text(),data):await response.arrayBuffer()};onProgress(++completed,files.length)}};
  await Promise.all(Array.from({length:6},worker));
  // Ship HDRI bytes with the portable game, so post-export rendering stays offline.
- const hdri=await loadProjectHdri(data.project?.id);
  if(hdri)importedEntries.push({name:'assets/environment.hdr',data:hdri.bytes});
  entries.push(...importedEntries);
  if(!files.includes('js/assets/imported-models-3d.js'))entries.push({name:'js/assets/imported-models-3d.js',data:importedCatalog});

@@ -37,7 +37,7 @@ test('per-object C# script source is retained in the scene and exportable',()=>{
 
 test('Inspector offers C# script editing on the selected GameObject',()=>{
  const inspector=read('js/ui/inspector.js');
- assert.match(inspector,/function openCSharpEditor\(/);assert.match(read('js/ui/component-browser.js'),/name:'Script C# local'/);
+ assert.match(inspector,/function openCSharpEditor\(/);assert.doesNotMatch(read('js/ui/component-browser.js'),/options\.push\(\{id:'script'/);
  assert.match(inspector,/warlike:script-open/);
 });
 

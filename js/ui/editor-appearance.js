@@ -36,7 +36,7 @@ export function initEditorAppearance(){
  const container=document.querySelector('#editorSwatches');
  for(const color of editorColors){
   const btn=document.createElement('button');
-  btn.type='button';btn.dataset.color=color;btn.style.background=color;btn.title=color;
+  btn.type='button';btn.dataset.color=color;btn.style.backgroundColor=color;btn.style.setProperty('--swatch-color',color);btn.title=color;
   btn.setAttribute('aria-label','Utiliser la couleur '+color);
   btn.onclick=()=>setColor(color);
   container.append(btn);

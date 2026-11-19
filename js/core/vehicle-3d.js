@@ -1,4 +1,6 @@
 import {solidBody3d,moveBody3d} from './collision-3d.js';
+import {vehicleTuning} from './vehicle-controller.js';
+import {resolveInputKeys} from './input-actions.js';
 import {collisionBackend3d} from './collision-backend-3d.js';
 import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle} from './vehicle-components.js';
 import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle-weapons-3d.js';
@@ -7,7 +9,7 @@ import {stepArcadeVehicle} from './arcade-driving.js';
 import {vehicleConfiguration,tickVehicleArticulation} from './vehicle-articulation.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 const center=o=>({x:o.x+(o.w||32)/2,y:o.y+(o.depth3d||o.h||32)/2});
-export const isDriveable3d=o=>!!o&&(o.vehicleConfig?.driveable===true||vehicleConfiguration(o)?.enabled===true&&vehicleConfiguration(o)?.drive!=='static'||o.tags?.includes('race-vehicle')||get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles');
+export const isDriveable3d=o=>!!o&&o.vehicleController?.enabled!==false&&(o.vehicleController?.enabled===true||o.vehicleConfig?.driveable===true||vehicleConfiguration(o)?.enabled===true&&vehicleConfiguration(o)?.drive!=='static'||o.tags?.includes('race-vehicle')||get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles');
 export const driving3d={vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0};
 export const currentVehicle3d=entities=>entities.find(o=>o.id===driving3d.vehicleId&&isDriveable3d(o))||null;
 export const resetDriving3d=()=>Object.assign(driving3d,{vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0});
@@ -20,6 +22,9 @@ const intersects=(car,x,y,o)=>{
  return verticalBase<otherTop&&verticalTop>otherBase&&x<o.x+otherW&&x+w>o.x&&y<o.y+otherD&&y+d>o.y;
 };
 export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}={}){
+ const inputVehicle=currentVehicle3d(entities);
+ keys=resolveInputKeys(inputVehicle||player,keys,{context:inputVehicle?'vehicle':'player'});
+ pressedKeys=resolveInputKeys(inputVehicle||player,pressedKeys,{context:inputVehicle?'vehicle':'player'});
  const step=Math.min(.1,Math.max(0,Number(dt)||0));
  driving3d.impact=Math.max(0,driving3d.impact-step);
  const enter=keys.has('e')||pressedKeys.has('e');
@@ -60,7 +65,7 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
  const steer=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const handbrake=keys.has(' ')||keys.has('space');
  const state=stepArcadeVehicle({speed:driving3d.speed,steer:driving3d.steer,rotation:drivingCar.rotation||0},
-  {throttle,steer,handbrake},step,drivingCar);
+  {throttle,steer,handbrake},step,vehicleTuning(drivingCar));
  driving3d.speed=state.speed;driving3d.steer=state.steer;
  const backend=collisionBackend3d(),oldRotation=drivingCar.rotation||0;
  if(backend?.owns(drivingCar)){

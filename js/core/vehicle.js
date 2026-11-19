@@ -1,4 +1,6 @@
 import {recordEngineEvent} from './engine-diagnostics.js';
+import {vehicleTuning} from './vehicle-controller.js';
+import {resolveInputKeys} from './input-actions.js';
 import {stepArcadeVehicle,moveVehicleWithCollision} from './arcade-driving.js';
 import {playSound} from './audio.js';
 import {housingActive,housing} from './housing.js';
@@ -7,16 +9,17 @@ import {sanitizeVehicle,collisionCircleRect} from '../typed/systems.js';
 import {state} from './state.js';
 import {getAsset} from '../assets/catalog.js';
 export const driving={vehicleId:null,speed:0,steer:0,grip:1,enterHeld:false,collisionFlash:0,transition:null};
-const vehicle=o=>o?.type==='prefab'&&getAsset(o.assetId)?.category==='Vehicles';
+const vehicle=o=>o?.vehicleController?.enabled!==false&&(o?.vehicleController?.enabled===true||o?.type==='prefab'&&getAsset(o.assetId)?.category==='Vehicles');
 const center=o=>({x:o.x+o.w/2,y:o.y+o.h/2});
-export function vehicleDefaults(o){return sanitizeVehicle({maxSpeed:o.maxSpeed,acceleration:o.acceleration,brakeForce:o.brakeForce,turnRate:o.turnRate,drag:o.drag,collisionRadius:o.collisionRadius})}
+export function vehicleDefaults(o){const config=vehicleTuning(o);return sanitizeVehicle({maxSpeed:config.maxSpeed,acceleration:config.acceleration,brakeForce:config.brakeForce,turnRate:config.turnRate,drag:config.drag,collisionRadius:config.collisionRadius})}
 export function resetDriving(){Object.assign(driving,{vehicleId:null,speed:0,steer:0,grip:1,enterHeld:false,collisionFlash:0,transition:null})}
 export function currentVehicle(){return state.entities.find(o=>o.id===driving.vehicleId&&vehicle(o))||null}
 const solid=solidCollider2d;
 const overlapCircleRect=collisionCircleRect;
 export function updateVehicles(dt,player,keys=state.keys){
  driving.collisionFlash=Math.max(0,driving.collisionFlash-dt);
- const k=keys,pressed=(k.has('e')||state.keyPresses?.has('e'))&&!housingActive()&&housing.transition===0;
+ const controlled=currentVehicle();
+ const k=resolveInputKeys(controlled||player,keys,{context:controlled?'vehicle':'player'}),pressed=(k.has('e')||state.keyPresses?.has('e'))&&!housingActive()&&housing.transition===0;
  if(driving.transition){const action=driving.transition;action.remaining-=dt;if(action.remaining<=0){if(action.type==='enter'){playSound('vehicle');recordEngineEvent('vehicle-enter',String(action.carId));driving.vehicleId=action.carId;driving.speed=0;driving.steer=0;player._hiddenInVehicle=true;player.animation='drive';}else{playSound('door');player.x=action.x;player.y=action.y;recordEngineEvent('vehicle-exit',String(driving.vehicleId));player._hiddenInVehicle=false;driving.vehicleId=null;driving.speed=0;driving.steer=0;player.animation='exit_vehicle';player._actionAnimationUntil=performance.now()/1000+.45}driving.transition=null;player._vehicleTransition=false}else{player._vehicleTransition=true;player.animation=action.type==='enter'?'enter_vehicle':'exit_vehicle';driving.enterHeld=pressed;return}}
 
  if(pressed&&!driving.enterHeld&&player){

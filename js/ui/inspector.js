@@ -23,6 +23,7 @@ import {renderUiComponentsInspector} from './ui-components-inspector.js';
 import {freeAudioAssets} from '../assets/free-game-assets.js';
 import {assetCredits} from './asset-credits.js';
 import {componentChoices,addObjectComponent,resetObjectComponent,removeObjectComponent,webDataComponentKinds,inspectorComponentRank,validateEditorProperty} from '../core/component-definitions.js';
+import {portableComponentKinds} from '../core/runtime-capabilities.js';
 import {newSequence} from '../core/logic-sequences.js';
 import {finishInspector as finishComponentInspector,openComponentBrowser} from './component-browser.js';
 import {communityRecipes,applyCommunityRecipe} from '../core/community-plugins.js';
@@ -89,7 +90,7 @@ function renderNativeComponents(root,o){
  const labels={memberIds:'ID des membres',spacing:'Espacement (m)',followDistance:'Distance de suivi (m)',damage:'Dégâts',fireRate:'Tirs / seconde',magazineSize:'Taille du chargeur',armor:'Armure',invulnerable:'Invulnérable',regen:'Régénération / s',speed:'Vitesse',lifetime:'Durée de vie',gravity:'Gravité',restitution:'Rebond',friction:'Friction',teamId:'Équipe ID',friendlyFire:'Tirs alliés',delay:'Délai (s)',matchDuration:'Durée du match (s)',scoreLimit:'Limite de kills',countdown:'Compte à rebours',radius:'Rayon',amount:'Quantité',healAmount:'Soin',captureTime:'Temps de capture',vx:'Vitesse X',vy:'Vitesse Y',vz:'Vitesse Z',targetId:'ID de la cible',stopDistance:'Distance d’arrêt',maxSpeed:'Vitesse max',acceleration:'Accélération',brakeForce:'Freinage',turnRate:'Direction (°/s)',drag:'Résistance',reverseRatio:'Rapport marche arrière',money:'Crédits',reputation:'Réputation',materials:'Matériaux',gold:'Or'};
  const defaults=Object.assign({},...Object.values(nativeComponentCatalog));
  definitions.forEach((definition,index)=>{
- const card=document.createElement('details');card.className='inspector-component warlike-component-card';card.dataset.componentTitle=definition.kind;card.dataset.nativeIndex=String(index);card._resetNative=()=>{definitions[index]={kind:definition.kind,...structuredClone(defaults[definition.kind]||{})}};card.dataset.runtime=webDataComponentKinds.has(definition.kind)?'web':'dotnet';card.open=true;
+ const card=document.createElement('details');card.className='inspector-component warlike-component-card';card.dataset.componentTitle=definition.kind;card.dataset.nativeIndex=String(index);card._resetNative=()=>{definitions[index]={kind:definition.kind,...structuredClone(defaults[definition.kind]||{})}};card.dataset.runtime=(webDataComponentKinds.has(definition.kind)||portableComponentKinds.has(definition.kind)&&definition.runtime==='web')?'web':'dotnet';card.open=true;
  const heading=document.createElement('summary');heading.textContent=definition.kind||'Composant';const badge=document.createElement('small');badge.className='component-runtime-badge';badge.textContent=webDataComponentKinds.has(definition.kind)?'Web':'C# local';heading.append(badge);card.append(heading);
  const fields=document.createElement('div');fields.className='warlike-component-fields';
  const keys=Object.keys(defaults[definition.kind]||{});for(const key of Object.keys(definition)){if(!['kind','enabled'].includes(key)&&!keys.includes(key))keys.push(key)}

@@ -1,3 +1,4 @@
+import {bindInspectorFold} from './inspector-folds.js';
 import {componentChoices,addObjectComponent,resetObjectComponent,removeObjectComponent,componentRemovalBlockers,inspectorComponentGroup} from '../core/component-definitions.js';
 import {copyInspectorComponent,pasteInspectorComponent} from '../core/inspector-model.js';
 import {solidCollider2d,actor2d} from '../core/physics-2d.js';
@@ -28,15 +29,13 @@ function binding(card,owner){
  return null;
 }
 export function decorateInspectorComponents(root,owner){
- let folds={};const storageKey='warlike.inspector.folds.v2';try{folds=JSON.parse(localStorage.getItem(storageKey)||'{}')}catch{}
  const cards=[...root.querySelectorAll(':scope>.inspector-component')],context=inspectorContext()+':'+owner.id+':';
  const keyFor=card=>card.dataset.inspectorKey;
  cards.forEach((card,index)=>{
   const descriptor=binding(card,owner),title=card.dataset.componentTitle;
   card.dataset.inspectorKey=descriptor?.id||title+':'+index;
   const summary=card.querySelector(':scope>summary');if(!summary)return;
-  const foldKey=context+keyFor(card);card.open=folds[foldKey]??(title==='Transform');
-  card.addEventListener('toggle',()=>{if(card.dataset.searchExpanded==='true')return;folds[foldKey]=card.open;try{localStorage.setItem(storageKey,JSON.stringify(folds))}catch{}});
+  bindInspectorFold(card,summary,context+keyFor(card),title==='Transform');
   summary.querySelectorAll('.component-menu-toggle').forEach(node=>node.remove());
   card.querySelectorAll('.unity-component-menu').forEach(node=>node.remove());
   const value=descriptor?.get?.();
@@ -70,7 +69,7 @@ export function decorateInspectorComponents(root,owner){
  if(order.length){const sorted=cards.slice().sort((a,b)=>{if(a.dataset.componentTitle==='Transform')return -1;if(b.dataset.componentTitle==='Transform')return 1;const rank=card=>order.includes(keyFor(card))?order.indexOf(keyFor(card)):1e5;return rank(a)-rank(b)});const end=root.querySelector(':scope>.inspector-add-component');for(const card of sorted)root.insertBefore(card,end)}
  // Keep the Unity-like main inspector focused on rendering and physics.
  // Attached gameplay/script data remains intact and accessible under Extensions.
- const builtinVisualTitles=new Set(['Transform','Sprite Renderer','Mesh Renderer · Matériau','Animator 2D','Animator 3D · clips du modèle','Caméra de jeu','Camera','Camera 3D','Collider 3D','Box Collider 3D','Box Collider 2D','Rigidbody 2D','Rigidbody 3D','Physics 3D • Rigidbody','Articulation 3D','Audio Source']);
+ const builtinVisualTitles=new Set(['Transform','Sprite Renderer','Mesh Renderer · Matériau','Animator 2D','Animator 3D · clips du modèle','Caméra de jeu','Camera','Camera 3D','Collider 3D','Box Collider 3D','Box Collider 2D','Collider 2D','Articulation 2D','Zone de forces 2D','Diagnostic physique 2D','Rigidbody 2D','Rigidbody 3D','Physics 3D • Rigidbody','Articulation 3D','Audio Source']);
  const extensionCards=cards.filter(card=>{
   const key=card.dataset.componentKey;
   if(key&&componentChoices(workspace.mode).some(def=>def.id===key))return inspectorComponentGroup(key)==='extension';

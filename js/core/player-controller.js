@@ -1,5 +1,5 @@
 import {stepHeroFlight} from './hero-movement.js';
-import {controllerMode2d,walkPlatformer2d,moveBody2d} from './physics-2d.js';
+import {controllerMode2d,walkPlatformer2d,moveBody2d,stepPhysics2d} from './physics-2d.js';
 import {faceMovement2d} from './character-facing.js';
 import {followCamera2d} from './play-camera.js';
 import {activeSceneCamera2d,cameraView2d} from './scene-camera-2d.js';
@@ -17,6 +17,10 @@ export function walkPlayer(player,dt,keys=state.keys,{pressedKeys=state.keyPress
  const configured=Number(sprint?player.controller2d?.sprintSpeed:player.controller2d?.walkSpeed);const speed=player.controller2d?Math.max(0,Number.isFinite(configured)?configured:motion.footSpeed):Math.max(10,Number(player.footSpeed)||motion.footSpeed)*(sprint?motion.sprintMultiplier:1);
  const fatigue=player.survival?.enabled!==false&&player.survival&&player.survivalState?.rest<15?.6:1,dx=length?x/length*speed*dt*fatigue:0,dy=length?y/length*speed*dt*fatigue:0;if(length)playSound('step',{cooldown:sprint?.2:.34,gain:sprint?1:.7});
  const beforeX=player.x,beforeY=player.y;moveBody2d(player,dx,dy,state.entities);
+ // Existing top-down controllers keep their authored motion. New physics tools
+ // opt this explicit Rigidbody into simulation; the scene step excludes it.
+ const tools=player.joint2d?.enabled!==false&&player.joint2d||state.entities.some(o=>o.enabled!==false&&o.effector2d&&o.effector2d.enabled!==false);
+ if(player.rigidbody2d?.enabled&&tools)stepPhysics2d(state.entities.includes(player)?state.entities:[player,...state.entities],dt,{only:player});
  faceMovement2d(player,player.x-beforeX,player.y-beforeY);
  if(player.type==='prefab'||player.type==='character'){
   if(!player._ninjaAttackUntil){player.animation=length?(sprint?'run':'walk'):'idle';if(player.assetId?.startsWith('zombie'))player.animation=length?'walk_zombie':'idle_zombie'}

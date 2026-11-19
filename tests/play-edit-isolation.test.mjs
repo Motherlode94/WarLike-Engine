@@ -25,6 +25,8 @@ const {togglePlay}=await import('../js/core/scene.js');
 const {state}=await import('../js/core/state.js');
 const {gameProject,restoreGameProject,freshGameProject}=await import('../js/core/game-project.js');
 const {workspace}=await import('../js/core/workspaces.js');
+const {record,undo,redo,resetHistory}=await import('../js/core/history.js');
+const {webScriptRuntime}=await import('../js/core/web-script-runtime.js');
 
 function setup(mode){
  if(state.playing)togglePlay();
@@ -66,4 +68,18 @@ test('compiled Blueprint instructions never leak back into authored graph',()=>{
  togglePlay();
  assert.deepEqual(state.entities,authored,'Stop must restore instructions from before compilation');
  assert.deepEqual(state.selected,expected.selection);
+});
+test('Stop restores authored state after script teardown fails, across two sessions and Undo/Redo',()=>{
+ const expected=setup('2d');resetHistory();record('Before edit');
+ state.entities[0].x=80;record('Move');const edited=structuredClone(state.entities);
+ const originalStop=webScriptRuntime.stop,originalError=console.error;
+ try{
+  for(let i=0;i<2;i++){
+   togglePlay();state.entities[0].x=999;state.selected=[];state.nextId=99;
+   webScriptRuntime.stop=()=>{throw Error('OnDestroy failure')};console.error=()=>{};
+   togglePlay();webScriptRuntime.stop=originalStop;
+   assert.equal(state.playing,false);assert.deepEqual(state.entities,edited);assert.deepEqual(state.selected,expected.selection);assert.equal(state.nextId,3);
+  }
+  undo();assert.equal(state.entities[0].x,40);redo();assert.equal(state.entities[0].x,80);
+ }finally{webScriptRuntime.stop=originalStop;console.error=originalError}
 });

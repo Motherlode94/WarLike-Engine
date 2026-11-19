@@ -17,7 +17,7 @@ const unityCategories=Object.freeze({
  Layout:['uiCanvas','uiRect','uiElement'],
  Mesh:['spriteRenderer2d','tilemap2d'],
  Navigation:['ai','tacticalUnit'],
- 'Physics 2D':['collider2d','rigidbody2d','controller2d'],
+ 'Physics 2D':['collider2d','rigidbody2d','joint2d','effector2d','controller2d'],
  Physics:['collider3d','rigidbody3d','controller3d','grab3d'],
  Rendering:['light','sceneCamera3d','camera2d','environmentProbe3d'],
  Scripts:['webScripts','warScripts']
@@ -186,7 +186,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
 }
 export function finishInspector(root,owner,templates,nativeCatalog,renderNative,openScript){
  renderNative(root,owner);
- const keyByTitle={'Aventure · Journal et quête':'adventure','Aventure · Interaction ciblée':'adventureInteractable','Survie · Besoins et fabrication':'survival','Survie · Ressource ou campement':'survivalNode','Survie · Cycle jour / nuit':'survivalWorld','Animator · Graphe d’états':'animatorGraph','Super-héros · Pouvoirs':'superhero','Progression RPG':'rpgProgression','Émetteur FX':'fxEmitter','Simulation · Réseau et monde':'simulationNode','Unité tactique RTS':'tacticalUnit','Collider 3D':'collider3d','Articulation 3D':'joint3d','Box Collider 2D':'collider2d','Rigidbody 2D':'rigidbody2d','Contrôleur de personnage 2D':'controller2d','Stats · Santé et endurance':'stats','Inventaire':'inventory','IA · Perception et navigation':'ai','Contrôleur de personnage 3D':'controller3d','Physics 3D • Rigidbody':'rigidbody3d'};
+ const keyByTitle={'Aventure · Journal et quête':'adventure','Aventure · Interaction ciblée':'adventureInteractable','Survie · Besoins et fabrication':'survival','Survie · Ressource ou campement':'survivalNode','Survie · Cycle jour / nuit':'survivalWorld','Animator · Graphe d’états':'animatorGraph','Super-héros · Pouvoirs':'superhero','Progression RPG':'rpgProgression','Émetteur FX':'fxEmitter','Simulation · Réseau et monde':'simulationNode','Unité tactique RTS':'tacticalUnit','Collider 3D':'collider3d','Articulation 3D':'joint3d','Collider 2D':'collider2d','Box Collider 2D':'collider2d','Rigidbody 2D':'rigidbody2d','Articulation 2D':'joint2d','Zone de forces 2D':'effector2d','Contrôleur de personnage 2D':'controller2d','Stats · Santé et endurance':'stats','Inventaire':'inventory','IA · Perception et navigation':'ai','Contrôleur de personnage 3D':'controller3d','Physics 3D • Rigidbody':'rigidbody3d'};
  const cards=[...root.children].filter(el=>el.matches('.inspector-component'));
  for(const card of cards){
   const title=card.dataset.componentTitle||card.querySelector('summary')?.textContent||'';card.dataset.componentTitle=title;

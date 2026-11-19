@@ -1,3 +1,4 @@
+import {cleanupPlay} from './play-cleanup.js';
 import {nativeBridgeRequest} from './native-bridge-client.js';
 import {authorizeScripts} from './script-trust.js';
 import {prepareSkeletalAssets} from './skeletal-animation.js';
@@ -34,8 +35,17 @@ export function startRuntimeSession(){
  startComponentRuntime();initializeWebComponents(state.entities,sequenceRuntime.globals);announce();
 }
 export function stopRuntimeSession(){
- physicsContactEvents2d.reset();
- resetAnimationRuntime();webScriptRuntime.stop();webScene=null;webLoading=false;webElapsed=0;if(runtimeSession.backend==='native'&&nativeCanStop&&revision!==null)requestNative('/stop',{revision}).catch(()=>{});warScriptRuntime.stop();runtimeSession.generation++;runtimeSession.phase='stopped';runtimeSession.busy=false;revision=null;initializedScene=null;pending=null;elapsed=0;nativeCanStop=false;resetComponentRuntime();announce();
+ const stopNative=runtimeSession.backend==='native'&&nativeCanStop&&revision!==null,stoppedRevision=revision;
+ // Invalidate pending responses before any script OnDestroy/cleanup can throw.
+ runtimeSession.generation++;runtimeSession.phase='stopped';runtimeSession.busy=false;
+ revision=null;initializedScene=null;pending=null;elapsed=0;nativeCanStop=false;
+ webScene=null;webLoading=false;webElapsed=0;
+ const errors=cleanupPlay([
+  ()=>physicsContactEvents2d.reset(),resetAnimationRuntime,()=>webScriptRuntime.stop(),
+  ()=>{if(stopNative)Promise.resolve(requestNative('/stop',{revision:stoppedRevision})).catch(()=>{})},
+  ()=>warScriptRuntime.stop(),resetComponentRuntime,announce
+ ]);
+ if(errors.length)throw new AggregateError(errors,'Nettoyage du runtime incomplet');
 }
 // A frame has one writer. Native callbacks finish before browser components,
 // gameplay and Blueprint actions run against the same state.entities objects.

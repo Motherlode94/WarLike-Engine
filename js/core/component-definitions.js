@@ -21,7 +21,7 @@ import {defaultRigidbody3d} from './physics-3d.js';
 import {defaultGrab3d} from './grab-physics-3d.js';
 import {defaultEnvironmentProbe3d} from './environment-probes-3d.js';
 import {newSequence} from './logic-sequences.js';
-import {registeredComponentChoices} from './component-registry.js';
+import {registeredComponentChoices,registerComponentManifest} from './component-registry.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
  {id:'webScripts',name:'JavaScript / TypeScript',category:'Scripts',description:'Modules JS natifs ou TS compilés, exécutés dans Play et l’export Web.',create:()=>[{scriptId:newId(),name:'script.js',source:templates.javascript,language:'javascript',enabled:true,values:{}}]},
@@ -67,6 +67,8 @@ export const webComponentDefinitions=[
  {id:'worldPoliceConfig',name:'Police · Recherche',category:'Intelligence artificielle',description:'Patrouille et poursuite selon le niveau de recherche.',create:()=>({enabled:true,range:450,speed:75})},
  {id:'worldInfectedConfig',name:'Infecté · Horde',category:'Intelligence artificielle',description:'Poursuite du joueur à proximité.',create:()=>({enabled:true,range:300,speed:53})}
 ];
+// Extension registration rejects built-in IDs and preserves existing scene fields unchanged.
+export const registerWarLikeComponent=spec=>registerComponentManifest(spec,{builtinIds:webComponentDefinitions.map(d=>d.id)});
 // Stable Inspector metadata: classification never depends on translated display names.
 export const inspectorCoreComponentIds=new Set(['collider2d','rigidbody2d','joint2d','effector2d','collider3d','rigidbody3d','joint3d','cameraRig']);
 export function inspectorComponentGroup(id){return inspectorCoreComponentIds.has(id)?(id==='cameraRig'?'render':'physics'):'extension'}

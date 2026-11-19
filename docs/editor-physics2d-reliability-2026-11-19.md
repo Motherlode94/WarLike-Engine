@@ -4,6 +4,7 @@
 
 - **Stop** invalide les réponses asynchrones avant les nettoyages de scripts. Chaque nettoyage est tenté même si un autre échoue ; l’erreur reste signalée. Les GameObjects, composants anciens, sélection, identifiants, projet et caméra d’édition sont restaurés.
 - La caméra 3D capture/restaure sa navigation dès le changement de Play, indépendamment de la prochaine image. Deux sessions rapides ne partagent pas une caméra de jeu résiduelle.
+- L’arrêt pendant la saisie d’un objet 3D abandonne la poignée de jeu sans écraser les vitesses du Rigidbody restauré.
 - Une manipulation 2D commencée avant Play ne reprend pas après Stop. Supprimer une sélection ne sélectionne plus un objet sans rapport.
 - Les panneaux de l’Inspector restent ouverts pendant les modifications rapides ; leurs préférences se combinent sans réécrire les données des projets.
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGrabSession3d,defaultGrab3d,canGrab3d,tickGrab3d,releaseGrab3d} from '../js/core/grab-physics-3d.js';
+import {createGrabSession3d,discardGrabSession3d,defaultGrab3d,canGrab3d,tickGrab3d,releaseGrab3d} from '../js/core/grab-physics-3d.js';
 import {stepPhysics3d} from '../js/core/physics-3d.js';
 const actor=()=>({id:1,type:'player',playable3d:true,x:0,y:0,w:32,h:96,depth3d:32,elevation3d:0,collision3d:true});
 const crate=()=>({id:2,type:'object',x:-16,y:-100,w:32,h:32,depth3d:32,elevation3d:.5,collision3d:true,solid3d:true,
@@ -8,6 +8,13 @@ const crate=()=>({id:2,type:'object',x:-16,y:-100,w:32,h:32,depth3d:32,elevation
  grab3d:defaultGrab3d()});
 const options=(player,entities,keys=[],overrides={})=>({
  actor:player,entities,origin:[0,.75,0],direction:[0,0,-1],pressedKeys:new Set(keys),dt:1/60,...overrides
+});
+test('discarding a held Play object never resets restored editor velocities',()=>{
+ const authored=crate();authored.rigidbody3d.vx=12;authored.rigidbody3d.vy=3;
+ const expected=structuredClone(authored),runtime=structuredClone(authored),player=actor(),session=createGrabSession3d();
+ tickGrab3d(session,options(player,[player,runtime],['g']));assert.equal(session.heldId,authored.id);
+ discardGrabSession3d(session);assert.equal(session.heldId,null);assert.equal(session.previousKinematic,null);
+ assert.deepEqual(authored,expected);assert.equal(runtime.rigidbody3d.kinematic,true);
 });
 test('Grab3D accepts only a visible enabled dynamic physics body with component',()=>{
  const b=crate();assert.equal(canGrab3d(b),true);

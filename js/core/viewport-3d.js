@@ -49,7 +49,7 @@ import {rapierStatus,loadRapier3d,createRapierScene,activateRapierQueries3d,move
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
 import {getModelGeometry,getTextureImage,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences,emitSequenceSignal} from './logic-sequences.js';
-import {createGrabSession3d,tickGrab3d,releaseGrab3d} from './grab-physics-3d.js';
+import {createGrabSession3d,discardGrabSession3d,tickGrab3d,releaseGrab3d} from './grab-physics-3d.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {workspace,switchWorkspace} from './workspaces.js';
 import {sunAt,visibleLights,updateLighting} from './lighting.js';
@@ -640,7 +640,7 @@ export function init3d(canvas,host,buttons){
  };
  const syncPlayCamera=createEditorPlayCamera(view3d,{enter:enterPlay,leave(){
   releasePlayMouse();editorKeys.clear();
-  try{if(document.pointerLockElement===canvas)document.exitPointerLock?.();resetDriving3d();releaseGrab3d(grabSession,state.entities)}finally{stopRapier()}
+  try{if(document.pointerLockElement===canvas)document.exitPointerLock?.();resetDriving3d();discardGrabSession3d(grabSession)}finally{stopRapier()}
  }});
  document.addEventListener('warlike:change',()=>syncPlayCamera(state.playing&&workspace.mode==='3d'));
 

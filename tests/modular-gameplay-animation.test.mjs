@@ -40,14 +40,14 @@ test('P2: player, animal, navigation are data components, not prefabs, in both s
 });
 test('P2: standalone wildlife wanders and flees without creating prefabs or changing AI objects',()=>{
  const animal=actor(10);animal.animalController={...defaultAnimalController(),behavior:'wander',roamRadius:3};
- const ai=actor(11);ai.ai={enabled:true};
+ const ai=actor(11,500,500);ai.ai={enabled:true};
  const aiBefore={x:ai.x,y:ai.y};
  const walked=stepAnimalControllers([animal,ai],.1,{mode:'3d'});
  assert.equal(walked,1);
  assert.ok(Math.hypot(animal.x,animal.y)>0);
  assert.ok(animal.animatorParameters.animalSpeed>0);
  assert.deepEqual({x:ai.x,y:ai.y},aiBefore);
- const threat=actor(12,animal.x+16,animal.y);
+ const threat=actor(12,animal.x+80,animal.y);
  animal.animalController.behavior='flee';animal.animalController.targetId=12;
  const beforeX=animal.x;
  stepAnimalControllers([animal,threat],.1,{mode:'3d'});

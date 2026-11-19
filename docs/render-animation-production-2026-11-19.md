@@ -45,3 +45,11 @@ Un masque inconnu n’est jamais transformé en masque de tout le corps. Un masq
 Les nouveaux tests couvrent les niveaux GGX et leur radiance, les uploads GPU avec restauration de binding, les chaînes humanoïdes, les orientations des parents, les proportions, les masques réels, la sérialisation et les os absents. Le vrai GLB UAL est transféré et ses sommets skinnés sont déformés ; le petit rig Kenney, sans avant-bras ni pieds distincts, est explicitement refusé comme Avatar complet.
 
 Le correctif de capture CHAMBRE 07 utilise l’événement de capture du véritable canvas après rendu, avec format PNG et délai borné. Les assertions physiques, ressources, missions et sauvegardes restent actives. La CI complète et le contrôle visuel de l’export restent nécessaires avant une validation générale.
+
+### Vérification de l’interface et de la persistance
+
+Dans le navigateur de contrôle : les anciennes sauvegardes 2D et 3D conservent les données JSON de l’objet sélectionné après Play/Stop. Le laboratoire affiche ses 122 objets ; le profil UAL présente 15/15 correspondances requises. La création du clip `Walk_Formal_Loop · humanoïde` fonctionne depuis l’interface et reste présente après réouverture du projet.
+
+La scène est exportée depuis Fichier, puis réimportée dans le même éditeur. Elle conserve 122 identifiants distincts, les six matériaux GGX, le profil Avatar, les courbes du clip créé et le masque `upperBody`. Profil et courbes sont identiques avant/après ce parcours.
+
+WebGL est indisponible dans ce navigateur de contrôle : l’aperçu logiciel du squelette fonctionne, mais il ne constitue pas une preuve des reflets 3D. Les tests Chromium de pixels du shader GGX et du parcours 3D avec matériaux GLB ont réussi en CI sur le commit de mise à jour de la branche. Les contrôles complets de chaque dernier commit restent à consulter sur la PR.

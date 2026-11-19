@@ -1,4 +1,5 @@
 import {noteAnimatorAction} from './animator-graph.js';
+import {targetInFacingArc3d} from './look-direction.js';
 import {moveBody3d,solidBody3d,supportBody3d} from './collision-3d.js';
 import {damageSimulationNode} from './simulation-nodes.js';
 import {skillRank,progressionDamageScale,awardExperience} from './rpg-progression.js';
@@ -125,7 +126,7 @@ export function updateAi(entities,player,dt){
 }
 export function attack3d(attacker,entities,{range=120,damageAmount=20,arc=1.2}={}){
  const target=entities.filter(e=>e!==attacker&&(e.simulationNode?.enabled&&e.simulationNode.kind==='destructible'&&e.simulationNode.health>0||e.ai?.enabled&&isHostileTo(e,attacker,attacker)&&healthOf(e)>0)&&
-  e.sequenceEnabled!==false&&hasLineOfSight(attacker,e,entities))
+  e.sequenceEnabled!==false&&hasLineOfSight(attacker,e,entities)&&targetInFacingArc3d(attacker,e,arc))
   .sort((a,b)=>actorDistance(a,attacker)-actorDistance(b,attacker))[0];
  if(!target||actorDistance(target,attacker)>Math.max(0,n(range,120)))return null;
  const before=healthOf(target),amount=Math.max(0,n(damageAmount,20))*progressionDamageScale(attacker);if(target.simulationNode?.kind==='destructible')damageSimulationNode(target,amount,attacker,{mode:'3d'});else{damage(target,amount);if(before>0&&healthOf(target)<=0)awardExperience(attacker,40)}target.animation='hurt';noteAnimatorAction(attacker,'attack',.45);return target;

@@ -35,9 +35,10 @@ import {drawRpgNotices,resetRpg,rpg} from './rpg-systems.js';
 import {updateLogic,drawLogic,resetLogic,logic} from './visual-logic.js';
 import {updateVehicles,currentVehicle,drawDrivingHud,resetDriving} from './vehicle.js';
 import {state} from './state.js';
+import {aimActor2d} from './look-direction.js';
 import {getAsset} from '../assets/catalog.js';
-export const game={equippedWeaponId:null,equipHeld:false,projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,mouse:{x:500,y:300,down:false},kills:0};
-export function resetGame(){motion.cameraFollow=true;motion.cameraInitialized=false;resetGameMode();resetAdvanced();resetLogic();resetDriving();resetHousing();resetElements();resetRpg();Object.assign(game,{equippedWeaponId:null,equipHeld:false,projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}const player=playerEntity();if(player)game.life=healthOf(player)}
+export const game={equippedWeaponId:null,equipHeld:false,projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,mouse:{x:500,y:300,down:false,moved:false},kills:0};
+export function resetGame(){motion.cameraFollow=true;motion.cameraInitialized=false;resetGameMode();resetAdvanced();resetLogic();resetDriving();resetHousing();resetElements();resetRpg();Object.assign(game,{equippedWeaponId:null,equipHeld:false,projectiles:[],particles:[],score:0,life:100,wave:1,time:0,fireTimer:0,meleeTimer:0,hurtTimer:0,over:false,kills:0,mouse:{...game.mouse,down:false,moved:false}});for(const e of state.entities){e._cooldown=0;e._hit=0}const player=playerEntity();if(player)game.life=healthOf(player)}
 const center=e=>({x:e.x+e.w/2,y:e.y+e.h/2});
 const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const playerEntity=()=>lanActor(state.entities,state.entities.find(o=>o.controller2d)||state.entities.find(o=>o.type==='player'||o.type==='character'||o.type==='prefab'&&getAsset(o.assetId)?.category==='Characters'));
@@ -46,7 +47,7 @@ const solid=solidCollider2d;
 function flash(x,y,color,count=8){emitFx('electric',{x,y,z:0},{mode:'2d',color,count:Math.min(count,12),lifetime:.3,scale:.7});for(let i=0;i<count;i++){const a=Math.PI*2*i/count+Math.random()*.5,s=30+Math.random()*75;game.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.25+Math.random()*.4,color})}}
 function move(e,dx,dy){const oldX=e.x;e.x+=dx;if(state.entities.some(o=>o!==e&&solid(o)&&overlaps(e,o)))e.x=oldX;const oldY=e.y;e.y+=dy;if(state.entities.some(o=>o!==e&&solid(o)&&overlaps(e,o)))e.y=oldY}
 function shoot(p,at,weapon){noteAnimatorAction(p,'attack',.35);
- const origin=center(p),dx=at.x-origin.x,dy=at.y-origin.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;
+ const origin=center(p),direction=aimActor2d(p,at),ux=direction.x,uy=direction.y;
  const damage=Math.max(1,Number(weapon?.weaponDamage)||34)*progressionDamageScale(p),reach=Math.max(40,Number(weapon?.weaponRange)||760);
  const speed=weapon?.weaponClass==='melee'?500:660;
  game.projectiles.push({x:origin.x,y:origin.y,vx:ux*speed,vy:uy*speed,life:reach/speed,damage});
@@ -69,7 +70,7 @@ const equip=k.has('g');if(equip&&!game.equipHeld&&!currentVehicle()){
 }
 game.equipHeld=equip;
 const equipped=state.entities.find(e=>e.id===game.equippedWeaponId&&getAsset(e.assetId)?.category==='Weapons');
-const aim=game.mouse.x===500&&game.mouse.y===300?{x:p.x+300,y:p.y}:game.mouse;
+const aim=game.mouse.moved?game.mouse:null;
 if(p.adventure?.combatEnabled!==false&&!currentVehicle()&&(!gameplayInputBlocked()&&game.mouse.down||k.has('f')||!gameplayInputBlocked()&&state.keyPresses?.has('f')||k.has(' ')&&controllerMode2d(p,state.entities)!=='platformer')&&game.fireTimer===0){if(!equipped||equipped.weaponClass==='melee'||consumeAmmo())shoot(p,aim,equipped);game.fireTimer=Math.max(.06,Number(equipped?.weaponInterval)||.16)}if(k.has('h')&&game.fireTimer===0&&consumeMedkit(game))game.fireTimer=.4;
 for(const e of state.entities.filter(enemy)){if(e.ai)continue;if(currentMode()&&['teamDeathmatch','frontline'].includes(currentMode().kind)&&e.team===p.team)continue;e._cooldown=Math.max(0,(e._cooldown||0)-dt);e._hit=Math.max(0,(e._hit||0)-dt);const a=center(e),b=center(p),dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;if(e.assetId==='zombie-runner'&&d<600)e.animation='run_zombie';else if(e.assetId==='zombie-crawler')e.animation='crawl';else if(e.assetId==='zombie-brute'&&d<80)e.animation='mutant_smash';else if(e.assetId?.startsWith('zombie')&&d<650)e.animation='walk_zombie';const mode=e.horrorAiConfig?.enabled&&horror.enabled?'none':e.behavior||'none',range=Math.max(70,Number(e.detectionRadius)||650),speed=Math.max(0,Number(e.aiSpeed)||65);
 if(mode==='chase'&&d<range&&d>38)move(e,dx/d*speed*dt,dy/d*speed*dt);
@@ -101,4 +102,4 @@ export function startGameSimulation(){
  }
  requestAnimationFrame(frame);
 }
-export function bindGameInput(canvas){canvas.addEventListener('pointermove',e=>{const rect=canvas.getBoundingClientRect(),c=state.camera;game.mouse.x=((e.clientX-rect.left)*canvas.clientWidth/rect.width-c.x)/c.zoom;game.mouse.y=((e.clientY-rect.top)*canvas.clientHeight/rect.height-c.y)/c.zoom});canvas.addEventListener('pointerdown',e=>{if(state.playing&&e.button===0&&!e.defaultPrevented)game.mouse.down=true});window.addEventListener('pointerup',()=>game.mouse.down=false);window.addEventListener('blur',()=>game.mouse.down=false)}
+export function bindGameInput(canvas){canvas.addEventListener('pointermove',e=>{const rect=canvas.getBoundingClientRect(),c=state.camera;game.mouse.x=((e.clientX-rect.left)*canvas.clientWidth/rect.width-c.x)/c.zoom;game.mouse.y=((e.clientY-rect.top)*canvas.clientHeight/rect.height-c.y)/c.zoom;if(state.playing)game.mouse.moved=true;});canvas.addEventListener('pointerdown',e=>{if(state.playing&&e.button===0&&!e.defaultPrevented)game.mouse.down=true});window.addEventListener('pointerup',()=>game.mouse.down=false);window.addEventListener('blur',()=>game.mouse.down=false)}

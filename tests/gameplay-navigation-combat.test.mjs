@@ -11,11 +11,13 @@ test('AI attempts alternate steering around a blocking rectangle',()=>{
  assert.ok(enemy.x<44 || enemy.y!==50,'enemy should not pass through the wall');
 });
 test('3D attack damages nearest live AI enemy only within range',()=>{
- const hero={id:1,x:0,y:0,w:20,h:20};
+ const hero={id:1,x:0,y:0,w:20,h:20,rotation:270}; // WarLike 3D: this heading looks toward +X.
  const enemy={id:2,x:70,y:0,w:20,h:20,ai:{enabled:true},stats:defaultStats()};
  const distant={id:3,x:400,y:0,w:20,h:20,ai:{enabled:true},stats:defaultStats()};
  assert.equal(attack3d(hero,[hero,enemy,distant],{range:100,damageAmount:25}),enemy);
  assert.equal(enemy.stats.health,75);
  assert.equal(distant.stats.health,100);
  assert.equal(attack3d(hero,[hero,distant],{range:100}),null);
+ const behind={id:4,x:-65,y:0,w:20,h:20,ai:{enabled:true},stats:defaultStats()};
+ assert.equal(attack3d(hero,[hero,behind],{range:100}),null,'a character cannot shoot backwards without turning');
 });

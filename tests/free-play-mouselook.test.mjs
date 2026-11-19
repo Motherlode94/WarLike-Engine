@@ -13,5 +13,8 @@ test('left click fires, right click aims, and free-look is not tied to a click',
  assert.match(source,/else if\(e\.button===2\)\{e\.preventDefault\(\);fpsAiming=true/);
  assert.match(source,/fpsFiring\|\|input\.has\('f'\)/);
  assert.doesNotMatch(source,/fpsMouseDown/);
- assert.doesNotMatch(source,/canvas\.requestPointerLock/);
+ assert.match(source,/canvas\.requestPointerLock\(\)/);
+ assert.match(source,/\(e\.button===0\|\|e\.button===2\)\&\&shouldMouseLook\(\)/);
+ assert.match(source,/pending\?\.catch\?\.\(\(\)=>\{\}\)/);
+ assert.match(source,/document\.pointerLockElement===canvas\)document\.exitPointerLock/);
 });

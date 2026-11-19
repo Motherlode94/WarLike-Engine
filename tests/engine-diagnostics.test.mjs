@@ -64,7 +64,7 @@ test('F8 panel available for 2D and 3D and sessions reset after Stop',()=>{
  assert.ok(panel.includes('engineDiagnosticReport'));
  assert.ok(panel.includes('Exporter le rapport JSON'));
  assert.ok(scene.includes('resetEngineDiagnostics(workspace.mode)'));
- assert.ok(scene.includes('stopEngineDiagnostics()'));
+ assert.ok(scene.includes('cleanupPlay([stopRuntimeSession,resetHeroRuntime,stopEngineDiagnostics,resetSequences])'));
  assert.ok(game.includes('updateEngineDiagnosticsPanel(state)'));
  assert.ok(viewport.includes('tickEngineDiagnostics(dt)'));
 });

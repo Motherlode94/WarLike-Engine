@@ -7,6 +7,9 @@ const finite=(v,fallback=0)=>Number.isFinite(Number(v))?Number(v):fallback;
 const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
 export const defaultGrab3d=()=>({enabled:true,maxDistance:3,holdDistance:1.8,throwSpeed:8});
 export const createGrabSession3d=()=>({heldId:null,previousKinematic:null});
+// Stop has already restored authored objects. Discard only the runtime handle;
+// releasing against those restored IDs would overwrite their saved velocities.
+export const discardGrabSession3d=session=>{if(session){session.heldId=null;session.previousKinematic=null}};
 export function canGrab3d(entity){
  return !!entity?.grab3d&&entity.grab3d.enabled!==false
   &&entity.enabled!==false&&entity.visible!==false&&!entity._sequenceDestroyed

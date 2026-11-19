@@ -239,3 +239,97 @@ body.reference-engine:not(.hub-open) #properties .unity-object-static-field{
 body.reference-engine:not(.hub-open) #properties .unity-object-static-field>input{
  width:14px!important;height:14px!important;min-height:14px!important;margin:0;
 }
+
+/* Inspector readability pass: editor-only, theme-variable driven.
+   Never override global theme tokens or the render/game viewport. */
+body.reference-engine:not(.hub-open) #inspectorPanel {
+  container: inspector-pane / inline-size;
+}
+body.reference-engine:not(.hub-open) #properties {
+  min-width: 0;
+  overflow-x: hidden;
+}
+body.reference-engine:not(.hub-open) #properties .unity-object-identity,
+body.reference-engine:not(.hub-open) #properties .unity-object-labels,
+body.reference-engine:not(.hub-open) #properties .inspector-component {
+  min-width: 0;
+  box-sizing: border-box;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component>summary {
+  min-height: 30px!important;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--wl-theme-text, inherit);
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component .component-content {
+  padding: 9px 10px!important;
+  min-width: 0;
+}
+body.reference-engine:not(.hub-open) #properties :is(input,select,textarea,button) {
+  min-width: 0;
+  font: inherit;
+}
+body.reference-engine:not(.hub-open) #properties :is(input,select,textarea):focus-visible,
+body.reference-engine:not(.hub-open) #properties button:focus-visible {
+  outline: 2px solid var(--editor-accent,#7fcac9);
+  outline-offset: 1px;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-axis {
+  min-width: 0;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-axis input {
+  width: 100%;
+  min-width: 0;
+  text-align: right;
+}
+@container inspector-pane (max-width: 305px) {
+  #properties .unity-object-labels {
+    grid-template-columns: minmax(0,1fr)!important;
+  }
+  #properties .inspector-component .component-content {
+    padding: 7px!important;
+  }
+}
+
+/* Contrast safeguard for the editor only. Several existing themes set pale
+   header/button surfaces while retaining near-white text; keep these interactive
+   surfaces readable without editing the shared theme or Store palette. */
+body.reference-engine:not(.hub-open) #inspectorPanel #properties .inspector-component>summary {
+  background-color: #303944!important;
+  color: #f1f5fa!important;
+  border-color: #526070!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties .inspector-component>summary:hover {
+  background-color: #405064!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties .inspector-component>summary :is(span,strong,small,em) {
+  color: inherit!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties :is(button,.inspector-extensions-toggle) {
+  background-color: #303944!important;
+  color: #f1f5fa!important;
+  border-color: #526070!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties button:not(:disabled):hover {
+  background-color: #405064!important;
+}
+body.reference-engine:not(.hub-open) :is(.scene-tools,.scene-header,.bottom-tabs) button {
+  color: #f1f5fa!important;
+  background-color: #303944!important;
+  border-color: #526070!important;
+}
+body.reference-engine:not(.hub-open) :is(.scene-tools,.scene-header,.bottom-tabs) button:not(:disabled):hover {
+  background-color: #405064!important;
+}
+body.reference-engine:not(.hub-open) :is(.scene-tools,.scene-header,.bottom-tabs) button:disabled {
+  opacity: .5;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties :is(input,select,textarea) {
+  background-color: #1c2230!important;
+  color: #f1f5fa!important;
+  border-color: #526070!important;
+}

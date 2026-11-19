@@ -1,11 +1,11 @@
 // Deterministic 2D contact state machine for Engine Play and Web exports.
 // Tracks collider pairs across completed simulation frames, not editor frames.
-import {colliderRect2d,solidCollider2d,collisionLayersAllow2d} from './physics-2d.js';
+import {solidCollider2d,collisionLayersAllow2d} from './physics-2d.js';
 import {tilemapColliders2d} from './tilemap-2d.js';
-const finite=n=>Number.isFinite(Number(n))?Number(n):0;
-const touches=(a,b,epsilon=.12)=>a.x<=b.x+b.w+epsilon&&a.x+a.w>=b.x-epsilon&&a.y<=b.y+b.h+epsilon&&a.y+a.h>=b.y-epsilon;
-const overlaps=(a,b)=>a.x<b.x+b.w-1e-5&&a.x+a.w>b.x+1e-5&&a.y<b.y+b.h-1e-5&&a.y+a.h>b.y+1e-5;
-const box=o=>colliderRect2d(o);
+import {colliderShape2d,colliderSeparation2d} from './collider-shapes-2d.js';
+const box=o=>colliderShape2d(o);
+const touches=(a,b)=>colliderSeparation2d(a,b)<=.12;
+const overlaps=(a,b)=>colliderSeparation2d(a,b)<-1e-5;
 const involved=e=>e.enabled!==false&&!e._sequenceDestroyed&&e.collider2d?.enabled!==false;
 const dynamic=e=>e.type==='player'||e.type==='character'||e.controller2d||e.rigidbody2d?.enabled||e.playable2d;
 const key=(kind,a,b)=>kind+':'+Math.min(a,b)+':'+Math.max(a,b);

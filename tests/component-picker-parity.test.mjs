@@ -56,3 +56,7 @@ test('Add Component has category drill-down and no Script Studio navigation masq
  assert.doesNotMatch(source,/options\.push\(\{id:'script'/);
  assert.match(source,/button\.onclick=\(\)=>attach\(option\)/);
 });
+
+test('2D constraints and force fields are in Physics 2D, not miscellaneous',()=>{
+ for(const id of ['joint2d','effector2d'])assert.equal(unityComponentCategory(componentChoices('2d').find(d=>d.id===id)),'Physics 2D');
+});

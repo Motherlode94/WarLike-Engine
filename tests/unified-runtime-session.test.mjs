@@ -9,6 +9,20 @@ import {runtimeSession,startRuntimeSession,stopRuntimeSession,runRuntimeFrame,se
 globalThis.document??={dispatchEvent(){}};globalThis.CustomEvent??=class extends Event{constructor(name,options){super(name);this.detail=options?.detail}};
 const setup=(backend='native')=>{stopRuntimeSession();restoreGameProject({runtimeBackend:backend});state.entities=[{id:1,x:0,y:0,w:32,h:64,hp:90,csharpComponents:[{kind:'AutoRotate',speed:90},{kind:'Health',regen:5}]}];state.playing=true;startRuntimeSession()};
 const finish=()=>{stopRuntimeSession();state.playing=false;setRuntimeTransport()};
+test('Stop invalidates late native frames even if a script cleanup throws',async()=>{
+ setup();let resolveFrame;
+ setRuntimeTransport(transport(input=>new Promise(resolve=>{resolveFrame=()=>resolve({revision:4,frame:input.frame,actors:input.actors.map(a=>({...a,x:999}))})})));
+ const originalStop=webScriptRuntime.stop;
+ try{
+  runRuntimeFrame(.02,{canRun:()=>true});await new Promise(resolve=>setImmediate(resolve));
+  const completion=runtimeSession.completion,generation=runtimeSession.generation;
+  webScriptRuntime.stop=()=>{throw Error('OnDestroy failure')};
+  assert.throws(()=>stopRuntimeSession(),AggregateError);
+  assert.ok(runtimeSession.generation>generation);assert.equal(runtimeSession.phase,'stopped');
+  state.entities=[{id:1,x:7,y:0,w:32,h:64}];resolveFrame();await completion;
+  assert.equal(state.entities[0].x,7);
+ }finally{webScriptRuntime.stop=originalStop;finish()}
+});
 for(const scenario of [
  {name:'cold native compilation may take longer than a normal frame request',path:'/scripts/compile',elapsed:5000,complete:true},
  {name:'unresponsive native compilation still stops Play after its extended deadline',path:'/scripts/compile',elapsed:30001,complete:false},

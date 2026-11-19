@@ -42,7 +42,7 @@ test('Engine official demos are backed by native scene loaders, not iframe proto
  assert.doesNotMatch(browser,/id:'chambre07',/);
  assert.doesNotMatch(menu,/href="\.\/examples\/(?:iron-defiance|worldforge|chambre-07)\/index\.html"/);
  assert.match(browser,/loadAuthoredDemo\(scene.id\)/);
- const registered=new Set(['productionlab','lastlightnative','chambre07native','irondefiancetraining','animation','town','nature','garage','platformer']);
+ const registered=new Set(['p5fps','p5tps','productionlab','lastlightnative','chambre07native','irondefiancetraining','animation','town','nature','garage','platformer']);
  const company=/\.\.\.Object\.fromEntries\(\['rdc','china','russia','usa','france','ukraine','japan'\]/.test(scene);
  assert.equal(company,true,'All faction scenes must be registered through the native builder');
  const catalog=browser.slice(browser.indexOf('const scenes=['),browser.indexOf('];',browser.indexOf('const scenes=[')));

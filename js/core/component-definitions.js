@@ -24,6 +24,7 @@ import {newSequence} from './logic-sequences.js';
 import {defaultInputActions} from './input-actions.js';
 import {defaultAnimalController} from './animal-controller.js';
 import {defaultNavigationAgent} from './navigation-agent.js';
+import {defaultVehicleController} from './vehicle-controller.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
  {id:'webScripts',name:'JavaScript / TypeScript',category:'Scripts',description:'Modules JS natifs ou TS compilés, exécutés dans Play et l’export Web.',create:()=>[{scriptId:newId(),name:'script.js',source:templates.javascript,language:'javascript',enabled:true,values:{}}]},
@@ -54,6 +55,7 @@ export const webComponentDefinitions=[
  {id:'camera2d',name:'Camera 2D · Scène',category:'Caméra',description:'Caméra native orthographique pour scène 2D : suivi joueur, zoom, décalage et pixel perfect.',modes:['2d'],create:defaultSceneCamera2d},
  {id:'cameraRig',name:'Caméra de jeu',category:'Caméra',description:'Suivi fluide, distance, sensibilité et évitement des obstacles.',create:defaultCameraRig},
  {id:'inputActions',name:'Input Actions · Commandes',category:'Input',description:'Touches modulaires par joueur ou véhicule, profils enregistrés et exportables.',create:defaultInputActions},
+ {id:'vehicleController',name:'Vehicle Controller · Arcade 2D/3D',category:'Véhicule',description:'Pilotage modulaire indépendant du Prefab : accélération, freinage, direction, vitesse et collisions.',create:defaultVehicleController},
  {id:'navigationAgent',name:'Navigation Agent · Points de passage',category:'Navigation',description:'Déplacement 2D/3D sur points/cible via collisions. Navigation locale sans NavMesh.',create:defaultNavigationAgent},
  {id:'animalController',name:'Animal Controller · Comportement',category:'Personnage',description:'Locomotion de faune 2D/3D : errance et fuite, avec collisions et paramètres Animator. À utiliser sans IA combat active.',create:defaultAnimalController},
  {id:'stats',name:'Stats · Santé et endurance',category:'Personnage',description:'Santé, endurance et régénération.',create:defaultStats},

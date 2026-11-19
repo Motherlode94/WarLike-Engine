@@ -49,17 +49,17 @@ html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not
 html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(.panel-title,.project-header,.project-toolbar,.scene-header,.scene-tabs,.unity-scene-root,.unity-hierarchy-group-title){
  background:var(--warlike-palette-header,#303844)!important;color:var(--wl-text-header,#eef3fa)!important;border-color:var(--warlike-palette-border,#4b5565)!important;
 }
-html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(#hierarchyPanel,#inspectorPanel,#properties,#projectPanel,#viewport,.studio-menubar,.project-panel) :is(button,.tab,.folder-item,.dock-toggle){
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(#hierarchyPanel,#inspectorPanel,#inspectorPanel #properties,#properties,#projectPanel,#viewport,.studio-menubar,.project-panel) :is(button,.tab,.folder-item,.dock-toggle){
  --wl-fg:var(--wl-text-button,#eef3fa);
  background:var(--warlike-palette-button,#303844)!important;color:var(--wl-text-button,#eef3fa)!important;border-color:var(--warlike-palette-border,#4b5565)!important;text-shadow:none!important;
 }
-html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(#hierarchyPanel,#inspectorPanel,#properties,#projectPanel,#viewport,.studio-menubar,.project-panel) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea,option,optgroup){
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(#hierarchyPanel,#inspectorPanel,#inspectorPanel #properties,#properties,#projectPanel,#viewport,.studio-menubar,.project-panel) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea,option,optgroup){
  background:var(--warlike-palette-panel,#252a32)!important;color:var(--wl-text-panel,#eef3fa)!important;border-color:var(--warlike-palette-border,#4b5565)!important;caret-color:var(--wl-text-panel,#eef3fa)!important;
 }
-html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(#hierarchyPanel,#inspectorPanel,#properties,#projectPanel,#viewport,.studio-menubar,.project-panel) :is(button.active,.tab.active,.folder-item.active,button.selected){
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(#hierarchyPanel,#inspectorPanel,#inspectorPanel #properties,#properties,#projectPanel,#viewport,.studio-menubar,.project-panel) :is(button.active,.tab.active,.folder-item.active,button.selected){
  background:color-mix(in srgb,var(--warlike-palette-accent,#48cba9) 18%,var(--warlike-palette-panel,#252a32))!important;color:var(--wl-text-selected,#eef3fa)!important;border-color:var(--warlike-palette-accent,#48cba9)!important;
 }
-html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(#hierarchyPanel,#inspectorPanel,#properties,#projectPanel,#viewport,.studio-menubar,.project-panel) :is(button,input,select,textarea):disabled{
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(#hierarchyPanel,#inspectorPanel,#inspectorPanel #properties,#properties,#projectPanel,#viewport,.studio-menubar,.project-panel) :is(button,input,select,textarea):disabled{
  opacity:1!important;filter:none!important;border-style:dashed!important;cursor:not-allowed;
 }
 html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(input,textarea)::placeholder{color:var(--wl-text-muted,#bcc8d6)!important;opacity:1}

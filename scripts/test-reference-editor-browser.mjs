@@ -25,7 +25,7 @@ try{
   const failures=await page.evaluate(async()=>{
    const {contrastRatio}=await import('/js/ui/editor-palette.js');
    const hex=color=>'#'+color.match(/[\d.]+/g).slice(0,3).map(v=>Math.round(Number(v)).toString(16).padStart(2,'0')).join('');
-   const targets=['#play','#hubSave','#hierarchyPanel .panel-title','#inspectorPanel .panel-title','#projectPanel .project-header','#hierarchyPanel input[type="text"]','#projectPanel input[type="search"]','#viewport button'];
+   const targets=['#play','#hubSave','#hierarchyPanel .panel-title','#inspectorPanel .panel-title','#projectPanel .project-header','#hierarchyPanel input','#projectPanel input[type="search"]','#properties input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range])','#properties select','#properties textarea','#viewport button'];
    return targets.flatMap(selector=>[...document.querySelectorAll(selector)].filter(n=>n.getClientRects().length).flatMap(n=>{
     const style=getComputedStyle(n);if(style.backgroundColor==='rgba(0, 0, 0, 0)')return [];
     const ratio=contrastRatio(hex(style.color),hex(style.backgroundColor));return ratio>=4.5?[]:[{selector,text:n.textContent.slice(0,60),color:style.color,background:style.backgroundColor,ratio}];

@@ -21,6 +21,10 @@ import {defaultRigidbody3d} from './physics-3d.js';
 import {defaultGrab3d} from './grab-physics-3d.js';
 import {defaultEnvironmentProbe3d} from './environment-probes-3d.js';
 import {newSequence} from './logic-sequences.js';
+import {defaultInputActions} from './input-actions.js';
+import {defaultAnimalController} from './animal-controller.js';
+import {defaultNavigationAgent} from './navigation-agent.js';
+import {defaultVehicleController} from './vehicle-controller.js';
 import {registeredComponentChoices,registerComponentManifest} from './component-registry.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
@@ -51,6 +55,10 @@ export const webComponentDefinitions=[
  {id:'sceneCamera3d',name:'Camera · Scene (Main Camera)',category:'Caméra',description:'Caméra native de scène, priorités, projection perspective et modes fixe/suivi. Active en Game/Play et export.',modes:['3d'],create:defaultSceneCamera},
  {id:'camera2d',name:'Camera 2D · Scène',category:'Caméra',description:'Caméra native orthographique pour scène 2D : suivi joueur, zoom, décalage et pixel perfect.',modes:['2d'],create:defaultSceneCamera2d},
  {id:'cameraRig',name:'Caméra de jeu',category:'Caméra',description:'Suivi fluide, distance, sensibilité et évitement des obstacles.',create:defaultCameraRig},
+ {id:'inputActions',name:'Input Actions · Commandes',category:'Input',description:'Touches modulaires par joueur ou véhicule, profils enregistrés et exportables.',create:defaultInputActions},
+ {id:'vehicleController',name:'Vehicle Controller · Arcade 2D/3D',category:'Véhicule',description:'Pilotage modulaire indépendant du Prefab : accélération, freinage, direction, vitesse et collisions.',create:defaultVehicleController},
+ {id:'navigationAgent',name:'Navigation Agent · Points de passage',category:'Navigation',description:'Déplacement 2D/3D sur points/cible via collisions. Navigation locale sans NavMesh.',create:defaultNavigationAgent},
+ {id:'animalController',name:'Animal Controller · Comportement',category:'Personnage',description:'Locomotion de faune 2D/3D : errance et fuite, avec collisions et paramètres Animator. À utiliser sans IA combat active.',create:defaultAnimalController},
  {id:'stats',name:'Stats · Santé et endurance',category:'Personnage',description:'Santé, endurance et régénération.',create:defaultStats},
  {id:'inventory',name:'Inventaire',category:'Personnage',description:'Objets, capacité et équipement.',create:defaultInventory},
  {id:'ai',name:'IA · Perception et navigation',category:'Intelligence artificielle',description:'Vision, mémoire, patrouille, poursuite et combat.',create:defaultAi},

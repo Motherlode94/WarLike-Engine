@@ -1,4 +1,5 @@
 import {stepHeroFlight} from './hero-movement.js';
+import {resolveInputKeys} from './input-actions.js';
 import {controllerMode2d,walkPlatformer2d,moveBody2d,stepPhysics2d} from './physics-2d.js';
 import {faceMovement2d} from './character-facing.js';
 import {followCamera2d} from './play-camera.js';
@@ -8,6 +9,7 @@ import {playSound} from './audio.js';
 import {state} from './state.js';
 export const motion={cameraFollow:false,cameraInitialized:false,footSpeed:190,sprintMultiplier:1.55};
 export function walkPlayer(player,dt,keys=state.keys,{pressedKeys=state.keyPresses}={}){
+ keys=resolveInputKeys(player,keys);pressedKeys=resolveInputKeys(player,pressedKeys);
  if(player._vehicleTransition||player._actionAnimationUntil>performance.now()/1000)return {moving:false,sprinting:false};
  if(player.superhero?.enabled!==false&&player.heroState?.flight){stepHeroFlight(player,keys,dt,state.entities,'2d');return {moving:true,sprinting:keys.has('shift')}}
  if(controllerMode2d(player,state.entities)==='platformer'){const beforeX=player.x,beforeY=player.y,result=walkPlatformer2d(player,dt,keys,state.entities,{pressedKeys});faceMovement2d(player,player.x-beforeX,player.y-beforeY);if(!player._ninjaAttackUntil)player.animation=player.grounded2d?(result.moving?(result.sprinting?'run':'walk'):'idle'):(player.rigidbody2d.vy<0?'jump':'fall');return result}

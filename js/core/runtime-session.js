@@ -4,6 +4,8 @@ import {nativeBridgeRequest} from './native-bridge-client.js';
 import {authorizeScripts} from './script-trust.js';
 import {prepareSkeletalAssets} from './skeletal-animation.js';
 import {stepEntityAnimations,resetAnimationRuntime} from './animation-runtime.js';
+import {stepAnimalControllers} from './animal-controller.js';
+import {stepNavigationAgents} from './navigation-agent.js';
 import {emitFx} from './fx-runtime.js';
 import {playSound} from './audio.js';
 import {heroCenter} from './hero-movement.js';
@@ -62,7 +64,7 @@ async function isolatedBrowserFrame(dt,update,canRun){
  finishBrowserFrame(ready.dt,update,true,true);if(generation===runtimeSession.generation)await webScriptRuntime.late({canApply});
 }
 
-function finishBrowserFrame(dt,update,run,isolated=false){if(run){if(!isLanGuest()){if(!isolated)profileScope('javascript',()=>webScriptRuntime.update(dt,scriptContext()));profileScope('warscript',()=>warScriptRuntime.update(dt,scriptContext()));}profileScope('components',()=>updateComponentRuntime(dt))}profileScope('gameplay',()=>update?.(dt));
+function finishBrowserFrame(dt,update,run,isolated=false){if(run){if(!isLanGuest()){if(!isolated)profileScope('javascript',()=>webScriptRuntime.update(dt,scriptContext()));profileScope('warscript',()=>warScriptRuntime.update(dt,scriptContext()));}profileScope('components',()=>updateComponentRuntime(dt))}if(run&&!isLanGuest()){profileScope('navigation',()=>stepNavigationAgents(state.entities,dt,{mode:workspace.mode}));profileScope('animals',()=>stepAnimalControllers(state.entities,dt,{mode:workspace.mode}))}profileScope('gameplay',()=>update?.(dt));
  if(run&&!isLanGuest()&&workspace.mode==='2d'&&gameIsRunning()){
   for(const event of physicsContactEvents2d.update(state.entities)){
    warScriptRuntime.contact(event);

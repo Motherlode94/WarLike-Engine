@@ -24,7 +24,7 @@ export function aimActor2d(actor,target){
 }
 export function facingVector3d(actor){
  const yaw=(Number(actor?.rotation)||0)*Math.PI/180;
- return {x:Math.sin(yaw),y:-Math.cos(yaw)};
+ return {x:-Math.sin(yaw),y:Math.cos(yaw)};
 }
 export function targetInFacingArc3d(actor,target,arcRadians=1.2){
  if(!actor||!target)return false;

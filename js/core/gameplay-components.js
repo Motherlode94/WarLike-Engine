@@ -1,4 +1,5 @@
 import {noteAnimatorAction} from './animator-graph.js';
+import {resolveInputKeys} from './input-actions.js';
 import {moveBody3d,solidBody3d,supportBody3d} from './collision-3d.js';
 import {damageSimulationNode} from './simulation-nodes.js';
 import {skillRank,progressionDamageScale,awardExperience} from './rpg-progression.js';
@@ -140,6 +141,7 @@ export function cameraRelativeWalk3d(right,forward,yaw){
  return {x,z,length};
 }
 export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set(),moveCharacter=null}={}){
+ keys=resolveInputKeys(p,keys);pressedKeys=resolveInputKeys(p,pressedKeys);
  const cfg=p.controller3d||defaultController(),stats=ensureStats(p),frame=clamp(n(dt),0,.1);if(!frame)return;
  if(p.superhero?.enabled!==false&&p.heroState?.flight){delete p._support3d;stepHeroFlight(p,keys,frame,entities,'3d',yaw);return}
  // A moving support carries its passenger, while walls and ceilings still block it.

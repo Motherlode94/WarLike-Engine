@@ -95,6 +95,10 @@ export function initEditorPalette(){
    if(key!=='font')root.style.setProperty('--warlike-palette-'+key,palette[key]+(key==='fontSize'?'px':''));
   }
   const readable=paletteContrast(palette);
+  const sceneActiveBackground=mixColor(palette.accent,palette.header,.24);
+  const sceneActiveText=readableText(palette.text,sceneActiveBackground);
+  root.style.setProperty('--wl-editor-scene-active-bg',sceneActiveBackground);
+  root.style.setProperty('--wl-editor-scene-active-fg',sceneActiveText);
   for(const [key,color] of Object.entries(readable))root.style.setProperty('--wl-text-'+key,color);
   root.style.setProperty('--warlike-palette-text',readable.panel);
   root.style.setProperty('--warlike-palette-muted',readable.muted);

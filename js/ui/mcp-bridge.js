@@ -64,17 +64,20 @@ export function installMcpBridge(){
  const permission=document.createElement('select');permission.setAttribute('aria-label','Permission MCP');permission.style.width='100%';
  for(const [value,label] of [['read','Lecture seule'],['edit','Lecture + modification du projet']]){const opt=document.createElement('option');opt.value=value;opt.textContent=label;permission.append(opt)}
  const status=document.createElement('p');status.setAttribute('role','status');status.textContent='Déconnecté.';
+ const sessionDisplay=document.createElement('code');sessionDisplay.setAttribute('aria-label','Identifiant de session Engine');sessionDisplay.style.cssText='display:block;overflow-wrap:anywhere;margin:8px 0;font-size:11px';sessionDisplay.textContent='Aucune session MCP active.';
+ const copySession=document.createElement('button');copySession.type='button';copySession.textContent='Copier ID de session';copySession.disabled=true;
  const connect=document.createElement('button');connect.type='button';connect.textContent='Connecter';
  const disconnect=document.createElement('button');disconnect.type='button';disconnect.textContent='Déconnecter';disconnect.disabled=true;
  const close=document.createElement('button');close.type='button';close.textContent='Fermer';close.onclick=()=>{panel.hidden=true};
  const controls=document.createElement('div');controls.style.cssText='display:flex;gap:8px;flex-wrap:wrap';controls.append(connect,disconnect,close);
- panel.append(heading,note,token,permission,controls,status);document.body.append(panel);
+ panel.append(heading,note,token,permission,controls,status,sessionDisplay,copySession);document.body.append(panel);
  const trigger=document.createElement('button');trigger.type='button';trigger.textContent='⬡ MCP';
  trigger.title='Connecter WarLike Engine au WarLike Server (autorisation explicite)';
  trigger.onclick=()=>{panel.hidden=!panel.hidden};
  const menu=document.querySelector('#openAnimationStudio')?.parentElement||document.querySelector('.top-menu')||document.querySelector('nav')||document.body;
  menu.append(trigger);
- let session=null,secret='',connectedPermission='read',active=false,timeout=0;
+ let session=null,secret='',connectedPermission='read',active=false,timeout=0,errors=0;
+ copySession.onclick=()=>{if(session&&navigator.clipboard?.writeText)void navigator.clipboard.writeText(session)};
  const request=async(method,payload)=>{
   const url=method==='GET'?endpoint+'?session='+encodeURIComponent(session):endpoint;
   const response=await fetch(url,{method,headers:{'Authorization':'Bearer '+secret,...(method!=='GET'?{'Content-Type':'application/json'}:{})},...(method!=='GET'?{body:JSON.stringify(payload)}:{}),credentials:'omit',cache:'no-store'});
@@ -84,7 +87,7 @@ export function installMcpBridge(){
  };
  const stop=async()=>{
   active=false;if(timeout)clearTimeout(timeout);
-  const oldSession=session;session=null;connect.disabled=false;disconnect.disabled=true;
+  const oldSession=session;session=null;connect.disabled=false;disconnect.disabled=true;permission.disabled=false;copySession.disabled=true;sessionDisplay.textContent='Aucune session MCP active.';errors=0;
   if(oldSession&&secret)try{await request('PUT',{action:'disconnect',session:oldSession})}catch{}
   secret='';token.value='';status.textContent='Déconnecté.';
  };
@@ -101,14 +104,19 @@ export function installMcpBridge(){
     await request('PUT',{action:'result',session,commandId:command.id,result:output});
     status.textContent='Connecté : '+connectedPermission+' · Dernière commande : '+command.name;
    }
-  }catch(error){status.textContent='Connexion interrompue : '+String(error.message||error).slice(0,150)}
+  errors=0;
+  }catch(error){
+   errors++;
+   status.textContent='Erreur de connexion ('+errors+'/3) : '+String(error.message||error).slice(0,130);
+   if(errors>=3){void stop();return}
+  }
   if(active)timeout=setTimeout(poll,1100);
  };
  connect.onclick=async()=>{
   if(active)return;
   if(token.value.trim().length<32){status.textContent='Clé Server invalide : 32 caractères minimum.';return}
   secret=token.value.trim();connectedPermission=permission.value;connect.disabled=true;
-  try{const result=await request('PUT',{action:'connect',permission:connectedPermission});session=result.session;active=true;disconnect.disabled=false;status.textContent='Connecté : '+connectedPermission;poll()}
+  try{const result=await request('PUT',{action:'connect',permission:connectedPermission});session=result.session;active=true;disconnect.disabled=false;permission.disabled=true;copySession.disabled=false;sessionDisplay.textContent='ID session : '+session;status.textContent='Connecté : '+connectedPermission+' · Utiliser cet ID dans les outils MCP';poll()}
   catch(error){connect.disabled=false;secret='';status.textContent='Connexion refusée : '+String(error.message||error)}
  };
  disconnect.onclick=()=>void stop();

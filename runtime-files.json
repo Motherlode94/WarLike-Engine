@@ -16381,6 +16381,7 @@
     "js/core/company-scene.js",
     "js/core/company-units.js",
     "js/core/component-definitions.js",
+    "js/core/component-registry.js",
     "js/core/component-runtime.js",
     "js/core/components-v2.js",
     "js/core/creative-runtime.js",

@@ -15,7 +15,7 @@ export function inspectRuntimeCompatibility(entities,{target='web',backend='web'
  for(const e of entities||[]){
   // Extension manifests currently provide editable data, not a verified runtime adapter.
   // Fail explicitly rather than shipping apparently functional components with no behavior.
-  for(const spec of [...getRegisteredComponentManifests('2d'),...getRegisteredComponentManifests('3d')]){
+  for(const spec of new Map([...getRegisteredComponentManifests('2d'),...getRegisteredComponentManifests('3d')].map(spec=>[spec.id,spec])).values()){
    if(e?.[spec.id]!=null) add((e.name||'#'+e.id)+' · '+spec.name+' : composant d’extension sans runtime vérifié. Exécution et export indisponibles.',e.id);
   }
   // The lightweight built-in solver handles rigidbody contacts but does not

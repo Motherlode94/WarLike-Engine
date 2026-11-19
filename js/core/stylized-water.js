@@ -1,4 +1,5 @@
 // Shared WarLike stylized water: editor-safe visual water, not fluid physics.
+import {oceanSettings,oceanSample} from './ocean-system.js';
 export const waterDefaults=Object.freeze({enabled:true,style:'lagoon',color:'#238fbb',deepColor:'#114e87',foamColor:'#d9faff',opacity:.8,amplitude:.15,frequency:1.3,speed:1,foam:.65,segments:24});
 export const waterSettings=(input={})=>{
  const o={...waterDefaults,...(input&&typeof input==='object'?input:{})};
@@ -11,6 +12,7 @@ export const waterSettings=(input={})=>{
 export const waterColor=(hex,alpha=1)=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).concat(alpha);
 export function waterHeight(x,z,time,config={}){
  const w=waterSettings(config),t=time*w.speed;
+ if(w.style==='ocean')return oceanSample(x,z,time,{...oceanSettings(config),...config,amplitude:w.amplitude,speed:w.speed}).height;
  return w.amplitude*(.56*Math.sin(x*w.frequency+t+z*.23)+.29*Math.sin(z*w.frequency*.9-t*.74+x*.38)+.15*Math.sin((x+z)*w.frequency*1.7+t*1.4));
 }
 export function waterSurface3d(width,depth,time,config={}){

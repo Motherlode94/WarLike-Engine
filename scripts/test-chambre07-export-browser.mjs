@@ -104,7 +104,18 @@ try{
  assert.equal(state.renderError||null,null,'3D render error');
  assert.equal(errors.length,0,'Unhandled page errors: '+errors.join('\n'));
  assert.equal(failed.length,0,'Missing runtime assets: '+JSON.stringify(failed.slice(0,10)));
- await page.screenshot({path:path.join(output,'chambre07-play.png'),animations:'disabled',caret:'hide',timeout:60000});
+ // Capture the real WebGL frame at the renderer's existing capture hook.
+ // A continuous SwiftShader scene can starve Chromium's full-page compositor;
+ // that timeout must not hide or replace any physics/export/mission assertion.
+ const frame=await page.evaluate(()=>new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(Error('No rendered CHAMBRE 07 frame within 30 seconds')),30000);
+  document.dispatchEvent(new CustomEvent('warlike:capture-frame',{detail:{resolve(data){clearTimeout(timer);resolve(data)}}}));
+ }));
+ assert.equal(typeof frame,'string','Renderer did not return a captured frame');
+ assert.match(frame,/^data:image\/png;base64,/,'Renderer frame is not a real PNG');
+ const pixels=Buffer.from(frame.split(',')[1],'base64');
+ assert.ok(pixels.length>1000,'Rendered frame is unexpectedly empty');
+ await writeFile(path.join(output,'chambre07-play.png'),pixels);
  await context.close();
  const missions=await verifyChambre07Missions(browser,{origin:'http://127.0.0.1:'+server.address().port,output});
  const legacy2d=await verifyLegacy2dOutcome(browser,{origin:'http://127.0.0.1:'+server.address().port,output});

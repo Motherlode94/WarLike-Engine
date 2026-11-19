@@ -16457,6 +16457,7 @@
     "js/core/native-bridge-client.js",
     "js/core/nature-demo-layout.js",
     "js/core/object-interaction-targeting.js",
+    "js/core/ocean-system.js",
     "js/core/open-world-systems.js",
     "js/core/pathfinding.js",
     "js/core/physics-2d.js",

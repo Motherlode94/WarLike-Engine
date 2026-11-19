@@ -26,6 +26,13 @@ test('Undo/Redo keeps an intentionally empty selection',()=>{
   redo();
   assert.equal(state.entities[0].name,'Edited');
   assert.deepEqual(state.selected,[],'Redo must preserve empty selection');
+  // Each authored change restores the selection saved with that edit.
+  state.selected=[1];state.entities[0].name='Selected edit';record('Selected rename');
+  state.selected=[];state.entities.push({id:2,name:'Second',type:'object',x:40,y:0,w:32,h:32,color:'#abcdef'});state.nextId=3;record('Add second');
+  undo();
+  assert.deepEqual(state.selected,[1],'Undo restores the previous edit selection');
+  redo();
+  assert.deepEqual(state.selected,[],'Redo restores the empty selection of its own snapshot');
  }finally{
   Object.assign(state,previous);globalThis.document=previousDocument;
  }

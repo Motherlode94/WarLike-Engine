@@ -21,6 +21,7 @@ import {defaultRigidbody3d} from './physics-3d.js';
 import {defaultGrab3d} from './grab-physics-3d.js';
 import {defaultEnvironmentProbe3d} from './environment-probes-3d.js';
 import {newSequence} from './logic-sequences.js';
+import {registeredComponentChoices,registerComponentManifest} from './component-registry.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
  {id:'webScripts',name:'JavaScript / TypeScript',category:'Scripts',description:'Modules JS natifs ou TS compilés, exécutés dans Play et l’export Web.',create:()=>[{scriptId:newId(),name:'script.js',source:templates.javascript,language:'javascript',enabled:true,values:{}}]},
@@ -66,11 +67,14 @@ export const webComponentDefinitions=[
  {id:'worldPoliceConfig',name:'Police · Recherche',category:'Intelligence artificielle',description:'Patrouille et poursuite selon le niveau de recherche.',create:()=>({enabled:true,range:450,speed:75})},
  {id:'worldInfectedConfig',name:'Infecté · Horde',category:'Intelligence artificielle',description:'Poursuite du joueur à proximité.',create:()=>({enabled:true,range:300,speed:53})}
 ];
+// Extension registration rejects built-in IDs and preserves existing scene fields unchanged.
+export const registerWarLikeComponent=spec=>registerComponentManifest(spec,{builtinIds:webComponentDefinitions.map(d=>d.id)});
 // Stable Inspector metadata: classification never depends on translated display names.
 export const inspectorCoreComponentIds=new Set(['collider2d','rigidbody2d','joint2d','effector2d','collider3d','rigidbody3d','joint3d','cameraRig']);
 export function inspectorComponentGroup(id){return inspectorCoreComponentIds.has(id)?(id==='cameraRig'?'render':'physics'):'extension'}
 export const componentDependencies=Object.freeze({
  // Rigidbody 2D may legitimately run without a Collider 2D.
+ collider2d:['joint2d','effector2d'],
  rigidbody2d:['joint2d'],
  collider3d:['rigidbody3d','joint3d','controller3d'],
  rigidbody3d:['joint3d']
@@ -78,16 +82,16 @@ export const componentDependencies=Object.freeze({
 export function componentRemovalBlockers(object,id){
  return (componentDependencies[id]||[]).filter(dependent=>object?.[dependent]!=null);
 }
-export const componentChoices=mode=>webComponentDefinitions.filter(d=>!d.modes||d.modes.includes(mode));
+export const componentChoices=mode=>[...webComponentDefinitions.filter(d=>!d.modes||d.modes.includes(mode)),...registeredComponentChoices(mode).filter(d=>!webComponentDefinitions.some(core=>core.id===d.id))];
 export function hasObjectComponent(object,id){return id==='sequence'?!!object.sequence:object[id]!=null}
 export function addObjectComponent(object,id,mode){
  const definition=componentChoices(mode).find(d=>d.id===id);if(!definition)return false;
  if(id==='sequence'&&object.sequence){object.sequences??=[];if(object.sequences.length>=32)return false;object.sequences.push(definition.create());return true}
  if(hasObjectComponent(object,id))return false;
- object[id]=definition.create();if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='controller3d'){object.collider3d??={...defaultCollider3d(),shape:'capsule'};object.collision3d=true;}if(['rigidbody3d','joint3d'].includes(id)){object.collider3d??=defaultCollider3d();object.collision3d=true;if(id==='joint3d')object.rigidbody3d??={...defaultRigidbody3d(),lockRotations:false}}if(id==='collider3d')object.collision3d=true;if(['rigidbody2d','joint2d'].includes(id))object.collider2d??=defaultCollider2d();if(id==='joint2d')object.rigidbody2d??=defaultRigidbody2d();if(id==='effector2d')object.collider2d??={...defaultCollider2d(),isTrigger:true};return true;
+ object[id]=definition.create();if(id==='collider2d')object.collision2d=true;if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='controller3d'){object.collider3d??={...defaultCollider3d(),shape:'capsule'};object.collision3d=true;}if(['rigidbody3d','joint3d'].includes(id)){object.collider3d??=defaultCollider3d();object.collision3d=true;if(id==='joint3d')object.rigidbody3d??={...defaultRigidbody3d(),lockRotations:false}}if(id==='collider3d')object.collision3d=true;if(['rigidbody2d','joint2d'].includes(id)){object.collider2d??=defaultCollider2d();object.collision2d=true;}if(id==='joint2d')object.rigidbody2d??=defaultRigidbody2d();if(id==='effector2d'){object.collider2d??={...defaultCollider2d(),isTrigger:true};object.collision2d=true;}return true;
 }
-export function resetObjectComponent(object,id){const definition=webComponentDefinitions.find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
-export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id)||componentRemovalBlockers(object,id).length)return false;delete object[id];if(id==='collider2d')object.collision3d=false;if(id==='superhero')delete object.heroState;if(id==='survival')delete object.survivalState;return true}
+export function resetObjectComponent(object,id){const definition=[...webComponentDefinitions,...registeredComponentChoices('2d'),...registeredComponentChoices('3d')].find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
+export function removeObjectComponent(object,id){if(![...webComponentDefinitions,...registeredComponentChoices('2d'),...registeredComponentChoices('3d')].some(d=>d.id===id)||!hasObjectComponent(object,id)||componentRemovalBlockers(object,id).length)return false;delete object[id];if(id==='collider2d')object.collision2d=false;if(id==='collider3d')object.collision3d=false;if(id==='superhero')delete object.heroState;if(id==='survival')delete object.survivalState;return true}
 export {webComponentKinds as webDataComponentKinds} from './runtime-capabilities.js';
 export function inspectorComponentRank(title){
  if(title==='Transform')return 0;

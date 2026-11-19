@@ -25,6 +25,7 @@ export function collisionLayersAllow2d(a,b){
 export function solidCollider2d(o){
  if(!o||o.enabled===false||o._sequenceDestroyed||o.sequenceEnabled===false||o.lightType||o.audioEnabled)return false;
  if(o.tilemap2d)return false; // Solid cells are individual collision rectangles.
+ if(o.collision2d===false)return false; // Explicit 2D opt-out, independent of 3D collision flags.
  if(o.collider2d)return o.collider2d.enabled!==false&&!o.collider2d.isTrigger;
  if(o.collision3d===false)return false;
  if(o.collision3d===true||o.solid2d===true||o.type==='object')return true;
@@ -36,7 +37,7 @@ export function solidCollider2d(o){
 export function moveBody2d(body,dx,dy,entities){
  const result={blockedX:false,blockedY:false,grounded:false,ceiling:false,hits:[]};
  if(body.enabled===false)return result;
- if(body.collider2d?.enabled===false||!body.collider2d&&body.collision3d===false||body.collider2d?.isTrigger){body.x+=n(dx);body.y+=n(dy);body.grounded2d=false;return result}
+ if(body.collider2d?.enabled===false||!body.collider2d&&(body.collision2d===false||body.collision3d===false)||body.collider2d?.isTrigger){body.x+=n(dx);body.y+=n(dy);body.grounded2d=false;return result}
  const obstacles=[...entities.filter(o=>o!==body&&solidCollider2d(o)&&collisionLayersAllow2d(body,o)),...tilemapColliders2d(entities.filter(o=>o!==body)).filter(o=>collisionLayersAllow2d(body,o))];
  for(let iteration=0;iteration<8;iteration++){
   const shape=colliderShape2d(body);let correction=null,hit=null;

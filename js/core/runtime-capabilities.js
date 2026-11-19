@@ -1,4 +1,5 @@
 import {inspectAnimationRig} from './skeletal-animation.js';
+import {getRegisteredComponentManifests} from './component-registry.js';
 import {inspectAnimationStudio} from './animation-clips.js';
 import {inspectAnimatorGraph} from './animator-graph.js';
 import {inspectWebScripts} from './web-script-runtime.js';
@@ -12,6 +13,11 @@ export function inspectRuntimeCompatibility(entities,{target='web',backend='web'
  const issues=[],add=(message,entityId=null)=>issues.push({severity:'error',message,entityId,target});
  if(target==='web'&&backend==='native')add('Ce projet utilise le runtime C# local. Choisis Play Web et remplace les composants natifs avant l’export Web.');
  for(const e of entities||[]){
+  // Extension manifests currently provide editable data, not a verified runtime adapter.
+  // Fail explicitly rather than shipping apparently functional components with no behavior.
+  for(const spec of new Map([...getRegisteredComponentManifests('2d'),...getRegisteredComponentManifests('3d')].map(spec=>[spec.id,spec])).values()){
+   if(e?.[spec.id]!=null) add((e.name||'#'+e.id)+' · '+spec.name+' : composant d’extension sans runtime vérifié. Exécution et export indisponibles.',e.id);
+  }
   // The lightweight built-in solver handles rigidbody contacts but does not
   // solve impulse joints. Never silently ship an articulated scene without
   // its constraints: switching to Rapier is required for Web export.

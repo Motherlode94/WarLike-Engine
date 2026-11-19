@@ -50,6 +50,7 @@ export const playerModules=[
   "js/core/company-camera.js",
   "js/core/company-runtime.js",
   "js/core/company-units.js",
+  "js/core/component-registry.js",
   "js/core/component-runtime.js",
   "js/core/creative-runtime.js",
   "js/core/csharp-frame.js",

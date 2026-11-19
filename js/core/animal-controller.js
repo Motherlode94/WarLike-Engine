@@ -28,7 +28,7 @@ export function stepAnimalControllers(entities,dt,{mode='3d'}={}){
   const cfg=animal?.animalController;
   if(!cfg||cfg.enabled===false||animal.enabled===false||animal.sequenceEnabled===false||animal._sequenceDestroyed||inspectAnimalController(cfg).length)continue;
   // Do not compete with the combat/targeting AI controller.
-  if(animal.ai?.enabled)continue;
+  if(animal.ai?.enabled||animal.navigationAgent?.enabled)continue;
   const state=animal._animalMotion??={clock:0,originX:n(animal.x),originY:n(animal.y)};
   state.clock+=frame;
   const current=pos(animal),targets=entities.filter(e=>e!==animal&&e.enabled!==false&&e.id===cfg.targetId);

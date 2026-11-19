@@ -60,3 +60,32 @@ test('Add Component has category drill-down and no Script Studio navigation masq
 test('2D constraints and force fields are in Physics 2D, not miscellaneous',()=>{
  for(const id of ['joint2d','effector2d'])assert.equal(unityComponentCategory(componentChoices('2d').find(d=>d.id===id)),'Physics 2D');
 });
+
+test('native behavior catalogue is not reduced to a single Rigidbody or confused with prefabs',()=>{
+ const source=readFileSync(new URL('../js/ui/component-browser.js',import.meta.url),'utf8');
+ for(const name of ['VehicleController','TacticalSquad','FollowActor','Damageable','Health','Weapon','Rigidbody']){
+  assert.ok(source.includes("'"+name+"'"),name);
+ }
+ assert.doesNotMatch(source,/nativePrimaryKinds=new Set\(\['Rigidbody'\]\)/);
+ assert.match(source,/owner\.csharpComponents\.push\(\{kind,/);
+ assert.doesNotMatch(source,/prefab3d|createPrefab|prefabLibrary/);
+});
+test('catalogue separates movement, gameplay, vehicle behavior and 2D\/3D physics',()=>{
+ const source=readFileSync(new URL('../js/ui/component-browser.js',import.meta.url),'utf8');
+ assert.match(source,/Vehicles:\['data-VehicleController'\]/);
+ assert.match(source,/Movement:\['controller2d','controller3d'\]/);
+ assert.match(source,/Physics:\['collider3d','rigidbody3d'/);
+ assert.equal(unityComponentCategory({id:'data-VehicleController',name:'VehicleController'}),'Vehicles');
+ assert.equal(unityComponentCategory({id:'data-FollowActor',name:'FollowActor'}),'Navigation');
+ assert.equal(unityComponentCategory({id:'controller3d',name:'Contrôleur de personnage 3D'}),'Movement');
+ assert.equal(unityComponentCategory({id:'collider2d',name:'Collider 2D'}),'Physics 2D');
+});
+test('portable components are explicitly Web; native only components remain .NET local',()=>{
+ const source=readFileSync(new URL('../js/ui/component-browser.js',import.meta.url),'utf8');
+ const inspector=readFileSync(new URL('../js/ui/inspector.js',import.meta.url),'utf8');
+ assert.match(source,/portableComponentKinds\.has\(kind\)/);
+ assert.match(source,/runtime:portable\?'web':'dotnet'/);
+ assert.match(source,/runtime:'web'/);
+ assert.match(inspector,/portableComponentKinds\.has\(definition\.kind\)/);
+ assert.match(source,/if\(owner\.csharpComponents\.some\(c=>c\.kind===kind\)\)return false/);
+});

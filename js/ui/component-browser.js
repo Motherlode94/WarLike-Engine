@@ -2,11 +2,21 @@ import {componentChoices,addObjectComponent,resetObjectComponent,removeObjectCom
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 import {workspace} from '../core/workspaces.js';
+import {portableComponentKinds,webComponentKinds} from '../core/runtime-capabilities.js';
 const make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;return el};
 // The Add Component picker lists every component supported by the current
 // project mode. Existing entities and unknown legacy component data are untouched.
 const featuredKinds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','cameraRig','controller2d','controller3d','animatorGraph','ai','sequence','stats','inventory','webScripts','warScripts']);
-const nativePrimaryKinds=new Set(['Rigidbody']);
+// Native entries are real components, not prefabs. Web portability is reported per kind.
+const nativePrimaryKinds=new Set(['Weapon','Damageable','Health','Projectile','Rigidbody','Team','Score','Respawn','DeathmatchRules','SpawnPoint','AmmoPickup','HealthPickup','KillZone','ObjectiveZone','AutoRotate','LinearMotion','FollowActor','VehicleController','TacticalSquad','Roleplay','RacingRules','SimulationEconomy','RpgProgression','FourXEmpire']);
+const nativeCategories=Object.freeze({
+ Weapon:'Gameplay',Damageable:'Gameplay',Health:'Gameplay',Projectile:'Gameplay',
+ Rigidbody:'Physics',Team:'Gameplay',Score:'Gameplay',Respawn:'Gameplay',DeathmatchRules:'Gameplay',
+ SpawnPoint:'Gameplay',AmmoPickup:'Gameplay',HealthPickup:'Gameplay',KillZone:'Gameplay',ObjectiveZone:'Gameplay',
+ AutoRotate:'Movement',LinearMotion:'Movement',FollowActor:'Navigation',
+ VehicleController:'Vehicles',TacticalSquad:'Navigation',
+ Roleplay:'Gameplay',RacingRules:'Gameplay',SimulationEconomy:'Gameplay',RpgProgression:'Gameplay',FourXEmpire:'Gameplay'
+});
 const unityCategories=Object.freeze({
  Animation:['animatorGraph','spriteAnimation2d'],
  Audio:['audio'],
@@ -14,19 +24,22 @@ const unityCategories=Object.freeze({
  Effects:['fxEmitter'],
  Event:['sequence','adventureInteractable'],
  Input:['cameraRig'],
+ Movement:['controller2d','controller3d'],
+ Vehicles:['data-VehicleController'],
  Layout:['uiCanvas','uiRect','uiElement'],
  Mesh:['spriteRenderer2d','tilemap2d'],
- Navigation:['ai','tacticalUnit'],
- 'Physics 2D':['collider2d','rigidbody2d','joint2d','effector2d','controller2d'],
- Physics:['collider3d','rigidbody3d','controller3d','grab3d'],
+ Navigation:['ai','tacticalUnit','data-FollowActor','data-TacticalSquad'],
+ 'Physics 2D':['collider2d','rigidbody2d','joint2d','effector2d'],
+ Physics:['collider3d','rigidbody3d','grab3d','data-Rigidbody'],
  Rendering:['light','sceneCamera3d','camera2d','environmentProbe3d'],
- Scripts:['webScripts','warScripts']
+ Scripts:['webScripts','warScripts'],
+ Gameplay:['stats','inventory','adventureInteractable','superhero','rpgProgression','horrorHideConfig','horrorFearConfig','data-Weapon','data-Damageable','data-Health','data-Projectile','data-Team','data-Score','data-Respawn','data-DeathmatchRules','data-SpawnPoint','data-AmmoPickup','data-HealthPickup','data-KillZone','data-ObjectiveZone','data-Roleplay','data-RacingRules','data-SimulationEconomy','data-RpgProgression','data-FourXEmpire']
 });
 const categoryById=new Map(Object.entries(unityCategories).flatMap(([group,ids])=>ids.map(id=>[id,group])));
 export const unityComponentCategory=option=>categoryById.get(option.id)||(
- option.id?.startsWith('data-')?'Physics':option.runtime==='dotnet'?'Scripts':option.category==='Personnage'?'Gameplay':option.category==='Intelligence artificielle'?'Navigation':'Miscellaneous'
+ option.id?.startsWith('data-')?(nativeCategories[option.id.slice(5)]||'Miscellaneous'):option.runtime==='dotnet'?'Scripts':option.category==='Personnage'?'Gameplay':option.category==='Intelligence artificielle'?'Navigation':'Miscellaneous'
 );
-const categoryOrder=['Animation','Audio','Constraints','Effects','Event','Input','Layout','Mesh','Miscellaneous','Navigation','Physics 2D','Physics','Playables','Rendering','Scripts','Gameplay'];
+const categoryOrder=['Animation','Audio','Constraints','Effects','Event','Input','Layout','Mesh','Miscellaneous','Movement','Navigation','Physics 2D','Physics','Vehicles','Playables','Rendering','Scripts','Gameplay'];
 export const unityComponentCategories=options=>[...new Set(options.map(unityComponentCategory))].sort((a,b)=>{
  const ai=categoryOrder.indexOf(a),bi=categoryOrder.indexOf(b);
  return (ai<0?999:ai)-(bi<0?999:bi)||a.localeCompare(b,'en');
@@ -71,11 +84,20 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
  for(const [category,kinds] of Object.entries(nativeCatalog)){
   for(const [kind,defaults] of Object.entries(kinds)){
    if(!nativePrimaryKinds.has(kind))continue;
+   const portable=portableComponentKinds.has(kind)||webComponentKinds.has(kind);
    options.push({
-    id:'data-'+kind,name:kind+' (C#)',category:'Physique',
-    description:'Rigidbody natif via pont .NET local.',runtime:'dotnet',
+    id:'data-'+kind,name:kind,category:nativeCategories[kind]||category,
+    description:portable
+     ?'Composant de comportement Web existant ; réglages enregistrés dans l’objet. Vérifier son effet dans Play et export.'
+     :'Composant natif nécessitant le pont .NET local. Non disponible en export Web.',
+    runtime:portable?'web':'dotnet',
     attached:owner.csharpComponents?.some(c=>c.kind===kind),
-    add:()=>{owner.csharpComponents??=[];owner.csharpComponents.push({kind,...structuredClone(defaults)});return true}
+    add:()=>{
+     owner.csharpComponents??=[];
+     if(owner.csharpComponents.some(c=>c.kind===kind))return false;
+     owner.csharpComponents.push({kind,...structuredClone(defaults),...(portable?{runtime:'web'}:{})});
+     return true;
+    }
    });
   }
  }

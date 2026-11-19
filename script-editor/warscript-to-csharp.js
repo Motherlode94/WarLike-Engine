@@ -61,7 +61,7 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
     if(Object.hasOwn(mathCalls,node.name))return mathCalls[node.name]+'('+a.join(', ')+')';
     if(node.name==='Input.GetKey'||node.name==='Input.GetKeyDown')return node.name+'('+a.join(', ')+')';
     if(methods.has(node.name)){
-     if(context!=='statement')return fail(node,'Une méthode WarScript personnalisée ne retourne pas de valeur : '+node.name);
+     if(context!=='statement'&&(ast.methodSignatures?.[node.name]?.returnType||'void')==='void')return fail(node,'Une méthode WarScript personnalisée ne retourne pas de valeur : '+node.name);
      return node.name+'('+a.join(', ')+')';
     }
     if(node.name==='Log'||node.name==='Debug.Log')return 'Debug.Log('+a.join(', ')+')';
@@ -103,6 +103,7 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
   if(!mapped)return {target:fail(node,'Propriété non modifiable en C# : '+name)};
   return {target:mapped,method:mapped==='gameObject.SetActive'};
  };
+ let activeReturnType='void';
  const statement=(node,scope,indent=2)=>{
   const pad='    '.repeat(indent);
   if(node.kind==='declare'){
@@ -135,8 +136,13 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
   }
   if(node.kind==='expression')return pad+expr(node.value,scope,'statement')+';';
   if(node.kind==='return'){
-   if(node.value)fail(node,'Les méthodes WarScript sont void ; return avec valeur non convertible');
-   return pad+'return;';
+   if(node.value&&activeReturnType==='void')fail(node,'Les méthodes WarScript sont void ; return avec valeur non convertible');
+   return pad+'return'+(node.value?' '+expr(node.value,scope):'')+';';
+  }
+  if(node.kind==='break'||node.kind==='continue')return pad+node.kind+';';
+  if(node.kind==='for'){
+   const bodyScope=new Set(scope),init=node.init?statement(node.init,bodyScope,0).trim().replace(/;$/,''):'',condition=node.condition?expr(node.condition,bodyScope):'',update=node.update?statement(node.update,bodyScope,0).trim().replace(/;$/,''):'';
+   return pad+'for ('+init+'; '+condition+'; '+update+') {\n'+pad+'    if (--__warLikeLoopBudget < 0) throw new InvalidOperationException("WarScript loop budget exceeded");\n'+node.body.map(n=>statement(n,bodyScope,indent+1)).join('\n')+'\n'+pad+'}';
   }
   if(node.kind==='while'){
    const bodyScope=new Set(scope);
@@ -160,9 +166,11 @@ export function convertWarScriptToCSharp(source,{className='ConvertedWarScript'}
  }
  if(ast.fields.length)out.push('');
  for(const [name,body] of Object.entries(ast.methods)){
-  out.push('    '+(['Awake','Start','Update','FixedUpdate','LateUpdate','OnEnable','OnDisable','OnDestroy'].includes(name)?'private':'public')+' void '+name+'()','    {');
-  const scope=new Set(fields.keys());
-  const containsWhile=nodes=>nodes.some(n=>n.kind==='while'||n.kind==='if'&&(containsWhile(n.yes)||containsWhile(n.no)));
+  const signature=ast.methodSignatures?.[name]||{returnType:'void',parameters:[]};activeReturnType=signature.returnType;
+  for(const param of signature.parameters)if(!validIdent(param.name)||param.name==='__warLikeLoopBudget')fail(param,'Nom de paramètre C# invalide : '+param.name);
+  out.push('    '+(['Awake','Start','Update','FixedUpdate','LateUpdate','OnEnable','OnDisable','OnDestroy'].includes(name)?'private':'public')+' '+signature.returnType+' '+name+'('+signature.parameters.map(p=>p.type+' '+p.name).join(', ')+')','    {');
+  const scope=new Set([...fields.keys(),...signature.parameters.map(p=>p.name)]);
+  const containsWhile=nodes=>nodes.some(n=>n.kind==='while'||n.kind==='for'||n.kind==='if'&&(containsWhile(n.yes)||containsWhile(n.no)));
   if(containsWhile(body))out.push('        int __warLikeLoopBudget = 4096;');
   for(const n of body)out.push(statement(n,scope));
   out.push('    }','');

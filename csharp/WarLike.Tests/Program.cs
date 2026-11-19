@@ -185,6 +185,12 @@ Test("MonoBehaviour callbacks use the actor Animator instance", () => {
     var animator = actor.GetComponent<Animator>()!; Check(animator.GetFloat("pace") == 3, "MonoBehaviour did not use its actor Animator.");
     Check(animator.DrainCommands().Any(c=>c.Method=="SetFloat"), "Callback commands were not retained for the shared frame.");
 });
+Test("generated typed WarScript methods and for controls run natively", () => {
+    var world = new GameWorld(); var actor = world.CreateActor("Typed", Vector3.Zero);
+    var script = world.AddComponent(actor, new GeneratedTypedWarScriptSmoke());
+    world.Tick(.05f); Check(script.total == 10, "Typed functions, for, continue or break differed from WarScript.");
+    world.Tick(.05f); Check(script.total == 20, "Typed script lost state between frames.");
+});
 Console.WriteLine($"{passed} native C# tests passed.");
 
 sealed class Probe(List<string> events) : WarLikeBehaviour {

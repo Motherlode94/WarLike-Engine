@@ -16,7 +16,7 @@ test('WarScript parses optional classes, access modifiers, types and newline ter
  assert.equal(code('float speed = 2\nUpdate() {\nspeed += 1\n}\n').fields.length,1);
 });
 test('compile diagnostics identify unsupported methods, properties, loops and invalid field values',()=>{
- for(const source of ['Start(){ fetch("secret"); }','Update(){ transform.constructor = 1; }','Update(){ for(;;){} }','float count = "bad";','float x = Vector3(Log("bad"),0,0);','Update(){ Missing = 1; }']){const p=compileWarScript(source);assert.equal(p.ok,false,source);assert.ok(p.diagnostics[0].line>0)}
+ for(const source of ['Start(){ fetch("secret"); }','Update(){ transform.constructor = 1; }','Update(){ foreach(var x in things){} }','float count = "bad";','float x = Vector3(Log("bad"),0,0);','Update(){ Missing = 1; }']){const p=compileWarScript(source);assert.equal(p.ok,false,source);assert.ok(p.diagnostics[0].line>0)}
  const p=compileWarScript('float ok = 1;\nUpdate() {\n Unknown();\n}');assert.equal(p.diagnostics[0].line,3);
 });
 test('operators preserve precedence, short circuit, local scope and typed assignments',()=>{

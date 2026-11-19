@@ -2,7 +2,7 @@ import {kaykitModels3d} from '../assets/kaykit-game-assets.js';
 import {lifeTownSprites} from '../assets/life-sprites-2d.js';
 import {uniqueAssets,filterAssetRecords,paginateAssets} from '../core/asset-browser.js';
 import {survivalSprites2d} from '../assets/survival-sprites-2d.js';
-import {prefabsForMode,readPrefabs,instantiatePrefab} from '../core/prefab-library.js';
+import {prefabsForMode,readPrefabs,instantiatePrefabHierarchy} from '../core/prefab-library.js';
 import {importedModels3d} from '../assets/real-models-3d.js';
 import {captureGameScene,sceneDefinition} from '../core/game-project.js';
 import {quaterniusModels3d} from '../assets/quaternius-game-assets.js';
@@ -112,7 +112,7 @@ export function initVisualAssetPacks(){
     if(state.playing)return;
     if(pack.type==='scene'){captureGameScene(state.entities,state.camera,{name:sceneDefinition(gameProject.activeSceneId)?.name||'Scène principale'});const scene=sceneDefinition(asset.sceneId);if(scene){gameProject.activeSceneId=scene.id;state.entities=structuredClone(scene.entities);state.camera=structuredClone(scene.camera);state.selected=[];state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1;record('Ouvrir la scène '+scene.name);notify();document.dispatchEvent(new Event('warlike:project'))}return}
     if(pack.type==='script'){if(asset.ownerId)state.selected=[asset.ownerId];notify();document.dispatchEvent(new CustomEvent('warlike:script-open',{detail:{scriptId:asset.scriptId,entityId:asset.ownerId}}));return}
-    if(pack.type==='prefab'){const entity=instantiatePrefab(asset.prefabRecord,state.nextId++,160,160);state.entities.push(entity);state.selected=[entity.id];record('Instancier '+asset.name);notify();return}
+    if(pack.type==='prefab'){const result=instantiatePrefabHierarchy(asset.prefabRecord,state.nextId,160,160);state.entities.push(...result.entities);state.nextId=result.nextId;state.selected=[result.rootId];record('Instancier '+asset.name);notify();return}
     if(pack.type==='animation'){let owner=state.entities.find(o=>state.selected.includes(o.id)&&o.model3dId===universal().id);if(!owner){owner=prefab3d(universal().id,state.nextId++,180,160);state.entities.push(owner)}Object.assign(owner,{animation3dClip:asset.clipName,animationAuto:false,animationPreview:true});state.selected=[owner.id];record('Animation Quaternius : '+asset.clipName);notify();info.textContent='Prévisualisation : '+asset.clipName+' · mannequin du pack Standard gratuit · Quaternius · CC0-1.0';return}
     if(pack.type==='audio'){unlockAudio();try{await playRecordedSound(asset.id,{cooldown:0});info.textContent='Écoute : '+asset.name+' · '+asset.packName+' · Kenney · CC0-1.0'}catch(error){info.textContent='Lecture impossible : '+error.message}return}
     if(pack.type==='ui'&&workspace.mode==='3d'){info.textContent=asset.name+' · Image UI. Les boutons ci-dessus appliquent l’habillage aux menus du jeu.';return}

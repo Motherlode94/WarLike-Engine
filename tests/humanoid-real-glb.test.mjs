@@ -35,3 +35,11 @@ test('the native production lab really combines UAL walking legs with a talking 
   pose.nodes[index].rotation.forEach((v,i)=>assert.ok(Math.abs(v-expected.nodes[index].rotation[i])<1e-6,name));
  }
 });
+test('optional humanoid finger chains map the genuine UAL rig and transfer their actual rotation channels',async()=>{
+ const g=await load('assets/free/quaternius/universal-animation-library/ual1-standard.glb'),avatar=createHumanoidAvatar(g.rig);
+ assert.equal(avatar.bones.leftThumbProximal,'thumb_01_l');assert.equal(avatar.bones.rightIndexDistal,'index_03_r');assert.equal(avatar.bones.leftToes,'ball_l');assert.deepEqual(inspectHumanoidAvatar(avatar,g.rig),[]);
+ const source=g.rig.animations.find(c=>c.name==='Idle_Talking_Loop'),converted=retargetHumanoidClip(g.rig,g.rig,source,avatar,avatar);
+ assert.ok(converted.channels.some(c=>c.bone==='thumb_01_l'&&c.path==='rotation'));assert.ok(converted.channels.some(c=>c.bone==='pinky_03_r'));
+ const compiled=compileSkeletalClip(g.rig,converted),pose=sampleRigPose(g.rig,compiled,.3);assert.ok(deformGlbParts(g,pose).every(part=>part.every(Number.isFinite)));
+ const bad=structuredClone(avatar);bad.bones.leftIndexProximal=avatar.bones.rightIndexProximal;delete bad.bones.rightIndexProximal;assert.ok(inspectHumanoidAvatar(bad,g.rig).some(e=>/optionnelle/.test(e)));
+});

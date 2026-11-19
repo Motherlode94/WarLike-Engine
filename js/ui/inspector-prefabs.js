@@ -1,5 +1,5 @@
-import {readPrefabs,savePrefabHierarchy,instantiatePrefabHierarchy} from '../core/prefab-library.js';
-import {prefabPropertyOverrides,revertInspectorPrefab} from '../core/inspector-prefabs.js';
+import {readPrefabs,prefabMode,savePrefabHierarchy,instantiatePrefabHierarchy} from '../core/prefab-library.js';
+import {prefabPropertyOverrides,revertInspectorPrefab,applyInspectorPrefab,createInspectorPrefabVariant} from '../core/inspector-prefabs.js';
 import {state,notify} from '../core/state.js';
 import {workspace} from '../core/workspaces.js';
 import {record} from '../core/history.js';
@@ -18,8 +18,8 @@ export function renderInspectorPrefab(root,owner){
    try{
     const prefab=savePrefabHierarchy(owner,state.entities,globalThis.localStorage,{mode:workspace.mode});
     const keys=new Set(prefab.nodes.map(node=>node.key));
-    for(const entity of state.entities)if(keys.has('node-'+entity.id)){
-     entity.prefabSourceId=prefab.id;entity.prefabNodeKey='node-'+entity.id;entity.prefabOverrides=[];
+    for(const entity of state.entities)if(keys.has('node-'+entity.id)&&(!entity.prefabSourceId||entity.id===owner.id)){
+     entity.prefabSourceId=prefab.id;entity.prefabNodeKey='node-'+entity.id;entity.prefabInstanceRootId=owner.id;entity.prefabLinks=[{prefabId:prefab.id,nodeKey:entity.prefabNodeKey,rootId:owner.id}];entity.prefabOverrides=[];
     }
     record('Créer le prefab hiérarchique '+prefab.name);notify();
    }catch(error){console.error('[WarLike prefab]',error);globalThis.alert?.('Prefab impossible : '+error.message)}
@@ -32,6 +32,9 @@ export function renderInspectorPrefab(root,owner){
  if(!prefab){
   const note=document.createElement('p');note.textContent='La source de ce prefab n’est plus dans les prefabs enregistrés de ce navigateur.';panel.append(note);root.append(panel);return;
  }
+ const saveComposition=()=>{try{const saved=savePrefabHierarchy(owner,state.entities,globalThis.localStorage,{mode:workspace.mode});globalThis.alert?.('Composition enregistrée : '+saved.name+' · '+saved.id);notify()}catch(error){globalThis.alert?.('Composition impossible : '+error.message)}};
+ panel.append(button('Enregistrer cette hiérarchie comme nouveau prefab',saveComposition));
+ const nested=document.createElement('select');nested.setAttribute('aria-label','Prefab enfant à insérer');for(const source of readPrefabs().filter(p=>!p.invalidVariant&&prefabMode(p)===workspace.mode)){const option=document.createElement('option');option.value=source.id;option.textContent=source.name;nested.append(option)}nested.disabled=state.playing;panel.append(nested,button('Insérer le prefab enfant lié',()=>{if(state.playing)return;try{const source=readPrefabs().find(p=>p.id===nested.value);if(!source)throw Error('Choisir une source.');const result=instantiatePrefabHierarchy(source,state.nextId,(owner.x||0)+80,(owner.y||0)+80);result.entities.find(e=>e.id===result.rootId).parentId=owner.id;state.entities.push(...result.entities);state.nextId=result.nextId;record('Insérer un prefab enfant lié');notify()}catch(error){globalThis.alert?.('Insertion impossible : '+error.message)}}));
  const overrides=prefabPropertyOverrides(prefab,owner,state.entities),info=document.createElement('p');
  info.textContent=overrides.length?overrides.length+' propriétés différentes : '+overrides.join(', '):'Cette instance utilise les propriétés du prefab source.';
  const revert=button('Rétablir les propriétés du prefab',()=>{
@@ -40,6 +43,9 @@ export function renderInspectorPrefab(root,owner){
  });
  revert.disabled=state.playing||!overrides.length;
  panel.append(info,revert);
+ panel.append(button('Appliquer ces propriétés à la source',()=>{if(state.playing)return;try{state.entities=applyInspectorPrefab(prefab,owner,state.entities);record('Appliquer les propriétés du prefab');notify()}catch(error){globalThis.alert?.('Application impossible : '+error.message)}}));
+ if(prefab.nodes)panel.append(button('Créer et instancier une variante',()=>{if(state.playing)return;try{const variant=createInspectorPrefabVariant(prefab,owner,state.entities),result=instantiatePrefabHierarchy(variant,state.nextId,(owner.x||0)+120,(owner.y||0)+120);state.entities.push(...result.entities);state.nextId=result.nextId;state.selected=[result.rootId];record('Créer une variante du prefab');notify()}catch(error){globalThis.alert?.('Variante impossible : '+error.message)}}));
+
  panel.append(button('Ajouter une instance du prefab',()=>{
   if(state.playing)return;
   try{

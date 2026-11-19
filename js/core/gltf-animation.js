@@ -1,3 +1,4 @@
+import {resolveTransformMask} from './animation-mask.js';
 // glTF 2.0 skeletal animation: TRS channels, quaternion slerp and inverse binds.
 // Data is read from the asset; no generated poses or substitute characters.
 export const identityMatrix=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
@@ -68,11 +69,11 @@ export function sampleRigPose(rig,clip,time,{loop=true,previous=null,blend=1,sam
   if(!layer.clip||layer.enabled===false)continue;
   const roots=new Set((layer.bones||[]).map(name=>rig.nodes.findIndex(n=>n.name===name)).filter(i=>i>=0)),mask=layer.bones?.length?new Set(roots):null;
   if(mask)for(let i=0;i<rig.nodes.length;i++){let parent=rig.parents[i];for(let k=0;parent>=0&&k<rig.nodes.length;k++,parent=rig.parents[parent])if(roots.has(parent)){mask.add(i);break}}
-  const target=sample(layer.clip,layer.time||0,layer.loop!==false),weight=Math.max(0,Math.min(1,Number(layer.weight)||0)),seen=new Set();
-  if(!weight)continue;
+  const target=sample(layer.clip,layer.time||0,layer.loop!==false),layerWeight=Math.max(0,Math.min(1,Number(layer.weight)||0)),weights=layer.transformMask?resolveTransformMask(layer.transformMask,rig):null,reference=layer.referenceClip?sample(layer.referenceClip,layer.referenceTime||0,false):rig.nodes,seen=new Set();
+  if(!layerWeight)continue;
   for(const channel of layer.clip.channels){
    const i=channel.node,key=channel.path,id=i+':'+key;if(seen.has(id)||mask&&!mask.has(i))continue;seen.add(id);
-   const a=nodes[i],b=target[i],rest=rig.nodes[i];
+   const weight=layerWeight*(weights?.[i]??1);if(!weight)continue;const a=nodes[i],b=target[i],rest=reference[i];
    if(layer.mode==='additive'){
     if(key==='rotation'){const q=rest.rotation,delta=qmul([-q[0],-q[1],-q[2],q[3]],b.rotation);a.rotation=qmul(a.rotation,slerpQuaternion([0,0,0,1],delta,weight));}
     else if(key==='scale')a.scale=a.scale.map((v,k)=>v*(1+(b.scale[k]/(rest.scale[k]||1)-1)*weight));

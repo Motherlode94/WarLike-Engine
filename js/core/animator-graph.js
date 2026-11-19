@@ -1,3 +1,4 @@
+import {inspectTransformMask} from './animation-mask.js';
 import {humanoidMasks} from './humanoid-avatar.js';
 import {blendSamples2d,machineAncestors,resolveMachineState,inspectMachines,transitionOrigins} from './animator-advanced.js';
 import {animationEventsBetween} from './animation-clips.js';
@@ -16,6 +17,10 @@ const safeParameter=name=>typeof name==='string'&&/^[-a-zA-Z0-9_]{1,40}$/.test(n
 export function inspectAnimatorGraph(graph){
  if(!graph||!Array.isArray(graph.states)||!Array.isArray(graph.transitions))return ['Graphe Animator invalide.'];if(!graph.states.length||graph.states.length>32||graph.transitions.length>96)return ['Limite : 32 états et 96 transitions.'];
  const ids=new Set(),errors=[];
+ if(graph.masks!=null&&(!Array.isArray(graph.masks)||graph.masks.length>16||new Set(graph.masks.map(m=>m?.id)).size!==graph.masks.length))errors.push('Bibliothèque de masques invalide.');
+ for(const resource of Array.isArray(graph.masks)?graph.masks:[]){if(!resource||!safeParameter(resource.id)||typeof resource.name!=='string'||!resource.name||resource.name.length>100)errors.push('Ressource masque invalide.');else errors.push(...inspectTransformMask(resource.mask));}
+ for(const layer of Array.isArray(graph.layers)?graph.layers:[]){if(!layer)continue;if(layer.transformMask)errors.push(...inspectTransformMask(layer.transformMask));if(layer.maskId&&!graph.masks?.some(m=>m.id===layer.maskId))errors.push('Ressource masque absente.');if(layer.weightParameter&&!safeParameter(layer.weightParameter)||layer.syncPhase!=null&&typeof layer.syncPhase!=='boolean'||layer.referenceClip!=null&&(typeof layer.referenceClip!=='string'||layer.referenceClip.length>160)||layer.referenceTime!=null&&(!Number.isFinite(layer.referenceTime)||layer.referenceTime<0||layer.referenceTime>1))errors.push('Pilotage de couche ou référence additive invalide.');}
+
  for(const s of graph.states){
   if(!s||typeof s.id!=='string'||!s.id||s.id.length>80||ids.has(s.id)){errors.push('Identifiant d’état vide ou dupliqué.');continue}ids.add(s.id);
   if(typeof s.clip!=='string'||!s.clip||s.clip.length>160)errors.push('Clip d’état absent.');
@@ -77,7 +82,7 @@ export function stepAnimator(owner,dt,{mode='3d',preview=false,parameters={},onE
  if(track.previous){track.previous.time+=frame*clamp(n(track.previous.state.speed,1),.05,4);for(const sample of track.previous.composite||[])sample.time+=frame;if(track.blend>=1)track.previous=null;}
  for(const event of animationEventsBetween(current.events,before,track.time,duration,{loop:current.loop!==false,normalized:true}))onEvent(event,owner);
  if(forced){forced.remaining=Math.max(0,forced.remaining-frame);if(!forced.remaining)delete owner._animatorForced;}
- const samples=animatorBlendSamples(current,p);owner._animatorFrame={stateId:current.id,name:current.name,clip:current.clip,samples,time:track.time,layerTime:track.elapsed,delta:frame*clamp(n(current.speed,1),.05,4),machinePath:machineAncestors(graph,current.id),normalizedTime:track.time/duration,duration,loop:current.loop!==false,blend:track.blend,previous:track.previous,parameters:p,layers:(graph.layers||[]).slice(0,4)};
+ const samples=animatorBlendSamples(current,p);owner._animatorFrame={stateId:current.id,name:current.name,clip:current.clip,samples,time:track.time,layerTime:track.elapsed,delta:frame*clamp(n(current.speed,1),.05,4),machinePath:machineAncestors(graph,current.id),normalizedTime:track.time/duration,duration,loop:current.loop!==false,blend:track.blend,previous:track.previous,parameters:p,layers:(graph.layers||[]).slice(0,4).map(l=>({...l,...(l.maskId?{transformMask:graph.masks.find(m=>m.id===l.maskId).mask}:{})}))};
  if(mode==='2d'&&!preview)owner.animation=samples.reduce((a,b)=>a.weight>b.weight?a:b).clip;
  if(action&&!preview){action.remaining=Math.max(0,action.remaining-frame);if(!action.remaining)delete owner._animatorAction}
  track.lastX=n(owner.x);track.lastY=n(owner.y);track.lastZ=n(owner.elevation3d);track.parameters=p;return owner._animatorFrame;
@@ -85,7 +90,7 @@ export function stepAnimator(owner,dt,{mode='3d',preview=false,parameters={},onE
 export function animatorPoseOptions(frame,clips,mapping={}){
  const convert=(samples,time,loop)=>samples.map(s=>({clip:resolveAnimationClip(clips,s.clip,mapping),weight:s.weight,time,loop})).filter(s=>s.clip);
  const samples=convert(frame.samples,frame.time,frame.loop),previous=frame.previous?{samples:frame.previous.composite?frame.previous.composite.flatMap(s=>convert([s],s.time,s.loop)):convert(animatorBlendSamples(frame.previous.state,frame.previous.parameters),frame.previous.time,frame.previous.state.loop!==false)}:null;
- const layers=(frame.layers||[]).filter(l=>l.enabled!==false).map(l=>({...l,clip:resolveAnimationClip(clips,l.clip,mapping),time:(frame.layerTime??frame.time)*n(l.speed,1)+n(l.offset)*n(resolveAnimationClip(clips,l.clip,mapping)?.duration)})).filter(l=>l.clip);return {samples,previous,blend:frame.blend,layers,loop:frame.loop};
+ const layers=(frame.layers||[]).filter(l=>l.enabled!==false).map(l=>{const clip=resolveAnimationClip(clips,l.clip,mapping),reference=l.referenceClip?resolveAnimationClip(clips,l.referenceClip,mapping):null;if(l.referenceClip&&!reference)throw Error('Clip de référence additif absent : '+l.referenceClip);return {...l,clip,weight:l.weight*(l.weightParameter?clamp(n(frame.parameters?.[l.weightParameter]),0,1):1),referenceClip:reference,referenceTime:n(l.referenceTime)*n(reference?.duration),time:(l.syncPhase?n(frame.normalizedTime)*n(clip?.duration):(frame.layerTime??frame.time))*n(l.speed,1)+n(l.offset)*n(clip?.duration)}}).filter(l=>l.clip);return {samples,previous,blend:frame.blend,layers,loop:frame.loop};
 }
 
 export function playAnimatorState(owner,stateId,duration=null,{fade=null,offset=0}={}){const state=owner.animatorGraph?.states.find(s=>s.id===stateId);if(!state)return false;owner._animatorForced={stateId,restart:true,fade,offset:clamp(n(offset),0,1),remaining:Math.max(.05,Math.min(10,n(duration??state.duration??1,1)))};return true}

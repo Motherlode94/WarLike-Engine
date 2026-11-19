@@ -44,6 +44,6 @@ En cas d'API WarScript incompatible, la conversion échoue **sans générer un f
 - Les paramètres `controller.*`, `world.timeScale`, `light.*` et la visibilité graphique `SetVisible` ne sont pas traduits sans bridge natif équivalent.
 - Les champs `var` n'ont pas de type statique sûr à émettre. Déclare `float`, `int`, `bool`, `string` ou `Vector3`.
 - Les scripts C# ont besoin de la connexion au runtime .NET natif. Les différences de comportement des physiques et des scènes entre les deux backends doivent être testées.
-- L'AST v1 ne propose pas les boucles `for` / `while`, fonctions avec paramètres, ni les closures : le transpileur ne les invente pas.
+- L’AST v2 accepte `for`, `while`, `break`, `continue`, fonctions typées et paramètres. Les closures et génériques restent absents. Les boucles générées disposent d’un compteur ; le runtime natif et la VM ont des limites distinctes.
 
 La priorité est **un résultat correct et vérifiable**, pas un pourcentage de conversion artificiel.

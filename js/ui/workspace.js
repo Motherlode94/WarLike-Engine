@@ -1,8 +1,9 @@
+import {applyInspectorPrefab} from '../core/inspector-prefabs.js';
 import {paginateAssets,uniqueAssets} from '../core/asset-browser.js';
 import {gameProject} from '../core/game-project.js';
 import {assetCredits} from './asset-credits.js';
 import {bindPanelSplitter,projectPanelRange} from './resizable-window.js';
-import {prefabsForMode,readPrefabs,savePrefab,instantiatePrefab,applyPrefabChanges,updatePrefab} from '../core/prefab-library.js';
+import {prefabsForMode,readPrefabs,savePrefab,instantiatePrefabHierarchy,applyPrefabChanges,updatePrefab} from '../core/prefab-library.js';
 import {hub,sanitizeAssetPack} from '../core/project-hub.js';
 import {persistLocalModel,clearLocalModels} from '../core/local-asset-library.js';
 import {addCommunityModels3d} from '../assets/community-models-3d.js';
@@ -76,8 +77,8 @@ const prefabApply=document.createElement('button');prefabApply.type='button';pre
 const prefabInfo=document.createElement('small');prefabInfo.textContent='Modèles de scène réutilisables conservés dans le navigateur.';
 const refreshPrefabList=()=>{const previous=prefabSelect.value,list=prefabsForMode(readPrefabs(),workspace.mode);prefabSelect.replaceChildren(...list.map(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;return o}));if(list.some(p=>p.id===previous))prefabSelect.value=previous};
 prefabSave.onclick=()=>{if(state.playing)return;const entity=state.entities.find(o=>o.id===state.selected.at(-1));if(!entity){prefabInfo.textContent='Sélectionne un objet avant de créer un prefab.';return}try{const p=savePrefab(entity,globalThis.localStorage,{mode:workspace.mode});refreshPrefabList();prefabSelect.value=p.id;prefabInfo.textContent='Prefab créé : '+p.name}catch(error){prefabInfo.textContent=error.message}};
-prefabAdd.onclick=()=>{if(state.playing)return;const p=prefabsForMode(readPrefabs(),workspace.mode).find(p=>p.id===prefabSelect.value);if(!p)return;const object=instantiatePrefab(p,state.nextId++,120+(state.nextId%7)*40,120+(state.nextId%5)*40);state.entities.push(object);state.selected=[object.id];record('Instancier prefab '+p.name);notify()};
-prefabApply.onclick=()=>{if(state.playing)return;const entity=state.entities.find(o=>o.id===state.selected.at(-1));const p=readPrefabs().find(p=>p.id===entity?.prefabSourceId);if(!p){prefabInfo.textContent='Sélectionne une instance de prefab.';return}try{const result=applyPrefabChanges(p,entity,state.entities);updatePrefab(result.prefab);state.entities=result.instances;record('Appliquer prefab '+p.name);notify();prefabInfo.textContent='Modifications appliquées aux instances liées.'}catch(error){prefabInfo.textContent=error.message}};
+prefabAdd.onclick=()=>{if(state.playing)return;const p=prefabsForMode(readPrefabs(),workspace.mode).find(p=>p.id===prefabSelect.value);if(!p)return;let result;try{result=instantiatePrefabHierarchy(p,state.nextId,120+(state.nextId%7)*40,120+(state.nextId%5)*40)}catch(error){prefabInfo.textContent=error.message;return}state.entities.push(...result.entities);state.nextId=result.nextId;state.selected=[result.rootId];record('Instancier prefab '+p.name);notify()};
+prefabApply.onclick=()=>{if(state.playing)return;const entity=state.entities.find(o=>o.id===state.selected.at(-1));const p=readPrefabs().find(p=>p.id===entity?.prefabSourceId);if(!p){prefabInfo.textContent='Sélectionne une instance de prefab.';return}try{if(p.nodes)state.entities=applyInspectorPrefab(p,entity,state.entities);else{const result=applyPrefabChanges(p,entity,state.entities);updatePrefab(result.prefab);state.entities=result.instances;}record('Appliquer prefab '+p.name);notify();prefabInfo.textContent='Modifications appliquées aux instances liées.'}catch(error){prefabInfo.textContent=error.message}};
 prefabTools.append(prefabTitle,prefabSelect,prefabSave,prefabAdd,prefabApply,prefabInfo);
 document.querySelector('.asset-content')?.prepend(prefabTools);
 refreshPrefabList();

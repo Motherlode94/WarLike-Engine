@@ -4,43 +4,44 @@ const key='warlike.prefabs.library.v1';
 // identity, parent link, source metadata or selection-specific editor state.
 const clean=o=>{
  const {id,name,x,y,parentId,sceneObjectId,prefabSourceId,prefabOverrides,inspectorOrder,...components}=o;
- return structuredClone(components);
+ for(const field of ['prefabNodeKey','prefabInstanceRootId','prefabLinks'])delete components[field];return structuredClone(components);
 };
-const rawPrefabs=storage=>{
- try{const data=JSON.parse(storage.getItem(key)||'[]');return Array.isArray(data)?data.filter(p=>p&&typeof p.id==='string'&&p.components&&typeof p.components==='object'):[]}
- catch{return []}
+const rawPrefabs=(storage,strict=false)=>{
+ try{const data=JSON.parse(storage.getItem(key)||'[]');if(!Array.isArray(data)||strict&&data.some(p=>!p||typeof p!=='object'||Array.isArray(p)))throw Error('Bibliothèque prefab invalide.');return strict?data:data.filter(p=>p&&typeof p.id==='string'&&p.components&&typeof p.components==='object')}
+ catch(error){if(strict)throw Error('Bibliothèque prefab illisible : données conservées. '+error.message);return []}
 };
 export function readPrefabs(storage=globalThis.localStorage){
  const stored=rawPrefabs(storage),byId=new Map(stored.map(p=>[p.id,p])),resolved=new Map();
  const resolve=(prefab,stack=new Set())=>{
   if(resolved.has(prefab.id))return resolved.get(prefab.id);
-  if(!prefab.basePrefabId){resolved.set(prefab.id,prefab);return prefab}
+  if(!prefab.basePrefabId){if(stack.has(prefab.id)||stack.size>=16)throw Error('Cycle ou profondeur de prefabs imbriqués');const result=resolveNestedPrefab(prefab,id=>{const source=byId.get(id);if(!source)throw Error('Source imbriquée absente : '+id);return resolve(source,new Set([...stack,prefab.id]))});resolved.set(prefab.id,result);return result}
   if(stack.has(prefab.id))throw Error('Cycle de variantes prefab');
   const base=byId.get(prefab.basePrefabId);
   if(!base)throw Error('Source de variante absente');
-  const result=resolvePrefabVariant(prefab,resolve(base,new Set([...stack,prefab.id])));
+  const variant=resolvePrefabVariant(prefab,resolve(base,new Set([...stack,prefab.id])));const result=resolveNestedPrefab(variant,id=>{const source=byId.get(id);if(!source)throw Error('Source imbriquée absente : '+id);return resolve(source,new Set([...stack,prefab.id]))});
   resolved.set(prefab.id,result);return result;
  };
- return stored.map(p=>{try{return resolve(p)}catch{return {...p,invalidVariant:true}}});
+ return stored.map(p=>{try{return resolve(p)}catch(error){return {...p,invalidVariant:true,prefabError:error.message}}});
 }
 export const prefabMode=prefab=>['2d','3d'].includes(prefab?.mode)?prefab.mode:prefab?.components?.type==='mesh3d'||prefab?.components?.collider3d||prefab?.components?.controller3d||prefab?.components?.rigidbody3d?'3d':'2d';
 export const prefabsForMode=(prefabs,mode)=>prefabs.filter(p=>prefabMode(p)===mode);
 const changed=()=>globalThis.document?.dispatchEvent?.(new Event('warlike:prefabs'));
 export function savePrefab(entity,storage=globalThis.localStorage,{mode=null}={}){
  if(!entity||typeof entity!=='object')throw Error('Sélectionne un objet valide');
- const entries=readPrefabs(storage),id='prefab-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
+ const entries=rawPrefabs(storage,true),id='prefab-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
  const prefab={id,name:entity.name||'Prefab',components:clean(entity)};prefab.mode=['2d','3d'].includes(mode)?mode:prefabMode(prefab);
- entries.push(prefab);storage.setItem(key,JSON.stringify(entries));changed();return prefab;
+ entries.push(prefab);writePrefabLibrary(storage,entries);changed();return prefab;
 }
 export function instantiatePrefab(prefab,nextId,x=120,y=120){
  if(prefab?.invalidVariant)throw Error('Variante de prefab invalide : source parent absente ou cyclique');
  if(!prefab?.components)throw Error('Prefab invalide');
  const fresh=structuredClone(prefab.components);
  // Legacy user prefabs might already contain source-instance metadata.
- for(const field of ['id','name','x','y','parentId','sceneObjectId','prefabSourceId','prefabOverrides','inspectorOrder'])delete fresh[field];
+ for(const field of ['id','name','x','y','parentId','sceneObjectId','prefabSourceId','prefabOverrides','prefabNodeKey','prefabInstanceRootId','prefabLinks','inspectorOrder'])delete fresh[field];
  return {...fresh,id:nextId,name:prefab.name+' '+nextId,x,y,prefabSourceId:prefab.id,prefabOverrides:[]};
 }
 export function applyPrefabChanges(prefab,entity,instances){
+ if(prefab?.nodes)throw Error('Utiliser l’application de propriétés hiérarchiques pour ce prefab.');
  if(!prefab||!entity||entity.prefabSourceId!==prefab.id)throw Error('Instance incompatible');
  const next={...prefab,components:clean(entity)};
  const affected=instances.map(item=>{
@@ -61,9 +62,10 @@ export function applyPrefabChanges(prefab,entity,instances){
  return {prefab:next,instances:affected};
 }
 export function updatePrefab(prefab,storage=globalThis.localStorage){
- const list=rawPrefabs(storage),index=list.findIndex(p=>p.id===prefab.id);
+ const list=rawPrefabs(storage,true),index=list.findIndex(p=>p.id===prefab.id);
  if(index<0)throw Error('Prefab absent');
- list[index]=prefab;storage.setItem(key,JSON.stringify(list));changed();
+ if(list[index].nodes?.some(n=>n.nested)&&!prefab.nodes?.some(n=>n.nested))throw Error('Une source imbriquée ne peut pas être aplatie : appliquer les propriétés du nœud.');
+ list[index]=prefab;writePrefabLibrary(storage,list);changed();
 }
 
 
@@ -71,7 +73,7 @@ export function updatePrefab(prefab,storage=globalThis.localStorage){
 // and old instantiatePrefab() continues to return exactly one object.
 // Each node has a stable local key. Never persist scene IDs as prefab identity.
 const idOf=value=>typeof value==='number'&&Number.isSafeInteger(value)&&value>=0;
-const hierarchyFields=new Set(['id','name','parentId','prefabSourceId','prefabOverrides','prefabNodeKey','inspectorOrder','sceneObjectId']);
+const hierarchyFields=new Set(['id','name','parentId','prefabSourceId','prefabOverrides','prefabNodeKey','prefabInstanceRootId','prefabLinks','inspectorOrder','sceneObjectId']);
 const cleanHierarchyNode=object=>{
  const data=structuredClone(object);
  for(const field of hierarchyFields)delete data[field];
@@ -98,7 +100,7 @@ function validateHierarchy(nodes){
  }
  return roots[0].key;
 }
-export function makePrefabHierarchy(root,sceneEntities,{mode=null}={}){
+export function makePrefabHierarchy(root,sceneEntities,{mode=null,prefabs=[]}={}){
  if(!root||!idOf(root.id)||!Array.isArray(sceneEntities))throw Error('Racine de prefab invalide');
  const byId=new Map();
  for(const entity of sceneEntities){
@@ -111,32 +113,63 @@ export function makePrefabHierarchy(root,sceneEntities,{mode=null}={}){
   const id=todo.shift();
   for(const e of sceneEntities)if(e.parentId===id&&!selected.has(e.id)){selected.add(e.id);todo.push(e.id)}
  }
+ const nestedRoots=new Map(),omitted=new Set();
+ for(const e of sceneEntities)if(selected.has(e.id)&&e.id!==root.id&&e.prefabSourceId&&(!byId.get(e.parentId)||byId.get(e.parentId).prefabSourceId!==e.prefabSourceId||e.prefabInstanceRootId===e.id)){
+  const source=prefabs.find(p=>p.id===e.prefabSourceId);if(!source||source.invalidVariant||!source.nodes)throw Error('Source du prefab enfant absente ou invalide : '+e.prefabSourceId);
+  nestedRoots.set(e.id,source);
+ }
+ // Only outermost nested roots become authored slots. Their complete source
+ // trees are expanded dynamically by readPrefabs, never baked as stale copies.
+ for(const id of nestedRoots.keys()){let parent=byId.get(id)?.parentId;const seen=new Set();while(parent!=null&&!seen.has(parent)){seen.add(parent);if(nestedRoots.has(parent)){nestedRoots.delete(id);break}parent=byId.get(parent)?.parentId}}
+ for(const e of sceneEntities)if(selected.has(e.id)){let parent=e.parentId;const seen=new Set();while(parent!=null&&!seen.has(parent)){seen.add(parent);if(nestedRoots.has(parent)){omitted.add(e.id);break}parent=byId.get(parent)?.parentId}}
  const keyFor=id=>'node-'+id;
- const nodes=sceneEntities.filter(e=>selected.has(e.id)).map(e=>{
+ const nodes=sceneEntities.filter(e=>selected.has(e.id)&&!omitted.has(e.id)).map(e=>{
+  if(nestedRoots.has(e.id)){
+   const source=nestedRoots.get(e.id),members=sceneEntities.filter(o=>o.id===e.id||isDescendantOf(o,e.id,byId)),overrides={},removedProperties={};
+   if(members.length!==source.nodes.length)throw Error('Structure du prefab enfant modifiée : enregistrer une nouvelle composition enfant avant le parent.');
+   const origin=source.nodes.find(n=>n.parentKey==null).data;
+   for(const item of members){
+    const sourceKey=object=>object.prefabLinks?.find(l=>l.prefabId===source.id&&l.rootId===e.id)?.nodeKey||object.prefabNodeKey;
+    const nodeKey=sourceKey(item),template=source.nodes.find(n=>n.key===nodeKey);
+    if(!template)throw Error('Structure enfant modifiée : enregistrer d’abord le prefab enfant.');
+    const data=cleanHierarchyNode(item),baseline=structuredClone(template.data);
+    if(item.id!==e.id){data.x=(data.x||0)-(e.x||0)+(origin.x||0);data.y=(data.y||0)-(e.y||0)+(origin.y||0)}
+    for(const joint of ['joint3d','joint2d'])if(data[joint]?.targetId){
+     const target=members.find(m=>m.id===data[joint].targetId),targetKey=target&&sourceKey(target);
+     if(!targetKey)throw Error('Articulation externe au prefab enfant.');data[joint].targetNodeKey=targetKey;delete data[joint].targetId;
+    }
+    if(item.id===e.id)for(const field of ['x','y']){delete data[field];delete baseline[field]}
+    const diff=diffPrefabData(baseline,data);
+    if(Object.keys(diff.patch).length)overrides[nodeKey]=diff.patch;
+    if(diff.removed.length)removedProperties[nodeKey]=diff.removed;
+   }
+   return {key:keyFor(e.id),parentKey:keyFor(e.parentId),name:e.name,data:{x:e.x,y:e.y},nested:{prefabId:source.id,overrides,removedProperties}};
+  }
   const data=cleanHierarchyNode(e);
   // Preserve intra-prefab joint links, remapping only references to members.
-  if(data.joint3d?.enabled!==false&&data.joint3d?.targetId){
-   if(!selected.has(Number(data.joint3d.targetId)))
+  for(const joint of ['joint3d','joint2d'])if(data[joint]?.enabled!==false&&data[joint]?.targetId){
+   if(!selected.has(Number(data[joint].targetId)))
     throw Error('Articulation externe au prefab : inclus aussi sa cible dans la hiérarchie.');
-   data.joint3d.targetNodeKey=keyFor(Number(data.joint3d.targetId));
-   delete data.joint3d.targetId;
+   data[joint].targetNodeKey=keyFor(Number(data[joint].targetId));
+   delete data[joint].targetId;
   }
   return {key:keyFor(e.id),parentKey:e.id===root.id?null:keyFor(e.parentId),name:e.name||'GameObject',data};
  });
  validateHierarchy(nodes);
- return {version:2,name:root.name||'Prefab',mode:mode||(['2d','3d'].includes(root.mode)?root.mode:root.type==='mesh3d'?'3d':'2d'),
+ return {version:3,coordinateSpace:'legacy-world',name:root.name||'Prefab',mode:mode||(['2d','3d'].includes(root.mode)?root.mode:root.type==='mesh3d'?'3d':'2d'),
   rootKey:keyFor(root.id),nodes,components:clean(root)};
 }
 export function savePrefabHierarchy(root,sceneEntities,storage=globalThis.localStorage,{mode=null}={}){
- const hierarchy=makePrefabHierarchy(root,sceneEntities,{mode});
- const entries=readPrefabs(storage);
+ const hierarchy=makePrefabHierarchy(root,sceneEntities,{mode,prefabs:readPrefabs(storage)});
+ const entries=rawPrefabs(storage,true);
  const id='prefab-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
- const prefab={...hierarchy,id};entries.push(prefab);
- storage.setItem(key,JSON.stringify(entries));changed();return prefab;
+ const prefab={...hierarchy,id};entries.push(prefab);const preview=readPrefabs({getItem:()=>JSON.stringify(entries)}).find(p=>p.id===id);if(preview?.invalidVariant)throw Error(preview.prefabError);
+ writePrefabLibrary(storage,entries);changed();return prefab;
 }
 export function instantiatePrefabHierarchy(prefab,nextId,x=120,y=120){
+ if(prefab?.nodes?.some(n=>n.nested))throw Error('Résoudre les sources des prefabs imbriqués depuis la bibliothèque avant instanciation.');
  if(prefab?.invalidVariant)throw Error('Variante de prefab invalide : source parent absente ou cyclique');
- if(!idOf(nextId))throw Error('Identifiant de prefab invalide');
+ if(!idOf(nextId)||nextId+(prefab?.nodes?.length||1)>Number.MAX_SAFE_INTEGER)throw Error('Identifiant de prefab invalide');
  if(!Array.isArray(prefab?.nodes)||!prefab.nodes.length){
   return {entities:[instantiatePrefab(prefab,nextId,x,y)],nextId:nextId+1,rootId:nextId};
  }
@@ -156,12 +189,10 @@ export function instantiatePrefabHierarchy(prefab,nextId,x=120,y=120){
   for(const field of hierarchyFields)delete source[field];
   const entity={...source,id:assigned.get(node.key),name:node.name+(node.key===rootKey?' '+nextId:''),
    parentId:node.parentKey==null?null:assigned.get(node.parentKey),
-   prefabSourceId:prefab.id,prefabNodeKey:node.key,prefabOverrides:[]};
-  if(node.key===rootKey){entity.x=x;entity.y=y}
-  if(entity.joint3d?.targetNodeKey){
-   entity.joint3d.targetId=assigned.get(entity.joint3d.targetNodeKey)??0;
-   delete entity.joint3d.targetNodeKey;
-  }
+   prefabSourceId:prefab.id,prefabNodeKey:node.key,prefabInstanceRootId:assigned.get(rootKey),prefabOverrides:[],prefabLinks:[{prefabId:prefab.id,nodeKey:node.key,rootId:assigned.get(rootKey)},...(node.sourceLinks||[]).map(link=>({prefabId:link.prefabId,nodeKey:link.nodeKey,rootId:assigned.get(link.scopeKey)}))]};
+  const closest=entity.prefabLinks.at(-1);entity.prefabSourceId=closest.prefabId;entity.prefabNodeKey=closest.nodeKey;entity.prefabInstanceRootId=closest.rootId;
+  if(prefab.coordinateSpace==='legacy-world'&&node.key!==rootKey){const origin=prefab.nodes.find(n=>n.key===rootKey).data;entity.x=(entity.x||0)+x-(origin.x||0);entity.y=(entity.y||0)+y-(origin.y||0)}if(node.key===rootKey){entity.x=x;entity.y=y}
+  for(const joint of ['joint3d','joint2d'])if(entity[joint]?.targetNodeKey){if(!assigned.has(entity[joint].targetNodeKey))throw Error('Cible d’articulation prefab absente.');entity[joint].targetId=assigned.get(entity[joint].targetNodeKey);delete entity[joint].targetNodeKey;}
   return entity;
  });
  return {entities,nextId:nextId+entities.length,rootId:assigned.get(rootKey)};
@@ -179,21 +210,86 @@ export function createPrefabVariant(base,overrides={},name=(base?.name||'Prefab'
  return {version:2,id:'variant-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),
   basePrefabId:base.id,name,mode:base.mode,overrides:structuredClone(overrides)};
 }
-export function savePrefabVariant(base,overrides={},storage=globalThis.localStorage,{name=null}={}){
+export function savePrefabVariant(base,overrides={},storage=globalThis.localStorage,{name=null,removedProperties={}}={}){
  const source=readPrefabs(storage).find(p=>p.id===base?.id);
  if(!source||source.invalidVariant)throw Error('La source de cette variante doit être enregistrée dans la bibliothèque');
  const variant=createPrefabVariant(source,overrides,name||source.name+' Variant');
- const stored={...variant,components:structuredClone(source.components)};
- const all=rawPrefabs(storage);all.push(stored);storage.setItem(key,JSON.stringify(all));changed();
+ const stored={...variant,removedProperties:structuredClone(removedProperties),components:structuredClone(source.components)};resolvePrefabVariant(stored,source);
+ const all=rawPrefabs(storage,true);all.push(stored);writePrefabLibrary(storage,all);changed();
  return resolvePrefabVariant(stored,source);
 }
 export function resolvePrefabVariant(variant,base){
  if(!variant?.basePrefabId||variant.basePrefabId!==base?.id||!Array.isArray(base.nodes))throw Error('Variante et prefab parent incompatibles');
  validateHierarchy(base.nodes);
- const nodes=structuredClone(base.nodes);
+ const nodes=structuredClone(base.nodes);for(const key of Object.keys(variant.overrides||{}))if(!nodes.some(n=>n.key===key))throw Error('Nœud de variante absent : '+key);
  for(const node of nodes)for(const [property,value] of Object.entries(variant.overrides?.[node.key]||{})){
   if(hierarchyFields.has(property)||property==='key'||property==='parentKey')throw Error('Override de structure interdit');
-  node.data[property]=structuredClone(value);
+  node.data[property]=mergePrefabValue(node.data[property],value);
  }
- return {...structuredClone(base),id:variant.id,name:variant.name||base.name,basePrefabId:base.id,overrides:structuredClone(variant.overrides||{}),nodes};
+ for(const [nodeKey,paths] of Object.entries(variant.removedProperties||{})){const node=nodes.find(n=>n.key===nodeKey);if(!node)throw Error('Nœud supprimé de la source de variante : '+nodeKey);if(!Array.isArray(paths)||paths.length>256)throw Error('Liste de suppressions de variante invalide.');for(const path of paths)deletePrefabPath(node.data,path);}
+ return {...structuredClone(base),id:variant.id,name:variant.name||base.name,basePrefabId:base.id,overrides:structuredClone(variant.overrides||{}),removedProperties:structuredClone(variant.removedProperties||{}),nodes};
+}
+
+const unsafePrefabKey=key=>['__proto__','prototype','constructor'].includes(key);
+function mergePrefabValue(base,patch,depth=0){
+ if(depth>16)throw Error('Propriétés de prefab trop imbriquées');
+ if(patch&&typeof patch==='object'&&!Array.isArray(patch)){
+  const result=base&&typeof base==='object'&&!Array.isArray(base)?structuredClone(base):{};
+  for(const [key,value] of Object.entries(patch)){if(unsafePrefabKey(key))throw Error('Propriété prefab réservée');result[key]=mergePrefabValue(result[key],value,depth+1)}return result;
+ }return structuredClone(patch);
+}
+const isDescendantOf=(entity,rootId,byId)=>{let parent=entity.parentId;const seen=new Set();while(parent!=null&&!seen.has(parent)){if(parent===rootId)return true;seen.add(parent);parent=byId.get(parent)?.parentId}return false};
+function resolveNestedPrefab(prefab,lookup){
+ if(!prefab.nodes?.some(n=>n.nested))return prefab;
+ validateHierarchy(prefab.nodes);const nodes=[];
+ for(const slot of prefab.nodes){
+  if(!slot.nested){nodes.push(structuredClone(slot));continue}
+  const source=lookup(slot.nested.prefabId);if(source.invalidVariant||!source.nodes)throw Error('Source imbriquée invalide');
+  for(const key of new Set([...Object.keys(slot.nested.overrides||{}),...Object.keys(slot.nested.removedProperties||{})]))if(!source.nodes.some(n=>n.key===key))throw Error('Nœud imbriqué absent : '+key);
+  const rootKey=validateHierarchy(source.nodes),qualify=key=>key===rootKey?slot.key:slot.key+'/'+key;
+  for(const original of source.nodes){
+   const node=structuredClone(original),patch=slot.nested.overrides?.[original.key]||{};
+   for(const field of Object.keys(patch))if(hierarchyFields.has(field)||unsafePrefabKey(field))throw Error('Override imbriqué de structure interdit');
+   node.data=mergePrefabValue(node.data,patch);const removed=slot.nested.removedProperties?.[original.key]||[];if(!Array.isArray(removed)||removed.length>256)throw Error('Liste de suppressions imbriquées invalide.');for(const path of removed)deletePrefabPath(node.data,path);node.key=qualify(original.key);node.parentKey=original.key===rootKey?slot.parentKey:qualify(original.parentKey);
+   if(original.key===rootKey){node.name=slot.name||node.name;node.data=mergePrefabValue(node.data,slot.data)}
+   for(const joint of ['joint3d','joint2d'])if(node.data[joint]?.targetNodeKey)node.data[joint].targetNodeKey=qualify(node.data[joint].targetNodeKey);
+   if(original.key!==rootKey){const origin=source.nodes.find(n=>n.key===rootKey).data;node.data.x=(node.data.x||0)+(slot.data.x||0)-(origin.x||0);node.data.y=(node.data.y||0)+(slot.data.y||0)-(origin.y||0)}
+   node.sourceLinks=[{prefabId:source.id,nodeKey:original.key,scopeKey:slot.key},...(original.sourceLinks||[]).map(link=>({...link,scopeKey:qualify(link.scopeKey)}))];
+   if(node.sourceLinks.length>=16)throw Error('Profondeur de prefab imbriqué dépassée.');
+   nodes.push(node);
+  }
+  if(nodes.length>1000)throw Error('Limite de 1000 objets dans le prefab développé.');
+ }
+ validateHierarchy(nodes);return {...prefab,nodes,components:structuredClone(nodes.find(n=>n.parentKey==null).data)};
+}
+function writePrefabLibrary(storage,entries){
+ const previous=storage.getItem(key)||'[]';
+ if(storage.getItem(key+'.before-v3')==null)storage.setItem(key+'.before-v3',previous);
+ storage.setItem(key,JSON.stringify(entries));
+}
+function deletePrefabPath(data,path){
+ if(typeof path!=='string'||!path||path.length>1600)throw Error('Chemin de propriété prefab invalide.');
+ const parts=path.split('.');if(parts.some(unsafePrefabKey)||hierarchyFields.has(parts[0]))throw Error('Suppression de structure interdite.');
+ let parent=data;for(const part of parts.slice(0,-1)){if(!parent||typeof parent!=='object'||Array.isArray(parent))return;parent=parent[part]}if(parent&&typeof parent==='object')delete parent[parts.at(-1)];
+}
+export function updatePrefabNodeProperties(prefabId,nodeKey,patch,removed=[],storage=globalThis.localStorage){
+ const all=rawPrefabs(storage,true),raw=all.find(p=>p.id===prefabId);if(!raw)throw Error('Source prefab absente');
+ for(const field of Object.keys(patch))if(hierarchyFields.has(field)||unsafePrefabKey(field))throw Error('Modification de structure interdite');
+ if(raw.basePrefabId){raw.overrides??={};raw.overrides[nodeKey]=mergePrefabValue(raw.overrides[nodeKey]||{},patch);raw.removedProperties??={};raw.removedProperties[nodeKey]=[...new Set([...(raw.removedProperties[nodeKey]||[]),...removed])].filter(path=>!patchTouchesPath(patch,path));}
+ else {const node=raw.nodes?.find(n=>n.key===nodeKey);if(!node||node.nested)throw Error('Nœud source non éditable directement');node.data=mergePrefabValue(node.data,patch);for(const path of removed)deletePrefabPath(node.data,path);if(node.parentKey==null)raw.components=structuredClone(node.data);}
+ // Validate a virtual library before writing, including dependencies and cycles.
+ const preview=readPrefabs({getItem:()=>JSON.stringify(all)}).find(p=>p.id===prefabId);if(preview?.invalidVariant)throw Error(preview.prefabError);
+ writePrefabLibrary(storage,all);changed();return preview;
+}
+function diffPrefabData(base,next){
+ const patch={},removed=[];const visit=(a,b,out,path='')=>{
+  for(const field of new Set([...Object.keys(a||{}),...Object.keys(b||{})])){
+   const at=path?path+'.'+field:field;if(!Object.hasOwn(b||{},field)){removed.push(at);continue}
+   const old=a?.[field],value=b[field];if(JSON.stringify(old)===JSON.stringify(value))continue;
+   if(old&&value&&typeof old==='object'&&typeof value==='object'&&!Array.isArray(old)&&!Array.isArray(value)){out[field]={};visit(old,value,out[field],at)}else out[field]=structuredClone(value);
+  }
+ };visit(base,next,patch);return {patch,removed};
+}
+function patchTouchesPath(patch,path){
+ let value=patch;for(const part of path.split('.')){if(!value||typeof value!=='object'||Array.isArray(value))return true;if(!Object.hasOwn(value,part))return false;value=value[part]}return true;
 }

@@ -1,9 +1,17 @@
 import {sampleRigPose,nodeMatrix,multiplyMatrices} from './gltf-animation.js';
 import {invertMatrix4Math} from './math-kernel.js';
-export const humanoidBones=Object.freeze(['hips','spine','chest','upperChest','neck','head','leftShoulder','leftUpperArm','leftLowerArm','leftHand','rightShoulder','rightUpperArm','rightLowerArm','rightHand','leftUpperLeg','leftLowerLeg','leftFoot','rightUpperLeg','rightLowerLeg','rightFoot']);
-export const requiredHumanoidBones=Object.freeze(humanoidBones.filter(b=>!['chest','upperChest','neck','leftShoulder','rightShoulder'].includes(b)));
+const bodyBones=['hips','spine','chest','upperChest','neck','head','leftShoulder','leftUpperArm','leftLowerArm','leftHand','rightShoulder','rightUpperArm','rightLowerArm','rightHand','leftUpperLeg','leftLowerLeg','leftFoot','rightUpperLeg','rightLowerLeg','rightFoot'];
+const fingerNames=['Thumb','Index','Middle','Ring','Little'],fingerSegments=['Proximal','Intermediate','Distal'];
+const fingerBones=['left','right'].flatMap(side=>fingerNames.flatMap(finger=>fingerSegments.map(segment=>side+finger+segment)));
+export const humanoidBones=Object.freeze([...bodyBones,...fingerBones,'leftToes','rightToes','leftEye','rightEye','jaw']);
+export const requiredHumanoidBones=Object.freeze(bodyBones.filter(b=>!['chest','upperChest','neck','leftShoulder','rightShoulder'].includes(b)));
 export const humanoidMasks=Object.freeze(['fullBody','upperBody','lowerBody','head','leftArm','rightArm']);
 const aliases={hips:['hips','pelvis','hip'],spine:['spine','spine01','spine1'],chest:['chest','spine1','spine01','spine2','spine02','upperchest'],upperChest:['upperchest','spine3','spine03'],neck:['neck','neck1','neck01'],head:['head'],leftShoulder:['leftshoulder','shoulderl','lshoulder','claviclel'],rightShoulder:['rightshoulder','shoulderr','rshoulder','clavicler'],leftUpperArm:['leftupperarm','leftarm','upperarml','arml','lupperarm'],rightUpperArm:['rightupperarm','rightarm','upperarmr','armr','rupperarm'],leftLowerArm:['leftlowerarm','leftforearm','forearml','lowerarml','lforearm'],rightLowerArm:['rightlowerarm','rightforearm','forearmr','lowerarmr','rforearm'],leftHand:['lefthand','handl','lhand'],rightHand:['righthand','handr','rhand'],leftUpperLeg:['leftupperleg','leftupleg','leftthigh','thighl','upperlegl'],rightUpperLeg:['rightupperleg','rightupleg','rightthigh','thighr','upperlegr'],leftLowerLeg:['leftlowerleg','leftleg','leftcalf','shinl','calfl','lowerlegl'],rightLowerLeg:['rightlowerleg','rightleg','rightcalf','shinr','calfr','lowerlegr'],leftFoot:['leftfoot','footl','lfoot'],rightFoot:['rightfoot','footr','rfoot']};
+for(const side of ['left','right'])for(const finger of fingerNames)for(const [index,segment] of fingerSegments.entries()){
+ const prefix=side==='left'?'l':'r',names=finger==='Little'?['little','pinky']:[finger.toLowerCase()],slot=side+finger+segment;
+ aliases[slot]=[slot.toLowerCase(),...names.flatMap(name=>[side+'hand'+name+(index+1),name+'0'+(index+1)+prefix,name+(index+1)+prefix])];
+}
+Object.assign(aliases,{leftToes:['lefttoebase','lefttoes','balll','toel'],rightToes:['righttoebase','righttoes','ballr','toer'],leftEye:['lefteye','eyel'],rightEye:['righteye','eyer'],jaw:['jaw','lowerjaw']});
 const key=name=>String(name||'').toLowerCase().replace(/^(?:(?:mixamorig|armature|skeleton)[.:_\s-]*|rig[.:_\s-]+)+/,'').replace(/[^a-z0-9]/g,'');
 export function createHumanoidAvatar(rig,{bones={}}={}){
  const mapped={},used=new Set();
@@ -25,6 +33,11 @@ export function inspectHumanoidAvatar(avatar,rig=null){
  for(const slot of humanoidBones)if(avatar.bones[slot]){const matches=rig.nodes.map((n,i)=>n.name===avatar.bones[slot]?i:-1).filter(i=>i>=0);if(matches.length!==1)errors.push('Avatar : os absent ou ambigu : '+avatar.bones[slot]);else indices[slot]=matches[0]}
  const below=(child,parent)=>{let index=rig.parents[child];for(let k=0;k<rig.nodes.length&&index>=0;k++,index=rig.parents[index])if(index===parent)return true;return false};
  for(const chain of [['hips','spine','head'],['spine','leftUpperArm','leftLowerArm','leftHand'],['spine','rightUpperArm','rightLowerArm','rightHand'],['hips','leftUpperLeg','leftLowerLeg','leftFoot'],['hips','rightUpperLeg','rightLowerLeg','rightFoot']])for(let i=1;i<chain.length;i++){const parent=indices[chain[i-1]],child=indices[chain[i]];if(parent!=null&&child!=null&&!below(child,parent))errors.push('Avatar : hiérarchie incohérente '+chain[i-1]+' → '+chain[i])}
+ for(const side of ['left','right']){
+  const chains=[[side+'Foot',side+'Toes'],...fingerNames.map(finger=>[side+'Hand',...fingerSegments.map(segment=>side+finger+segment)])];
+  for(const chain of chains){const mapped=chain.filter(slot=>indices[slot]!=null);for(let i=1;i<mapped.length;i++)if(!below(indices[mapped[i]],indices[mapped[i-1]]))errors.push('Avatar : hiérarchie optionnelle incohérente '+mapped[i-1]+' → '+mapped[i]);}
+ }
+ for(const slot of ['leftEye','rightEye','jaw'])if(indices[slot]!=null&&indices.head!=null&&!below(indices[slot],indices.head))errors.push('Avatar : '+slot+' doit dépendre de la tête.');
  return errors;
 }
 export function humanoidMaskRoots(avatar,mask){

@@ -34,12 +34,12 @@ export function stepAnimalControllers(entities,dt,{mode='3d'}={}){
   const current=pos(animal),targets=entities.filter(e=>e!==animal&&e.enabled!==false&&e.id===cfg.targetId);
   const target=targets[0],threat=target?pos(target):null;
   const distance=threat?Math.hypot(threat.x-current.x,threat.y-current.y):Infinity;
-  const flee=cfg.behavior==='flee'&&threat&&distance<cfg.perceptionRadius*64;
+  const flee=cfg.behavior==='flee'&&threat&&distance<Math.max(cfg.perceptionRadius,cfg.fleeDistance)*64;
   let vx=0,vy=0,speed=0;
   if(flee){
    vx=current.x-threat.x;vy=current.y-threat.y;speed=cfg.runSpeed*64;
    if(Math.hypot(vx,vy)<1e-4){vx=1;vy=0}
-  }else if(cfg.behavior!=='idle'){
+  }else if(cfg.behavior!=='idle'&&state.clock%(6+cfg.restSeconds)<6){
    // Repeatable orbit around original location; never teleports or uses random state.
    const angle=state.clock*.45+(n(animal.id)%17)*.37, radius=cfg.roamRadius*64;
    const tx=state.originX+Math.sin(angle)*radius,ty=state.originY+Math.cos(angle)*radius;

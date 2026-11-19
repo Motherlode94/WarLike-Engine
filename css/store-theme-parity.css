@@ -20,7 +20,7 @@ html[data-warlike-app="warlike-engine"][data-wl-theme]{
  color-scheme:dark;
 }
 html[data-warlike-app="warlike-engine"][data-wl-theme="sand-light"]{color-scheme:light}
-html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open){
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open):not(.reference-engine){
  --wl-theme-bg:var(--wl-bg)!important;
  --wl-theme-panel:var(--wl-surface)!important;
  --wl-theme-header:var(--wl-sidebar)!important;
@@ -40,30 +40,78 @@ html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open){
  background:var(--wl-bg)!important;
  color:var(--wl-fg)!important;
 }
-html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.studio-menubar,.topbar,.hierarchy,.inspector,.project-panel,.center-stack,.workspace,.blueprint-window,.editor-appearance-menu,.warlike-animation-studio,.render-quality-panel,.asset-content,.asset-folders,.asset-body,#assetGrid,#properties){
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open):not(.reference-engine) :is(.studio-menubar,.topbar,.hierarchy,.inspector,.project-panel,.center-stack,.workspace,.blueprint-window,.editor-appearance-menu,.warlike-animation-studio,.render-quality-panel,.asset-content,.asset-folders,.asset-body,#assetGrid,#properties){
  border-color:var(--wl-border)!important;
  color:var(--wl-fg)!important;
 }
-html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.studio-menubar,.topbar,.scene-header,.scene-tools,.bottom-tabs,.panel-title,.dock-title,.asset-toolbar,.console-bar,.project-footer){
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open):not(.reference-engine) :is(.studio-menubar,.topbar,.scene-header,.scene-tools,.bottom-tabs,.panel-title,.dock-title,.asset-toolbar,.console-bar,.project-footer){
  background:var(--wl-sidebar)!important;
  color:var(--wl-fg)!important;
  border-color:var(--wl-border)!important;
 }
-html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.hierarchy,.inspector,.project-panel,.asset-content,.asset-folders,.asset-body,#assetGrid,#properties,.blueprint-window){
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open):not(.reference-engine) :is(.hierarchy,.inspector,.project-panel,.asset-content,.asset-folders,.asset-body,#assetGrid,#properties,.blueprint-window){
  background:var(--wl-surface)!important;
 }
-html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.studio-menubar,.hierarchy,.inspector,.project-panel,.blueprint-window) :is(button,input,select,textarea):not([type=color]):not([type=checkbox]):not([type=range]){
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open):not(.reference-engine) :is(.studio-menubar,.hierarchy,.inspector,.project-panel,.blueprint-window) :is(button,input,select,textarea):not([type=color]):not([type=checkbox]):not([type=range]){
  color:var(--wl-fg)!important;
  border-color:var(--wl-border)!important;
 }
-html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.studio-menubar,.hierarchy,.inspector,.project-panel,.blueprint-window) :is(input,select,textarea):not([type=color]):not([type=checkbox]):not([type=range]){
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open):not(.reference-engine) :is(.studio-menubar,.hierarchy,.inspector,.project-panel,.blueprint-window) :is(input,select,textarea):not([type=color]):not([type=checkbox]):not([type=range]){
  background:var(--wl-input)!important;
 }
-html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(.scene-tabs .active,.bottom-tabs .active,#objects .selected,.asset-folders .active){
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open):not(.reference-engine) :is(.scene-tabs .active,.bottom-tabs .active,#objects .selected,.asset-folders .active){
  background:var(--wl-selected)!important;
  color:var(--wl-fg)!important;
 }
-html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open) :is(button,input,select,textarea):focus-visible{
+html[data-warlike-app="warlike-engine"][data-wl-theme] body:not(.hub-open):not(.reference-engine) :is(button,input,select,textarea):focus-visible{
  outline:2px solid var(--wl-focus)!important;
 }
 /* Preserve WebGL canvas, scene lighting and scene/game backgrounds. */
+
+
+/* Engine editor-specific palette wins over Store's shared theme.
+   Do not change Hub chrome, Game viewport, canvases, assets or other apps. */
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build){
+ --editor-accent:var(--warlike-palette-accent,#48cba9)!important;
+ --wl-accent:var(--warlike-palette-accent,#48cba9);
+ --wl-selected:color-mix(in srgb,var(--warlike-palette-accent,#48cba9) 22%,var(--warlike-palette-panel,#252a32));
+ --wl-focus:var(--warlike-palette-accent,#48cba9);
+}
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) .scene-header .scene-tabs .tab.active{
+ background:var(--wl-editor-scene-active-bg,#34434b)!important;
+ color:var(--wl-editor-scene-active-fg,#f1f5f9)!important;
+ border-top:2px solid var(--warlike-palette-accent,#48cba9)!important;
+ border-bottom:2px solid var(--warlike-palette-accent,#48cba9)!important;
+ text-shadow:none!important;
+}
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) .scene-header .scene-tabs .tab:not(.active){
+ background:var(--warlike-palette-header,#303844)!important;
+ color:var(--wl-text-header,#f1f5f9)!important;
+ border-bottom:2px solid transparent!important;
+}
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) #hierarchyPanel .unity-hierarchy-row.selected{
+ background:color-mix(in srgb,var(--warlike-palette-accent,#48cba9) 17%,var(--warlike-palette-panel,#252a32))!important;
+ border-left-color:var(--warlike-palette-accent,#48cba9)!important;
+}
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) #hierarchyPanel :is(.hierarchy-row-layer,.hierarchy-row-tag,.hierarchy-row-static){
+ background:var(--warlike-palette-button,#303844)!important;
+ color:var(--wl-text-button,#f1f5f9)!important;
+ opacity:1!important;
+ border:1px solid var(--warlike-palette-border,#4b5565)!important;
+}
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) #editorSwatches button{
+ background-color:var(--swatch-color)!important;
+ background-image:none!important;
+ border:1px solid var(--warlike-palette-border,#4b5565)!important;
+ opacity:1!important;
+ filter:none!important;
+ min-width:0;
+}
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) #editorSwatches button[aria-pressed="true"]{
+ outline:2px solid var(--wl-text-panel,#f1f5f9)!important;
+ outline-offset:2px;
+ box-shadow:0 0 0 1px var(--warlike-palette-panel,#252a32) inset!important;
+}
+html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) .editor-appearance-menu input[type=color]{
+ background:var(--warlike-palette-panel,#252a32)!important;
+}

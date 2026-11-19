@@ -1,3 +1,4 @@
+import {prefilterRadianceFace3d} from './ibl-prefilter-3d.js';
 // Procedural HDR environment cubemaps for the WebGL1 GLB renderer.
 // RGBM stores linear radiance up to 8.0 in RGBA8 without float texture extensions.
 const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
@@ -33,35 +34,48 @@ export function buildEnvironmentFace3d(face,size,options={}){
  return pixels;
 }
 export function createEnvironmentIbl3d(gl,{sharpSize=32,diffuseSize=16}={}){
- if(!gl||!Number.isInteger(sharpSize)||!Number.isInteger(diffuseSize)||sharpSize<2||diffuseSize<2)throw Error('Invalid IBL context or cubemap size');
+ const valid=size=>Number.isInteger(size)&&size>=2&&size<=128&&(size&(size-1))===0;
+ if(!gl||!valid(sharpSize)||!valid(diffuseSize))throw Error('Invalid IBL context or cubemap size');
  const sharp=gl.createTexture(),diffuse=gl.createTexture();
- if(!sharp||!diffuse)throw Error('Unable to allocate environment cubemap');
- const upload=(texture,size,options)=>{
-  gl.bindTexture(gl.TEXTURE_CUBE_MAP,texture);
-  for(let face=0;face<6;face++)gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X+face,0,gl.RGBA,size,size,0,gl.RGBA,gl.UNSIGNED_BYTE,buildEnvironmentFace3d(face,size,options));
-  gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+ if(!sharp||!diffuse){if(sharp)gl.deleteTexture(sharp);if(diffuse)gl.deleteTexture(diffuse);throw Error('Unable to allocate environment cubemap')}
+ const maxLod=Math.log2(sharpSize);
+ const upload=(sampleRadiance)=>{
+  const previous=gl.getParameter(gl.TEXTURE_BINDING_CUBE_MAP);
+  try{
+   gl.bindTexture(gl.TEXTURE_CUBE_MAP,sharp);
+   // Every level is convolved from source radiance, never generateMipmap's
+   // box-filtering of RGBM bytes (which is not a GGX convolution).
+   for(let level=0;level<=maxLod;level++){
+    const size=sharpSize>>level,roughness=level/maxLod;
+    for(let face=0;face<6;face++)gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X+face,level,gl.RGBA,size,size,0,gl.RGBA,gl.UNSIGNED_BYTE,prefilterRadianceFace3d(sampleRadiance,face,size,{roughness,samples:32}));
+   }
+   gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
+   gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+   gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+   gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+   gl.bindTexture(gl.TEXTURE_CUBE_MAP,diffuse);
+   for(let face=0;face<6;face++)gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X+face,0,gl.RGBA,diffuseSize,diffuseSize,0,gl.RGBA,gl.UNSIGNED_BYTE,prefilterRadianceFace3d(sampleRadiance,face,diffuseSize,{diffuse:true,samples:48}));
+   gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+   gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+   gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+   gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  }finally{gl.bindTexture(gl.TEXTURE_CUBE_MAP,previous)}
  };
- // HDRI input uses GGX importance sampling for the sharp map and a
- // cosine-weighted irradiance convolution for the broad/diffuse map.
+ const update=options=>upload(direction=>proceduralRadiance3d(direction,options));
  const updateHdri=(hdr,prefilter)=>{
   if(!hdr?.data||typeof prefilter!=='function')throw Error('Missing HDRI prefilter');
-  const apply=(texture,size,settings)=>{
-   gl.bindTexture(gl.TEXTURE_CUBE_MAP,texture);
-   for(let face=0;face<6;face++)gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X+face,0,gl.RGBA,size,size,0,gl.RGBA,gl.UNSIGNED_BYTE,prefilter(hdr,face,size,settings));
-  };
-  apply(sharp,sharpSize,{roughness:.13,samples:32});
-  apply(diffuse,diffuseSize,{diffuse:true,samples:48});
-  gl.bindTexture(gl.TEXTURE_CUBE_MAP,null);
+  // Keep the public callback contract: prefilter owns HDR decoding/sampling.
+  const previous=gl.getParameter(gl.TEXTURE_BINDING_CUBE_MAP);
+  try{
+   gl.bindTexture(gl.TEXTURE_CUBE_MAP,sharp);
+   for(let level=0;level<=maxLod;level++)for(let face=0;face<6;face++){
+    const size=sharpSize>>level;
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X+face,level,gl.RGBA,size,size,0,gl.RGBA,gl.UNSIGNED_BYTE,prefilter(hdr,face,size,{roughness:level/maxLod,samples:32}));
+   }
+   gl.bindTexture(gl.TEXTURE_CUBE_MAP,diffuse);
+   for(let face=0;face<6;face++)gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X+face,0,gl.RGBA,diffuseSize,diffuseSize,0,gl.RGBA,gl.UNSIGNED_BYTE,prefilter(hdr,face,diffuseSize,{diffuse:true,samples:48}));
+  }finally{gl.bindTexture(gl.TEXTURE_CUBE_MAP,previous)}
  };
- const update=({sunDirection,sunColor,sunIntensity}={})=>{
-  const options={sunDirection,sunColor,sunIntensity};
-  upload(sharp,sharpSize,options);
-  upload(diffuse,diffuseSize,{...options,soft:true});
-  gl.bindTexture(gl.TEXTURE_CUBE_MAP,null);
- };
- update();
- return {sharp,diffuse,update,updateHdri,destroy(){gl.deleteTexture(sharp);gl.deleteTexture(diffuse)}};
+ try{update()}catch(error){gl.deleteTexture(sharp);gl.deleteTexture(diffuse);throw error}
+ return {sharp,diffuse,maxLod,update,updateHdri,destroy(){gl.deleteTexture(sharp);gl.deleteTexture(diffuse)}};
 }

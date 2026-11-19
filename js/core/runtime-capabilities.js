@@ -17,6 +17,7 @@ export function inspectRuntimeCompatibility(entities,{target='web',backend='web'
   // its constraints: switching to Rapier is required for Web export.
   if(target==='web'&&project?.physics3d==='builtin'&&e.joint3d?.enabled!==false&&e.joint3d)
    add((e.name||'#'+e.id)+' · Joint 3D nécessite le moteur physique Rapier. Choisis Rapier dans les paramètres du projet avant l’export Web.',e.id);
+  if(Array.isArray(e.animatorGraph?.layers)&&e.animatorGraph.layers.some(l=>l?.avatarMask&&l.enabled!==false)&&(!e.animationRig||e.animationRig.enabled===false||!e.animationRig.avatar||e.animationRig.avatar.enabled===false))add((e.name||'#'+e.id)+' · masque humanoïde sans Avatar actif.',e.id);
   if(e.animationRig&&e.animationRig.enabled!==false)for(const error of inspectAnimationRig(e.animationRig))add((e.name||'#'+e.id)+' · '+error,e.id);
   if(e.animatorGraph&&e.animatorGraph.enabled!==false)for(const error of inspectAnimatorGraph(e.animatorGraph))add((e.name||'#'+e.id)+' · '+error,e.id);
   if(e.animationStudio&&e.animationStudio.enabled!==false&&e.animationStudio.playOnStart)for(const error of inspectAnimationStudio(e.animationStudio))add((e.name||'#'+e.id)+' · '+error,e.id);

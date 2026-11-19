@@ -1,3 +1,4 @@
+import {humanoidMasks} from './humanoid-avatar.js';
 import {blendSamples2d,machineAncestors,resolveMachineState,inspectMachines,transitionOrigins} from './animator-advanced.js';
 import {animationEventsBetween} from './animation-clips.js';
 import {resolveAnimationClip} from './gltf-animation.js';
@@ -25,6 +26,7 @@ export function inspectAnimatorGraph(graph){
  }
  const machineErrors=inspectMachines(graph);errors.push(...machineErrors);if(!resolveMachineState(graph,graph.entry))errors.push('État d’entrée absent.');
  const known=id=>ids.has(id)||typeof id==='string'&&id.startsWith('@')&&!!resolveMachineState(graph,id);
+ for(const layer of Array.isArray(graph.layers)?graph.layers:[])if(layer?.avatarMask&&!humanoidMasks.includes(layer.avatarMask))errors.push('Masque humanoïde de couche inconnu.');
  for(const t of graph.transitions){
   if(!t||!known(t.to)||t.from!=='*'&&!known(t.from))errors.push('Transition vers un état absent.');
   if(!Array.isArray(t?.conditions)||t.conditions.length>12||t.conditions.some(c=>!c||!safeParameter(c.parameter)||!['==','!=','>','>=','<','<=','trigger'].includes(c.operator||'==')||c.operator!=='trigger'&&!['number','string','boolean'].includes(typeof c.value)||typeof c.value==='number'&&!Number.isFinite(c.value)))errors.push('Conditions de transition invalides.');

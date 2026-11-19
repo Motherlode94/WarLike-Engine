@@ -92,6 +92,7 @@ export const playerModules=[
   "js/core/lighting.js",
   "js/core/local-asset-library.js",
   "js/core/logic-sequences.js",
+  "js/core/look-direction.js",
   "js/core/math-kernel.js",
   "js/core/mode-advanced.js",
   "js/core/native-3d.js",

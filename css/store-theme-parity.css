@@ -78,8 +78,8 @@ html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not
  --wl-focus:var(--warlike-palette-accent,#48cba9);
 }
 html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) .scene-header .scene-tabs .tab.active{
- background:color-mix(in srgb,var(--warlike-palette-accent,#48cba9) 24%,var(--warlike-palette-header,#303844))!important;
- color:var(--wl-text-selected,#f1f5f9)!important;
+ background:var(--wl-editor-scene-active-bg,#34434b)!important;
+ color:var(--wl-editor-scene-active-fg,#f1f5f9)!important;
  border-top:2px solid var(--warlike-palette-accent,#48cba9)!important;
  border-bottom:2px solid var(--warlike-palette-accent,#48cba9)!important;
  text-shadow:none!important;

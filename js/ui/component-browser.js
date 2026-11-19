@@ -55,7 +55,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
  heading.setAttribute('aria-label','Ajouter un composant WarLike');
  root.append(heading);
  const options=componentChoices(workspace.mode)
-  .map(d=>({...d,runtime:'web',attached:d.id==='sequence'?false:owner[d.id]!=null,add:()=>addObjectComponent(owner,d.id,workspace.mode)}));
+  .map(d=>({...d,runtime:d.runtime||'web',attached:d.id==='sequence'?false:owner[d.id]!=null,add:()=>addObjectComponent(owner,d.id,workspace.mode)}));
  if(workspace.mode==='3d')options.push({
   id:'light',name:'Lumière ponctuelle',category:'Rendu et scène',
   description:'Éclaire la scène 3D.',runtime:'web',
@@ -143,7 +143,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
    const button=make('button','component-browser-option');button.type='button';button.dataset.componentId=option.id;
    button.disabled=state.playing||!!option.attached;
    button.title=option.description;
-   const runtimeLabel=option.runtime==='dotnet'?' · .NET local':' · Web';
+   const runtimeLabel=option.runtime==='dotnet'?' · .NET local':option.runtime==='unverified'?' · Données seules, Play/export non intégrés':' · Web';
    button.append(make('strong','',option.name+(option.attached?' · ajouté':'')),make('small','',option.description+runtimeLabel));
    button.onclick=()=>attach(option);list.append(button);
   };
@@ -164,7 +164,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
    if(hasQuery)list.append(make('h4','component-browser-category','Résultats de recherche'));
    for(const option of items)renderOption(option);
    if(!items.length)list.append(make('p','component-browser-empty','Aucun composant trouvé pour cette recherche.'));
-   hint.textContent=items.length+' composants disponibles · Web = Play navigateur ; .NET local = pont C# requis. Les composants déjà présents restent intacts.';
+   hint.textContent=items.length+' composants disponibles · Web = Play navigateur ; .NET local = pont C# requis ; données seules = aucun runtime certifié. Les composants déjà présents restent intacts.';
   }
  };
 

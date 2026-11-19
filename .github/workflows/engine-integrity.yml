@@ -113,6 +113,30 @@ jobs:
             .validation-tools/chambre07-rapier/legacy-2d-outcome.png
           if-no-files-found: ignore
 
+  p6-fps-tps-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npx playwright install --with-deps chromium
+      - name: Native P5 FPS/TPS portable export in Chromium
+        run: node scripts/test-p6-fps-tps-export-browser.mjs
+        env:
+          WARLIKE_P6_OUTPUT_DIR: .validation-tools/p6-fps-tps
+      - name: Upload P6 FPS/TPS screenshots and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-fps-tps-browser
+          path: |
+            .validation-tools/p6-fps-tps/*.png
+            .validation-tools/p6-fps-tps/report.json
+          if-no-files-found: ignore
+
   complete-3d:
     runs-on: ubuntu-latest
     timeout-minutes: 8

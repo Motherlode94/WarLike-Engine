@@ -24,11 +24,27 @@ html[data-warlike-app="warlike-engine"] :is(.asset-card,.asset-item,.project-ass
 /* Editor palette owns both surfaces AND their matching readable text.
    Scope excludes the Hub, game builds, thumbnails and canvas pixels. */
 html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build){
- --wl-theme-panel:var(--warlike-palette-panel,#252a32);
- --wl-theme-header:var(--warlike-palette-header,#303844);
- --wl-theme-border:var(--warlike-palette-border,#4b5565);
- --wl-fg:var(--wl-text-panel,#eef3fa);
- --wl-fg-muted:var(--wl-text-muted,#bcc8d6);
+ /* Store parity otherwise redeclares these on body, hiding the palette on html.
+    Inherit the editor's complete pair before bridging legacy chrome tokens. */
+ --warlike-palette-surface:inherit!important;
+ --warlike-palette-panel:inherit!important;
+ --warlike-palette-header:inherit!important;
+ --warlike-palette-button:inherit!important;
+ --warlike-palette-border:inherit!important;
+ --warlike-palette-text:inherit!important;
+ --warlike-custom-surface:inherit!important;
+ --warlike-custom-text:inherit!important;
+ --editor-accent:inherit!important;
+ --wl-bg:var(--warlike-palette-surface,#252a32);
+ --wl-surface:var(--warlike-palette-panel,#252a32);
+ --wl-sidebar:var(--warlike-palette-header,#303844);
+ --wl-input:var(--warlike-palette-panel,#252a32);
+ --wl-border:var(--warlike-palette-border,#4b5565);
+ --wl-theme-panel:var(--warlike-palette-panel,#252a32)!important;
+ --wl-theme-header:var(--warlike-palette-header,#303844)!important;
+ --wl-theme-border:var(--warlike-palette-border,#4b5565)!important;
+ --wl-fg:var(--wl-text-panel,#eef3fa)!important;
+ --wl-fg-muted:var(--wl-text-muted,#bcc8d6)!important;
 }
 html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) :is(.panel-title,.project-header,.project-toolbar,.scene-header,.scene-tabs,.unity-scene-root,.unity-hierarchy-group-title){
  background:var(--warlike-palette-header,#303844)!important;color:var(--wl-text-header,#eef3fa)!important;border-color:var(--warlike-palette-border,#4b5565)!important;

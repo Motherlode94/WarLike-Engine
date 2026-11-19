@@ -28,10 +28,11 @@ for(const mode of ['2d','3d']){
  const base=path.join(built,mode);
  const html=await readFile(path.join(base,'index.html'),'utf8');
  assert.match(html,/src=["']\.\/js\/game-build-player\.js["']/,'Portable '+mode+' HTML must load its own bootstrap');
- for(const required of ['js/game-build-player.js','js/editor.js','js/core/runtime-session.js']){
+ for(const required of ['js/game-build-player.js','js/runtime/bootstrap.js','js/core/runtime-session.js']){
   const bytes=await readFile(path.join(base,required)).catch(()=>null);
   assert.ok(bytes?.byteLength,'Missing '+required+' in isolated '+mode+' export');
  }
+ assert.equal(await readFile(path.join(base,'js/editor.js')).catch(()=>null),null,'Editor must not ship in the player');
 }
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.png':'image/png','.glb':'model/gltf-binary','.wasm':'application/wasm','.svg':'image/svg+xml','.jpg':'image/jpeg','.webp':'image/webp'};
 const server=createServer(async(req,res)=>{

@@ -26,3 +26,16 @@ test('all preset themes resolve readable badge, tab and selection text',()=>{
   }
  }
 });
+
+test('selected Scene tab and swatches use the manual editor accent, not Store-selected green',()=>{
+ const parity=readFileSync(new URL('../css/store-theme-parity.css',import.meta.url),'utf8');
+ const scoped=parity.split('/* Engine editor-specific palette wins over Store')[1];
+ assert.ok(scoped,'editor palette priority bridge');
+ assert.match(scoped,/\.scene-header \.scene-tabs \.tab\.active/);
+ assert.match(scoped,/--editor-accent:var\(--warlike-palette-accent/);
+ assert.match(scoped,/#editorSwatches button\{/);
+ assert.match(scoped,/background-color:var\(--swatch-color\)!important/);
+ assert.match(scoped,/#hierarchyPanel :is\(\.hierarchy-row-layer/);
+ const appearance=readFileSync(new URL('../js/ui/editor-appearance.js',import.meta.url),'utf8');
+ assert.match(appearance,/setProperty\('--swatch-color',color\)/);
+});

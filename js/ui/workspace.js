@@ -21,7 +21,8 @@ import {state,notify} from '../core/state.js';
 import {catalog,urlFor,categories} from '../assets/catalog.js';
 import {addPrefab} from '../core/scene.js';
 import {placeEntityOnSurface3d} from '../core/scene-graph-v2.js';
-export const toolsState={tool:'move',snap:false,grid:true,colliders:false};
+import {toolsState} from '../core/view-options.js';
+export {toolsState};
 const $=s=>document.querySelector(s);
 export function setTool(id){if(!['hand','move','rotate','scale','rect'].includes(id))return;toolsState.tool=id;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===id));$('#toolStatus').textContent=id[0].toUpperCase()+id.slice(1)+' tool';log('Outil : '+id)}
 let lines=[];

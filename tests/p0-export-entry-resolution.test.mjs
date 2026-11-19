@@ -24,15 +24,16 @@ test('game export boot script is inside every isolated scene subdirectory',()=>{
   assert.equal(editor.pathname,folder+'js/editor.js');
  }
 });
-test('export contains boot and editor dependency modules (no bare CDN dependency)',async()=>{
+test('export contains player dependency modules without authoring code (no bare CDN dependency)',async()=>{
  assert.ok(Array.isArray(manifest.files));
  const files=new Set(gameRuntimeFiles(manifest.files,{project:{scenes:[]}}));
- for(const name of ['index.html','js/game-build-player.js','js/editor.js','js/core/runtime-session.js']){
+ for(const name of ['index.html','js/game-build-player.js','js/runtime/bootstrap.js','js/core/runtime-session.js']){
   assert.ok(files.has(name),'Missing required export runtime file '+name);
   const source=await readFile(new URL('../'+name,import.meta.url));
   assert.ok(source.length>0,name+' must not be empty');
  }
  const boot=await readFile(new URL('../js/game-build-player.js',import.meta.url),'utf8');
- assert.match(boot,/await import\(['"]\.\/editor\.js['"]\)/);
+ assert.match(boot,/await import\(['"]\.\/runtime\/bootstrap\.js['"]\)/);
+ assert.ok(!files.has('js/editor.js'));assert.ok(![...files].some(f=>f.startsWith('js/ui/')));
  assert.doesNotMatch(boot,/await import\(['"]\/(?:editor|camera)\//);
 });

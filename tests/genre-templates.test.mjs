@@ -94,7 +94,7 @@ test('Field Lab is a reversible diagnostics course in both workspaces',()=>{
  const logic=read('js/core/logic-sequences.js');
  assert.match(logic,/case 'playerInVehicle'/);
  assert.match(logic,/case 'playerOnFoot'/);
- const hud=read('js/ui/genre-hud.js');
+ const hud=read('js/runtime/ui/genre-hud.js');
  assert.match(hud,/genre==='fieldlab'/);
  const html=read('index.html');
  assert.match(html,/value="fieldlab"/);

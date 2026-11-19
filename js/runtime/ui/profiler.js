@@ -1,0 +1,13 @@
+import {runtimeProfiler,startProfiler,stopProfiler} from '../../core/runtime-profiler.js';
+import {isTypingTarget} from '../../core/editor-clipboard.js';
+import {state} from '../../core/state.js';
+export function initRuntimeProfilerUi(){
+ if(document.getElementById('warlikeProfiler'))return;
+ const panel=document.createElement('section');panel.id='warlikeProfiler';panel.hidden=true;panel.setAttribute('aria-label','Profiler WarLike');
+ const heading=document.createElement('strong');heading.textContent='WarLike Profiler · F7';const close=document.createElement('button');close.textContent='Fermer';close.onclick=()=>panel.hidden=true;
+ const capture=document.createElement('button');capture.textContent='Nouvelle capture';capture.onclick=()=>{if(state.playing)startProfiler()};const freeze=document.createElement('button');freeze.textContent='Figer la capture';freeze.onclick=stopProfiler;
+ const output=document.createElement('pre');output.setAttribute('aria-live','off');const download=document.createElement('button');download.textContent='Exporter le profil JSON';download.onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(runtimeProfiler.report(),null,2)],{type:'application/json'})),link=document.createElement('a');link.href=url;link.download='warlike-profiler-'+Date.now()+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+ panel.append(heading,close,capture,freeze,download,output);document.body.append(panel);
+ window.addEventListener('keydown',e=>{if(e.key!=='F7'||e.repeat||isTypingTarget(e.target))return;e.preventDefault();panel.hidden=!panel.hidden});
+ const fmt=v=>Number.isFinite(v)?v.toFixed(2):'indisponible';let last=0;const frame=now=>{requestAnimationFrame(frame);if(panel.hidden||now-last<500)return;last=now;const r=runtimeProfiler.report();output.textContent=(r.enabled?'Capture active':'Capture figée')+' · '+r.frames+' images / '+r.capacity+'\nFPS observés : '+fmt(r.averageFps)+'\nImage p50/p95 : '+fmt(r.frameMs.p50)+' / '+fmt(r.frameMs.p95)+' ms\nCPU mesuré p95 : '+fmt(r.cpuMeasuredMs.p95)+' ms\nGPU : '+r.gpu.status+' · p95 '+fmt(r.gpu.p95Ms)+' ms\nHeap JS : '+(r.last?.heapBytes!=null?(r.last.heapBytes/1048576).toFixed(1)+' Mio':'indisponible')+'\nObjets : '+(r.last?.entities??'—')+' · Draw calls : '+(r.last?.mode==='3d'?r.last.drawCalls:'non mesurés en Canvas')+'\nTriangles soumis : '+(r.last?.mode==='3d'?r.last.triangles:'non mesurés en Canvas')+'\n\nÉtapes CPU · cumul / p95 par image\n'+Object.entries(r.stages).map(([name,s])=>name+' : '+fmt(s.inclusiveMs)+' / '+fmt(s.p95Ms)+' ms').join('\n')+'\n\nInclusifs imbriqués : ne pas additionner.\nLes intervalles d’image sont réels, sans clamp du pas physique.'};requestAnimationFrame(frame);
+}

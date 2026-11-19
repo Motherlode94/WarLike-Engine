@@ -32,6 +32,27 @@ jobs:
           name: runtime-acceptance
           path: .validation-tools/runtime-acceptance/
           if-no-files-found: ignore
+  complex-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npx playwright install --with-deps chromium
+      - name: Complex scene edit, persistence, profiler and standalone export
+        run: node scripts/test-complex-production-browser.mjs
+      - name: Upload complex scene and profiler evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: complex-production
+          path: |
+            .validation-tools/complex-production/*.json
+            .validation-tools/complex-production/*.png
+          if-no-files-found: ignore
   core-and-export:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -44,7 +65,7 @@ jobs:
       - name: Rebuild portable runtime file manifest
         run: npm run build:runtime
       - name: Reject an outdated committed runtime manifest
-        run: git diff --exit-code -- runtime-files.json
+        run: git diff --exit-code -- runtime-files.json js/core/player-modules.js
       - name: Verify portable Web module dependency closure
         run: node scripts/check-runtime-module-closure.mjs
       - name: Check runtime files required by native CHAMBRE 07

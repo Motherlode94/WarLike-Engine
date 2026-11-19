@@ -122,7 +122,7 @@ export async function verifyLegacy2dOutcome(browser,{origin,output}){
   await page.getByRole('button',{name:'Jouer',exact:true}).waitFor({timeout:45000});
   const result=await page.evaluate(async()=>{
    const {restoreWorkspaces,workspace}=await import('/js/core/workspaces.js'),{restoreGameProject,freshGameProject}=await import('/js/core/game-project.js');
-   const {state,notify}=await import('/js/core/state.js'),{togglePlay}=await import('/js/core/scene.js');
+   const {state,notify}=await import('/js/core/state.js'),{togglePlay}=await import('/js/core/play-session.js');
    const {gameSession,setGamePhase,saveGameSlot,readGameSlot,queueLoadGame}=await import('/js/core/game-session.js'),{sequenceRuntime}=await import('/js/core/logic-sequences.js');
    const project={...freshGameProject(),id:'legacy-2d-save',title:'Ancienne scène 2D',genre:'action'};
    const entities=[{id:17,type:'player',name:'Ancien joueur',skin:'scout',x:100,y:100,w:32,h:48,hp:100,legacyField:{keep:true}}];

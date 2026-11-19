@@ -18,7 +18,7 @@ import {interactSimulationNode} from './simulation-nodes.js';
 import {upgradeHeroSkill} from './rpg-progression.js';
 import {healthOf,actorDistance} from './ai-perception.js';
 import {view3d,playableActor} from './viewport-3d.js';
-import {togglePlay} from './scene.js';
+import {togglePlay} from './play-session.js';
 import {fxRuntime} from './fx-runtime.js';
 import {cameraRigFor} from './play-camera.js';
 import {lighting} from './lighting.js';

@@ -14,6 +14,27 @@ try{
  const url='http://127.0.0.1:'+server.address().port;mark('boot');await page.goto(url,{waitUntil:'load'});await page.locator('body.reference-engine').waitFor();await page.getByRole('button',{name:'Ancien projet QA',exact:true}).click();await page.locator('#hubOverlay').waitFor({state:'hidden'});
  const snapshot=()=>page.evaluate(async()=>{const {state}=await import('/js/core/state.js');return JSON.parse(JSON.stringify(state.entities));});
  console.log('Editor opened legacy fixture');const legacy=await snapshot();assert.equal(legacy.length,1);assert.equal(legacy[0].id,41);assert.equal(legacy[0].x,123);assert.equal(legacy[0].script,'legacy-script-kept');assert.deepEqual(legacy[0].legacyExtension,{enabled:true,value:7});
+ // Check computed foreground/background pairs after the real theme change handler.
+ mark('theme contrast on legacy project');
+ const themes=await page.evaluate(async()=>{
+  const {editorThemePresets}=await import('/js/ui/editor-palette.js');return Object.keys(editorThemePresets);
+ });
+ await page.locator('#editorAppearance > summary').click();
+ for(const theme of themes){
+  await page.locator('#editorThemePreset').selectOption(theme);
+  const failures=await page.evaluate(async()=>{
+   const {contrastRatio}=await import('/js/ui/editor-palette.js');
+   const hex=color=>'#'+color.match(/[\d.]+/g).slice(0,3).map(v=>Math.round(Number(v)).toString(16).padStart(2,'0')).join('');
+   const targets=['#play','#hubSave','#hierarchyPanel .panel-title','#inspectorPanel .panel-title','#projectPanel .project-header','#hierarchyPanel input[type="text"]','#projectPanel input[type="search"]','#viewport button'];
+   return targets.flatMap(selector=>[...document.querySelectorAll(selector)].filter(n=>n.getClientRects().length).flatMap(n=>{
+    const style=getComputedStyle(n);if(style.backgroundColor==='rgba(0, 0, 0, 0)')return [];
+    const ratio=contrastRatio(hex(style.color),hex(style.backgroundColor));return ratio>=4.5?[]:[{selector,text:n.textContent.slice(0,60),color:style.color,background:style.backgroundColor,ratio}];
+   }));
+  });
+  assert.deepEqual(failures,[],theme+' must keep controls readable');
+  assert.deepEqual(await snapshot(),legacy,'theme changes must not rewrite a legacy scene');
+ }
+ await page.locator('#editorThemePreset').selectOption('graphite');await page.locator('#editorAppearance > summary').click();
  const dimensions=await page.evaluate(()=>{const r=s=>{const x=document.querySelector(s).getBoundingClientRect();return {x:x.x,y:x.y,width:x.width,height:x.height};};return {scene:r('#viewport'),hierarchy:r('#hierarchyPanel'),inspector:r('#inspectorPanel'),project:r('#projectPanel'),assets:r('#visualPackItems'),play:r('#play'),vw:innerWidth,vh:innerHeight};});assert.equal(dimensions.hierarchy.width,230);assert.equal(dimensions.inspector.width,310);assert.equal(dimensions.project.height,180);assert.ok(dimensions.assets.height>=70,'Project should show assets, not just toolbars');assert.ok(dimensions.scene.height>dimensions.vh*.55);assert.ok(Math.abs(dimensions.play.x+dimensions.play.width/2-dimensions.vw/2)<50);await page.screenshot({path:path.join(output,'editor-legacy-2d.png')});
  mark('open graph');await page.locator('#openBlueprint').click();assert.deepEqual(await snapshot(),legacy,'opening the new workspace must not convert an old sequence');await page.getByRole('button',{name:'Créer le graphe',exact:true}).click();await page.locator('.bp-node-v2').nth(2).waitFor();
  // A right-click creates a node where requested, rather than inserting into a hidden chain.

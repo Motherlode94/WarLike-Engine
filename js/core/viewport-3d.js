@@ -1,12 +1,13 @@
+import {runtimeProfiler,profileStart,profileScope,profileDraw,createGpuProfiler} from './runtime-profiler.js';
 import {createEditorPlayCamera} from './editor-play-camera.js';
 import {cacheAnimationGeometry,skeletalClips,sampleEntityRigPose,hasSkeletalPreview,skeletalFrame} from './skeletal-animation.js';
 import {waterSettings,waterSurface3d,waterColor} from './stylized-water.js';
 import {runRuntimeFrame} from './runtime-session.js';
 import {companyController,commandCompany,selectCompanySquad} from './company-runtime.js';
 import {moveCompanyCamera} from './company-camera.js';
-import {updateCompanyMarkers} from '../ui/company-ui.js';
+import {updateCompanyMarkers} from '../runtime/ui/company-ui.js';
 import {resetBattlefield,tickBattlefield,battlefieldMatch,consumeBattlefieldShot,isBattlefieldSoldier} from './battlefield-runtime.js';
-import {updateBattlefieldHud} from '../ui/battlefield-hud.js';
+import {updateBattlefieldHud} from '../runtime/ui/battlefield-hud.js';
 import {rotationQuaternion3d,quaternionEuler3d} from './collider-3d.js';
 import {affineCorrection3d,normalMatrix3d,updateEditorEntityHierarchy3d,updateAffineEditorPose3d,boneSocketTransform3d,buildMeshSnapIndex3d,nearestMeshSnapFeature3d} from './scene-graph-v2.js';
 
@@ -32,7 +33,7 @@ import {updateHorrorAudio} from './horror-audio.js';
 import {tickEngineDiagnostics} from './engine-diagnostics.js';
 import {updateDriving3d,currentVehicle3d,isDriveable3d,driving3d,resetDriving3d} from './vehicle-3d.js';
 import {vehicleRigPose} from './vehicle-articulation.js';
-import {updateGenreHud} from '../ui/genre-hud.js';
+import {updateGenreHud} from '../runtime/ui/genre-hud.js';
 import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
 import {updateHorror,updateHorrorPerception,horror} from './horror-survival.js';
@@ -56,10 +57,11 @@ import {sunAt,visibleLights,updateLighting} from './lighting.js';
 // WarLike 3D Beta: self-contained WebGL perspective scene editor.
 // Existing scene x/y become ground X/Z; object h is extrusion height. No remote dependencies.
 import {state,notify} from './state.js';
-import {record} from './history.js';
+import {editorServices} from './editor-services.js';
+const record=(...args)=>editorServices.record(...args);
 import {getAsset} from '../assets/catalog.js';
 import {game} from './gameplay.js';
-import {initSceneGizmo3d} from './gizmos-3d.js';
+const initSceneGizmo3d=(...args)=>editorServices.initSceneGizmo3d(...args);
 import {glbVisualPlacement3d} from './glb-visual-transform-3d.js';
 import {orderRtsMove,orderRtsGroup,isRtsUnit,updateRtsOrders} from './rts-orders.js';
 
@@ -575,8 +577,8 @@ export function init3d(canvas,host,buttons){
    physicsAccumulator+=dt;
    const fixed=1/60;
    let steps=0;
-   while(physicsAccumulator>=fixed&&steps++<6){stepRapierScene(physicsSession,fixed);physicsAccumulator-=fixed}
-  }else stepPhysics3d(state.entities,dt);
+   while(physicsAccumulator>=fixed&&steps++<6){profileScope('physics3d',()=>stepRapierScene(physicsSession,fixed));physicsAccumulator-=fixed}
+  }else profileScope('physics3d',()=>stepPhysics3d(state.entities,dt));
   if(!p)releaseGrab3d(grabSession,state.entities);
   if(!p)return;
   updateHorror(dt,p,state.entities,input);updateHorrorPerception(dt,p,state.entities,input);updateHorrorAudio(dt,p,state.entities,input,horror);horror.jumpscare=Math.max(0,horror.jumpscare-dt);
@@ -854,11 +856,11 @@ export function init3d(canvas,host,buttons){
 
  document.addEventListener('warlike:company-focus',event=>{if(!state.playing||!companyController(state.entities)||![event.detail?.x,event.detail?.y].every(Number.isFinite))return;view3d.target=[event.detail.x/64,0,event.detail.y/64]});
  let captureFrame=null;document.addEventListener('warlike:capture-frame',event=>{captureFrame=event.detail?.resolve});
- let previousTime=performance.now();
+ const gpuProfiler=createGpuProfiler(gl);let previousTime=performance.now();
  function draw(now=performance.now()){
   requestAnimationFrame(draw);
   const dt=Math.min(.1,Math.max(0,(now-previousTime)/1000));previousTime=now;
-  if(document.hidden)return;cameraFrame=gameIsRunning()?dt:0;
+  if(document.hidden)return;const finishProfile=workspace.mode==='3d'?runtimeProfiler.frame(now,{mode:'3d',phase:state.playing?gameSession.phase:'editor',entities:state.entities.length}):()=>{};cameraFrame=gameIsRunning()?dt:0;
   if(!state.playing&&view3d.enabled&&view3d.drag?.nav==='look'&&editorKeys.size){
    const right=Number(editorKeys.has('KeyD'))-Number(editorKeys.has('KeyA')),forward=Number(editorKeys.has('KeyW'))-Number(editorKeys.has('KeyS')),up=Number(editorKeys.has('KeyE'))-Number(editorKeys.has('KeyQ')),length=Math.hypot(right,forward,up);
    if(length){const cam=camera(),speed=clamp(view3d.radius*.7,2.5,40)*(editorKeys.has('ShiftLeft')||editorKeys.has('ShiftRight')?3:1)*dt/length,delta=V.add(V.add(V.mul(cam.right,right*speed),V.mul(cam.forward,forward*speed)),[0,up*speed,0]);view3d.target=V.add(view3d.target,delta);view3d.drag.eye=V.add(view3d.drag.eye,delta);view3d.drag.target=view3d.target.slice();if(!view3d.drag.moved){view3d.drag.moved=true;document.dispatchEvent(new Event('warlike:scene-navigation'))}}
@@ -873,8 +875,8 @@ export function init3d(canvas,host,buttons){
    const desired=sceneCameraView(selectedCamera,state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});
    transitionPose=cameraTransition.update(selectedCamera,desired,dt);
   }else{cameraTransition.reset();transitionPose=null}
-  if(!view3d.enabled){updateGizmos();return}
-  updateGenreHud(state);updateBattlefieldHud(state);updateGizmos();renderSceneCameraMarkers();
+  if(!view3d.enabled){updateGizmos();finishProfile();return}
+  const endRenderProfile=profileStart('render3d'),endGpuProfile=gpuProfiler.begin();updateGenreHud(state);updateBattlefieldHud(state);updateGizmos();renderSceneCameraMarkers();
   const vehicleHud=document.getElementById('warlikeVehicle3dHud');
   if(vehicleHud){
    const car=currentVehicle3d(state.entities);
@@ -932,7 +934,7 @@ export function init3d(canvas,host,buttons){
   gl.uniform1fv(u.lightCone,new Float32Array(padded('cone',.7)));
   gl.uniform1fv(u.lightSpot,new Float32Array(lamps.map(l=>l.spot?1:0).concat(Array(8-lamps.length).fill(0))));
   gl.disable(gl.CULL_FACE);
-  if(!state.playing&&!globalThis.__WARLIKE_BUILD__){bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);gl.drawArrays(gl.LINES,0,grid.count)}
+  if(!state.playing&&!globalThis.__WARLIKE_BUILD__){bind(grid);model([0,-.02,0],[1,1,1],[.22,.34,.42,1]);profileDraw(grid.count,'lines');gl.drawArrays(gl.LINES,0,grid.count)}
   // Update attached child world matrices after gizmos, scripts and physics.
   if(state.entities.some(o=>o.parentId!==null&&o.parentId!==undefined||Array.isArray(o.worldMatrix3d)))try{updateEditorEntityHierarchy3d(state.entities,{physicsOwnsDynamics:state.playing})}catch(error){if(!view3d._hierarchyWarned){console.warn('[WarLike] Hiérarchie 3D',error);view3d._hierarchyWarned=true}}
   const objects=[...state.entities].filter(o=>(state.playing||!o.editorHidden)&&(!state.playing||!((o.audioEnabled||o.lightType)&&!o.assetId)&&o.enabled!==false&&o.visible!==false&&o.sequenceEnabled!==false&&!o._hiddenInVehicle&&!o._hiddenInHouse&&!o._modeEliminated)&&(!isFps()||o!==playableActor(state.entities)));
@@ -965,13 +967,13 @@ export function init3d(canvas,host,buttons){
      gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
      gl.uniform1f(u.roughness,.2);gl.uniform1f(u.metallic,.08);
      model([b.x,Number(o.elevation3d)||0,b.z],[1,1,1],waterColor(water.color,water.opacity),(o.rotation||0)*Math.PI/180,o);
-     gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
+     profileDraw(waterMesh.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
      if(water.foam>0){
       // Pale translucent crest layer with lower wave amplitude; visible
       // on the entire surface without adding a second material/shader.
       gl.uniform3fv(emissiveUniform,[.075,.11,.13]);
       model([b.x,(Number(o.elevation3d)||0)+.015,b.z],[1,1,1],waterColor(water.foamColor,water.opacity*water.foam*.17),(o.rotation||0)*Math.PI/180,o);
-      gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
+      profileDraw(waterMesh.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,waterMesh.count);
      }
      gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform3fv(emissiveUniform,[0,0,0]);
     },true,o);
@@ -985,7 +987,7 @@ export function init3d(canvas,host,buttons){
      if(vertices){gl.bindBuffer(gl.ARRAY_BUFFER,mesh.buffer);gl.bufferSubData(gl.ARRAY_BUFFER,0,vertices)}
      gl.uniform1f(u.roughness,clamp(Number(roughness),.04,1));gl.uniform1f(u.metallic,clamp(Number(metallic),0,1));
      bind(mesh);if(o._survivalPreview){gl.uniform1f(alphaCutoff,.01);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}
-     model(p,scale,o._survivalPreview?[...shade.slice(0,3),.5]:shade,angle,o);gl.drawArrays(gl.TRIANGLES,0,mesh.count);
+     model(p,scale,o._survivalPreview?[...shade.slice(0,3),.5]:shade,angle,o);profileDraw(mesh.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,mesh.count);
     },mesh.alphaMode==='BLEND'||!!o._survivalPreview,o);
    };
    const cube=(p,scale,shade)=>drawShape(cubes,p,scale,shade);
@@ -1186,17 +1188,18 @@ export function init3d(canvas,host,buttons){
   gl.depthMask(true);gl.disable(gl.BLEND);
   if(!state.playing)tickFxRuntime(state.entities.filter(o=>o.fxEmitter?.preview),dt,'3d');
   fxRenderer.draw(cam,w,h,state.playing?state.entities:[]);
-  if(!state.playing){gl.useProgram(program);bind(outline);for(const o of objects.filter(o=>state.selected.includes(o.id))){const b=objectBounds3d(o);model([b.x,b.y,b.z],[b.w*1.03,b.h*1.03,b.d*1.03],[.32,1,.8,1],(o.rotation||0)*Math.PI/180,o);gl.drawArrays(gl.LINES,0,outline.count)}}
+  if(!state.playing){gl.useProgram(program);bind(outline);for(const o of objects.filter(o=>state.selected.includes(o.id))){const b=objectBounds3d(o);model([b.x,b.y,b.z],[b.w*1.03,b.h*1.03,b.d*1.03],[.32,1,.8,1],(o.rotation||0)*Math.PI/180,o);profileDraw(outline.count,'lines');gl.drawArrays(gl.LINES,0,outline.count)}}
   if(isFps()&&gameIsRunning()&&healthOf(playableActor(state.entities))>0){
    const actor=playableActor(state.entities),id=actor.weaponSystem?.model3dId;
    if(id){ensureModel(id);const weapon=realGlbBuffers.get(id);if(weapon?.status==='ready'){
     const recoil=(actor._attackCooldown||0)>.14?.04:0,lower=battlefieldMatch.active&&battlefieldMatch.reloading?.18:0;
     const at=V.add(cam.eye,V.add(V.mul(cam.forward,.7-recoil),V.add(V.mul(cam.right,.22),V.mul(cam.up,-.22-lower))));
     gl.clear(gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniform1f(u.roughness,.65);gl.uniform1f(u.metallic,.4);
-    for(const part of weapon.parts){bind(part.mesh);model(at,[.85,.85,.85],part.color);gl.uniform1i(viewModelUniform,1);gl.uniformMatrix3fv(viewBasisUniform,false,[...cam.forward,...cam.up,...cam.right]);gl.drawArrays(gl.TRIANGLES,0,part.mesh.count)}
+    for(const part of weapon.parts){bind(part.mesh);model(at,[.85,.85,.85],part.color);gl.uniform1i(viewModelUniform,1);gl.uniformMatrix3fv(viewBasisUniform,false,[...cam.forward,...cam.up,...cam.right]);profileDraw(part.mesh.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,part.mesh.count)}
     gl.uniform1i(viewModelUniform,0);
    }}
   }
+  endGpuProfile();endRenderProfile();finishProfile();
   if(captureFrame){const resolve=captureFrame;captureFrame=null;try{resolve(canvas.toDataURL('image/png'))}catch{resolve(null)}}
  }
  requestAnimationFrame(draw);

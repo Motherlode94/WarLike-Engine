@@ -1,3 +1,4 @@
+import {profileScope} from './runtime-profiler.js';
 import {cleanupPlay} from './play-cleanup.js';
 import {nativeBridgeRequest} from './native-bridge-client.js';
 import {authorizeScripts} from './script-trust.js';
@@ -61,14 +62,14 @@ async function isolatedBrowserFrame(dt,update,canRun){
  finishBrowserFrame(ready.dt,update,true,true);if(generation===runtimeSession.generation)await webScriptRuntime.late({canApply});
 }
 
-function finishBrowserFrame(dt,update,run,isolated=false){if(run){if(!isLanGuest()){if(!isolated)webScriptRuntime.update(dt,scriptContext());warScriptRuntime.update(dt,scriptContext());}updateComponentRuntime(dt)}update?.(dt);
+function finishBrowserFrame(dt,update,run,isolated=false){if(run){if(!isLanGuest()){if(!isolated)profileScope('javascript',()=>webScriptRuntime.update(dt,scriptContext()));profileScope('warscript',()=>warScriptRuntime.update(dt,scriptContext()));}profileScope('components',()=>updateComponentRuntime(dt))}profileScope('gameplay',()=>update?.(dt));
  if(run&&!isLanGuest()&&workspace.mode==='2d'&&gameIsRunning()){
   for(const event of physicsContactEvents2d.update(state.entities)){
    warScriptRuntime.contact(event);
    emitSequenceSignal('physics2d:'+event.kind+':'+event.stage+':'+event.ownerId,event.otherId);
   }
  }
- if(run&&!isLanGuest()){stepEntityAnimations(state.entities,dt,{mode:workspace.mode,onEvent:animationEvent});warScriptRuntime.late();if(!isolated)webScriptRuntime.late();}captureWebComponents(state.entities,sequenceRuntime.globals)}
+ if(run&&!isLanGuest()){profileScope('animation',()=>stepEntityAnimations(state.entities,dt,{mode:workspace.mode,onEvent:animationEvent}));profileScope('warscript',()=>warScriptRuntime.late());if(!isolated)webScriptRuntime.late();}captureWebComponents(state.entities,sequenceRuntime.globals)}
 export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
  if(!state.playing||runtimeSession.phase==='error')return false;
  if(runtimeSession.phase==='stopped'){update?.(dt);return true} // standalone tools/tests

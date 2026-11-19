@@ -1,3 +1,4 @@
+import {playerModules} from './player-modules.js';
 import {MAX_SCENE_MODEL_BYTES} from '../assets/model-capacity.js';
 import {portableModelBytes,portableModelDescriptor} from './portable-assets.js';
 import {loadProjectHdri} from './project-hdri-assets.js';
@@ -56,9 +57,9 @@ export function prepareGameDefinition({entities,camera,mode='2d',project=gamePro
 }
 export function gameBuildHtml(template,data){
  const json=JSON.stringify(data).replace(/</g,'\\u003c'),title=String(data.project.title||'WarLike Game').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let html=template.replace(/<title>[^<]*<\/title>/,()=>'<title>'+title+'</title>').replace(/<script\b[^>]*type="module"[^>]*src="[^"]*js\/editor\.js[^"]*"[^>]*><\/script>/,'<script type="module" src="./js/game-build-player.js"></script>');
- if(!html.includes('src="./js/game-build-player.js"'))throw Error('Le document de démarrage du moteur est incompatible.');
- html=html.replace('</head>',()=>'<script>globalThis.__WARLIKE_BUILD__=true;'+(data.hasEnvironmentHdri?'globalThis.__WARLIKE_HDRI_INCLUDED__=true;':'')+'</script><script type="application/json" id="warlikeGameData">'+json+'</script></head>').replace('<body>','<body class="warlike-game-build">');
+ const styles=['style','studio-polish','blueprint-hub','adventure','survival','project-genres','company','life','creative-studios','runtime-player','runtime-profiler'];
+ const html='<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+title+'</title><script type="importmap">{"imports":{"@dimforge/rapier3d-compat":"./vendor/rapier3d/rapier.mjs"}}</script>'+styles.map(name=>'<link rel="stylesheet" href="./css/'+name+'.css">').join('')+'<script>globalThis.__WARLIKE_BUILD__=true;'+(data.hasEnvironmentHdri?'globalThis.__WARLIKE_HDRI_INCLUDED__=true;':'')+'</script><script type="application/json" id="warlikeGameData">'+json+'</script></head><body class="warlike-game-build"><main id="viewport"><canvas id="canvas"></canvas><canvas id="canvas3d" hidden></canvas><div id="view3dStatus" hidden></div><div id="horror3dHud" hidden></div><div id="rpgShortcuts" class="rpg-shortcuts" hidden></div><section id="rpgInventory" class="rpg-overlay" hidden></section><section id="rpgJournal" class="rpg-overlay" hidden></section><section id="rpgDialogue" class="rpg-dialogue" hidden></section></main><script type="module" src="./js/game-build-player.js"></script></body></html>';
+
  return html;
 }
 // The editor ships the complete library. A playable export only needs models
@@ -80,7 +81,13 @@ export function gameRuntimeModels(data){
 export function gameRuntimeFiles(files,data){
  const usedModels=new Set(),toolPreviews=new Set(),toolIds=new Set(Object.values(survivalTools).map(tool=>tool.modelId));
  for(const asset of gameRuntimeModels(data)){if(toolIds.has(asset.id)&&asset.thumbnailUrl?.startsWith('./assets/free/'))toolPreviews.add(asset.thumbnailUrl.slice(2));if(asset.url?.startsWith('./assets/free/'))usedModels.add(asset.url.slice(2));for(const texture of asset.textureFiles||[])usedModels.add(texture.replace(/^\.\//,''))}
- return files.filter(name=>toolPreviews.has(name)||!name.startsWith('assets/free/')||!name.includes('/previews/')&&!/\/(models|textures)\.json$/.test(name)&&(!(name.endsWith('.glb')||name.startsWith('assets/free/textures/'))||usedModels.has(name)));
+ const modules=new Set(playerModules),styles=new Set(['style','studio-polish','blueprint-hub','adventure','survival','project-genres','company','life','creative-studios','runtime-player','runtime-profiler'].map(n=>'css/'+n+'.css'));
+ return files.filter(name=>{
+  if(/\.m?js$/.test(name)&&!modules.has(name))return false;
+  if(name.endsWith('.html')&&name!=='index.html')return false;
+  if(name.startsWith('css/')&&!styles.has(name))return false;
+  return toolPreviews.has(name)||!name.startsWith('assets/free/')||!name.includes('/previews/')&&!/\/(models|textures)\.json$/.test(name)&&(!(name.endsWith('.glb')||name.startsWith('assets/free/textures/'))||usedModels.has(name));
+ });
 }
 export function gameBuildModelCatalog(name,source,data){
  const replacements=new Map((data.packagedRemoteModels||[]).map(model=>[model.id,model]));

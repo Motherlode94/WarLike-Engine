@@ -56,15 +56,15 @@ test('mounting vehicle consumes E so nearby Blueprints cannot fire at same time'
  assert.equal(sequenceRuntime.globals.money,500);
 });
 test('F8 panel available for 2D and 3D and sessions reset after Stop',()=>{
- const panel=source('js/ui/engine-diagnostics-panel.js');
- const scene=source('js/core/scene.js');
+ const panel=source('js/runtime/ui/engine-diagnostics-panel.js');
+ const scene=source('js/core/play-session.js');
  const game=source('js/core/gameplay.js');
  const viewport=source('js/core/viewport-3d.js');
  assert.ok(panel.includes("event.key!=='F8'"));
  assert.ok(panel.includes('engineDiagnosticReport'));
  assert.ok(panel.includes('Exporter le rapport JSON'));
  assert.ok(scene.includes('resetEngineDiagnostics(workspace.mode)'));
- assert.ok(scene.includes('cleanupPlay([stopRuntimeSession,resetHeroRuntime,stopEngineDiagnostics,resetSequences])'));
+ assert.ok(scene.includes('cleanupPlay([stopRuntimeSession,resetHeroRuntime,stopEngineDiagnostics,resetSequences,stopProfiler])'));
  assert.ok(game.includes('updateEngineDiagnosticsPanel(state)'));
  assert.ok(viewport.includes('tickEngineDiagnostics(dt)'));
 });

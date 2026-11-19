@@ -1,3 +1,4 @@
+import {profileDraw} from './runtime-profiler.js';
 import {fxRuntime,fxColor} from './fx-runtime.js';
 import {heroCenter} from './hero-movement.js';
 // Two GPU batches at most: additive energy and alpha-blended smoke. No remote sprites.
@@ -21,7 +22,7 @@ export function createFxRenderer3d(gl){
    }
    if(!cursor)continue;gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,storage.subarray(0,cursor),gl.DYNAMIC_DRAW);
    for(let i=0;i<attributes.length;i++){gl.enableVertexAttribArray(attributes[i]);gl.vertexAttribPointer(attributes[i],i===0?3:i===1?1:4,gl.FLOAT,false,32,i===0?0:i===1?12:16)}
-   gl.blendFunc(gl.SRC_ALPHA,smoke?gl.ONE_MINUS_SRC_ALPHA:gl.ONE);gl.drawArrays(gl.POINTS,0,cursor/8);stats.particles+=cursor/8;stats.drawCalls++;
+   gl.blendFunc(gl.SRC_ALPHA,smoke?gl.ONE_MINUS_SRC_ALPHA:gl.ONE);profileDraw(cursor/8,'points');gl.drawArrays(gl.POINTS,0,cursor/8);stats.particles+=cursor/8;stats.drawCalls++;
   }
   for(const a of attributes)gl.disableVertexAttribArray(a);gl.depthMask(true);gl.disable(gl.BLEND);
  }

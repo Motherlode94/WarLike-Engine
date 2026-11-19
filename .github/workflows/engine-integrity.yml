@@ -44,7 +44,7 @@ jobs:
       - name: Rebuild portable runtime file manifest
         run: npm run build:runtime
       - name: Reject an outdated committed runtime manifest
-        run: git diff --exit-code -- runtime-files.json
+        run: git diff --exit-code -- runtime-files.json js/core/player-modules.js
       - name: Verify portable Web module dependency closure
         run: node scripts/check-runtime-module-closure.mjs
       - name: Check runtime files required by native CHAMBRE 07
@@ -65,6 +65,8 @@ jobs:
           WARLIKE_EXPORT_BROWSER_OUTPUT_DIR: .validation-tools/export-browser
       - name: Reference editor, Blueprint and old/new project round trips
         run: node scripts/test-reference-editor-browser.mjs
+      - name: Complex scene edit, persistence, profiler and standalone export
+        run: node scripts/test-complex-production-browser.mjs
       - name: CHAMBRE 07 export and isolated Play
         run: npm run test:chambre07:browser
         env:
@@ -80,6 +82,8 @@ jobs:
         with:
           name: chambre07-export-play-screenshot
           path: |
+            .validation-tools/complex-production/*.json
+            .validation-tools/complex-production/*.png
             .validation-tools/export-browser/*.png
             .validation-tools/script-security/*.png
             .validation-tools/script-security/report.json

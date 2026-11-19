@@ -1,5 +1,5 @@
 import {isTypingTarget} from './editor-clipboard.js';
-import {toolsState} from '../ui/workspace.js';
+import {toolsState} from './view-options.js';
 import {hitGizmo2d,gizmoCenter} from './gizmos-2d.js';
 import {orderRtsMove,orderRtsGroup,isRtsUnit} from './rts-orders.js';
 import {state,notify} from './state.js';

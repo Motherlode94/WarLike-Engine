@@ -1,3 +1,11 @@
+import {initRuntimeProfilerUi} from './runtime/ui/profiler.js';
+import {installEditorServices} from './core/editor-services.js';
+import {drawOverlay2d} from './ui/scene-overlay-2d.js';
+import {initSceneGizmo3d} from './core/gizmos-3d.js';
+import {makeWindowResizable} from './ui/resizable-window.js';
+import {loadAdventureCampaign} from './core/adventure-campaign.js';
+import {loadSurvivalScene} from './core/survival-scene.js';
+import {createHeroForgeScene} from './core/hero-forge-scene.js';
 import {initReferenceWorkspace} from './ui/reference-workspace.js';
 import {restoreLocalModels} from './core/local-asset-library.js';
 import {initSkeletalStudio} from './ui/skeletal-studio.js';
@@ -68,6 +76,7 @@ import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
 import {createGameUiOverlay} from './core/ui-game-overlay.js';
 import {emitSequenceSignal} from './core/logic-sequences.js';
+installEditorServices({record,renderHistory,drawOverlay2d,initSceneGizmo3d,makeWindowResizable,loadAdventureCampaign,loadSurvivalScene,createHeroForgeScene});
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
 // One gameplay overlay serves both 2D Canvas and 3D WebGL views.
 const gameUiOverlay=createGameUiOverlay(host,{onSignal:signal=>emitSequenceSignal(signal)});
@@ -414,3 +423,5 @@ initCreativeStudios();initSkeletalStudio();initCreativeRuntime();initSurvivalUi(
 document.addEventListener('warlike:script-log',event=>log(event.detail.message,event.detail.level));
 
 initReferenceWorkspace();
+
+initRuntimeProfilerUi();

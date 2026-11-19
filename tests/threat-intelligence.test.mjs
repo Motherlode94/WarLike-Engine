@@ -51,8 +51,8 @@ test('Field Lab contains visible ally and hostile NPC identities',()=>{
  }
 });
 test('Inspector and scanner load for Web Play 2D and 3D',()=>{
- const inspector=read('js/ui/inspector.js'),hud=read('js/ui/genre-hud.js');
- const game=read('js/core/gameplay.js'),scanner=read('js/ui/threat-scanner.js');
+ const inspector=read('js/ui/inspector.js'),hud=read('js/runtime/ui/genre-hud.js');
+ const game=read('js/core/gameplay.js'),scanner=read('js/runtime/ui/threat-scanner.js');
  assert.ok(inspector.includes('Enemy Intelligence · identité / factions'));
  assert.ok(scanner.includes("event.key.toLowerCase()!=='t'"));
  assert.ok(hud.includes('updateThreatScanner(state)'));

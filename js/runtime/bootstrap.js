@@ -1,0 +1,46 @@
+import {initRuntimeProfilerUi} from './ui/profiler.js';
+import {state,notify} from '../core/state.js';
+import {restoreWorkspaces} from '../core/workspaces.js';
+import {restoreGameProject} from '../core/game-project.js';
+import {toolsState} from '../core/view-options.js';
+import {motion} from '../core/player-controller.js';
+import {startRenderer} from '../core/renderer.js';
+import {init3d} from '../core/viewport-3d.js';
+import {bindGameInput,startGameSimulation} from '../core/gameplay.js';
+import {bindModeInput} from '../core/game-modes.js';
+import {initializeRpgUi} from '../core/rpg-systems.js';
+import {initializeNative3d} from '../core/native-3d.js';
+import {loadRenderQuality} from '../core/render-quality.js';
+import {updateAudioSources,stopSources} from '../core/audio-sources.js';
+import {unlockAudio} from '../core/audio.js';
+import {unlockHorrorAudio} from '../core/horror-audio.js';
+import {createGameUiOverlay} from '../core/ui-game-overlay.js';
+import {emitSequenceSignal} from '../core/logic-sequences.js';
+import {initCreativeRuntime} from '../core/creative-runtime.js';
+import {bindPlayerInput} from './input.js';
+import {initGameFlowUi} from './ui/game-flow-ui.js';
+import {initLifeUi} from './ui/life-ui.js';
+import {initCompanyUi} from './ui/company-ui.js';
+import {initHeroForgeUi} from './ui/hero-forge-ui.js';
+import {initSurvivalUi} from './ui/survival-ui.js';
+import {initAdventureUi} from './ui/adventure-ui.js';
+import {initLanPanel} from './ui/lan-panel.js';
+let started=false;
+export function startPlayer(data){
+ if(started)throw Error('Le lecteur est déjà initialisé.');
+ if(data?.format!=='warlike.game.v1'||!['2d','3d'].includes(data.mode))throw Error('Format de jeu inconnu.');
+ const scene=data.project?.scenes?.find(s=>s.id===data.project.startupSceneId);if(!scene)throw Error('Scène de démarrage absente.');
+ const slot={entities:scene.entities,selected:[],nextId:Math.max(0,...scene.entities.map(o=>o.id))+1,camera:scene.camera||{x:0,y:0,zoom:1},game:{...data.project,activeSceneId:scene.id}},empty=()=>({entities:[],selected:[],nextId:1,camera:{x:0,y:0,zoom:1}});
+ if(!restoreWorkspaces({workspaceMode:data.mode,workspaces:{'2d':data.mode==='2d'?slot:empty(),'3d':data.mode==='3d'?slot:empty()}}))throw Error('Scènes de jeu invalides.');
+ restoreGameProject({...data.project,activeSceneId:scene.id});toolsState.grid=false;state.selected=[];motion.cameraFollow=true;
+ const host=document.getElementById('viewport'),canvas=document.getElementById('canvas');if(!host||!canvas)throw Error('Document du lecteur incomplet.');
+ started=true;initRuntimeProfilerUi();loadRenderQuality();initializeNative3d();bindPlayerInput();bindGameInput(canvas);bindModeInput();initializeRpgUi();
+ const overlay=createGameUiOverlay(host,{onSignal:signal=>emitSequenceSignal(signal)});
+ document.addEventListener('pointerdown',()=>{unlockAudio();unlockHorrorAudio()},{capture:true});
+ startRenderer(canvas,host);startGameSimulation();
+ // Camera widgets are detached runtime adapters, never Editor DOM or services.
+ init3d(document.getElementById('canvas3d'),host,{toggle:document.createElement('button'),focus:document.createElement('button'),status:document.getElementById('view3dStatus')});
+ initGameFlowUi();initLifeUi();initCompanyUi();initHeroForgeUi();initSurvivalUi();initAdventureUi();initLanPanel();initCreativeRuntime();
+ let wasPlaying=false;const frame=now=>{requestAnimationFrame(frame);if(wasPlaying&&!state.playing)stopSources();wasPlaying=state.playing;updateAudioSources(now/1000);overlay.update(state.entities,{playing:state.playing,width:host.clientWidth,height:host.clientHeight})};requestAnimationFrame(frame);
+ document.dispatchEvent(new Event('warlike:project'));notify();
+}

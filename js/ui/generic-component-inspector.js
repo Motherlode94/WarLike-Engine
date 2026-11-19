@@ -58,7 +58,41 @@ export function renderGenericComponents(root,entity){
    input.oninput=()=>input.setCustomValidity?.('');
    row.append(name,input);body.append(row);
   }
-  if(!fields.length)body.append(text('p','Ce composant contient des données complexes. Utilise son éditeur spécialisé ou la configuration de son extension.'));
+  // Navigation waypoints are structured data: offer proper Inspector controls
+  // instead of pretending the generic scalar field editor can edit arrays.
+  if(definition.id==='navigationAgent'){
+   const group=document.createElement('div');group.className='navigation-waypoint-editor';
+   group.append(text('strong','Points de passage · unités de scène'));
+   const points=entity.navigationAgent?.waypoints||[];
+   points.forEach((point,index)=>{
+    const row=document.createElement('div');row.className='property-row';
+    row.append(text('span','Point '+(index+1)));
+    for(const axis of ['x','y']){
+     const field=document.createElement('input');field.type='number';field.step='any';
+     field.value=String(point[axis]);field.disabled=state.playing;
+     field.setAttribute('aria-label','Point '+(index+1)+' · '+axis.toUpperCase());
+     field.onchange=()=>{
+      const value=Number(field.value);
+      if(!Number.isFinite(value))return;
+      if(state.playing)return;
+      point[axis]=value;record('Navigation : modifier point '+(index+1));notify();
+     };row.append(field);
+    }
+    const removePoint=text('button','−');removePoint.type='button';removePoint.title='Supprimer ce point';
+    removePoint.disabled=state.playing;removePoint.onclick=()=>{
+     if(state.playing)return;points.splice(index,1);record('Navigation : supprimer point');notify();
+    };
+    row.append(removePoint);group.append(row);
+   });
+   const addPoint=text('button','Ajouter point de passage');addPoint.type='button';
+   addPoint.disabled=state.playing||points.length>=64;addPoint.onclick=()=>{
+    if(state.playing||points.length>=64)return;
+    points.push({x:Number(entity.x)||0,y:Number(entity.y)||0});
+    record('Navigation : ajouter point');notify();
+   };
+   group.append(addPoint);body.append(group);
+  }
+  if(!fields.length&&definition.id!=='navigationAgent')body.append(text('p','Ce composant contient des données complexes. Utilise son éditeur spécialisé ou la configuration de son extension.'));
   const actions=document.createElement('div');actions.className='warlike-component-actions';
   const reset=text('button','Réinitialiser'),remove=text('button','Supprimer');
   reset.type=remove.type='button';

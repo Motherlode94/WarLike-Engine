@@ -42,7 +42,7 @@ test('Engine official demos are backed by native scene loaders, not iframe proto
  assert.doesNotMatch(browser,/id:'chambre07',/);
  assert.doesNotMatch(menu,/href="\.\/examples\/(?:iron-defiance|worldforge|chambre-07)\/index\.html"/);
  assert.match(browser,/loadAuthoredDemo\(scene.id\)/);
- const registered=new Set(['lastlightnative','chambre07native','irondefiancetraining','animation','town','nature','garage','platformer']);
+ const registered=new Set(['productionlab','lastlightnative','chambre07native','irondefiancetraining','animation','town','nature','garage','platformer']);
  const company=/\.\.\.Object\.fromEntries\(\['rdc','china','russia','usa','france','ukraine','japan'\]/.test(scene);
  assert.equal(company,true,'All faction scenes must be registered through the native builder');
  const catalog=browser.slice(browser.indexOf('const scenes=['),browser.indexOf('];',browser.indexOf('const scenes=[')));
@@ -50,5 +50,5 @@ test('Engine official demos are backed by native scene loaders, not iframe proto
  assert.ok(listed.length>=10,'Native demo catalog unexpectedly empty');
  for(const id of listed)assert.ok(registered.has(id)||/^ironcompany-(rdc|china|russia|usa|france|ukraine|japan)$/.test(id),'Missing native builder for '+id);
 
- for(const id of ['irondefiancetraining','chambre07native','lastlightnative'])assert.ok(scene.includes(id+':'),id);
+ for(const id of ['productionlab','irondefiancetraining','chambre07native','lastlightnative'])assert.ok(scene.includes(id+':'),id);
 });

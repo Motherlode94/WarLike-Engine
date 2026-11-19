@@ -133,7 +133,7 @@ const shader=(gl,type,text)=>{
  if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh)||'Erreur shader');return sh;
 };
 export const program3d=gl=>{
- const derivatives=!!gl.getExtension("OES_standard_derivatives");
+ const derivatives=!!gl.getExtension("OES_standard_derivatives"),explicitLod=!!gl.getExtension("EXT_shader_texture_lod");
  const vs=`precision highp float;
  attribute vec3 aPosition;attribute vec3 aNormal;attribute vec2 aTexcoord;varying vec2 vTexcoord;attribute vec4 aVertexColor;varying vec4 vVertexColor;
  attribute vec4 aMaterialUV0,aMaterialUV1;varying vec4 vMaterialUV0,vMaterialUV1;
@@ -155,7 +155,7 @@ export const program3d=gl=>{
  gl_Position=vec4(dot(rel,uRight)*f/uAspect,dot(rel,uUp)*f,clipZ,d);
 
  }`;
- const fs=`${derivatives?"#extension GL_OES_standard_derivatives : enable\n":""}precision highp float;
+ const fs=`${explicitLod?"#extension GL_EXT_shader_texture_lod : enable\n":""}${derivatives?"#extension GL_OES_standard_derivatives : enable\n":""}precision highp float;
  varying vec4 vMaterialUV0,vMaterialUV1;
  uniform sampler2D uNormalMap,uMetallicRoughnessMap,uOcclusionMap,uEmissiveMap;
  uniform bool uHasNormalMap,uHasMetallicRoughnessMap,uHasOcclusionMap,uHasEmissiveMap;
@@ -168,7 +168,7 @@ export const program3d=gl=>{
  uniform float uFlashPower;
  uniform vec3 uSunDir,uSunColor;
  uniform float uSunIntensity,uAmbient;
- uniform bool uEnvironmentEnabled;uniform samplerCube uEnvironmentSharp,uEnvironmentDiffuse;uniform int uProbeCount;uniform vec3 uProbePositions[4],uProbeTints[4];uniform float uProbeRadius[4],uProbeStrength[4];
+ uniform float uEnvironmentMaxLod;uniform bool uEnvironmentEnabled;uniform samplerCube uEnvironmentSharp,uEnvironmentDiffuse;uniform int uProbeCount;uniform vec3 uProbePositions[4],uProbeTints[4];uniform float uProbeRadius[4],uProbeStrength[4];
  uniform bool uShadowPass,uShadowsEnabled,uViewModel;uniform sampler2D uShadowMap;uniform float uShadowTexelSize,uShadowBias;uniform vec3 uShadowEye,uShadowRight,uShadowUp,uShadowForward;uniform float uShadowExtent,uShadowNear,uShadowFar;
  uniform int uLightCount;
  uniform vec3 uLightPos[8],uLightColor[8],uLightDir[8];
@@ -240,8 +240,13 @@ export const program3d=gl=>{
  float specularStrength=mix(.12,.45,1.-roughness);
  vec3 indirectDiffuse=ambientLight*baseColor.rgb*(1.-metallic)*(vec3(1.)-indirectFresnel);
  vec3 indirectSpecular=reflectedSky*uAmbient*ao*indirectFresnel*specularStrength;
- // RGBM cubemaps provide view-dependent radiance; the second face set is
- // broad and intentionally lower-frequency (not a GGX-prefiltered mip chain).
+ // Source-convolved GGX levels; optional explicit LOD on WebGL1.
+ // BRDF coefficients follow the analytic split-sum fit documented by Epic:
+ // https://www.unrealengine.com/blog/physically-based-shading-on-mobile
+ vec4 fit=roughness*vec4(-1.,-.0275,-.572,.022)+vec4(1.,.0425,1.04,-.04);
+ float grazing=min(fit.x*fit.x,exp2(-9.28*NoV))*fit.x+fit.y;
+ vec2 integrated=vec2(-1.04,1.04)*grazing+fit.zw;
+ vec3 environmentReflectance=clamp(F0*integrated.x+integrated.y,0.,1.);
  if(uEnvironmentEnabled){
   vec3 probeTint=vec3(1.);
   for(int probeIndex=0;probeIndex<4;probeIndex++){
@@ -251,10 +256,10 @@ export const program3d=gl=>{
    probeTint=mix(probeTint,uProbeTints[probeIndex],clamp(influence*uProbeStrength[probeIndex],0.,1.));
   }
   vec3 environmentDiffuse=rgbmEnvironment(textureCube(uEnvironmentDiffuse,normal))*probeTint;
-  vec3 environmentSharp=rgbmEnvironment(textureCube(uEnvironmentSharp,reflected))*probeTint;
-  vec3 environmentBroad=rgbmEnvironment(textureCube(uEnvironmentDiffuse,reflected))*probeTint;
-  indirectDiffuse=environmentDiffuse*uAmbient*ao*baseColor.rgb*(1.-metallic)*(vec3(1.)-indirectFresnel);
-  indirectSpecular=mix(environmentSharp,environmentBroad,roughness)*uAmbient*ao*indirectFresnel*mix(.12,.45,1.-roughness);
+  float environmentLod=roughness*uEnvironmentMaxLod;
+  vec3 environmentSpecular=rgbmEnvironment(${explicitLod?'textureCubeLodEXT(uEnvironmentSharp,reflected,environmentLod)':'textureCube(uEnvironmentSharp,reflected,environmentLod)'})*probeTint;
+  indirectDiffuse=environmentDiffuse*uAmbient*ao*baseColor.rgb*(1.-metallic)*(vec3(1.)-environmentReflectance);
+  indirectSpecular=environmentSpecular*uAmbient*ao*environmentReflectance;
  }
  vec3 indirect=indirectDiffuse+indirectSpecular;
  vec3 direct=directBRDF(baseColor.rgb,metallic,roughness,normal,viewDir,normalize(uSunDir))*uSunColor*uSunIntensity*sunShadowVisibility(vWorld,normal,uSunDir);
@@ -372,7 +377,7 @@ export function init3d(canvas,host,buttons){
  let program;
  try{program=program3d(gl)}catch(err){renderFailure('Compilation shader : '+String(err.message||err));return {setEnabled:()=>false,focus:()=>{},syncToWorkspace:()=>renderFailure(view3d.error)}}
  const loc=n=>gl.getUniformLocation(program,n);
- const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),projectionFactor:loc('uProjectionFactor'),nearClip:loc('uNearClip'),farClip:loc('uFarClip'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]'),shadowPass:loc('uShadowPass'),shadowEnabled:loc('uShadowsEnabled'),shadowMap:loc('uShadowMap'),shadowTexel:loc('uShadowTexelSize'),shadowBias:loc('uShadowBias'),shadowEye:loc('uShadowEye'),shadowRight:loc('uShadowRight'),shadowUp:loc('uShadowUp'),shadowForward:loc('uShadowForward'),shadowExtent:loc('uShadowExtent'),shadowNear:loc('uShadowNear'),shadowFar:loc('uShadowFar'),environmentEnabled:loc('uEnvironmentEnabled'),environmentSharp:loc('uEnvironmentSharp'),environmentDiffuse:loc('uEnvironmentDiffuse'),probeCount:loc('uProbeCount'),probePositions:loc('uProbePositions[0]'),probeTints:loc('uProbeTints[0]'),probeRadius:loc('uProbeRadius[0]'),probeStrength:loc('uProbeStrength[0]')};
+ const u={eye:loc('uEye'),right:loc('uRight'),up:loc('uUp'),forward:loc('uForward'),pos:loc('uPosition'),scale:loc('uScale'),rotation:loc('uRotation'),aspect:loc('uAspect'),projectionFactor:loc('uProjectionFactor'),nearClip:loc('uNearClip'),farClip:loc('uFarClip'),color:loc('uColor'),roughness:loc('uRoughness'),metallic:loc('uMetallic'),exposure:loc('uExposure'),fogDensity:loc('uFogDensity'),flashPos:loc('uFlashPos'),flashDir:loc('uFlashDir'),flashPower:loc('uFlashPower'),sunDir:loc('uSunDir'),sunColor:loc('uSunColor'),sunIntensity:loc('uSunIntensity'),ambient:loc('uAmbient'),lightCount:loc('uLightCount'),lightPos:loc('uLightPos[0]'),lightColor:loc('uLightColor[0]'),lightDir:loc('uLightDir[0]'),lightPower:loc('uLightPower[0]'),lightRange:loc('uLightRange[0]'),lightCone:loc('uLightCone[0]'),lightSpot:loc('uLightSpot[0]'),shadowPass:loc('uShadowPass'),shadowEnabled:loc('uShadowsEnabled'),shadowMap:loc('uShadowMap'),shadowTexel:loc('uShadowTexelSize'),shadowBias:loc('uShadowBias'),shadowEye:loc('uShadowEye'),shadowRight:loc('uShadowRight'),shadowUp:loc('uShadowUp'),shadowForward:loc('uShadowForward'),shadowExtent:loc('uShadowExtent'),shadowNear:loc('uShadowNear'),shadowFar:loc('uShadowFar'),environmentMaxLod:loc('uEnvironmentMaxLod'),environmentEnabled:loc('uEnvironmentEnabled'),environmentSharp:loc('uEnvironmentSharp'),environmentDiffuse:loc('uEnvironmentDiffuse'),probeCount:loc('uProbeCount'),probePositions:loc('uProbePositions[0]'),probeTints:loc('uProbeTints[0]'),probeRadius:loc('uProbeRadius[0]'),probeStrength:loc('uProbeStrength[0]')};
  let environmentIbl=null,lastIblSignature='',importedHdr=null;
  let hdrOperation=0;
  const announceHdri=(event,detail)=>globalThis.window?.dispatchEvent(new CustomEvent(event,{detail}));
@@ -908,7 +913,7 @@ export function init3d(canvas,host,buttons){
    }
    gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_CUBE_MAP,environmentIbl.sharp);
    gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_CUBE_MAP,environmentIbl.diffuse);
-   gl.uniform1i(u.environmentSharp,6);gl.uniform1i(u.environmentDiffuse,7);
+   gl.uniform1i(u.environmentSharp,6);gl.uniform1i(u.environmentDiffuse,7);gl.uniform1f(u.environmentMaxLod,environmentIbl.maxLod);
    gl.uniform1i(u.environmentEnabled,1);
    gl.activeTexture(gl.TEXTURE0);
   }else gl.uniform1i(u.environmentEnabled,0);

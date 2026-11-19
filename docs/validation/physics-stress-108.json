@@ -1,0 +1,40 @@
+{
+  "schema": "warlike.physics-stress.v1",
+  "environment": "Node + genuine Rapier WASM; no rendering, AI or browser FPS measurement",
+  "bodies": 108,
+  "steps": 1200,
+  "fixedDelta": 0.016666666666666666,
+  "simulatedSeconds": 20,
+  "passed": true,
+  "invalidSamples": 0,
+  "maxEditorExportDelta": 0,
+  "minElevation": -0.004066646099090576,
+  "physicsStepMs": {
+    "editor": {
+      "p50": 0.3935840000000326,
+      "p95": 1.007645000000025,
+      "max": 269.16482499999995
+    },
+    "exported": {
+      "p50": 1.2440459999997984,
+      "p95": 1.8722379999999248,
+      "max": 5.153917999999976
+    }
+  },
+  "cases": [
+    "108 default bodies / configurable budget",
+    "box, sphere, capsule",
+    "gravity and mixed masses",
+    "three-level stacks, floor and walls",
+    "CCD enabled",
+    "authored scene unchanged",
+    "JSON export reconstruction",
+    "sampled trajectory and velocity parity"
+  ],
+  "limitations": [
+    "not a GPU benchmark",
+    "does not measure 108 soldiers with AI",
+    "not a full ZIP/browser test",
+    "no cross-platform determinism claim"
+  ]
+}

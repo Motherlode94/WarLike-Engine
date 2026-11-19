@@ -25,8 +25,12 @@ const worldVector=(local,n)=>{
  const tangent=normalize(cross(up,n)),bitangent=cross(n,tangent);
  return normalize(tangent.map((v,i)=>v*local[0]+bitangent[i]*local[1]+n[i]*local[2]));
 };
-export function prefilterHdriFace3d(hdr,face,size,{roughness=.65,samples=32,diffuse=false,range=8}={}){
- if(!Number.isInteger(size)||size<2||size>128||!Number.isInteger(samples)||samples<1||samples>128)throw Error('Invalid IBL prefilter budget');
+export function prefilterHdriFace3d(hdr,face,size,options={}){
+ return prefilterRadianceFace3d(direction=>sampleEquirectHdr(hdr,direction),face,size,options);
+}
+export function prefilterRadianceFace3d(sampleRadiance,face,size,{roughness=.65,samples=32,diffuse=false,range=8}={}){
+ if(!Number.isInteger(size)||size<1||size>128||!Number.isInteger(samples)||samples<1||samples>128)throw Error('Invalid IBL prefilter budget');
+ if(typeof sampleRadiance!=='function'||!Number.isInteger(face)||face<0||face>5||!Number.isFinite(roughness)||roughness<0||roughness>1)throw Error('Invalid IBL radiance source');
  const out=new Uint8Array(size*size*4);
  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
   const n=cubeDirection3d(face,2*(x+.5)/size-1,2*(y+.5)/size-1);
@@ -43,7 +47,7 @@ export function prefilterHdriFace3d(hdr,face,size,{roughness=.65,samples=32,diff
     w=Math.max(0,dot(n,dir));
    }
    if(w<=0)continue;
-   const light=sampleEquirectHdr(hdr,dir);
+   const light=sampleRadiance(dir);
    for(let c=0;c<3;c++)radiance[c]+=light[c]*w;
    weight+=w;
   }

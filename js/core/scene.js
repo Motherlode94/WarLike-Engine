@@ -1,3 +1,4 @@
+import {createProductionValidationScene} from './production-validation-scene.js';
 import {cleanupPlay} from './play-cleanup.js';
 import {deleteEntitySubtrees,duplicateEntitySubtrees,reparentEntities,updateEditorEntityHierarchy3d,legacyReferenceMatrix3d} from './scene-graph-v2.js';
 import {encodeProjectAssets,restoreProjectAssets} from './portable-assets.js';
@@ -258,7 +259,7 @@ export function loadElementsDemo(){
 // Each demo is a complete, playable sandbox for its own project type.
 export function loadAuthoredDemo(kind='town'){
  if(state.playing)return false;
- const builders={lastlightnative:createLastLightScene,chambre07native:createChambre07Scene,irondefiancetraining:createIronDefianceTrainingScene,...Object.fromEntries(['rdc','china','russia','usa','france','ukraine','japan'].map(faction=>['ironcompany-'+faction,mode=>createIronDefianceCompanyScene(mode,faction)])),animation:createAnimationDemo,town:createTownDemo,nature:createNatureDemo,garage:createGarageDemo,platformer:()=>{if(workspace.mode!=='2d')throw Error('Le parcours plateforme utilise le projet 2D.');return createBundledPhysicsScene2d()}};
+ const builders={productionlab:createProductionValidationScene,lastlightnative:createLastLightScene,chambre07native:createChambre07Scene,irondefiancetraining:createIronDefianceTrainingScene,...Object.fromEntries(['rdc','china','russia','usa','france','ukraine','japan'].map(faction=>['ironcompany-'+faction,mode=>createIronDefianceCompanyScene(mode,faction)])),animation:createAnimationDemo,town:createTownDemo,nature:createNatureDemo,garage:createGarageDemo,platformer:()=>{if(workspace.mode!=='2d')throw Error('Le parcours plateforme utilise le projet 2D.');return createBundledPhysicsScene2d()}};
  const genre=kind.startsWith('genre:')?kind.slice(6):null;
  const build=genre?mode=>createGenreScene(genre,mode):builders[kind];if(!build)throw Error('Scène démo inconnue.');
  const demo=build(workspace.mode);record('Avant changement de scène démo');

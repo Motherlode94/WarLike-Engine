@@ -1,4 +1,5 @@
 import {solidBody3d,moveBody3d} from './collision-3d.js';
+import {resolveInputKeys} from './input-actions.js';
 import {collisionBackend3d} from './collision-backend-3d.js';
 import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle} from './vehicle-components.js';
 import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle-weapons-3d.js';
@@ -20,6 +21,9 @@ const intersects=(car,x,y,o)=>{
  return verticalBase<otherTop&&verticalTop>otherBase&&x<o.x+otherW&&x+w>o.x&&y<o.y+otherD&&y+d>o.y;
 };
 export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}={}){
+ const inputVehicle=currentVehicle3d(entities);
+ keys=resolveInputKeys(inputVehicle||player,keys,{context:inputVehicle?'vehicle':'player'});
+ pressedKeys=resolveInputKeys(inputVehicle||player,pressedKeys,{context:inputVehicle?'vehicle':'player'});
  const step=Math.min(.1,Math.max(0,Number(dt)||0));
  driving3d.impact=Math.max(0,driving3d.impact-step);
  const enter=keys.has('e')||pressedKeys.has('e');

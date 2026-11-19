@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {defaultInputActions,resolveInputKeys,inspectInputActions} from '../js/core/input-actions.js';
 import {defaultAnimalController,stepAnimalControllers,inspectAnimalController} from '../js/core/animal-controller.js';
 import {defaultNavigationAgent,stepNavigationAgents,inspectNavigationAgent} from '../js/core/navigation-agent.js';
+import {defaultVehicleController,inspectVehicleController,vehicleTuning} from '../js/core/vehicle-controller.js';
+import {isDriveable3d} from '../js/core/vehicle-3d.js';
+import {readFileSync} from 'node:fs';
 import {componentChoices,addObjectComponent,removeObjectComponent,resetObjectComponent} from '../js/core/component-definitions.js';
 import {canonicalScene,runtimeEntities} from '../js/core/scene-contract.js';
 import {inspectRuntimeCompatibility} from '../js/core/runtime-capabilities.js';
@@ -22,7 +25,7 @@ test('P2 Input Actions: additional and replacement bindings affect only the cont
  assert.ok(inspectInputActions({...a.inputActions,forward:';'}).length);
 });
 test('P2: player, animal, navigation are data components, not prefabs, in both scene modes',()=>{
- for(const id of ['inputActions','animalController','navigationAgent']){
+ for(const id of ['inputActions','animalController','navigationAgent','vehicleController']){
   for(const mode of ['2d','3d'])assert.ok(componentChoices(mode).some(d=>d.id===id));
  }
  const a=actor(3);
@@ -71,4 +74,21 @@ test('P2/P3: invalid component configurations block export explicitly',()=>{
  assert.ok(errors.some(e=>e.message.includes('Input Actions')));
  assert.ok(errors.some(e=>e.message.includes('Animal Controller')));
  assert.ok(errors.some(e=>e.message.includes('Navigation Agent')));
+});
+
+test('P2: vehicle behavior is independently attachable to a plain GameObject',()=>{
+ const car=actor(41);car.type='mesh3d';
+ assert.equal(isDriveable3d(car),false);
+ assert.equal(addObjectComponent(car,'vehicleController','3d'),true);
+ assert.equal(isDriveable3d(car),true);
+ assert.equal(vehicleTuning(car).maxSpeed,300);
+ car.vehicleController.maxSpeed=120;
+ assert.equal(vehicleTuning(car).maxSpeed,120);
+ assert.deepEqual(inspectVehicleController(car.vehicleController),[]);
+ const scene=runtimeEntities(canonicalScene([car]));
+ assert.equal(scene[0].vehicleController.maxSpeed,120);
+ assert.equal(removeObjectComponent(car,'vehicleController'),true);
+ assert.equal(isDriveable3d(car),false);
+ const source2d=readFileSync(new URL('../js/core/vehicle.js',import.meta.url),'utf8');
+ assert.match(source2d,/o\?\.vehicleController\?\.enabled===true/);
 });

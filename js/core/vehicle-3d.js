@@ -9,7 +9,7 @@ import {stepArcadeVehicle} from './arcade-driving.js';
 import {vehicleConfiguration,tickVehicleArticulation} from './vehicle-articulation.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 const center=o=>({x:o.x+(o.w||32)/2,y:o.y+(o.depth3d||o.h||32)/2});
-export const isDriveable3d=o=>!!o&&(o.vehicleController?.enabled===true||o.vehicleConfig?.driveable===true||vehicleConfiguration(o)?.enabled===true&&vehicleConfiguration(o)?.drive!=='static'||o.tags?.includes('race-vehicle')||get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles');
+export const isDriveable3d=o=>!!o&&o.vehicleController?.enabled!==false&&(o.vehicleController?.enabled===true||o.vehicleConfig?.driveable===true||vehicleConfiguration(o)?.enabled===true&&vehicleConfiguration(o)?.drive!=='static'||o.tags?.includes('race-vehicle')||get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles');
 export const driving3d={vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0};
 export const currentVehicle3d=entities=>entities.find(o=>o.id===driving3d.vehicleId&&isDriveable3d(o))||null;
 export const resetDriving3d=()=>Object.assign(driving3d,{vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0});

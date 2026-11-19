@@ -1,4 +1,8 @@
 import {inspectAnimationRig} from './skeletal-animation.js';
+import {inspectInputActions} from './input-actions.js';
+import {inspectAnimalController} from './animal-controller.js';
+import {inspectNavigationAgent} from './navigation-agent.js';
+import {inspectVehicleController} from './vehicle-controller.js';
 import {inspectAnimationStudio} from './animation-clips.js';
 import {inspectAnimatorGraph} from './animator-graph.js';
 import {inspectWebScripts} from './web-script-runtime.js';
@@ -17,6 +21,10 @@ export function inspectRuntimeCompatibility(entities,{target='web',backend='web'
   // its constraints: switching to Rapier is required for Web export.
   if(target==='web'&&project?.physics3d==='builtin'&&e.joint3d?.enabled!==false&&e.joint3d)
    add((e.name||'#'+e.id)+' · Joint 3D nécessite le moteur physique Rapier. Choisis Rapier dans les paramètres du projet avant l’export Web.',e.id);
+  if(e.inputActions&&e.inputActions.enabled!==false)for(const error of inspectInputActions(e.inputActions))add((e.name||'#'+e.id)+' · '+error,e.id);
+  if(e.animalController&&e.animalController.enabled!==false)for(const error of inspectAnimalController(e.animalController))add((e.name||'#'+e.id)+' · '+error,e.id);
+  if(e.navigationAgent&&e.navigationAgent.enabled!==false)for(const error of inspectNavigationAgent(e.navigationAgent))add((e.name||'#'+e.id)+' · '+error,e.id);
+  if(e.vehicleController&&e.vehicleController.enabled!==false)for(const error of inspectVehicleController(e.vehicleController))add((e.name||'#'+e.id)+' · '+error,e.id);
   if(Array.isArray(e.animatorGraph?.layers)&&e.animatorGraph.layers.some(l=>l?.avatarMask&&l.enabled!==false)&&(!e.animationRig||e.animationRig.enabled===false||!e.animationRig.avatar||e.animationRig.avatar.enabled===false))add((e.name||'#'+e.id)+' · masque humanoïde sans Avatar actif.',e.id);
   if(e.animationRig&&e.animationRig.enabled!==false)for(const error of inspectAnimationRig(e.animationRig))add((e.name||'#'+e.id)+' · '+error,e.id);
   if(e.animatorGraph&&e.animatorGraph.enabled!==false)for(const error of inspectAnimatorGraph(e.animatorGraph))add((e.name||'#'+e.id)+' · '+error,e.id);

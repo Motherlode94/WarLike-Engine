@@ -17,6 +17,7 @@ export const selectInRect=(entities,rect,contain=false)=>entities.filter(e=>!e.e
 export function attachInput(canvas,host){
  let drag=null,space=false;
  const screen=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.clientWidth/r.width,y:(e.clientY-r.top)*canvas.clientHeight/r.height}};
+ document.addEventListener('warlike:change',()=>{if(!state.playing)return;const pointer=drag?.pointer;drag=null;space=false;clearBox();if(pointer!==undefined&&canvas.hasPointerCapture?.(pointer))canvas.releasePointerCapture(pointer)});
  const additive=e=>e.shiftKey||e.ctrlKey||e.metaKey;
  const clearBox=()=>{selectionBox.active=false;selectionBox.start=null;selectionBox.end=null};
  canvas.addEventListener('contextmenu',e=>e.preventDefault());

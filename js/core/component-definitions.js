@@ -9,6 +9,7 @@ import {defaultFxEmitter} from './fx-runtime.js';
 import {defaultSimulationNode} from './simulation-nodes.js';
 import {defaultTacticalUnit} from './rts-orders.js';
 import {defaultCollider2d,defaultRigidbody2d,defaultController2d} from './physics-2d.js';
+import {defaultJoint2d,defaultEffector2d} from './physics-tools-2d.js';
 import {defaultCameraRig} from './play-camera.js';
 import {defaultSpriteAnimation2d} from './sprite-animation-2d.js';
 import {defaultTilemap2d} from './tilemap-2d.js';
@@ -38,8 +39,10 @@ export const webComponentDefinitions=[
  {id:'tilemap2d',name:'Tilemap 2D',category:'Rendering',description:'Grille de tuiles native avec pinceau, dimensions et collisions par cellule.',modes:['2d'],create:defaultTilemap2d},
  {id:'spriteAnimation2d',name:'Sprite Animation 2D',category:'Animation',description:'Animation d’une Sprite Sheet horizontale PNG, configurable dans Inspector.',modes:['2d'],create:defaultSpriteAnimation2d},
  {id:'spriteRenderer2d',name:'Sprite Renderer 2D',category:'Rendering',description:'Ordre de dessin et opacité du sprite/rectangle de l’objet 2D.',modes:['2d'],create:()=>({enabled:true,sortingOrder:0,opacity:1})},
- {id:'collider2d',name:'Box Collider 2D',category:'Physique',description:'Collision solide ou trigger, dimensions et décalage.',modes:['2d'],create:defaultCollider2d},
+ {id:'collider2d',name:'Collider 2D',category:'Physique',description:'Rectangle, cercle ou capsule ; collision solide ou trigger, dimensions et décalage.',modes:['2d'],create:defaultCollider2d},
  {id:'rigidbody2d',name:'Rigidbody 2D',category:'Physique',description:'Gravité, vitesse, rebond et friction.',modes:['2d'],create:defaultRigidbody2d},
+ {id:'joint2d',name:'Articulation 2D',category:'Physique',description:'Distance fixe ou ressort vers une ancre ou un objet cible.',modes:['2d'],create:defaultJoint2d},
+ {id:'effector2d',name:'Zone de forces 2D',category:'Physique',description:'Force directionnelle et amortissement dans un volume Trigger.',modes:['2d'],create:defaultEffector2d},
  {id:'controller2d',name:'Contrôleur de personnage 2D',category:'Personnage',description:'Vue du dessus ou plateforme avec gravité et saut.',modes:['2d'],create:defaultController2d},
  {id:'uiCanvas',name:'UI Canvas · Overlay',category:'Interface du jeu',description:'Racine de l’interface de jeu, échelle responsive. Phase initiale : structure éditable ; rendu de jeu non encore relié.',create:defaultUiCanvas},
  {id:'uiRect',name:'UI RectTransform',category:'Interface du jeu',description:'Ancres, pivot, taille et position d’un objet UI rattaché au Canvas.',create:defaultUiRect},
@@ -64,10 +67,11 @@ export const webComponentDefinitions=[
  {id:'worldInfectedConfig',name:'Infecté · Horde',category:'Intelligence artificielle',description:'Poursuite du joueur à proximité.',create:()=>({enabled:true,range:300,speed:53})}
 ];
 // Stable Inspector metadata: classification never depends on translated display names.
-export const inspectorCoreComponentIds=new Set(['collider2d','rigidbody2d','collider3d','rigidbody3d','joint3d','cameraRig']);
+export const inspectorCoreComponentIds=new Set(['collider2d','rigidbody2d','joint2d','effector2d','collider3d','rigidbody3d','joint3d','cameraRig']);
 export function inspectorComponentGroup(id){return inspectorCoreComponentIds.has(id)?(id==='cameraRig'?'render':'physics'):'extension'}
 export const componentDependencies=Object.freeze({
  // Rigidbody 2D may legitimately run without a Collider 2D.
+ rigidbody2d:['joint2d'],
  collider3d:['rigidbody3d','joint3d','controller3d'],
  rigidbody3d:['joint3d']
 });
@@ -80,7 +84,7 @@ export function addObjectComponent(object,id,mode){
  const definition=componentChoices(mode).find(d=>d.id===id);if(!definition)return false;
  if(id==='sequence'&&object.sequence){object.sequences??=[];if(object.sequences.length>=32)return false;object.sequences.push(definition.create());return true}
  if(hasObjectComponent(object,id))return false;
- object[id]=definition.create();if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='controller3d'){object.collider3d??={...defaultCollider3d(),shape:'capsule'};object.collision3d=true;}if(['rigidbody3d','joint3d'].includes(id)){object.collider3d??=defaultCollider3d();object.collision3d=true;if(id==='joint3d')object.rigidbody3d??={...defaultRigidbody3d(),lockRotations:false}}if(id==='collider3d')object.collision3d=true;if(id==='rigidbody2d')object.collider2d??=defaultCollider2d();return true;
+ object[id]=definition.create();if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='controller3d'){object.collider3d??={...defaultCollider3d(),shape:'capsule'};object.collision3d=true;}if(['rigidbody3d','joint3d'].includes(id)){object.collider3d??=defaultCollider3d();object.collision3d=true;if(id==='joint3d')object.rigidbody3d??={...defaultRigidbody3d(),lockRotations:false}}if(id==='collider3d')object.collision3d=true;if(['rigidbody2d','joint2d'].includes(id))object.collider2d??=defaultCollider2d();if(id==='joint2d')object.rigidbody2d??=defaultRigidbody2d();if(id==='effector2d')object.collider2d??={...defaultCollider2d(),isTrigger:true};return true;
 }
 export function resetObjectComponent(object,id){const definition=webComponentDefinitions.find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
 export function removeObjectComponent(object,id){if(!webComponentDefinitions.some(d=>d.id===id)||!hasObjectComponent(object,id)||componentRemovalBlockers(object,id).length)return false;delete object[id];if(id==='collider2d')object.collision3d=false;if(id==='superhero')delete object.heroState;if(id==='survival')delete object.survivalState;return true}

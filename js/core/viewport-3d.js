@@ -1,3 +1,4 @@
+import {createEditorPlayCamera} from './editor-play-camera.js';
 import {cacheAnimationGeometry,skeletalClips,sampleEntityRigPose,hasSkeletalPreview,skeletalFrame} from './skeletal-animation.js';
 import {waterSettings,waterSurface3d,waterColor} from './stylized-water.js';
 import {runRuntimeFrame} from './runtime-session.js';
@@ -48,7 +49,7 @@ import {rapierStatus,loadRapier3d,createRapierScene,activateRapierQueries3d,move
 import {updateController3d,updateAi,updateStats,attack3d,damage} from './gameplay-components.js';
 import {getModelGeometry,getTextureImage,model3dById} from '../assets/real-models-3d.js';
 import {updateSequences,emitSequenceSignal} from './logic-sequences.js';
-import {createGrabSession3d,tickGrab3d,releaseGrab3d} from './grab-physics-3d.js';
+import {createGrabSession3d,discardGrabSession3d,tickGrab3d,releaseGrab3d} from './grab-physics-3d.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {workspace,switchWorkspace} from './workspaces.js';
 import {sunAt,visibleLights,updateLighting} from './lighting.js';
@@ -152,7 +153,7 @@ export const program3d=gl=>{
  float f=uProjectionFactor;
  float clipZ=d*(uFarClip+uNearClip)/(uFarClip-uNearClip)-2.0*uFarClip*uNearClip/(uFarClip-uNearClip);
  gl_Position=vec4(dot(rel,uRight)*f/uAspect,dot(rel,uUp)*f,clipZ,d);
- 
+
  }`;
  const fs=`${derivatives?"#extension GL_OES_standard_derivatives : enable\n":""}precision highp float;
  varying vec4 vMaterialUV0,vMaterialUV1;
@@ -621,12 +622,12 @@ export function init3d(canvas,host,buttons){
  };
  const releasePlayMouse=e=>{if(!e||e.button===0)fpsFiring=false;if(!e||e.button===2)fpsAiming=false;};canvas.addEventListener('pointerup',releasePlayMouse);canvas.addEventListener('pointercancel',()=>releasePlayMouse());window.addEventListener('pointerup',releasePlayMouse);window.addEventListener('blur',()=>releasePlayMouse());
  const playerTarget=()=>{const vehicle=currentVehicle3d(state.entities),p=vehicle||playableActor(state.entities);return p?cameraTargetFor(objectBounds3d(p),cameraRigFor(p,!!vehicle)):null};
- let wasPlaying=false,editorCamera=null;
+
  let physicsSession=null,physicsGeneration=0,physicsAccumulator=0;
  const stopRapier=()=>{physicsGeneration++;disposeRapierScene(physicsSession);physicsSession=null;physicsAccumulator=0;};
  const enterPlay=()=>{
   resetBattlefield(state.entities);fpsAiming=false;fpsFiring=false;
-  editorCamera={yaw:view3d.yaw,pitch:view3d.pitch,radius:view3d.radius,target:view3d.target.slice()};view3d.drag=null;boomDistance=null;resetDriving3d();
+  view3d.drag=null;boomDistance=null;resetDriving3d();
   const p=playableActor(state.entities),pt=playerTarget(),rig=cameraRigFor(p);view3d.followPlayer=!!pt&&!activeSceneCamera(state.entities);if(pt){view3d.target=pt.slice();view3d.radius=rig.distance;view3d.yaw=Math.PI-(Number(p.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18}
   if(companyController(state.entities)){view3d.followPlayer=false;view3d.target=[14,0,14];view3d.radius=32;view3d.pitch=.92;view3d.yaw=-.55;return}
   if(gameProject.physics3d==='builtin')return;
@@ -637,6 +638,12 @@ export function init3d(canvas,host,buttons){
    catch(error){console.warn('[WarLike] Rapier unavailable, using built-in physics',error);physicsSession=null}
   });
  };
+ const syncPlayCamera=createEditorPlayCamera(view3d,{enter:enterPlay,leave(){
+  releasePlayMouse();editorKeys.clear();
+  try{if(document.pointerLockElement===canvas)document.exitPointerLock?.();resetDriving3d();discardGrabSession3d(grabSession)}finally{stopRapier()}
+ }});
+ document.addEventListener('warlike:change',()=>syncPlayCamera(state.playing&&workspace.mode==='3d'));
+
 
  const selectionRect=document.createElement('div');selectionRect.className='scene-selection-rectangle';selectionRect.hidden=true;host.append(selectionRect);const editorKeys=new Set();
  document.addEventListener('keydown',e=>{if(state.playing||!view3d.enabled||view3d.drag?.nav!=='look'||isTypingTarget(e.target))return;if(['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();editorKeys.add(e.code)}});document.addEventListener('keyup',e=>editorKeys.delete(e.code));window.addEventListener('blur',()=>{editorKeys.clear();view3d.drag=null;selectionRect.hidden=true});
@@ -853,9 +860,7 @@ export function init3d(canvas,host,buttons){
   }
   const company=state.playing&&workspace.mode==='3d'?companyController(state.entities):null;if(company&&!gameplayInputBlocked()){view3d.target=moveCompanyCamera(view3d.target,view3d.yaw,gameplayKeys(state.keys),dt,company.company.bounds)}
   updateLighting(dt,state.playing&&workspace.mode==='3d');
-  if(state.playing&&!wasPlaying)enterPlay();
-  if(!state.playing&&wasPlaying){releasePlayMouse();view3d.followPlayer=false;view3d.drag=null;if(editorCamera)Object.assign(view3d,editorCamera);editorCamera=null;if(document.pointerLockElement===canvas)document.exitPointerLock?.();resetDriving3d();releaseGrab3d(grabSession,state.entities);stopRapier();}
-  wasPlaying=state.playing;
+  syncPlayCamera(state.playing&&workspace.mode==='3d');
   if(state.playing&&workspace.mode==='3d'&&!isLanGuest()){runRuntimeFrame(dt,{update(dt){update3dPlay(dt);updateSequences(dt,{mode:'3d',yaw:view3d.yaw,playing:true,entities:state.entities,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}});}
   if(state.playing&&gameIsRunning()&&view3d.followPlayer){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),pt=playerTarget();if(pt){const cut=actor!==lastCameraActor||gameSession.currentSceneId!==lastCameraScene||Math.hypot(...V.sub(pt,view3d.target))>12,t=cut?1:cameraDamping(cameraRigFor(actor).followSharpness,dt);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t));if(cut)boomDistance=null}lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;}
   if(state.playing&&workspace.mode==='3d'){

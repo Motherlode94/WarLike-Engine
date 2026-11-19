@@ -517,3 +517,7 @@ Le moteur contient un seul store principal et des départements spécialisés, s
 ## Correctif — identité du paquet npm (novembre 2026)
 
 Le paquet `package.json` s'appelait `warlike-studio` alors qu'il représente WarLike Engine. Le nom est désormais `warlike-engine` afin d'éviter les collisions entre logiciels, métadonnées de build et outils d'intégration. Les scripts de test, export et validation de jeux restent inchangés. Le test `tests/engine-package-identity.test.mjs` empêche une régression. Cela ne change ni le runtime 2D/3D ni l'état réel des exports.
+
+### Animation, prefabs et scripts — 19 novembre 2026
+
+[Documentation et limites de la livraison](docs/animation-prefabs-scripting-depth-2026-11-19.md) : 55 correspondances Avatar optionnelles/obligatoires, masques pondérés réutilisables, couches additives référencées, WarScript v2 et prefabs imbriqués liés avec variantes. La conversion explicite d’un sous-ensemble C# vers WarScript permet des copies Web ; la compilation C#/.NET arbitraire pour le Web reste absente. Les nouveaux parcours UI ne sont pas encore validés en navigateur.

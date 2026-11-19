@@ -18,7 +18,7 @@ const prefab=()=>({...makePrefabHierarchy(source()[0],source(),{mode:'3d'}),id:'
 test('prefab captures root and descendants but no unrelated entity or scene IDs',()=>{
  const p=prefab();
  assert.deepEqual(p.nodes.map(n=>n.name),['Véhicule','Porte gauche','Poignée']);
- assert.equal(p.version,2);
+ assert.equal(p.version,3);
  assert.equal(p.nodes[1].parentKey,p.nodes[0].key);
  assert.equal(p.nodes[2].parentKey,p.nodes[1].key);
  assert.equal(p.nodes[1].data.joint3d.targetNodeKey,p.nodes[0].key);
@@ -34,7 +34,7 @@ test('instantiate twice remaps parents and joint target IDs without sharing obje
  assert.equal(a.entities[1].joint3d.targetId,50);
  assert.equal(b.entities[1].joint3d.targetId,53);
  assert.equal(a.entities[0].x,300);assert.equal(b.entities[0].y,950);
- assert.equal(a.entities[1].x,12,'Child local transform remains intact');
+ assert.equal(a.entities[1].x,212,'New world-space prefab keeps the child offset relative to its root');
  a.entities[2].color='#000000';
  assert.notEqual(b.entities[2].color,'#000000');
  assert.deepEqual(a.entities.map(e=>e.prefabNodeKey),b.entities.map(e=>e.prefabNodeKey));

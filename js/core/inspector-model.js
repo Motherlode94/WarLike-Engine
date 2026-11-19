@@ -48,8 +48,10 @@ export function pasteInspectorComponent(owner,keys,values){
 export function inspectorMetadata(entity){
  const result={};
  for(const key of ['visible','editorHidden'])if(typeof entity[key]==='boolean')result[key]=entity[key];
- for(const key of ['hierarchyGroup','prefabSourceId'])if(typeof entity[key]==='string')result[key]=entity[key].slice(0,100);
+ for(const key of ['hierarchyGroup','prefabSourceId','prefabNodeKey'])if(typeof entity[key]==='string')result[key]=entity[key].slice(0,key==='prefabNodeKey'?1600:100);
  for(const key of ['inspectorOrder','prefabOverrides'])if(Array.isArray(entity[key]))result[key]=entity[key].filter(value=>typeof value==='string'&&!forbidden.has(value)).slice(0,128).map(value=>value.slice(0,120));
+ if(Number.isSafeInteger(entity.prefabInstanceRootId)&&entity.prefabInstanceRootId>0)result.prefabInstanceRootId=entity.prefabInstanceRootId;
+ if(Array.isArray(entity.prefabLinks))result.prefabLinks=entity.prefabLinks.filter(l=>l&&typeof l.prefabId==='string'&&typeof l.nodeKey==='string'&&Number.isSafeInteger(l.rootId)&&l.rootId>0).slice(0,16).map(l=>({prefabId:l.prefabId.slice(0,100),nodeKey:l.nodeKey.slice(0,1600),rootId:l.rootId}));
  return result;
 }
 // Small arithmetic grammar: no eval, function calls, variables or JavaScript execution.

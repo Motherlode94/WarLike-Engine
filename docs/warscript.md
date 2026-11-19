@@ -30,11 +30,11 @@ Update() {
 
 `class Nom { … }`, `public` et `void` sont facultatifs. Les points-virgules peuvent être remplacés par un retour à la ligne à la fin d’une instruction. Les noms des champs et méthodes sont sensibles à la casse. Les commentaires `//` et `/* … */` sont acceptés.
 
-## Syntaxe v1
+## Syntaxe v2
 
 Types : `float`, `int`, `bool`, `string`, `Vector3`, `var`. Les champs déclarés en tête de script sont publics par défaut ; `private` les masque dans l’Inspector. Les variables locales appartiennent à leur méthode ou leur bloc. Les valeurs publiques enregistrées sont propres à chaque GameObject, même lorsque plusieurs objets partagent le même fichier.
 
-Les conditions `if` / `else`, `return`, affectations `=`, `+=`, `-=`, `*=`, `/=`, `++`, `--`, calculs, comparaisons et opérateurs `&&`, `||`, `!` sont disponibles. Des méthodes personnelles sans paramètre peuvent être appelées depuis d’autres méthodes. Un `Vector3` se crée avec `Vector3(x,y,z)` ou `new Vector3(x,y,z)` ; l’addition, la soustraction et la multiplication/division par un nombre sont prises en charge.
+Les conditions `if` / `else`, `return`, affectations `=`, `+=`, `-=`, `*=`, `/=`, `++`, `--`, calculs, comparaisons et opérateurs `&&`, `||`, `!` sont disponibles. Les méthodes personnelles peuvent déclarer un type de retour (`float`, `int`, `bool`, `string`, `Vector3` ou `void`) et jusqu’à huit paramètres typés. Les formes anciennes sans paramètres sont conservées. `for`, `while`, `break` et `continue` partagent le budget de 4096 opérations du callback ; les appels sont limités à huit niveaux. Un `Vector3` se crée avec `Vector3(x,y,z)` ou `new Vector3(x,y,z)` ; l’addition, la soustraction et la multiplication/division par un nombre sont prises en charge.
 
 | Méthode | Appel par le moteur |
 | --- | --- |
@@ -110,3 +110,18 @@ WarScript v2 n’est pas un compilateur C#. Il prend en charge les **boucles `wh
 Chaque script est limité à 64 Ko, 64 champs et 32 méthodes ; chaque appel de cycle de vie a un budget de 4096 opérations et une profondeur de 8 appels. Maximum : 8 scripts attachés par objet et 64 actifs par scène. Une erreur arrête le composant concerné et s’affiche dans Console ; les autres composants continuent. Corriger puis relancer Play.
 
 Voir aussi : [Animation Studio et API Animator](animation-studio.md).
+
+## Exemple de fonction et boucle
+
+```csharp
+public int total = 0;
+int Twice(int n) { return n * 2; }
+void Update() {
+    for (int i = 0; i < 4; i++) {
+        if (i == 1) { continue; }
+        total += Twice(i);
+    }
+}
+```
+
+Le passage explicite C# → copie WarScript Web, les masques et les prefabs sont détaillés dans [la livraison du 19 novembre](animation-prefabs-scripting-depth-2026-11-19.md). Ce passage ne compile pas un assemblage .NET dans le navigateur.

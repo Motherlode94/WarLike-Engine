@@ -5,7 +5,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
-const root=fileURLToPath(new URL('../',import.meta.url)),out=path.join(root,'.validation-tools/complex-production'),dist=path.join(out,'export');await mkdir(dist,{recursive:true});
+const root=path.resolve(fileURLToPath(new URL('../',import.meta.url))),out=path.join(root,'.validation-tools/complex-production'),dist=path.join(out,'export');await mkdir(dist,{recursive:true});
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.wasm':'application/wasm','.glb':'model/gltf-binary','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.mp3':'audio/mpeg','.ogg':'audio/ogg'};
 const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://local'),exported=url.pathname.startsWith('/export/'),base=exported?dist:root,relative=decodeURIComponent(exported?url.pathname.slice(8):url.pathname.slice(1)),file=path.resolve(base,relative||'index.html');if(file!==base&&!file.startsWith(base+path.sep)){res.writeHead(403).end();return}const bytes=await readFile(file);res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'});res.end(bytes)}catch{res.writeHead(404).end()}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const base='http://127.0.0.1:'+server.address().port,browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--in-process-gpu']}),errors=[],requests=[];let page,stage='boot';

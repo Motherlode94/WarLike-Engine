@@ -50,6 +50,23 @@ export function analyzeComponentReadiness(object,mode='3d'){
  for(const issue of portability)issues.push(note('warning','Runtime / Export',issue.message||String(issue)));
  return {components:Object.keys(object||{}).filter(k=>supported.has(k)&&object[k]!=null),issues};
 }
+// Explicit author action: never silently replace an existing avatar or invent clips.
+export function assignValidatedHumanoidAvatar(object,rig,{replace=false}={}){
+ if(!object||!rig?.skins?.length)throw Error('GLB sans skin humanoïde utilisable.');
+ if(object.animationRig?.avatar&&!replace)throw Error('Avatar existant : confirme explicitement son remplacement.');
+ const avatar=createHumanoidAvatar(rig);
+ const errors=inspectHumanoidAvatar(avatar,rig);
+ if(errors.length)throw Error('Rig non compatible humanoïde : '+errors.slice(0,6).join('; '));
+ object.animationRig={enabled:true,clips:[],activeClip:'',playOnStart:false,ik:[],
+  rootMotion:{enabled:false,bone:'',axes:['x','z'],collision:true},
+  ...object.animationRig,avatar};
+ return avatar;
+}
+export async function configureRealHumanoidOnObject(object,{replace=false}={}){
+ if(!object?.model3dId)throw Error('Sélectionne un modèle GLB avant de créer un Avatar.');
+ const geometry=await getModelGeometry(object.model3dId);
+ return assignValidatedHumanoidAvatar(object,geometry.rig,{replace});
+}
 export async function inspectGameObjectAuthoring(object,{mode='3d'}={}){
  const issues=[],componentReport=analyzeComponentReadiness(object,mode);
  issues.push(...componentReport.issues);

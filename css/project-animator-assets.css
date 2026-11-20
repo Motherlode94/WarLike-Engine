@@ -23,9 +23,14 @@
 /* Native authoring controls sit in the Project dock header, not underneath the
    optional GLB import panels that can fill the available vertical space. */
 #projectPanel #projectContent > .browser-title{display:flex;align-items:center;justify-content:space-between;gap:8px;overflow:visible;flex:0 0 auto}
-#projectPanel #projectContent > .browser-title .warlike-project-create{margin-left:auto;z-index:45}
-#projectPanel #projectContent > .browser-title .warlike-project-create summary{padding:3px 8px;font-size:11px;line-height:18px}
-#projectPanel #projectContent > .browser-title .warlike-project-create-options{position:absolute;top:100%;left:auto;right:0;min-width:225px;z-index:55;max-height:min(260px,45vh)}
+#projectPanel > .bottom-tabs .warlike-project-create{margin-left:auto;z-index:45}
+#projectPanel > .bottom-tabs .warlike-project-create summary{padding:3px 8px;font-size:11px;line-height:18px}
+#projectPanel > .bottom-tabs .warlike-project-create-options{position:absolute;top:100%;left:auto;right:0;min-width:225px;z-index:55;max-height:min(260px,45vh)}
 #projectPanel #projectContent > .warlike-project-animator-assets{margin:0;max-height:126px;overflow:auto;flex:0 0 auto;border-radius:0}
 #projectPanel #projectContent > .warlike-project-documents{max-height:110px;overflow:auto;flex:0 0 auto}
 #projectPanel #projectContent > .asset-body{min-height:0;flex:1 1 auto}
+
+/* Project/Console tabs remain visible even when asset import panels overflow. */
+#projectPanel > .bottom-tabs .warlike-project-create{margin-left:auto;position:relative;z-index:55;flex:0 0 auto}
+#projectPanel > .bottom-tabs .warlike-project-create summary{white-space:nowrap;min-height:24px;box-sizing:border-box}
+#projectPanel > .bottom-tabs .warlike-project-create[open] .warlike-project-create-options{position:absolute;top:100%;right:0;left:auto;display:block;z-index:70;max-height:min(260px,45vh);overflow:auto}

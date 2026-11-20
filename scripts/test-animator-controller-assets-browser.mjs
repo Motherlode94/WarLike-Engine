@@ -44,7 +44,7 @@ try{
  const panel=page.locator('#properties');
  await panel.locator('.inspector-animator-controller-select').waitFor({state:'attached'});
  // Animator is collapsed by default in the Unity-style Inspector: open it through the visible UI.
- const animatorSection=panel.locator('details.inspector-component').filter({has:panel.locator('.inspector-animator-controller-select')});
+ const animatorSection=panel.locator('details.inspector-component:has(.inspector-animator-controller-select)');
  await animatorSection.locator(':scope > summary').click();
  await animatorSection.locator('.inspector-animator-controller-select').waitFor({state:'visible'});
  const manager=panel.locator('.inspector-animator-library');

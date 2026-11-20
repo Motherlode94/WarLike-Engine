@@ -39,14 +39,18 @@ try{
    await page.locator('#hubClose').click();
    await page.locator('#hubOverlay').waitFor({state:'hidden'});
    await page.locator('#canvas3d').waitFor({state:'visible'});
-   // Exercise exactly the same menu event as the Game > Scènes démo control.
-   await page.evaluate(()=>document.dispatchEvent(new Event('warlike:demo-browser-open')));
-   const dialog=page.locator('#demoSceneBrowser');
-   await dialog.waitFor({state:'visible'});
-   const card=dialog.locator('[data-demo-scene="'+id+'"]');
-   await card.waitFor({state:'visible'});
-   await card.getByRole('button',{name:'Charger dans Engine'}).click();
-   await dialog.waitFor({state:'hidden'});
+   // Keep the P5 certification fixtures internal. Production UI no longer
+   // exposes a demonstration browser; lifecycle still exercises real editor UI.
+   const cleanStart=await page.evaluate(async()=>{
+    const {state}=await import('/js/core/state.js');
+    return state.entities.map(entity=>entity.name);
+   });
+   assert.deepEqual(cleanStart,['Main Camera','Terrain','Directional Light'],
+     'New Engine project must start with the clean three-object scene');
+   await page.evaluate(async kind=>{
+    const {loadAuthoredDemo}=await import('/js/core/scene.js');
+    if(!loadAuthoredDemo(kind))throw new Error('Could not load internal P5 certification scene');
+   },id);
    const snapshot=()=>page.evaluate(async()=>{
     const {state}=await import('/js/core/state.js');
     return structuredClone(state.entities);
@@ -107,7 +111,7 @@ try{
   }finally{await context.close()}
  }
  report.result='PASS';
- console.log('PASS P7 editor demo menu, Hierarchy, Inspector, Play/Stop, save/reopen FPS/TPS',report.modes);
+ console.log('PASS P7 clean editor, internal FPS/TPS certification, Inspector, Play/Stop, save/reopen',report.modes);
 }finally{
  await writeFile(path.join(output,'report.json'),JSON.stringify(report,null,2));
  await browser?.close();

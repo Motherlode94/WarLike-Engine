@@ -39,3 +39,20 @@
 #projectPanel > .bottom-tabs button.warlike-project-create{padding:3px 8px;font-size:11px;line-height:18px;min-height:24px;border:1px solid var(--wl-theme-border,#4c5a65);border-radius:4px;background:var(--wl-theme-button,#344352);color:var(--wl-theme-fg,#e9f1f7);cursor:pointer;white-space:nowrap;margin-left:auto}
 body > .warlike-project-create-options:not([hidden]){position:fixed;display:block;z-index:99999;background:var(--wl-theme-panel,#242f3a);border:1px solid var(--wl-theme-border,#596b7a);color:var(--wl-theme-fg,#eef2f6);box-shadow:0 12px 26px #0009}
 body > .warlike-project-create-options[hidden]{display:none!important}
+
+/* The library below may contain thousands of GLBs; do not bury draggable
+   Controllers inside its scrolled/overflow-clipped content. */
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets{
+ display:flex;align-items:center;gap:5px;flex:0 1 340px;min-width:100px;
+ margin:0 3px;padding:2px 5px;border-radius:3px;border-color:var(--wl-theme-border,#52606c);
+ overflow:hidden;white-space:nowrap;background:var(--wl-theme-header,#2a3844)
+}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets h4,
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-summary{display:none}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-list{
+ display:flex;align-items:center;gap:5px;max-height:30px;overflow-x:auto;overflow-y:hidden;min-width:0;width:100%
+}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-item{flex:none;min-width:0}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets button{min-height:23px;padding:2px 5px;font-size:10px}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-drag{max-width:160px;min-width:75px}
+#projectPanel:has(#projectContent[hidden]) > .bottom-tabs > .warlike-project-animator-assets{display:none!important}

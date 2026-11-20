@@ -7,6 +7,8 @@ const types={
  scene:{label:'Scène',data:{entities:[],camera:{x:0,y:0,zoom:1},mode:'3d'}},
  material:{label:'Material',data:{shader:'standard',color:'#ffffff',metallic:0,roughness:.8}},
  physicMaterial:{label:'Physic Material',data:{friction:.5,restitution:0}},
+ // Legacy placeholder format retained solely for reading older local documents.
+ animatorController:{label:'Animator Controller (ancien document)',data:{parameters:[],states:[],transitions:[]}},
  animationClip:{label:'Animation Clip',data:{duration:1,loop:true,curves:[]}},
  avatarMask:{label:'Avatar Mask',data:{bones:[]}},
  audioMixer:{label:'Audio Mixer',data:{groups:[{name:'Master',gain:1}]}},
@@ -25,6 +27,7 @@ export function listProjectDocuments(){
 }
 function persist(items){localStorage.setItem(key(),JSON.stringify(items))}
 export function createProjectDocument(type){
+ if(type==='animatorController')throw Error('Utilise la ressource native Animator Controller du projet.');
  if(!types[type])throw Error('Type de document inconnu');
  const items=listProjectDocuments();
  const prefix=types[type].label;
@@ -45,6 +48,7 @@ export function mountProjectCreateBrowser(){
  const menu=document.createElement('details');menu.className='warlike-project-create';menu.innerHTML='<summary>＋ Créer un asset</summary>';
  const options=document.createElement('div');options.className='warlike-project-create-options';
  for(const [type,definition] of Object.entries(types)){
+  if(type==='animatorController')continue;
   const button=document.createElement('button');button.type='button';button.textContent=definition.label;
   button.onclick=()=>{try{createProjectDocument(type);menu.open=false}catch(error){window.alert('Création impossible : '+error.message)}};
   options.append(button);

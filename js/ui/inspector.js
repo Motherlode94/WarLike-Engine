@@ -1,7 +1,7 @@
 import {createCSharpWebCopy} from '../core/csharp-web-copy.js';
 import {renderWebScriptInspector} from './web-script-inspector.js';
 import {gameProject} from '../core/game-project.js';
-import {animatorControllerAssets,createAnimatorControllerAsset,assignAnimatorControllerAsset,saveAnimatorControllerAsset,animatorControllerOutdated} from '../core/animator-controller-assets.js';
+import {animatorControllerAssets,createAnimatorControllerAsset,assignAnimatorControllerAsset,saveAnimatorControllerAsset,animatorControllerOutdated,synchronizeAnimatorControllerAsset} from '../core/animator-controller-assets.js';
 import {renderWarScriptInspector} from './war-script-inspector.js';
 import {renderGenericComponents} from './generic-component-inspector.js';
 import {renderLifeInspector} from './life-inspector.js';
@@ -158,7 +158,15 @@ function finishInspector(root,o,templates){renderWebScriptInspector(root,o,{comp
  const controllerName=document.createElement('input');controllerName.type='text';controllerName.maxLength=120;
  controllerName.value=o.name+' Controller';controllerName.setAttribute('aria-label','Nom du nouveau Controller');
  controllerName.disabled=state.playing;library.append(controllerName,create,update);
- actions.append(assign);body.append(actions,library);
+ const sync=document.createElement('button');sync.type='button';sync.textContent='Synchroniser Controller';
+ sync.disabled=state.playing||!animatorControllerOutdated(gameProject,o)||!choices.some(a=>a.id===o.animatorControllerId);
+ sync.title='Récupérer la dernière révision du Controller en conservant les clips et l’Avatar du GameObject.';
+ sync.onclick=()=>{
+  if(state.playing||!window.confirm('Synchroniser depuis le Controller du projet ? Le graphe local sera remplacé, y compris ses modifications non enregistrées. Avatar et clips conservés.'))return;
+  try{synchronizeAnimatorControllerAsset(gameProject,o,{confirmed:true});record('Synchroniser Animator Controller');notify()}
+  catch(error){window.alert('Animator : '+error.message)}
+ };
+ actions.append(assign,sync);body.append(actions,library);
  if(animatorControllerOutdated(gameProject,o)){const warning=document.createElement('small');warning.textContent='Controller mis à jour ou absent : réassigne-le pour synchroniser ce GameObject.';body.append(warning)}
 
  row('Avatar',o.animationRig?.avatar?'Humanoid':'Aucun · choisir un rig');

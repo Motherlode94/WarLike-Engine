@@ -1,0 +1,42 @@
+name: P1 Combined Engine Acceptance
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p1-integrated-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  camera-terrain-legacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser dependencies
+        run: |
+          npm install --no-package-lock
+          npx playwright install --with-deps chromium
+      - name: Confirm clean starter has only 3 objects
+        run: node --test tests/clean-starter-scene.test.mjs
+      - name: Main Camera real WebGL preview
+        run: node scripts/test-camera-live-preview-browser.mjs
+      - name: Sculpt and paint terrain in native editor
+        run: |
+          node --test tests/gaia-terrain-sculpt.test.mjs
+          node scripts/test-gaia-terrain-browser.mjs
+      - name: Legacy scene browser reload and Web export parity
+        run: node scripts/test-legacy-scene-reopen-browser.mjs
+      - name: Preserve all P1 browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-integrated-browser-evidence
+          path: |
+            .validation-tools/camera-live-preview/
+            .validation-tools/gaia-terrain/
+            .validation-tools/legacy-reopen/
+          if-no-files-found: warn

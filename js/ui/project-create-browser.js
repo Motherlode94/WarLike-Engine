@@ -60,6 +60,26 @@ export function mountProjectCreateBrowser(){
   catch(error){window.alert('Création impossible : '+error.message)}
  };
  options.prepend(animator);
+ // The Project dock clips overflow; a top-layer popover keeps the native
+ // menu interactive without changing dock dimensions or breaking other panels.
+ options.setAttribute('popover','manual');
+ const closeMenu=()=>{if(options.matches(':popover-open'))options.hidePopover();menu.open=false};
+ const placeMenu=()=>{
+  const r=menu.getBoundingClientRect(),width=240;
+  options.style.position='fixed';
+  options.style.left=Math.max(8,Math.min(window.innerWidth-width-8,r.right-width))+'px';
+  options.style.top=Math.max(8,Math.min(window.innerHeight-90,r.bottom+4))+'px';
+  options.style.width=width+'px';
+ };
+ menu.addEventListener('toggle',()=>{
+  if(menu.open){placeMenu();options.showPopover()}
+  else if(options.matches(':popover-open'))options.hidePopover();
+ });
+ document.addEventListener('pointerdown',event=>{
+  if(menu.open&&!menu.contains(event.target)&&!options.contains(event.target))closeMenu();
+ });
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.open)closeMenu()});
+ options.addEventListener('click',event=>{if(event.target.closest('button'))closeMenu()});
  menu.append(options);toolbar.append(menu);
  const panel=document.createElement('section');panel.className='warlike-project-documents';
  const heading=document.createElement('h4');heading.textContent='Documents du projet';panel.append(heading);

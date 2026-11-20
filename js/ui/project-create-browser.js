@@ -80,7 +80,9 @@ export function mountProjectCreateBrowser(){
  });
  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.open)closeMenu()});
  options.addEventListener('click',event=>{if(event.target.closest('button'))closeMenu()});
- menu.append(options);toolbar.append(menu);
+ // Keep only the trigger inside the clipped Project dock: even a popover
+ // must not inherit an ancestor <details> content box or its overflow.
+ toolbar.append(menu);document.body.append(options);
  const panel=document.createElement('section');panel.className='warlike-project-documents';
  const heading=document.createElement('h4');heading.textContent='Documents du projet';panel.append(heading);
  const list=document.createElement('div');list.className='warlike-project-document-list';panel.append(list);

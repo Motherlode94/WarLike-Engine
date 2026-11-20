@@ -1,0 +1,28 @@
+name: Real GLB Humanoid Retarget Browser
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-glb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npx playwright install --with-deps chromium
+      - name: Real humanoid GLB source-to-target retarget tests
+        run: node --test tests/real-glb-humanoid-transfer.test.mjs
+      - name: Real Editor, Play Stop and Web export acceptance
+        run: node scripts/test-real-glb-retarget-browser.mjs
+      - name: Save Chromium screenshots and report even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-glb-humanoid-play-export
+          path: .validation-tools/real-glb-retarget/
+          if-no-files-found: warn

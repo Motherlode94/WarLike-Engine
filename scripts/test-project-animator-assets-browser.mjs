@@ -45,7 +45,7 @@ try{
  await page.locator('#projectTab').click();
  // The Project panel may be collapsed by a persisted workspace layout.
  await page.locator('#projectContent').evaluate(el=>{if(el.hidden)throw Error('Project Browser is hidden after opening the tab')});
- const projectMenu=page.locator('.warlike-project-create > summary');
+ const projectMenu=page.locator('#warlikeProjectCreateTrigger');
  if(!await projectMenu.isVisible()){
   const layout=await page.evaluate(()=>{
    const describe=sel=>{const e=document.querySelector(sel);if(!e)return null;const r=e.getBoundingClientRect(),css=getComputedStyle(e);return {hidden:e.hidden,display:css.display,visibility:css.visibility,overflow:css.overflow,rect:{x:r.x,y:r.y,width:r.width,height:r.height},scrollHeight:e.scrollHeight,clientHeight:e.clientHeight}};
@@ -59,7 +59,7 @@ try{
  if(!await action.isVisible()){
   const visibility=await page.evaluate(()=>{
    const menu=document.querySelector('.warlike-project-create'),panel=document.querySelector('.warlike-project-create-options'),button=panel?.querySelector('button'),rect=panel?.getBoundingClientRect();
-   return {open:menu?.open,hidden:panel?.hidden,parent:panel?.parentElement?.tagName,display:panel&&getComputedStyle(panel).display,visibility:panel&&getComputedStyle(panel).visibility,rect:rect&&{x:rect.x,y:rect.y,width:rect.width,height:rect.height},button:button&&getComputedStyle(button).display};
+   return {open:menu?.getAttribute('aria-expanded'),hidden:panel?.hidden,parent:panel?.parentElement?.tagName,display:panel&&getComputedStyle(panel).display,visibility:panel&&getComputedStyle(panel).visibility,rect:rect&&{x:rect.x,y:rect.y,width:rect.width,height:rect.height},button:button&&getComputedStyle(button).display};
   });
   throw Error('Create Animator option is invisible: '+JSON.stringify(visibility));
  }

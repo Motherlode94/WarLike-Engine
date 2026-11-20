@@ -72,7 +72,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   // Scene-only framing aid. This uses actual 3D camera projection, not a second game renderer.
   const selectedCam=state.entities.find(o=>state.selected.includes(o.id)&&o.sceneCamera3d);
   preview.hidden=!selectedCam||selectedCam.sceneCamera3d.showPreview===false||state.playing||!view3d.enabled;
-  if(!preview.hidden){
+  if(!preview.hidden&&preview.dataset.liveRenderer!=='webgl'){
    const ctx=preview.getContext('2d'),w=preview.width,h=preview.height;
    ctx.clearRect(0,0,w,h);ctx.fillStyle='#142536';ctx.fillRect(0,0,w,h);
    const view=sceneCameraView(selectedCam,state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});

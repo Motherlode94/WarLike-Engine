@@ -911,7 +911,7 @@ export function init3d(canvas,host,buttons){
   resize();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
   const solar=sunAt(undefined,state.entities);gl.clearColor(...solar.sky,1);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   if(state.playing&&!activeSceneCamera(state.entities)&&!isFps()&&!companyController(state.entities)){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),rig=cameraRigFor(actor,!!currentVehicle3d(state.entities)),desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);boomDistance=rig.collision?resolveCameraBoom(view3d.target,desired.eye,state.entities.filter(o=>o!==actor&&solidBody3d(o)).map(cameraObstacleForEntity),{previousDistance:boomDistance,dt:cameraFrame}).distance:view3d.radius}
-  gl.useProgram(program);gl.uniform1i(u.shadowPass,0);gl.uniform1i(u.shadowEnabled,0);const cam=camera();updateBattlefieldHud(state,{camera:cam,width:w,height:h,project:project3d});updateCompanyMarkers({camera:cam,width:w,height:h,project:project3d});
+  gl.useProgram(program);gl.uniform1i(u.shadowPass,0);gl.uniform1i(u.shadowEnabled,0);let cam=camera();updateBattlefieldHud(state,{camera:cam,width:w,height:h,project:project3d});updateCompanyMarkers({camera:cam,width:w,height:h,project:project3d});
   gl.uniform3fv(u.flashPos,cam.eye);gl.uniform3fv(u.flashDir,cam.forward);
   gl.uniform1f(u.flashPower,state.playing&&horror.enabled&&horror.flashlight&&horror.battery>0?3.1:0);
   gl.uniform3fv(u.eye,cam.eye);gl.uniform3fv(u.forward,cam.forward);gl.uniform3fv(u.right,cam.right);gl.uniform3fv(u.up,cam.up);gl.uniform1f(u.aspect,w/h);
@@ -1212,6 +1212,90 @@ export function init3d(canvas,host,buttons){
     for(const part of weapon.parts){bind(part.mesh);model(at,[.85,.85,.85],part.color);gl.uniform1i(viewModelUniform,1);gl.uniformMatrix3fv(viewBasisUniform,false,[...cam.forward,...cam.up,...cam.right]);profileDraw(part.mesh.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,part.mesh.count)}
     gl.uniform1i(viewModelUniform,0);
    }}
+  }
+  // Render the selected Main Camera through the SAME WebGL material pipeline.
+  // This is a 320x180 offscreen pass: no duplicate renderer, no editor layout change.
+  // Throttled so large authored scenes remain responsive.
+  if(!state.playing&&now-(view3d._cameraPreviewAt||0)>300){
+   const selectedCamera=state.entities.find(o=>state.selected.includes(o.id)&&o.sceneCamera3d);
+   const preview=document.querySelector('.warlike-camera-frame-preview');
+   if(preview&&!preview.hidden&&selectedCamera?.sceneCamera3d?.showPreview!==false){
+    const previewCam=sceneCameraView(selectedCamera,state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});
+    if(previewCam){
+     try{
+      const pw=preview.width,ph=preview.height;
+      const previousCam=cam;
+      let target=view3d._previewTarget;
+      if(!target||target.width!==pw||target.height!==ph){
+       if(target){gl.deleteFramebuffer(target.framebuffer);gl.deleteTexture(target.color);gl.deleteRenderbuffer(target.depth)}
+       const framebuffer=gl.createFramebuffer(),color=gl.createTexture(),depth=gl.createRenderbuffer();
+       gl.bindTexture(gl.TEXTURE_2D,color);
+       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,pw,ph,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+       gl.bindRenderbuffer(gl.RENDERBUFFER,depth);
+       gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,pw,ph);
+       gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);
+       gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,color,0);
+       gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,depth);
+       if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)
+        throw Error('Camera Preview framebuffer incomplete');
+       target=view3d._previewTarget={framebuffer,color,depth,width:pw,height:ph};
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER,target.framebuffer);
+      gl.viewport(0,0,pw,ph);
+      gl.depthMask(true);gl.disable(gl.BLEND);
+      gl.clearColor(...solar.sky,1);
+      gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+      gl.useProgram(program);
+      gl.uniform1i(u.shadowPass,0);
+      cam=previewCam;
+      gl.uniform3fv(u.eye,cam.eye);
+      gl.uniform3fv(u.forward,cam.forward);
+      gl.uniform3fv(u.right,cam.right);
+      gl.uniform3fv(u.up,cam.up);
+      gl.uniform1f(u.aspect,pw/ph);
+      gl.uniform1f(u.projectionFactor,1/Math.tan((cam.fieldOfView||60)*Math.PI/360));
+      gl.uniform1f(u.nearClip,cam.nearClip||.1);
+      gl.uniform1f(u.farClip,cam.farClip||300);
+      gl.uniform3fv(u.flashPos,cam.eye);gl.uniform3fv(u.flashDir,cam.forward);
+      // The draw closures contain GLB geometry, texture bindings, PBR settings
+      // and the active material shaders. Keep the existing shadow/IBL uniforms.
+      for(const entry of opaqueDraws)entry.draw();
+      gl.depthMask(true);gl.disable(gl.BLEND);
+      for(const entry of transparentDraws)entry.draw();
+      const bytes=new Uint8Array(pw*ph*4);
+      gl.readPixels(0,0,pw,ph,gl.RGBA,gl.UNSIGNED_BYTE,bytes);
+      const context=preview.getContext('2d');
+      const image=context.createImageData(pw,ph);
+      for(let y=0;y<ph;y++)image.data.set(bytes.subarray((ph-y-1)*pw*4,(ph-y)*pw*4),y*pw*4);
+      context.putImageData(image,0,0);
+      context.fillStyle='rgba(12,24,31,.85)';
+      context.fillRect(0,0,pw,21);
+      context.fillStyle='#e1eff4';context.font='11px system-ui';
+      context.fillText('CAMERA · RENDU 3D',9,15);
+      preview.dataset.liveRenderer='webgl';
+      view3d._cameraPreviewAt=now;
+      cam=previousCam;
+      gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+      gl.viewport(0,0,canvas.width,canvas.height);
+      gl.depthMask(true);gl.disable(gl.BLEND);
+      gl.useProgram(program);
+      gl.uniform3fv(u.eye,cam.eye);gl.uniform3fv(u.forward,cam.forward);
+      gl.uniform3fv(u.right,cam.right);gl.uniform3fv(u.up,cam.up);
+      gl.uniform1f(u.aspect,w/h);
+      gl.uniform1f(u.projectionFactor,1/Math.tan((cam.fieldOfView||60)*Math.PI/360));
+      gl.uniform1f(u.nearClip,cam.nearClip||.1);gl.uniform1f(u.farClip,cam.farClip||300);
+      gl.uniform3fv(u.flashPos,cam.eye);gl.uniform3fv(u.flashDir,cam.forward);
+     }catch(error){
+      cam=camera();
+      gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+      gl.viewport(0,0,canvas.width,canvas.height);
+      delete preview.dataset.liveRenderer;
+      if(!view3d._previewErrorLogged){console.warn('[WarLike] Camera Preview WebGL',error);view3d._previewErrorLogged=true}
+     }
+    }
+   }
   }
   endGpuProfile();endRenderProfile();finishProfile();
   if(captureFrame){const resolve=captureFrame;captureFrame=null;try{resolve(canvas.toDataURL('image/png'))}catch{resolve(null)}}

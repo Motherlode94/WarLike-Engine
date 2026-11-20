@@ -137,8 +137,22 @@ try{
     const {view3d}=await import('./js/core/viewport-3d.js');
     return Math.abs(view3d.yaw-prior)>.04;
    },yawBefore);
+   // Camera yaw must also rotate the actor, not just the picture.
+   await page.waitForFunction(async()=>{
+    const [{state},{view3d}]=await Promise.all([
+      import('./js/core/state.js'),import('./js/core/viewport-3d.js')
+    ]);
+    const actor=state.entities.find(e=>e.playable3d);
+    const expected=((180-view3d.yaw*180/Math.PI)%360+360)%360;
+    const delta=((actor.rotation-expected+540)%360)-180;
+    return Math.abs(delta)<3;
+   },null,{timeout:5000});
    const turned=await snap();
    assert(Math.abs(turned.yaw-yawBefore)>.04,'Mouse motion must rotate camera without clicking');
+   const expectedRotation=((180-turned.yaw*180/Math.PI)%360+360)%360;
+   const facingDifference=((turned.rotation-expectedRotation+540)%360)-180;
+   assert(Math.abs(facingDifference)<3,
+     'Player must face camera direction in both FPS/TPS: '+JSON.stringify({turned,expectedRotation,facingDifference}));
    // Rotating into an obstacle can legitimately stop movement; assert either
    // actual displacement or grounded collision without silently passing stuck input.
    await page.keyboard.down('w');

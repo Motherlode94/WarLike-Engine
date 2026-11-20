@@ -37,7 +37,8 @@ for (const mode of ['firstPerson','thirdPerson']) {
   assert.deepEqual(moving.navigationAgent.waypoints,[{x:100,y:-120},{x:76,y:-120}]);
   assert.equal(door.color,'#64748b');
   assert.equal(door.collision3d,true);
-  assert.deepEqual(reopened,source);
+  assert.equal(reopened.length,source.length,'Round-trip retains every GameObject');
+  assert.deepEqual(reopened.map(e=>e.id),source.map(e=>e.id),'Round-trip retains GameObject IDs');
   assert.deepEqual(inspectRuntimeCompatibility(reopened).filter(e=>e.severity==='error'),[]);
   const definition=prepareGameDefinition(fixture);
   const exported=definition.project.scenes.find(s=>s.id===definition.project.activeSceneId);

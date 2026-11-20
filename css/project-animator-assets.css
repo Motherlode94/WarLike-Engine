@@ -19,3 +19,13 @@
 #projectPanel .asset-content > .warlike-project-animator-assets{order:-90;flex-shrink:0}
 #projectPanel .asset-content > .warlike-project-documents{order:-80;flex-shrink:0}
 #projectPanel .warlike-project-create[open] .warlike-project-create-options{position:static;max-height:220px;overflow:auto}
+
+/* Native authoring controls sit in the Project dock header, not underneath the
+   optional GLB import panels that can fill the available vertical space. */
+#projectPanel #projectContent > .browser-title{display:flex;align-items:center;justify-content:space-between;gap:8px;overflow:visible;flex:0 0 auto}
+#projectPanel #projectContent > .browser-title .warlike-project-create{margin-left:auto;z-index:45}
+#projectPanel #projectContent > .browser-title .warlike-project-create summary{padding:3px 8px;font-size:11px;line-height:18px}
+#projectPanel #projectContent > .browser-title .warlike-project-create-options{position:absolute;top:100%;left:auto;right:0;min-width:225px;z-index:55;max-height:min(260px,45vh)}
+#projectPanel #projectContent > .warlike-project-animator-assets{margin:0;max-height:126px;overflow:auto;flex:0 0 auto;border-radius:0}
+#projectPanel #projectContent > .warlike-project-documents{max-height:110px;overflow:auto;flex:0 0 auto}
+#projectPanel #projectContent > .asset-body{min-height:0;flex:1 1 auto}

@@ -31,7 +31,7 @@ export function setHubAccent(value,{persist=true}={}){
  return true;
 }
 
-const defaults2d=()=>[{id:1,name:'Player',type:'prefab',assetId:'free-platformer-art-deluxe-p1-stand',x:100,y:110,w:64,h:88,color:'#41cdb5',animation:'idle',animationSpeed:1,hp:100,behavior:'none'}];
+const defaults2d=()=>[{id:1,name:'Main Camera 2D',type:'object',x:0,y:0,w:32,h:32,visible:false,collision3d:false,camera2d:{enabled:true,priority:0,mode:'free',targetId:0,zoom:1,followSharpness:9,offsetX:0,offsetY:0,pixelPerfect:false}}];
 const defaults3d=()=>createCleanStarterScene3d();
 const entry=entities=>({entities,selected:entities.length===3&&entities[0]?.name==='Main Camera'?[]:entities.length?[entities[0].id]:[],nextId:Math.max(1,...entities.map(e=>e.id+1)),camera:{x:0,y:0,zoom:1}});
 const safeRead=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
@@ -75,8 +75,8 @@ export function createProject(name,type,assetPack='starter',genre='sandbox'){
  if(state.playing)throw Error('Arrête Play avant de créer un projet.');
  if(hub.projectId)saveProject();
  name=assertName(name);if(!['2d','3d'].includes(type))throw Error('Type de projet invalide.');
- const chosenGenre=normalizeGenre(genre);if(!genreCompatible(genre,type))throw Error('Ce type de jeu est incompatible avec un projet '+type.toUpperCase()+'.');
- const id=uniqueId(),slots={};for(const mode of ['2d','3d']){const selected=genreForMode(chosenGenre,mode);slots[mode]=selected==='sandbox'?entry(mode==='2d'?defaults2d():defaults3d()):createGenreScene(selected,mode);slots[mode].game={...freshGameProject(),...slots[mode].game,id,title:name,genre:selected}}
+ const chosenGenre='sandbox'; // Fresh projects never install packaged games. Older authored projects are left intact.
+ const id=uniqueId(),slots={};for(const mode of ['2d','3d']){slots[mode]=entry(mode==='2d'?defaults2d():defaults3d());slots[mode].game={...freshGameProject(),id,title:name,genre:'sandbox'}}
  const data={workspaceMode:type,workspaces:slots};
  if(!restoreWorkspaces(data))throw Error('Impossible de créer le projet.');
  gameProject.id=id;gameProject.title=name;
@@ -130,7 +130,7 @@ export function initHub(){
  const modal=document.querySelector('#hubOverlay'),cards=document.querySelector('#hubProjects'),name=document.querySelector('#hubProjectName'),type=document.querySelector('#hubProjectType'),assetPackSelect=document.querySelector('#hubAssetPack'),genreSelect=document.querySelector('#hubProjectGenre'),message=document.querySelector('#hubMessage');
  const preview=document.createElement('article');preview.id='hubGenrePreview';preview.className='hub-genre-preview';preview.setAttribute('aria-live','polite');genreSelect.closest('label').after(preview);
  const describeGenre=()=>{const template=genreTemplates[genreSelect.value];preview.replaceChildren();if(!template)return;const heading=document.createElement('strong'),status=document.createElement('span'),description=document.createElement('p'),list=document.createElement('ul');heading.textContent=genreLabel(genreSelect.value,type.value);status.className='hub-genre-status';status.textContent='Compatible '+type.value.toUpperCase()+' · '+genreStage(genreSelect.value);description.textContent=template.description;for(const feature of template.features){const li=document.createElement('li');li.textContent=feature;list.append(li)}preview.append(heading,status,description,list)};
- const syncGenres=()=>{const selected=genreSelect.value;genreSelect.replaceChildren();for(const [stage,label] of [['playable','Scènes jouables'],['base','Bases à compléter'],['other','Projet libre et diagnostic']]){const group=document.createElement('optgroup');group.label=label;for(const [id,template] of compatibleGenres(type.value)){if(stage==='other'?!['blank','tool'].includes(template.stage):template.stage!==stage)continue;const option=document.createElement('option');option.value=id;option.textContent=genreLabel(id,type.value);group.append(option)}if(group.children.length)genreSelect.append(group)}genreSelect.value=genreForMode(selected,type.value);describeGenre()};
+ const syncGenres=()=>{genreSelect.replaceChildren();const option=document.createElement('option');option.value='sandbox';option.textContent='Projet vierge';genreSelect.append(option);genreSelect.value='sandbox';describeGenre()};
  genreSelect.addEventListener('change',describeGenre);type.addEventListener('change',syncGenres);syncGenres();
  const title=document.querySelector('#studioProjectName');
  const projectSearch=document.querySelector('#hubProjectSearch'),projectFilter=document.querySelector('#hubProjectFilter'),projectCount=document.querySelector('#hubProjectCount');

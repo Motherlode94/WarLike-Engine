@@ -93,13 +93,26 @@ try{
    assert.equal(initial.mode,mode);
    assert.equal(initial.rapierReady,true,'Portable Rapier must be active');
    assert.equal(initial.glError,0);
+   // Sample position and Animator parameters atomically. At a waypoint or an
+   // obstacle the agent may legitimately be idle on the NEXT animation frame.
    await page.waitForFunction(async initialX=>{
     const {state}=await import('./js/core/state.js');
     const target=state.entities.find(e=>e.navigationAgent);
-    return Math.abs(target.x-initialX)>0.2;
+    const observation={
+      x:target.x,
+      y:target.y,
+      speed:target.animatorParameters?.navigationSpeed,
+      moving:target.animatorParameters?.navigationMoving,
+      status:target._navigationState?.status,
+    };
+    if(Math.abs(observation.x-initialX)>0.2 && observation.speed>0 && observation.moving===true){
+      window.__p6NavigationObserved=observation;
+      return true;
+    }
+    return false;
    },initial.navX,{timeout:15000});
-   const navigated=await snap();
-   assert(navigated.navSpeed>0,'Native Navigation Agent must report Animator speed');
+   const navigated={...await snap(),observation:await page.evaluate(()=>window.__p6NavigationObserved)};
+   assert(navigated.observation.speed>0,'Native Navigation Agent must report Animator speed while moving');
    const canvas=page.locator('#canvas3d'),rect=await canvas.boundingBox();
    assert(rect&&rect.width>100);
    const cx=rect.x+rect.width/2,cy=rect.y+rect.height/2;

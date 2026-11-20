@@ -81,8 +81,25 @@ try{
    await page.getByRole('button',{name:'P7 '+id,exact:true}).click();
    await page.locator('#hubOverlay').waitFor({state:'hidden'});
    assert.deepEqual(await snapshot(),edited,'P7 save/reopen lost Inspector edits, controller or Animator');
+   // P8: compare the *actually reopened* Editor project against the real Web
+   // export preparation, including edited Inspector data and native components.
+   const parity=await page.evaluate(async()=>{
+    const [{state},{gameProject},{prepareGameDefinition}]=await Promise.all([
+      import('/js/core/state.js'),import('/js/core/game-project.js'),
+      import('/js/core/game-build.js'),
+    ]);
+    const data=prepareGameDefinition({
+      entities:state.entities,camera:state.camera,mode:'3d',project:gameProject,
+    });
+    const scene=data.project.scenes.find(s=>s.id===data.project.activeSceneId);
+    return {entities:scene?.entities,mode:data.mode,format:data.format};
+   });
+   assert.equal(parity.mode,'3d');
+   assert.equal(parity.format,'warlike.game.v1');
+   assert.deepEqual(parity.entities,edited,
+     'P8 Web export must match reopened Inspector, camera, navigation and animation components');
    assert.deepEqual(errors,[],'P7 browser JS errors');
-   report.modes[id]={mode,objects:edited.length,selected:actor.id,editedName:'P7 '+mode+' joueur certifié',saved:true,reopened:true,playStop:true};
+   report.modes[id]={mode,objects:edited.length,selected:actor.id,editedName:'P7 '+mode+' joueur certifié',saved:true,reopened:true,playStop:true,exportParity:true};
   }catch(error){
    report.errors.push({id,message:error.message,stack:error.stack,errors});
    await page.screenshot({path:path.join(output,id+'-failure.png')}).catch(()=>{});

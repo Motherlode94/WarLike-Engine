@@ -16633,6 +16633,7 @@
     "js/ui/logic-sequence-editor.js",
     "js/ui/mcp-bridge.js",
     "js/ui/physics-2d-inspector.js",
+    "js/ui/project-animator-assets.js",
     "js/ui/project-create-browser.js",
     "js/ui/real-model-thumbnail.js",
     "js/ui/reference-workspace.js",

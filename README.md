@@ -1,5 +1,8 @@
 # WarLike Engine + WarLike Editor — un moteur et son éditeur dans un seul dépôt
 
+> **Politique de création (20 novembre 2026).** WarLike Engine ne propose plus de jeux de démonstration préinstallés. Un nouveau projet 3D contient uniquement Main Camera, Terrain et Directional Light ; un nouveau projet 2D ne contient qu’une caméra 2D. Chaque créateur construit son propre gameplay, ses personnages et ses animations à partir des ressources et composants du moteur. Les anciennes scènes de certification sont conservées uniquement comme fixtures techniques et ne sont plus proposées dans les menus de création. Les projets existants ne sont pas effacés.
+
+
 ## À l'origine de WarLike Engine — l'histoire de son créateur
 
 **WarLike Engine est un projet personnel de Hardi MBANVU (HardieBay), originaire de Kinshasa, en République démocratique du Congo.** Artiste et développeur, il réunit dans son parcours la composition, le rap, le chant, le beatmaking, la guitare, l'illustration et le développement logiciel.

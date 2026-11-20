@@ -135,31 +135,43 @@ try{
    await page.locator('#canvas3d').focus();
    const beforeForward=await snap();
    await page.keyboard.down('w');
+   let held;
    try {
-    await page.waitForFunction(async()=>{
-      const {state}=await import('./js/core/state.js');
-      return state.keys.has('w');
-    },null,{timeout:2000});
-    await page.waitForFunction(async start=>{
-      const {state}=await import('./js/core/state.js');
-      const actor=state.entities.find(e=>e.playable3d);
-      return Math.hypot(actor.x-start.x,actor.y-start.y)>1;
-    },{x:beforeForward.playerX,y:beforeForward.playerY},{timeout:5000});
+    // Observe the actor and the Rapier body on consecutive animation frames
+    // while W is genuinely held. Reject one-frame displacement spikes.
+    held=await page.evaluate(async start=>{
+     const [{state},{activeRapierScene3d}]=await Promise.all([
+      import('./js/core/state.js'),import('./js/core/rapier-physics-3d.js')
+     ]);
+     const samples=[];
+     const deadline=performance.now()+6000;
+     return new Promise((resolve,reject)=>{
+      const observe=()=>{
+       const actor=state.entities.find(e=>e.playable3d);
+       const physics=activeRapierScene3d()?.actors.get(actor?.id);
+       const displacement=Math.hypot(actor.x-start.x,actor.y-start.y);
+       const snapshot={time:Math.round(performance.now()),x:actor.x,y:actor.y,
+        displacement,keys:[...state.keys],body:physics?.body.translation(),
+        grounded:actor.grounded3d};
+       samples.push(snapshot);
+       if(samples.length>200)samples.shift();
+       const stable=samples.length>=4&&samples.slice(-4).every(v=>v.displacement>1&&v.keys.includes('w'));
+       if(stable)return resolve({stable:true,samples:samples.slice(-30)});
+       if(performance.now()>deadline)
+        return reject(new Error('Forward W did not produce sustained motion: '+JSON.stringify({
+         initial:start,first:samples.slice(0,10),last:samples.slice(-25),
+         maxDisplacement:Math.max(...samples.map(s=>s.displacement))
+        })));
+       requestAnimationFrame(observe);
+      };
+      observe();
+     });
+    },{x:beforeForward.playerX,y:beforeForward.playerY});
    } finally {await page.keyboard.up('w')}
    const forward=await snap();
-   const inputDiagnostic=await page.evaluate(async()=>{
-    const [{state},{gameplayInputBlocked,gameplayKeys},{activeRapierScene3d}]=await Promise.all([
-      import('./js/core/state.js'),import('./js/core/gameplay-input.js'),import('./js/core/rapier-physics-3d.js')
-    ]);
-    const actor=state.entities.find(e=>e.playable3d);
-    const scene=activeRapierScene3d(),body=scene?.actors.get(actor.id);
-    return {inputBlocked:gameplayInputBlocked(),keys:[...state.keys],playing:state.playing,
-      controller:actor.controller3d,grounded:actor.grounded3d,
-      elevation:actor.elevation3d,verticalVelocity:actor._verticalVelocity,
-      physicsController:!!body?.controller,collider:body?.geometry,position:body?.body.translation()};
-   });
+   // A character must NOT snap back to its spawn after the key is released.
    assert(Math.hypot(forward.playerX-beforeForward.playerX,forward.playerY-beforeForward.playerY)>1,
-     'Forward input must move actor in an open section: '+JSON.stringify({beforeForward,forward,inputDiagnostic}));
+     'Forward motion was undone after W released: '+JSON.stringify({beforeForward,forward,held}));
    const canvas=page.locator('#canvas3d'),rect=await canvas.boundingBox();
    assert(rect&&rect.width>100);
    const cx=rect.x+rect.width/2,cy=rect.y+rect.height/2;

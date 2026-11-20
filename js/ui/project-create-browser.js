@@ -1,12 +1,12 @@
 // WarLike Editor project documents. Authoring assets are versioned project-local
 // JSON documents; no implied runtime support until an importer consumes the type.
 import {gameProject} from '../core/game-project.js';
+import {mountAnimatorControllerProjectAssets,createNativeAnimatorControllerFromSelection} from './project-animator-assets.js';
 const types={
  folder:{label:'Dossier',data:{children:[]}},
  scene:{label:'Scène',data:{entities:[],camera:{x:0,y:0,zoom:1},mode:'3d'}},
  material:{label:'Material',data:{shader:'standard',color:'#ffffff',metallic:0,roughness:.8}},
  physicMaterial:{label:'Physic Material',data:{friction:.5,restitution:0}},
- animatorController:{label:'Animator Controller',data:{parameters:[],states:[],transitions:[]}},
  animationClip:{label:'Animation Clip',data:{duration:1,loop:true,curves:[]}},
  avatarMask:{label:'Avatar Mask',data:{bones:[]}},
  audioMixer:{label:'Audio Mixer',data:{groups:[{name:'Master',gain:1}]}},
@@ -48,11 +48,20 @@ export function mountProjectCreateBrowser(){
   const button=document.createElement('button');button.type='button';button.textContent=definition.label;
   button.onclick=()=>{try{createProjectDocument(type);menu.open=false}catch(error){window.alert('Création impossible : '+error.message)}};
   options.append(button);
- }menu.append(options);toolbar.prepend(menu);
+ }
+ const animator=document.createElement('button');animator.type='button';animator.textContent='Animator Controller';
+ animator.title='Créer une véritable ressource Animator Controller depuis le GameObject sélectionné.';
+ animator.onclick=()=>{
+  try{createNativeAnimatorControllerFromSelection();menu.open=false}
+  catch(error){window.alert('Création impossible : '+error.message)}
+ };
+ options.append(animator);
+ menu.append(options);toolbar.prepend(menu);
  const panel=document.createElement('section');panel.className='warlike-project-documents';
  const heading=document.createElement('h4');heading.textContent='Documents du projet';panel.append(heading);
  const list=document.createElement('div');list.className='warlike-project-document-list';panel.append(list);
  host.append(panel);
+ mountAnimatorControllerProjectAssets(host);
  function draw(){
   const assets=listProjectDocuments();panel.hidden=!assets.length;list.replaceChildren();
   for(const asset of assets){

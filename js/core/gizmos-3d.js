@@ -24,7 +24,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  preview.width=320;preview.height=180;
  preview.className='warlike-camera-frame-preview';
  preview.style.cssText='position:absolute;right:14px;bottom:14px;z-index:13;width:min(320px,42%);height:auto;aspect-ratio:16/9;border:1px solid #6fbcd1;border-radius:7px;background:#152638;box-shadow:0 5px 20px #0009;pointer-events:none';
- preview.setAttribute('aria-label','Aperçu schématique du cadrage Camera 3D, vue filaire');
+ preview.setAttribute('aria-label','Aperçu géométrique ombré du cadrage Camera 3D');
  host.append(preview);
 
  const options=document.createElement('div');
@@ -80,29 +80,42 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
     ctx.strokeStyle='#5b879d';ctx.lineWidth=1;
     ctx.strokeRect(1,1,w-2,h-2);
     const boxes=state.entities.filter(e=>e!==selectedCam&&e.enabled!==false&&e.visible!==false).slice(0,160);
+    // This is a lightweight shaded geometry preview, not a second WebGL pass.
+    // Sort projected polygon faces far-to-near to preserve intuitive framing.
+    const faces=[],screenPoint=p=>project3d(p,view,w,h);
     for(const entity of boxes){
-     const b=objectBounds3d(entity);
-     if(!b||!Number.isFinite(b.x+b.y+b.z))continue;
-     const points=[[b.x-b.w/2,b.y-b.h/2,b.z-b.d/2],[b.x+b.w/2,b.y-b.h/2,b.z-b.d/2],
-      [b.x+b.w/2,b.y+b.h/2,b.z-b.d/2],[b.x-b.w/2,b.y+b.h/2,b.z-b.d/2],
-      [b.x-b.w/2,b.y-b.h/2,b.z+b.d/2],[b.x+b.w/2,b.y-b.h/2,b.z+b.d/2],
-      [b.x+b.w/2,b.y+b.h/2,b.z+b.d/2],[b.x-b.w/2,b.y+b.h/2,b.z+b.d/2]]
-      .map(q=>project3d(q,view,w,h));
-     ctx.strokeStyle=state.selected.includes(entity.id)?'#f1cb78':'#9cb9c9';
-     for(let j=0;j<4;j++)for(const [a,c] of [[j,(j+1)%4],[j+4,((j+1)%4)+4],[j,j+4]]){
-      if(!points[a]||!points[c])continue;
-      ctx.beginPath();ctx.moveTo(points[a].x,points[a].y);ctx.lineTo(points[c].x,points[c].y);ctx.stroke();
+     const box=objectBounds3d(entity);
+     if(!box||![box.x,box.y,box.z,box.w,box.h,box.d].every(Number.isFinite))continue;
+     const x=box.x,y=box.y,z=box.z,dx=box.w/2,dy=box.h/2,dz=box.d/2;
+     const corners=[
+      [x-dx,y-dy,z-dz],[x+dx,y-dy,z-dz],[x+dx,y+dy,z-dz],[x-dx,y+dy,z-dz],
+      [x-dx,y-dy,z+dz],[x+dx,y-dy,z+dz],[x+dx,y+dy,z+dz],[x-dx,y+dy,z+dz]
+     ].map(screenPoint);
+     const color=/^#[0-9a-f]{6}$/i.test(entity.color||'')?entity.color:'#799e91';
+     for(const [indices,alpha] of [[[3,2,6,7],.95],[[4,5,6,7],.62],[[0,1,2,3],.5],[[0,3,7,4],.72],[[1,2,6,5],.82]]){
+      const poly=indices.map(i=>corners[i]);
+      if(poly.some(p=>!p||!Number.isFinite(p.x+p.y)))continue;
+      faces.push({poly,depth:poly.reduce((s,p)=>s+p.depth,0)/poly.length,color,alpha});
      }
     }
+    faces.sort((a,b)=>b.depth-a.depth);
+    ctx.save();ctx.beginPath();ctx.rect(1,19,w-2,h-20);ctx.clip();
+    for(const face of faces){
+     ctx.beginPath();ctx.moveTo(face.poly[0].x,face.poly[0].y);
+     for(const point of face.poly.slice(1))ctx.lineTo(point.x,point.y);
+     ctx.closePath();ctx.globalAlpha=face.alpha;ctx.fillStyle=face.color;ctx.fill();
+     ctx.globalAlpha=.5;ctx.strokeStyle='#b0c9d5';ctx.lineWidth=.6;ctx.stroke();
+    }
+    ctx.restore();
     ctx.strokeStyle='#b1d8e6';ctx.beginPath();ctx.moveTo(w/2-6,h/2);ctx.lineTo(w/2+6,h/2);ctx.moveTo(w/2,h/2-6);ctx.lineTo(w/2,h/2+6);ctx.stroke();
    }
-   ctx.fillStyle='#e1eff4';ctx.font='11px system-ui';ctx.fillText('CAMERA · CADRAGE FILAIRE',9,16);
+   ctx.fillStyle='#e1eff4';ctx.font='11px system-ui';ctx.fillText('CAMERA · APERÇU GÉOMÉTRIQUE',9,16);
   }
   frustum.replaceChildren();
   if(showingCamera){
    const b=objectBounds3d(selectedObject);
    try{
-    const bounds=cameraFrustumCorners3d([b.x,b.y,b.z],[selectedObject.rotationX3d||0,selectedObject.rotation||0,selectedObject.rotationZ3d||0],selectedObject.sceneCamera3d,rect.width/rect.height);
+    const bounds=cameraFrustumCorners3d([(Number(selectedObject.x)||0)/64,(Number(selectedObject.elevation3d)||0),(Number(selectedObject.y)||0)/64],[-(selectedObject.rotationX3d||0),selectedObject.rotation||0,selectedObject.rotationZ3d||0],selectedObject.sceneCamera3d,rect.width/rect.height);
     const vertices=[...bounds.near,...bounds.far].map(v=>project3d(v,cam,rect.width,rect.height));
     for(let i=0;i<4;i++)for(const [a,b] of [[i,(i+1)%4],[i+4,((i+1)%4)+4],[i,i+4]]){
      if(vertices[a]&&vertices[b])frustum.append(el('line',{x1:vertices[a].x,y1:vertices[a].y,x2:vertices[b].x,y2:vertices[b].y}));

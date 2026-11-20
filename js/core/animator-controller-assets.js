@@ -74,3 +74,14 @@ export function animatorControllerOutdated(project,object){
  const asset=animatorControllerAssets(project).find(a=>a.id===object.animatorControllerId);
  return !asset||asset.revision!==object.animatorControllerRevision;
 }
+
+/**
+ * Explicitly refresh a GameObject snapshot from its linked project asset.
+ * Never modify Avatar, imported clips, IK, root motion or other GameObjects.
+ * The caller must confirm overwriting any unsaved local graph edits.
+ */
+export function synchronizeAnimatorControllerAsset(project,object,{confirmed=false}={}){
+ if(!object?.animatorControllerId)throw Error('Ce GameObject ne possède pas de Controller lié.');
+ if(!confirmed)throw Error('Confirme le remplacement du graphe local avant synchronisation.');
+ return assignAnimatorControllerAsset(project,object,object.animatorControllerId);
+}

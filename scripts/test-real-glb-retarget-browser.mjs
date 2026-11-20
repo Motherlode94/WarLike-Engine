@@ -55,7 +55,7 @@ try{
  await page.getByRole('button',{name:'Sélectionner Personnage GLB créé par auteur',exact:true}).click();
  await page.screenshot({path:path.join(out,'editor-real-glb.png')});
  report.checks.push('Real source and target GLB imported; Inspector-compatible rig assigned');
- const inspector=page.getByRole('button',{name:'Analyser le GameObject'});
+ const inspector=page.locator('#properties .inspector-authoring-audit button').filter({hasText:'Analyser le GameObject'});
  const diagnostic=await page.evaluate(async()=>{
   const [{state},{workspace},{inspectedObjects,inspectorSelection},{inspectedAsset}]=await Promise.all([
    import('/js/core/state.js'),import('/js/core/workspaces.js'),import('/js/ui/inspector-context.js'),import('/js/ui/inspector-assets.js')

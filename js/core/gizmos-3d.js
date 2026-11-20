@@ -3,6 +3,7 @@ import {rotationQuaternion3d} from './collider-3d.js';
 import {projectedAxisDrag3d,projectedAxisScale3d,projectedAxisRotation3d,alignSceneObjects3d,snapSelected3d} from './scene-editing-3d-tools.js';
 import {cameraFrustumCorners3d} from './editor-camera-frustum-3d.js';
 import {sceneCameraView} from './scene-camera-3d.js';
+import {initializeEditableTerrain,applyTerrainBrush,terrainBrushModes,terrainLayers} from './gaia-terrain-sculpt.js';
 import {initializeRustGizmo,axisRayParameter,gizmoPointerRay} from './rust-gizmo-acceleration.js';
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
@@ -50,6 +51,45 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  rustToggle.checked=localStorage.getItem('warlike.gizmo.rust.enabled')==='true';
  rustToggle.onchange=()=>{localStorage.setItem('warlike.gizmo.rust.enabled',String(rustToggle.checked));if(rustToggle.checked)void initializeRustGizmo()};
  options.append(mode,snap,document.createTextNode('Snap'),step,snapMode,gridButton,floorButton,alignX,alignZ,document.createTextNode('Rust'),rustToggle);options.style.flexWrap='wrap';options.style.maxWidth='min(650px,75%)';host.append(options);
+ // Native terrain editing uses the existing Scene View, not a separate editor.
+ const terrainTools=document.createElement('div');
+ terrainTools.className='warlike-gaia-terrain-tools';
+ terrainTools.style.cssText='position:absolute;left:12px;bottom:58px;z-index:15;display:flex;gap:5px;align-items:center;flex-wrap:wrap;max-width:min(720px,90%);background:#202d34ed;border:1px solid #5d827c;border-radius:7px;padding:6px;color:#eaf5ed;font:12px system-ui';
+ const terrainMode=document.createElement('select');terrainMode.setAttribute('aria-label','Outil de sculpture terrain 3D');
+ for(const [value,label] of [['off','Déplacer'],['raise','Monter'],['lower','Creuser'],['smooth','Lisser'],['flatten','Aplatir'],['paint','Peindre']]){
+  const opt=document.createElement('option');opt.value=value;opt.textContent=label;terrainMode.append(opt)
+ }
+ terrainMode.style.cssText='background:#293c43;color:inherit;border:1px solid #66837a;padding:4px';
+ const radiusControl=document.createElement('input');radiusControl.type='number';radiusControl.min='.25';radiusControl.max='32';radiusControl.step='.25';radiusControl.value='2';radiusControl.style.cssText='width:58px;background:#293c43;color:inherit;border:1px solid #66837a;padding:4px';radiusControl.setAttribute('aria-label','Rayon de brosse en mètres');
+ const strengthControl=document.createElement('input');strengthControl.type='number';strengthControl.min='.05';strengthControl.max='4';strengthControl.step='.1';strengthControl.value='.8';strengthControl.style.cssText=radiusControl.style.cssText;strengthControl.setAttribute('aria-label','Force de brosse');
+ const layerControl=document.createElement('select');layerControl.style.cssText=terrainMode.style.cssText;layerControl.setAttribute('aria-label','Matériau terrain');
+ for(const value of terrainLayers){const opt=document.createElement('option');opt.value=value;opt.textContent=value;layerControl.append(opt)}
+ terrainTools.append(document.createTextNode('Gaia ·'),terrainMode,document.createTextNode('Rayon'),radiusControl,document.createTextNode('Force'),strengthControl,layerControl);
+ host.append(terrainTools);
+ const selectedTerrain=()=>state.entities.find(o=>state.selected.includes(o.id)&&(o.name==='Terrain'||o.terrainHeightfield||o.type==='terrain3d'));
+ let painting=false,painted=false;
+ const terrainStroke=event=>{
+  if(state.playing||terrainMode.value==='off'||event.button!==0&&!painting)return;
+  const o=selectedTerrain();if(!o)return;
+  const rect=canvas.getBoundingClientRect(),ray=gizmoPointerRay(event.clientX,event.clientY,rect,getCamera());
+  if(!ray||Math.abs(ray.direction[1])<1e-6)return;
+  const y=Number(o.elevation3d)||0,t=(y-ray.origin[1])/ray.direction[1];
+  if(t<=0||t>1000)return;
+  const x=ray.origin[0]+ray.direction[0]*t,z=ray.origin[2]+ray.direction[2]*t;
+  const terrain=initializeEditableTerrain(o);
+  if(Math.abs(x-terrain.offsetX)>terrain.size/2||Math.abs(z-terrain.offsetZ)>terrain.size/2)return;
+  const changed=applyTerrainBrush(o,{mode:terrainMode.value,x,z,
+   radius:Number(radiusControl.value)||2,strength:Number(strengthControl.value)||.8,
+   targetHeight:terrain.height/2,layer:layerControl.value});
+  if(changed){painted=true;notify()}
+  event.preventDefault();event.stopImmediatePropagation();
+ };
+ canvas.addEventListener('pointerdown',event=>{if(!selectedTerrain()||terrainMode.value==='off'||event.button!==0)return;painting=true;painted=false;terrainStroke(event)},true);
+ canvas.addEventListener('pointermove',event=>{if(painting&&(event.buttons&1))terrainStroke(event)},true);
+ const endTerrainStroke=()=>{if(painting&&painted)record('Gaia Terrain · '+terrainMode.value);painting=false;painted=false};
+ canvas.addEventListener('pointerup',endTerrainStroke,true);
+ canvas.addEventListener('pointercancel',endTerrainStroke,true);
+ window.addEventListener('pointerup',endTerrainStroke);
  let drag=null,lastTool='';
  const tool=()=>document.querySelector('.scene-tools [data-tool].active')?.dataset.tool||'move';
  const center=()=>{
@@ -63,6 +103,8 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const colors={x:'#f36868',y:'#68d781',z:'#64a9ff'};
  const redraw=()=>{
   const selected=center(),selectedObject=state.entities.find(o=>state.selected.includes(o.id)&&o.sceneCamera3d);
+  terrainTools.hidden=!view3d.enabled||state.playing||!selectedTerrain();
+  terrainTools.style.display=terrainTools.hidden?'none':'flex';
   const showingCamera=!!selectedObject&&selectedObject.sceneCamera3d.showFrustum!==false;
   const active=view3d.enabled&&!state.playing&&!!selected&&(tool()!=='hand'||showingCamera);
   layer.style.display=active?'block':'none';if(!active)return;

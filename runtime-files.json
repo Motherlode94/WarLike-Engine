@@ -16410,6 +16410,7 @@
     "js/core/fx-renderer-3d.js",
     "js/core/fx-runtime.js",
     "js/core/gaia-terrain-physics.js",
+    "js/core/gaia-terrain-sculpt.js",
     "js/core/gaia-world-import-preview.js",
     "js/core/game-build.js",
     "js/core/game-dialogue.js",

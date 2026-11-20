@@ -1,4 +1,6 @@
 import {solidBody3d,activeBody3d,supportBody3d} from './collision-3d.js';
+import {validTerrainHeightfield} from './gaia-terrain-physics.js';
+import {terrainSurfaceMesh3d} from './gaia-terrain-sculpt.js';
 import {updateAffineEditorPose3d,affineCorrection3d,legacyReferenceMatrix3d,hasAffinePose} from './scene-graph-v2.js';
 import {characterBody3d,colliderGeometry3d,colliderPosition3d,rotationQuaternion3d,quaternionEuler3d,affineBoxHull3d,affineHullSignature3d} from './collider-3d.js';
 import {installCollisionBackend3d,releaseCollisionBackend3d} from './collision-backend-3d.js';
@@ -14,8 +16,9 @@ const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,n(v)));
 const included=o=>activeBody3d(o)&&o.collision3d!==false&&o.collider3d?.enabled!==false&&(solidBody3d(o)||characterBody3d(o));
 const dynamic=o=>!!o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!characterBody3d(o)&&!o.ai?.enabled;
-const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,o.collider3d,o.controller3d,o.joint3d,!!o.ai?.enabled].map((v,i)=>i===2&&v?Object.fromEntries(Object.entries(v).filter(([k])=>!['vx','vy','vz'].includes(k))):v));
+const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,o.collider3d,o.controller3d,o.joint3d,!!o.ai?.enabled,o.terrainHeightfield?o.terrainRevision3d||0:null].map((v,i)=>i===2&&v?Object.fromEntries(Object.entries(v).filter(([k])=>!['vx','vy','vz'].includes(k))):v));
 const scenePosition=o=>({x:n(o.x),y:n(o.y),z:n(o.elevation3d)});
+const terrainPose=o=>o.terrainHeightfield&&validTerrainHeightfield(o.terrainHeightfield)?{x:o.terrainHeightfield.offsetX,y:n(o.elevation3d),z:o.terrainHeightfield.offsetZ}:colliderPosition3d(o);
 const velocity=o=>({x:n(o.rigidbody3d?.vx),y:n(o.rigidbody3d?.vy),z:n(o.rigidbody3d?.vz)});
 const changed=(a,b)=>Object.keys(a).some(k=>Math.abs(a[k]-n(b?.[k]))>1e-5);
 const skippedColliderSignature=o=>bodyConfig(o)+'|'+JSON.stringify(affineCorrection3d(o)?.map(v=>Math.round(v*1e5)/1e5)||null);
@@ -47,7 +50,7 @@ export function createRapierScene(RAPIER,entities,gravity=15){
  const world=new RAPIER.World({x:0,y:-Math.max(0,gravity),z:0}),actors=new Map(),joints=new Map(),errors=[],skipped=new Map();
  for(const o of entities){
   if(!included(o))continue;
-  const g=colliderGeometry3d(o),pos=colliderPosition3d(o,g),isCharacter=characterBody3d(o),isDynamic=dynamic(o),isKinematic=isCharacter||o.rigidbody3d?.kinematic===true;
+  const g=colliderGeometry3d(o),pos=terrainPose(o),isCharacter=characterBody3d(o),isDynamic=dynamic(o),isKinematic=isCharacter||o.rigidbody3d?.kinematic===true;
   const desc=(isDynamic?RAPIER.RigidBodyDesc.dynamic():isKinematic&&RAPIER.RigidBodyDesc.kinematicPositionBased?RAPIER.RigidBodyDesc.kinematicPositionBased():RAPIER.RigidBodyDesc.fixed()).setTranslation(pos.x,pos.y,pos.z);
   const rotation=rotationQuaternion3d(o);desc.setRotation?.(rotation);
   if(isDynamic){const v=velocity(o);desc.setLinvel(v.x/64,v.y,v.z/64);desc.setCcdEnabled?.(o.rigidbody3d.ccd!==false);desc.setGravityScale?.(Math.max(0,n(o.rigidbody3d.gravity,15))/Math.max(.001,gravity));if(o.rigidbody3d.lockRotations!==false)desc.lockRotations?.()}
@@ -58,11 +61,23 @@ export function createRapierScene(RAPIER,entities,gravity=15){
   if(affine&&typeof RAPIER.ColliderDesc.convexHull!=='function'){
    errors.push(o.name+' : collision désactivée — ce runtime Rapier ne prend pas en charge les convex hulls sous shear.');skipped.set(o.id,{entity:o,signature:skippedColliderSignature(o)});continue;
   }
-  const colliderDesc=affine?RAPIER.ColliderDesc.convexHull(affine.points):g.shape==='capsule'?RAPIER.ColliderDesc.capsule(g.halfHeight,g.radius):g.shape==='sphere'?RAPIER.ColliderDesc.ball(g.radius):RAPIER.ColliderDesc.cuboid(g.w/2,g.h/2,g.d/2);
+  let terrainGeometry=null;
+  if(o.terrainHeightfield&&validTerrainHeightfield(o.terrainHeightfield)){
+   if(typeof RAPIER.ColliderDesc.trimesh!=='function'){
+    errors.push(o.name+' : ce runtime Rapier ne prend pas en charge les terrains triangulés.');
+    skipped.set(o.id,{entity:o,signature:skippedColliderSignature(o)});continue;
+   }
+   const surface=terrainSurfaceMesh3d(o.terrainHeightfield),src=surface.vertices,vertexCount=src.length/6;
+   const vertices=new Float32Array(vertexCount*3),indices=new Uint32Array(vertexCount);
+   for(let i=0;i<vertexCount;i++){vertices[i*3]=src[i*6];vertices[i*3+1]=src[i*6+1];vertices[i*3+2]=src[i*6+2];indices[i]=i}
+   terrainGeometry={vertices,indices};
+  }
+  const colliderDesc=terrainGeometry?RAPIER.ColliderDesc.trimesh(terrainGeometry.vertices,terrainGeometry.indices):
+   affine?RAPIER.ColliderDesc.convexHull(affine.points):g.shape==='capsule'?RAPIER.ColliderDesc.capsule(g.halfHeight,g.radius):g.shape==='sphere'?RAPIER.ColliderDesc.ball(g.radius):RAPIER.ColliderDesc.cuboid(g.w/2,g.h/2,g.d/2);
   if(!colliderDesc){errors.push(o.name+' : collision désactivée — impossible de créer le convex hull du collider affine.');skipped.set(o.id,{entity:o,signature:skippedColliderSignature(o)});continue}
   const body=world.createRigidBody(desc);
   // Offset was already baked into affine hull vertices.
-  if(!affine)colliderDesc.setTranslation?.(g.offset.x,g.offset.y,g.offset.z);
+  if(!affine&&!terrainGeometry)colliderDesc.setTranslation?.(g.offset.x,g.offset.y,g.offset.z);
   colliderDesc.setRestitution?.(clamp(o.rigidbody3d?.restitution??.2,0,1));colliderDesc.setFriction?.(clamp(o.rigidbody3d?.friction??.82,0,2));if(isDynamic)colliderDesc.setMass?.(Math.max(.01,n(o.rigidbody3d.mass,1)));
   const collider=world.createCollider(colliderDesc,body),controller=isCharacter||o.ai?.enabled?controllerFor(world,o):null;
   actors.set(o.id,{body,collider,controller,entity:o,geometry:g,width:n(o.w,32)/64,depth:n(o.depth3d,o.h||32)/64,height:n(o.h,32)/64,isDynamic,isKinematic,isCharacter,config:bodyConfig(o),affineHullSignature:affine?.signature||null,lastPosition:scenePosition(o),lastVelocity:velocity(o),lastRotation:rotation});
@@ -94,7 +109,7 @@ export function synchronizeRapierScene(scene,entities){
  for(const [id,r] of scene.skipped||[]){const o=current.get(id);if(o!==r.entity||!included(o)||skippedColliderSignature(o)!==r.signature)return false;}
  for(const [id,r] of scene.actors){const o=current.get(id);if(o!==r.entity||!included(o)||bodyConfig(o)!==r.config)return false;
   if(Math.abs(n(o.w,32)/64-r.width)+Math.abs(n(o.h,32)/64-r.height)+Math.abs(n(o.depth3d,o.h||32)/64-r.depth)>1e-5)return false;
-  const pos=colliderPosition3d(o),rotation=rotationQuaternion3d(o);
+  const pos=terrainPose(o),rotation=rotationQuaternion3d(o);
   let affine=null;
   try{affine=affineColliderData(o,colliderGeometry3d(o),pos,rotation)}catch{return false}
   // If the authored affine shape changes, rebuild the physics shape. A pose
@@ -142,7 +157,7 @@ export function moveRapierCharacter3d(scene,o,dx,dy,dz,{ignore=null,entities=nul
 function refreshRapierQueryPoses3d(scene){
  for(const r of scene.actors.values()){
   const o=r.entity;if(!included(o))continue;
-  const position=colliderPosition3d(o),rotation=rotationQuaternion3d(o);
+  const position=terrainPose(o),rotation=rotationQuaternion3d(o);
   if(changed(position,r.body.translation()))r.body.setTranslation(position,true);
   if(changed(rotation,r.lastRotation)){r.body.setRotation(rotation,true);r.lastRotation=rotation;}
  }

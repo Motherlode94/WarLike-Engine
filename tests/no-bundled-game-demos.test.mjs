@@ -7,7 +7,7 @@ test('WarLike editor no longer offers bundled demonstration games',()=>{
  const html=read('index.html');
  for(const marker of [
   'id="rpgDemo"','id="logicDemo"','id="driveDemo"','id="loadDemo"',
-  'id="hubOpenChambreNative"','id="horror3dDemo"','id="horrorPursuitDemo"',
+  'id="hubOpenChambreNative"','id="fpsScene"','id="horror3dDemo"','id="horrorPursuitDemo"',
   'data-studio-action="threeDDemo"','data-studio-action="threeDNatureDemo"',
   'data-studio-action="threeDGarageDemo"','data-studio-action="gameModeDemo"',
   'data-studio-action="buildingDemo"','data-studio-action="ninjaZombieDemo"',

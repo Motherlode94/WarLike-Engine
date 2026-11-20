@@ -67,6 +67,7 @@ export const playerModules=[
   "js/core/fx-renderer-3d.js",
   "js/core/fx-runtime.js",
   "js/core/gaia-terrain-physics.js",
+  "js/core/gaia-terrain-sculpt.js",
   "js/core/game-dialogue.js",
   "js/core/game-elements.js",
   "js/core/game-genres.js",

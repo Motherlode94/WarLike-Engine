@@ -36,7 +36,7 @@ test('player look follows camera by default and can turn toward actual motion',(
  const movement=cameraRelativeWalk3d(0,1,0);
  assert.equal(Math.round(playerFacing3d({yaw:0,right:movement.x,forward:movement.z,mode:'movement'})),180);
  assert.equal(playerFacing3d({yaw:1,mode:'locked',current:42}),42);
- assert.equal(playerFacing3d({yaw:0,current:0,mode:'camera',turnSpeed:90,dt:.5}),45);
+ assert.equal(playerFacing3d({yaw:Math.PI/2,current:0,mode:'camera',turnSpeed:90,dt:.5}),45);
  assert.equal(playerFacing3d({yaw:Math.PI,current:350,mode:'camera',turnSpeed:40,dt:.25}),0);
 });
 

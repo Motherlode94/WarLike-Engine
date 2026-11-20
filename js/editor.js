@@ -9,7 +9,6 @@ import {createHeroForgeScene} from './core/hero-forge-scene.js';
 import {initReferenceWorkspace} from './ui/reference-workspace.js';
 import {restoreLocalModels} from './core/local-asset-library.js';
 import {initSkeletalStudio} from './ui/skeletal-studio.js';
-import {initDemoBrowser} from './ui/demo-browser.js';
 import {initScriptStudio} from './ui/script-studio.js';
 import {initLifeUi} from './ui/life-ui.js';
 import {initCompanyUi} from './ui/company-ui.js';
@@ -29,14 +28,11 @@ import {openComponentBrowser} from './ui/component-browser.js';
 import {initGameFlowUi} from './ui/game-flow-ui.js';
 import {initStudioPolish} from './ui/studio-polish.js';
 import {horrorAudio,horrorAmbiences,setHorrorAmbience,unlockHorrorAudio,playHorrorCue} from './core/horror-audio.js';
-import {loadHorror3dDemo} from './core/horror-pursuit-3d-demo.js';
 import {initExternalAssetLibrary} from './ui/external-asset-library.js';
 import {hydrateLibraryModels} from './core/library-transfer.js';
 import {registerLocalModel} from './assets/real-models-3d.js';
-import {loadHorrorPursuitDemo} from './core/horror-pursuit-demo.js';
 import {initVisualAssetPacks} from './ui/visual-asset-packs.js';
 import {initCommunityManager} from './ui/community-manager.js';
-import {createFpsScene} from './core/fps-scene.js';
 import {initUnityPackageImport} from './ui/unitypackage-import.js';
 import {horror} from './core/horror-survival.js';
 import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality,applyHorrorAtmosphere} from './core/render-quality.js';
@@ -67,7 +63,7 @@ import {readGaiaWorldFile} from './core/gaia-world-import-preview.js';
 import {autoSave,recoverLocal,hasLocalSave,backupLocalSave,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo,renderHistory} from './core/history.js';
-import {addEntity,addPrefab,addLogicHotspot,loadLogicDemo,loadRpgDemo,loadCombatDemo,loadDrivingDemo,load3dBetaDemo,addLight,addAudioEmitter,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
+import {addEntity,addPrefab,addLogicHotspot,addLight,addAudioEmitter,duplicateSelected,togglePlay,exportScene,importScene} from './core/scene.js';
 import {sceneCreateItems,createSceneItem} from './core/editor-create-catalog.js';
 import {initTilemapEditor2d} from './ui/tilemap-editor-2d.js';
 import {mountProjectCreateBrowser} from './ui/project-create-browser.js';
@@ -80,7 +76,6 @@ installEditorServices({record,renderHistory,drawOverlay2d,initSceneGizmo3d,makeW
 const $=s=>document.querySelector(s),canvas=$('#canvas'),host=$('#viewport');
 // One gameplay overlay serves both 2D Canvas and 3D WebGL views.
 const gameUiOverlay=createGameUiOverlay(host,{onSignal:signal=>emitSequenceSignal(signal)});
-document.getElementById('fpsScene')?.addEventListener('click',()=>{if(!window.confirm('Remplacer la scène 3D actuelle par le terrain d’entraînement FPS ? Sauvegarde d’abord ton projet.'))return;try{createFpsScene();document.getElementById('workspace3d')?.click();}catch(error){window.alert(error.message)}});
 // Make the project chooser visible before initializing optional editor systems.
 loadRenderQuality();
 for(const [id,key,scale] of [['render2dAmbient','ambient2d',100],['render2dRadius','lightRadius2d',1],['render3dExposure','exposure3d',100],['render3dFog','fog3d',1000]]){
@@ -115,8 +110,6 @@ const enableLight=document.getElementById('render2dLight');
 if(enableLight){enableLight.checked=renderQuality.lighting2d;enableLight.addEventListener('change',()=>{setRenderQuality({lighting2d:enableLight.checked});saveRenderQuality()})}
 if(!globalThis.__WARLIKE_BUILD__)try{await restoreLocalModels()}catch(error){log('Bibliothèque locale : '+error.message,'warn')}
 initUnityPackageImport();
-document.getElementById('horrorPursuitDemo')?.addEventListener('click',()=>{if(!window.confirm('Charger Horror Pursuit ? La scène actuelle sera remplacée. Sauvegarde ton projet avant de continuer.'))return;try{loadHorrorPursuitDemo()}catch(error){window.alert(error.message)}});
-document.getElementById('horror3dDemo')?.addEventListener('click',()=>{if(!confirm('Remplacer la scene par Horror 3D ?'))return;try{loadHorror3dDemo()}catch(error){alert(error.message)}});
 initVisualAssetPacks();
 const importedLibraryModels=globalThis.__WARLIKE_BUILD__?{loaded:0,errors:[]}:await hydrateLibraryModels(registerLocalModel);
 if(importedLibraryModels.errors.length)console.warn('[WarLike Library] Importation partielle :',importedLibraryModels.errors);
@@ -219,10 +212,6 @@ bindGameInput(canvas);
 initializeRpgUi();
 bindModeInput();
 window.addEventListener('keydown',e=>{if(!state.playing||e.repeat||e.ctrlKey||e.metaKey||e.key.toLowerCase()!=='c'||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;motion.cameraFollow=!motion.cameraFollow;log('Caméra : '+(motion.cameraFollow?'suivi du joueur':'libre'))});
-$('#rpgDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger RPG Demo ? Cette action remplace la scène actuelle (Ctrl+Z pour annuler).'))return;loadRpgDemo();log('RPG Demo chargé — Play, E, I et J')};
-$('#logicDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Visual Logic Demo ? La scène actuelle sera remplacée (Ctrl+Z pour annuler).'))return;loadLogicDemo();log('Visual Logic Demo chargé — Play et E pour interagir')};
-$('#driveDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Driving Sandbox ? Tu peux annuler ce remplacement avec Ctrl+Z.'))return;loadDrivingDemo();log('Driving Sandbox chargé — Play, puis E pour monter')};
-$('#loadDemo').onclick=()=>{if(state.playing)return;if(!confirm('Charger Combat Sandbox ? La scène actuelle sera remplacée dans l’éditeur. Tu pourras l’annuler avec Ctrl+Z.'))return;loadCombatDemo();log('Combat Sandbox chargé : sélectionne Play')};
 // The Hub handles legacy scene recovery explicitly; never overwrite a named project on startup.
 record('Scène initiale');
 beginAutoSave();
@@ -269,7 +258,6 @@ const relocateTools=(targetId,ids)=>{
  if(!target)return;
  for(const id of ids){const control=document.getElementById(id);if(control)target.append(control)}
 };
-relocateTools('warlikeDemoTools',['rpgDemo','logicDemo','driveDemo','loadDemo']);
 relocateTools('warlikeCreationTools',['newPointLight','newSpotLight','newAudioSource']);
 relocateTools('warlikeRenderingTools',['audioToggle']);
 const volumeInput=document.getElementById('audioVolume');

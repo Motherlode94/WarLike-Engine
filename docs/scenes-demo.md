@@ -1,5 +1,8 @@
 # Scènes démo jouables
 
+> **ARCHIVE TECHNIQUE — NON DISTRIBUÉE COMME JEU.** Les jeux et scènes décrits ci-dessous étaient des prototypes historiques. Depuis le 20 novembre 2026, WarLike Engine ne les propose plus dans ses menus ou ses nouveaux projets. Les références aux anciens menus ci-dessous documentent uniquement le fonctionnement historique. Les fixtures sont conservées pour certifier les contrôleurs, l'Animator, les modèles, les collisions et l'export, sans présenter ces prototypes comme des jeux aboutis.
+
+
 ## CHAMBRE 07 · La Voix — scène 3D native et éditable
 
 Créer ou ouvrir un projet **3D**, puis ouvrir **Game → Scènes démo jouables… → CHAMBRE 07 · Scène 3D native → Charger cette scène**. Dans le **Hub du moteur**, le raccourci CHAMBRE 07 ouvre ce même navigateur. La scène charge de véritables objets de l'éditeur ; ce n'est **pas** une iframe.

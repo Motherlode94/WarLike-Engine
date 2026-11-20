@@ -97,5 +97,5 @@ test('Field Lab is a reversible diagnostics course in both workspaces',()=>{
  const hud=read('js/runtime/ui/genre-hud.js');
  assert.match(hud,/genre==='fieldlab'/);
  const html=read('index.html');
- assert.match(html,/value="fieldlab"/);
+ assert.doesNotMatch(html,/value="fieldlab"/,'Field Lab remains a private test fixture, never a selectable bundled game');
 });

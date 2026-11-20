@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {analyzeModelReadiness,analyzeComponentReadiness,inspectGameObjectAuthoring} from '../js/core/authoring-readiness.js';
+import {analyzeModelReadiness,analyzeComponentReadiness,inspectGameObjectAuthoring,assignValidatedHumanoidAvatar} from '../js/core/authoring-readiness.js';
 import {readFileSync} from 'node:fs';
 test('GLB diagnostic reports actual surfaces, materials and missing animation, without inventing clips',()=>{
  const result=analyzeModelReadiness({parts:[{vertices:new Float32Array(18)}],triangleCount:1,normalizationScale:1,normalizedSize:[1,1,1],materialWarnings:['Texture externe introuvable'],rig:null});
@@ -31,4 +31,16 @@ test('Inspector exposes manual audit without changing scenes or adding demos',()
  assert.match(src,/mountAuthoringAudit\(root,o\)/);
  assert.match(src,/inspectGameObjectAuthoring\(object/);
  assert.match(src,/Analyser le GameObject/);
+});
+
+test('Avatar assignment refuses incomplete imported rigs and preserves existing saved configuration',()=>{
+ const object={id:7,name:'Vrai personnage',model3dId:'custom-glb',animationRig:{enabled:true,clips:[{name:'MonClip',duration:1,channels:[]}]}};
+ const before=structuredClone(object);
+ const invalid={nodes:[{name:'Hips',children:[]}],parents:new Int32Array([-1]),skins:[{joints:[0]}],animations:[]};
+ assert.throws(()=>assignValidatedHumanoidAvatar(object,invalid),/Rig non compatible humanoïde/);
+ assert.deepEqual(object,before,'Invalid rig must never overwrite authored animation setup');
+ object.animationRig.avatar={schema:'warlike.avatar.v1',enabled:true,bones:{}};
+ const existing=structuredClone(object);
+ assert.throws(()=>assignValidatedHumanoidAvatar(object,invalid),/Avatar existant/);
+ assert.deepEqual(object,existing);
 });

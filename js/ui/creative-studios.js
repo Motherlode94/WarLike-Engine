@@ -41,17 +41,39 @@ export function initCreativeStudios(){
  function renderAnimator(){
   const {body,o}=heading(animator);if(!o)return;loadClips(o);
   if(profileClipCache.has(o.model3dId||o.assetId))renderAnimationProfiles(body,o,profileClipCache.get(o.model3dId||o.assetId),{selected:o.animatorGraph?.profileId||'adventure',onApplied:()=>{selectedState='motion';save('Appliquer un profil Animator');renderAnimator()}});
-  if(!o.animatorGraph){body.append(el('p','','Crée un graphe de locomotion, saut, attaque, pouvoirs, vol et mort. Les poses viennent des clips du modèle.'));button(body,'Créer le graphe Animator',()=>{o.animatorGraph=defaultAnimatorGraph();save('Créer Animator');renderAnimator()});button(body,'Créer un contrôleur depuis les clips GLB (Meshy / rig)',()=>applyModelAnimator(o),false);return}
+  if(!o.animatorGraph){
+   body.append(el('p','creative-status','Associe un Animator à ce GameObject à partir de ses vrais clips GLB. Aucun état fictif ne sera créé.'));
+   const available=[...new Set([...clipsFor(o),...(o.animationRig?.clips||[]).map(clip=>clip.name)])];
+   if(available.length){
+    const selector=el('select','animator-first-clip');
+    selector.setAttribute('aria-label','Premier clip réel du contrôleur');
+    for(const name of available){const option=el('option','',name);option.value=name;selector.append(option)}
+    body.append(selector);
+    button(body,'Créer Animator depuis ce clip',()=>{
+     const name=selector.value,duration=durationCache.get(o.model3dId||o.assetId)?.get(name)||1;
+     o.animatorGraph={enabled:true,entry:'main',states:[{id:'main',name,clip:name,loop:true,speed:1,duration,x:110,y:170,events:[]}],transitions:[],layers:[],parameters:[]};
+     selectedState='main';save('Créer Animator depuis le vrai clip '+name);renderAnimator()
+    });
+   }else body.append(el('p','creative-status','Aucun clip GLB trouvé. Importe un modèle animé ou crée une animation dans le studio Squelette.'));
+   button(body,'Squelette · Animations et rig',()=>document.dispatchEvent(new Event('warlike:skeleton-open')),false);
+   return
+  }
   const graph=o.animatorGraph;graph.parameters??=[];graph.machines??=[];const toolbar=el('div','creative-toolbar animator-primary-toolbar');
   check(toolbar,'Animator actif',graph.enabled!==false,v=>graph.enabled=v);
   field(toolbar,'État initial',graph.entry,v=>{graph.entry=v;renderAnimator()},{
    choices:[...graph.states.map(s=>({value:s.id,label:s.name})),...graph.machines.map(m=>({value:'@'+m.id,label:'▱ '+m.name}))]});
+  const realClips=[...new Set([...clipsFor(o),...(o.animationRig?.clips||[]).map(clip=>clip.name)])];
+  const clipPicker=el('select','animator-add-clip');
+  clipPicker.setAttribute('aria-label','Choisir un vrai clip GLB');
+  for(const name of realClips){const option=el('option','',name);option.value=name;clipPicker.append(option)}
+  clipPicker.disabled=realClips.length===0;toolbar.append(clipPicker);
   button(toolbar,'Ajouter un état',()=>{
-   if(graph.states.length>=32)return;
-   const id='state-'+Date.now().toString(36);
-   graph.states.push({id,name:'Nouvel état',clip:'idle',loop:true,speed:1,duration:1,x:60,y:60,events:[]});
-   selectedState=id;save('Ajouter état Animator');renderAnimator()
-  });
+   if(graph.states.length>=32||!clipPicker.value)return;
+   const name=clipPicker.value,id='state-'+Date.now().toString(36);
+   const duration=durationCache.get(o.model3dId||o.assetId)?.get(name)||1;
+   graph.states.push({id,name,clip:name,loop:true,speed:1,duration,x:60,y:60,events:[]});
+   selectedState=id;save('Ajouter état Animator : '+name);renderAnimator()
+  },state.playing||!realClips.length);
   const advanced=el('details','animator-advanced-options');
   advanced.append(el('summary','','Options avancées · Avatar, aperçu et outils'));
   const extended=el('div','creative-toolbar');

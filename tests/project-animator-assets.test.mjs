@@ -70,3 +70,9 @@ test('Scene View uses native 3D picking and never assigns to selected by default
  assert.match(source,/workspace\.mode!==mode/);
  assert.match(readFileSync(new URL('../js\/editor.js',import.meta.url),'utf8'),/installAnimatorControllerSceneDrop\(\)/);
 });
+
+test('native Animator asset drag handle mounts in the Project dock, not clipped import content',()=>{
+ const source=readFileSync(new URL('../js/ui/project-create-browser.js',import.meta.url),'utf8');
+ assert.match(source,/mountAnimatorControllerProjectAssets\(toolbar\)/);
+ assert.doesNotMatch(source,/mountAnimatorControllerProjectAssets\(host\)/);
+});

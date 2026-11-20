@@ -44,6 +44,7 @@ export const playerModules=[
   "js/core/building-system.js",
   "js/core/camera-transition-3d.js",
   "js/core/character-facing.js",
+  "js/core/clean-starter-scene.js",
   "js/core/collider-3d.js",
   "js/core/collider-shapes-2d.js",
   "js/core/collision-3d.js",

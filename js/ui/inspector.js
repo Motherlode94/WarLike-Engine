@@ -276,7 +276,7 @@ function mountAuthoringAudit(root,object){
  };
  const transferGroup=document.createElement('div');transferGroup.className='warlike-glb-retarget-controls';
  const sourceInput=document.createElement('input');sourceInput.type='text';sourceInput.placeholder='ID du modèle GLB source';
- sourceInput.setAttribute('aria-label','Identifiant GLB source');sourceInput.maxLength=160;
+ sourceInput.setAttribute('aria-label','Identifiant GLB source');sourceInput.maxLength=160;sourceInput.value=object.model3dId||'';
  const clipsSelect=document.createElement('select');clipsSelect.setAttribute('aria-label','Animation GLB source');clipsSelect.disabled=true;
  const loadClips=document.createElement('button');loadClips.type='button';loadClips.textContent='Lire animations GLB';
  const clipName=document.createElement('input');clipName.type='text';clipName.placeholder='Nom du clip transféré';clipName.maxLength=160;

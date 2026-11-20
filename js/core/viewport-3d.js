@@ -525,7 +525,8 @@ export function init3d(canvas,host,buttons){
  view3d.enabled=workspace.mode==='3d';
  const resize=()=>{const {width:w,height:h}=viewportPixelSize(host.clientWidth,host.clientHeight,window.devicePixelRatio||1);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h)};
  const focusScene=()=>{
-  const arr=state.selected.length?state.entities.filter(o=>state.selected.includes(o.id)):state.entities;
+  const visualEntities=state.entities.filter(o=>o.enabled!==false&&!o.sceneCamera3d&&o.lightType!=='directional');
+  const arr=state.selected.length?state.entities.filter(o=>state.selected.includes(o.id)):(visualEntities.length?visualEntities:state.entities);
   if(!arr.length){view3d.target=[9,0,6];view3d.radius=25;return}
   let minx=Infinity,maxx=-Infinity,minz=Infinity,maxz=-Infinity,miny=Infinity,maxy=-Infinity;
   for(const o of arr){const b=objectBounds3d(o);minx=Math.min(minx,b.x-b.w/2);maxx=Math.max(maxx,b.x+b.w/2);minz=Math.min(minz,b.z-b.d/2);maxz=Math.max(maxz,b.z+b.d/2);miny=Math.min(miny,b.y-b.h/2);maxy=Math.max(maxy,b.y+b.h/2)}

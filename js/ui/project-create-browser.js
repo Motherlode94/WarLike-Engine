@@ -44,7 +44,7 @@ export function downloadProjectDocument(asset){
  a.href=url;a.download=asset.name.replace(/[^a-z0-9_.-]+/gi,'-')+'.warlike.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 export function mountProjectCreateBrowser(){
- const toolbar=document.querySelector('.asset-toolbar'),host=document.querySelector('.asset-content');if(!toolbar||!host)return;
+ const host=document.querySelector('#projectContent'),toolbar=host?.querySelector('.browser-title');if(!toolbar||!host)return;
  const menu=document.createElement('details');menu.className='warlike-project-create';menu.innerHTML='<summary>＋ Créer un asset</summary>';
  const options=document.createElement('div');options.className='warlike-project-create-options';
  for(const [type,definition] of Object.entries(types)){
@@ -60,12 +60,13 @@ export function mountProjectCreateBrowser(){
   catch(error){window.alert('Création impossible : '+error.message)}
  };
  options.append(animator);
- menu.append(options);toolbar.prepend(menu);
+ menu.append(options);toolbar.append(menu);
  const panel=document.createElement('section');panel.className='warlike-project-documents';
  const heading=document.createElement('h4');heading.textContent='Documents du projet';panel.append(heading);
  const list=document.createElement('div');list.className='warlike-project-document-list';panel.append(list);
- host.append(panel);
- mountAnimatorControllerProjectAssets(host);
+ host.querySelector('.asset-body')?.before(panel);
+ const animatorSection=mountAnimatorControllerProjectAssets(host);
+ if(animatorSection)host.querySelector('.asset-body')?.before(animatorSection);
  function draw(){
   const assets=listProjectDocuments();panel.hidden=!assets.length;list.replaceChildren();
   for(const asset of assets){

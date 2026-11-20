@@ -37,7 +37,7 @@ test('player look follows camera by default and can turn toward actual motion',(
  assert.equal(Math.round(playerFacing3d({yaw:0,right:movement.x,forward:movement.z,mode:'movement'})),180);
  assert.equal(playerFacing3d({yaw:1,mode:'locked',current:42}),42);
  assert.equal(playerFacing3d({yaw:0,current:0,mode:'camera',turnSpeed:90,dt:.5}),45);
- assert.equal(playerFacing3d({yaw:0,current:350,mode:'camera',turnSpeed:40,dt:.25}),0);
+ assert.equal(playerFacing3d({yaw:Math.PI,current:350,mode:'camera',turnSpeed:40,dt:.25}),0);
 });
 
 test('3D player controller exposes look config without altering core movement defaults',()=>{

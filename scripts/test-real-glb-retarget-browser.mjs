@@ -25,7 +25,7 @@ try{
  await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'load'});
  await page.locator('body.reference-engine').waitFor();
  const authored=await page.evaluate(async()=>{
-  const [{createProject,saveProject},{registerLocalModel},{retargetImportedHumanoidClip},{state}]=await Promise.all([
+  const [{createProject,saveProject},{registerLocalModel},{retargetImportedHumanoidClip},{state,notify}]=await Promise.all([
    import('/js/core/project-hub.js'),import('/js/assets/real-models-3d.js'),
    import('/js/core/humanoid-glb-transfer.js'),import('/js/core/state.js')]);
   const file=async(path,name)=>{
@@ -46,6 +46,7 @@ try{
    sourceModelId:a.id,sourceClipName:'Walk_Formal_Loop',name:'Marche humanoïde importée',fps:20
   });
   actor.animationRig.activeClip=transfer.name;actor.animationRig.playOnStart=true;
+  notify();
   if(!saveProject())throw Error('Saving authored scene failed');
   return {id,modelId:b.id,sourceId:a.id,clip:transfer.name,channels:transfer.channels};
  });

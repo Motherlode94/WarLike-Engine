@@ -144,10 +144,11 @@ try{
   }catch(e){
    report.errors.push({mode,error:String(e),pageErrors:errors,httpErrors,external});
    await page.screenshot({path:path.join(out,mode+'-failure.png')}).catch(()=>{});
+   await writeFile(path.join(out,'report.json'),JSON.stringify({...report,result:'FAIL'},null,2));
    throw e;
   }finally{await context.close()}
  }
  report.result='PASS';
  await writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));
- console.log(JSON.stringify({result:report.result,builds,modes:Object.fromEntries(Object.entries(report.modes).map(([m,v])=>[m,{camera:v.turned.yaw,navSpeed:v.navigated.navSpeed,playerMoved:Math.hypot(v.moved.playerX-v.turned.playerX,v.moved.playerY-v.turned.playerY),fired:v.fired.attackCooldown>0}]))},null,2));
+ console.log(JSON.stringify({result:report.result,builds,modes:Object.fromEntries(Object.entries(report.modes).map(([m,v])=>[m,{camera:v.turned.yaw,navSpeed:v.navigated.observation.speed,playerMoved:Math.hypot(v.moved.playerX-v.turned.playerX,v.moved.playerY-v.turned.playerY),fired:v.fired.attackCooldown>0}]))},null,2));
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}

@@ -1398,3 +1398,18 @@ body:not(.hub-open) #warlikeVisualPacks button:hover{border-color:var(--editor-a
 body:not(.hub-open) #warlikeVisualPacks input,body:not(.hub-open) #warlikeVisualPacks select{background:var(--warlike-palette-surface,#252629)!important;color:var(--warlike-palette-text,#e5e7eb)!important;border:1px solid var(--warlike-palette-border,#535a62)!important}
 body:not(.hub-open) #studioPrimaryActions #play{opacity:1!important;color:var(--warlike-palette-text,#e5e7eb)!important;background:var(--warlike-palette-button,#454950)!important;border:1px solid var(--editor-accent,#6c9dc8)!important}
 body:not(.hub-open) #studioPrimaryActions #play:hover{filter:brightness(1.16)}
+
+/* Dedicated GLB import tool; Inspector remains focused on active components. */
+.inspector-authoring-audit{margin:6px 2px;border:0;padding:0}
+.inspector-model-import-button{width:100%;padding:6px 9px;font-size:12px;text-align:left;background:transparent;border:1px solid var(--line,#52606a);border-radius:4px;color:inherit}
+.inspector-model-import-button:hover{background:var(--panel-hover,#354550)}
+.warlike-model-import-window{position:fixed;z-index:9000;left:max(24px,calc(50vw - 280px));top:12vh;width:min(560px,90vw);height:min(620px,78vh);display:flex;flex-direction:column;box-shadow:0 12px 40px #0008}
+.warlike-model-import-window[hidden]{display:none}
+.warlike-model-import-window .creative-body{overflow:auto;flex:1;padding:12px;display:flex;flex-direction:column;gap:10px}
+.warlike-model-import-window .warlike-glb-retarget-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.warlike-model-import-window .warlike-glb-retarget-controls>strong{grid-column:1/-1}
+.warlike-model-import-window input,.warlike-model-import-window select{min-width:0;max-width:100%;box-sizing:border-box}
+.inspector-animator-field{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px;align-items:center;padding:3px 0;font-size:12px}
+.inspector-animator-field>span:last-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:4px 6px;border:1px solid var(--line,#50606a);border-radius:3px}
+.inspector-animator-root-motion{display:flex;gap:6px;align-items:center;margin:7px 0;font-size:12px}
+.inspector-animator-open{width:100%;padding:6px;font-size:12px}

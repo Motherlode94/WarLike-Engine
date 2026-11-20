@@ -45,25 +45,25 @@ export function downloadProjectDocument(asset){
 }
 export function mountProjectCreateBrowser(){
  const host=document.querySelector('#projectContent'),toolbar=document.querySelector('#projectPanel > .bottom-tabs');if(!toolbar||!host)return;
- const menu=document.createElement('details');menu.className='warlike-project-create';menu.innerHTML='<summary>＋ Créer un asset</summary>';
+ const menu=document.createElement('button');menu.type='button';menu.id='warlikeProjectCreateTrigger';menu.className='warlike-project-create';menu.textContent='＋ Créer un asset';menu.setAttribute('aria-expanded','false');
  const options=document.createElement('div');options.className='warlike-project-create-options';
  for(const [type,definition] of Object.entries(types)){
   if(type==='animatorController')continue;
   const button=document.createElement('button');button.type='button';button.textContent=definition.label;
-  button.onclick=()=>{try{createProjectDocument(type);menu.open=false}catch(error){window.alert('Création impossible : '+error.message)}};
+  button.onclick=()=>{try{createProjectDocument(type);closeMenu()}catch(error){window.alert('Création impossible : '+error.message)}};
   options.append(button);
  }
  const animator=document.createElement('button');animator.type='button';animator.textContent='Animator Controller';
  animator.title='Créer une véritable ressource Animator Controller depuis le GameObject sélectionné.';
  animator.onclick=()=>{
-  try{createNativeAnimatorControllerFromSelection();menu.open=false}
+  try{createNativeAnimatorControllerFromSelection();closeMenu()}
   catch(error){window.alert('Création impossible : '+error.message)}
  };
  options.prepend(animator);
  // The Project dock clips overflow; a top-layer popover keeps the native
  // menu interactive without changing dock dimensions or breaking other panels.
- options.hidden=true;
- const closeMenu=()=>{options.hidden=true;options.style.display='none';menu.open=false};
+ options.hidden=true;let open=false;
+ const closeMenu=()=>{open=false;options.hidden=true;options.style.display='none';menu.setAttribute('aria-expanded','false')};
  const placeMenu=()=>{
   const r=menu.getBoundingClientRect(),width=240;
   options.style.position='fixed';options.style.zIndex='99999';
@@ -71,14 +71,15 @@ export function mountProjectCreateBrowser(){
   options.style.top=Math.max(8,Math.min(window.innerHeight-90,r.bottom+4))+'px';
   options.style.width=width+'px';
  };
- menu.addEventListener('toggle',()=>{
-  if(menu.open){placeMenu();options.hidden=false;options.style.display='block'}
-  else{options.hidden=true;options.style.display='none'}
- });
+ menu.onclick=()=>{
+  if(open){closeMenu();return}
+  placeMenu();open=true;options.hidden=false;options.style.display='block';
+  menu.setAttribute('aria-expanded','true');
+ };
  document.addEventListener('pointerdown',event=>{
-  if(menu.open&&!menu.contains(event.target)&&!options.contains(event.target))closeMenu();
+  if(open&&!menu.contains(event.target)&&!options.contains(event.target))closeMenu();
  });
- document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.open)closeMenu()});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&open)closeMenu()});
  options.addEventListener('click',event=>{if(event.target.closest('button'))closeMenu()});
  // Keep only the trigger inside the clipped Project dock: even a popover
  // must not inherit an ancestor <details> content box or its overflow.

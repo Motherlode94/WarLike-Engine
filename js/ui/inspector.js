@@ -30,6 +30,7 @@ import {communityRecipes,applyCommunityRecipe} from '../core/community-plugins.j
 import {threatFactions,threatRelations,threatProfile} from '../core/threat-intelligence.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {getModelGeometry} from '../assets/real-models-3d.js';
+import {inspectGameObjectAuthoring,configureRealHumanoidOnObject} from '../core/authoring-readiness.js';
 import {defaultRigidbody3d,applyImpulse3d} from '../core/physics-3d.js';
 import {recipes,applyRecipe} from '../core/gameplay-recipes.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController,inventoryAdd,inventoryRemove,equipItem} from '../core/gameplay-components.js';
@@ -232,6 +233,47 @@ function renderTypedComponent(root,componentInstance,owner){
   section.append(line);
  }
  root.append(section);
+}
+function mountAuthoringAudit(root,object){
+ const section=document.createElement('section');section.className='inspector-authoring-audit';
+ const heading=document.createElement('h3');heading.textContent='Contrôle modèle · Animator · Gameplay';
+ const button=document.createElement('button');button.type='button';
+ button.textContent='Analyser le GameObject';button.setAttribute('aria-label','Analyser le modèle GLB, Animator et composants du GameObject');
+ const results=document.createElement('div');results.className='inspector-authoring-results';
+ results.setAttribute('role','status');results.setAttribute('aria-live','polite');
+ button.onclick=async()=>{
+  if(button.disabled)return;button.disabled=true;results.replaceChildren();
+  results.textContent='Analyse du modèle et de la compatibilité en cours…';
+  try{
+   const report=await inspectGameObjectAuthoring(object,{mode:workspace.mode});
+   if(!section.isConnected)return;
+   results.replaceChildren();
+   const summary=document.createElement('p');
+   summary.textContent=(report.model?`${report.model.triangles} triangles · ${report.model.meshes} surfaces · ${report.model.skins} skins · ${report.model.clips.length} clips GLB · ${report.model.humanoidMapped}/${report.model.humanoidRequired} os requis mappés`:'Aucun modèle GLB à inspecter')+
+    ` · ${report.components.length} composants reconnus · ${report.errors} erreur(s) · ${report.warnings} alerte(s)`;
+   results.append(summary);
+   if(!report.issues.length){const ok=document.createElement('p');ok.textContent='Aucune anomalie détectée par cet audit (test en Play/export toujours nécessaire).';results.append(ok)}
+   for(const item of report.issues){const line=document.createElement('p');line.textContent=`[${item.severity.toUpperCase()}] ${item.category} : ${item.message}`;line.dataset.severity=item.severity;results.append(line)}
+  }catch(error){results.textContent='Diagnostic indisponible : '+error.message}
+  finally{button.disabled=false}
+ };
+ const avatarButton=document.createElement('button');avatarButton.type='button';
+ avatarButton.textContent='Configurer Avatar humanoïde réel';
+ avatarButton.disabled=!object.model3dId||state.playing;
+ avatarButton.title='N’assigne un Avatar que si le squelette réel contient les os requis et les hiérarchies valides.';
+ avatarButton.onclick=async()=>{
+  if(state.playing||!object.model3dId)return;
+  const replace=Boolean(object.animationRig?.avatar);
+  if(replace&&!window.confirm('Remplacer la correspondance d’os humanoïde actuelle ?'))return;
+  avatarButton.disabled=true;
+  try{
+   await configureRealHumanoidOnObject(object,{replace});
+   record('Inspector : Avatar humanoïde GLB validé');
+   notify();
+  }catch(error){results.textContent='Avatar non assigné : '+error.message}
+  finally{avatarButton.disabled=state.playing||!object.model3dId}
+ };
+ section.append(heading,button,avatarButton,results);root.append(section);
 }
 export function renderInspector(){initAssetInspection();const root=document.querySelector('#properties');const objects=inspectedObjects(),o=objects.at(-1),asset=inspectedAsset();const signature=inspectorContext()+':'+(asset?'asset:'+asset.id:objects.map(object=>object.id).join(','));const scroll=root.dataset.inspection===signature?root.scrollTop:0;root.dataset.inspection=signature;root.replaceChildren();inspectorWindowHeader(root,asset?[asset]:objects,asset?assetInspectorLock():{});requestAnimationFrame(()=>{root.scrollTop=scroll});if(asset){if(inspectorDebug())renderInspectorDebug(root,[asset]);else renderAssetInspector(root,asset);return}if(!o){const empty=document.createElement('p');empty.className='inspector-empty';empty.textContent='Sélectionne un GameObject dans Hierarchy ou une ressource dans Project pour afficher ses propriétés.';root.append(empty);return}if(inspectorDebug()){renderInspectorDebug(root,objects);return}if(objects.length>1){renderMultipleInspector(root,objects);return}
 
@@ -486,7 +528,7 @@ if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Box Collider 3D',bod
 });
 if(o.model3dId||get3dAsset(o.assetId)?.shape==='glb')renderAnimator3d(root,o);
 if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Mesh Renderer · Matériau',body=>{const isGlb=!!o.model3dId||get3dAsset(o.assetId)?.shape==='glb';if(isGlb){const label=document.createElement('label'),check=document.createElement('input');label.className='logic-flag';check.type='checkbox';check.checked=o.colorCustomized===true;check.disabled=state.playing;check.onchange=()=>{o.colorCustomized=check.checked;o.color??='#ffffff';record('Teinte personnalisée');notify()};label.append(check,document.createTextNode('Teinte personnalisée'));body.append(label)}if(!isGlb||o.colorCustomized)colorPalette(body,o,'color','Couleur du matériau');field(body,o,'materialRoughness','Rugosité 0–1');field(body,o,'materialMetallic','Métal 0–1');const hint=document.createElement('p');hint.textContent='Les GLB conservent leurs textures et couleurs. Une couleur personnalisée teinte le matériau.';body.append(hint);const asset=get3dAsset(o.model3dId||o.assetId);if(asset?.author)body.append(assetCredits(asset));for(const [i,key] of ['materialRoughness','materialMetallic'].entries()){const input=body.querySelectorAll('.property-row input')[i];if(o[key]===undefined){input.value='';input.placeholder='Matériau du GLB'}input.addEventListener('change',()=>{if(!input.value.trim()){delete o[key];record('Matériau d’origine');notify()}})}});
-const del3d=document.createElement('button');del3d.className='delete-object';del3d.textContent='Supprimer objet 3D';del3d.disabled=state.playing;del3d.onclick=()=>deleteInspectedObject(o);root.append(del3d);finishInspector(root,o,advancedTools);
+const del3d=document.createElement('button');del3d.className='delete-object';del3d.textContent='Supprimer objet 3D';del3d.disabled=state.playing;del3d.onclick=()=>deleteInspectedObject(o);root.append(del3d);mountAuthoringAudit(root,o);finishInspector(root,o,advancedTools);
 return;
 }
 if(o.assetId||!o.audioEnabled&&!o.lightType)component(root,'Sprite Renderer',body=>{if(!getAsset(o.assetId)?.spriteUrl)colorPalette(body,o,'color','Couleur de l’objet');if(o.type==='prefab'){const label=document.createElement('p');label.textContent='Source : '+(getAsset(o.assetId)?.name||o.assetId);body.append(label);const asset=getAsset(o.assetId);if(asset?.author)body.append(assetCredits(asset))}if(o.type==='character')selectField(body,o,'skin','Character',['scout','soldier'])});
@@ -567,6 +609,6 @@ for(const instance of (o.editorComponents||o.components||[]))renderTypedComponen
 renderBoneSocketInspector(root,o);
 root.append(advancedTools);
 renderPhysics2d(root,o,{component,field,selectField});
-const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=()=>deleteInspectedObject(o);root.append(del);finishInspector(root,o,advancedTools)}
+const del=document.createElement('button');del.className='delete-object';del.textContent='Supprimer GameObject';del.disabled=state.playing;del.onclick=()=>deleteInspectedObject(o);root.append(del);mountAuthoringAudit(root,o);finishInspector(root,o,advancedTools)}
 export function renderUI(){renderHierarchy();renderInspector()}
 document.addEventListener('warlike:change',renderUI);

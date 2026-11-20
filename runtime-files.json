@@ -16351,6 +16351,7 @@
     "js/core/audio-sources.js",
     "js/core/audio.js",
     "js/core/authored-demo-scenes.js",
+    "js/core/authoring-readiness.js",
     "js/core/battlefield-runtime.js",
     "js/core/battlefield-scene.js",
     "js/core/blueprint-catalog.js",

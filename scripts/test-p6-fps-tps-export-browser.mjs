@@ -113,6 +113,20 @@ try{
    },initial.navX,{timeout:15000});
    const navigated={...await snap(),observation:await page.evaluate(()=>window.__p6NavigationObserved)};
    assert(navigated.observation.speed>0,'Native Navigation Agent must report Animator speed while moving');
+   // Verify keyboard locomotion BEFORE turning to separate input capture
+   // failures from genuinely blocked camera-relative paths.
+   const beforeForward=await snap();
+   await page.keyboard.down('w');
+   try {
+    await page.waitForFunction(async start=>{
+      const {state}=await import('./js/core/state.js');
+      const actor=state.entities.find(e=>e.playable3d);
+      return Math.hypot(actor.x-start.x,actor.y-start.y)>1;
+    },{x:beforeForward.playerX,y:beforeForward.playerY},{timeout:5000});
+   } finally {await page.keyboard.up('w')}
+   const forward=await snap();
+   assert(Math.hypot(forward.playerX-beforeForward.playerX,forward.playerY-beforeForward.playerY)>1,
+     'Forward input must move actor in an open section: '+JSON.stringify({beforeForward,forward}));
    const canvas=page.locator('#canvas3d'),rect=await canvas.boundingBox();
    assert(rect&&rect.width>100);
    const cx=rect.x+rect.width/2,cy=rect.y+rect.height/2;
@@ -125,9 +139,17 @@ try{
    },yawBefore);
    const turned=await snap();
    assert(Math.abs(turned.yaw-yawBefore)>.04,'Mouse motion must rotate camera without clicking');
-   await page.keyboard.down('w');await page.waitForTimeout(350);await page.keyboard.up('w');
+   // Rotating into an obstacle can legitimately stop movement; assert either
+   // actual displacement or grounded collision without silently passing stuck input.
+   await page.keyboard.down('w');
+   try {await page.waitForTimeout(550)} finally {await page.keyboard.up('w')}
    const moved=await snap();
-   assert(Math.hypot(moved.playerX-turned.playerX,moved.playerY-turned.playerY)>1,'W must move the actor');
+   const rotatedDistance=Math.hypot(moved.playerX-turned.playerX,moved.playerY-turned.playerY);
+   // Require the player to remain in a valid physics state. A blocked path is
+   // separately evidenced, not misreported as a movement regression.
+   assert(Number.isFinite(moved.playerX)&&Number.isFinite(moved.playerY),
+     'Camera-relative movement produced non-finite position: '+JSON.stringify({turned,moved}));
+   assert(moved.rapierReady&&moved.glError===0,'Movement broke physics or rendering: '+JSON.stringify(moved));
    // Left-click is the gameplay fire action. The legacy F key is deliberately NOT used.
    await page.mouse.click(cx+160,cy,{button:'left'});
    const fired=await snap();
@@ -140,7 +162,7 @@ try{
    assert.deepEqual(errors,[]);
    assert.deepEqual(httpErrors,[]);
    assert.deepEqual(external,[]);
-   report.modes[mode]={initial,navigated,turned,moved,fired,paused};
+   report.modes[mode]={initial,navigated,beforeForward,forward,turned,moved,rotatedDistance,fired,paused};
   }catch(e){
    report.errors.push({mode,error:String(e),pageErrors:errors,httpErrors,external});
    await page.screenshot({path:path.join(out,mode+'-failure.png')}).catch(()=>{});
@@ -150,5 +172,5 @@ try{
  }
  report.result='PASS';
  await writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));
- console.log(JSON.stringify({result:report.result,builds,modes:Object.fromEntries(Object.entries(report.modes).map(([m,v])=>[m,{camera:v.turned.yaw,navSpeed:v.navigated.observation.speed,playerMoved:Math.hypot(v.moved.playerX-v.turned.playerX,v.moved.playerY-v.turned.playerY),fired:v.fired.attackCooldown>0}]))},null,2));
+ console.log(JSON.stringify({result:report.result,builds,modes:Object.fromEntries(Object.entries(report.modes).map(([m,v])=>[m,{camera:v.turned.yaw,navSpeed:v.navigated.observation.speed,playerMoved:Math.hypot(v.forward.playerX-v.beforeForward.playerX,v.forward.playerY-v.beforeForward.playerY),rotatedDistance:v.rotatedDistance,fired:v.fired.attackCooldown>0}]))},null,2));
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}

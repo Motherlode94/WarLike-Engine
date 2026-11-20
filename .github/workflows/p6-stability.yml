@@ -1,0 +1,35 @@
+name: P6 FPS TPS Stability Certification
+on:
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Independent FPS/TPS browser test runs (1-10)'
+        required: true
+        default: '5'
+        type: choice
+        options: ['3','5','10']
+permissions:
+  contents: read
+jobs:
+  p6-repeated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npx playwright install --with-deps chromium
+      - name: Repeat real FPS/TPS standalone browser certification
+        env:
+          WARLIKE_P6_REPEAT_COUNT: ${{ inputs.iterations }}
+          WARLIKE_P6_REPEAT_DIR: .validation-tools/p6-repeat
+        run: node scripts/test-p6-repeat-stability.mjs
+      - name: Preserve screenshots reports and logs even if one run fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-fps-tps-repeat-evidence
+          path: .validation-tools/p6-repeat/
+          if-no-files-found: warn

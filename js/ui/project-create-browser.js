@@ -44,7 +44,7 @@ export function downloadProjectDocument(asset){
  a.href=url;a.download=asset.name.replace(/[^a-z0-9_.-]+/gi,'-')+'.warlike.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 export function mountProjectCreateBrowser(){
- const host=document.querySelector('#projectContent'),toolbar=host?.querySelector('.browser-title');if(!toolbar||!host)return;
+ const host=document.querySelector('#projectContent'),toolbar=document.querySelector('#projectPanel > .bottom-tabs');if(!toolbar||!host)return;
  const menu=document.createElement('details');menu.className='warlike-project-create';menu.innerHTML='<summary>＋ Créer un asset</summary>';
  const options=document.createElement('div');options.className='warlike-project-create-options';
  for(const [type,definition] of Object.entries(types)){

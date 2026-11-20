@@ -58,7 +58,11 @@ try{
  assert.equal(details.owner.animatorControllerId,details.asset.id);
  report.checks.push('Create reusable Controller through actual Inspector');
  await page.getByRole('button',{name:'Sélectionner Rig Actor 2',exact:true}).click();
+ // Selection rebuilds the Inspector and collapses Animator again; expand the new section.
+ const secondAnimatorSection=panel.locator('details.inspector-component:has(.inspector-animator-controller-select)');
+ await secondAnimatorSection.locator(':scope > summary').click();
  const secondSelect=panel.locator('.inspector-animator-controller-select');
+ await secondSelect.waitFor({state:'visible'});
  await secondSelect.selectOption(details.asset.id);
  await panel.getByRole('button',{name:'Assigner',exact:true}).click();
  const saved=await page.evaluate(async()=>{

@@ -7,7 +7,7 @@ const required=[
  'index.html','js/game-build-player.js','js/editor.js','js/core/chambre-07-scene.js',
  'js/core/scene.js','js/core/logic-sequences.js','js/core/viewport-3d.js',
  'js/ui/focus-menu.js','js/ui/unity-layout-refinement.js',
- 'css/focus-menu.css','css/unity-layout-refinement.css',
+ 'css/focus-menu.css','css/component-picker.css',
  'js/ui/demo-browser.js'
 ];
 const missing=required.filter(file=>!manifest.files?.includes(file));

@@ -76,3 +76,34 @@ test('existing retargeted animation is never overwritten without explicit approv
   assert.deepEqual(o,before);
  }finally{importedModels3d.delete(id)}
 });
+
+test('two distinct real Quaternius GLB humanoid rigs retarget a source walk onto target skeleton',async()=>{
+ const sourceId='local-real-ual1-cross',targetId='local-real-ual2-cross';
+ const read=async file=>{
+  const bytes=await readFile(new URL('../'+file,import.meta.url));
+  return bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
+ };
+ const [sourceBuffer,targetBuffer]=await Promise.all([
+  read('assets/free/quaternius/universal-animation-library/ual1-standard.glb'),
+  read('assets/free/quaternius/universalanimationlibrary2/ual2-standard.glb')
+ ]);
+ importedModels3d.set(sourceId,{id:sourceId,name:'UAL 1',shape:'glb',file:new File([sourceBuffer],'ual1-standard.glb')});
+ importedModels3d.set(targetId,{id:targetId,name:'UAL 2',shape:'glb',file:new File([targetBuffer],'ual2-standard.glb')});
+ try{
+  const target=parseGlb(targetBuffer);
+  const owner={id:7,name:'Mon vrai personnage UAL 2',type:'mesh3d',model3dId:targetId,
+   x:0,y:0,w:100,h:170,depth3d:100,playable3d:true};
+  const result=await retargetImportedHumanoidClip(owner,{
+   sourceModelId:sourceId,sourceClipName:'Walk_Formal_Loop',name:'Marche vraie UAL1 vers UAL2',fps:20
+  });
+  assert(result.channels>=15);
+  const compiled=compileSkeletalClip(target.rig,owner.animationRig.clips[0]);
+  const zero=deformGlbParts(target,sampleRigPose(target.rig,compiled,0));
+  const moving=deformGlbParts(target,sampleRigPose(target.rig,compiled,.3));
+  assert(zero.some((part,i)=>part.some((n,j)=>Math.abs(n-moving[i][j])>.005)),
+   'The TARGET UAL2 skinned vertices must move under UAL1 source animation');
+  assert.deepEqual(runtimeEntities(canonicalScene([owner]))[0].animationRig,owner.animationRig);
+  const exported=prepareGameDefinition({entities:[owner],mode:'3d'});
+  assert.deepEqual(exported.project.scenes[0].entities[0].animationRig,owner.animationRig);
+ }finally{importedModels3d.delete(sourceId);importedModels3d.delete(targetId)}
+});

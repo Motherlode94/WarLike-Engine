@@ -139,8 +139,19 @@ try{
     },{x:beforeForward.playerX,y:beforeForward.playerY},{timeout:5000});
    } finally {await page.keyboard.up('w')}
    const forward=await snap();
+   const inputDiagnostic=await page.evaluate(async()=>{
+    const [{state},{gameplayInputBlocked,gameplayKeys},{activeRapierScene3d}]=await Promise.all([
+      import('./js/core/state.js'),import('./js/core/gameplay-input.js'),import('./js/core/rapier-physics-3d.js')
+    ]);
+    const actor=state.entities.find(e=>e.playable3d);
+    const scene=activeRapierScene3d(),body=scene?.actors.get(actor.id);
+    return {inputBlocked:gameplayInputBlocked(),keys:[...state.keys],playing:state.playing,
+      controller:actor.controller3d,grounded:actor.grounded3d,
+      elevation:actor.elevation3d,verticalVelocity:actor._verticalVelocity,
+      physicsController:!!body?.controller,collider:body?.geometry,position:body?.body.translation()};
+   });
    assert(Math.hypot(forward.playerX-beforeForward.playerX,forward.playerY-beforeForward.playerY)>1,
-     'Forward input must move actor in an open section: '+JSON.stringify({beforeForward,forward}));
+     'Forward input must move actor in an open section: '+JSON.stringify({beforeForward,forward,inputDiagnostic}));
    const canvas=page.locator('#canvas3d'),rect=await canvas.boundingBox();
    assert(rect&&rect.width>100);
    const cx=rect.x+rect.width/2,cy=rect.y+rect.height/2;

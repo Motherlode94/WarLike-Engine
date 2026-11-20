@@ -16442,6 +16442,7 @@
     "js/core/horror-survival.js",
     "js/core/housing.js",
     "js/core/humanoid-avatar.js",
+    "js/core/humanoid-glb-transfer.js",
     "js/core/ibl-prefilter-3d.js",
     "js/core/input-actions.js",
     "js/core/input.js",

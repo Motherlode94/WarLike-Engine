@@ -1,0 +1,28 @@
+name: Project Animator Assets Drag and Drop
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  project-animator-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npx playwright install --with-deps chromium
+      - name: Native assets, isolation and drag contract
+        run: node --test tests/project-animator-assets.test.mjs tests/animator-controller-assets.test.mjs tests/animator-controller-explicit-sync.test.mjs tests/editor-create-catalog.test.mjs
+      - name: Playwright editor create, drag, reopen and export
+        run: node scripts/test-project-animator-assets-browser.mjs
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-animator-assets-evidence
+          path: .validation-tools/project-animator-assets/
+          if-no-files-found: warn

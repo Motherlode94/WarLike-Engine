@@ -3,6 +3,9 @@
 import {gameProject} from '../core/game-project.js';
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
+import {workspace} from '../core/workspaces.js';
+import {toWorld} from '../core/camera.js';
+import {view3d} from '../core/viewport-3d.js';
 import {
  animatorControllerAssets,createAnimatorControllerAsset,assignAnimatorControllerAsset,
  removeAnimatorControllerAsset,validateAnimatorControllerAsset
@@ -44,6 +47,53 @@ export function installAnimatorControllerDrop(target,resolveObject){
  });
 }
 
+// Resolve the target at the drop point. Never fall back to the selected object.
+export function pickAnimatorSceneTarget2d(entities,point){
+ return [...entities].reverse().find(o=>o.editorHidden!==true&&o.visible!==false&&
+  point.x>=o.x&&point.x<=o.x+o.w&&point.y>=o.y&&point.y<=o.y+o.h)||null;
+}
+export function pickAnimatorSceneTarget3d(clientX,clientY){
+ // The editor's existing pickAt uses actual GLB triangles where available,
+ // including animated vertices; boxes are fallback for unloaded geometry.
+ return typeof view3d.pickAt==='function'?view3d.pickAt(clientX,clientY):null;
+}
+export function resolveAnimatorSceneTarget(event,canvas,mode=workspace.mode){
+ if(!canvas||state.playing)return null;
+ const rect=canvas.getBoundingClientRect();
+ if(!rect.width||!rect.height||event.clientX<rect.left||event.clientX>rect.right||
+    event.clientY<rect.top||event.clientY>rect.bottom)return null;
+ if(mode==='3d')return pickAnimatorSceneTarget3d(event.clientX,event.clientY);
+ const point=toWorld({
+  x:(event.clientX-rect.left)*canvas.clientWidth/rect.width,
+  y:(event.clientY-rect.top)*canvas.clientHeight/rect.height
+ });
+ return pickAnimatorSceneTarget2d(state.entities,point);
+}
+export function installAnimatorControllerSceneDrop(){
+ for(const [mode,selector] of [['2d','#canvas'],['3d','#canvas3d']]){
+  const canvas=document.querySelector(selector);
+  if(!canvas)continue;
+  canvas.addEventListener('dragover',event=>{
+   if(state.playing||workspace.mode!==mode||!Array.from(event.dataTransfer?.types||[]).includes(animatorControllerDragType))return;
+   if(!resolveAnimatorSceneTarget(event,canvas,mode))return;
+   event.preventDefault();event.dataTransfer.dropEffect='copy';
+  });
+  canvas.addEventListener('drop',event=>{
+   const id=controllerDropId(event);
+   if(state.playing||workspace.mode!==mode||id===null)return;
+   event.preventDefault();event.stopPropagation();
+   const object=resolveAnimatorSceneTarget(event,canvas,mode);
+   if(!object)return; // Empty scene space must not affect any GameObject.
+   try{
+    const changed=applyAnimatorControllerToObject(gameProject,object,id,{
+     confirmReplace:()=>window.confirm('Assigner le Controller à « '+object.name+' » dans Scene View ? Le graphe existant sera remplacé. Avatar, clips et modèle conservés.')
+    });
+    if(changed){state.selected=[object.id];record('Assigner Animator Controller dans Scene View');notify()}
+   }catch(error){window.alert('Animator Controller : '+error.message)}
+  });
+ }
+}
+
 export function createNativeAnimatorControllerFromSelection(){
  if(state.playing)throw Error('Arrête Play avant de créer un Controller.');
  const object=state.entities.find(o=>o.id===state.selected.at(-1));
@@ -62,13 +112,13 @@ export function mountAnimatorControllerProjectAssets(host){
  section.append(heading,summary,list);host.append(section);
  const redraw=()=>{
   const assets=animatorControllerAssets(gameProject);section.hidden=!assets.length;
-  summary.textContent=assets.length+' Controller(s) du projet · glisser sur un GameObject dans Hierarchy ou Inspector';
+  summary.textContent=assets.length+' Controller(s) du projet · glisser sur un GameObject dans Scene, Hierarchy ou Inspector';
   list.replaceChildren();
   for(const asset of assets){
    const row=document.createElement('div');row.className='warlike-project-animator-item';
    row.dataset.animatorControllerId=asset.id;
    const handle=document.createElement('button');handle.type='button';handle.className='warlike-project-animator-drag';
-   handle.textContent='▷ '+asset.name+' · v'+asset.revision;handle.title='Glisser vers Hierarchy ou Inspector pour affecter le Controller';
+   handle.textContent='▷ '+asset.name+' · v'+asset.revision;handle.title='Glisser vers Scene, Hierarchy ou Inspector pour affecter le Controller';
    handle.draggable=!state.playing;handle.disabled=state.playing;
    handle.addEventListener('dragstart',event=>{
     if(state.playing){event.preventDefault();return}

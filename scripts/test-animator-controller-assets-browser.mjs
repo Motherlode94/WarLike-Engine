@@ -34,7 +34,7 @@ try{
    w:60,h:120,depth3d:60,visible:true,rotation:0,shape:'box',
    playable3d:index===1,controller3d:defaultController(),stats:defaultStats(),cameraRig:{mode:'thirdPerson',collision:true},
    animatorGraph:defaultAnimatorGraph(),
-   animationRig:{enabled:true,clips:[],activeClip:'',playOnStart:false,avatar:{id:'user-authored-avatar-'+index}}
+   animationRig:{enabled:true,clips:[],activeClip:'',playOnStart:false,avatar:{schema:'warlike.avatar.v1',enabled:false,bones:{},id:'user-authored-avatar-'+index}}
   });
   state.entities.push(actor(1),actor(2));state.nextId=6;state.selected=[4];notify();
   return id;

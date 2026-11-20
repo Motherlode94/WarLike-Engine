@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {defaultAnimatorGraph} from '../js/core/animator-graph.js';
 import {freshGameProject,restoreGameProject} from '../js/core/game-project.js';
 import {createAnimatorControllerAsset,saveAnimatorControllerAsset} from '../js/core/animator-controller-assets.js';
-import {animatorControllerDragType,applyAnimatorControllerToObject,controllerDropId} from '../js/ui/project-animator-assets.js';
+import {animatorControllerDragType,applyAnimatorControllerToObject,controllerDropId,pickAnimatorSceneTarget2d} from '../js/ui/project-animator-assets.js';
 import {createProjectDocument} from '../js/ui/project-create-browser.js';
 
 const actor=id=>({id,name:'Actor '+id,animatorGraph:defaultAnimatorGraph(),animationRig:{
@@ -55,4 +55,18 @@ test('project browser, Hierarchy and Inspector contain native drag/drop wiring',
  assert.match(read('js/ui/hierarchy-view.js'),/installAnimatorControllerDrop\(row/);
  assert.match(read('js/ui/project-animator-assets.js'),/installAnimatorControllerDrop\(inspector/);
  assert.match(read('index.html'),/project-animator-assets\.css/);
+});
+
+test('Scene View 2D targets only the visible GameObject under the drop point',()=>{
+ const first={id:1,name:'First',x:0,y:0,w:50,h:60},second={id:2,name:'Second',x:20,y:10,w:60,h:70};
+ assert.equal(pickAnimatorSceneTarget2d([first,second],{x:30,y:30})?.id,2,'topmost object wins');
+ assert.equal(pickAnimatorSceneTarget2d([first,{...second,editorHidden:true}],{x:30,y:30})?.id,1);
+ assert.equal(pickAnimatorSceneTarget2d([first,second],{x:900,y:900}),null,'empty drop never uses selection');
+});
+test('Scene View uses native 3D picking and never assigns to selected by default',()=>{
+ const source=readFileSync(new URL('../js/ui/project-animator-assets.js',import.meta.url),'utf8');
+ assert.match(source,/view3d\.pickAt\(clientX,clientY\)/);
+ assert.match(source,/if\(!object\)return; \/\/ Empty scene space/);
+ assert.match(source,/workspace\.mode!==mode/);
+ assert.match(readFileSync(new URL('../js\/editor.js',import.meta.url),'utf8'),/installAnimatorControllerSceneDrop\(\)/);
 });

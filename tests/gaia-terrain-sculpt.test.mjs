@@ -36,3 +36,18 @@ test('terrain mesh emits finite vertex geometry and paint colors for shared PBR 
  assert(mesh.vertices.every(Number.isFinite));
  assert(mesh.colors.every(Number.isFinite));
 });
+
+import {loadRapier3d,createRapierScene,disposeRapierScene} from '../js/core/rapier-physics-3d.js';
+test('sculpted Gaia terrain builds a real Rapier triangle mesh collider',async()=>{
+ const rapier=await loadRapier3d();assert(rapier,'Native Rapier must load');
+ const o=sample();initializeEditableTerrain(o,{resolution:9,maxHeight:8});
+ applyTerrainBrush(o,{mode:'raise',x:0,z:0,radius:6,strength:3});
+ const scene=createRapierScene(rapier,[o]);
+ try{
+  const actor=scene.actors.get(o.id);
+  assert(actor?.collider,'Terrain must have a native collider');
+  const ray=new rapier.Ray({x:0,y:12,z:0},{x:0,y:-1,z:0});
+  const hit=actor.collider.castRay(ray,30,true);
+  assert(hit!==null&&hit>=0&&hit<12,'Ray from above must intersect sculpted hill');
+ }finally{disposeRapierScene(scene)}
+});

@@ -106,6 +106,8 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   terrainTools.hidden=!view3d.enabled||state.playing||!selectedTerrain();
   terrainTools.style.display=terrainTools.hidden?'none':'flex';
   const showingCamera=!!selectedObject&&selectedObject.sceneCamera3d.showFrustum!==false;
+  // Hide the preview before the early return when Play starts or selection changes.
+  preview.hidden=!selectedObject||selectedObject.sceneCamera3d.showPreview===false||state.playing||!view3d.enabled;
   const active=view3d.enabled&&!state.playing&&!!selected&&(tool()!=='hand'||showingCamera);
   layer.style.display=active?'block':'none';if(!active)return;
   const rect=canvas.getBoundingClientRect();if(rect.width<1||rect.height<1)return;

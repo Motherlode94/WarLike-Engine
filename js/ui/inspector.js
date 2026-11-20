@@ -31,6 +31,7 @@ import {threatFactions,threatRelations,threatProfile} from '../core/threat-intel
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {getModelGeometry} from '../assets/real-models-3d.js';
 import {inspectGameObjectAuthoring,configureRealHumanoidOnObject} from '../core/authoring-readiness.js';
+import {listRealGlbAnimationClips,retargetImportedHumanoidClip} from '../core/humanoid-glb-transfer.js';
 import {defaultRigidbody3d,applyImpulse3d} from '../core/physics-3d.js';
 import {recipes,applyRecipe} from '../core/gameplay-recipes.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController,inventoryAdd,inventoryRemove,equipItem} from '../core/gameplay-components.js';
@@ -118,7 +119,20 @@ function openCSharpEditor(){
  document.dispatchEvent(new CustomEvent('warlike:script-open',{detail:{language:'csharp',entityId:inspectedObjects().at(-1)?.id}}));
 }
 
-function finishInspector(root,o,templates){renderWebScriptInspector(root,o,{component});renderWarScriptInspector(root,o,{component});if(o.csharpScript)component(root,'Script C#',body=>{const reference=document.createElement('p');reference.textContent=o.csharpScript.name||'Script C#';const open=document.createElement('button');open.type='button';open.textContent='Ouvrir dans Script Studio';open.onclick=openCSharpEditor;const native=document.createElement('button');native.type='button';native.textContent='Utiliser Play C# natif';native.disabled=state.playing;native.onclick=()=>{gameProject.runtimeBackend='native';record('Play C# natif');notify()};const portable=document.createElement('button');portable.type='button';portable.textContent='Convertir et utiliser WarScript Web';portable.disabled=state.playing||o.csharpScript.enabled===false;const help=document.createElement('p');help.textContent='Conversion du sous-ensemble compatible, sans compilation .NET. Garde le C# original, le désactive sur cet objet et active sa copie WarScript pour Play et export Web. Les API incompatibles bloquent la conversion.';portable.onclick=()=>{if(state.playing)return;try{const result=createCSharpWebCopy(o,gameProject,state.entities);Object.assign(o,result.entity);Object.assign(gameProject,result.project);record('Créer la copie WarScript Web du C#');notify()}catch(error){globalThis.alert?.('Conversion impossible : '+error.message)}};body.append(reference,open,native,help,portable)});renderBlueprintInstance(root,o,component);if(o.animatorGraph)component(root,'Animator · Graphe d’états',body=>{const info=document.createElement('p');info.textContent=o.animatorGraph.states.length+' états · transitions, mélange de locomotion et événements.';const b=document.createElement('button');b.type='button';b.textContent='Ouvrir Animator';b.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:o.id}}));body.append(info,b)});renderLifeInspector(root,o,{component,field,selectField});renderAdventureInspector(root,o,{component,field});renderSurvivalInspector(root,o,{component,field,selectField});renderHeroForgeInspector(root,o,{component,field,selectField,colorPalette});renderUiComponentsInspector(root,o);renderEditorCameraInspector(root,o);renderGenericComponents(root,o);finishComponentInspector(root,o,templates,nativeComponentCatalog,renderNativeComponents,openCSharpEditor);decorateInspectorComponents(root,o);enhanceInspectorDetails(root,o)}
+function finishInspector(root,o,templates){renderWebScriptInspector(root,o,{component});renderWarScriptInspector(root,o,{component});if(o.csharpScript)component(root,'Script C#',body=>{const reference=document.createElement('p');reference.textContent=o.csharpScript.name||'Script C#';const open=document.createElement('button');open.type='button';open.textContent='Ouvrir dans Script Studio';open.onclick=openCSharpEditor;const native=document.createElement('button');native.type='button';native.textContent='Utiliser Play C# natif';native.disabled=state.playing;native.onclick=()=>{gameProject.runtimeBackend='native';record('Play C# natif');notify()};const portable=document.createElement('button');portable.type='button';portable.textContent='Convertir et utiliser WarScript Web';portable.disabled=state.playing||o.csharpScript.enabled===false;const help=document.createElement('p');help.textContent='Conversion du sous-ensemble compatible, sans compilation .NET. Garde le C# original, le désactive sur cet objet et active sa copie WarScript pour Play et export Web. Les API incompatibles bloquent la conversion.';portable.onclick=()=>{if(state.playing)return;try{const result=createCSharpWebCopy(o,gameProject,state.entities);Object.assign(o,result.entity);Object.assign(gameProject,result.project);record('Créer la copie WarScript Web du C#');notify()}catch(error){globalThis.alert?.('Conversion impossible : '+error.message)}};body.append(reference,open,native,help,portable)});renderBlueprintInstance(root,o,component);if(o.animatorGraph)component(root,'Animator',body=>{
+ const row=(name,value)=>{const item=document.createElement('div');item.className='inspector-animator-field';
+  const label=document.createElement('span');label.textContent=name;
+  const current=document.createElement('span');current.textContent=value;current.title=value;item.append(label,current);body.append(item)};
+ row('Controller',o.animatorGraph.controllerName||o.name+' · Controller');
+ row('Avatar',o.animationRig?.avatar?'Humanoid':'Aucun · choisir un rig');
+ const rootMotion=document.createElement('label');rootMotion.className='inspector-animator-root-motion';
+ const toggle=document.createElement('input');toggle.type='checkbox';toggle.checked=!!o.animationRig?.rootMotion?.enabled;toggle.disabled=state.playing;
+ toggle.onchange=()=>{o.animationRig??={enabled:true,clips:[],activeClip:'',playOnStart:false,rootMotion:{enabled:false}};
+   o.animationRig.rootMotion??={enabled:false};o.animationRig.rootMotion.enabled=toggle.checked;record('Animator : Root Motion');notify()};
+ rootMotion.append(toggle,document.createTextNode('Appliquer Root Motion'));body.append(rootMotion);
+ const b=document.createElement('button');b.type='button';b.className='inspector-animator-open';b.textContent='Ouvrir Animator';
+ b.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:o.id}}));body.append(b);
+});renderLifeInspector(root,o,{component,field,selectField});renderAdventureInspector(root,o,{component,field});renderSurvivalInspector(root,o,{component,field,selectField});renderHeroForgeInspector(root,o,{component,field,selectField,colorPalette});renderUiComponentsInspector(root,o);renderEditorCameraInspector(root,o);renderGenericComponents(root,o);finishComponentInspector(root,o,templates,nativeComponentCatalog,renderNativeComponents,openCSharpEditor);decorateInspectorComponents(root,o);enhanceInspectorDetails(root,o)}
 function renderObjectBehaviors(root,owner){
  const entries=[...(owner.sequence?[{index:-1,sequence:owner.sequence}]:[]),...(owner.sequences||[]).map((sequence,index)=>({index,sequence}))];
  for(const entry of entries){
@@ -235,7 +249,17 @@ function renderTypedComponent(root,componentInstance,owner){
  root.append(section);
 }
 function mountAuthoringAudit(root,object){
- const section=document.createElement('section');section.className='inspector-authoring-audit';
+ if(!object.model3dId)return;
+ const entry=document.createElement('div');entry.className='inspector-authoring-audit';
+ const open=document.createElement('button');open.type='button';open.className='inspector-model-import-button';
+ open.textContent='Modèle · Rig / Import…';open.title='Ouvrir les réglages GLB, Avatar et retargeting dans une fenêtre séparée';
+ entry.append(open);root.append(entry);
+ const section=document.createElement('section');section.className='creative-window warlike-model-import-window';section.id='modelRigImportWindow';section.hidden=true;
+ const header=document.createElement('header');const title=document.createElement('strong');title.textContent='Import du modèle · Rig · Animations';
+ const close=document.createElement('button');close.type='button';close.textContent='×';close.setAttribute('aria-label','Fermer import du modèle');
+ close.onclick=()=>{section.hidden=true;section.remove()};header.append(title,close);
+ const scroll=document.createElement('div');scroll.className='creative-body';section.append(header,scroll);
+ open.onclick=()=>{document.querySelector('#modelRigImportWindow')?.remove();document.body.append(section);section.hidden=false};
  const heading=document.createElement('h3');heading.textContent='Contrôle modèle · Animator · Gameplay';
  const button=document.createElement('button');button.type='button';
  button.textContent='Analyser le GameObject';button.setAttribute('aria-label','Analyser le modèle GLB, Animator et composants du GameObject');
@@ -273,7 +297,47 @@ function mountAuthoringAudit(root,object){
   }catch(error){results.textContent='Avatar non assigné : '+error.message}
   finally{avatarButton.disabled=state.playing||!object.model3dId}
  };
- section.append(heading,button,avatarButton,results);root.append(section);
+ const transferGroup=document.createElement('div');transferGroup.className='warlike-glb-retarget-controls';
+ const sourceInput=document.createElement('input');sourceInput.type='text';sourceInput.placeholder='ID du modèle GLB source';
+ sourceInput.setAttribute('aria-label','Identifiant GLB source');sourceInput.maxLength=160;sourceInput.value=object.model3dId||'';
+ const clipsSelect=document.createElement('select');clipsSelect.setAttribute('aria-label','Animation GLB source');clipsSelect.disabled=true;
+ const loadClips=document.createElement('button');loadClips.type='button';loadClips.textContent='Lire animations GLB';
+ const clipName=document.createElement('input');clipName.type='text';clipName.placeholder='Nom du clip transféré';clipName.maxLength=160;
+ clipName.setAttribute('aria-label','Nom animation transférée');
+ const fpsInput=document.createElement('input');fpsInput.type='number';fpsInput.min='1';fpsInput.max='60';fpsInput.value='30';
+ fpsInput.setAttribute('aria-label','Cadence du retargeting');
+ const transfer=document.createElement('button');transfer.type='button';transfer.textContent='Transférer animation humanoïde';
+ transfer.disabled=true;
+ loadClips.onclick=async()=>{
+  clipsSelect.replaceChildren();clipsSelect.disabled=true;transfer.disabled=true;loadClips.disabled=true;
+  try{
+   const clips=await listRealGlbAnimationClips(sourceInput.value.trim());
+   for(const clip of clips){const option=document.createElement('option');option.value=clip.name;option.textContent=clip.name+' · '+clip.duration.toFixed(2)+'s';clipsSelect.append(option)}
+   clipsSelect.disabled=clips.length===0;transfer.disabled=!object.model3dId||!clips.length||state.playing;
+   results.textContent=clips.length+' vrais clips trouvés dans le GLB source.';
+  }catch(error){results.textContent='Import source : '+error.message}
+  finally{loadClips.disabled=false}
+ };
+ transfer.onclick=async()=>{
+  if(state.playing||!object.model3dId||!clipsSelect.value)return;
+  const name=clipName.value.trim()||clipsSelect.value+' · retarget';
+  const exists=object.animationRig?.clips?.some(c=>c.name===name);
+  if(exists&&!window.confirm('Remplacer le clip '+name+' existant ?'))return;
+  transfer.disabled=true;
+  try{
+   const result=await retargetImportedHumanoidClip(object,{
+    sourceModelId:sourceInput.value.trim(),sourceClipName:clipsSelect.value,
+    name,fps:Number(fpsInput.value),replace:exists
+   });
+   record('Animator : transfert humanoïde '+result.name);
+   results.textContent='Clip réel enregistré : '+result.name+' ('+result.channels+' pistes). Configure son état dans Animator avant Play.';
+   notify();
+  }catch(error){results.textContent='Transfert refusé : '+error.message}
+  finally{transfer.disabled=state.playing||clipsSelect.disabled||!object.model3dId}
+ };
+ const transferTitle=document.createElement('strong');transferTitle.textContent='Retargeting entre modèles GLB';
+ transferGroup.append(transferTitle,sourceInput,loadClips,clipsSelect,clipName,fpsInput,transfer);
+ scroll.append(heading,button,avatarButton,transferGroup,results);
 }
 export function renderInspector(){initAssetInspection();const root=document.querySelector('#properties');const objects=inspectedObjects(),o=objects.at(-1),asset=inspectedAsset();const signature=inspectorContext()+':'+(asset?'asset:'+asset.id:objects.map(object=>object.id).join(','));const scroll=root.dataset.inspection===signature?root.scrollTop:0;root.dataset.inspection=signature;root.replaceChildren();inspectorWindowHeader(root,asset?[asset]:objects,asset?assetInspectorLock():{});requestAnimationFrame(()=>{root.scrollTop=scroll});if(asset){if(inspectorDebug())renderInspectorDebug(root,[asset]);else renderAssetInspector(root,asset);return}if(!o){const empty=document.createElement('p');empty.className='inspector-empty';empty.textContent='Sélectionne un GameObject dans Hierarchy ou une ressource dans Project pour afficher ses propriétés.';root.append(empty);return}if(inspectorDebug()){renderInspectorDebug(root,objects);return}if(objects.length>1){renderMultipleInspector(root,objects);return}
 

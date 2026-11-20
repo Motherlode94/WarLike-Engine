@@ -1,0 +1,20 @@
+/* WarLike Engine: functional Add Component browser only.
+   No forced Unity palette, no editor-wide layout overrides. */
+.unity-component-popup{display:flex;flex-direction:column;gap:5px;z-index:99999;max-height:min(620px,75vh);overflow:hidden;padding:7px;border:1px solid var(--wl-theme-border,var(--wl-border,#505d68));border-radius:5px;background:var(--wl-theme-panel,var(--wl-surface,#29343f));color:var(--wl-text-panel,var(--wl-fg,#eaf1f8));box-shadow:0 12px 30px #0008}
+.unity-component-popup[hidden]{display:none!important}
+.unity-component-popup-title{padding:7px;text-align:center;font-size:14px;background:var(--wl-theme-header,var(--wl-sidebar,#34404b));color:var(--wl-text-header,var(--wl-fg,#eaf1f8))}
+.unity-component-search{display:block;width:100%;min-height:30px;padding:4px 10px;background:var(--wl-input,#202b33);color:var(--wl-text-panel,#fff);border:1px solid var(--wl-theme-border,#526370);border-radius:4px}
+.component-browser-breadcrumb{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--wl-theme-border,#526370);min-height:27px;font-size:12px}
+.component-browser-back{padding:3px 7px;border:0;background:transparent;color:inherit}
+.component-browser-back:disabled{opacity:.6}
+.component-browser-current{font-size:12px;color:inherit}
+.component-browser-results{overflow-y:auto;min-height:120px;max-height:450px}
+.component-browser-folder,.component-browser-option{display:flex;width:100%;gap:5px;border:0;border-radius:3px;padding:8px 10px;text-align:left;background:transparent;color:inherit}
+.component-browser-folder{justify-content:space-between}
+.component-browser-option{flex-direction:column}
+.component-browser-folder:hover,.component-browser-folder:focus-visible,.component-browser-option:hover:not(:disabled),.component-browser-option:focus-visible{background:var(--wl-selected,#3c5a69);outline:2px solid var(--wl-focus,var(--wl-accent,#48cba9));outline-offset:-2px}
+.component-browser-chevron{font-size:17px}
+.component-browser-option strong{font-weight:600}
+.component-browser-option small,.component-browser-hint{font-size:11px;line-height:1.4;color:var(--wl-text-muted,#bac6d2)}
+.component-browser-category{font-size:12px;font-weight:600;text-align:center;padding:5px;border-bottom:1px solid var(--wl-theme-border,#526370);margin:0}
+.component-browser-hint{padding:4px 5px}

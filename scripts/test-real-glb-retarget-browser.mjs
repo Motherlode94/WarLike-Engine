@@ -52,6 +52,9 @@ try{
  });
  await page.locator('#hubClose').click();
  await page.locator('#hubOverlay').waitFor({state:'hidden'});
+ await page.getByRole('button',{name:'Sélectionner Terrain',exact:true}).click();
+ assert.equal(await page.locator('#properties .inspector-authoring-audit').count(),0,
+  'Terrain Inspector must not show GLB Avatar, retargeting or gameplay diagnostics');
  await page.getByRole('button',{name:'Sélectionner Personnage GLB créé par auteur',exact:true}).click();
  await page.screenshot({path:path.join(out,'editor-real-glb.png')});
  report.checks.push('Real source and target GLB imported; Inspector-compatible rig assigned');

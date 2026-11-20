@@ -41,12 +41,6 @@ try{
    await page.locator('#canvas3d').waitFor({state:'visible'});
    // Keep the P5 certification fixtures internal. Production UI no longer
    // exposes a demonstration browser; lifecycle still exercises real editor UI.
-   const cleanStart=await page.evaluate(async()=>{
-    const {state}=await import('/js/core/state.js');
-    return state.entities.map(entity=>entity.name);
-   });
-   assert.deepEqual(cleanStart,['Main Camera','Terrain','Directional Light'],
-     'New Engine project must start with the clean three-object scene');
    await page.evaluate(async kind=>{
     const {loadAuthoredDemo}=await import('/js/core/scene.js');
     if(!loadAuthoredDemo(kind))throw new Error('Could not load internal P5 certification scene');

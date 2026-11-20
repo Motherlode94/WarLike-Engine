@@ -5,7 +5,7 @@ import {moveBody3d,solidBody3d,supportBody3d} from './collision-3d.js';
 import {damageSimulationNode} from './simulation-nodes.js';
 import {skillRank,progressionDamageScale,awardExperience} from './rpg-progression.js';
 import {stepHeroFlight} from './hero-movement.js';
-import {cameraFacingDegrees} from './character-facing.js';
+import {playerFacing3d} from './player-look-rotation.js';
 import {findEnginePath as findPath} from './native-3d.js';
 import {healthOf,actorDistance,isHostileTo,isAiObstacle,hasLineOfSight,perceiveTarget} from './ai-perception.js';
 import {collisionBackend3d} from './collision-backend-3d.js';
@@ -15,7 +15,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const defaultStats=()=>({maxHealth:100,health:100,maxStamina:100,stamina:100,staminaRegen:14});
 export const defaultInventory=()=>({capacity:16,items:[],equipment:{weapon:null,armor:null}});
 export const defaultAi=()=>({enabled:true,state:'idle',detection:450,attackRange:65,attackDamage:8,attackCooldown:1.2,speed:75,homeX:null,homeY:null,patrolRadius:130,pathfinding:true,requireLineOfSight:false,fieldOfView:360,memoryDuration:4,searchDuration:2,pathCellSize:48,repathInterval:.75});
-export const defaultController=()=>({walkSpeed:4.2,sprintSpeed:7,jumpForce:5.6,gravity:15,dodgeDistance:1.8,dodgeCooldown:.8,staminaCost:20,stepHeight:.28,coyoteTime:.1,jumpBuffer:.12,slopeLimit:45,slideAngle:50,snapToGround:.2,stepMinWidth:.12,skinWidth:.01,mass:70,pushBodies:true});
+export const defaultController=()=>({walkSpeed:4.2,sprintSpeed:7,jumpForce:5.6,gravity:15,dodgeDistance:1.8,dodgeCooldown:.8,staminaCost:20,stepHeight:.28,coyoteTime:.1,jumpBuffer:.12,slopeLimit:45,slideAngle:50,facingMode:'camera',turnSpeed:0,snapToGround:.2,stepMinWidth:.12,skinWidth:.01,mass:70,pushBodies:true});
 export function ensureStats(o){o.stats??={...defaultStats(),maxHealth:Math.max(100,healthOf(o)),health:Math.max(0,healthOf(o))};return o.stats}
 export function ensureAi(o){o.ai={...defaultAi(),...o.ai};return o.ai}
 export function setHealth(o,value){const s=ensureStats(o);s.health=clamp(n(value),0,Math.max(1,n(s.maxHealth,100)));o.hp=s.health;return s.health}
@@ -157,7 +157,7 @@ export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()
  if(dodgeDown&&!p._dodgeHeld&&p._dodgeTimer<=0&&len&&stats.stamina>=n(cfg.staminaCost,20)){p._dodgeTimer=Math.max(.1,n(cfg.dodgeCooldown,.8));p._dodgeBoost=Math.max(0,n(cfg.dodgeDistance,1.8))*64/.18;stats.stamina=Math.max(0,stats.stamina-n(cfg.staminaCost,20))}
  p._dodgeHeld=dodgeDown;
  const dodge=p._dodgeBoost&&p._dodgeTimer>Math.max(0,n(cfg.dodgeCooldown,.8))-.18?p._dodgeBoost:0,movement=cameraRelativeWalk3d(ax,az,yaw),speed=Math.max(0,n(sprint?cfg.sprintSpeed:cfg.walkSpeed,4.2))*64*(p.survival?.enabled!==false&&p.survival&&p.survivalState?.rest<15?.6:1)+dodge;
- if(Number.isFinite(yaw))p.rotation=cameraFacingDegrees(yaw);if(len&&sprint)stats.stamina=clamp(stats.stamina-18*frame,0,n(stats.maxStamina,100));
+ if(Number.isFinite(yaw))p.rotation=playerFacing3d({yaw,current:n(p.rotation),right:movement.x,forward:movement.z,mode:cfg.facingMode||'camera',turnSpeed:n(cfg.turnSpeed),dt:frame});if(len&&sprint)stats.stamina=clamp(stats.stamina-18*frame,0,n(stats.maxStamina,100));
  const grounded=(moveCharacter?p.grounded3d===true||!!supportBody3d(p,entities):!!supportBody3d(p,entities))&&p._verticalVelocity<=0;
  p._coyote3d=grounded?clamp(n(cfg.coyoteTime,.1),0,.3):Math.max(0,n(p._coyote3d)-frame);
  p._jumpBuffer3d=Math.max(0,n(p._jumpBuffer3d)-frame);

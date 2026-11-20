@@ -3,6 +3,7 @@ import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 import {workspace} from '../core/workspaces.js';
 import {portableComponentKinds,webComponentKinds} from '../core/runtime-capabilities.js';
+import {componentMenuPath,componentMenuChildren} from './component-menu-tree.js';
 const make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;return el};
 // The Add Component picker lists every component supported by the current
 // project mode. Existing entities and unknown legacy component data are untouched.
@@ -111,7 +112,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
  const search=make('input','unity-component-search');search.type='search';search.placeholder='Rechercher : physique, IA, animation, script…';search.setAttribute('aria-label','Rechercher un composant');
  const list=make('div','component-browser-results'),hint=make('small','component-browser-hint');
  const trail=make('nav','component-browser-breadcrumb');trail.setAttribute('aria-label','Navigation catégories');
- let activeCategory=null;
+ let activeCategory=null,activeSubcategory=null;
  const title=make('div','unity-component-popup-title','Add Component');
  popup.append(title,search,trail,list,hint);
  // A body-level popup avoids being clipped by the narrow, scrolling Inspector.
@@ -141,7 +142,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
  };
  const outside=e=>{if(!popup.contains(e.target)&&!heading.contains(e.target))close()};
  const keyboard=e=>{
-  if(e.key==='Escape'){e.preventDefault();if(activeCategory&&!search.value.trim()){activeCategory=null;render()}else close()}
+  if(e.key==='Escape'){e.preventDefault();if(activeSubcategory&&!search.value.trim()){activeSubcategory=null;render()}else if(activeCategory&&!search.value.trim()){activeCategory=null;render()}else close()}
   if(e.key==='ArrowDown'&&document.activeElement===search){e.preventDefault();list.querySelector('button:not(:disabled)')?.focus()}
  };
  const attach=option=>{
@@ -160,9 +161,10 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
   const hasQuery=!!query;
   const back=make('button','component-browser-back',activeCategory?'‹  Composants':'Composants');
   back.type='button';back.disabled=!activeCategory||hasQuery;
-  back.onclick=()=>{activeCategory=null;render();search.focus()};
+  back.onclick=()=>{if(activeSubcategory)activeSubcategory=null;else activeCategory=null;render();search.focus()};
   trail.append(back);
-  if(activeCategory&&!hasQuery)trail.append(make('span','component-browser-current','› '+activeCategory));
+  if(activeCategory&&!hasQuery)trail.append(make('span','component-browser-current','› '+activeCategory+(activeSubcategory?' › '+activeSubcategory:'')));
+  const pathOf=option=>componentMenuPath(option,unityComponentCategory(option));
   const renderOption=option=>{
    const button=make('button','component-browser-option');button.type='button';button.dataset.componentId=option.id;
    button.disabled=state.playing||!!option.attached;
@@ -179,14 +181,23 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
     button.type='button';button.dataset.category=category;
     button.append(make('span','',category),make('span','component-browser-chevron','›'));
     button.title=members.length+' composants';
-    button.onclick=()=>{activeCategory=category;render()};
+    button.onclick=()=>{activeCategory=category;activeSubcategory=null;render()};
     list.append(button);
    }
    hint.textContent=matched.length+' composants réels · Ouvre une catégorie ou recherche par nom.';
   }else{
-   const items=activeCategory&&!hasQuery?matched.filter(option=>unityComponentCategory(option)===activeCategory):matched;
+   const categoryItems=activeCategory&&!hasQuery?matched.filter(option=>unityComponentCategory(option)===activeCategory):matched;
+   const items=activeSubcategory&&!hasQuery?categoryItems.filter(option=>pathOf(option)[1]===activeSubcategory):categoryItems;
    if(hasQuery)list.append(make('h4','component-browser-category','Résultats de recherche'));
-   for(const option of items)renderOption(option);
+   if(activeCategory&&!hasQuery&&!activeSubcategory){
+    const children=componentMenuChildren(matched,activeCategory,pathOf);
+    for(const group of children.groups){
+     const folder=make('button','component-browser-folder');folder.type='button';folder.dataset.subcategory=group;
+     folder.append(make('span','',group),make('span','component-browser-chevron','›'));
+     folder.onclick=()=>{activeSubcategory=group;render()};list.append(folder)
+    }
+    for(const item of children.direct)renderOption(item);
+   }else for(const option of items)renderOption(option);
    if(!items.length)list.append(make('p','component-browser-empty','Aucun composant trouvé pour cette recherche.'));
    hint.textContent=items.length+' composants disponibles · Web = Play navigateur ; .NET local = pont C# requis ; données seules = aucun runtime certifié. Les composants déjà présents restent intacts.';
   }
@@ -197,7 +208,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
   if(opened){close();return}
   // Unmount the previous dialog when the Inspector has been redrawn.
   document.querySelectorAll('body > .unity-component-popup').forEach(node=>{if(node!==popup)node.remove()});
-  opened=true;root.open=false;activeCategory=null;search.value='';render();popup.hidden=false;position();
+  opened=true;root.open=false;activeCategory=null;activeSubcategory=null;search.value='';render();popup.hidden=false;position();
   document.addEventListener('pointerdown',outside,true);
   document.addEventListener('keydown',keyboard,true);
   window.addEventListener('resize',schedulePosition);
@@ -205,7 +216,7 @@ export function renderComponentBrowser(parent,owner,nativeCatalog,openScript){
   window.addEventListener('pointermove',schedulePosition,{passive:true});
   search.focus();
  });
- search.addEventListener('input',()=>{if(search.value.trim())activeCategory=null;render()});
+ search.addEventListener('input',()=>{if(search.value.trim()){activeCategory=null;activeSubcategory=null}render()});
  parent.append(root);return root;
 }
 export function finishInspector(root,owner,templates,nativeCatalog,renderNative,openScript){

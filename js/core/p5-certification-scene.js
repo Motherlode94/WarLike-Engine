@@ -36,14 +36,15 @@ export function p5CertificationScene(cameraMode='firstPerson') {
     name:'P5 · Cible mobile',
     x:68,y:-120,
     ai:undefined,
-    stats:undefined,
+    // Keep Health/Stats so the mobile target can actually receive FPS/TPS damage.
+    // Only the competing combat AI is disabled; Navigation Agent still drives it.
+    stats:defaultStats(),
     collision3d:true,
     solid3d:false,
     navigationAgent:{...defaultNavigationAgent(),speed:1.3,loop:true,waypoints:[{x:112,y:-120},{x:68,y:-120}]},
     animatorGraph:defaultAnimatorGraph(),
   };
   delete movingTarget.ai;
-  delete movingTarget.stats;
   scene.entities.push(movingTarget);
   scene.ids.movingTarget=movingTarget.id;
   scene.project.id='p5-fps-tps-certification-'+(cameraMode==='firstPerson'?'fps':'tps');

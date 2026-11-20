@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createCleanStarterScene3d} from '../js/core/clean-starter-scene.js';
 import {sunAt} from '../js/core/lighting.js';
+import {sceneCameraView} from '../js/core/scene-camera-3d.js';
 import {readFileSync} from 'node:fs';
 test('new 3D project starts with exactly Main Camera, Terrain and Directional Light',()=>{
  const objects=createCleanStarterScene3d();
@@ -10,8 +11,12 @@ test('new 3D project starts with exactly Main Camera, Terrain and Directional Li
  assert.ok(objects[0].sceneCamera3d?.enabled);
  assert.equal(objects[1].collision3d,true);
  assert.equal(objects[1].solid3d,true);
- assert.ok(objects[1].w>=640&&objects[1].depth3d>=640);
+ assert.ok(objects[1].w>=1280&&objects[1].depth3d>=1280);
  assert.equal(objects[2].lightType,'directional');
+ const cameraView=sceneCameraView(objects[0],objects);
+ assert.ok(cameraView?.forward[1]<-.4,'Starter camera must look downward toward terrain');
+ const groundCenter=[0,0,0],toCenter=groundCenter.map((n,i)=>n-cameraView.eye[i]);
+ assert.ok(cameraView.forward.reduce((sum,n,i)=>sum+n*toCenter[i],0)>0,'Terrain must be in front of starter camera');
 });
 test('directional scene light controls actual daylight intensity',()=>{
  const scene=createCleanStarterScene3d();

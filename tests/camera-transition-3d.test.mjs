@@ -42,7 +42,7 @@ test('Scene preview is editor-only and native camera inspector exposes target dr
  assert.ok(inspector.includes('sceneCameraTargets3d(state.entities,object)'));
  assert.ok(inspector.includes('targetSelect.onchange'));
  assert.ok(inspector.includes('transitionDuration'));
- assert.ok(gizmos.includes('CADRAGE FILAIRE'));
+ assert.ok(gizmos.includes('APERÇU GÉOMÉTRIQUE'));
  assert.ok(gizmos.includes('state.playing||!view3d.enabled'));
  assert.ok(viewport.includes('cameraTransition.update'));
 });

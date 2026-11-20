@@ -27,6 +27,7 @@ export const playerModules=[
   "js/core/animation-mask.js",
   "js/core/animation-runtime.js",
   "js/core/animator-advanced.js",
+  "js/core/animator-controller-assets.js",
   "js/core/animator-graph.js",
   "js/core/annotations.js",
   "js/core/arcade-driving.js",

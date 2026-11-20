@@ -34,3 +34,8 @@
 #projectPanel > .bottom-tabs .warlike-project-create{margin-left:auto;position:relative;z-index:55;flex:0 0 auto}
 #projectPanel > .bottom-tabs .warlike-project-create summary{white-space:nowrap;min-height:24px;box-sizing:border-box}
 #projectPanel > .bottom-tabs .warlike-project-create[open] .warlike-project-create-options{position:absolute;top:100%;right:0;left:auto;display:block;z-index:70;max-height:min(260px,45vh);overflow:auto}
+
+/* Explicit Create button: avoids native details auto-close inside the dock. */
+#projectPanel > .bottom-tabs button.warlike-project-create{padding:3px 8px;font-size:11px;line-height:18px;min-height:24px;border:1px solid var(--wl-theme-border,#4c5a65);border-radius:4px;background:var(--wl-theme-button,#344352);color:var(--wl-theme-fg,#e9f1f7);cursor:pointer;white-space:nowrap;margin-left:auto}
+body > .warlike-project-create-options:not([hidden]){position:fixed;display:block;z-index:99999;background:var(--wl-theme-panel,#242f3a);border:1px solid var(--wl-theme-border,#596b7a);color:var(--wl-theme-fg,#eef2f6);box-shadow:0 12px 26px #0009}
+body > .warlike-project-create-options[hidden]{display:none!important}

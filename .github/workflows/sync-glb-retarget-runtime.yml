@@ -1,0 +1,28 @@
+name: Sync Real GLB Retarget Runtime
+on:
+  push:
+    branches:
+      - feat/real-glb-humanoid-retarget-play-export-20261120
+    paths-ignore:
+      - runtime-files.json
+      - js/core/player-modules.js
+permissions:
+  contents: write
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm run build:runtime
+      - name: Commit regenerated portable manifests
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- runtime-files.json js/core/player-modules.js
+          if ! git diff --cached --quiet; then
+            git commit -m "build(runtime): include real humanoid GLB transfer module"
+            git push origin HEAD:feat/real-glb-humanoid-retarget-play-export-20261120
+          fi

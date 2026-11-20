@@ -1,0 +1,26 @@
+name: Legacy Project Browser Reopen
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  legacy-scene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npx playwright install --with-deps chromium
+      - name: Save reload old-style scene and compare Web export
+        run: node scripts/test-legacy-scene-reopen-browser.mjs
+      - name: Preserve before and after visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-scene-reopen
+          path: .validation-tools/legacy-reopen/
+          if-no-files-found: warn

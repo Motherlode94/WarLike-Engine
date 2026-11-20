@@ -63,7 +63,7 @@ try{
   return {mode:workspace.mode,selected:state.selected,objects:inspectedObjects().map(x=>({id:x.id,name:x.name,type:x.type})),
    inspectorLocked:inspectorSelection.locked,asset:inspectedAsset()?.id||null,
    pane:document.querySelector('#properties')?.innerText?.slice(0,1200),
-   auditButtons:[...document.querySelectorAll('button')].filter(b=>b.textContent?.includes('Analyser le GameObject')).map(b=>({text:b.textContent,hidden:b.hidden}))};
+   auditButtons:[...document.querySelectorAll('button')].filter(b=>b.textContent?.includes('Analyser le GameObject')).map(b=>({text:b.textContent,hidden:b.hidden,ancestry:[b,b.parentElement,b.parentElement?.parentElement,b.parentElement?.parentElement?.parentElement].filter(Boolean).map(e=>({tag:e.tagName,id:e.id,cls:e.className,display:getComputedStyle(e).display,visibility:getComputedStyle(e).visibility,opacity:getComputedStyle(e).opacity,width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height}))}))};
  });
  console.log('GLB authoring Inspector selection:',JSON.stringify(diagnostic));
  assert.deepEqual(diagnostic.selected,[4],'Hierarchy must select the new authored GLB');

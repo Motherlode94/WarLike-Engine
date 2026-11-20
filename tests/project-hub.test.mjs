@@ -49,7 +49,7 @@ test('new project never installs Adventure chapters or demo GameObjects',()=>{
  const id=createProject('Le phare et la vallée','2d','starter','adventure');
  assert.equal(gameProject.genre,'sandbox');
  assert.deepEqual(state.entities.map(o=>o.name),['Main Camera 2D']);
- assert.equal(gameProject.scenes.length,1);
+ assert.equal(gameProject.scenes.length,0,'Blank projects must not preload authored game levels');
  saveProject();switchWorkspace('3d');
  assert.deepEqual(state.entities.map(o=>o.name),['Main Camera','Terrain','Directional Light']);
  createProject('Autre projet témoin','2d');openProject(id);

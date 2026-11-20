@@ -456,6 +456,17 @@ renderObjectBehaviors(root,o);
  });
  if(workspace.mode==='3d'&&o.controller3d)component(root,'Contrôleur de personnage 3D',body=>{
   for(const [key,label] of [['walkSpeed','Marche'],['sprintSpeed','Sprint'],['jumpForce','Saut'],['gravity','Gravité'],['slopeLimit','Pente maximale (°)'],['slideAngle','Glisser au-delà de (°)'],['snapToGround','Accroche au sol (m)'],['skinWidth','Marge de contact (m)'],['stepMinWidth','Largeur minimale de marche (m)'],['mass','Masse pour pousser (kg)'],['stepHeight','Hauteur de marche (m)'],['coyoteTime','Tolérance après rebord (s)'],['jumpBuffer','Mémorisation du saut (s)'],['dodgeDistance','Distance esquive (m)'],['dodgeCooldown','Recharge esquive (s)'],['staminaCost','Coût endurance']])field(body,o.controller3d,key,label);
+  const facing=document.createElement('label');facing.className='inspector-controller-facing';
+  facing.textContent='Rotation du joueur';
+  const select=document.createElement('select');select.setAttribute('aria-label','Mode de rotation du joueur');
+  for(const [value,label] of [['camera','Suivre la direction de la caméra'],['movement','Suivre la direction du déplacement'],['locked','Conserver la rotation']]){
+   const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option)
+  }
+  select.value=o.controller3d.facingMode||'camera';select.disabled=state.playing;
+  select.onchange=()=>{o.controller3d.facingMode=select.value;record('Rotation du personnage');notify()};
+  facing.append(select);body.append(facing);
+  field(body,o.controller3d,'turnSpeed','Vitesse de rotation (°/s · 0 = immédiate)');
+
  });
 if(o.playable3d||o.type==='player'||o.type==='character'||getAsset(o.assetId)?.category==='Characters'||o.cameraRig){
  component(root,'Caméra de jeu',body=>{

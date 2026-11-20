@@ -1,0 +1,13 @@
+/* Project/Assets Animator Controllers: use existing theme tokens, not a new theme. */
+.warlike-project-animator-assets{min-width:0;padding:9px 10px;margin:8px 0;border:1px solid var(--wl-theme-border,var(--wl-border,#4d6069));border-radius:7px;background:var(--wl-theme-panel,var(--wl-surface,#253139));color:var(--wl-text-panel,var(--wl-text,#edf5f5))}
+.warlike-project-animator-assets[hidden]{display:none!important}
+.warlike-project-animator-assets h4{margin:0 0 5px;font-size:12px;font-weight:650;color:inherit}
+.warlike-project-animator-summary{display:block;margin-bottom:7px;color:var(--wl-muted,var(--wl-text-muted,#bac8ce));font-size:11px}
+.warlike-project-animator-list{display:grid;gap:5px;max-height:235px;overflow:auto}
+.warlike-project-animator-item{display:flex;align-items:center;gap:5px;min-width:0}
+.warlike-project-animator-item button{font:inherit;font-size:11px;min-height:27px;border:1px solid var(--wl-theme-border,var(--wl-border,#62757d));border-radius:5px;background:var(--wl-button,var(--wl-theme-panel,#34434d));color:var(--wl-text-panel,var(--wl-text,#edf5f5));padding:4px 7px;cursor:pointer}
+.warlike-project-animator-item button:focus-visible{outline:2px solid var(--wl-accent,#51bfae);outline-offset:1px}
+.warlike-project-animator-item button:disabled{cursor:not-allowed;opacity:.5}
+.warlike-project-animator-item .warlike-project-animator-drag{min-width:75px;flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:grab}
+.warlike-project-animator-item .warlike-project-animator-drag:active{cursor:grabbing}
+@media(max-width:700px){.warlike-project-animator-item{flex-wrap:wrap}.warlike-project-animator-item .warlike-project-animator-drag{flex-basis:100%}}

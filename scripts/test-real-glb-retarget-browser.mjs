@@ -56,7 +56,20 @@ try{
  await page.screenshot({path:path.join(out,'editor-real-glb.png')});
  report.checks.push('Real source and target GLB imported; Inspector-compatible rig assigned');
  const inspector=page.getByRole('button',{name:'Analyser le GameObject'});
- await inspector.waitFor({state:'visible'});
+ const diagnostic=await page.evaluate(async()=>{
+  const [{state},{workspace},{inspectedObjects,inspectorSelection},{inspectedAsset}]=await Promise.all([
+   import('/js/core/state.js'),import('/js/core/workspaces.js'),import('/js/ui/inspector-context.js'),import('/js/ui/inspector-assets.js')
+  ]);
+  return {mode:workspace.mode,selected:state.selected,objects:inspectedObjects().map(x=>({id:x.id,name:x.name,type:x.type})),
+   inspectorLocked:inspectorSelection.locked,asset:inspectedAsset()?.id||null,
+   pane:document.querySelector('#properties')?.innerText?.slice(0,1200),
+   auditButtons:[...document.querySelectorAll('button')].filter(b=>b.textContent?.includes('Analyser le GameObject')).map(b=>({text:b.textContent,hidden:b.hidden}))};
+ });
+ console.log('GLB authoring Inspector selection:',JSON.stringify(diagnostic));
+ assert.deepEqual(diagnostic.selected,[4],'Hierarchy must select the new authored GLB');
+ assert.equal(diagnostic.mode,'3d');
+ assert.equal(diagnostic.objects.at(-1)?.id,4,'Inspector must inspect the authored GameObject');
+ await inspector.waitFor({state:'visible',timeout:12000});
  await inspector.click();
  await page.waitForFunction(()=>document.querySelector('.inspector-authoring-results')?.textContent?.includes('clips GLB'),null,{timeout:30000});
  report.checks.push('Inspector loaded actual GLB and evaluated geometry/skin');

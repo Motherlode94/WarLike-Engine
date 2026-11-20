@@ -25,13 +25,14 @@ try{
  await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'load'});
  await page.locator('body.reference-engine').waitFor();
  const authored=await page.evaluate(async()=>{
-  const [{createProject},{state,notify},{defaultAnimatorGraph}]=await Promise.all([
-   import('/js/core/project-hub.js'),import('/js/core/state.js'),import('/js/core/animator-graph.js')
+  const [{createProject},{state,notify},{defaultAnimatorGraph},{defaultController,defaultStats}]=await Promise.all([
+   import('/js/core/project-hub.js'),import('/js/core/state.js'),import('/js/core/animator-graph.js'),import('/js/core/gameplay-components.js')
   ]);
   const id=createProject('Reusing Animator Controllers','3d');
   const actor=index=>({
    id:3+index,name:'Rig Actor '+index,type:'mesh3d',x:120*index,y:0,elevation3d:0,
    w:60,h:120,depth3d:60,visible:true,rotation:0,shape:'box',
+   playable3d:index===1,controller3d:defaultController(),stats:defaultStats(),cameraRig:{mode:'thirdPerson',collision:true},
    animatorGraph:defaultAnimatorGraph(),
    animationRig:{enabled:true,clips:[],activeClip:'',playOnStart:false,avatar:{id:'user-authored-avatar-'+index}}
   });

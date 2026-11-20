@@ -31,7 +31,7 @@ try{
   ]);
   const id=createProject('Native Animator Project Assets','3d');
   const actor=index=>({
-   id:3+index,name:'Native Actor '+index,type:'mesh3d',x:120*index,y:0,elevation3d:0,
+   id:3+index,name:'Native Actor '+index,type:'mesh3d',playable3d:index===1,x:120*index,y:0,elevation3d:0,
    w:60,h:120,depth3d:60,visible:true,rotation:0,shape:'box',
    animatorGraph:defaultAnimatorGraph(),
    animationRig:{enabled:true,clips:[],activeClip:'',playOnStart:false,

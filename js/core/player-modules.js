@@ -115,6 +115,7 @@ export const playerModules=[
   "js/core/play-cleanup.js",
   "js/core/play-session.js",
   "js/core/player-controller.js",
+  "js/core/player-look-rotation.js",
   "js/core/portable-models.js",
   "js/core/project-hdri-assets.js",
   "js/core/quest-inventory.js",

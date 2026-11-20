@@ -31,6 +31,7 @@ try{
    import('/js/core/project-hub.js'),import('/js/core/state.js'),
    import('/js/core/clean-starter-scene.js')
   ]);
+  const {defaultController,defaultStats}=await import('/js/core/gameplay-components.js');
   const id=createProject('Legacy visual re-open check','3d');
   const scene=createCleanStarterScene3d();
   scene[0].sceneCamera3d={...scene[0].sceneCamera3d,fieldOfView:72,nearClip:.15,farClip:180};
@@ -38,7 +39,8 @@ try{
   scene[1].materialMetallic=.12;
   scene[1].colorCustomized=true;
   scene.push({
-   id:4,name:'Ancien GameObject',type:'mesh3d',assetId:'primitive-cube',
+   id:4,name:'Ancien GameObject',type:'mesh3d',assetId:'primitive-cube',playable3d:true,
+   controller3d:defaultController(),cameraRig:{mode:'thirdPerson',collision:true},stats:defaultStats(),
    x:64,y:64,elevation3d:1,w:96,h:96,depth3d:96,visible:true,
    collision3d:true,solid3d:true,collider3d:{shape:'box',enabled:true},
    materialRoughness:.43,materialMetallic:.26,materialColor:'#a08468',

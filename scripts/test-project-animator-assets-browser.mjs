@@ -42,6 +42,9 @@ try{
  });
  await page.locator('#hubClose').click();
  await page.locator('#hubOverlay').waitFor({state:'hidden'});
+ await page.locator('#projectTab').click();
+ // The Project panel may be collapsed by a persisted workspace layout.
+ await page.locator('#projectContent').evaluate(el=>{if(el.hidden)throw Error('Project Browser is hidden after opening the tab')});
  await page.locator('.warlike-project-create > summary').click();
  await page.locator('.warlike-project-create-options button').filter({hasText:/^Animator Controller$/}).click();
  const nativeAsset=page.locator('.warlike-project-animator-drag').first();

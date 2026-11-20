@@ -83,6 +83,22 @@ try{
  });
  assert.deepEqual(exportData,{model:authored.modelId,clip:authored.clip,avatar:'warlike.avatar.v1'});
  report.checks.push('Web export preparation retains target GLB, imported clip and humanoid avatar');
+ const built=await page.evaluate(async()=>{
+  const [{state},{gameProject},{exportGamePackage}]=await Promise.all([
+   import('/js/core/state.js'),import('/js/core/game-project.js'),import('/js/core/game-build.js')
+  ]);
+  const archive=await exportGamePackage({entities:state.entities,camera:state.camera,mode:'3d',project:gameProject});
+  const sig=new Uint8Array(await archive.blob.slice(0,4).arrayBuffer());
+  const tail=new Uint8Array(await archive.blob.slice(-65557).arrayBuffer());
+  const tailText=new TextDecoder('latin1').decode(tail);
+  return {signature:[...sig],bytes:archive.blob.size,files:archive.files,
+   containsModel:tailText.includes(state.entities.find(o=>o.id===4).model3dId)};
+ });
+ assert.deepEqual(built.signature,[80,75,3,4],'Export ZIP header must be valid');
+ assert(built.bytes>10000&&built.files>10,'Portable Web export must include runtime files');
+ assert(built.containsModel,'Portable archive must include imported target GLB bytes');
+ report.checks.push('Actual offline Web ZIP created with its imported target rigged model');
+ report.archive=built;
  assert.deepEqual(report.errors,[]);
  report.status='PASS';report.asset=authored;report.play=play;
  await ctx.close();

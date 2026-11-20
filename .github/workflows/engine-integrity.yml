@@ -137,6 +137,28 @@ jobs:
             .validation-tools/p6-fps-tps/report.json
           if-no-files-found: ignore
 
+  p7-editor-lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npx playwright install --with-deps chromium
+      - name: Editor demo menu, Inspector, Play/Stop and project save/reopen FPS and TPS
+        run: node scripts/test-p7-editor-demo-browser.mjs
+      - name: Upload P7 editor screenshots and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p7-editor-lifecycle
+          path: |
+            .validation-tools/p7-editor/*.png
+            .validation-tools/p7-editor/report.json
+          if-no-files-found: ignore
+
   complete-3d:
     runs-on: ubuntu-latest
     timeout-minutes: 8

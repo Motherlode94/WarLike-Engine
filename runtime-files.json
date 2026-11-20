@@ -16344,6 +16344,7 @@
     "js/core/animation-runtime.js",
     "js/core/animation-studio.js",
     "js/core/animator-advanced.js",
+    "js/core/animator-controller-assets.js",
     "js/core/animator-graph.js",
     "js/core/animator-model-template.js",
     "js/core/annotations.js",

@@ -1,0 +1,28 @@
+name: Animator Controller Asset Browser Acceptance
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  animator-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npx playwright install --with-deps chromium
+      - name: Test reusable Animator Controller library and integrity
+        run: node --test tests/animator-controller-assets.test.mjs
+      - name: Verify Inspector, browser reload and Web export
+        run: node scripts/test-animator-controller-assets-browser.mjs
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: animator-controller-asset-evidence
+          path: .validation-tools/animator-controller-assets/
+          if-no-files-found: warn

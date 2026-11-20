@@ -55,7 +55,10 @@ try{
  await page.getByRole('button',{name:'Sélectionner Personnage GLB créé par auteur',exact:true}).click();
  await page.screenshot({path:path.join(out,'editor-real-glb.png')});
  report.checks.push('Real source and target GLB imported; Inspector-compatible rig assigned');
- const inspector=page.locator('#properties .inspector-authoring-audit button').filter({hasText:'Analyser le GameObject'});
+ const modelSettings=page.locator('#properties .inspector-model-import-button');
+ await modelSettings.waitFor({state:'visible'});
+ await modelSettings.click();
+ const inspector=page.locator('#modelRigImportWindow button').filter({hasText:'Analyser le GameObject'});
  const diagnostic=await page.evaluate(async()=>{
   const [{state},{workspace},{inspectedObjects,inspectorSelection},{inspectedAsset}]=await Promise.all([
    import('/js/core/state.js'),import('/js/core/workspaces.js'),import('/js/ui/inspector-context.js'),import('/js/ui/inspector-assets.js')
@@ -71,7 +74,7 @@ try{
  assert.equal(diagnostic.objects.at(-1)?.id,4,'Inspector must inspect the authored GameObject');
  await inspector.waitFor({state:'visible',timeout:12000});
  await inspector.click();
- await page.waitForFunction(()=>document.querySelector('.inspector-authoring-results')?.textContent?.includes('clips GLB'),null,{timeout:30000});
+ await page.waitForFunction(()=>document.querySelector('#modelRigImportWindow .inspector-authoring-results')?.textContent?.includes('clips GLB'),null,{timeout:30000});
  report.checks.push('Inspector loaded actual GLB and evaluated geometry/skin');
  await page.locator('#play').click();
  await page.waitForFunction(async()=>{const {state}=await import('/js/core/state.js');return state.playing===true});

@@ -143,7 +143,7 @@ function finishInspector(root,o,templates){renderWebScriptInspector(root,o,{comp
  const create=document.createElement('button');create.type='button';create.textContent='Créer Controller';
  create.disabled=state.playing;create.onclick=()=>{
   if(state.playing)return;
-  try{createAnimatorControllerAsset(gameProject,o);record('Créer Animator Controller réutilisable');notify()}
+  try{createAnimatorControllerAsset(gameProject,o,{name:controllerName.value.trim()||o.name+' Controller'});record('Créer Animator Controller réutilisable');notify()}
   catch(error){window.alert('Animator : '+error.message)}
  };
  const update=document.createElement('button');update.type='button';update.textContent='Enregistrer Controller';
@@ -153,7 +153,12 @@ function finishInspector(root,o,templates){renderWebScriptInspector(root,o,{comp
   try{saveAnimatorControllerAsset(gameProject,o);record('Enregistrer Animator Controller');notify()}
   catch(error){window.alert('Animator : '+error.message)}
  };
- actions.append(assign,create,update);body.append(actions);
+ const library=document.createElement('details');library.className='inspector-animator-library';
+ const summary=document.createElement('summary');summary.textContent='Gérer les Controllers du projet';library.append(summary);
+ const controllerName=document.createElement('input');controllerName.type='text';controllerName.maxLength=120;
+ controllerName.value=o.name+' Controller';controllerName.setAttribute('aria-label','Nom du nouveau Controller');
+ controllerName.disabled=state.playing;library.append(controllerName,create,update);
+ actions.append(assign);body.append(actions,library);
  if(animatorControllerOutdated(gameProject,o)){const warning=document.createElement('small');warning.textContent='Controller mis à jour ou absent : réassigne-le pour synchroniser ce GameObject.';body.append(warning)}
 
  row('Avatar',o.animationRig?.avatar?'Humanoid':'Aucun · choisir un rig');

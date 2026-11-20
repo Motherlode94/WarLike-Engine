@@ -88,8 +88,9 @@ export function mountProjectCreateBrowser(){
  const heading=document.createElement('h4');heading.textContent='Documents du projet';panel.append(heading);
  const list=document.createElement('div');list.className='warlike-project-document-list';panel.append(list);
  host.querySelector('.asset-body')?.before(panel);
- const animatorSection=mountAnimatorControllerProjectAssets(host);
- if(animatorSection)host.querySelector('.asset-body')?.before(animatorSection);
+ // Keep the draggable project-owned Controllers in the always-visible Project dock.
+ // Import/library panels can overflow the inner Project content area.
+ mountAnimatorControllerProjectAssets(toolbar);
  function draw(){
   const assets=listProjectDocuments();panel.hidden=!assets.length;list.replaceChildren();
   for(const asset of assets){

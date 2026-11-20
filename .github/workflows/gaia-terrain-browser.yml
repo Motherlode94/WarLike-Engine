@@ -1,0 +1,26 @@
+name: Gaia Terrain Brush Browser Acceptance
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  terrain-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - run: npx playwright install --with-deps chromium
+      - name: Sculpt selected terrain through native editor
+        run: node scripts/test-gaia-terrain-browser.mjs
+      - name: Upload Gaia terrain screenshot and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaia-terrain-browser
+          path: .validation-tools/gaia-terrain/
+          if-no-files-found: warn

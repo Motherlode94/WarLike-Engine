@@ -1,0 +1,12 @@
+/* Retired bundled demonstration surfaces; keep production editors and project assets. */
+#warlikeDemoTools,
+#warlikeToolLibrary section:has(#warlikeDemoTools),
+.warlike-demo-shortcut,
+#rpgDemo,#logicDemo,#driveDemo,#loadDemo,
+#horror3dDemo,#horrorPursuitDemo,
+[data-studio-action="demo"],
+[data-studio-action="logicDemo"],
+[data-studio-action="ninjaZombieDemo"],
+[data-studio-action="gameModeDemo"],
+button[id$="Demo"],
+button[id$="Sandbox"]{display:none!important}

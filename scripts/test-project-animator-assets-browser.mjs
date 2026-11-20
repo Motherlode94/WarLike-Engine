@@ -55,7 +55,15 @@ try{
   throw Error('Project/Assets native Create menu not visible: '+JSON.stringify(layout));
  }
  await projectMenu.click();
- await page.locator('.warlike-project-create-options button').filter({hasText:/^Animator Controller$/}).click();
+ const action=page.locator('.warlike-project-create-options button').filter({hasText:/^Animator Controller$/});
+ if(!await action.isVisible()){
+  const visibility=await page.evaluate(()=>{
+   const menu=document.querySelector('.warlike-project-create'),panel=document.querySelector('.warlike-project-create-options'),button=panel?.querySelector('button'),rect=panel?.getBoundingClientRect();
+   return {open:menu?.open,hidden:panel?.hidden,parent:panel?.parentElement?.tagName,display:panel&&getComputedStyle(panel).display,visibility:panel&&getComputedStyle(panel).visibility,rect:rect&&{x:rect.x,y:rect.y,width:rect.width,height:rect.height},button:button&&getComputedStyle(button).display};
+  });
+  throw Error('Create Animator option is invisible: '+JSON.stringify(visibility));
+ }
+ await action.click();
  const nativeAsset=page.locator('.warlike-project-animator-drag').first();
  await nativeAsset.waitFor({state:'visible'});
  const before=await page.evaluate(async()=>{

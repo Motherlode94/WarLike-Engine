@@ -1,13 +1,13 @@
 import {animationEditorPreview} from './animation-clips.js';
 import {genreForMode} from './game-genres.js';
 import {gameProject,restoreGameProject} from './game-project.js';
-import {prefab3d} from '../assets/catalog-3d.js';
+import {createCleanStarterScene3d} from './clean-starter-scene.js';
 // Independent 2D/3D workspaces. Each keeps its own scene, selection and camera.
 // Switching cannot happen during Play; callers stop simulation before switching.
 import {state,notify} from './state.js';
-export const workspace={mode:'2d',scenes:{
- '2d':{entities:null,selected:null,nextId:1,camera:null},
- '3d':{entities:[{...prefab3d('character-hero',1,150,150),name:'3D Player',playable3d:true}],selected:[1],nextId:2,camera:{x:0,y:0,zoom:1}}
+export const workspace={mode:'3d',scenes:{
+ '2d':{entities:[],selected:[],nextId:1,camera:{x:0,y:0,zoom:1}},
+ '3d':{entities:createCleanStarterScene3d(),selected:[],nextId:4,camera:{x:0,y:0,zoom:1}}
 }};
 const clone=v=>structuredClone(v);
 export function captureWorkspace(){

@@ -31,6 +31,7 @@ import {threatFactions,threatRelations,threatProfile} from '../core/threat-intel
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {getModelGeometry} from '../assets/real-models-3d.js';
 import {inspectGameObjectAuthoring,configureRealHumanoidOnObject} from '../core/authoring-readiness.js';
+import {listRealGlbAnimationClips,retargetImportedHumanoidClip} from '../core/humanoid-glb-transfer.js';
 import {defaultRigidbody3d,applyImpulse3d} from '../core/physics-3d.js';
 import {recipes,applyRecipe} from '../core/gameplay-recipes.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController,inventoryAdd,inventoryRemove,equipItem} from '../core/gameplay-components.js';
@@ -273,7 +274,47 @@ function mountAuthoringAudit(root,object){
   }catch(error){results.textContent='Avatar non assigné : '+error.message}
   finally{avatarButton.disabled=state.playing||!object.model3dId}
  };
- section.append(heading,button,avatarButton,results);root.append(section);
+ const transferGroup=document.createElement('div');transferGroup.className='warlike-glb-retarget-controls';
+ const sourceInput=document.createElement('input');sourceInput.type='text';sourceInput.placeholder='ID du modèle GLB source';
+ sourceInput.setAttribute('aria-label','Identifiant GLB source');sourceInput.maxLength=160;
+ const clipsSelect=document.createElement('select');clipsSelect.setAttribute('aria-label','Animation GLB source');clipsSelect.disabled=true;
+ const loadClips=document.createElement('button');loadClips.type='button';loadClips.textContent='Lire animations GLB';
+ const clipName=document.createElement('input');clipName.type='text';clipName.placeholder='Nom du clip transféré';clipName.maxLength=160;
+ clipName.setAttribute('aria-label','Nom animation transférée');
+ const fpsInput=document.createElement('input');fpsInput.type='number';fpsInput.min='1';fpsInput.max='60';fpsInput.value='30';
+ fpsInput.setAttribute('aria-label','Cadence du retargeting');
+ const transfer=document.createElement('button');transfer.type='button';transfer.textContent='Transférer animation humanoïde';
+ transfer.disabled=true;
+ loadClips.onclick=async()=>{
+  clipsSelect.replaceChildren();clipsSelect.disabled=true;transfer.disabled=true;loadClips.disabled=true;
+  try{
+   const clips=await listRealGlbAnimationClips(sourceInput.value.trim());
+   for(const clip of clips){const option=document.createElement('option');option.value=clip.name;option.textContent=clip.name+' · '+clip.duration.toFixed(2)+'s';clipsSelect.append(option)}
+   clipsSelect.disabled=clips.length===0;transfer.disabled=!object.model3dId||!clips.length||state.playing;
+   results.textContent=clips.length+' vrais clips trouvés dans le GLB source.';
+  }catch(error){results.textContent='Import source : '+error.message}
+  finally{loadClips.disabled=false}
+ };
+ transfer.onclick=async()=>{
+  if(state.playing||!object.model3dId||!clipsSelect.value)return;
+  const name=clipName.value.trim()||clipsSelect.value+' · retarget';
+  const exists=object.animationRig?.clips?.some(c=>c.name===name);
+  if(exists&&!window.confirm('Remplacer le clip '+name+' existant ?'))return;
+  transfer.disabled=true;
+  try{
+   const result=await retargetImportedHumanoidClip(object,{
+    sourceModelId:sourceInput.value.trim(),sourceClipName:clipsSelect.value,
+    name,fps:Number(fpsInput.value),replace:exists
+   });
+   record('Animator : transfert humanoïde '+result.name);
+   results.textContent='Clip réel enregistré : '+result.name+' ('+result.channels+' pistes). Configure son état dans Animator avant Play.';
+   notify();
+  }catch(error){results.textContent='Transfert refusé : '+error.message}
+  finally{transfer.disabled=state.playing||clipsSelect.disabled||!object.model3dId}
+ };
+ const transferTitle=document.createElement('strong');transferTitle.textContent='Retargeting entre modèles GLB';
+ transferGroup.append(transferTitle,sourceInput,loadClips,clipsSelect,clipName,fpsInput,transfer);
+ section.append(heading,button,avatarButton,transferGroup,results);root.append(section);
 }
 export function renderInspector(){initAssetInspection();const root=document.querySelector('#properties');const objects=inspectedObjects(),o=objects.at(-1),asset=inspectedAsset();const signature=inspectorContext()+':'+(asset?'asset:'+asset.id:objects.map(object=>object.id).join(','));const scroll=root.dataset.inspection===signature?root.scrollTop:0;root.dataset.inspection=signature;root.replaceChildren();inspectorWindowHeader(root,asset?[asset]:objects,asset?assetInspectorLock():{});requestAnimationFrame(()=>{root.scrollTop=scroll});if(asset){if(inspectorDebug())renderInspectorDebug(root,[asset]);else renderAssetInspector(root,asset);return}if(!o){const empty=document.createElement('p');empty.className='inspector-empty';empty.textContent='Sélectionne un GameObject dans Hierarchy ou une ressource dans Project pour afficher ses propriétés.';root.append(empty);return}if(inspectorDebug()){renderInspectorDebug(root,objects);return}if(objects.length>1){renderMultipleInspector(root,objects);return}
 

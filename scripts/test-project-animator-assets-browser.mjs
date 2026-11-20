@@ -45,7 +45,16 @@ try{
  await page.locator('#projectTab').click();
  // The Project panel may be collapsed by a persisted workspace layout.
  await page.locator('#projectContent').evaluate(el=>{if(el.hidden)throw Error('Project Browser is hidden after opening the tab')});
- await page.locator('.warlike-project-create > summary').click();
+ const projectMenu=page.locator('.warlike-project-create > summary');
+ if(!await projectMenu.isVisible()){
+  const layout=await page.evaluate(()=>{
+   const describe=sel=>{const e=document.querySelector(sel);if(!e)return null;const r=e.getBoundingClientRect(),css=getComputedStyle(e);return {hidden:e.hidden,display:css.display,visibility:css.visibility,overflow:css.overflow,rect:{x:r.x,y:r.y,width:r.width,height:r.height},scrollHeight:e.scrollHeight,clientHeight:e.clientHeight}};
+   return Object.fromEntries(['#projectPanel','#projectContent','.asset-content','.asset-toolbar','.warlike-project-create','.warlike-project-create > summary'].map(sel=>[sel,describe(sel)]));
+  });
+  await page.screenshot({path:path.join(out,'project-menu-not-visible.png')});
+  throw Error('Project/Assets native Create menu not visible: '+JSON.stringify(layout));
+ }
+ await projectMenu.click();
  await page.locator('.warlike-project-create-options button').filter({hasText:/^Animator Controller$/}).click();
  const nativeAsset=page.locator('.warlike-project-animator-drag').first();
  await nativeAsset.waitFor({state:'visible'});

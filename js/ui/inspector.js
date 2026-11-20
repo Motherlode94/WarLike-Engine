@@ -30,7 +30,7 @@ import {communityRecipes,applyCommunityRecipe} from '../core/community-plugins.j
 import {threatFactions,threatRelations,threatProfile} from '../core/threat-intelligence.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {getModelGeometry} from '../assets/real-models-3d.js';
-import {inspectGameObjectAuthoring} from '../core/authoring-readiness.js';
+import {inspectGameObjectAuthoring,configureRealHumanoidOnObject} from '../core/authoring-readiness.js';
 import {defaultRigidbody3d,applyImpulse3d} from '../core/physics-3d.js';
 import {recipes,applyRecipe} from '../core/gameplay-recipes.js';
 import {defaultStats,defaultInventory,defaultAi,defaultController,inventoryAdd,inventoryRemove,equipItem} from '../core/gameplay-components.js';
@@ -257,7 +257,23 @@ function mountAuthoringAudit(root,object){
   }catch(error){results.textContent='Diagnostic indisponible : '+error.message}
   finally{button.disabled=false}
  };
- section.append(heading,button,results);root.append(section);
+ const avatarButton=document.createElement('button');avatarButton.type='button';
+ avatarButton.textContent='Configurer Avatar humanoïde réel';
+ avatarButton.disabled=!object.model3dId||state.playing;
+ avatarButton.title='N’assigne un Avatar que si le squelette réel contient les os requis et les hiérarchies valides.';
+ avatarButton.onclick=async()=>{
+  if(state.playing||!object.model3dId)return;
+  const replace=Boolean(object.animationRig?.avatar);
+  if(replace&&!window.confirm('Remplacer la correspondance d’os humanoïde actuelle ?'))return;
+  avatarButton.disabled=true;
+  try{
+   await configureRealHumanoidOnObject(object,{replace});
+   record('Inspector : Avatar humanoïde GLB validé');
+   notify();
+  }catch(error){results.textContent='Avatar non assigné : '+error.message}
+  finally{avatarButton.disabled=state.playing||!object.model3dId}
+ };
+ section.append(heading,button,avatarButton,results);root.append(section);
 }
 export function renderInspector(){initAssetInspection();const root=document.querySelector('#properties');const objects=inspectedObjects(),o=objects.at(-1),asset=inspectedAsset();const signature=inspectorContext()+':'+(asset?'asset:'+asset.id:objects.map(object=>object.id).join(','));const scroll=root.dataset.inspection===signature?root.scrollTop:0;root.dataset.inspection=signature;root.replaceChildren();inspectorWindowHeader(root,asset?[asset]:objects,asset?assetInspectorLock():{});requestAnimationFrame(()=>{root.scrollTop=scroll});if(asset){if(inspectorDebug())renderInspectorDebug(root,[asset]);else renderAssetInspector(root,asset);return}if(!o){const empty=document.createElement('p');empty.className='inspector-empty';empty.textContent='Sélectionne un GameObject dans Hierarchy ou une ressource dans Project pour afficher ses propriétés.';root.append(empty);return}if(inspectorDebug()){renderInspectorDebug(root,objects);return}if(objects.length>1){renderMultipleInspector(root,objects);return}
 

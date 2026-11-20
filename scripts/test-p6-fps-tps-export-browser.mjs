@@ -98,27 +98,35 @@ try{
    // Playwright's waitForFunction may execute in an isolated world; never
    // write telemetry to window and then read it through page.evaluate.
    // Return the same-frame observation as a JSHandle instead.
-   const observationHandle=await page.waitForFunction(async initialX=>{
+   // Sample directly in the application's page world on animation frames.
+   // The previous waitForFunction JSHandle could serialize to false even while
+   // successive real snapshots showed moving=true and navigationSpeed > 0.
+   // Resolve only with a frozen same-frame measurement meeting all criteria.
+   const observation=await page.evaluate(async initialX=>{
     const {state}=await import('./js/core/state.js');
-    const target=state.entities.find(e=>e.navigationAgent);
-    const observation={
-      x:target.x,
-      y:target.y,
-      speed:target.animatorParameters?.navigationSpeed,
-      moving:target.animatorParameters?.navigationMoving,
-      status:target._navigationState?.status,
-    };
-    // Snapshot a primitive value while all conditions are true in this
-    // animation frame. JSON prevents serialization of a mutable live handle
-    // after the Navigation Agent has moved to its next waypoint.
-    return Math.abs(observation.x-initialX)>0.2 &&
-      observation.speed>0 && observation.moving===true ?
-      JSON.stringify(observation) : false;
-   },initial.navX,{timeout:15000});
-   const observation=JSON.parse(await observationHandle.jsonValue());
-   await observationHandle.dispose();
+    const deadline=performance.now()+15000;
+    return new Promise((resolve,reject)=>{
+     const sample=()=>{
+      const target=state.entities.find(e=>e.navigationAgent);
+      if(!target)return reject(new Error('Navigation Agent missing'));
+      const snapshot={
+       x:target.x,y:target.y,
+       speed:target.animatorParameters?.navigationSpeed,
+       moving:target.animatorParameters?.navigationMoving,
+       status:target._navigationState?.status,
+      };
+      if(Math.abs(snapshot.x-initialX)>0.2&&snapshot.speed>0&&snapshot.moving===true)
+       return resolve(snapshot);
+      if(performance.now()>=deadline)
+       return reject(new Error('Navigation Agent did not move with Animator speed: '+JSON.stringify(snapshot)));
+      requestAnimationFrame(sample);
+     };
+     sample();
+    });
+   },initial.navX);
    const navigated={...await snap(),observation};
-   assert(navigated.observation.speed>0&&navigated.observation.moving===true,
+   assert(Math.abs(navigated.observation.x-initial.navX)>0.2&&
+     navigated.observation.speed>0&&navigated.observation.moving===true,
      'Native Navigation Agent must report Animator speed while moving: '+JSON.stringify({initial,navigated}));
    // Verify keyboard locomotion BEFORE turning to separate input capture
    // failures from genuinely blocked camera-relative paths.

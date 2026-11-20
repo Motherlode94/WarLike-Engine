@@ -76,6 +76,7 @@ try{
  await inspector.click();
  await page.waitForFunction(()=>document.querySelector('#modelRigImportWindow .inspector-authoring-results')?.textContent?.includes('clips GLB'),null,{timeout:30000});
  report.checks.push('Inspector loaded actual GLB and evaluated geometry/skin');
+ await page.getByRole('button',{name:'Fermer import du modèle'}).click();
  await page.locator('#play').click();
  await page.waitForFunction(async()=>{const {state}=await import('/js/core/state.js');return state.playing===true});
  await page.waitForTimeout(550);

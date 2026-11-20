@@ -236,7 +236,17 @@ function renderTypedComponent(root,componentInstance,owner){
  root.append(section);
 }
 function mountAuthoringAudit(root,object){
- const section=document.createElement('section');section.className='inspector-authoring-audit';
+ if(!object.model3dId)return;
+ const entry=document.createElement('div');entry.className='inspector-authoring-audit';
+ const open=document.createElement('button');open.type='button';open.className='inspector-model-import-button';
+ open.textContent='Modèle · Rig / Import…';open.title='Ouvrir les réglages GLB, Avatar et retargeting dans une fenêtre séparée';
+ entry.append(open);root.append(entry);
+ const section=document.createElement('section');section.className='creative-window warlike-model-import-window';section.id='modelRigImportWindow';section.hidden=true;
+ const header=document.createElement('header');const title=document.createElement('strong');title.textContent='Import du modèle · Rig · Animations';
+ const close=document.createElement('button');close.type='button';close.textContent='×';close.setAttribute('aria-label','Fermer import du modèle');
+ close.onclick=()=>{section.hidden=true;section.remove()};header.append(title,close);
+ const scroll=document.createElement('div');scroll.className='creative-body';section.append(header,scroll);
+ open.onclick=()=>{document.querySelector('#modelRigImportWindow')?.remove();document.body.append(section);section.hidden=false};
  const heading=document.createElement('h3');heading.textContent='Contrôle modèle · Animator · Gameplay';
  const button=document.createElement('button');button.type='button';
  button.textContent='Analyser le GameObject';button.setAttribute('aria-label','Analyser le modèle GLB, Animator et composants du GameObject');
@@ -314,7 +324,7 @@ function mountAuthoringAudit(root,object){
  };
  const transferTitle=document.createElement('strong');transferTitle.textContent='Retargeting entre modèles GLB';
  transferGroup.append(transferTitle,sourceInput,loadClips,clipsSelect,clipName,fpsInput,transfer);
- section.append(heading,button,avatarButton,transferGroup,results);root.append(section);
+ scroll.append(heading,button,avatarButton,transferGroup,results);
 }
 export function renderInspector(){initAssetInspection();const root=document.querySelector('#properties');const objects=inspectedObjects(),o=objects.at(-1),asset=inspectedAsset();const signature=inspectorContext()+':'+(asset?'asset:'+asset.id:objects.map(object=>object.id).join(','));const scroll=root.dataset.inspection===signature?root.scrollTop:0;root.dataset.inspection=signature;root.replaceChildren();inspectorWindowHeader(root,asset?[asset]:objects,asset?assetInspectorLock():{});requestAnimationFrame(()=>{root.scrollTop=scroll});if(asset){if(inspectorDebug())renderInspectorDebug(root,[asset]);else renderAssetInspector(root,asset);return}if(!o){const empty=document.createElement('p');empty.className='inspector-empty';empty.textContent='Sélectionne un GameObject dans Hierarchy ou une ressource dans Project pour afficher ses propriétés.';root.append(empty);return}if(inspectorDebug()){renderInspectorDebug(root,objects);return}if(objects.length>1){renderMultipleInspector(root,objects);return}
 

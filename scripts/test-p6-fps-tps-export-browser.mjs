@@ -108,13 +108,18 @@ try{
       moving:target.animatorParameters?.navigationMoving,
       status:target._navigationState?.status,
     };
+    // Snapshot a primitive value while all conditions are true in this
+    // animation frame. JSON prevents serialization of a mutable live handle
+    // after the Navigation Agent has moved to its next waypoint.
     return Math.abs(observation.x-initialX)>0.2 &&
-      observation.speed>0 && observation.moving===true ? observation : false;
+      observation.speed>0 && observation.moving===true ?
+      JSON.stringify(observation) : false;
    },initial.navX,{timeout:15000});
-   const observation=await observationHandle.jsonValue();
+   const observation=JSON.parse(await observationHandle.jsonValue());
    await observationHandle.dispose();
    const navigated={...await snap(),observation};
-   assert(navigated.observation.speed>0,'Native Navigation Agent must report Animator speed while moving');
+   assert(navigated.observation.speed>0&&navigated.observation.moving===true,
+     'Native Navigation Agent must report Animator speed while moving: '+JSON.stringify({initial,navigated}));
    // Verify keyboard locomotion BEFORE turning to separate input capture
    // failures from genuinely blocked camera-relative paths.
    const beforeForward=await snap();

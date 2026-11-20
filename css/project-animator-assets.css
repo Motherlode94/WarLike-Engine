@@ -11,3 +11,11 @@
 .warlike-project-animator-item .warlike-project-animator-drag{min-width:75px;flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:grab}
 .warlike-project-animator-item .warlike-project-animator-drag:active{cursor:grabbing}
 @media(max-width:700px){.warlike-project-animator-item{flex-wrap:wrap}.warlike-project-animator-item .warlike-project-animator-drag{flex-basis:100%}}
+
+/* Import panels inserted by Workspace must not push the Project toolbar below
+   the visible dock. Keep Create/Search accessible before optional import tools. */
+#projectPanel .asset-content{overflow-y:auto!important;min-height:0}
+#projectPanel .asset-content > .asset-toolbar{order:-100;position:sticky;top:0;z-index:20;flex-shrink:0}
+#projectPanel .asset-content > .warlike-project-animator-assets{order:-90;flex-shrink:0}
+#projectPanel .asset-content > .warlike-project-documents{order:-80;flex-shrink:0}
+#projectPanel .warlike-project-create[open] .warlike-project-create-options{position:static;max-height:220px;overflow:auto}

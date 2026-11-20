@@ -166,10 +166,25 @@ try{
    assert(Number.isFinite(moved.playerX)&&Number.isFinite(moved.playerY),
      'Camera-relative movement produced non-finite position: '+JSON.stringify({turned,moved}));
    assert(moved.rapierReady&&moved.glError===0,'Movement broke physics or rendering: '+JSON.stringify(moved));
-   // Left-click is the gameplay fire action. The legacy F key is deliberately NOT used.
-   await page.mouse.click(cx+160,cy,{button:'left'});
-   const fired=await snap();
-   assert(fired.attackCooldown>0,'Left click should initiate weapon attack');
+   // Left-click is the gameplay fire action; capture the real runtime cooldown
+   // while the button is pressed, rather than sampling after it has expired.
+   // The legacy F key is deliberately NOT used.
+   await page.mouse.move(cx,cy);
+   await page.mouse.down({button:'left'});
+   let fired;
+   try {
+    const shotHandle=await page.waitForFunction(async()=>{
+      const {state}=await import('./js/core/state.js');
+      const p=state.entities.find(e=>e.playable3d);
+      const cooldown=p._attackCooldown||0;
+      return cooldown>0?{cooldown,animation:p.animation||null}:false;
+    },null,{timeout:5000});
+    const shot=await shotHandle.jsonValue();
+    await shotHandle.dispose();
+    fired={...await snap(),shot};
+   } finally {await page.mouse.up({button:'left'})}
+   assert(fired.shot.cooldown>0,
+     'Left-click must invoke real FPS/TPS weapon attack: '+JSON.stringify(fired));
    await page.screenshot({path:path.join(out,mode+'-play.png')});
    await page.keyboard.press('Escape');
    const paused=await snap();
@@ -188,5 +203,5 @@ try{
  }
  report.result='PASS';
  await writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));
- console.log(JSON.stringify({result:report.result,builds,modes:Object.fromEntries(Object.entries(report.modes).map(([m,v])=>[m,{camera:v.turned.yaw,navSpeed:v.navigated.observation.speed,playerMoved:Math.hypot(v.forward.playerX-v.beforeForward.playerX,v.forward.playerY-v.beforeForward.playerY),rotatedDistance:v.rotatedDistance,fired:v.fired.attackCooldown>0}]))},null,2));
+ console.log(JSON.stringify({result:report.result,builds,modes:Object.fromEntries(Object.entries(report.modes).map(([m,v])=>[m,{camera:v.turned.yaw,navSpeed:v.navigated.observation.speed,playerMoved:Math.hypot(v.forward.playerX-v.beforeForward.playerX,v.forward.playerY-v.beforeForward.playerY),rotatedDistance:v.rotatedDistance,fired:v.fired.shot.cooldown>0}]))},null,2));
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}

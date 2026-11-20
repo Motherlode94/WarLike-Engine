@@ -99,6 +99,37 @@ try{
  assert.equal(reopened.avatar,'avatar-native-2');
  assert.deepEqual(report.errors,[]);
  report.checks.push('Save/reopen and Web export preserve the shared asset and GameObject graph');
+ const sceneDrop2d=await page.evaluate(async()=>{
+  const [{createProject},{state,notify},{gameProject},{defaultAnimatorGraph},{animatorControllerDragType}]=await Promise.all([
+    import('/js/core/project-hub.js'),import('/js/core/state.js'),
+    import('/js/core/game-project.js'),import('/js/core/animator-graph.js'),
+    import('/js/ui/project-animator-assets.js')
+  ]);
+  createProject('Animator Scene 2D Drop','2d');
+  const source={id:20,name:'Source 2D',type:'object',x:60,y:60,w:70,h:80,animatorGraph:defaultAnimatorGraph()};
+  const target={id:21,name:'Target 2D',type:'object',x:230,y:60,w:80,h:90,animatorGraph:defaultAnimatorGraph()};
+  state.entities.push(source,target);state.selected=[20];notify();
+  const {createAnimatorControllerAsset}=await import('/js/core/animator-controller-assets.js');
+  const asset=createAnimatorControllerAsset(gameProject,source);
+  const canvas=document.querySelector('#canvas'),r=canvas.getBoundingClientRect();
+  const drag=(x,y)=>{
+   const dt=new DataTransfer();dt.setData(animatorControllerDragType,asset.id);
+   const options={bubbles:true,cancelable:true,dataTransfer:dt,clientX:r.left+x,clientY:r.top+y};
+   canvas.dispatchEvent(new DragEvent('dragover',options));
+   canvas.dispatchEvent(new DragEvent('drop',options));
+  };
+  drag(900,500); // Empty space must not alter the current selection.
+  const noChange=target.animatorControllerId===undefined&&state.selected.at(-1)===20;
+  drag(250,80);
+  return {noChange,assigned:target.animatorControllerId===asset.id,
+    selected:state.selected.at(-1),sourceGraph:structuredClone(source.animatorGraph),
+    targetGraph:structuredClone(target.animatorGraph)};
+ });
+ assert(sceneDrop2d.noChange,'Dropping in empty 2D space must not affect selected GameObject');
+ assert(sceneDrop2d.assigned,'Dropping on 2D target must attach the Controller');
+ assert.equal(sceneDrop2d.selected,21);
+ assert.deepEqual(sceneDrop2d.sourceGraph,sceneDrop2d.targetGraph);
+ report.checks.push('Scene View 2D drop resolves the target position; empty space is ignored');
  report.status='PASS';
 }catch(error){report.errors.push(error.message);throw error}
 finally{

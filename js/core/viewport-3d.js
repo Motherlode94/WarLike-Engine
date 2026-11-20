@@ -2,6 +2,8 @@ import {runtimeProfiler,profileStart,profileScope,profileDraw,createGpuProfiler}
 import {createEditorPlayCamera} from './editor-play-camera.js';
 import {cacheAnimationGeometry,skeletalClips,sampleEntityRigPose,hasSkeletalPreview,skeletalFrame} from './skeletal-animation.js';
 import {waterSettings,waterSurface3d,waterColor} from './stylized-water.js';
+import {validTerrainHeightfield} from './gaia-terrain-physics.js';
+import {terrainSurfaceMesh3d} from './gaia-terrain-sculpt.js';
 import {runRuntimeFrame} from './runtime-session.js';
 import {companyController,commandCompany,selectCompanySquad} from './company-runtime.js';
 import {moveCompanyCamera} from './company-camera.js';
@@ -451,6 +453,7 @@ export function init3d(canvas,host,buttons){
  const makeBuffer=(data,dynamic=false)=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,dynamic?gl.DYNAMIC_DRAW:gl.STATIC_DRAW);return {buffer:b,count:data.length/6}};
  const cubes=makeBuffer(cubeVerts()),sphere=makeBuffer(curvedVerts('sphere')),cylinder=makeBuffer(curvedVerts('cylinder')),cone=makeBuffer(curvedVerts('cone')),grid=makeBuffer(gridVerts()),outline=makeBuffer(boundsLines());
  const waterMesh=makeBuffer(new Float32Array(0),true);
+ const terrainMeshes=new Map();
  const realGlbBuffers=new Map(),animationStates=new WeakMap(),animatedHitVertices=new WeakMap();
  view3d.modelDiagnostics=()=>[...realGlbBuffers].map(([id,value])=>({id,status:value.status,triangles:value.triangles||0,warnings:value.materialWarnings||[],message:value.message||null,maps:value.parts?.map(p=>Object.keys(p.mesh.materialMaps||{}))||[]}));
  const ensureModel=id=>{
@@ -973,6 +976,27 @@ export function init3d(canvas,host,buttons){
   for(const o of objects){
    const b=objectBounds3d(o),color=assetColor(o),asset=getAsset(o.assetId),category=asset?.category;
    const angle=(o.rotation||0)*Math.PI/180;
+   if(o.terrainHeightfield&&validTerrainHeightfield(o.terrainHeightfield)){
+    const terrain=o.terrainHeightfield,signature=(o.terrainRevision3d||0)+'|'+terrain.resolution+'|'+terrain.size;
+    let cached=terrainMeshes.get(o.id);
+    if(!cached||cached.signature!==signature){
+     if(cached){gl.deleteBuffer(cached.mesh.buffer);gl.deleteBuffer(cached.mesh.colorBuffer)}
+     const surface=terrainSurfaceMesh3d(terrain);
+     const mesh=makeBuffer(surface.vertices);
+     mesh.colorBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,mesh.colorBuffer);
+     gl.bufferData(gl.ARRAY_BUFFER,surface.colors,gl.STATIC_DRAW);
+     cached={mesh,signature};terrainMeshes.set(o.id,cached);
+    }
+    submit([terrain.offsetX,Number(o.elevation3d)||0,terrain.offsetZ],()=>{
+     gl.uniform1f(u.roughness,Math.max(.04,Math.min(1,o.materialRoughness??.88)));
+     gl.uniform1f(u.metallic,0);
+     bind(cached.mesh);
+     model([terrain.offsetX,Number(o.elevation3d)||0,terrain.offsetZ],[1,1,1],[1,1,1,1],0);
+     profileDraw(cached.mesh.count,'triangles');
+     gl.drawArrays(gl.TRIANGLES,0,cached.mesh.count);
+    },false,o);
+    continue;
+   }
    if(o.water3d?.enabled){
     submit([b.x,Number(o.elevation3d)||0,b.z],()=>{
      const water=waterSettings(o.water3d),surface=waterSurface3d(b.w,b.d,now/1000,water);

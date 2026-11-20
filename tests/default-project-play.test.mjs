@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 
-test('default 3D project has a playable actor',()=>{
+test('default 3D project starts with the clean editable camera terrain and light',()=>{
  const hub=read('js/core/project-hub.js');
- assert.match(hub,/defaults3d=\(\)=>\[\{\.\.\.prefab3d\('character-hero',1,150,150\),name:'3D Player',playable3d:true\}\]/);
+ assert.match(hub,/defaults3d=\(\)=>createCleanStarterScene3d\(\)/);
 });
 test('Hub project changes update both the canvas and 3D state before Play',()=>{
  const source=read('js/core/viewport-3d.js');

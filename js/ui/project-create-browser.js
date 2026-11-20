@@ -62,18 +62,18 @@ export function mountProjectCreateBrowser(){
  options.prepend(animator);
  // The Project dock clips overflow; a top-layer popover keeps the native
  // menu interactive without changing dock dimensions or breaking other panels.
- options.setAttribute('popover','manual');
- const closeMenu=()=>{if(options.matches(':popover-open'))options.hidePopover();menu.open=false};
+ options.hidden=true;
+ const closeMenu=()=>{options.hidden=true;options.style.display='none';menu.open=false};
  const placeMenu=()=>{
   const r=menu.getBoundingClientRect(),width=240;
-  options.style.position='fixed';
+  options.style.position='fixed';options.style.zIndex='99999';
   options.style.left=Math.max(8,Math.min(window.innerWidth-width-8,r.right-width))+'px';
   options.style.top=Math.max(8,Math.min(window.innerHeight-90,r.bottom+4))+'px';
   options.style.width=width+'px';
  };
  menu.addEventListener('toggle',()=>{
-  if(menu.open){placeMenu();options.showPopover()}
-  else if(options.matches(':popover-open'))options.hidePopover();
+  if(menu.open){placeMenu();options.hidden=false;options.style.display='block'}
+  else{options.hidden=true;options.style.display='none'}
  });
  document.addEventListener('pointerdown',event=>{
   if(menu.open&&!menu.contains(event.target)&&!options.contains(event.target))closeMenu();

@@ -59,7 +59,7 @@ export function mountProjectCreateBrowser(){
   try{createNativeAnimatorControllerFromSelection();menu.open=false}
   catch(error){window.alert('Création impossible : '+error.message)}
  };
- options.append(animator);
+ options.prepend(animator);
  menu.append(options);toolbar.append(menu);
  const panel=document.createElement('section');panel.className='warlike-project-documents';
  const heading=document.createElement('h4');heading.textContent='Documents du projet';panel.append(heading);

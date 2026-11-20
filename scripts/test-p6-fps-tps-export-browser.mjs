@@ -95,7 +95,10 @@ try{
    assert.equal(initial.glError,0);
    // Sample position and Animator parameters atomically. At a waypoint or an
    // obstacle the agent may legitimately be idle on the NEXT animation frame.
-   await page.waitForFunction(async initialX=>{
+   // Playwright's waitForFunction may execute in an isolated world; never
+   // write telemetry to window and then read it through page.evaluate.
+   // Return the same-frame observation as a JSHandle instead.
+   const observationHandle=await page.waitForFunction(async initialX=>{
     const {state}=await import('./js/core/state.js');
     const target=state.entities.find(e=>e.navigationAgent);
     const observation={
@@ -105,13 +108,12 @@ try{
       moving:target.animatorParameters?.navigationMoving,
       status:target._navigationState?.status,
     };
-    if(Math.abs(observation.x-initialX)>0.2 && observation.speed>0 && observation.moving===true){
-      window.__p6NavigationObserved=observation;
-      return true;
-    }
-    return false;
+    return Math.abs(observation.x-initialX)>0.2 &&
+      observation.speed>0 && observation.moving===true ? observation : false;
    },initial.navX,{timeout:15000});
-   const navigated={...await snap(),observation:await page.evaluate(()=>window.__p6NavigationObserved)};
+   const observation=await observationHandle.jsonValue();
+   await observationHandle.dispose();
+   const navigated={...await snap(),observation};
    assert(navigated.observation.speed>0,'Native Navigation Agent must report Animator speed while moving');
    // Verify keyboard locomotion BEFORE turning to separate input capture
    // failures from genuinely blocked camera-relative paths.

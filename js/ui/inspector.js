@@ -1,6 +1,7 @@
 import {createCSharpWebCopy} from '../core/csharp-web-copy.js';
 import {renderWebScriptInspector} from './web-script-inspector.js';
 import {gameProject} from '../core/game-project.js';
+import {animatorControllerAssets,createAnimatorControllerAsset,assignAnimatorControllerAsset,saveAnimatorControllerAsset,animatorControllerOutdated} from '../core/animator-controller-assets.js';
 import {renderWarScriptInspector} from './war-script-inspector.js';
 import {renderGenericComponents} from './generic-component-inspector.js';
 import {renderLifeInspector} from './life-inspector.js';
@@ -123,7 +124,38 @@ function finishInspector(root,o,templates){renderWebScriptInspector(root,o,{comp
  const row=(name,value)=>{const item=document.createElement('div');item.className='inspector-animator-field';
   const label=document.createElement('span');label.textContent=name;
   const current=document.createElement('span');current.textContent=value;current.title=value;item.append(label,current);body.append(item)};
- row('Controller',o.animatorGraph.controllerName||o.name+' · Controller');
+ const choices=animatorControllerAssets(gameProject);
+ const selected=document.createElement('select');selected.className='inspector-animator-controller-select';
+ selected.setAttribute('aria-label','Animator Controller du projet');
+ const empty=document.createElement('option');empty.value='';empty.textContent='Aucun Controller réutilisable';selected.append(empty);
+ for(const asset of choices){const option=document.createElement('option');option.value=asset.id;option.textContent=asset.name+' · v'+asset.revision;selected.append(option)}
+ selected.value=choices.some(a=>a.id===o.animatorControllerId)?o.animatorControllerId:'';
+ selected.disabled=state.playing;body.append(selected);
+ const actions=document.createElement('div');actions.className='inspector-animator-actions';
+ const assign=document.createElement('button');assign.type='button';assign.textContent='Assigner';
+ assign.disabled=state.playing||!choices.length;
+ assign.onclick=()=>{
+  if(state.playing||!selected.value)return;
+  if(o.animatorGraph&&!window.confirm('Assigner ce Controller ? Le graphe actuel de ce GameObject sera remplacé, mais ses clips et son Avatar seront conservés.'))return;
+  try{assignAnimatorControllerAsset(gameProject,o,selected.value);record('Assigner Animator Controller');notify()}
+  catch(error){window.alert('Animator : '+error.message)}
+ };
+ const create=document.createElement('button');create.type='button';create.textContent='Créer Controller';
+ create.disabled=state.playing;create.onclick=()=>{
+  if(state.playing)return;
+  try{createAnimatorControllerAsset(gameProject,o);record('Créer Animator Controller réutilisable');notify()}
+  catch(error){window.alert('Animator : '+error.message)}
+ };
+ const update=document.createElement('button');update.type='button';update.textContent='Enregistrer Controller';
+ update.disabled=state.playing||!choices.some(a=>a.id===o.animatorControllerId);
+ update.onclick=()=>{
+  if(state.playing||!window.confirm('Enregistrer les modifications de ce graphe dans le Controller du projet ? Les autres GameObjects conservent leurs versions tant qu’ils ne sont pas réassignés.'))return;
+  try{saveAnimatorControllerAsset(gameProject,o);record('Enregistrer Animator Controller');notify()}
+  catch(error){window.alert('Animator : '+error.message)}
+ };
+ actions.append(assign,create,update);body.append(actions);
+ if(animatorControllerOutdated(gameProject,o)){const warning=document.createElement('small');warning.textContent='Controller mis à jour ou absent : réassigne-le pour synchroniser ce GameObject.';body.append(warning)}
+
  row('Avatar',o.animationRig?.avatar?'Humanoid':'Aucun · choisir un rig');
  const rootMotion=document.createElement('label');rootMotion.className='inspector-animator-root-motion';
  const toggle=document.createElement('input');toggle.type='checkbox';toggle.checked=!!o.animationRig?.rootMotion?.enabled;toggle.disabled=state.playing;

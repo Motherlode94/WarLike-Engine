@@ -24,7 +24,7 @@ test('Hub saves independently named 2D and 3D projects',()=>{
  state.nextId=3;assert.equal(saveProject(),true);
  const b=createProject('World 3D','3d');
  assert.equal(workspace.mode,'3d');
- assert.ok(state.entities.some(o=>o.type==='mesh3d'&&o.playable3d));
+ assert.deepEqual(state.entities.map(o=>o.name),['Main Camera','Terrain','Directional Light']);
  assert.equal(listProjects().length,2);
  assert.ok(renameProject(b,'World Renamed'));
  assert.equal(listProjects().find(p=>p.id===b).name,'World Renamed');
@@ -32,7 +32,7 @@ test('Hub saves independently named 2D and 3D projects',()=>{
  assert.ok(state.entities.some(o=>o.name==='Arena wall'));
  assert.equal(state.entities.some(o=>o.type==='mesh3d'),false);
  openProject(b);
- assert.ok(state.entities.some(o=>o.playable3d));
+ assert.deepEqual(state.entities.map(o=>o.name),['Main Camera','Terrain','Directional Light']);
  deleteProject(a);
  assert.equal(listProjects().length,1);
 });
@@ -52,7 +52,7 @@ test('genre survives project reopen and independent workspace switches',()=>{
  state.playing=false;const id=createProject('Mon survival','3d','starter','survival');assert.equal(gameProject.genre,'survival');assert.equal(hub.genre,'survival');switchWorkspace('2d');assert.equal(gameProject.genre,'survival');assert.equal(gameProject.id,id);saveProject();assert.equal(listProjects().find(p=>p.id===id).type,'2d');createProject('RPG séparé','3d','starter','rpg');openProject(id);assert.equal(gameProject.genre,'survival');assert.equal(workspace.mode,'2d');assert.equal(gameProject.title,'Mon survival');
 });
 test('platformer creation is 2D only and its other workspace remains a valid blank project',()=>{
- state.playing=false;const id=createProject('Plateforme Kenney','2d','starter','platformer');assert.equal(gameProject.genre,'platformer');assert.ok(state.entities.some(o=>o.controller2d?.mode==='platformer'));switchWorkspace('3d');assert.equal(gameProject.genre,'sandbox');assert.equal(gameProject.id,id);assert.ok(state.entities.some(o=>o.playable3d));switchWorkspace('2d');assert.equal(gameProject.genre,'platformer');const before=JSON.stringify(state.entities);assert.throws(()=>createProject('Incompatible','3d','starter','platformer'),/incompatible/);assert.equal(JSON.stringify(state.entities),before);
+ state.playing=false;const id=createProject('Plateforme Kenney','2d','starter','platformer');assert.equal(gameProject.genre,'platformer');assert.ok(state.entities.some(o=>o.controller2d?.mode==='platformer'));switchWorkspace('3d');assert.equal(gameProject.genre,'sandbox');assert.equal(gameProject.id,id);assert.deepEqual(state.entities.map(o=>o.name),['Main Camera','Terrain','Directional Light']);switchWorkspace('2d');assert.equal(gameProject.genre,'platformer');const before=JSON.stringify(state.entities);assert.throws(()=>createProject('Incompatible','3d','starter','platformer'),/incompatible/);assert.equal(JSON.stringify(state.entities),before);
 });
 test('changing a project genre retains authored entities, title and scenes',()=>{
  state.playing=false;const id=createProject('Projet personnalisé','3d','starter','sandbox');gameProject.title='Mon titre conservé';state.entities[0].name='Mon personnage';captureGameScene(state.entities,state.camera,{id:'custom'});const entities=JSON.stringify(state.entities),scenes=JSON.stringify(gameProject.scenes);assert.equal(chooseProjectGenre(id,'rpg'),true);assert.equal(gameProject.genre,'rpg');assert.equal(JSON.stringify(state.entities),entities);assert.equal(JSON.stringify(gameProject.scenes),scenes);assert.equal(gameProject.title,'Mon titre conservé');createProject('Autre','2d');openProject(id);assert.equal(gameProject.genre,'rpg');assert.equal(state.entities[0].name,'Mon personnage');assert.throws(()=>chooseProjectGenre(id,'platformer'),/incompatible/);state.playing=true;assert.throws(()=>chooseProjectGenre(id,'survival'),/Arrête Play/);state.playing=false;

@@ -1,3 +1,4 @@
+import {createCleanStarterScene3d} from './clean-starter-scene.js';
 import {portableModelArchive} from './portable-models.js';
 import {animationEditorPreview} from './animation-clips.js';
 import {gameProject,freshGameProject} from './game-project.js';
@@ -31,8 +32,8 @@ export function setHubAccent(value,{persist=true}={}){
 }
 
 const defaults2d=()=>[{id:1,name:'Player',type:'prefab',assetId:'free-platformer-art-deluxe-p1-stand',x:100,y:110,w:64,h:88,color:'#41cdb5',animation:'idle',animationSpeed:1,hp:100,behavior:'none'}];
-const defaults3d=()=>[{...prefab3d('character-hero',1,150,150),name:'3D Player',playable3d:true}];
-const entry=entities=>({entities,selected:[1],nextId:2,camera:{x:0,y:0,zoom:1}});
+const defaults3d=()=>createCleanStarterScene3d();
+const entry=entities=>({entities,selected:entities.length===3&&entities[0]?.name==='Main Camera'?[]:entities.length?[entities[0].id]:[],nextId:Math.max(1,...entities.map(e=>e.id+1)),camera:{x:0,y:0,zoom:1}});
 const safeRead=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
 const indexed=()=>safeRead(INDEX,[]).filter(p=>p&&typeof p.id==='string');
 const uniqueId=()=>Date.now().toString(36)+'-'+Math.floor(Math.random()*1e8).toString(36);

@@ -4,11 +4,14 @@ const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 export const lightTypes=['point','spot'];
 export function updateLighting(dt,playing){if(playing&&lighting.dayNight&&lighting.speed>0)lighting.hour=(lighting.hour+Math.min(.1,Math.max(0,Number(dt)||0))*lighting.speed/3600)%24}
 export function periodAt(hour=lighting.hour){const h=((Number(hour)||0)%24+24)%24;return h>=6&&h<8?'aube':h>=8&&h<18?'jour':h>=18&&h<20?'crépuscule':'nuit'}
-export function sunAt(hour=lighting.hour){
+export function sunAt(hour=lighting.hour,entities=null){
+ const sceneLight=Array.isArray(entities)?entities.find(o=>o?.lightType==='directional'&&o.enabled!==false):null;
+ const enabled=sceneLight?sceneLight.lightEnabled!==false:lighting.sunEnabled;
+ const intensity=sceneLight&&Number.isFinite(Number(sceneLight.lightIntensity))?Math.max(0,Math.min(10,Number(sceneLight.lightIntensity))):lighting.sunIntensity;
  const theta=((hour-6)/24)*Math.PI*2;
  const altitude=Math.sin(theta),sun=Math.max(0,altitude),twilight=Math.max(0,1-Math.abs(altitude)*4),night=1-sun;
  return {direction:[Math.cos(theta)*.45,Math.max(.08,altitude),Math.sin(theta)*.55],
- intensity:lighting.sunEnabled?lighting.sunIntensity*(.07+.93*sun):0,
+ intensity:enabled?intensity*(.07+.93*sun):0,
  ambient:Math.max(.035,lighting.ambient*(.3+.7*sun))+sun*.12,
  color:[1,.93-.21*twilight,.80-.28*twilight],
  sky:[.014+.31*sun+.11*twilight,.020+.49*sun+.045*twilight,.046+.71*sun+.065*twilight]};

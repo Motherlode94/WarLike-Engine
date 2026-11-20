@@ -109,7 +109,7 @@ test('animation and WarScript LateUpdate share one accepted frame and pause free
  setup('web');const actor=state.entities[0];actor.csharpComponents=[];
  actor.animationStudio={playOnStart:true,clips:[{name:'Move',duration:1,speed:1,keys:[{time:0,x:0},{time:1,x:100}],events:[]}]};
  actor.warScripts=[{scriptId:'animation-observer',name:'Observer.wls',source:'LateUpdate(){ transform.rotation.z = transform.position.x * 64; }',values:{}}];
- try{runRuntimeFrame(.1,{canRun:()=>true});assert.equal(actor.x,10);assert.equal(actor.rotation,10);runRuntimeFrame(.1,{canRun:()=>false});assert.equal(actor.x,10);runRuntimeFrame(.1,{canRun:()=>true});assert.equal(actor.x,20);assert.equal(actor.rotation,20);stopRuntimeSession();startRuntimeSession();runRuntimeFrame(.1,{canRun:()=>true});assert.equal(actor.x,10);}finally{finish()}
+ try{runRuntimeFrame(.1,{canRun:()=>true});assert.equal(actor.x,10);assert.equal(actor.rotationZ3d,10);runRuntimeFrame(.1,{canRun:()=>false});assert.equal(actor.x,10);runRuntimeFrame(.1,{canRun:()=>true});assert.equal(actor.x,20);assert.equal(actor.rotationZ3d,20);stopRuntimeSession();startRuntimeSession();runRuntimeFrame(.1,{canRun:()=>true});assert.equal(actor.x,10);}finally{finish()}
 });
 
 test('native animation waits for accepted responses and never advances for an in-flight frame',async()=>{

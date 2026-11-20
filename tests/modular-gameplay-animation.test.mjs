@@ -92,3 +92,15 @@ test('P2: vehicle behavior is independently attachable to a plain GameObject',()
  const source2d=readFileSync(new URL('../js/core/vehicle.js',import.meta.url),'utf8');
  assert.match(source2d,/o\?\.vehicleController\?\.enabled===true/);
 });
+
+test('P3: near-equal waypoint coordinates never leave a moving agent stalled at the stop-radius boundary',()=>{
+ const a=actor(22,99.20000002,0);
+ a.navigationAgent={...defaultNavigationAgent(),speed:1.3,stoppingDistance:.2,loop:true,waypoints:[{x:112,y:0},{x:68,y:0}]};
+ a._navigationState={index:0};
+ const previous=a.x;
+ const moved=stepNavigationAgents([a],1/60,{mode:'3d'});
+ assert.equal(moved,1,'agent must reverse toward next waypoint despite rounding error');
+ assert.ok(a.x<previous);
+ assert.equal(a._navigationState.index,1);
+ assert.ok(a.animatorParameters.navigationSpeed>0);
+});

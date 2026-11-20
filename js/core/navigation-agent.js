@@ -23,7 +23,7 @@ export function stepNavigationAgents(entities,dt,{mode='3d'}={}){
   let destination=target?{x:target.x,y:target.y}:cfg.waypoints[runtime.index]||null;
   if(!destination){runtime.speed=0;runtime.status='idle';continue}
   let dx=destination.x-o.x,dy=destination.y-o.y,distance=Math.hypot(dx,dy);
-  if(!target&&distance<=cfg.stoppingDistance*64){
+  if(!target&&distance<=cfg.stoppingDistance*64+1e-3){
    runtime.index+=1;
    if(runtime.index>=cfg.waypoints.length)runtime.index=cfg.loop?0:cfg.waypoints.length;
    destination=cfg.waypoints[runtime.index]||null;

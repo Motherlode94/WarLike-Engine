@@ -401,7 +401,7 @@ document.getElementById('play')?.addEventListener('click',()=>{unlockHorrorAudio
 
 initGameFlowUi();
 initStudioPolish();
-initDemoBrowser();
+// Bundled demo gallery retired: start in an editable clean scene.
 initAnnotationEditor();
 initResponsiveEditor();
 for(const event of ['warlike:annotation-open','warlike:annotation-close'])document.addEventListener(event,()=>{state.keys.clear();state.keyPresses?.clear()});

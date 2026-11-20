@@ -122,9 +122,16 @@ try{
      'Native Navigation Agent must report Animator speed while moving: '+JSON.stringify({initial,navigated}));
    // Verify keyboard locomotion BEFORE turning to separate input capture
    // failures from genuinely blocked camera-relative paths.
+   // Focus the actual game canvas, not a potentially focused UI field.
+   // Otherwise a keydown can be rejected by the editor's typing guard.
+   await page.locator('#canvas3d').focus();
    const beforeForward=await snap();
    await page.keyboard.down('w');
    try {
+    await page.waitForFunction(async()=>{
+      const {state}=await import('./js/core/state.js');
+      return state.keys.has('w');
+    },null,{timeout:2000});
     await page.waitForFunction(async start=>{
       const {state}=await import('./js/core/state.js');
       const actor=state.entities.find(e=>e.playable3d);

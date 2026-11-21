@@ -1,12 +1,14 @@
 // WarLike Editor project documents. Authoring assets are versioned project-local
 // JSON documents; no implied runtime support until an importer consumes the type.
 import {gameProject} from '../core/game-project.js';
+import {mountAnimatorControllerProjectAssets,createNativeAnimatorControllerFromSelection} from './project-animator-assets.js';
 const types={
  folder:{label:'Dossier',data:{children:[]}},
  scene:{label:'Scène',data:{entities:[],camera:{x:0,y:0,zoom:1},mode:'3d'}},
  material:{label:'Material',data:{shader:'standard',color:'#ffffff',metallic:0,roughness:.8}},
  physicMaterial:{label:'Physic Material',data:{friction:.5,restitution:0}},
- animatorController:{label:'Animator Controller',data:{parameters:[],states:[],transitions:[]}},
+ // Legacy placeholder format retained solely for reading older local documents.
+ animatorController:{label:'Animator Controller (ancien document)',data:{parameters:[],states:[],transitions:[]}},
  animationClip:{label:'Animation Clip',data:{duration:1,loop:true,curves:[]}},
  avatarMask:{label:'Avatar Mask',data:{bones:[]}},
  audioMixer:{label:'Audio Mixer',data:{groups:[{name:'Master',gain:1}]}},
@@ -25,6 +27,7 @@ export function listProjectDocuments(){
 }
 function persist(items){localStorage.setItem(key(),JSON.stringify(items))}
 export function createProjectDocument(type){
+ if(type==='animatorController')throw Error('Utilise la ressource native Animator Controller du projet.');
  if(!types[type])throw Error('Type de document inconnu');
  const items=listProjectDocuments();
  const prefix=types[type].label;
@@ -41,18 +44,53 @@ export function downloadProjectDocument(asset){
  a.href=url;a.download=asset.name.replace(/[^a-z0-9_.-]+/gi,'-')+'.warlike.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 export function mountProjectCreateBrowser(){
- const toolbar=document.querySelector('.asset-toolbar'),host=document.querySelector('.asset-content');if(!toolbar||!host)return;
- const menu=document.createElement('details');menu.className='warlike-project-create';menu.innerHTML='<summary>＋ Créer un asset</summary>';
+ const host=document.querySelector('#projectContent'),toolbar=document.querySelector('#projectPanel > .bottom-tabs');if(!toolbar||!host)return;
+ const menu=document.createElement('button');menu.type='button';menu.id='warlikeProjectCreateTrigger';menu.className='warlike-project-create';menu.textContent='＋ Créer un asset';menu.setAttribute('aria-expanded','false');
  const options=document.createElement('div');options.className='warlike-project-create-options';
  for(const [type,definition] of Object.entries(types)){
+  if(type==='animatorController')continue;
   const button=document.createElement('button');button.type='button';button.textContent=definition.label;
-  button.onclick=()=>{try{createProjectDocument(type);menu.open=false}catch(error){window.alert('Création impossible : '+error.message)}};
+  button.onclick=()=>{try{createProjectDocument(type);closeMenu()}catch(error){window.alert('Création impossible : '+error.message)}};
   options.append(button);
- }menu.append(options);toolbar.prepend(menu);
+ }
+ const animator=document.createElement('button');animator.type='button';animator.textContent='Animator Controller';
+ animator.title='Créer une véritable ressource Animator Controller depuis le GameObject sélectionné.';
+ animator.onclick=()=>{
+  try{createNativeAnimatorControllerFromSelection();closeMenu()}
+  catch(error){window.alert('Création impossible : '+error.message)}
+ };
+ options.prepend(animator);
+ // The Project dock clips overflow; a top-layer popover keeps the native
+ // menu interactive without changing dock dimensions or breaking other panels.
+ options.hidden=true;let open=false;
+ const closeMenu=()=>{open=false;options.hidden=true;options.style.display='none';menu.setAttribute('aria-expanded','false')};
+ const placeMenu=()=>{
+  const r=menu.getBoundingClientRect(),width=240;
+  options.style.position='fixed';options.style.zIndex='99999';
+  options.style.left=Math.max(8,Math.min(window.innerWidth-width-8,r.right-width))+'px';
+  options.style.top=Math.max(8,Math.min(window.innerHeight-90,r.bottom+4))+'px';
+  options.style.width=width+'px';
+ };
+ menu.onclick=()=>{
+  if(open){closeMenu();return}
+  placeMenu();open=true;options.hidden=false;options.style.display='block';
+  menu.setAttribute('aria-expanded','true');
+ };
+ document.addEventListener('pointerdown',event=>{
+  if(open&&!menu.contains(event.target)&&!options.contains(event.target))closeMenu();
+ });
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&open)closeMenu()});
+ options.addEventListener('click',event=>{if(event.target.closest('button'))closeMenu()});
+ // Keep only the trigger inside the clipped Project dock: even a popover
+ // must not inherit an ancestor <details> content box or its overflow.
+ toolbar.append(menu);document.body.append(options);
  const panel=document.createElement('section');panel.className='warlike-project-documents';
  const heading=document.createElement('h4');heading.textContent='Documents du projet';panel.append(heading);
  const list=document.createElement('div');list.className='warlike-project-document-list';panel.append(list);
- host.append(panel);
+ host.querySelector('.asset-body')?.before(panel);
+ // Keep the draggable project-owned Controllers in the always-visible Project dock.
+ // Import/library panels can overflow the inner Project content area.
+ mountAnimatorControllerProjectAssets(toolbar);
  function draw(){
   const assets=listProjectDocuments();panel.hidden=!assets.length;list.replaceChildren();
   for(const asset of assets){

@@ -4,6 +4,7 @@ import {workspace} from '../core/workspaces.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 import {getAsset} from '../assets/catalog.js';
 import {record} from '../core/history.js';
+import {installAnimatorControllerDrop} from './project-animator-assets.js';
 import {reparentSelected} from '../core/scene.js';
 const key='warlike.hierarchy.folds.v1';let folds={};try{folds=JSON.parse(localStorage.getItem(key)||'{}')}catch{}
 const el=(tag,cls,text)=>{const node=document.createElement(tag);node.className=cls;if(text)node.textContent=text;return node};
@@ -95,6 +96,7 @@ export function renderSceneHierarchy(){
   if(children.has(object.id)){const count=el('small','hierarchy-component-mark',String(children.get(object.id).length));count.title='Objets enfants';row.append(count)}
   if(object.sequence||object.ai||object.controller3d||object.csharpScript){const badge=el('span','hierarchy-component-mark',object.csharpScript?'C#':object.sequence?'⬡':object.ai?'AI':'▣');row.append(badge)}
   dropTarget(row,object.id);
+  installAnimatorControllerDrop(row,()=>state.entities.find(entity=>entity.id===object.id));
   const wrapper=document.createDocumentFragment();wrapper.append(row);
   const expanded=folds['object:'+object.id]!==false;
   if(children.get(object.id)?.length){

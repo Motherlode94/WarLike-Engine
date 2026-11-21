@@ -1,0 +1,58 @@
+/* Project/Assets Animator Controllers: use existing theme tokens, not a new theme. */
+.warlike-project-animator-assets{min-width:0;padding:9px 10px;margin:8px 0;border:1px solid var(--wl-theme-border,var(--wl-border,#4d6069));border-radius:7px;background:var(--wl-theme-panel,var(--wl-surface,#253139));color:var(--wl-text-panel,var(--wl-text,#edf5f5))}
+.warlike-project-animator-assets[hidden]{display:none!important}
+.warlike-project-animator-assets h4{margin:0 0 5px;font-size:12px;font-weight:650;color:inherit}
+.warlike-project-animator-summary{display:block;margin-bottom:7px;color:var(--wl-muted,var(--wl-text-muted,#bac8ce));font-size:11px}
+.warlike-project-animator-list{display:grid;gap:5px;max-height:235px;overflow:auto}
+.warlike-project-animator-item{display:flex;align-items:center;gap:5px;min-width:0}
+.warlike-project-animator-item button{font:inherit;font-size:11px;min-height:27px;border:1px solid var(--wl-theme-border,var(--wl-border,#62757d));border-radius:5px;background:var(--wl-button,var(--wl-theme-panel,#34434d));color:var(--wl-text-panel,var(--wl-text,#edf5f5));padding:4px 7px;cursor:pointer}
+.warlike-project-animator-item button:focus-visible{outline:2px solid var(--wl-accent,#51bfae);outline-offset:1px}
+.warlike-project-animator-item button:disabled{cursor:not-allowed;opacity:.5}
+.warlike-project-animator-item .warlike-project-animator-drag{min-width:75px;flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:grab}
+.warlike-project-animator-item .warlike-project-animator-drag:active{cursor:grabbing}
+@media(max-width:700px){.warlike-project-animator-item{flex-wrap:wrap}.warlike-project-animator-item .warlike-project-animator-drag{flex-basis:100%}}
+
+/* Import panels inserted by Workspace must not push the Project toolbar below
+   the visible dock. Keep Create/Search accessible before optional import tools. */
+#projectPanel .asset-content{overflow-y:auto!important;min-height:0}
+#projectPanel .asset-content > .asset-toolbar{order:-100;position:sticky;top:0;z-index:20;flex-shrink:0}
+#projectPanel .asset-content > .warlike-project-animator-assets{order:-90;flex-shrink:0}
+#projectPanel .asset-content > .warlike-project-documents{order:-80;flex-shrink:0}
+#projectPanel .warlike-project-create[open] .warlike-project-create-options{position:static;max-height:220px;overflow:auto}
+
+/* Native authoring controls sit in the Project dock header, not underneath the
+   optional GLB import panels that can fill the available vertical space. */
+#projectPanel #projectContent > .browser-title{display:flex;align-items:center;justify-content:space-between;gap:8px;overflow:visible;flex:0 0 auto}
+#projectPanel > .bottom-tabs .warlike-project-create{margin-left:auto;z-index:45}
+#projectPanel > .bottom-tabs .warlike-project-create summary{padding:3px 8px;font-size:11px;line-height:18px}
+#projectPanel > .bottom-tabs .warlike-project-create-options{position:absolute;top:100%;left:auto;right:0;min-width:225px;z-index:55;max-height:min(260px,45vh)}
+#projectPanel #projectContent > .warlike-project-animator-assets{margin:0;max-height:126px;overflow:auto;flex:0 0 auto;border-radius:0}
+#projectPanel #projectContent > .warlike-project-documents{max-height:110px;overflow:auto;flex:0 0 auto}
+#projectPanel #projectContent > .asset-body{min-height:0;flex:1 1 auto}
+
+/* Project/Console tabs remain visible even when asset import panels overflow. */
+#projectPanel > .bottom-tabs .warlike-project-create{margin-left:auto;position:relative;z-index:55;flex:0 0 auto}
+#projectPanel > .bottom-tabs .warlike-project-create summary{white-space:nowrap;min-height:24px;box-sizing:border-box}
+#projectPanel > .bottom-tabs .warlike-project-create[open] .warlike-project-create-options{position:absolute;top:100%;right:0;left:auto;display:block;z-index:70;max-height:min(260px,45vh);overflow:auto}
+
+/* Explicit Create button: avoids native details auto-close inside the dock. */
+#projectPanel > .bottom-tabs button.warlike-project-create{padding:3px 8px;font-size:11px;line-height:18px;min-height:24px;border:1px solid var(--wl-theme-border,#4c5a65);border-radius:4px;background:var(--wl-theme-button,#344352);color:var(--wl-theme-fg,#e9f1f7);cursor:pointer;white-space:nowrap;margin-left:auto}
+body > .warlike-project-create-options:not([hidden]){position:fixed;display:block;z-index:99999;background:var(--wl-theme-panel,#242f3a);border:1px solid var(--wl-theme-border,#596b7a);color:var(--wl-theme-fg,#eef2f6);box-shadow:0 12px 26px #0009}
+body > .warlike-project-create-options[hidden]{display:none!important}
+
+/* The library below may contain thousands of GLBs; do not bury draggable
+   Controllers inside its scrolled/overflow-clipped content. */
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets{
+ display:flex;align-items:center;gap:5px;flex:0 1 340px;min-width:100px;
+ margin:0 3px;padding:2px 5px;border-radius:3px;border-color:var(--wl-theme-border,#52606c);
+ overflow:hidden;white-space:nowrap;background:var(--wl-theme-header,#2a3844)
+}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets h4,
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-summary{display:none}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-list{
+ display:flex;align-items:center;gap:5px;max-height:30px;overflow-x:auto;overflow-y:hidden;min-width:0;width:100%
+}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-item{flex:none;min-width:0}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets button{min-height:23px;padding:2px 5px;font-size:10px}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-drag{max-width:160px;min-width:75px}
+#projectPanel:has(#projectContent[hidden]) > .bottom-tabs > .warlike-project-animator-assets{display:none!important}

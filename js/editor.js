@@ -67,6 +67,7 @@ import {addEntity,addPrefab,addLogicHotspot,addLight,addAudioEmitter,duplicateSe
 import {sceneCreateItems,createSceneItem} from './core/editor-create-catalog.js';
 import {initTilemapEditor2d} from './ui/tilemap-editor-2d.js';
 import {mountProjectCreateBrowser} from './ui/project-create-browser.js';
+import {installAnimatorControllerSceneDrop} from './ui/project-animator-assets.js';
 import {renderUI} from './ui/inspector.js';
 import {attachInput} from './core/input.js';
 import {startRenderer} from './core/renderer.js';
@@ -310,6 +311,7 @@ quickCreate?.addEventListener('click',event=>{
  if(created)quickCreate.open=false;
 });
 mountProjectCreateBrowser();
+installAnimatorControllerSceneDrop();
 document.addEventListener('pointerdown',event=>{if(quickCreate?.open&&!quickCreate.contains(event.target))quickCreate.open=false});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&quickCreate?.open)quickCreate.open=false});
 document.getElementById('quickCreateObject')?.addEventListener('click',()=>addEntity('object'));

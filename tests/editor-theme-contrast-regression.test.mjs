@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {editorThemePresets,paletteContrast,contrastRatio,mixColor} from '../js/ui/editor-palette.js';
 
-const css=readFileSync(new URL('../css/unity-hierarchy-inspector-density.css',import.meta.url),'utf8');
+const css=readFileSync(new URL('../css/store-theme-parity.css',import.meta.url),'utf8');
 const section=css.split('/* Theme contrast certification')[1];
 test('theme contrast overrides are scoped to editor chrome',()=>{
  assert.ok(section,'contrast patch should be loaded');

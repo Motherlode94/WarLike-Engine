@@ -25,20 +25,26 @@ test('Inspector continues to edit real object components and scene transform',()
  assert.ok(components.includes('Réinitialiser'));
  assert.ok(components.includes('Supprimer le composant'));
 });
-test('Production HTML and export include the same hierarchy/Inspector layout CSS',()=>{
- const css='css/unity-hierarchy-inspector-density.css';
- assert.match(read('index.html'),/unity-hierarchy-inspector-density\.css/);
+test('WarLike uses neutral hierarchy layout without loading old Unity visual overrides',()=>{
+ const html=read('index.html');
  const manifest=JSON.parse(read('runtime-files.json'));
- assert.ok(manifest.files.includes(css));
- const content=read(css);
- assert.match(content,/\.unity-hierarchy-row/);
- assert.match(content,/\.inspector-component/);
- assert.match(content,/@media\(max-width:1050px\)/);
+ for(const file of ['css/editor-hierarchy.css','css/component-picker.css']){
+  assert.ok(html.includes(file),file+' not loaded');
+  assert.ok(manifest.files.includes(file),file+' missing from export manifest');
+ }
+ for(const legacy of ['unity-workspace.css','unity-layout-refinement.css','unity-hierarchy-inspector-density.css','unity-component-picker.css']){
+  assert.ok(!html.includes(legacy),legacy+' still loaded');
+  assert.ok(!manifest.files.includes('css/'+legacy),legacy+' still packaged');
+ }
+ const css=read('css/editor-hierarchy.css');
+ assert.match(css,/\.unity-hierarchy-row/);
+ assert.match(css,/\[aria-selected="true"\]/);
+ assert.match(css,/@container hierarchy-pane/);
 });
 
 test('Inspector identity metadata is editable and static is editor-only',()=>{
  const inspector=read('js/ui/inspector.js');
  for(const term of ["['layer','Layer'","o.layer=v||'Default'","staticToggle.checked=o.isStatic===true","o.isStatic=staticToggle.checked","ne remplace pas le type du Rigidbody"])assert.ok(inspector.includes(term),term);
- const css=read('css/unity-hierarchy-inspector-density.css');
- for(const term of ['.unity-object-metadata-field','.unity-object-static-field','container:hierarchy-pane / inline-size','@container hierarchy-pane','min-height:0','overflow:hidden'])assert.ok(css.includes(term),term);
+ const css=read('css/editor-hierarchy.css');
+ for(const term of ['.hierarchy-object-name','.hierarchy-row-metadata','@container hierarchy-pane','min-height:0','overflow:hidden'])assert.ok(css.includes(term),term);
 });

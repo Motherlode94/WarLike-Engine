@@ -1,0 +1,17 @@
+/* WarLike Engine hierarchy structure. The user's selected theme owns colors.
+   Layout only: rows, controls, metadata and keyboard accessibility. */
+#hierarchyPanel #objects{min-width:0;min-height:0;overflow:auto}
+#hierarchyPanel .unity-hierarchy-quicktools{display:flex;align-items:center;gap:4px;padding:3px 6px;position:sticky;top:0;z-index:5;background:var(--wl-theme-panel,var(--wl-surface,#29323c))}
+#hierarchyPanel .unity-hierarchy-quicktools button{flex:none;min-width:23px;min-height:23px}
+#hierarchyPanel .unity-hierarchy-total{margin-left:auto;font-size:11px;color:var(--wl-text-muted,#bbc5ce)}
+#hierarchyPanel .unity-hierarchy-row{display:flex;align-items:center;gap:3px;min-width:0;min-height:24px;white-space:nowrap;color:var(--wl-text-panel,inherit)}
+#hierarchyPanel .unity-hierarchy-row[aria-selected="true"]{background:var(--wl-editor-selected-bg,var(--wl-selected,#375264));color:var(--wl-text-selected,#fff)}
+#hierarchyPanel .unity-hierarchy-row .hierarchy-object-label{display:flex;align-items:center;gap:4px;flex:1;min-width:0;min-height:22px;text-align:left}
+#hierarchyPanel .hierarchy-object-name{min-width:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#hierarchyPanel .hierarchy-row-metadata{display:flex;align-items:center;gap:3px;flex:none;max-width:135px;min-width:0;overflow:hidden;color:var(--wl-text-muted,#bbc5ce)}
+#hierarchyPanel .hierarchy-row-tag,#hierarchyPanel .hierarchy-row-layer{max-width:65px;overflow:hidden;text-overflow:ellipsis;font-size:10px}
+#hierarchyPanel .hierarchy-row-tag{display:none}
+#hierarchyPanel .hierarchy-row-static{font-size:10px}
+#hierarchyPanel .hierarchy-eye,#hierarchyPanel .hierarchy-tree-toggle{flex:none;min-width:19px;min-height:19px;padding:0}
+#hierarchyPanel .unity-hierarchy-row :is(button,[tabindex]):focus-visible{outline:2px solid var(--wl-focus,var(--wl-accent,#48cba9));outline-offset:-2px}
+@container hierarchy-pane (min-width:370px){#hierarchyPanel .hierarchy-row-tag{display:inline}}

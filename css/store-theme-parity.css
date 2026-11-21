@@ -115,3 +115,78 @@ html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not
 html[data-warlike-app="warlike-engine"] body.reference-engine:not(.hub-open):not(.warlike-game-build) .editor-appearance-menu input[type=color]{
  background:var(--warlike-palette-panel,#252a32)!important;
 }
+
+/* Theme contrast certification — editor chrome only; never style the Game canvas.
+   Only theme-based readability rules; no historical hard-coded chrome. */
+body.reference-engine:not(.hub-open) {
+ --wl-editor-selected-bg:color-mix(in srgb,var(--warlike-palette-accent,#48cba9) 19%,var(--warlike-palette-panel,#303136));
+ --wl-editor-hover-bg:color-mix(in srgb,var(--warlike-palette-accent,#48cba9) 10%,var(--warlike-palette-panel,#303136));
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-row.selected,
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-row[aria-selected="true"] {
+ background:var(--wl-editor-selected-bg)!important;
+ color:var(--wl-text-selected,var(--wl-text-panel,#f1f5f9))!important;
+ border-left-color:var(--warlike-palette-accent,#48cba9);
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-row:hover:not(.selected){
+ background:var(--wl-editor-hover-bg)!important;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .hierarchy-row-metadata{
+ color:var(--wl-text-panel,#f1f5f9)!important;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel :is(.hierarchy-row-tag,.hierarchy-row-layer,.hierarchy-row-static){
+ background:var(--warlike-palette-button,#303a43)!important;
+ color:var(--wl-text-button,#f1f5f9)!important;
+ border:1px solid var(--warlike-palette-border,#45535b);
+ opacity:1!important;
+ border-radius:3px;
+ padding:1px 3px;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .hierarchy-row-tag{display:none}
+@container hierarchy-pane (min-width:370px){
+ body.reference-engine:not(.hub-open) #hierarchyPanel .hierarchy-row-tag{display:block}
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel :is(.hierarchy-eye,.hierarchy-tree-toggle,.hierarchy-object-icon,.hierarchy-script-icon){
+ color:var(--wl-text-panel,#f1f5f9)!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties .inspector-component>summary,
+body.reference-engine:not(.hub-open) #inspectorPanel #properties :is(button,.inspector-extensions-toggle),
+body.reference-engine:not(.hub-open) :is(.scene-tools,.scene-header,.bottom-tabs) button {
+ background-color:var(--warlike-palette-button,#303a43)!important;
+ color:var(--wl-text-button,#f1f5f9)!important;
+ border-color:var(--warlike-palette-border,#45535b)!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties .inspector-component>summary:hover,
+body.reference-engine:not(.hub-open) #inspectorPanel #properties button:not(:disabled):hover,
+body.reference-engine:not(.hub-open) :is(.scene-tools,.scene-header,.bottom-tabs) button:not(:disabled):hover {
+ background-color:var(--wl-editor-hover-bg)!important;
+ color:var(--wl-text-panel,#f1f5f9)!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties :is(input,select,textarea){
+ background-color:var(--warlike-palette-panel,#1c2228)!important;
+ color:var(--wl-text-panel,#f1f5f9)!important;
+ border-color:var(--warlike-palette-border,#45535b)!important;
+}
+body.reference-engine:not(.hub-open) .scene-header .scene-tabs :is(button,.tab){
+ background:var(--warlike-palette-header,#303a43)!important;
+ color:var(--wl-text-header,#f1f5f9)!important;
+ border-color:var(--warlike-palette-border,#45535b)!important;
+}
+body.reference-engine:not(.hub-open) .scene-header .scene-tabs :is(button,.tab).active,
+body.reference-engine:not(.hub-open) .scene-header .scene-tabs :is(button,.tab)[aria-selected="true"],
+body.reference-engine:not(.hub-open) .bottom-tabs :is(button,.tab).active {
+ background:var(--wl-editor-selected-bg)!important;
+ color:var(--wl-text-selected,#f1f5f9)!important;
+ box-shadow:inset 0 -2px var(--warlike-palette-accent,#48cba9);
+}
+body.reference-engine:not(.hub-open) .editor-appearance-menu #editorSwatches button[aria-pressed="true"]{
+ outline:2px solid var(--wl-text-panel,#f1f5f9)!important;
+ outline-offset:2px;
+}
+body.reference-engine:not(.hub-open) .editor-appearance-menu #editorThemePreview span{
+ border:1px solid var(--warlike-palette-border,#45535b);
+}
+body.reference-engine:not(.hub-open) :is(.scene-header,.bottom-tabs,#hierarchyPanel) :is(button,.tab):focus-visible{
+ outline:2px solid var(--warlike-palette-accent,#48cba9)!important;
+ outline-offset:-2px;
+}

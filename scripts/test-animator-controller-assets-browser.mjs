@@ -99,6 +99,59 @@ try{
  assert.deepEqual(reopened.graphs,saved.graphs);
  assert.deepEqual(report.errors,[]);
  report.checks.push('Browser reload and Web export preserve independent Controller and scene graphs');
+ await page.evaluate(async()=>{
+  const {state,notify}=await import('/js/core/state.js');state.selected=[4];notify();
+  document.dispatchEvent(new CustomEvent('warlike:animator-open',{detail:{id:4}}));
+ });
+ const studio=page.locator('#animatorGraphStudio');
+ const node=id=>studio.locator('[data-animator-state="'+id+'"]');
+ const connect=()=>studio.getByRole('button',{name:'Connecter deux états',exact:true});
+ const graph=()=>page.evaluate(async()=>{
+  const {state}=await import('/js/core/state.js');return structuredClone(state.entities.find(e=>e.id===4).animatorGraph);
+ });
+ await studio.waitFor({state:'visible'});
+ await node('motion').click();const initial=await graph();await connect().click();
+ await studio.getByRole('button',{name:'Annuler connexion',exact:true}).click();
+ assert.deepEqual(await graph(),initial,'Cancel must not change the graph');
+ await connect().click();await node('attack').click();
+ const connected=await graph();
+ assert.equal(connected.transitions.length,saved.graphs[0].transitions.length+1);
+ assert.deepEqual(connected.transitions.at(-1),{from:'motion',to:'attack',conditions:[{parameter:'action',operator:'==',value:'attack'}],blend:.18});
+ // A second click sequence must not duplicate an existing edge.
+ await node('motion').click();await connect().click();await node('attack').click();
+ assert.deepEqual(await graph(),connected);
+ // Any State is keyboard accessible; use a destination without an existing edge.
+ const any=studio.getByRole('button',{name:'Tous les états',exact:true});
+ await any.focus();await page.keyboard.press('Enter');await node('motion').click();
+ const withAny=await graph();assert.equal(withAny.transitions.length,connected.transitions.length+1);
+ assert.equal(withAny.transitions.at(-1).from,'*');assert.equal(withAny.transitions.at(-1).to,'motion');
+ const executed=await page.evaluate(async()=>{
+  const [{state},{stepAnimator,resetAnimators},{saveProject}]=await Promise.all([
+   import('/js/core/state.js'),import('/js/core/animator-graph.js'),import('/js/core/project-hub.js')
+  ]);
+  const source=state.entities.find(e=>e.id===4),actor=structuredClone(source);
+  resetAnimators();stepAnimator(actor,.016,{parameters:{action:''}});
+  const frame=stepAnimator(actor,.016,{parameters:{action:'attack'}});
+  if(!saveProject())throw Error('Could not save visual connections');
+  return {state:frame.stateId,other:structuredClone(state.entities.find(e=>e.id===5).animatorGraph),avatar:source.animationRig.avatar.id};
+ });
+ assert.equal(executed.state,'attack','The transition authored through clicks must run in the real Animator');
+ assert.deepEqual(executed.other,saved.graphs[1],'Editing one actor must not silently propagate to the second');
+ assert.equal(executed.avatar,'user-authored-avatar-1');
+ await page.screenshot({path:path.join(out,'animator-visual-connections.png')});
+ await page.reload({waitUntil:'load'});
+ const persisted=await page.evaluate(async id=>{
+  const [{openProject},{state},{gameProject},{prepareGameDefinition}]=await Promise.all([
+   import('/js/core/project-hub.js'),import('/js/core/state.js'),import('/js/core/game-project.js'),import('/js/core/game-build.js')
+  ]);
+  if(!openProject(id))throw Error('Could not reopen visually connected Animator');
+  const build=prepareGameDefinition({entities:state.entities,camera:state.camera,mode:'3d',project:gameProject});
+  return {graph:structuredClone(state.entities.find(e=>e.id===4).animatorGraph),
+   exportGraph:build.project.scenes.find(s=>s.id===build.project.startupSceneId).entities.find(e=>e.id===4).animatorGraph};
+ },authored);
+ assert.deepEqual(persisted.graph,withAny);assert.deepEqual(persisted.exportGraph,withAny);
+ assert.deepEqual(report.errors,[]);
+ report.checks.push('Visual state connections: cancel, duplicate protection, keyboard Any State, executable transition, actor isolation, Hub reload and export');
  report.status='PASS';
 } catch(error){report.errors.push(error.message);throw error}
 finally{

@@ -155,7 +155,7 @@ try{
     import('/js/core/project-hub.js'),import('/js/core/state.js'),import('/js/core/game-project.js'),import('/js/core/animator-graph.js')
    ]);
    const id=createProject('Controller preservation '+mode,mode);
-   state.entities.push({id:80,name:'Legacy object',type:'object',x:0,y:0,w:64,h:64,
+   state.entities.push({id:80,name:'Legacy object',type:'player',playable3d:mode==='3d',x:0,y:0,w:64,h:64,
     unknownComponent:{settings:[1,2,3]},animatorGraph:defaultAnimatorGraph(),animatorControllerId:'broken'});
    const valid={id:'valid',name:'Preserved Controller',revision:1,graph:defaultAnimatorGraph(),future:{version:2,data:['keep']}};
    gameProject.animatorControllers=[valid,{id:'broken',name:'Broken',revision:1,graph:{states:[],transitions:[]}},null,

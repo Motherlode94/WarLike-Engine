@@ -118,7 +118,7 @@ La touche **E** change la valeur `opened` et émet un **signal** nommé `door:to
 | **TypeScript `.ts`** | Profiter du typage et des diagnostics pendant l'édition | **Oui**, après compilation en JavaScript à jour |
 | **C# natif `.cs`** | Utiliser le bridge local .NET et l'API MonoBehaviour native | **Non**, les composants C# actifs bloquent actuellement l'export autonome |
 
-**Limites à connaître avant de commencer :** WarScript est volontairement plus petit que C#. Il ne prend pas encore en charge les boucles `for` / `foreach`, les tableaux, les coroutines, les méthodes à paramètres, les classes héritées personnalisées ou les bibliothèques .NET. Les scripts sont bornés en taille et en temps d'exécution pour éviter de bloquer la simulation. Un `.wls` ne peut pas utiliser directement `using UnityEngine;`.
+**Limites à connaître avant de commencer :** WarScript est volontairement plus petit que C#. Il prend en charge les boucles `for`, `break`, `continue` et les méthodes typées avec paramètres et retour de valeur. Les boucles `foreach`, les tableaux, les coroutines, les classes héritées personnalisées et les bibliothèques .NET restent hors du périmètre. Les scripts sont bornés en taille et en temps d'exécution pour éviter de bloquer la simulation. Un `.wls` ne peut pas utiliser directement `using UnityEngine;`.
 
 **Pour aller plus loin :** [Guide complet WarScript : syntaxe, API, cycles de vie et restrictions](docs/warscript.md) · [Comparatif des langages de scripts](docs/script-languages.md) · [WarLike Engine vs WarLike Editor](docs/unity-6000-6-web-architecture.md).
 

@@ -18,7 +18,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 let browser;const report={status:'FAIL',checks:[],errors:[]};
 try{
- browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--in-process-gpu']});
+ browser=await chromium.launch({headless:true,...(process.env.WARLIKE_CHROMIUM?{executablePath:process.env.WARLIKE_CHROMIUM}:{}),args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--in-process-gpu']});
  const context=await browser.newContext({viewport:{width:1440,height:960}});
  const page=await context.newPage();
  page.on('pageerror',error=>report.errors.push(error.message));
@@ -147,6 +147,48 @@ try{
  assert.equal(sceneDrop2d.selected,21);
  assert.deepEqual(sceneDrop2d.sourceGraph,sceneDrop2d.targetGraph);
  report.checks.push('Scene View 2D drop resolves the target position; empty space is ignored');
+ // Real Hub persistence: legacy objects and incompatible library records must
+ // survive repeated saves, reloads, workspace switches and export preparation.
+ for(const mode of ['2d','3d']){
+  const authored=await page.evaluate(async mode=>{
+   const [{createProject,saveProject},{state,notify},{gameProject},{defaultAnimatorGraph}]=await Promise.all([
+    import('/js/core/project-hub.js'),import('/js/core/state.js'),import('/js/core/game-project.js'),import('/js/core/animator-graph.js')
+   ]);
+   const id=createProject('Controller preservation '+mode,mode);
+   state.entities.push({id:80,name:'Legacy object',type:'object',x:0,y:0,w:64,h:64,
+    unknownComponent:{settings:[1,2,3]},animatorGraph:defaultAnimatorGraph(),animatorControllerId:'broken'});
+   const valid={id:'valid',name:'Preserved Controller',revision:1,graph:defaultAnimatorGraph(),future:{version:2,data:['keep']}};
+   gameProject.animatorControllers=[valid,{id:'broken',name:'Broken',revision:1,graph:{states:[],transitions:[]}},null,
+    ...Array.from({length:62},(_,i)=>({...structuredClone(valid),id:'controller'+i}))];
+   notify();if(!saveProject())throw Error('Could not save preservation fixture');
+   return {id,entities:structuredClone(state.entities),library:structuredClone(gameProject.animatorControllers)};
+  },mode);
+  for(let repeat=0;repeat<2;repeat++){
+   await page.reload({waitUntil:'load'});
+   const actual=await page.evaluate(async({id,mode})=>{
+    const [{openProject,saveProject},{state,notify},{gameProject},{prepareGameDefinition},{switchWorkspace}]=await Promise.all([
+     import('/js/core/project-hub.js'),import('/js/core/state.js'),import('/js/core/game-project.js'),
+     import('/js/core/game-build.js'),import('/js/core/workspaces.js')
+    ]);
+    if(!openProject(id))throw Error('Could not reopen preservation fixture');
+    switchWorkspace(mode==='2d'?'3d':'2d');switchWorkspace(mode);notify();
+    const build=prepareGameDefinition({entities:state.entities,camera:state.camera,mode,project:gameProject});
+    if(!saveProject())throw Error('Could not resave preservation fixture');
+    return {entities:structuredClone(state.entities),library:structuredClone(gameProject.animatorControllers),exportLibrary:build.project.animatorControllers};
+   },{id:authored.id,mode});
+   assert.deepEqual(actual.entities,authored.entities);
+   assert.deepEqual(actual.library,authored.library);
+   assert.deepEqual(actual.exportLibrary,authored.library);
+   await page.locator('#projectTab').click();
+   const warning=page.locator('.warlike-project-animator-diagnostics');
+   await warning.waitFor({state:'visible'});
+   assert.match(await warning.innerText(),/65 ressources conservées/);
+   assert.match(await warning.innerText(),/lecture seule/);
+   assert.equal(await page.locator('.warlike-project-animator-drag').count(),63);
+  }
+  report.checks.push(mode+': legacy entities, metadata and 65 library records preserved over two Hub reloads, workspace switches and Web export preparation');
+ }
+ assert.deepEqual(report.errors,[]);
  report.status='PASS';
 }catch(error){report.errors.push(error.message);throw error}
 finally{

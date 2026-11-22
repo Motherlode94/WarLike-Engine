@@ -48,3 +48,14 @@ test('WarNode launches its existing executable visual scripting Graph rather tha
  assert.ok(runtime.includes('export function createGraph('));
  assert.ok(runtime.includes('export function applyGraph('));
 });
+
+test('Animator visual connection writes an executable transition to the existing graph',()=>{
+ const ui=readFileSync(new URL('../js/ui/creative-studios.js',import.meta.url),'utf8');
+ assert.ok(ui.includes('Connecter deux états'));
+ assert.match(ui,/if\(completeConnection\(s\.id\)\)return/);
+ assert.ok(ui.includes('graph.transitions.push(transition)'));
+ assert.ok(ui.includes('Connecter états Animator'));
+ const {graph}=createCharacterAnimatorGraph(clips);
+ graph.transitions.push({from:'attack',to:'motion',conditions:[{parameter:'action',operator:'==',value:'motion'}],blend:.18});
+ assert.deepEqual(inspectAnimatorGraph(graph),[]);
+});

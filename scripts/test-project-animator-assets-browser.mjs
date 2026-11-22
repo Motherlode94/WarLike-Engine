@@ -165,12 +165,14 @@ try{
   },mode);
   for(let repeat=0;repeat<2;repeat++){
    await page.reload({waitUntil:'load'});
+   await page.getByRole('button',{name:'Controller preservation '+mode,exact:true}).click();
+   await page.locator('#hubOverlay').waitFor({state:'hidden'});
    const actual=await page.evaluate(async({id,mode})=>{
-    const [{openProject,saveProject},{state,notify},{gameProject},{prepareGameDefinition},{switchWorkspace}]=await Promise.all([
+    const [{hub,saveProject},{state,notify},{gameProject},{prepareGameDefinition},{switchWorkspace}]=await Promise.all([
      import('/js/core/project-hub.js'),import('/js/core/state.js'),import('/js/core/game-project.js'),
      import('/js/core/game-build.js'),import('/js/core/workspaces.js')
     ]);
-    if(!openProject(id))throw Error('Could not reopen preservation fixture');
+    if(hub.projectId!==id)throw Error('Could not reopen preservation fixture through the Hub');
     switchWorkspace(mode==='2d'?'3d':'2d');switchWorkspace(mode);notify();
     const build=prepareGameDefinition({entities:state.entities,camera:state.camera,mode,project:gameProject});
     if(!saveProject())throw Error('Could not resave preservation fixture');

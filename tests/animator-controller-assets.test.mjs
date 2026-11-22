@@ -5,7 +5,7 @@ import {freshGameProject,restoreGameProject,gameProject} from '../js/core/game-p
 import {
  animatorControllerAssets,createAnimatorControllerAsset,assignAnimatorControllerAsset,
  saveAnimatorControllerAsset,removeAnimatorControllerAsset,restoreAnimatorControllerAssets,
- animatorControllerOutdated
+ animatorControllerOutdated,animatorControllerDiagnostics
 } from '../js/core/animator-controller-assets.js';
 import {readFileSync} from 'node:fs';
 
@@ -53,7 +53,8 @@ test('Controller library roundtrips through actual project restoration and valid
  assert.equal(animatorControllerAssets(gameProject)[0].id,created.id);
  assert.deepEqual(animatorControllerAssets(gameProject)[0].graph,actor.animatorGraph);
  const malformed={id:'bad',name:'Broken',revision:1,graph:{states:[],transitions:[]}};
- assert.deepEqual(restoreAnimatorControllerAssets([malformed]),[]);
+ assert.deepEqual(restoreAnimatorControllerAssets([malformed]),[malformed]);
+ assert.deepEqual(animatorControllerAssets({animatorControllers:[malformed]}),[]);
  assert.equal(animatorControllerAssets(freshGameProject()).length,0,'No demos or controllers auto-installed');
 });
 test('Inspector exposes a concise selector, explicit create and safe assign, plus separate Animator window',()=>{
@@ -61,4 +62,60 @@ test('Inspector exposes a concise selector, explicit create and safe assign, plu
  for(const item of ['Animator Controller du projet','Créer Controller','Enregistrer Controller','Assigner','Ouvrir Animator'])
   assert(code.includes(item),item+' missing');
  assert(code.includes("warlike:animator-open"));
+});
+
+test('invalid, duplicate, oversized and future Controller data roundtrip without mutation',()=>{
+ const asset={id:'good',name:'Controller',revision:1,graph:defaultAnimatorGraph(),future:{version:2,labels:['keep']}};
+ const broken={...structuredClone(asset),id:'broken',graph:{states:[],transitions:[]}};
+ const malformed={...structuredClone(asset),id:'malformed',graph:{...defaultAnimatorGraph(),layers:[null],transitions:[null]}};
+ const duplicate={...structuredClone(asset),name:'Duplicate'};
+ const data=[asset,broken,malformed,duplicate,null,...Array.from({length:61},(_,i)=>({...structuredClone(asset),id:'asset'+i}))];
+ const original=structuredClone(data),project={...freshGameProject(),animatorControllers:data};
+ for(let i=0;i<2;i++){
+  restoreGameProject(JSON.parse(JSON.stringify(project)));
+  assert.deepEqual(gameProject.animatorControllers,original,'Repeated restoration keeps the exact source representation');
+ }
+ assert.deepEqual(data,original);
+ assert.equal(animatorControllerAssets(gameProject).length,61,'Ambiguous IDs and invalid graphs cannot be assigned');
+ const issues=animatorControllerDiagnostics(gameProject).join(' ');
+ assert.match(issues,/66 ressources conservées/);
+ assert.match(issues,/Identifiant dupliqué/);
+ assert.match(issues,/lecture seule/);
+ const target=makeObject(5),before=structuredClone(target);
+ for(const id of ['good','broken','malformed']){
+  assert.throws(()=>assignAnimatorControllerAsset(gameProject,target,id),/introuvable/);
+  assert.throws(()=>saveAnimatorControllerAsset(gameProject,target,{id}),/Aucun Controller/);
+  assert.equal(removeAnimatorControllerAsset(gameProject,id),false);
+ }
+ assert.deepEqual(target,before);
+ assert.throws(()=>createAnimatorControllerAsset(gameProject,target),/64/);
+ assert.deepEqual(gameProject.animatorControllers,original);
+});
+
+test('unknown library formats are preserved and cannot be overwritten by creation',()=>{
+ for(const value of [null,'future-library',{schema:'warlike.controllers.v2',entries:[{data:'keep'}]}]){
+  restoreGameProject({animatorControllers:value});
+  assert.deepEqual(gameProject.animatorControllers,value);
+  assert.deepEqual(animatorControllerAssets(gameProject),[]);
+  assert.match(animatorControllerDiagnostics(gameProject).join(' '),/lecture seule/);
+  assert.throws(()=>createAnimatorControllerAsset(gameProject,makeObject(1)),/lecture seule/);
+  assert.deepEqual(gameProject.animatorControllers,value);
+ }
+ restoreGameProject({});
+ assert.deepEqual(gameProject.animatorControllers,[],'Old projects without a library still open normally');
+ assert.deepEqual(animatorControllerDiagnostics(gameProject),[]);
+});
+
+test('valid metadata survives editing and deletion addresses the stored library',()=>{
+ const asset={id:'good',name:'Controller',revision:1,graph:defaultAnimatorGraph(),future:{version:2}};
+ const invalid={id:'invalid',graph:null};
+ const project={animatorControllers:restoreAnimatorControllerAssets([invalid,asset])},target=makeObject(1);
+ assignAnimatorControllerAsset(project,target,'good');
+ target.animatorGraph.states[0].speed=2;
+ saveAnimatorControllerAsset(project,target);
+ assert.deepEqual(project.animatorControllers[1].future,{version:2});
+ assert.deepEqual(project.animatorControllers[0],invalid);
+ assert.equal(removeAnimatorControllerAsset(project,'good'),true);
+ assert.deepEqual(project.animatorControllers,[invalid]);
+ assert.deepEqual(asset.graph.states[0].speed,1,'Restoration creates independent editable data');
 });

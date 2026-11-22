@@ -55,4 +55,5 @@ body > .warlike-project-create-options[hidden]{display:none!important}
 #projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-item{flex:none;min-width:0}
 #projectPanel > .bottom-tabs > .warlike-project-animator-assets button{min-height:23px;padding:2px 5px;font-size:10px}
 #projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-drag{max-width:160px;min-width:75px}
+#projectPanel > .bottom-tabs > .warlike-project-animator-assets .warlike-project-animator-diagnostics{flex:none;max-width:125px;overflow:hidden;text-overflow:ellipsis}
 #projectPanel:has(#projectContent[hidden]) > .bottom-tabs > .warlike-project-animator-assets{display:none!important}

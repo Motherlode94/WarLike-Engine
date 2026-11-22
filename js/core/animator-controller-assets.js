@@ -7,31 +7,42 @@ const validName=value=>typeof value==='string'&&value.trim().length>0&&value.tri
 const validId=value=>typeof value==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(value);
 export const animatorAssetLimit=64;
 export function animatorControllerAssets(project){
- return Array.isArray(project?.animatorControllers)?project.animatorControllers:[];
+ const items=project?.animatorControllers;
+ if(!Array.isArray(items))return [];
+ const counts=new Map();
+ for(const asset of items)if(validId(asset?.id))counts.set(asset.id,(counts.get(asset.id)||0)+1);
+ return items.filter(asset=>!validateAnimatorControllerAsset(asset).length&&counts.get(asset.id)===1);
 }
 export function validateAnimatorControllerAsset(asset){
  if(!asset||!validId(asset.id)||!validName(asset.name))return ['Identifiant ou nom de Controller invalide.'];
  if(!Number.isSafeInteger(asset.revision)||asset.revision<1)return ['Révision de Controller invalide.'];
- return inspectAnimatorGraph(asset.graph);
+ try{return inspectAnimatorGraph(asset.graph)}catch{return ['Structure de graphe Animator invalide ou non prise en charge.']}
 }
 export function restoreAnimatorControllerAssets(value){
- if(!Array.isArray(value))return [];
- const items=[],ids=new Set();
- for(const original of value.slice(0,animatorAssetLimit)){
-  try{
-   const asset={id:original?.id,name:original?.name,revision:original?.revision,graph:clone(original?.graph)};
-   if(!validateAnimatorControllerAsset(asset).length&&!ids.has(asset.id)){
-    ids.add(asset.id);items.push(asset)
-   }
-  }catch{/* A malformed historic asset never blocks opening its scene. */}
- }
- return items;
+ // Loading is lossless, including future formats and invalid entries. Validation
+ // controls authoring, never which source data survives the next project save.
+ return value===undefined?[]:clone(value);
+}
+export function animatorControllerDiagnostics(project){
+ const items=project?.animatorControllers;
+ if(items===undefined)return [];
+ if(!Array.isArray(items))return ['Format de bibliothèque non pris en charge : données conservées en lecture seule.'];
+ const errors=[],counts=new Map();
+ for(const asset of items)if(validId(asset?.id))counts.set(asset.id,(counts.get(asset.id)||0)+1);
+ if(items.length>animatorAssetLimit)errors.push(items.length+' ressources conservées ; création limitée à '+animatorAssetLimit+' Controllers.');
+ items.forEach((asset,index)=>{
+  const issues=validateAnimatorControllerAsset(asset);
+  if(validId(asset?.id)&&counts.get(asset.id)>1)issues.push('Identifiant dupliqué.');
+  if(issues.length)errors.push('Ressource '+(index+1)+' : '+issues.join(' ')+' Données conservées en lecture seule.');
+ });
+ return errors;
 }
 export function createAnimatorControllerAsset(project,object,{name=null}={}){
  if(!project||!object?.animatorGraph||!validName(name??object.name+' Controller'))throw Error('Sélectionne un GameObject avec un Animator valide.');
  const errors=inspectAnimatorGraph(object.animatorGraph);
  if(errors.length)throw Error('Animator invalide : '+errors.slice(0,3).join('; '));
- const items=animatorControllerAssets(project);
+ if(project.animatorControllers!==undefined&&!Array.isArray(project.animatorControllers))throw Error('Bibliothèque non prise en charge : données conservées en lecture seule.');
+ const items=project.animatorControllers||[];
  if(items.length>=animatorAssetLimit)throw Error('64 Animator Controllers maximum par espace de projet.');
  const id='anim-'+Date.now().toString(36)+'-'+Math.floor(Math.random()*1679616).toString(36);
  const asset={id,name:(name??object.name+' Controller').trim(),revision:1,graph:clone(object.animatorGraph)};
@@ -64,7 +75,8 @@ export function saveAnimatorControllerAsset(project,object,{id=object?.animatorC
  return asset;
 }
 export function removeAnimatorControllerAsset(project,id){
- const items=animatorControllerAssets(project),index=items.findIndex(a=>a.id===id);
+ if(!animatorControllerAssets(project).some(a=>a.id===id))return false;
+ const items=project.animatorControllers,index=items.findIndex(a=>a.id===id);
  if(index<0)return false;
  // Copies on GameObjects are kept to preserve their exact gameplay.
  items.splice(index,1);return true;

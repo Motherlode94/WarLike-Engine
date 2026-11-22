@@ -80,8 +80,13 @@ try{
    assert.equal(start.mode,'3d');
    await page.getByRole('button',{name:'Jouer',exact:true}).click();
    await page.waitForFunction(async()=>{
-    const {runtimeSession}=await import('./js/core/runtime-session.js');
-    return runtimeSession.phase==='ready';
+    const [{runtimeSession},{rapierStatus,activeRapierScene3d}]=await Promise.all([
+     import('./js/core/runtime-session.js'),import('./js/core/rapier-physics-3d.js')
+    ]);
+    const physics=rapierStatus();
+    if(physics.error)throw Error('Portable Rapier initialization failed: '+physics.error);
+    // Script readiness precedes the asynchronous WASM load and scene creation.
+    return runtimeSession.phase==='ready'&&physics.ready&&activeRapierScene3d()?.actors.size>0;
    },null,{timeout:60000});
    const snap=()=>page.evaluate(async()=>{
     const [{state},{view3d},{rapierStatus}]=await Promise.all([import('./js/core/state.js'),import('./js/core/viewport-3d.js'),import('./js/core/rapier-physics-3d.js')]);

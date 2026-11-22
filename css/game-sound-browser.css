@@ -1,0 +1,30 @@
+/* WarLike Engine native audio assets, independent of Studio/DAW. */
+.game-sound-dialog{
+ width:min(880px,96vw);max-width:96vw;max-height:min(790px,92vh);
+ padding:0;border:1px solid #607870;border-radius:10px;background:#202a28;
+ color:#eef3ee;box-shadow:0 26px 80px #000a;overflow:hidden;
+}
+.game-sound-dialog::backdrop{background:#000b}
+.game-sound-dialog .game-sound-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid #53655f}
+.game-sound-dialog .game-sound-header strong{font-size:18px}
+.game-sound-dialog .game-sound-header p{margin:6px 0 0;color:#ccd5d0;font-size:12px;line-height:1.5}
+.game-sound-dialog button{cursor:pointer;background:#35433d;color:#eef3ee;border:1px solid #82958a;border-radius:5px;min-height:36px;padding:6px 11px}
+.game-sound-dialog button:hover{background:#486356}
+.game-sound-dialog :is(button,input,select):focus-visible{outline:2px solid #b9deae;outline-offset:2px}
+.game-sound-toolbar{padding:12px 18px;display:grid;grid-template-columns:minmax(140px,1fr) minmax(150px,200px) minmax(120px,175px);gap:10px}
+.game-sound-toolbar :is(input,select){min-width:0;min-height:38px;background:#2e3a35;color:#eef3ee;border:1px solid #86948d;border-radius:4px;padding:7px}
+.game-sound-summary{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:0 18px 10px;font-size:12px;color:#c8d7cf}
+.game-sound-results{max-height: min(490px,54vh);overflow:auto;padding:0 18px;display:grid;gap:7px;align-content:start}
+.game-sound-item{border:1px solid #66766c;border-radius:6px;background:#2d3a33;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;min-width:0}
+.game-sound-meta{display:grid;gap:5px;min-width:0}
+.game-sound-meta strong{font-size:13px;overflow-wrap:anywhere}
+.game-sound-meta small{font-size:11px;color:#d0dcd5;overflow-wrap:anywhere}
+.game-sound-actions{display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0}
+.game-sound-status{display:block;padding:14px 20px;border-top:1px solid #53655f;color:#d6e9d5;min-height:44px;font-size:12px}
+@media(max-width:660px){
+ .game-sound-dialog{width:98vw;max-height:94vh}
+ .game-sound-toolbar{grid-template-columns:minmax(0,1fr)}
+ .game-sound-item{align-items:stretch;flex-direction:column}
+ .game-sound-actions>*{flex:1}
+ .game-sound-results{max-height:52vh}
+}

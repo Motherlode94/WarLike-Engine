@@ -182,8 +182,10 @@ try{
    await page.locator('#projectTab').click();
    const warning=page.locator('.warlike-project-animator-diagnostics');
    await warning.waitFor({state:'visible'});
-   assert.match(await warning.innerText(),/65 ressources conservées/);
-   assert.match(await warning.innerText(),/lecture seule/);
+   const popup=page.waitForEvent('dialog');await warning.click();
+   const message=(await popup).message();
+   assert.match(message,/65 ressources conservées/);
+   assert.match(message,/lecture seule/);
    assert.equal(await page.locator('.warlike-project-animator-drag').count(),63);
   }
   report.checks.push(mode+': legacy entities, metadata and 65 library records preserved over two Hub reloads, workspace switches and Web export preparation');

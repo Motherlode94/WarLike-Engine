@@ -108,14 +108,15 @@ export function mountAnimatorControllerProjectAssets(host){
  const section=document.createElement('section');section.className='warlike-project-animator-assets';
  const heading=document.createElement('h4');heading.textContent='Animation / Animator Controllers';
  const summary=document.createElement('small');summary.className='warlike-project-animator-summary';
- const diagnostics=document.createElement('p');diagnostics.className='warlike-project-animator-diagnostics';
- diagnostics.setAttribute('role','status');
+ const diagnostics=document.createElement('button');diagnostics.type='button';diagnostics.className='warlike-project-animator-diagnostics';
+ diagnostics.setAttribute('aria-label','Diagnostics des Animator Controllers');
  const list=document.createElement('div');list.className='warlike-project-animator-list';
  section.append(heading,summary,diagnostics,list);host.append(section);
  const redraw=()=>{
   const assets=animatorControllerAssets(gameProject),issues=animatorControllerDiagnostics(gameProject);
   section.hidden=!assets.length&&!issues.length;
-  diagnostics.hidden=!issues.length;diagnostics.textContent=issues.join(' ');
+  diagnostics.hidden=!issues.length;diagnostics.textContent='⚠ '+issues.length+' diagnostic(s)';
+  diagnostics.title=issues.join('\n');diagnostics.onclick=()=>window.alert(issues.join('\n'));
   summary.textContent=assets.length+' Controller(s) du projet · glisser sur un GameObject dans Scene, Hierarchy ou Inspector';
   list.replaceChildren();
   for(const asset of assets){

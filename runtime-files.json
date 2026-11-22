@@ -16550,6 +16550,7 @@
     "js/core/vehicle-components.js",
     "js/core/vehicle-controller.js",
     "js/core/vehicle-weapons-3d.js",
+    "js/core/vehicle-wheel-physics.js",
     "js/core/vehicle.js",
     "js/core/view-options.js",
     "js/core/viewport-3d.js",

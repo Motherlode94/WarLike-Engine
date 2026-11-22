@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {defaultWheelPhysics,validateWheelPhysics,solveWheelForces} from '../js/core/vehicle-wheel-physics.js';
+const wheel=defaultWheelPhysics();
+const state={velocity:{x:0,y:0,z:0},angularVelocity:{x:0,y:0,z:0},forward:{x:0,y:0,z:-1},centerOfMass:{x:0,y:0,z:0}};
+const contact={distance:.55,normal:{x:0,y:1,z:0},point:{x:0,y:-.55,z:0}};
+test('wheel configuration validation',()=>{assert.deepEqual(validateWheelPhysics(wheel),[]);assert.ok(validateWheelPhysics({...wheel,radius:0}).length)});
+test('wheel raycast miss has zero force',()=>{const x=solveWheelForces({wheel,contact:null,state,dt:1/60});assert.equal(x.grounded,false);assert.deepEqual(x.force,{x:0,y:0,z:0})});
+test('compression creates upward suspension force',()=>{const x=solveWheelForces({wheel,contact,state,dt:1/60});assert.equal(x.grounded,true);assert.ok(x.normalForce>0);assert.ok(x.force.y>0)});
+test('friction caps drive torque on low-grip surfaces',()=>{const w={...wheel,grip:.2};const x=solveWheelForces({wheel:w,contact,state,dt:1/60,inputs:{throttle:1},driveForce:1e6});assert.ok(Math.hypot(x.force.x,x.force.z)<=x.normalForce*w.grip+1e-6)});
+test('uncompressed suspension does not pull the chassis down',()=>{const x=solveWheelForces({wheel,contact:{...contact,distance:wheel.radius+wheel.restLength+wheel.travel},state,dt:1/60});assert.equal(x.normalForce,0)});
+test('cannot step with invalid delta',()=>assert.throws(()=>solveWheelForces({wheel,contact,state,dt:0})));

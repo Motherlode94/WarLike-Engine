@@ -1,5 +1,6 @@
 import {solidBody3d,activeBody3d,supportBody3d} from './collision-3d.js';
 import {applyGroundVehicleForces} from './ground-vehicle-rapier.js';
+import {applyAircraftForces} from './aircraft-rapier.js';
 import {validTerrainHeightfield} from './gaia-terrain-physics.js';
 import {terrainSurfaceMesh3d} from './gaia-terrain-sculpt.js';
 import {updateAffineEditorPose3d,affineCorrection3d,legacyReferenceMatrix3d,hasAffinePose} from './scene-graph-v2.js';
@@ -219,6 +220,7 @@ export function stepRapierScene(scene,dt){
  // Only entities with groundVehiclePhysics.enabled receive wheel impulses.
  // Existing arcade vehicles and regular rigidbodies remain untouched.
  applyGroundVehicleForces(scene,t);
+ applyAircraftForces(scene,t);
  scene.world.step();
  for(const r of scene.actors.values()){if(!r.isDynamic)continue;const {body,entity:o,width,depth,height}=r,p=body.translation(),v=body.linvel();const oldAffine=Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,oldReference=Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null;o.x=(p.x-width/2)*64;o.y=(p.z-depth/2)*64;o.elevation3d=p.y-height/2;
   if(o.rigidbody3d){o.rigidbody3d.vx=v.x*64;o.rigidbody3d.vy=v.y;o.rigidbody3d.vz=v.z*64;r.lastVelocity=velocity(o)}

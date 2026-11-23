@@ -32,7 +32,9 @@ export function solveWheelForces({wheel,contact,state,inputs={},dt,driveForce=0,
  if(!(dt>0&&Number.isFinite(dt)))throw Error('Wheel physics requires a positive fixed timestep');
  if(!contact||!Number.isFinite(contact.distance))return {grounded:false,force:{x:0,y:0,z:0},normalForce:0,compression:0,slip:0};
  const normal=norm(contact.normal||{x:0,y:1,z:0});
- if(Math.hypot(normal.x,normal.y,normal.z)<.5)return {grounded:false,force:{x:0,y:0,z:0},normalForce:0,compression:0,slip:0};
+ // Y is world-up: a wall, an underside or an inverted face cannot support a wheel.
+ // A sloped drivable surface still has a positive upward normal.
+ if(Math.hypot(normal.x,normal.y,normal.z)<.5||normal.y<=.15)return {grounded:false,force:{x:0,y:0,z:0},normalForce:0,compression:0,slip:0};
  const maxLength=wheel.restLength+wheel.travel;
  const length=clamp(contact.distance-wheel.radius,0,maxLength);
  if(contact.distance>wheel.radius+maxLength)return {grounded:false,force:{x:0,y:0,z:0},normalForce:0,compression:0,slip:0};
@@ -54,7 +56,10 @@ export function solveWheelForces({wheel,contact,state,inputs={},dt,driveForce=0,
  const throttle=clamp(inputs.throttle,-1,1),brake=clamp(inputs.brake,0,1),handbrake=clamp(inputs.handbrake,0,1);
  const drive=wheel.driven?clamp(driveForce,0,1e7)*throttle:0;
  const stopping=(wheel.braking?brake:0)+handbrake;
- const requestedLong=drive-Math.sign(longitudinal||throttle)*clamp(brakeForce,0,1e7)*clamp(stopping,0,1);
+ // Brakes oppose *actual* wheel travel. At rest they must not produce thrust
+ // in the direction opposite to the driver's throttle command.
+ const brakeDirection=Math.abs(longitudinal)>1e-3?Math.sign(longitudinal):0;
+ const requestedLong=drive-brakeDirection*clamp(brakeForce,0,1e7)*clamp(stopping,0,1);
  const rolling=normalForce*wheel.rollingResistance*Math.sign(longitudinal);
  const longitudinalForce=requestedLong-rolling;
  const lateralForce=-lateral*normalForce*.16; // transient lateral damping, bounded by friction circle

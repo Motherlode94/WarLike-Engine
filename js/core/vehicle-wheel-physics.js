@@ -59,13 +59,16 @@ export function solveWheelForces({wheel,contact,state,inputs={},dt,driveForce=0,
  // Brakes oppose *actual* wheel travel. At rest they must not produce thrust
  // in the direction opposite to the driver's throttle command.
  const brakeDirection=Math.abs(longitudinal)>1e-3?Math.sign(longitudinal):0;
- // A brake must not reverse a wheel's velocity in a single fixed step.
- // Limit its impulse to the wheel's effective longitudinal momentum.
- // Existing standalone callers without an effective mass retain the legacy model.
  const requestedBrake=clamp(brakeForce,0,1e7)*clamp(stopping,0,1);
- const maxStoppingForce=Number.isFinite(effectiveMass)&&effectiveMass>0
-  ?Math.abs(longitudinal)*effectiveMass/dt:Infinity;
- const brakeApplied=brakeDirection*Math.min(requestedBrake,maxStoppingForce);
+ // Static hill-hold: gravity accelerates the wheel down the local forward
+ // axis even at exactly zero velocity. Counter only that acceleration and
+ // existing wheel momentum, within the authored brake force.
+ // Rapier supplies the entity gravity (which may differ from world gravity).
+ // Without an effective mass, retain the original pure legacy brake model.
+ const gravity=Number.isFinite(state.gravity)?Math.max(0,state.gravity):0;
+ const brakeApplied=Number.isFinite(effectiveMass)&&effectiveMass>0
+  ?clamp(effectiveMass*(longitudinal/dt-gravity*forward.y),-requestedBrake,requestedBrake)
+  :brakeDirection*requestedBrake;
  const requestedLong=drive-brakeApplied;
  const rolling=normalForce*wheel.rollingResistance*Math.sign(longitudinal);
  const longitudinalForce=requestedLong-rolling;

@@ -26,7 +26,8 @@ test('preview is non-destructive and only contains road and shoulder samples',()
  const t=terrain.terrainHeightfield,n=t.resolution;
  for(const patch of preview.patches)for(const sample of patch.changes){
   const x=sample.index%n,z=Math.floor(sample.index/n),wx=t.offsetX-t.size/2+x*t.size/(n-1),wz=t.offsetZ-t.size/2+z*t.size/(n-1);
-  assert.ok(Math.abs(wx)<=8.000001&&Math.abs(wz)<=3.500001,'only road footprint and shoulder can change');
+  const distanceToRoad=Math.hypot(Math.max(-6-wx,0,wx-6),wz);
+  assert.ok(distanceToRoad<=road.width/2+2+1e-8,'only samples within road footprint and shoulder may change');
  }
 });
 test('commit modifies road corridor but preserves distant Gaia samples and increments revision',()=>{

@@ -5,6 +5,7 @@ import {applyAircraftForces} from './aircraft-rapier.js';
 import {applyAircraftLandingGearForces} from './aircraft-landing-gear.js';
 import {validTerrainHeightfield} from './gaia-terrain-physics.js';
 import {terrainSurfaceMesh3d} from './gaia-terrain-sculpt.js';
+import {validRoadSpline,roadSurfaceBuffers3d} from './gaia-road-spline.js';
 import {updateAffineEditorPose3d,affineCorrection3d,legacyReferenceMatrix3d,hasAffinePose} from './scene-graph-v2.js';
 import {characterBody3d,colliderGeometry3d,colliderPosition3d,rotationQuaternion3d,quaternionEuler3d,affineBoxHull3d,affineHullSignature3d} from './collider-3d.js';
 import {installCollisionBackend3d,releaseCollisionBackend3d} from './collision-backend-3d.js';
@@ -18,9 +19,9 @@ export async function loadRapier3d(){
 }
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,n(v)));
-const included=o=>activeBody3d(o)&&o.collision3d!==false&&o.collider3d?.enabled!==false&&(solidBody3d(o)||characterBody3d(o));
+const included=o=>o.roadSpline?o.enabled!==false&&o.collision3d!==false:activeBody3d(o)&&o.collision3d!==false&&o.collider3d?.enabled!==false&&(solidBody3d(o)||characterBody3d(o));
 const dynamic=o=>!!o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!characterBody3d(o)&&!o.ai?.enabled;
-const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,o.collider3d,o.controller3d,o.joint3d,!!o.ai?.enabled,o.terrainHeightfield?o.terrainRevision3d||0:null].map((v,i)=>i===2&&v?Object.fromEntries(Object.entries(v).filter(([k])=>!['vx','vy','vz'].includes(k))):v));
+const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,o.collider3d,o.controller3d,o.joint3d,!!o.ai?.enabled,o.terrainHeightfield?o.terrainRevision3d||0:null,o.roadSpline?o.roadSpline:null].map((v,i)=>i===2&&v?Object.fromEntries(Object.entries(v).filter(([k])=>!['vx','vy','vz'].includes(k))):v));
 const scenePosition=o=>({x:n(o.x),y:n(o.y),z:n(o.elevation3d)});
 const terrainPose=o=>o.terrainHeightfield&&validTerrainHeightfield(o.terrainHeightfield)?{x:o.terrainHeightfield.offsetX,y:n(o.elevation3d),z:o.terrainHeightfield.offsetZ}:colliderPosition3d(o);
 const velocity=o=>({x:n(o.rigidbody3d?.vx),y:n(o.rigidbody3d?.vy),z:n(o.rigidbody3d?.vz)});
@@ -54,6 +55,21 @@ export function createRapierScene(RAPIER,entities,gravity=15){
  const world=new RAPIER.World({x:0,y:-Math.max(0,gravity),z:0}),actors=new Map(),joints=new Map(),errors=[],skipped=new Map();
  for(const o of entities){
   if(!included(o))continue;
+  if(o.roadSpline){
+   if(!validRoadSpline(o.roadSpline)){errors.push(o.name+' : tracé de route invalide');skipped.set(o.id,{entity:o,signature:skippedColliderSignature(o)});continue}
+   if(typeof RAPIER.ColliderDesc.trimesh!=='function'){errors.push(o.name+' : trimesh Rapier indisponible');skipped.set(o.id,{entity:o,signature:skippedColliderSignature(o)});continue}
+   try{
+    const tiles=entities.filter(t=>validTerrainHeightfield(t.terrainHeightfield)&&t.enabled!==false);
+    const mesh=roadSurfaceBuffers3d(o.roadSpline,tiles);
+    const desc=RAPIER.RigidBodyDesc.fixed().setTranslation(0,0,0);
+    const body=world.createRigidBody(desc);
+    const colliderDesc=RAPIER.ColliderDesc.trimesh(mesh.positions,mesh.indices);
+    colliderDesc.setFriction?.(clamp(o.roadFriction??1.1,0,2));colliderDesc.setRestitution?.(0);
+    const collider=world.createCollider(colliderDesc,body);
+    actors.set(o.id,{body,collider,controller:null,entity:o,geometry:null,width:n(o.w,32)/64,depth:n(o.depth3d,o.h||32)/64,height:n(o.h,32)/64,isDynamic:false,isKinematic:false,isCharacter:false,config:bodyConfig(o),affineHullSignature:null,lastPosition:scenePosition(o),lastVelocity:velocity(o),lastRotation:{x:0,y:0,z:0,w:1}});
+   }catch(error){errors.push(o.name+' : route sans collision — '+String(error.message||error));skipped.set(o.id,{entity:o,signature:skippedColliderSignature(o)})}
+   continue;
+  }
   const g=colliderGeometry3d(o),pos=terrainPose(o),isCharacter=characterBody3d(o),isDynamic=dynamic(o),isKinematic=isCharacter||o.rigidbody3d?.kinematic===true;
   const desc=(isDynamic?RAPIER.RigidBodyDesc.dynamic():isKinematic&&RAPIER.RigidBodyDesc.kinematicPositionBased?RAPIER.RigidBodyDesc.kinematicPositionBased():RAPIER.RigidBodyDesc.fixed()).setTranslation(pos.x,pos.y,pos.z);
   const rotation=rotationQuaternion3d(o);desc.setRotation?.(rotation);
@@ -112,6 +128,7 @@ export function synchronizeRapierScene(scene,entities){
  const current=new Map(entities.map(o=>[o.id,o]));if(current.size!==scene.entityCount||entities.filter(included).length!==scene.actors.size+(scene.skipped?.size||0))return false;
  for(const [id,r] of scene.skipped||[]){const o=current.get(id);if(o!==r.entity||!included(o)||skippedColliderSignature(o)!==r.signature)return false;}
  for(const [id,r] of scene.actors){const o=current.get(id);if(o!==r.entity||!included(o)||bodyConfig(o)!==r.config)return false;
+  if(o.roadSpline)continue;
   if(Math.abs(n(o.w,32)/64-r.width)+Math.abs(n(o.h,32)/64-r.height)+Math.abs(n(o.depth3d,o.h||32)/64-r.depth)>1e-5)return false;
   const pos=terrainPose(o),rotation=rotationQuaternion3d(o);
   let affine=null;

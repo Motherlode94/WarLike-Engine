@@ -23,6 +23,7 @@ export const playerModules=[
   "js/core/adventure-runtime.js",
   "js/core/ai-perception.js",
   "js/core/aircraft-flight-physics.js",
+  "js/core/aircraft-pilot-input.js",
   "js/core/aircraft-rapier.js",
   "js/core/animal-controller.js",
   "js/core/animation-clips.js",

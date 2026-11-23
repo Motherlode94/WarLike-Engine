@@ -5,6 +5,9 @@ import {cameraFrustumCorners3d} from './editor-camera-frustum-3d.js';
 import {sceneCameraView} from './scene-camera-3d.js';
 import {initializeEditableTerrain,applyTerrainBrush,terrainBrushModes,terrainLayers} from './gaia-terrain-sculpt.js';
 import {initializeRustGizmo,axisRayParameter,gizmoPointerRay} from './rust-gizmo-acceleration.js';
+import {heightfieldAt3d,validTerrainHeightfield} from './gaia-terrain-physics.js';
+import {createRoadSpline,sampleRoadSpline,roadSplineEntity,editRoadSpline} from './gaia-road-spline.js';
+
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
 const el=(tag,props={})=>{const node=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(props))node.setAttribute(k,String(v));return node};
@@ -67,9 +70,120 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  terrainTools.append(document.createTextNode('Gaia ·'),terrainMode,document.createTextNode('Rayon'),radiusControl,document.createTextNode('Force'),strengthControl,layerControl);
  host.append(terrainTools);
  const selectedTerrain=()=>state.entities.find(o=>state.selected.includes(o.id)&&(o.name==='Terrain'||o.terrainHeightfield||o.type==='terrain3d'));
+ const selectedRoad=()=>state.entities.find(o=>state.selected.includes(o.id)&&o.roadSpline);
+ const roadOverlay=el('svg',{class:'warlike-gaia-road-overlay','aria-label':'Tracé Road Editor sur Gaia'});
+ roadOverlay.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:11;pointer-events:none;overflow:visible';
+ host.append(roadOverlay);
+ const roadButton=document.createElement('button');roadButton.type='button';roadButton.textContent='＋ Route';roadButton.title='Cliquer sur Gaia pour définir les points de contrôle';
+ const roadFinish=document.createElement('button');roadFinish.type='button';roadFinish.textContent='Terminer';roadFinish.hidden=true;
+ const roadWidth=document.createElement('input');roadWidth.type='number';roadWidth.min='1';roadWidth.max='60';roadWidth.step='.5';roadWidth.value='6';roadWidth.setAttribute('aria-label','Largeur de route en mètres');
+ roadWidth.style.cssText=radiusControl.style.cssText;
+ terrainTools.append(document.createTextNode('Route'),roadButton,document.createTextNode('m'),roadWidth,roadFinish);
+ let roadMode=false,roadDraft=null,roadDrag=null;
+ const gaiaTiles=()=>state.entities.filter(o=>validTerrainHeightfield(o.terrainHeightfield)&&o.enabled!==false);
+ const terrainAt=(x,z)=>{
+  for(const tile of gaiaTiles()){
+   const y=heightfieldAt3d(tile.terrainHeightfield,x,z);
+   if(y!==null)return y;
+  }
+  return null;
+ };
+ const roadPointer=event=>{
+  const rect=canvas.getBoundingClientRect(),ray=gizmoPointerRay(event.clientX,event.clientY,rect,getCamera());
+  if(!ray||Math.abs(ray.direction[1])<1e-6)return null;
+  const t=-ray.origin[1]/ray.direction[1];
+  if(t<=0||t>1000)return null;
+  const x=ray.origin[0]+ray.direction[0]*t,z=ray.origin[2]+ray.direction[2]*t;
+  return terrainAt(x,z)===null?null:{x,z};
+ };
+ const redrawRoad=()=>{
+  roadOverlay.replaceChildren();
+  roadOverlay.style.display=view3d.enabled&&!state.playing?'block':'none';
+  if(!view3d.enabled||state.playing)return;
+  const rect=canvas.getBoundingClientRect(),cam=getCamera();
+  roadOverlay.setAttribute('viewBox','0 0 '+rect.width+' '+rect.height);
+  const roads=state.entities.filter(o=>o.roadSpline&&o.enabled!==false);
+  for(const road of roads){
+   const active=state.selected.includes(road.id),points=sampleRoadSpline(road.roadSpline,{segmentsPerSpan:8});
+   const projected=points.map(p=>{
+    const y=terrainAt(p.x,p.z);
+    return y===null?null:project3d([p.x,y+road.roadSpline.elevationOffset,p.z],cam,rect.width,rect.height);
+   });
+   let run=[];
+   const drawRun=()=>{if(run.length>1){const path=el('polyline',{points:run.join(' '),fill:'none',stroke:active?'#ffd46b':'#67b7df','stroke-width':active?4:2,'stroke-linecap':'round','stroke-linejoin':'round'});roadOverlay.append(path)}run=[]};
+   for(const p of projected){if(!p){drawRun();continue}run.push(p.x+','+p.y)}
+   drawRun();
+   if(active)for(const point of road.roadSpline.points){
+    const y=terrainAt(point.x,point.z);if(y===null)continue;
+    const p=project3d([point.x,y+road.roadSpline.elevationOffset,point.z],cam,rect.width,rect.height);
+    if(p)roadOverlay.append(el('circle',{cx:p.x,cy:p.y,r:6,fill:'#ffd46b',stroke:'#23333e','stroke-width':2}));
+   }
+  }
+  if(roadDraft){const y=terrainAt(roadDraft.x,roadDraft.z);
+   if(y!==null){const p=project3d([roadDraft.x,y+.1,roadDraft.z],cam,rect.width,rect.height);
+    if(p)roadOverlay.append(el('circle',{cx:p.x,cy:p.y,r:6,fill:'#72e7bd'}));
+   }
+  }
+ };
+ const syncRoadControls=()=>{
+  roadButton.textContent=roadMode?'Arrêter le tracé':selectedRoad()?'Éditer la route':'＋ Route';
+  roadFinish.hidden=!roadMode;
+  roadWidth.disabled=!selectedRoad();
+  if(selectedRoad()&&document.activeElement!==roadWidth)roadWidth.value=String(selectedRoad().roadSpline.width);
+ };
+ roadButton.onclick=()=>{
+  if(state.playing)return;
+  if(!roadMode&&!selectedRoad()&&!gaiaTiles().length)return;
+  roadMode=!roadMode;roadDraft=null;roadDrag=null;terrainMode.value='off';syncRoadControls();redrawRoad();
+ };
+ roadFinish.onclick=()=>{roadMode=false;roadDraft=null;roadDrag=null;syncRoadControls();redrawRoad()};
+ roadWidth.onchange=()=>{
+  const road=selectedRoad();if(!road||state.playing)return;
+  const width=Number(roadWidth.value);if(!Number.isFinite(width)||width<1||width>60){roadWidth.value=String(road.roadSpline.width);return}
+  if(width!==road.roadSpline.width){road.roadSpline=editRoadSpline(road.roadSpline,{action:'width',width});record('Road Editor · largeur');notify();redrawRoad()}
+ };
+ const roadControlHit=event=>{
+  const road=selectedRoad();if(!road)return -1;
+  const rect=canvas.getBoundingClientRect(),cam=getCamera();
+  let hit=-1,dist=14;
+  road.roadSpline.points.forEach((p,i)=>{
+   const y=terrainAt(p.x,p.z);if(y===null)return;
+   const q=project3d([p.x,y+road.roadSpline.elevationOffset,p.z],cam,rect.width,rect.height);
+   const d=q?Math.hypot(q.x-(event.clientX-rect.left),q.y-(event.clientY-rect.top)):Infinity;
+   if(d<dist){hit=i;dist=d}
+  });
+  return hit;
+ };
+ canvas.addEventListener('pointerdown',event=>{
+  if(!roadMode||state.playing||!view3d.enabled||event.button!==0||event.altKey)return;
+  const point=roadPointer(event);if(!point)return;
+  const road=selectedRoad(),hit=roadControlHit(event);
+  if(road&&hit>=0){roadDrag={id:road.id,index:hit,pointer:event.pointerId,changed:false};canvas.setPointerCapture(event.pointerId)}
+  else if(road){try{road.roadSpline=editRoadSpline(road.roadSpline,{action:'append',point});record('Road Editor · ajouter point');notify()}catch(error){console.warn('Road Editor:',error.message)}}
+  else if(roadDraft){
+   if(Math.hypot(point.x-roadDraft.x,point.z-roadDraft.z)<.01){event.preventDefault();event.stopImmediatePropagation();return}
+   const created=roadSplineEntity(state.nextId++,createRoadSpline([roadDraft,point],{width:Number(roadWidth.value)||6}));
+   state.entities.push(created);state.selected=[created.id];roadDraft=null;
+   record('Road Editor · créer route');notify()
+  }else roadDraft=point;
+  event.preventDefault();event.stopImmediatePropagation();syncRoadControls();redrawRoad();
+ },true);
+ canvas.addEventListener('pointermove',event=>{
+  if(!roadDrag||roadDrag.pointer!==event.pointerId)return;
+  const road=state.entities.find(o=>o.id===roadDrag.id),point=roadPointer(event);
+  if(road&&point){try{road.roadSpline=editRoadSpline(road.roadSpline,{action:'move',index:roadDrag.index,point});roadDrag.changed=true;notify();redrawRoad()}catch{ /* Ignore degenerate overlapping control points. */ }}
+  event.preventDefault();event.stopImmediatePropagation();
+ },true);
+ const finishRoadDrag=event=>{
+  if(!roadDrag||roadDrag.pointer!==event.pointerId)return;
+  if(roadDrag.changed)record('Road Editor · déplacer point');
+  roadDrag=null;redrawRoad();event.stopImmediatePropagation();
+ };
+ canvas.addEventListener('pointerup',finishRoadDrag,true);
+ canvas.addEventListener('pointercancel',finishRoadDrag,true);
  let painting=false,painted=false;
  const terrainStroke=event=>{
-  if(state.playing||terrainMode.value==='off'||event.button!==0&&!painting)return;
+  if(state.playing||roadMode||terrainMode.value==='off'||event.button!==0&&!painting)return;
   const o=selectedTerrain();if(!o)return;
   const rect=canvas.getBoundingClientRect(),ray=gizmoPointerRay(event.clientX,event.clientY,rect,getCamera());
   if(!ray||Math.abs(ray.direction[1])<1e-6)return;
@@ -84,7 +198,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   if(changed){painted=true;notify()}
   event.preventDefault();event.stopImmediatePropagation();
  };
- canvas.addEventListener('pointerdown',event=>{if(!selectedTerrain()||terrainMode.value==='off'||event.button!==0)return;painting=true;painted=false;terrainStroke(event)},true);
+ canvas.addEventListener('pointerdown',event=>{if(roadMode||!selectedTerrain()||terrainMode.value==='off'||event.button!==0)return;painting=true;painted=false;terrainStroke(event)},true);
  canvas.addEventListener('pointermove',event=>{if(painting&&(event.buttons&1))terrainStroke(event)},true);
  const endTerrainStroke=()=>{if(painting&&painted)record('Gaia Terrain · '+terrainMode.value);painting=false;painted=false};
  canvas.addEventListener('pointerup',endTerrainStroke,true);
@@ -93,7 +207,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  let drag=null,lastTool='';
  const tool=()=>document.querySelector('.scene-tools [data-tool].active')?.dataset.tool||'move';
  const center=()=>{
-  const objects=state.entities.filter(o=>state.selected.includes(o.id));
+  const objects=state.entities.filter(o=>state.selected.includes(o.id)&&!o.roadSpline);
   if(!objects.length)return null;
   const pts=objects.map(objectBounds3d);
   return pts.reduce((p,b)=>[p[0]+b.x/pts.length,p[1]+b.y/pts.length,p[2]+b.z/pts.length],[0,0,0]);
@@ -103,7 +217,8 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const colors={x:'#f36868',y:'#68d781',z:'#64a9ff'};
  const redraw=()=>{
   const selected=center(),selectedObject=state.entities.find(o=>state.selected.includes(o.id)&&o.sceneCamera3d);
-  terrainTools.hidden=!view3d.enabled||state.playing||!selectedTerrain();
+  terrainTools.hidden=!view3d.enabled||state.playing||(!selectedTerrain()&&!selectedRoad());
+  syncRoadControls();redrawRoad();
   terrainTools.style.display=terrainTools.hidden?'none':'flex';
   const showingCamera=!!selectedObject&&selectedObject.sceneCamera3d.showFrustum!==false;
   // Hide the preview before the early return when Play starts or selection changes.

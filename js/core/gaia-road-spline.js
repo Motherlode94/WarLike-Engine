@@ -91,3 +91,20 @@ export function roadSplineEntity(id,road,{name='Gaia Road'}={}){
  if(!Number.isSafeInteger(id)||id<1||!validRoadSpline(road))throw Error('Invalid Gaia road entity');
  return {id,name,type:'road',roadSpline:structuredClone(road),enabled:true,visible:true};
 }
+
+/** Edit an authored road without altering any Gaia height samples. */
+export function editRoadSpline(road,{action,index,point,width}){
+ if(!validRoadSpline(road))throw Error('Invalid road spline');
+ const next=structuredClone(road);
+ if(action==='width')next.width=width;
+ else if(action==='append'){
+  if(next.points.length>=256)throw Error('Road control point limit reached');
+  next.points.push(point);
+ }else if(action==='move'){
+  if(!Number.isInteger(index)||index<0||index>=next.points.length)throw Error('Invalid control point');
+  next.points[index]=point;
+ }else throw Error('Unknown road edit');
+ if(!validRoadSpline(next)||next.points.some((p,i)=>i&&distance(p,next.points[i-1])<1e-4))
+  throw Error('Invalid road edit geometry');
+ return next;
+}

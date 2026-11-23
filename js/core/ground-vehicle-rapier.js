@@ -14,7 +14,9 @@ const rotate=(q,v)=>{
 const gridWheels=(axles,halfWidth,frontSteer,tracked)=>axles.flatMap((z,i)=>[-1,1].map(side=>({
  position:{x:side*halfWidth,y:0,z},wheel:{
   ...defaultWheelPhysics(),steering:frontSteer&&i===0,driven:tracked||i===axles.length-1,
-  spring:tracked?95000:axles.length===3?52000:32000,
+  // Heavy chassis must support their own weight before full suspension travel.
+  // Static wheel compression: mass * 9.81 / (wheelCount * spring).
+  spring:tracked?150000:axles.length===3?80000:32000,
   damper:tracked?11500:axles.length===3?6000:4300,
   grip:tracked?1.2:1.05
  },side

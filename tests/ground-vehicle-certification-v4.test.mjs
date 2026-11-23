@@ -41,11 +41,14 @@ test('V4 scene preserves vehicle physics in canonical roundtrip and exported pla
 test('V4 real Rapier raycasts detect each suspension and apply forces only after contact',()=>{
  const s=newScene(),scene=createRapierScene(RAPIER,s.entities);
  try{
+  // Rapier updates broadphase/query pipeline on the physics step; warm up
+  // the real world before probing authored suspension contacts.
+  stepRapierScene(scene,1/120);
   const result=applyGroundVehicleForces(scene,1/60);
   for(const kind of ['car','truck','tracked']){
    const status=result.find(x=>x.id===s.ids[kind]);
    assert.ok(status&&!status.error,kind+': '+JSON.stringify(status));
-   assert.ok(status.contacts>=2,kind+' must actually touch the ground: '+JSON.stringify(status));
+   assert.ok(status.contacts>=2,kind+' must actually touch the ground: '+JSON.stringify({status,pose:scene.actors.get(s.ids[kind])?.body.translation(),floor:scene.actors.get(1)?.collider?.translation?.()}));
   }
   assert.equal(synchronizeRapierScene(scene,s.entities),true);
   stepRapierScene(scene,1/60);

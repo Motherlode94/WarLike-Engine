@@ -60,6 +60,7 @@ export const dimensions3d=a=>{
  return {w:90,h:90,d:85};
 };
 const vehicleTunings={
+ jeep:[180,150,120],sports:[265,210,135],truck:[135,92,85],tank:[90,70,65],buggy:[190,170,140],bike:[195,215,150],
  sedan:[205,155,126],police:[245,190,142],ambulance:[170,115,105],firetruck:[125,85,76],bus:[135,87,72],
  van:[165,125,105],pickup:[185,150,117],suv:[195,148,113],taxi:[202,157,128],
  muscle:[250,210,124],supercar:[335,260,140],formula:[360,290,154],kart:[190,210,157],rally:[260,230,151],
@@ -122,7 +123,7 @@ export function prefab3d(id,nextId=1,x=120,y=120){
  const a=get3dAsset(id);if(!a)return null;
  const size=dimensions3d(a),realId=defaultRealModelFor(a.id),real=realId&&model3dById(realId);return {id:nextId,name:a.name+' '+nextId,type:'mesh3d',assetId:a.id,
  x,y,w:size.w,h:size.h,depth3d:size.d,meshShape:real?'glb':a.shape,elevation3d:0,color:a.color||'#ffffff',rotation:0,
- collision3d:!['water','ground','road','lamp','bush'].includes(a.shape),...(real?{model3dId:realId}:a.shape==='glb'?{model3dId:a.id}:{}),...(a.category==='Characters'?{playable3d:true}:{})};
+ collision3d:!['water','ground','road','lamp','bush'].includes(a.shape),...(real?{model3dId:realId}:a.shape==='glb'?{model3dId:a.id}:{}),...(a.category==='Vehicles'?defaultsForVehicle(a.id):{}),...(a.category==='Characters'?{playable3d:true}:{})};
 }
 export function thumbnail3d(asset){
  const a=typeof asset==='string'?get3dAsset(asset):asset;if(!a)return '';

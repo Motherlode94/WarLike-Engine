@@ -921,10 +921,10 @@ export function init3d(canvas,host,buttons){
    const info=aircraftFlightInstruments(aircraft);
    const display=name=>Number.isFinite(name)?name.toFixed(1):'0.0';
    aircraftHud.textContent=(info.kind==='helicopter'?'HÉLICOPTÈRE':'AVION')+' · '+(aircraftViewMode==='cockpit'?'COCKPIT':'EXTÉRIEUR')+
-    '\\nALT '+display(info.altitudeMeters)+' m   V/S '+display(info.verticalSpeedMs)+' m/s'+
-    '\\nVITESSE '+display(info.speedKmh)+' km/h   CAP '+Math.round(info.headingDeg)+'°'+
-    '\\nTANGAGE '+Math.round(info.pitchDeg)+'°   ROULIS '+Math.round(info.bankDeg)+'°   PUISSANCE '+info.powerPercent+'%'+
-    '\\nV : changer de vue · E : sortir au sol';
+    '\nALT '+display(info.altitudeMeters)+' m   V/S '+display(info.verticalSpeedMs)+' m/s'+
+    '\nVITESSE '+display(info.speedKmh)+' km/h   CAP '+Math.round(info.headingDeg)+'°'+
+    '\nTANGAGE '+Math.round(info.pitchDeg)+'°   ROULIS '+Math.round(info.bankDeg)+'°   PUISSANCE '+info.powerPercent+'%'+
+    '\nV : changer de vue · E : sortir au sol';
    aircraftHud.hidden=false;
   }else{aircraftHud.hidden=true;aircraftViewFor=null;aircraftViewMode=null;aircraftCameraKeyHeld=false}
   const vehicleHud=document.getElementById('warlikeVehicle3dHud');

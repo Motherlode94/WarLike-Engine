@@ -30,7 +30,7 @@ const overrides={
  spriteRenderer2d:['Rendering','Sprites'],tilemap2d:['Tilemap','Tilemaps'],
  uiCanvas:['Layout','Canvas'],uiRect:['Layout','Rect Transform'],uiElement:['Layout','Elements'],
  webScripts:['Scripts','Web'],warScripts:['Scripts','WarScript'],
- vehicleController:['Vehicles','Controllers'],groundVehiclePhysics:['Vehicles','Physics'],aircraftPhysics:['Vehicles','Aircraft'],aircraftSystems:['Vehicles','Aircraft'],'data-VehicleController':['Vehicles','Controllers'],
+ vehicleController:['Vehicles','Controllers'],groundVehiclePhysics:['Vehicles','Physics'],aircraftPhysics:['Vehicles','Aircraft'],aircraftSystems:['Vehicles','Aircraft'],aircraftLandingGear:['Vehicles','Aircraft'],'data-VehicleController':['Vehicles','Controllers'],
  controller2d:['Movement','Player'],controller3d:['Movement','Player'],
  animalController:['Gameplay','Animals'],
  ai:['Navigation','Agents'],navigationAgent:['Navigation','Agents'],

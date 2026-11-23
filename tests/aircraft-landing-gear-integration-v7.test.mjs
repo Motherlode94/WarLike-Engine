@@ -1,0 +1,47 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {addObjectComponent,componentRemovalBlockers,componentChoices,removeObjectComponent} from '../js/core/component-definitions.js';
+import {componentMenuPath} from '../js/ui/component-menu-tree.js';
+import {canonicalScene,runtimeEntities} from '../js/core/scene-contract.js';
+import {prepareGameDefinition,gameRuntimeFiles} from '../js/core/game-build.js';
+import {freshGameProject} from '../js/core/game-project.js';
+import {readFileSync} from 'node:fs';
+import {playerModules} from '../js/core/player-modules.js';
+test('Aircraft V7 creates native gear, airframe, systems, collider and dynamic body',()=>{
+ const e={id:1,name:'Plane',type:'mesh3d',x:0,y:0,w:220,h:90,depth3d:360,assetId:'primitive-cube'};
+ const option=componentChoices('3d').find(o=>o.id==='aircraftLandingGear');
+ assert.ok(option);assert.deepEqual(componentMenuPath(option,'Vehicles'),['Vehicles','Aircraft']);
+ assert.equal(componentChoices('2d').some(o=>o.id==='aircraftLandingGear'),false);
+ assert.equal(addObjectComponent(e,'aircraftLandingGear','3d'),true);
+ assert.equal(e.aircraftLandingGear.kind,'airplane');
+ assert.equal(e.aircraftPhysics.enabled,true);
+ assert.equal(e.aircraftSystems.gear.deployed,true);
+ assert.equal(e.collider3d.enabled,true);
+ assert.equal(e.rigidbody3d.mass,e.aircraftPhysics.mass);
+ assert.equal(e.rigidbody3d.lockRotations,false);
+ assert.ok(componentRemovalBlockers(e,'aircraftPhysics').includes('aircraftLandingGear'));
+ assert.equal(removeObjectComponent(e,'aircraftPhysics'),false);
+});
+test('Aircraft V7 fixed wheel mounts, braking, and retraction survive canonical save/export',()=>{
+ const e={id:1,name:'Plane',type:'mesh3d',x:0,y:0,w:220,h:90,depth3d:360,assetId:'primitive-cube'};
+ addObjectComponent(e,'aircraftLandingGear','3d');
+ e.aircraftGearInput={brake:.7};e.aircraftSystems.gear.deployed=false;
+ const restored=runtimeEntities(canonicalScene([e]))[0];
+ assert.deepEqual(restored.aircraftLandingGear,e.aircraftLandingGear);
+ assert.deepEqual(restored.aircraftGearInput,e.aircraftGearInput);
+ const pilot={id:2,name:'Pilot',type:'player',x:300,y:200,w:32,h:96,depth3d:32,playable3d:true};
+ const project={...freshGameProject(),physics3d:'rapier',genre:'sandbox'};
+ const source={entities:[e,pilot],camera:{x:0,y:0,zoom:1},mode:'3d',project};
+ const before=structuredClone(source);
+ const build=prepareGameDefinition(source);
+ assert.deepEqual(source,before);
+ assert.deepEqual(build.project.scenes[0].entities[0].aircraftLandingGear,e.aircraftLandingGear);
+ const manifest=JSON.parse(readFileSync(new URL('../runtime-files.json',import.meta.url),'utf8'));
+ assert.ok(gameRuntimeFiles(manifest.files,build).includes('js/core/aircraft-landing-gear.js'));
+ assert.ok(playerModules.includes('js/core/aircraft-landing-gear.js'));
+});
+test('Aircraft V7 braking is controlled by pilot only, not arcade movement',()=>{
+ const runtime=readFileSync(new URL('../js/core/vehicle-3d.js',import.meta.url),'utf8');
+ const rapier=readFileSync(new URL('../js/core/rapier-physics-3d.js',import.meta.url),'utf8');
+ assert.match(runtime,/drivingCar\.aircraftGearInput=\{brake:/);
+ assert.match(rapier,/applyAircraftLandingGearForces\(scene,t\)/);
+});

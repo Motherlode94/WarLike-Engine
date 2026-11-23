@@ -75,6 +75,7 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
  // Rapier step applies forces; never move the aircraft with arcade transforms.
  if(drivingCar.aircraftPhysics?.enabled){
   drivingCar.aircraftInput=aircraftPilotInput(drivingCar.aircraftPhysics.kind,drivingCar.aircraftInput,keys,step);
+  drivingCar.aircraftGearInput={brake:keys.has(' ')||keys.has('space')?1:0};
   if(drivingCar.aircraftSystems?.enabled)stepAircraftSystems(drivingCar.aircraftSystems,drivingCar.aircraftPhysics.kind,keys,step,drivingCar.aircraftPhysics.kind==='helicopter'?drivingCar.aircraftInput.collective:drivingCar.aircraftInput.throttle);
   const v=drivingCar.rigidbody3d;
   driving3d.speed=v?Math.hypot(Number(v.vx)||0,Number(v.vy)||0,Number(v.vz)||0):0;

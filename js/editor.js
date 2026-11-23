@@ -61,6 +61,7 @@ import {catalog,urlFor} from './assets/catalog.js';
 import {state,notify} from './core/state.js';
 import {gaiaWorldToEntities} from './core/gaia-terrain-physics.js';
 import {readGaiaWorldFile} from './core/gaia-world-import-preview.js';
+import {gaiaWorldPreviewMesh,drawGaiaWorldPreview} from './core/gaia-world-preview-3d.js';
 import {autoSave,recoverLocal,hasLocalSave,backupLocalSave,beginAutoSave,connectCloud} from './core/storage.js';
 import {zoomAt,resetCamera} from './core/camera.js';
 import {record,undo,redo,renderHistory} from './core/history.js';
@@ -152,12 +153,49 @@ $('#save').onclick=()=>exportScene().catch(error=>alert('Export impossible : '+e
 // Gaia remains a native WarLike Engine module. Preview first, import only on confirmation.
 const gaiaDialog=$('#gaiaDialog'),gaiaFeedback=$('#gaiaFeedback'),gaiaConfirm=$('#gaiaConfirm'),gaiaTiles=$('#gaiaTileList');
 let selectedGaia=null;
+let gaiaPreviewMesh=null;
+const gaia3d=$('#gaia3dCanvas'),gaia3dPanel=$('#gaia3dPreview');
+const gaiaView={yaw:-.65,pitch:.7,zoom:1};
+const paintGaiaPreview=()=>{
+ if(!gaiaPreviewMesh||gaia3dPanel.hidden)return;
+ drawGaiaWorldPreview(gaia3d,gaiaPreviewMesh,gaiaView);
+};
+const clearGaiaPreview=()=>{
+ gaiaPreviewMesh=null;gaia3dPanel.hidden=true;
+ gaiaView.yaw=-.65;gaiaView.pitch=.7;gaiaView.zoom=1;
+ gaia3d.getContext('2d')?.clearRect(0,0,gaia3d.width,gaia3d.height);
+};
+$('#gaia3dOrbitLeft').onclick=()=>{gaiaView.yaw-=.25;paintGaiaPreview()};
+$('#gaia3dOrbitRight').onclick=()=>{gaiaView.yaw+=.25;paintGaiaPreview()};
+$('#gaia3dZoomIn').onclick=()=>{gaiaView.zoom=Math.min(3,gaiaView.zoom*1.2);paintGaiaPreview()};
+$('#gaia3dZoomOut').onclick=()=>{gaiaView.zoom=Math.max(.4,gaiaView.zoom/1.2);paintGaiaPreview()};
+$('#gaia3dReset').onclick=()=>{gaiaView.yaw=-.65;gaiaView.pitch=.7;gaiaView.zoom=1;paintGaiaPreview()};
+let gaiaDrag=null;
+gaia3d.addEventListener('pointerdown',event=>{
+ if(event.button!==0||!gaiaPreviewMesh)return;
+ gaiaDrag={x:event.clientX,y:event.clientY,id:event.pointerId};
+ gaia3d.setPointerCapture(event.pointerId);
+});
+gaia3d.addEventListener('pointermove',event=>{
+ if(!gaiaDrag||gaiaDrag.id!==event.pointerId)return;
+ gaiaView.yaw+=(event.clientX-gaiaDrag.x)*.009;
+ gaiaView.pitch=Math.max(.15,Math.min(1.35,gaiaView.pitch+(event.clientY-gaiaDrag.y)*.006));
+ gaiaDrag.x=event.clientX;gaiaDrag.y=event.clientY;
+ paintGaiaPreview();
+});
+for(const type of ['pointerup','pointercancel'])gaia3d.addEventListener(type,()=>{gaiaDrag=null});
+gaia3d.addEventListener('wheel',event=>{
+ if(!gaiaPreviewMesh)return;
+ event.preventDefault();
+ gaiaView.zoom=Math.max(.4,Math.min(3,gaiaView.zoom*(event.deltaY>0?.9:1.1)));
+ paintGaiaPreview();
+},{passive:false});
 function gaiaStatus(message,isError=false){
  gaiaFeedback.textContent=message;
  gaiaFeedback.dataset.error=String(isError);
 }
 function resetGaiaSelection(){
- selectedGaia=null;gaiaConfirm.disabled=true;gaiaTiles.replaceChildren();
+ selectedGaia=null;gaiaConfirm.disabled=true;gaiaTiles.replaceChildren();clearGaiaPreview();
  $('#gaiaSummary').textContent='Sélectionne un fichier pour voir sa résolution et ses dimensions avant de l’importer.';
  $('#gaiaFileName').textContent='Aucun fichier sélectionné';
  gaiaStatus('');
@@ -173,12 +211,13 @@ $('#gaiaCancel').onclick=()=>gaiaDialog.close();
 $('#gaiaClose').onclick=()=>gaiaDialog.close();
 $('#gaiaFile').onchange=async event=>{
  const file=event.target.files?.[0];
- gaiaConfirm.disabled=true;selectedGaia=null;gaiaTiles.replaceChildren();
+ gaiaConfirm.disabled=true;selectedGaia=null;gaiaTiles.replaceChildren();clearGaiaPreview();
  if(!file)return;
  $('#gaiaFileName').textContent=file.name;
  try{
   const {world,preview}=await readGaiaWorldFile(file);
   selectedGaia={world,preview};
+  gaiaPreviewMesh=gaiaWorldPreviewMesh(world);gaia3dPanel.hidden=false;paintGaiaPreview();
   $('#gaiaSummary').textContent=preview.count+' tuile(s) · '+preview.sampleCount.toLocaleString('fr')+' points de hauteur · altitude '+preview.overallMinMeters.toFixed(1)+' à '+preview.overallMaxMeters.toFixed(1)+' m';
   for(const tile of preview.tiles){
    const card=document.createElement('div');card.className='gaia-tile';card.setAttribute('role','listitem');
@@ -188,7 +227,7 @@ $('#gaiaFile').onchange=async event=>{
    card.append(title,details);gaiaTiles.append(card);
   }
   gaiaConfirm.disabled=false;gaiaStatus('Terrain vérifié : confirme pour l’ajouter à la scène.');
- }catch(error){gaiaStatus('Import indisponible : '+error.message,true);$('#gaiaSummary').textContent='Le fichier n’a pas pu être validé.';}
+ }catch(error){clearGaiaPreview();selectedGaia=null;gaiaStatus('Import indisponible : '+error.message,true);$('#gaiaSummary').textContent='Le fichier n’a pas pu être validé.';}
  finally{event.target.value='';}
 };
 gaiaConfirm.onclick=()=>{

@@ -31,7 +31,7 @@ test('road surface follows Gaia height at both shoulders, without altering terra
  assert.equal(geometry.vertices.length,12);
  assert.equal(geometry.triangles.length,10);
  for(const vertex of geometry.vertices){
-  assert.ok(Math.abs(vertex.y-heightfieldAt3d(tile.terrainHeightfield,vertex.x,vertex.z)-.05)<1e-8);
+  assert.ok(vertex.y>=heightfieldAt3d(tile.terrainHeightfield,vertex.x,vertex.z)+.05-1e-8,'road may rise to clear higher centreline terrain');
  }
  assert.deepEqual(tile.terrainHeightfield.heights,before,'geometry generation must not sculpt Gaia implicitly');
 });

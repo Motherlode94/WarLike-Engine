@@ -241,7 +241,14 @@ try{
    } finally {await page.mouse.up({button:'left'})}
    assert(fired.shot.cooldown>0,
      'Left-click must invoke real FPS/TPS weapon attack: '+JSON.stringify(fired));
-   await page.screenshot({path:path.join(out,mode+'-play.png')});
+   // Screenshot is a diagnostic artifact, not a gameplay assertion. On some
+   // headless WebGL runners, capture can stall even when physics, input and
+   // rendering checks have passed; don't mask the real acceptance result.
+   try {
+    await page.screenshot({path:path.join(out,mode+'-play.png'),timeout:8000,animations:'disabled'});
+   } catch(captureError) {
+    console.warn('[p6-fps-tps-browser] optional '+mode+' screenshot unavailable: '+String(captureError));
+   }
    await page.keyboard.press('Escape');
    const paused=await snap();
    assert.equal(paused.glError,0);

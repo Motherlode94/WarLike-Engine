@@ -8,6 +8,7 @@ import {initializeRustGizmo,axisRayParameter,gizmoPointerRay} from './rust-gizmo
 import {heightfieldAt3d,validTerrainHeightfield} from './gaia-terrain-physics.js';
 import {createRoadSpline,sampleRoadSpline,roadSplineEntity,editRoadSpline} from './gaia-road-spline.js';
 import {previewRoadGrade,applyRoadGradePlan} from './gaia-road-grading.js';
+import {cityBuildingsAlongRoad} from './gaia-city-builder.js';
 
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
@@ -85,6 +86,24 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const shoulderWidth=document.createElement('input');shoulderWidth.type='number';shoulderWidth.min='0';shoulderWidth.max='32';shoulderWidth.step='.5';shoulderWidth.value='2';shoulderWidth.setAttribute('aria-label','Largeur des accotements en mètres');shoulderWidth.style.cssText=radiusControl.style.cssText;
  const gradeInfo=document.createElement('span');gradeInfo.setAttribute('role','status');gradeInfo.style.maxWidth='180px';
  terrainTools.append(document.createTextNode('Accotement'),shoulderWidth,gradePreview,gradeApply,gradeInfo);
+ const cityButton=document.createElement('button');cityButton.type='button';cityButton.textContent='＋ Quartier';
+ cityButton.title='Générer de vrais bâtiments 3D de chaque côté de la route Gaia sélectionnée';
+ cityButton.setAttribute('aria-label','Générer un quartier le long de la route sélectionnée');
+ const cityInfo=document.createElement('span');cityInfo.setAttribute('role','status');
+ terrainTools.append(cityButton,cityInfo);
+ cityButton.onclick=()=>{
+  const road=selectedRoad();
+  if(state.playing||!view3d.enabled||!road)return;
+  try{
+   const buildings=cityBuildingsAlongRoad(road,gaiaTiles(),state.entities,{firstId:state.nextId,maxBuildings:40});
+   if(!buildings.length){cityInfo.textContent='Aucun emplacement Gaia compatible';return}
+   state.entities.push(...buildings);
+   state.nextId+=buildings.length;
+   record('World Builder · quartier '+buildings.length+' bâtiments');
+   notify();
+   cityInfo.textContent=buildings.length+' bâtiments créés';
+  }catch(error){cityInfo.textContent='Quartier : '+String(error.message||error)}
+ };
  let pendingGrade=null;
  const invalidateGrade=()=>{pendingGrade=null;gradeApply.disabled=true;gradeInfo.textContent=''};
  let roadMode=false,roadDraft=null,roadDrag=null;
@@ -155,7 +174,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const syncRoadControls=()=>{
   roadButton.textContent=roadMode?'Arrêter le tracé':selectedRoad()?'Éditer la route':'＋ Route';
   roadFinish.hidden=!roadMode;
-  roadWidth.disabled=!selectedRoad();gradePreview.disabled=!selectedRoad()||state.playing;
+  roadWidth.disabled=!selectedRoad();gradePreview.disabled=!selectedRoad()||state.playing;cityButton.disabled=!selectedRoad()||state.playing;
   if(selectedRoad()&&document.activeElement!==roadWidth)roadWidth.value=String(selectedRoad().roadSpline.width);
  };
  roadButton.onclick=()=>{

@@ -28,6 +28,12 @@ export function groundVehicleCertificationScene(){
   ids[kind]=vehicle.id;
   add('V4 · obstacle '+kind,x, -500,width,100,55,{elevation3d:0,color:'#915c51'});
  }
+ // A playable actor is required by the standalone game contract. Keep the
+ // starting observer outside driving lanes; vehicle selection remains independent.
+ add('V4 · conducteur et observateur',-550,850,32,96,32,{
+  elevation3d:0,playable3d:true,collision3d:true,solid3d:true,
+  cameraRig:{mode:'thirdPerson',distance:6,height:1.2,collision:true}
+ });
  // Testing ramp is intentionally off the driving axis until steering is enabled.
  add('V4 · rampe inclinee',500,-700,550,35,650,{elevation3d:.1,rotationZ3d:10,color:'#998970'});
  return {mode:'3d',entities,camera:{x:0,y:0,zoom:1},ids,selected:[ids.car],

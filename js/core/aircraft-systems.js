@@ -6,7 +6,9 @@ export const defaultAircraftSystems=()=>({
  flaps:{position:0,liftBonus:.55,dragCoefficient:.075},
  airbrake:{deployed:false,dragCoefficient:.22},
  propeller:{enabled:true,rpmMax:2600,angle:0},
- rotor:{enabled:true,rpmMax:420,angle:0}
+ rotor:{enabled:true,rpmMax:420,angle:0},
+ // Optional GLB node names; actual geometry must exist in the imported model.
+ parts:{propeller:'Propeller',rotor:'Rotor',gear:'LandingGear',flapL:'FlapL',flapR:'FlapR',airbrake:'Airbrake'}
 });
 export function validateAircraftSystems(value){
  if(!value||typeof value!=='object')return ['Aircraft systems: configuration missing'];

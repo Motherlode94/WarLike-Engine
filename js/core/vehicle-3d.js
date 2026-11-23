@@ -7,6 +7,7 @@ import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle
 import {recordEngineEvent} from './engine-diagnostics.js';
 import {stepArcadeVehicle} from './arcade-driving.js';
 import {aircraftPilotInput,releaseAircraftControls,canSafelyExitAircraft} from './aircraft-pilot-input.js';
+import {stepAircraftSystems} from './aircraft-systems.js';
 import {vehicleConfiguration,tickVehicleArticulation} from './vehicle-articulation.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 const center=o=>({x:o.x+(o.w||32)/2,y:o.y+(o.depth3d||o.h||32)/2});
@@ -74,6 +75,7 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
  // Rapier step applies forces; never move the aircraft with arcade transforms.
  if(drivingCar.aircraftPhysics?.enabled){
   drivingCar.aircraftInput=aircraftPilotInput(drivingCar.aircraftPhysics.kind,drivingCar.aircraftInput,keys,step);
+  if(drivingCar.aircraftSystems?.enabled)stepAircraftSystems(drivingCar.aircraftSystems,drivingCar.aircraftPhysics.kind,keys,step,drivingCar.aircraftPhysics.kind==='helicopter'?drivingCar.aircraftInput.collective:drivingCar.aircraftInput.throttle);
   const v=drivingCar.rigidbody3d;
   driving3d.speed=v?Math.hypot(Number(v.vx)||0,Number(v.vy)||0,Number(v.vz)||0):0;
   player.x=drivingCar.x+((drivingCar.w||32)-(player.w||32))/2;

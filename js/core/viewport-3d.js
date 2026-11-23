@@ -36,6 +36,7 @@ import {tickEngineDiagnostics} from './engine-diagnostics.js';
 import {updateDriving3d,currentVehicle3d,isDriveable3d,driving3d,resetDriving3d} from './vehicle-3d.js';
 import {aircraftCameraView,aircraftFlightInstruments,nextAircraftCameraMode} from './aircraft-camera.js';
 import {vehicleRigPose} from './vehicle-articulation.js';
+import {aircraftRigPose} from './aircraft-visual-rig.js';
 import {updateGenreHud} from '../runtime/ui/genre-hud.js';
 import {updateOpenWorld} from './open-world-systems.js';
 import {sequenceRuntime} from './logic-sequences.js';
@@ -924,7 +925,7 @@ export function init3d(canvas,host,buttons){
     '\nALT '+display(info.altitudeMeters)+' m   V/S '+display(info.verticalSpeedMs)+' m/s'+
     '\nVITESSE '+display(info.speedKmh)+' km/h   CAP '+Math.round(info.headingDeg)+'°'+
     '\nTANGAGE '+Math.round(info.pitchDeg)+'°   ROULIS '+Math.round(info.bankDeg)+'°   PUISSANCE '+info.powerPercent+'%'+
-    '\nV : changer de vue · E : sortir au sol';
+    (aircraft.aircraftSystems?.enabled?'\nTRAIN '+(aircraft.aircraftSystems.gear.deployed?'SORTI':'RENTRÉ')+' · VOLETS '+Math.round(aircraft.aircraftSystems.flaps.position*100)+'% · AÉROFREIN '+(aircraft.aircraftSystems.airbrake.deployed?'ON':'OFF'):'')+'\nV caméra · G train · B volets · X aérofrein · E sortir';
    aircraftHud.hidden=false;
   }else{aircraftHud.hidden=true;aircraftViewFor=null;aircraftViewMode=null;aircraftCameraKeyHeld=false}
   const vehicleHud=document.getElementById('warlikeVehicle3dHud');
@@ -1085,8 +1086,8 @@ export function init3d(canvas,host,buttons){
       }
      }
      if(rig&&(hasSkeletalPreview(o)||skeletalFrame(o)?.clip&&(!o.animatorGraph||o.animatorGraph.enabled===false))){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,sampleForSockets(o,cached.geometry,{},state.entities),{buffers:track.buffers})}
-     if(rig&&o.vehicleArticulation){
-      const pose=vehicleRigPose(rig,o);if(pose)socketPose=pose;
+     if(rig&&(o.vehicleArticulation||o.aircraftSystems?.enabled)){
+      const pose=o.aircraftSystems?.enabled?aircraftRigPose(rig,o):vehicleRigPose(rig,o);if(pose)socketPose=pose;
       if(pose){let track=animationStates.get(o);if(!track){track={buffers:[]};animationStates.set(o,track)}posed=deformGlbParts(cached.geometry,pose,{buffers:track.buffers})}
      }
      if(rig&&state.entities.some(child=>child.socket3d?.targetId===o.id)){

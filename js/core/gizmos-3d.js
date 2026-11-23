@@ -6,7 +6,7 @@ import {sceneCameraView} from './scene-camera-3d.js';
 import {initializeEditableTerrain,applyTerrainBrush,terrainBrushModes,terrainLayers} from './gaia-terrain-sculpt.js';
 import {initializeRustGizmo,axisRayParameter,gizmoPointerRay} from './rust-gizmo-acceleration.js';
 import {heightfieldAt3d,validTerrainHeightfield} from './gaia-terrain-physics.js';
-import {createRoadSpline,sampleRoadSpline,roadSplineEntity} from './gaia-road-spline.js';
+import {createRoadSpline,sampleRoadSpline,roadSplineEntity,editRoadSpline} from './gaia-road-spline.js';
 
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
@@ -140,7 +140,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  roadWidth.onchange=()=>{
   const road=selectedRoad();if(!road||state.playing)return;
   const width=Number(roadWidth.value);if(!Number.isFinite(width)||width<1||width>60){roadWidth.value=String(road.roadSpline.width);return}
-  if(width!==road.roadSpline.width){road.roadSpline.width=width;record('Road Editor · largeur');notify();redrawRoad()}
+  if(width!==road.roadSpline.width){road.roadSpline=editRoadSpline(road.roadSpline,{action:'width',width});record('Road Editor · largeur');notify();redrawRoad()}
  };
  const roadControlHit=event=>{
   const road=selectedRoad();if(!road)return -1;
@@ -159,8 +159,9 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   const point=roadPointer(event);if(!point)return;
   const road=selectedRoad(),hit=roadControlHit(event);
   if(road&&hit>=0){roadDrag={id:road.id,index:hit,pointer:event.pointerId,changed:false};canvas.setPointerCapture(event.pointerId)}
-  else if(road){road.roadSpline.points.push(point);record('Road Editor · ajouter point');notify()}
+  else if(road){try{road.roadSpline=editRoadSpline(road.roadSpline,{action:'append',point});record('Road Editor · ajouter point');notify()}catch(error){console.warn('Road Editor:',error.message)}}
   else if(roadDraft){
+   if(Math.hypot(point.x-roadDraft.x,point.z-roadDraft.z)<.01){event.preventDefault();event.stopImmediatePropagation();return}
    const created=roadSplineEntity(state.nextId++,createRoadSpline([roadDraft,point],{width:Number(roadWidth.value)||6}));
    state.entities.push(created);state.selected=[created.id];roadDraft=null;
    record('Road Editor · créer route');notify()
@@ -170,7 +171,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  canvas.addEventListener('pointermove',event=>{
   if(!roadDrag||roadDrag.pointer!==event.pointerId)return;
   const road=state.entities.find(o=>o.id===roadDrag.id),point=roadPointer(event);
-  if(road&&point){road.roadSpline.points[roadDrag.index]=point;roadDrag.changed=true;notify();redrawRoad()}
+  if(road&&point){try{road.roadSpline=editRoadSpline(road.roadSpline,{action:'move',index:roadDrag.index,point});roadDrag.changed=true;notify();redrawRoad()}catch{ /* Ignore degenerate overlapping control points. */ }}
   event.preventDefault();event.stopImmediatePropagation();
  },true);
  const finishRoadDrag=event=>{

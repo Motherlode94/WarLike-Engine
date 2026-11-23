@@ -75,6 +75,7 @@ export const playerModules=[
   "js/core/fx-renderer-3d.js",
   "js/core/fx-runtime.js",
   "js/core/gaia-road-spline.js",
+  "js/core/gaia-scene-portability.js",
   "js/core/gaia-terrain-physics.js",
   "js/core/gaia-terrain-sculpt.js",
   "js/core/game-dialogue.js",

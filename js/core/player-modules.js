@@ -24,6 +24,7 @@ export const playerModules=[
   "js/core/ai-perception.js",
   "js/core/aircraft-camera.js",
   "js/core/aircraft-flight-physics.js",
+  "js/core/aircraft-landing-gear.js",
   "js/core/aircraft-pilot-input.js",
   "js/core/aircraft-rapier.js",
   "js/core/aircraft-systems.js",

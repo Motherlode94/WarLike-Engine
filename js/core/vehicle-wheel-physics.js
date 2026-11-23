@@ -27,7 +27,7 @@ export function validateWheelPhysics(c){
  * The caller must raycast against the live physics world (excluding this chassis).
  * Never apply forces without a valid contact.
  */
-export function solveWheelForces({wheel,contact,state,inputs={},dt,driveForce=0,brakeForce=0}){
+export function solveWheelForces({wheel,contact,state,inputs={},dt,driveForce=0,brakeForce=0,effectiveMass=0}){
  if(validateWheelPhysics(wheel).length)throw Error('Invalid wheel configuration');
  if(!(dt>0&&Number.isFinite(dt)))throw Error('Wheel physics requires a positive fixed timestep');
  if(!contact||!Number.isFinite(contact.distance))return {grounded:false,force:{x:0,y:0,z:0},normalForce:0,compression:0,slip:0};
@@ -62,7 +62,12 @@ export function solveWheelForces({wheel,contact,state,inputs={},dt,driveForce=0,
  const requestedLong=drive-brakeDirection*clamp(brakeForce,0,1e7)*clamp(stopping,0,1);
  const rolling=normalForce*wheel.rollingResistance*Math.sign(longitudinal);
  const longitudinalForce=requestedLong-rolling;
- const lateralForce=-lateral*normalForce*.16; // transient lateral damping, bounded by friction circle
+ // Cancel sideways contact velocity over the fixed step using a wheel's share
+ // of chassis mass, then limit the result by the combined tire friction circle.
+ // The old normalForce * .16 damping did not account for dt or chassis mass,
+ // allowing persistent sideways drift especially on heavy tracked vehicles.
+ // Keep the legacy fallback for callers that do not supply an effective mass.
+ const lateralForce=-lateral*(Number.isFinite(effectiveMass)&&effectiveMass>0?effectiveMass/dt:normalForce*.16);
  const cap=normalForce*wheel.grip;
  const magnitude=Math.hypot(longitudinalForce,lateralForce);
  const factor=magnitude>cap&&magnitude>0?cap/magnitude:1;

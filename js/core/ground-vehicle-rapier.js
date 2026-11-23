@@ -97,7 +97,10 @@ export function applyGroundVehicleForces(scene,dt){
     wheel:mount.wheel,contact,dt,
     inputs:{...inputs,throttle:drive,steer:config.kind==='tracked'?0:inputs.steer},
     state:{velocity,angularVelocity,forward,right,up,centerOfMass:center},
-    driveForce:config.driveForce/driven,brakeForce:config.brakeForce/braking
+    driveForce:config.driveForce/driven,brakeForce:config.brakeForce/braking,
+    // A tire can cancel at most its share of the chassis' lateral momentum
+    // per step. Rapier's friction circle still limits available grip.
+    effectiveMass:config.mass/config.wheels.length
    });
    if(!solved.grounded)continue;
    contacts++;

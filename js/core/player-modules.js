@@ -20,6 +20,8 @@ export const playerModules=[
   "js/assets/quaternius-game-assets.js",
   "js/assets/real-models-3d.js",
   "js/assets/survival-sprites-2d.js",
+  "js/core/aircraft-flight-physics.js",
+  "js/core/aircraft-rapier.js",
   "js/core/adventure-runtime.js",
   "js/core/ai-perception.js",
   "js/core/animal-controller.js",

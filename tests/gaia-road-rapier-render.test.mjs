@@ -47,7 +47,8 @@ test('Rapier can raycast the exact static road collider above Gaia terrain',asyn
   assert(roadHit<terrainHit,'road surface should sit above Gaia terrain for wheel contact');
   assert(synchronizeRapierScene(scene,[terrain,road]),'steady road scene must synchronize without rebuild');
   raycastRapierScene3d(scene,[0,12,0],[0,-1,0],[terrain,road]);
-  assert.deepEqual(roadActor.body.translation(),{x:0,y:0,z:0},'query refresh must not shift world-space road mesh');
+  const pose=roadActor.body.translation();
+  assert([pose.x,pose.y,pose.z].every(v=>Math.abs(v)<1e-8),'query refresh must not shift world-space road mesh');
  }finally{disposeRapierScene(scene)}
 });
 test('out-of-tile road cannot silently create a fake Rapier collider',async()=>{

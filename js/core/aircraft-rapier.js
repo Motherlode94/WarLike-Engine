@@ -1,6 +1,7 @@
 // Opt-in real-Rapier aircraft dynamics, Y-up and SI units.
 // The same fixed-step adapter is used by editor Play and exported player.
 import {solveAircraftForces,validateAircraftConfig} from './aircraft-flight-physics.js';
+import {validateAircraftSystems} from './aircraft-systems.js';
 const zero=()=>({x:0,y:0,z:0});
 const finite=(value,defaultValue=0)=>typeof value==='number'&&Number.isFinite(value)?value:defaultValue;
 const clamp=(value,min,max)=>Math.min(max,Math.max(min,finite(value)));
@@ -25,6 +26,7 @@ export function validateAircraftActor(entity){
  const rb=entity?.rigidbody3d;
  if(!rb?.enabled||rb.kinematic||rb.lockRotations!==false)errors.push('Aircraft: Rigidbody3D dynamique avec rotations libres requis');
  if(!entity?.collider3d||entity.collider3d.enabled===false||entity.collision3d===false)errors.push('Aircraft: Collider3D actif requis');
+ if(entity.aircraftSystems?.enabled)errors.push(...validateAircraftSystems(entity.aircraftSystems));
  if(entity.groundVehiclePhysics?.enabled)errors.push('Aircraft: ne pas activer simultanément la physique terrestre');
  if(Number.isFinite(rb?.mass)&&Math.abs(rb.mass-entity.aircraftPhysics.mass)>.01)errors.push('Aircraft: masse du Rigidbody différente de celle de la cellule');
  return errors;
@@ -48,7 +50,7 @@ export function applyAircraftForces(scene,dt){
    const solved=solveAircraftForces({
     config,velocity:actor.body.linvel(),angularVelocity:actor.body.angvel(),
     wind:e.aircraftWind||zero(),forward,up,right,
-    controls:aircraftControls(e.aircraftInput),includeGravity:false
+    controls:aircraftControls(e.aircraftInput),systems:e.aircraftSystems,includeGravity:false
    });
    // Rapier owns gravity and collision resolution. Convert continuous N and Nm
    // to fixed-step impulses so no force persists beyond this step.

@@ -37,14 +37,17 @@ export function stepArcadeVehicle(current,controls,dt,tuning={}){
   brakeLight:handbrake||(throttle*speed<0),handbrake};
 }
 export function moveVehicleWithCollision(vehicle,delta,blocked,{maxStep=10}={}){
- const steps=Math.max(1,Math.ceil(Math.hypot(delta.dx,delta.dy)/Math.max(1,maxStep)));
- let collision=false,travel=0;
- for(let i=0;i<steps;i++){
-  const x=vehicle.x+delta.dx/steps,y=vehicle.y+delta.dy/steps;
-  // Separating axes permits sliding against walls instead of stopping completely.
-  if(!blocked(x,vehicle.y)){vehicle.x=x;travel++}else collision=true;
-  if(!blocked(vehicle.x,y)){vehicle.y=y;travel++}else collision=true;
-  if(collision)break;
+ // Vehicles follow their heading: unlike a walking character, they must not
+ // slide sideways simply because one world axis is blocked by a wall.
+ const dx=Number.isFinite(delta.dx)?delta.dx:0,dy=Number.isFinite(delta.dy)?delta.dy:0;
+ const steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)/Math.max(1,Number(maxStep)||10)));
+ const startX=vehicle.x,startY=vehicle.y;
+ if(dx===0&&dy===0)return {collision:false,moved:false};
+ let moved=false;
+ for(let i=1;i<=steps;i++){
+  const x=startX+dx*i/steps,y=startY+dy*i/steps;
+  if(blocked(x,y))return {collision:true,moved};
+  vehicle.x=x;vehicle.y=y;moved=true;
  }
- return {collision,moved:travel>0};
+ return {collision:false,moved};
 }

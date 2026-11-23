@@ -103,7 +103,9 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
   player.y=drivingCar.y+((drivingCar.depth3d||drivingCar.h||32)-(player.depth3d||player.h||32))/2;
   player.elevation3d=drivingCar.elevation3d||0;
   player._hiddenInVehicle=true;player.animation='drive';
-  drivingCar.animation=handbrake?'brake':driving3d.speed>2?'drive':'idle';
+  // Animation follows longitudinal signed speed, not total horizontal speed:
+  // slipping sideways must not look like forward acceleration, or hide reverse.
+  drivingCar.animation=handbrake&&driving3d.speed>2?'brake':Math.abs(signedSpeed)<=2?'idle':signedSpeed<0?'reverse':'drive';
   return true;
  }
  const state=stepArcadeVehicle({speed:driving3d.speed,steer:driving3d.steer,rotation:drivingCar.rotation||0},

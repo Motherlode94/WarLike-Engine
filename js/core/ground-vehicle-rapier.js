@@ -38,6 +38,13 @@ export function validateGroundVehiclePhysics(config){
  }
  return errors;
 }
+// Signed forward velocity in scene units/s, measured from the physical chassis.
+// Positive = forward, negative = reverse; lateral drift does not count as reverse.
+export function signedGroundVehicleSpeed(body){
+ if(!body?.rotation||!body?.linvel)return 0;
+ const forward=rotate(body.rotation(),{x:0,y:0,z:-1}),v=body.linvel();
+ return (finite(v.x)*forward.x+finite(v.y)*forward.y+finite(v.z)*forward.z)*64;
+}
 export const groundVehicleInputs=(input={})=>({
  throttle:clamp(input.throttle,-1,1),steer:clamp(input.steer,-1,1),
  brake:clamp(input.brake,0,1),handbrake:clamp(input.handbrake,0,1)

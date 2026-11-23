@@ -3,7 +3,7 @@ import {defaultAirplanePhysics,defaultHelicopterPhysics} from '../js/core/aircra
 import {isDriveable3d,updateDriving3d,driving3d,resetDriving3d} from '../js/core/vehicle-3d.js';
 import {canonicalScene,runtimeEntities} from '../js/core/scene-contract.js';
 const pilot=()=>({id:1,type:'player',playable3d:true,x:0,y:0,w:32,h:96,depth3d:32,elevation3d:0});
-const airframe=(kind)=>({id:2,name:'Aircraft',type:'mesh3d',x:45,y:15,w:196,h:70,depth3d:260,elevation3d:0,
+const airframe=(kind)=>({id:2,name:'Aircraft',type:'mesh3d',x:45,y:-50,w:196,h:70,depth3d:260,elevation3d:0,
  aircraftPhysics:{...(kind==='helicopter'?defaultHelicopterPhysics():defaultAirplanePhysics()),enabled:true},
  collider3d:{enabled:true},rigidbody3d:{enabled:true,vx:0,vy:0,vz:0},collision3d:true});
 const update=(entities,player,keys)=>updateDriving3d(entities,player,new Set(keys),.1);

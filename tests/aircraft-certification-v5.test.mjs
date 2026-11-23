@@ -91,3 +91,33 @@ test('V5 zero helicopter collective produces gravity-driven descent without arti
   assert.ok(scene.actors.get(heli.id).body.translation().y<start-.25);
  }finally{disposeRapierScene(scene)}
 });
+
+test('V5 helicopter collective balances actual Rapier gravity for stationary hover',()=>{
+ const s=make('helicopter'),heli=s.entities.find(e=>e.id===s.ids.craft);
+ heli.elevation3d=8;
+ // createRapierScene defaults to 15 m/s²; hover is thrust equal to mg.
+ const hover=heli.aircraftPhysics.mass*15/heli.aircraftPhysics.maxThrust;
+ assert.ok(hover>0&&hover<1,'Helicopter must have enough rotor thrust to hover');
+ heli.aircraftInput.collective=hover;
+ const scene=createRapierScene(RAPIER,s.entities);
+ try{
+  const initial=scene.actors.get(heli.id).body.translation().y;
+  tick(scene,s.entities,90);
+  const body=scene.actors.get(heli.id).body;
+  assert.ok(Math.abs(body.translation().y-initial)<.4,'Real Rapier rotor should hold altitude at mg thrust: '+JSON.stringify(body.translation()));
+  assert.ok(Math.abs(body.linvel().y)<.5,'Hover should not build vertical speed');
+ }finally{disposeRapierScene(scene)}
+});
+test('V5 helicopter descending onto physical heliport does not tunnel through it',()=>{
+ const s=make('helicopter'),heli=s.entities.find(e=>e.id===s.ids.craft);
+ heli.elevation3d=5;
+ heli.aircraftInput.collective=0;
+ const scene=createRapierScene(RAPIER,s.entities);
+ try{
+  tick(scene,s.entities,120);
+  const body=scene.actors.get(heli.id).body;
+  assert.ok(Number.isFinite(body.translation().y));
+  assert.ok(heli.elevation3d>=-.3,'Landing gear stand-in collider must not fall through the helipad: '+heli.elevation3d);
+  assert.ok(heli.elevation3d<1,'The helicopter must descend to the actual surface: '+heli.elevation3d);
+ }finally{disposeRapierScene(scene)}
+});

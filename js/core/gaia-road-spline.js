@@ -68,8 +68,11 @@ export function roadSurfaceGeometry3d(road,terrains,{segmentsPerSpan=12}={}){
   const ly=roadHeightAt(terrains,left.x,left.z),ry=roadHeightAt(terrains,right.x,right.z),cy=roadHeightAt(terrains,p.x,p.z);
   // Failing explicitly prevents creating floating or invisible sections at
   // Gaia tile boundaries. Multi-tile roads need actual adjacent Gaia tiles.
-  if(ly===null||ry===null)throw Error('Road crosses outside Gaia terrain coverage');
-  crossSections.push({left:{...left,y:ly+road.elevationOffset},right:{...right,y:ry+road.elevationOffset}});
+  if(ly===null||ry===null||cy===null)throw Error('Road crosses outside Gaia terrain coverage');
+  // A peaked Gaia ridge can be taller at the centreline than both shoulders.
+  // Keep the drivable triangle above the centre as well as both edges.
+  const surfaceHeight=Math.max(ly,ry,cy)+road.elevationOffset;
+  crossSections.push({left:{...left,y:surfaceHeight},right:{...right,y:surfaceHeight}});
  }
  if(crossSections.length<2)throw Error('Road requires two non-degenerate sections');
  const vertices=[],triangles=[];

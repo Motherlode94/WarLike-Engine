@@ -72,6 +72,39 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  host.append(terrainTools);
  const selectedTerrain=()=>state.entities.find(o=>state.selected.includes(o.id)&&(o.name==='Terrain'||o.terrainHeightfield||o.type==='terrain3d'));
  const selectedRoad=()=>state.entities.find(o=>state.selected.includes(o.id)&&o.roadSpline);
+ // Gaia preview reuses the Main Camera preview framebuffer and shaders.
+ // It has an independent camera; no second renderer and no Play session.
+ const gaiaPreviewButton=document.createElement('button');gaiaPreviewButton.type='button';
+ gaiaPreviewButton.textContent='Aperçu Gaia 3D';
+ gaiaPreviewButton.setAttribute('aria-label','Aperçu Gaia 3D');
+ gaiaPreviewButton.setAttribute('aria-pressed','false');
+ const gaiaOrbitLeft=document.createElement('button');gaiaOrbitLeft.type='button';gaiaOrbitLeft.textContent='↶';gaiaOrbitLeft.title='Tourner la prévisualisation à gauche';
+ const gaiaOrbitRight=document.createElement('button');gaiaOrbitRight.type='button';gaiaOrbitRight.textContent='↷';gaiaOrbitRight.title='Tourner la prévisualisation à droite';
+ const gaiaZoomIn=document.createElement('button');gaiaZoomIn.type='button';gaiaZoomIn.textContent='＋';gaiaZoomIn.title='Rapprocher la caméra Gaia';
+ const gaiaZoomOut=document.createElement('button');gaiaZoomOut.type='button';gaiaZoomOut.textContent='−';gaiaZoomOut.title='Éloigner la caméra Gaia';
+ const gaiaPreviewClose=document.createElement('button');gaiaPreviewClose.type='button';gaiaPreviewClose.textContent='Fermer';gaiaPreviewClose.title='Fermer l’aperçu Gaia 3D';
+ const gaiaPreviewControls=[gaiaOrbitLeft,gaiaOrbitRight,gaiaZoomIn,gaiaZoomOut,gaiaPreviewClose];
+ terrainTools.append(gaiaPreviewButton,...gaiaPreviewControls);
+ const syncGaiaPreview=()=>{
+  const active=!!view3d.gaiaPreview&&view3d.enabled&&!state.playing;
+  for(const button of gaiaPreviewControls)button.hidden=!active;
+  gaiaPreviewButton.setAttribute('aria-pressed',String(active));
+  gaiaPreviewButton.textContent=active?'Aperçu Gaia 3D · actif':'Aperçu Gaia 3D';
+ };
+ gaiaPreviewButton.onclick=()=>{
+  if(state.playing)return;
+  view3d.gaiaPreview=!view3d.gaiaPreview;
+  if(view3d.gaiaPreview){
+   view3d.gaiaPreviewYaw=-.7;view3d.gaiaPreviewPitch=.65;view3d.gaiaPreviewZoom=1;
+  }
+  syncGaiaPreview();notify();
+ };
+ gaiaPreviewClose.onclick=()=>{view3d.gaiaPreview=false;syncGaiaPreview();notify()};
+ gaiaOrbitLeft.onclick=()=>{view3d.gaiaPreviewYaw=(view3d.gaiaPreviewYaw??-.7)-.3;notify()};
+ gaiaOrbitRight.onclick=()=>{view3d.gaiaPreviewYaw=(view3d.gaiaPreviewYaw??-.7)+.3;notify()};
+ gaiaZoomIn.onclick=()=>{view3d.gaiaPreviewZoom=clamp((view3d.gaiaPreviewZoom??1)*.8,.45,3);notify()};
+ gaiaZoomOut.onclick=()=>{view3d.gaiaPreviewZoom=clamp((view3d.gaiaPreviewZoom??1)*1.25,.45,3);notify()};
+ syncGaiaPreview();
  const roadOverlay=el('svg',{class:'warlike-gaia-road-overlay','aria-label':'Tracé Road Editor sur Gaia'});
  roadOverlay.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:11;pointer-events:none;overflow:visible';
  host.append(roadOverlay);
@@ -245,11 +278,11 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const redraw=()=>{
   const selected=center(),selectedObject=state.entities.find(o=>state.selected.includes(o.id)&&o.sceneCamera3d);
   terrainTools.hidden=!view3d.enabled||state.playing||(!selectedTerrain()&&!selectedRoad());
-  syncRoadControls();redrawRoad();
+  syncRoadControls();syncGaiaPreview();redrawRoad();
   terrainTools.style.display=terrainTools.hidden?'none':'flex';
   const showingCamera=!!selectedObject&&selectedObject.sceneCamera3d.showFrustum!==false;
   // Hide the preview before the early return when Play starts or selection changes.
-  preview.hidden=!selectedObject||selectedObject.sceneCamera3d.showPreview===false||state.playing||!view3d.enabled;
+  preview.hidden=state.playing||!view3d.enabled||(!view3d.gaiaPreview&&(!selectedObject||selectedObject.sceneCamera3d.showPreview===false));
   const active=view3d.enabled&&!state.playing&&!!selected&&(tool()!=='hand'||showingCamera);
   layer.style.display=active?'block':'none';if(!active)return;
   const rect=canvas.getBoundingClientRect();if(rect.width<1||rect.height<1)return;
@@ -257,7 +290,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   const cam=getCamera(),p=project3d(selected,cam,rect.width,rect.height);if(!p){layer.style.display='none';return}
   // Scene-only framing aid. This uses actual 3D camera projection, not a second game renderer.
   const selectedCam=state.entities.find(o=>state.selected.includes(o.id)&&o.sceneCamera3d);
-  preview.hidden=!selectedCam||selectedCam.sceneCamera3d.showPreview===false||state.playing||!view3d.enabled;
+  preview.hidden=state.playing||!view3d.enabled||(!view3d.gaiaPreview&&(!selectedCam||selectedCam.sceneCamera3d.showPreview===false));
   if(!preview.hidden&&preview.dataset.liveRenderer!=='webgl'){
    const ctx=preview.getContext('2d'),w=preview.width,h=preview.height;
    ctx.clearRect(0,0,w,h);ctx.fillStyle='#142536';ctx.fillRect(0,0,w,h);

@@ -11,7 +11,13 @@ import {getAsset} from '../assets/catalog.js';
 export const driving={vehicleId:null,speed:0,steer:0,grip:1,enterHeld:false,collisionFlash:0,transition:null};
 const vehicle=o=>o?.vehicleController?.enabled!==false&&(o?.vehicleController?.enabled===true||o?.type==='prefab'&&getAsset(o.assetId)?.category==='Vehicles');
 const center=o=>({x:o.x+o.w/2,y:o.y+o.h/2});
-export function vehicleDefaults(o){const config=vehicleTuning(o);return sanitizeVehicle({maxSpeed:config.maxSpeed,acceleration:config.acceleration,brakeForce:config.brakeForce,turnRate:config.turnRate,drag:config.drag,collisionRadius:config.collisionRadius})}
+export function vehicleDefaults(o){
+ const config=vehicleTuning(o);
+ // Preserve the native driving parameters when feeding the shared 2D/3D solver.
+ // Previously reverseRatio, traction and steeringResponse were silently dropped.
+ return {...sanitizeVehicle({maxSpeed:config.maxSpeed,acceleration:config.acceleration,brakeForce:config.brakeForce,turnRate:config.turnRate,drag:config.drag,collisionRadius:config.collisionRadius}),
+  reverseRatio:config.reverseRatio,traction:config.traction,steeringResponse:config.steeringResponse};
+}
 export function resetDriving(){Object.assign(driving,{vehicleId:null,speed:0,steer:0,grip:1,enterHeld:false,collisionFlash:0,transition:null})}
 export function currentVehicle(){return state.entities.find(o=>o.id===driving.vehicleId&&vehicle(o))||null}
 const solid=solidCollider2d;

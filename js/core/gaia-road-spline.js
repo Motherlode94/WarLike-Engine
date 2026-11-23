@@ -92,7 +92,12 @@ export function roadPolyline2d(road,{segmentsPerSpan=12,unitsPerMeter=64}={}){
 }
 export function roadSplineEntity(id,road,{name='Gaia Road'}={}){
  if(!Number.isSafeInteger(id)||id<1||!validRoadSpline(road))throw Error('Invalid Gaia road entity');
- return {id,name,type:'road',roadSpline:structuredClone(road),enabled:true,visible:true};
+ const xs=road.points.map(p=>p.x),zs=road.points.map(p=>p.z),half=road.width/2;
+ const minX=Math.min(...xs)-half,maxX=Math.max(...xs)+half,minZ=Math.min(...zs)-half,maxZ=Math.max(...zs)+half;
+ // The existing scene/project contract requires finite x/y/w/h and a color.
+ // This footprint is metadata only: the spline remains authoritative in metres.
+ return {id,name,type:'road',x:minX*64,y:minZ*64,w:(maxX-minX)*64,h:(maxZ-minZ)*64,
+  color:'#444a50',collision3d:true,roadSpline:structuredClone(road),enabled:true,visible:true};
 }
 
 /** Edit an authored road without altering any Gaia height samples. */

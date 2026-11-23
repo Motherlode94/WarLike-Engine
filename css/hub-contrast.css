@@ -1,0 +1,86 @@
+/* Hub-specific accessibility layer.
+   The Hub is a modal project manager, not an editor dock or a Store theme panel.
+   Never apply these styles to Scene, Game, canvas, or inspector content. */
+#hubOverlay {
+  --hub-ui-bg:#22272e;
+  --hub-ui-surface:#2d343d;
+  --hub-ui-elevated:#38424e;
+  --hub-ui-input:#202832;
+  --hub-ui-fg:#f3f6fa;
+  --hub-ui-muted:#c5d1dd;
+  --hub-ui-border:#657586;
+  color-scheme:dark;
+}
+#hubOverlay .hub-window{
+  background:var(--hub-ui-bg)!important;
+  color:var(--hub-ui-fg)!important;
+  border-color:var(--hub-ui-border)!important;
+  color-scheme:dark;
+}
+#hubOverlay :is(.hub-heading,.hub-suite,.hub-create,.hub-list,.hub-appearance,.hub-diagnostics,.hub-stats>div){
+  background:var(--hub-ui-surface)!important;
+  color:var(--hub-ui-fg)!important;
+  border-color:var(--hub-ui-border)!important;
+}
+#hubOverlay .hub-heading{background:linear-gradient(120deg,#303c49,#252d37)!important}
+#hubOverlay :is(h1,h2,h3,h4,legend,summary,.hub-project-card strong,.hub-app-card strong,.hub-stats strong){
+  color:var(--hub-ui-fg)!important;
+  opacity:1!important;
+}
+#hubOverlay :is(p,label,small,.hub-heading p,.hub-project-card small,.hub-stats span,.hub-suite-heading p,.hub-project-list-title small,.hub-app-card small,.hub-suite-roadmap span){
+  color:var(--hub-ui-muted)!important;
+  opacity:1!important;
+}
+#hubOverlay :is(.hub-project-card,.hub-app-card,.hub-empty-projects){
+  background:var(--hub-ui-elevated)!important;
+  color:var(--hub-ui-fg)!important;
+  border-color:var(--hub-ui-border)!important;
+}
+#hubOverlay .hub-app-card:hover,
+#hubOverlay .hub-project-card:hover{background:#435364!important}
+#hubOverlay :is(button,select,input,textarea):not([type=color]):not(.hub-theme-swatch){
+  font:inherit;
+  color:var(--hub-ui-fg)!important;
+  border:1px solid var(--hub-ui-border)!important;
+  background:var(--hub-ui-input)!important;
+  opacity:1;
+}
+#hubOverlay :is(button,select,input,textarea):not([type=color]):not(.hub-theme-swatch):disabled{
+  opacity:.6!important;
+}
+#hubOverlay :is(input,textarea)::placeholder{color:#b8c6d2!important;opacity:1}
+#hubOverlay select option{background:#202832!important;color:#f3f6fa!important}
+#hubOverlay :is(button,.hub-app-card):hover:not(:disabled):not(.hub-theme-swatch){
+  background:var(--hub-ui-elevated)!important;
+  border-color:#91b6cd!important;
+}
+#hubOverlay :is(button,input,select,textarea,a):focus-visible{
+  outline:2px solid var(--hub-accent,#48cba9)!important;
+  outline-offset:3px;
+}
+#hubOverlay :is(.hub-theme-swatch,input[type=color]){
+  color-scheme:normal;
+  cursor:pointer;
+}
+#hubOverlay .hub-theme-swatch[aria-pressed=true]{
+  outline:2px solid var(--hub-ui-fg)!important;
+  outline-offset:2px;
+}
+#hubOverlay .hub-primary{
+  color:#fff!important;
+  background:#286f63!important;
+  border-color:#68cfb5!important;
+  font-weight:700;
+}
+#hubOverlay .hub-primary:hover:not(:disabled){background:#368678!important}
+#hubOverlay #hubMessage{color:#ffccaa!important}
+#hubOverlay :is(a,.hub-doc-link a){color:#a9d9ff!important;text-decoration:underline}
+#hubOverlay a:hover{color:#e5f3ff!important}
+#hubOverlay #hubProjectCount{color:var(--hub-ui-muted)!important}
+#hubOverlay .hub-project-card button:first-of-type{border-color:var(--hub-accent,#48cba9)!important}
+@media(max-width:700px){
+  #hubOverlay .hub-layout{grid-template-columns:minmax(0,1fr)}
+  #hubOverlay :is(.hub-create,.hub-list){min-width:0}
+  #hubOverlay .hub-project-toolbar{flex-wrap:wrap}
+  #hubOverlay .hub-project-toolbar input{min-width:150px}
+}

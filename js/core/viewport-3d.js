@@ -924,7 +924,7 @@ export function init3d(canvas,host,buttons){
     '\nALT '+display(info.altitudeMeters)+' m   V/S '+display(info.verticalSpeedMs)+' m/s'+
     '\nVITESSE '+display(info.speedKmh)+' km/h   CAP '+Math.round(info.headingDeg)+'°'+
     '\nTANGAGE '+Math.round(info.pitchDeg)+'°   ROULIS '+Math.round(info.bankDeg)+'°   PUISSANCE '+info.powerPercent+'%'+
-    '+(aircraft.aircraftSystems?.enabled?'\nTRAIN '+(aircraft.aircraftSystems.gear.deployed?'SORTI':'RENTRÉ')+' · VOLETS '+Math.round(aircraft.aircraftSystems.flaps.position*100)+'% · AÉROFREIN '+(aircraft.aircraftSystems.airbrake.deployed?'ON':'OFF'):'')+'\nV caméra · G train · B volets · X aérofrein · E sortir';
+    (aircraft.aircraftSystems?.enabled?'\nTRAIN '+(aircraft.aircraftSystems.gear.deployed?'SORTI':'RENTRÉ')+' · VOLETS '+Math.round(aircraft.aircraftSystems.flaps.position*100)+'% · AÉROFREIN '+(aircraft.aircraftSystems.airbrake.deployed?'ON':'OFF'):'')+'\nV caméra · G train · B volets · X aérofrein · E sortir';
    aircraftHud.hidden=false;
   }else{aircraftHud.hidden=true;aircraftViewFor=null;aircraftViewMode=null;aircraftCameraKeyHeld=false}
   const vehicleHud=document.getElementById('warlikeVehicle3dHud');

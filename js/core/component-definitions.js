@@ -112,7 +112,8 @@ export function addObjectComponent(object,id,mode){
   object.rigidbody3d??=defaultRigidbody3d();object.rigidbody3d.enabled=true;
   object.rigidbody3d.kinematic=false;object.rigidbody3d.lockRotations=false;
   object.rigidbody3d.mass=object.aircraftPhysics.mass;
-  object.aircraftLandingGear.kind=object.aircraftPhysics.kind;
+  if(object.aircraftLandingGear.kind!==object.aircraftPhysics.kind)
+   object.aircraftLandingGear=defaultAircraftLandingGear(object.aircraftPhysics.kind);
  }
  if(id==='aircraftSystems'){
   object.aircraftPhysics??={...defaultAirplanePhysics(),enabled:true};

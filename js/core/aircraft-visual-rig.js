@@ -26,7 +26,7 @@ export function aircraftRigPose(rig,entity){
  apply('gear',[1,0,0],sys.gear?.deployed?0:-Math.PI/2);
  apply('flapL',[1,0,0],finite(sys.flaps?.position)*.55);
  apply('flapR',[1,0,0],-finite(sys.flaps?.position)*.55);
- apply('airbrake',[1,0,0],sys.airbrake?.deployed?.8:0);
+ apply('airbrake',[1,0,0],sys.airbrake?.deployed?0.8:0);
  if(!tracks.size)return null;
  const channels=[...tracks].map(([node,q])=>({node,path:'rotation',times:new Float32Array([0]),values:new Float32Array(q),components:4,interpolation:'STEP'}));
  return sampleRigPose(rig,{duration:0,channels},0,{loop:false});

@@ -16434,6 +16434,7 @@
     "js/core/glb-visual-transform-3d.js",
     "js/core/gltf-animation.js",
     "js/core/grab-physics-3d.js",
+    "js/core/ground-vehicle-rapier.js",
     "js/core/hdr-radiance-3d.js",
     "js/core/hero-forge-scene.js",
     "js/core/hero-movement.js",

@@ -53,7 +53,7 @@ const server=createServer(async(req,res)=>{
  const file=path.resolve(out,'.'+pathname);
  if(!file.startsWith(out+path.sep)){res.writeHead(403).end();return}
  const target=path.extname(file)?file:path.join(file,'index.html');
- try{res.writeHead(200,{'Content-Type':mime[path.extname(target)]||'application/octet-stream'});res.end(await readFile(target))}catch{res.writeHead(404).end()}
+ try{const bytes=await readFile(target);res.writeHead(200,{'Content-Type':mime[path.extname(target)]||'application/octet-stream'});res.end(bytes)}catch(error){if(!res.headersSent)res.writeHead(404);res.end()}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin='http://127.0.0.1:'+server.address().port;

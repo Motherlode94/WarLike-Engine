@@ -65,11 +65,14 @@ export function roadSurfaceGeometry3d(road,terrains,{segmentsPerSpan=12}={}){
   if(len<1e-9)continue;
   const nx=-dz/len,nz=dx/len,half=road.width/2;
   const left={x:p.x+nx*half,z:p.z+nz*half},right={x:p.x-nx*half,z:p.z-nz*half};
-  const ly=roadHeightAt(terrains,left.x,left.z),ry=roadHeightAt(terrains,right.x,right.z);
+  const ly=roadHeightAt(terrains,left.x,left.z),ry=roadHeightAt(terrains,right.x,right.z),cy=roadHeightAt(terrains,p.x,p.z);
   // Failing explicitly prevents creating floating or invisible sections at
   // Gaia tile boundaries. Multi-tile roads need actual adjacent Gaia tiles.
-  if(ly===null||ry===null)throw Error('Road crosses outside Gaia terrain coverage');
-  crossSections.push({left:{...left,y:ly+road.elevationOffset},right:{...right,y:ry+road.elevationOffset}});
+  if(ly===null||ry===null||cy===null)throw Error('Road crosses outside Gaia terrain coverage');
+  // A peaked Gaia ridge can be taller at the centreline than both shoulders.
+  // Keep the drivable triangle above the centre as well as both edges.
+  const surfaceHeight=Math.max(ly,ry,cy)+road.elevationOffset;
+  crossSections.push({left:{...left,y:surfaceHeight},right:{...right,y:surfaceHeight}});
  }
  if(crossSections.length<2)throw Error('Road requires two non-degenerate sections');
  const vertices=[],triangles=[];
@@ -107,4 +110,30 @@ export function editRoadSpline(road,{action,index,point,width}){
  if(!validRoadSpline(next)||next.points.some((p,i)=>i&&distance(p,next.points[i-1])<1e-4))
   throw Error('Invalid road edit geometry');
  return next;
+}
+
+/**
+ * Shared authoritative road surface for WebGL and Rapier. World coordinates,
+ * metres and Y-up; each visual triangle uses exactly the same vertices as
+ * the corresponding collider triangle. No duplicate road height solver.
+ */
+export function roadSurfaceBuffers3d(road,terrains,options={}){
+ const surface=roadSurfaceGeometry3d(road,terrains,options);
+ const positions=new Float32Array(surface.vertices.length*3);
+ for(let i=0;i<surface.vertices.length;i++){
+  const p=surface.vertices[i];positions.set([p.x,p.y,p.z],i*3);
+ }
+ const indices=new Uint32Array(surface.triangles.length*3);
+ const renderVertices=new Float32Array(surface.triangles.length*18);
+ for(let i=0;i<surface.triangles.length;i++){
+  const triangle=surface.triangles[i],a=surface.vertices[triangle[0]],b=surface.vertices[triangle[1]],c=surface.vertices[triangle[2]];
+  const ux=b.x-a.x,uy=b.y-a.y,uz=b.z-a.z,vx=c.x-a.x,vy=c.y-a.y,vz=c.z-a.z;
+  const nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx,length=Math.hypot(nx,ny,nz)||1;
+  for(let j=0;j<3;j++){
+   const index=triangle[j],p=surface.vertices[index],offset=i*18+j*6;
+   indices[i*3+j]=index;
+   renderVertices.set([p.x,p.y,p.z,nx/length,ny/length,nz/length],offset);
+  }
+ }
+ return {positions,indices,renderVertices,triangleCount:surface.triangles.length};
 }

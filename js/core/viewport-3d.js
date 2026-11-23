@@ -4,6 +4,7 @@ import {cacheAnimationGeometry,skeletalClips,sampleEntityRigPose,hasSkeletalPrev
 import {waterSettings,waterSurface3d,waterColor} from './stylized-water.js';
 import {validTerrainHeightfield} from './gaia-terrain-physics.js';
 import {terrainSurfaceMesh3d} from './gaia-terrain-sculpt.js';
+import {validRoadSpline,roadSurfaceBuffers3d} from './gaia-road-spline.js';
 import {runRuntimeFrame} from './runtime-session.js';
 import {companyController,commandCompany,selectCompanySquad} from './company-runtime.js';
 import {moveCompanyCamera} from './company-camera.js';
@@ -1008,8 +1009,26 @@ export function init3d(canvas,host,buttons){
   };
   bind(cubes);
   for(const o of objects){
-   const b=objectBounds3d(o),color=assetColor(o),asset=getAsset(o.assetId),category=asset?.category;
+   const b=o.roadSpline?{x:0,y:0,z:0,w:1,h:1,d:1}:objectBounds3d(o),color=assetColor(o),asset=getAsset(o.assetId),category=asset?.category;
    const angle=(o.rotation||0)*Math.PI/180;
+   if(o.roadSpline&&validRoadSpline(o.roadSpline)){
+    const tiles=state.entities.filter(t=>validTerrainHeightfield(t.terrainHeightfield)&&t.enabled!==false);
+    const signature=JSON.stringify([o.roadSpline,tiles.map(t=>[t.id,t.terrainRevision3d||0])]);
+    let cached=terrainMeshes.get(o.id);
+    if(!cached||cached.signature!==signature){
+     if(cached){gl.deleteBuffer(cached.mesh.buffer);if(cached.mesh.colorBuffer)gl.deleteBuffer(cached.mesh.colorBuffer)}
+     try{
+      const road=roadSurfaceBuffers3d(o.roadSpline,tiles),mesh=makeBuffer(road.renderVertices);
+      cached={mesh,signature};terrainMeshes.set(o.id,cached);
+     }catch(error){console.warn('[WarLike Road Editor]',o.name,error.message);continue}
+    }
+    submit([0,0,0],()=>{
+     gl.uniform1f(u.roughness,.92);gl.uniform1f(u.metallic,0);
+     bind(cached.mesh);model([0,0,0],[1,1,1],[.21,.24,.28,1]);
+     profileDraw(cached.mesh.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,cached.mesh.count);
+    },false,o);
+    continue;
+   }
    if(o.terrainHeightfield&&validTerrainHeightfield(o.terrainHeightfield)){
     const terrain=o.terrainHeightfield,signature=(o.terrainRevision3d||0)+'|'+terrain.resolution+'|'+terrain.size;
     let cached=terrainMeshes.get(o.id);

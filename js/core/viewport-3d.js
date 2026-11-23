@@ -34,6 +34,7 @@ import {gameIsRunning,gameSession} from './game-session.js';
 import {updateHorrorAudio} from './horror-audio.js';
 import {tickEngineDiagnostics} from './engine-diagnostics.js';
 import {updateDriving3d,currentVehicle3d,isDriveable3d,driving3d,resetDriving3d} from './vehicle-3d.js';
+import {aircraftCameraView,aircraftFlightInstruments,nextAircraftCameraMode} from './aircraft-camera.js';
 import {vehicleRigPose} from './vehicle-articulation.js';
 import {updateGenreHud} from '../runtime/ui/genre-hud.js';
 import {updateOpenWorld} from './open-world-systems.js';
@@ -354,6 +355,12 @@ const assetColor=o=>{
  c==='Weapons'?[.9,.72,.42,1]:c==='VFX'?[.58,.43,.95,1]:rgba(o.color);
 };
 export function init3d(canvas,host,buttons){
+ const aircraftHud=document.createElement('div');
+ aircraftHud.id='warlikeAircraft3dHud';aircraftHud.hidden=true;
+ aircraftHud.setAttribute('aria-live','off');
+ aircraftHud.style.cssText='position:absolute;left:16px;bottom:58px;z-index:11;pointer-events:none;white-space:pre-line;padding:10px 14px;max-width:min(420px,90vw);border-radius:10px;background:rgba(10,20,34,.83);border:1px solid rgba(180,220,255,.32);color:#e2f4ff;font:600 13px/1.65 ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;box-shadow:0 4px 18px rgba(0,0,0,.26)';
+ host.append(aircraftHud);
+ let aircraftViewMode=null,aircraftViewFor=null,aircraftCameraKeyHeld=false;
  const drivingHud=document.createElement('div');
  drivingHud.id='warlikeVehicle3dHud';drivingHud.hidden=true;
  drivingHud.setAttribute('aria-live','off');
@@ -604,7 +611,14 @@ export function init3d(canvas,host,buttons){
  const isFps=()=>state.playing&&workspace.mode==='3d'&&!currentVehicle3d(state.entities)&&(activeSceneCamera(state.entities)?.sceneCamera3d?.mode==='firstPerson'||!activeSceneCamera(state.entities)&&cameraRigFor(playableActor(state.entities)).mode==='firstPerson');
  let boomDistance=null,cameraFrame=1/60,lastCameraActor=null,lastCameraScene=null;
  const camera=()=>{
-  if(state.playing){const sceneCam=currentSceneCameraPose();if(sceneCam)return sceneCam;}
+  if(state.playing){
+   const vehicle=currentVehicle3d(state.entities);
+   if(vehicle?.aircraftPhysics?.enabled){
+    const pose=aircraftCameraView(vehicle,{mode:aircraftViewMode||vehicle.aircraftCamera?.mode});
+    if(pose)return pose;
+   }
+   const sceneCam=currentSceneCameraPose();if(sceneCam)return sceneCam;
+  }
   if(!isFps()){
    const desired=sceneCamera3d(view3d.target,view3d.yaw,view3d.pitch,view3d.radius);
    if(!state.playing||companyController(state.entities))return desired;
@@ -651,7 +665,7 @@ export function init3d(canvas,host,buttons){
  const stopRapier=()=>{physicsGeneration++;disposeRapierScene(physicsSession);physicsSession=null;physicsAccumulator=0;};
  const enterPlay=()=>{
   resetBattlefield(state.entities);fpsAiming=false;fpsFiring=false;
-  view3d.drag=null;boomDistance=null;resetDriving3d();
+  view3d.drag=null;boomDistance=null;resetDriving3d();aircraftViewMode=null;aircraftViewFor=null;aircraftCameraKeyHeld=false;
   const p=playableActor(state.entities),pt=playerTarget(),rig=cameraRigFor(p);view3d.followPlayer=!!pt&&!activeSceneCamera(state.entities);if(pt){view3d.target=pt.slice();view3d.radius=rig.distance;view3d.yaw=Math.PI-(Number(p.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18}
   if(companyController(state.entities)){view3d.followPlayer=false;view3d.target=[14,0,14];view3d.radius=32;view3d.pitch=.92;view3d.yaw=-.55;return}
   if(gameProject.physics3d==='builtin')return;
@@ -894,13 +908,32 @@ export function init3d(canvas,host,buttons){
   }else{cameraTransition.reset();transitionPose=null}
   if(!view3d.enabled){updateGizmos();finishProfile();return}
   const endRenderProfile=profileStart('render3d'),endGpuProfile=gpuProfiler.begin();updateGenreHud(state);updateBattlefieldHud(state);updateGizmos();renderSceneCameraMarkers();
+  const activeAircraft=state.playing?currentVehicle3d(state.entities):null;
+  const aircraft=activeAircraft?.aircraftPhysics?.enabled?activeAircraft:null;
+  if(aircraft){
+   if(aircraftViewFor!==aircraft.id){
+    aircraftViewMode=aircraft.aircraftCamera?.mode==='cockpit'?'cockpit':'chase';
+    aircraftViewFor=aircraft.id;aircraftCameraKeyHeld=false;
+   }
+   const keys=gameplayKeys(state.keys),toggle=keys.has('v');
+   if(toggle&&!aircraftCameraKeyHeld&&!gameplayInputBlocked())aircraftViewMode=nextAircraftCameraMode(aircraftViewMode);
+   aircraftCameraKeyHeld=toggle;
+   const info=aircraftFlightInstruments(aircraft);
+   const display=name=>Number.isFinite(name)?name.toFixed(1):'0.0';
+   aircraftHud.textContent=(info.kind==='helicopter'?'HÉLICOPTÈRE':'AVION')+' · '+(aircraftViewMode==='cockpit'?'COCKPIT':'EXTÉRIEUR')+
+    '\\nALT '+display(info.altitudeMeters)+' m   V/S '+display(info.verticalSpeedMs)+' m/s'+
+    '\\nVITESSE '+display(info.speedKmh)+' km/h   CAP '+Math.round(info.headingDeg)+'°'+
+    '\\nTANGAGE '+Math.round(info.pitchDeg)+'°   ROULIS '+Math.round(info.bankDeg)+'°   PUISSANCE '+info.powerPercent+'%'+
+    '\\nV : changer de vue · E : sortir au sol';
+   aircraftHud.hidden=false;
+  }else{aircraftHud.hidden=true;aircraftViewFor=null;aircraftViewMode=null;aircraftCameraKeyHeld=false}
   const vehicleHud=document.getElementById('warlikeVehicle3dHud');
   if(vehicleHud){
    const car=currentVehicle3d(state.entities);
    const player=playableActor(state.entities);
    const nearby=!car&&player?state.entities.filter(isDriveable3d).map(o=>({o,d:Math.hypot((o.x+(o.w||32)/2)-(player.x+(player.w||32)/2),(o.y+(o.depth3d||o.h||32)/2)-(player.y+(player.depth3d||player.h||32)/2))})).sort((a,b)=>a.d-b.d)[0]:null;
    vehicleHud.hidden=!state.playing||(!car&&!(nearby&&nearby.d<Math.max(150,(nearby.o.w||64)*.85)));
-   if(car)vehicleHud.textContent=car.name+' · '+Math.round(Math.abs(driving3d.speed)*.36)+' km/h · Rapport '+(car.vehicleSystems?.transmission?.gear??1)+' · ZQSD conduire · E sortir · Espace frein à main'+(car.vehicleWeapon?.enabled?' · F tirer':'');
+   if(car)vehicleHud.textContent=car.aircraftPhysics?.enabled?car.name+' · W/Z gaz ou collectif · S réduire · Flèches/IJKL tangage/roulis · A/D lacet · V caméra · E sortie au sol':car.name+' · '+Math.round(Math.abs(driving3d.speed)*.36)+' km/h · Rapport '+(car.vehicleSystems?.transmission?.gear??1)+' · ZQSD conduire · E sortir · Espace frein à main'+(car.vehicleWeapon?.enabled?' · F tirer':'');
    else if(nearby)vehicleHud.textContent='E — Entrer dans '+nearby.o.name;
   }
   // No intrusive fixed center reticle; weapon aim is controlled by the camera.

@@ -89,7 +89,10 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
  // Ground vehicles use live Rapier impulses, not the legacy arcade transform.
  // The controls are authored per-frame and consumed by the fixed physics step.
  if(drivingCar.groundVehiclePhysics?.enabled){
-  const brake=Number(inputThrottle<0&&driving3d.speed>1);
+  // Brake only when the requested throttle opposes signed longitudinal motion.
+  // Absolute speed incorrectly treated reversing as forward and ignored lateral drift.
+  const signedSpeed=Number(drivingCar.groundVehicleMotion?.signedSpeed)||0;
+  const brake=Number(inputThrottle!==0&&signedSpeed*inputThrottle< -1);
   drivingCar.groundVehicleInput={throttle,steer,brake,handbrake:Number(handbrake)};
   tickVehicleSystems(drivingCar,step,{speed:driving3d.speed,throttle});
   // Entity speed is updated by the physics backend; use the measured horizontal

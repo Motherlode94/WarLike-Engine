@@ -45,7 +45,7 @@ export function updateVehicles(dt,player,keys=state.keys){
   return state.entities.some(o=>o!==car&&o!==player&&solid(o)&&overlapCircleRect(x+car.w/2,y+car.h/2,radius,colliderRect2d(o)));
  },{maxStep:Math.max(4,conf.collisionRadius*.35)});
  if(collision.collision){recordEngineEvent('collision',car.name);driving.speed=-driving.speed*.12;driving.collisionFlash=.24;playSound('impact',{cooldown:.22,gain:.38})}
- car.animation=handbrake&&Math.abs(driving.speed)>8?'brake':Math.abs(driving.speed)<3?'idle':turn>0?'turn_right':turn<0?'turn_left':driving.speed<0?'reverse':'drive';
+ car.animation=handbrake&&Math.abs(driving.speed)>8?'brake':Math.abs(driving.speed)<3?'idle':driving.speed<0?'reverse':turn>0?'turn_right':turn<0?'turn_left':'drive';
  car.animationSpeed=Math.max(.6,Math.min(2.5,Math.abs(driving.speed)/140));
  player.x=car.x+(car.w-player.w)/2;player.y=car.y+(car.h-player.h)/2;player._hiddenInVehicle=true;player.animation='drive';
 }

@@ -5,6 +5,7 @@ import {commonInspectorFields,inspectValue,setInspectorValue,inspectorNumber} fr
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 import {workspace} from '../core/workspaces.js';
+import {defaultGroundVehiclePhysics,validateGroundVehiclePhysics} from '../core/ground-vehicle-rapier.js';
 
 const dedicated=new Set([
  'webScripts','warScripts','sequence','animatorGraph',
@@ -57,6 +58,56 @@ export function renderGenericComponents(root,entity){
    };
    input.oninput=()=>input.setCustomValidity?.('');
    row.append(name,input);body.append(row);
+  }
+  if(definition.id==='groundVehiclePhysics'){
+   const config=entity.groundVehiclePhysics,group=document.createElement('section');
+   group.className='ground-vehicle-physics-inspector';
+   const heading=text('h4','Ground Vehicle Physics · Rapier 3D');group.append(heading);
+   const kindRow=document.createElement('div');kindRow.className='property-row';
+   const kindLabel=text('label','Profil du véhicule');const kind=document.createElement('select');
+   for(const [value,label] of [['car','Voiture · 4 roues'],['truck','Camion · 6 roues'],['tracked','Blindé · chenilles']]){
+    const option=document.createElement('option');option.value=value;option.textContent=label;kind.append(option);
+   }
+   kind.value=config.kind;kind.disabled=state.playing;
+   kind.onchange=()=>{
+    if(state.playing||!['car','truck','tracked'].includes(kind.value))return;
+    entity.groundVehiclePhysics=defaultGroundVehiclePhysics(kind.value);
+    // Keep Rigidbody mass and chassis profile in sync on explicit profile change.
+    if(entity.rigidbody3d)entity.rigidbody3d.mass=entity.groundVehiclePhysics.mass;
+    record('Véhicule : choisir profil '+kind.value);notify();
+   };
+   kindRow.append(kindLabel,kind);group.append(kindRow);
+   group.append(text('p','Le moteur de la scène doit utiliser Rapier. Suspension et roues utilisent des mètres, kg et newtons.'));
+   const columns=[['radius','Rayon (m)',.1,2],['restLength','Longueur ressort (m)',.05,3],
+    ['travel','Course (m)',0,2],['spring','Ressort (N/m)',1,200000],
+    ['damper','Amortissement',0,50000],['grip','Adhérence',0,5]];
+   const wheels=config.wheels||[];
+   wheels.forEach((mount,index)=>{
+    const details=document.createElement('details');details.className='vehicle-wheel-editor';
+    details.append(text('summary','Roue '+(index+1)+' · '+(mount.side<0?'gauche':'droite')));
+    const inner=document.createElement('div');inner.className='component-content';
+    for(const [key,label,min,max] of columns){
+     const row=document.createElement('div');row.className='property-row';
+     const caption=document.createElement('label');caption.textContent=label;
+     const input=document.createElement('input');input.type='number';input.step='any';input.min=String(min);input.max=String(max);
+     input.value=String(mount.wheel[key]);input.disabled=state.playing;
+     input.setAttribute('aria-label','Roue '+(index+1)+' · '+label);
+     input.onchange=()=>{
+      if(state.playing)return;
+      const value=Number(input.value);
+      if(!Number.isFinite(value)||value<min||value>max){input.setCustomValidity('Valeur hors limites');input.reportValidity();return}
+      const previous=mount.wheel[key];mount.wheel[key]=value;
+      const errors=validateGroundVehiclePhysics(config);
+      if(errors.length){mount.wheel[key]=previous;input.setCustomValidity(errors.join('; '));input.reportValidity();return}
+      input.setCustomValidity('');record('Roue '+(index+1)+' : '+key);notify();
+     };
+     row.append(caption,input);inner.append(row);
+    }
+    details.append(inner);group.append(details);
+   });
+   const errors=validateGroundVehiclePhysics(config);
+   if(errors.length)group.append(text('p','Configuration invalide : '+errors.join('; ')));
+   body.append(group);
   }
   // Navigation waypoints are structured data: offer proper Inspector controls
   // instead of pretending the generic scalar field editor can edit arrays.

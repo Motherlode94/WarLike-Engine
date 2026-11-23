@@ -23,7 +23,7 @@ const included=o=>o.roadSpline?o.enabled!==false&&o.collision3d!==false:activeBo
 const dynamic=o=>!!o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!characterBody3d(o)&&!o.ai?.enabled;
 const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,o.collider3d,o.controller3d,o.joint3d,!!o.ai?.enabled,o.terrainHeightfield?o.terrainRevision3d||0:null,o.roadSpline?o.roadSpline:null].map((v,i)=>i===2&&v?Object.fromEntries(Object.entries(v).filter(([k])=>!['vx','vy','vz'].includes(k))):v));
 const scenePosition=o=>({x:n(o.x),y:n(o.y),z:n(o.elevation3d)});
-const terrainPose=o=>o.terrainHeightfield&&validTerrainHeightfield(o.terrainHeightfield)?{x:o.terrainHeightfield.offsetX,y:n(o.elevation3d),z:o.terrainHeightfield.offsetZ}:colliderPosition3d(o);
+const terrainPose=o=>o.roadSpline?{x:0,y:0,z:0}:o.terrainHeightfield&&validTerrainHeightfield(o.terrainHeightfield)?{x:o.terrainHeightfield.offsetX,y:n(o.elevation3d),z:o.terrainHeightfield.offsetZ}:colliderPosition3d(o);
 const velocity=o=>({x:n(o.rigidbody3d?.vx),y:n(o.rigidbody3d?.vy),z:n(o.rigidbody3d?.vz)});
 const changed=(a,b)=>Object.keys(a).some(k=>Math.abs(a[k]-n(b?.[k]))>1e-5);
 const skippedColliderSignature=o=>bodyConfig(o)+'|'+JSON.stringify(affineCorrection3d(o)?.map(v=>Math.round(v*1e5)/1e5)||null);

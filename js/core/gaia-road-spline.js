@@ -108,3 +108,29 @@ export function editRoadSpline(road,{action,index,point,width}){
   throw Error('Invalid road edit geometry');
  return next;
 }
+
+/**
+ * Shared authoritative road surface for WebGL and Rapier. World coordinates,
+ * metres and Y-up; each visual triangle uses exactly the same vertices as
+ * the corresponding collider triangle. No duplicate road height solver.
+ */
+export function roadSurfaceBuffers3d(road,terrains,options={}){
+ const surface=roadSurfaceGeometry3d(road,terrains,options);
+ const positions=new Float32Array(surface.vertices.length*3);
+ for(let i=0;i<surface.vertices.length;i++){
+  const p=surface.vertices[i];positions.set([p.x,p.y,p.z],i*3);
+ }
+ const indices=new Uint32Array(surface.triangles.length*3);
+ const renderVertices=new Float32Array(surface.triangles.length*18);
+ for(let i=0;i<surface.triangles.length;i++){
+  const triangle=surface.triangles[i],a=surface.vertices[triangle[0]],b=surface.vertices[triangle[1]],c=surface.vertices[triangle[2]];
+  const ux=b.x-a.x,uy=b.y-a.y,uz=b.z-a.z,vx=c.x-a.x,vy=c.y-a.y,vz=c.z-a.z;
+  const nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx,length=Math.hypot(nx,ny,nz)||1;
+  for(let j=0;j<3;j++){
+   const index=triangle[j],p=surface.vertices[index],offset=i*18+j*6;
+   indices[i*3+j]=index;
+   renderVertices.set([p.x,p.y,p.z,nx/length,ny/length,nz/length],offset);
+  }
+ }
+ return {positions,indices,renderVertices,triangleCount:surface.triangles.length};
+}

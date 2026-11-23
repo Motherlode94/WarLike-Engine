@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initializeEditableTerrain,applyTerrainBrush} from '../js/core/gaia-terrain-sculpt.js';
+import {heightfieldAt3d} from '../js/core/gaia-terrain-physics.js';
 import {createRoadSpline,roadSplineEntity,roadSurfaceBuffers3d} from '../js/core/gaia-road-spline.js';
 import {loadRapier3d,createRapierScene,disposeRapierScene,synchronizeRapierScene,raycastRapierScene3d} from '../js/core/rapier-physics-3d.js';
 
@@ -29,11 +30,12 @@ test('Gaia road centreline clears a raised ridge between the shoulders',()=>{
  const surface=roadSurfaceBuffers3d(road.roadSpline,[terrain],{segmentsPerSpan:4});
  // The middle sample is centred on the Gaia brush peak. A wheel must see
  // the road before the underlying terrain when crossing the centreline.
- const midpoint=surface.positions.length/6-1;
+ const midpoint=Math.floor(surface.positions.length/12);
  const leftY=surface.positions[midpoint*6+1];
  const rightY=surface.positions[midpoint*6+4];
  assert.ok(Number.isFinite(leftY)&&Number.isFinite(rightY));
  assert.ok(Math.abs(leftY-rightY)<1e-6,'cross-section must not sink through centre ridge');
+ assert.ok(leftY>heightfieldAt3d(terrain.terrainHeightfield,0,0),'road must clear underlying central peak');
 });
 test('generated road preserves all Gaia height samples and survives JSON roundtrip',()=>{
  const {terrain,road}=fixture(),before=terrain.terrainHeightfield.heights.slice();

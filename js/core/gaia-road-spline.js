@@ -65,7 +65,7 @@ export function roadSurfaceGeometry3d(road,terrains,{segmentsPerSpan=12}={}){
   if(len<1e-9)continue;
   const nx=-dz/len,nz=dx/len,half=road.width/2;
   const left={x:p.x+nx*half,z:p.z+nz*half},right={x:p.x-nx*half,z:p.z-nz*half};
-  const ly=roadHeightAt(terrains,left.x,left.z),ry=roadHeightAt(terrains,right.x,right.z);
+  const ly=roadHeightAt(terrains,left.x,left.z),ry=roadHeightAt(terrains,right.x,right.z),cy=roadHeightAt(terrains,p.x,p.z);
   // Failing explicitly prevents creating floating or invisible sections at
   // Gaia tile boundaries. Multi-tile roads need actual adjacent Gaia tiles.
   if(ly===null||ry===null)throw Error('Road crosses outside Gaia terrain coverage');

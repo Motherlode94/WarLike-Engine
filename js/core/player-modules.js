@@ -22,6 +22,7 @@ export const playerModules=[
   "js/assets/survival-sprites-2d.js",
   "js/core/adventure-runtime.js",
   "js/core/ai-perception.js",
+  "js/core/aircraft-camera.js",
   "js/core/aircraft-flight-physics.js",
   "js/core/aircraft-pilot-input.js",
   "js/core/aircraft-rapier.js",

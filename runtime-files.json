@@ -16336,6 +16336,7 @@
     "js/core/adventure-scene.js",
     "js/core/ai-perception.js",
     "js/core/aircraft-flight-physics.js",
+    "js/core/aircraft-rapier.js",
     "js/core/animal-controller.js",
     "js/core/animation-clips.js",
     "js/core/animation-demo.js",

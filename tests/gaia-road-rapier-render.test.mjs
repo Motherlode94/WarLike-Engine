@@ -16,8 +16,8 @@ test('WebGL triangles and Rapier triangle mesh contain identical road coordinate
  const {terrain,road}=fixture();
  const mesh=roadSurfaceBuffers3d(road.roadSpline,[terrain],{segmentsPerSpan:5});
  assert.equal(mesh.renderVertices.length,mesh.indices.length*6);
- assert.equal(mesh.positions.length/3,12*1 /* six sections, two shoulders */);
- assert.equal(mesh.triangleCount,10);
+ assert.equal(mesh.positions.length/3,22 /* eleven sections, two shoulders */);
+ assert.equal(mesh.triangleCount,20);
  for(let i=0;i<mesh.indices.length;i++){
   const vertex=mesh.indices[i]*3,render=i*6;
   for(let axis=0;axis<3;axis++)assert.ok(Math.abs(mesh.positions[vertex+axis]-mesh.renderVertices[render+axis])<1e-6);

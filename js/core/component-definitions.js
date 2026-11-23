@@ -103,7 +103,13 @@ export function addObjectComponent(object,id,mode){
  const definition=componentChoices(mode).find(d=>d.id===id);if(!definition)return false;
  if(id==='sequence'&&object.sequence){object.sequences??=[];if(object.sequences.length>=32)return false;object.sequences.push(definition.create());return true}
  if(hasObjectComponent(object,id))return false;
- object[id]=definition.create();if(id==='collider2d')object.collision2d=true;if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='controller3d'){object.collider3d??={...defaultCollider3d(),shape:'capsule'};object.collision3d=true;}if(['rigidbody3d','joint3d'].includes(id)){object.collider3d??=defaultCollider3d();object.collision3d=true;if(id==='joint3d')object.rigidbody3d??={...defaultRigidbody3d(),lockRotations:false}}if(id==='aircraftSystems'&&!object.aircraftPhysics){object.aircraftPhysics={...defaultAirplanePhysics(),enabled:true};}
+ object[id]=definition.create();if(id==='collider2d')object.collision2d=true;if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='controller3d'){object.collider3d??={...defaultCollider3d(),shape:'capsule'};object.collision3d=true;}if(['rigidbody3d','joint3d'].includes(id)){object.collider3d??=defaultCollider3d();object.collision3d=true;if(id==='joint3d')object.rigidbody3d??={...defaultRigidbody3d(),lockRotations:false}}if(id==='aircraftSystems'){
+  object.aircraftPhysics??={...defaultAirplanePhysics(),enabled:true};
+  object.collider3d??=defaultCollider3d();object.collider3d.enabled=true;object.collision3d=true;
+  object.rigidbody3d??=defaultRigidbody3d();object.rigidbody3d.enabled=true;
+  object.rigidbody3d.kinematic=false;object.rigidbody3d.lockRotations=false;
+  object.rigidbody3d.mass=object.aircraftPhysics.mass;
+ }
  if(id==='aircraftPhysics'){
   object.collider3d??=defaultCollider3d();object.collision3d=true;
   object.rigidbody3d??=defaultRigidbody3d();object.rigidbody3d.enabled=true;

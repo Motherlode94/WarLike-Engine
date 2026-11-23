@@ -30,6 +30,38 @@ function sampleAtDistance(samples,target){
  return null;
 }
 const overlaps=(a,b,margin=0)=>a.x<b.x+b.w+margin&&a.x+a.w+margin>b.x&&a.y<b.y+(b.depth3d??b.h)+margin&&a.y+(a.depth3d??a.h)+margin>b.y;
+/**
+ * Reject a building footprint that crosses another authored road corridor.
+ * Conservative segment-vs-expanded-footprint clipping preserves space for
+ * vehicles and future sidewalks at perpendicular or oblique intersections.
+ * The spline and all geometry are measured in Gaia metres.
+ */
+const segmentHitsBox=(a,b,minX,maxX,minZ,maxZ)=>{
+ let enter=0,exit=1;
+ const dX=b.x-a.x,dZ=b.z-a.z;
+ for(const [p,q] of [[-dX,a.x-minX],[dX,maxX-a.x],[-dZ,a.z-minZ],[dZ,maxZ-a.z]]){
+  if(Math.abs(p)<1e-12){if(q<0)return false;continue}
+  const r=q/p;
+  if(p<0)enter=Math.max(enter,r);
+  else exit=Math.min(exit,r);
+  if(enter>exit)return false;
+ }
+ return true;
+};
+export function cityFootprintCrossesRoad(building,road,{shoulder=1.5}={}){
+ if(!validRoadSpline(road)||!Number.isFinite(shoulder)||shoulder<0||shoulder>20)
+  throw Error('Invalid road corridor clearance');
+ const depth=building?.depth3d??building?.h;
+ if(!Number.isFinite(building?.x)||!Number.isFinite(building?.y)||!Number.isFinite(building?.w)||!Number.isFinite(depth)||building.w<=0||depth<=0)
+  throw Error('Invalid city building footprint');
+ const buffer=road.width/2+shoulder;
+ const minX=building.x/64-buffer,maxX=(building.x+building.w)/64+buffer;
+ const minZ=building.y/64-buffer,maxZ=(building.y+depth)/64+buffer;
+ const points=sampleRoadSpline(road,{segmentsPerSpan:12});
+ for(let i=1;i<points.length;i++)if(segmentHitsBox(points[i-1],points[i],minX,maxX,minZ,maxZ))return true;
+ return false;
+}
+
 export function cityBuildingsAlongRoad(roadEntity,terrainEntities,existingEntities,{firstId=1,spacing=18,setback=4,maxBuildings=40,assets=['building-house','building-garage','building-hangar']}={}){
  const road=roadEntity?.roadSpline;
  if(!validRoadSpline(road))throw Error('City Builder needs a valid Gaia road');
@@ -39,6 +71,7 @@ export function cityBuildingsAlongRoad(roadEntity,terrainEntities,existingEntiti
  const samples=sampleRoadSpline(road,{segmentsPerSpan:12});
  let total=0;for(let i=1;i<samples.length;i++)total+=length(samples[i-1],samples[i]);
  const added=[],occupied=[...existingEntities].filter(o=>Number.isFinite(o.x)&&Number.isFinite(o.y)&&Number.isFinite(o.w)&&o.w>0&&!o.roadSpline&&!o.terrainHeightfield);
+ const crossRoads=existingEntities.filter(o=>o.id!==roadEntity.id&&o.enabled!==false&&validRoadSpline(o.roadSpline)).map(o=>o.roadSpline);
  for(let distance=spacing/2;distance<total-spacing/3&&added.length<maxBuildings;distance+=spacing){
   const p=sampleAtDistance(samples,distance);if(!p)break;
   for(const side of [-1,1]){
@@ -61,7 +94,7 @@ export function cityBuildingsAlongRoad(roadEntity,terrainEntities,existingEntiti
    building.rotation=Math.atan2(p.tangent.x,p.tangent.z)*180/Math.PI;
    building.citySourceRoadId=roadEntity.id;
    building.cityGenerator='warlike.city.roads.v1';
-   if(occupied.some(o=>overlaps(building,o,64)))continue;
+   if(occupied.some(o=>overlaps(building,o,64))||crossRoads.some(other=>cityFootprintCrossesRoad(building,other)))continue;
    occupied.push(building);added.push(building);
   }
  }

@@ -25,6 +25,7 @@ import {defaultInputActions} from './input-actions.js';
 import {defaultAnimalController} from './animal-controller.js';
 import {defaultNavigationAgent} from './navigation-agent.js';
 import {defaultVehicleController} from './vehicle-controller.js';
+import {defaultGroundVehiclePhysics} from './ground-vehicle-rapier.js';
 import {registeredComponentChoices,registerComponentManifest} from './component-registry.js';
 // The component browser adds the same data that the existing Web runtime reads.
 export const webComponentDefinitions=[
@@ -57,6 +58,7 @@ export const webComponentDefinitions=[
  {id:'cameraRig',name:'Caméra de jeu',category:'Caméra',description:'Suivi fluide, distance, sensibilité et évitement des obstacles.',create:defaultCameraRig},
  {id:'inputActions',name:'Input Actions · Commandes',category:'Input',description:'Touches modulaires par joueur ou véhicule, profils enregistrés et exportables.',create:defaultInputActions},
  {id:'vehicleController',name:'Vehicle Controller · Arcade 2D/3D',category:'Véhicule',description:'Pilotage modulaire indépendant du Prefab : accélération, freinage, direction, vitesse et collisions.',create:defaultVehicleController},
+ {id:'groundVehiclePhysics',name:'Ground Vehicle Physics · Rapier 3D',category:'Véhicule',modes:['3d'],description:'Voiture, camion ou blindé : suspensions et traction Rapier. Ajoute Rigidbody3D dynamique et Collider3D, active le backend Rapier.',create:()=>defaultGroundVehiclePhysics('car')},
  {id:'navigationAgent',name:'Navigation Agent · Points de passage',category:'Navigation',description:'Déplacement 2D/3D sur points/cible via collisions. Navigation locale sans NavMesh.',create:defaultNavigationAgent},
  {id:'animalController',name:'Animal Controller · Comportement',category:'Personnage',description:'Locomotion de faune 2D/3D : errance et fuite, avec collisions et paramètres Animator. À utiliser sans IA combat active.',create:defaultAnimalController},
  {id:'stats',name:'Stats · Santé et endurance',category:'Personnage',description:'Santé, endurance et régénération.',create:defaultStats},
@@ -84,8 +86,8 @@ export const componentDependencies=Object.freeze({
  // Rigidbody 2D may legitimately run without a Collider 2D.
  collider2d:['joint2d','effector2d'],
  rigidbody2d:['joint2d'],
- collider3d:['rigidbody3d','joint3d','controller3d'],
- rigidbody3d:['joint3d']
+ collider3d:['rigidbody3d','joint3d','controller3d','groundVehiclePhysics'],
+ rigidbody3d:['joint3d','groundVehiclePhysics']
 });
 export function componentRemovalBlockers(object,id){
  return (componentDependencies[id]||[]).filter(dependent=>object?.[dependent]!=null);
@@ -96,7 +98,14 @@ export function addObjectComponent(object,id,mode){
  const definition=componentChoices(mode).find(d=>d.id===id);if(!definition)return false;
  if(id==='sequence'&&object.sequence){object.sequences??=[];if(object.sequences.length>=32)return false;object.sequences.push(definition.create());return true}
  if(hasObjectComponent(object,id))return false;
- object[id]=definition.create();if(id==='collider2d')object.collision2d=true;if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='controller3d'){object.collider3d??={...defaultCollider3d(),shape:'capsule'};object.collision3d=true;}if(['rigidbody3d','joint3d'].includes(id)){object.collider3d??=defaultCollider3d();object.collision3d=true;if(id==='joint3d')object.rigidbody3d??={...defaultRigidbody3d(),lockRotations:false}}if(id==='collider3d')object.collision3d=true;if(['rigidbody2d','joint2d'].includes(id)){object.collider2d??=defaultCollider2d();object.collision2d=true;}if(id==='joint2d')object.rigidbody2d??=defaultRigidbody2d();if(id==='effector2d'){object.collider2d??={...defaultCollider2d(),isTrigger:true};object.collision2d=true;}return true;
+ object[id]=definition.create();if(id==='collider2d')object.collision2d=true;if(id==='superhero'){object.rpgProgression??=defaultRpgProgression();object.animatorGraph??=defaultAnimatorGraph();object.stats??=defaultStats()}if(id==='survival'){object.stats??=defaultStats();object.inventory??={capacity:24,items:[],equipment:{weapon:null,armor:null}}}if(id==='controller3d'){object.collider3d??={...defaultCollider3d(),shape:'capsule'};object.collision3d=true;}if(['rigidbody3d','joint3d'].includes(id)){object.collider3d??=defaultCollider3d();object.collision3d=true;if(id==='joint3d')object.rigidbody3d??={...defaultRigidbody3d(),lockRotations:false}}if(id==='groundVehiclePhysics'){
+  object.collider3d??=defaultCollider3d();object.collision3d=true;
+  object.rigidbody3d??=defaultRigidbody3d();
+  object.rigidbody3d.enabled=true;object.rigidbody3d.kinematic=false;object.rigidbody3d.lockRotations=false;
+  object.rigidbody3d.mass=object.groundVehiclePhysics.mass;
+  object.vehicleController??=defaultVehicleController();
+ }
+ if(id==='collider3d')object.collision3d=true;if(['rigidbody2d','joint2d'].includes(id)){object.collider2d??=defaultCollider2d();object.collision2d=true;}if(id==='joint2d')object.rigidbody2d??=defaultRigidbody2d();if(id==='effector2d'){object.collider2d??={...defaultCollider2d(),isTrigger:true};object.collision2d=true;}return true;
 }
 export function resetObjectComponent(object,id){const definition=[...webComponentDefinitions,...registeredComponentChoices('2d'),...registeredComponentChoices('3d')].find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
 export function removeObjectComponent(object,id){if(![...webComponentDefinitions,...registeredComponentChoices('2d'),...registeredComponentChoices('3d')].some(d=>d.id===id)||!hasObjectComponent(object,id)||componentRemovalBlockers(object,id).length)return false;delete object[id];if(id==='collider2d')object.collision2d=false;if(id==='collider3d')object.collision3d=false;if(id==='superhero')delete object.heroState;if(id==='survival')delete object.survivalState;return true}

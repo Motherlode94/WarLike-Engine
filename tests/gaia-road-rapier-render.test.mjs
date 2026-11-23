@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initializeEditableTerrain,applyTerrainBrush} from '../js/core/gaia-terrain-sculpt.js';
 import {createRoadSpline,roadSplineEntity,roadSurfaceBuffers3d} from '../js/core/gaia-road-spline.js';
-import {loadRapier3d,createRapierScene,disposeRapierScene} from '../js/core/rapier-physics-3d.js';
+import {loadRapier3d,createRapierScene,disposeRapierScene,synchronizeRapierScene,raycastRapierScene3d} from '../js/core/rapier-physics-3d.js';
 
 function fixture(){
  const terrain={id:1,name:'Gaia',type:'terrain3d',x:-640,y:-640,w:1280,h:16,depth3d:1280,visible:true,enabled:true,collision3d:true,solid3d:true};
@@ -45,6 +45,9 @@ test('Rapier can raycast the exact static road collider above Gaia terrain',asyn
   const terrainHit=scene.actors.get(terrain.id).collider.castRay(ray,20,true);
   assert(roadHit!==null&&terrainHit!==null);
   assert(roadHit<terrainHit,'road surface should sit above Gaia terrain for wheel contact');
+  assert(synchronizeRapierScene(scene,[terrain,road]),'steady road scene must synchronize without rebuild');
+  raycastRapierScene3d(scene,[0,12,0],[0,-1,0],[terrain,road]);
+  assert.deepEqual(roadActor.body.translation(),{x:0,y:0,z:0},'query refresh must not shift world-space road mesh');
  }finally{disposeRapierScene(scene)}
 });
 test('out-of-tile road cannot silently create a fake Rapier collider',async()=>{

@@ -79,15 +79,23 @@ try{
    });
    assert.equal(start.mode,'3d');
    await page.getByRole('button',{name:'Jouer',exact:true}).click();
-   await page.waitForFunction(async()=>{
+   // Poll in the application's main world. Playwright waitForFunction may
+   // run in an isolated world with its own module instances and Rapier state.
+   await page.evaluate(async()=>{
     const [{runtimeSession},{rapierStatus,activeRapierScene3d}]=await Promise.all([
      import('./js/core/runtime-session.js'),import('./js/core/rapier-physics-3d.js')
     ]);
-    const physics=rapierStatus();
-    if(physics.error)throw Error('Portable Rapier initialization failed: '+physics.error);
-    // Script readiness precedes the asynchronous WASM load and scene creation.
-    return runtimeSession.phase==='ready'&&physics.ready&&activeRapierScene3d()?.actors.size>0;
-   },null,{timeout:60000});
+    const deadline=performance.now()+60000;
+    while(performance.now()<deadline){
+     const physics=rapierStatus();
+     if(physics.error)throw Error('Portable Rapier initialization failed: '+physics.error);
+     if(runtimeSession.phase==='ready'&&physics.ready&&activeRapierScene3d()?.actors.size>0)return;
+     await new Promise(resolve=>setTimeout(resolve,100));
+    }
+    throw Error('Portable Rapier did not become active in the game world within 60s: '+JSON.stringify({
+     phase:runtimeSession.phase,physics:rapierStatus(),actorCount:activeRapierScene3d()?.actors.size||0
+    }));
+   });
    const snap=()=>page.evaluate(async()=>{
     const [{state},{view3d},{rapierStatus}]=await Promise.all([import('./js/core/state.js'),import('./js/core/viewport-3d.js'),import('./js/core/rapier-physics-3d.js')]);
     const hero=state.entities.find(e=>e.playable3d),target=state.entities.find(e=>e.navigationAgent);

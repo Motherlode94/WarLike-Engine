@@ -6,6 +6,7 @@ import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 import {workspace} from '../core/workspaces.js';
 import {defaultGroundVehiclePhysics,validateGroundVehiclePhysics} from '../core/ground-vehicle-rapier.js';
+import {defaultAirplanePhysics,defaultHelicopterPhysics} from '../core/aircraft-flight-physics.js';
 
 const dedicated=new Set([
  'webScripts','warScripts','sequence','animatorGraph',
@@ -58,6 +59,26 @@ export function renderGenericComponents(root,entity){
    };
    input.oninput=()=>input.setCustomValidity?.('');
    row.append(name,input);body.append(row);
+  }
+  if(definition.id==='aircraftPhysics'){
+   const section=document.createElement('section');section.className='aircraft-physics-inspector';
+   const heading=text('h4','Aircraft Physics · Rapier 3D');section.append(heading);
+   const row=document.createElement('div');row.className='property-row';
+   const label=text('label','Type de véhicule aérien');
+   const select=document.createElement('select');
+   for(const [value,name] of [['airplane','Avion · ailes fixes'],['helicopter','Hélicoptère · rotor']]){
+    const option=document.createElement('option');option.value=value;option.textContent=name;select.append(option);
+   }
+   select.value=entity.aircraftPhysics.kind;select.disabled=state.playing;
+   select.onchange=()=>{
+    if(state.playing)return;
+    entity.aircraftPhysics={...(select.value==='helicopter'?defaultHelicopterPhysics():defaultAirplanePhysics()),enabled:true};
+    if(entity.rigidbody3d)entity.rigidbody3d.mass=entity.aircraftPhysics.mass;
+    record('Aircraft : changer type '+select.value);notify();
+   };
+   row.append(label,select);section.append(row);
+   section.append(text('p','Rapier requis. Les commandes aircraftInput (throttle, collective, pitch, roll, yaw) seront connectées à l’Input Manager dans la prochaine étape.'));
+   body.append(section);
   }
   if(definition.id==='groundVehiclePhysics'){
    const config=entity.groundVehiclePhysics,group=document.createElement('section');

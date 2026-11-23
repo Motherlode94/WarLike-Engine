@@ -1,6 +1,7 @@
 // WarLike aircraft dynamics foundation: SI units (m, kg, s, N, Nm), right-handed y-up.
 // Pure math. Does not write scene transforms or bypass collision / Rapier.
 // Pass actual world-space basis vectors and rigidbody velocity from the physics backend.
+import {aircraftAeroModifiers} from './aircraft-systems.js';
 const EPS=1e-8;
 const zero=()=>({x:0,y:0,z:0});
 const finite=(n,d=0)=>typeof n==='number'&&Number.isFinite(n)?n:d;
@@ -47,11 +48,12 @@ export function validateAircraftConfig(c){
  */
 export function solveAircraftForces({config,velocity={x:0,y:0,z:0},wind={x:0,y:0,z:0},
  forward={x:0,y:0,z:-1},up=worldUp,right={x:1,y:0,z:0},
- angularVelocity=zero(),controls={},gravity=9.81,includeGravity=false}){
+ angularVelocity=zero(),controls={},systems=null,gravity=9.81,includeGravity=false}){
  const errors=validateAircraftConfig(config);if(errors.length)throw Error(errors.join('; '));
  const basis={forward:unit(vec(forward,{x:0,y:0,z:-1})),up:unit(vec(up,worldUp)),right:unit(vec(right,{x:1,y:0,z:0}))};
  if(length(basis.forward)<.9||length(basis.up)<.9||length(basis.right)<.9||
     Math.abs(dot(basis.forward,basis.up))>.01||Math.abs(dot(basis.forward,basis.right))>.01||Math.abs(dot(basis.up,basis.right))>.01)throw Error('Aircraft: repère local orthonormal requis');
+ const modifiers=aircraftAeroModifiers(systems,config.kind);
  const v=vec(velocity,zero()),air=add(v,scale(vec(wind,zero()),-1));
  const speed=length(air),q=.5*config.airDensity*speed*speed;
  const throttle=clamp(controls.throttle,0,1),collective=clamp(controls.collective,0,1);
@@ -62,12 +64,12 @@ export function solveAircraftForces({config,velocity={x:0,y:0,z:0},wind={x:0,y:0
   const forwardSpeed=dot(air,basis.forward),verticalSpeed=dot(air,basis.up),lateralSpeed=dot(air,basis.right);
   alpha=Math.atan2(-verticalSpeed,forwardSpeed);
   const stallRad=config.stallAngleDeg*Math.PI/180;
-  const rawCl=config.liftOffset+config.liftSlope*alpha;
+  const rawCl=config.liftOffset+modifiers.extraLift+config.liftSlope*alpha;
   // Bounded nonlinear post-stall lift without discontinuity at the stall angle.
   const stallFactor=Math.abs(alpha)>stallRad?Math.max(.10,stallRad/Math.abs(alpha)):.999999999999;
   const cl=clamp(rawCl*stallFactor,-config.maxLiftCoefficient,config.maxLiftCoefficient);
   stalled=Math.abs(alpha)>stallRad || forwardSpeed<=0;
-  const cd=config.baseDragCoefficient+config.inducedDragFactor*cl*cl+(stalled?.28:0);
+  const cd=config.baseDragCoefficient+modifiers.extraDrag+config.inducedDragFactor*cl*cl+(stalled?.28:0);
   const liftDirection=unit(add(basis.up,scale(basis.forward,-Math.sin(alpha))));
   lift=q*config.wingArea*cl;
   drag=q*config.wingArea*cd;
@@ -80,7 +82,7 @@ export function solveAircraftForces({config,velocity={x:0,y:0,z:0},wind={x:0,y:0
   const tilt=config.cyclicTiltDeg*Math.PI/180;
   const rotorDirection=unit(add(basis.up,add(scale(basis.forward,pitch*Math.tan(tilt)),scale(basis.right,roll*Math.tan(tilt)))));
   thrustForce=scale(rotorDirection,config.maxThrust*collective);
-  aeroForce=add(scale(air,-q*config.dragCoefficient*config.referenceArea/(speed||1)),
+  aeroForce=add(scale(air,-q*(config.dragCoefficient+modifiers.extraDrag)*config.referenceArea/(speed||1)),
    scale(basis.forward,config.maxForwardForce*throttle));
   lift=dot(thrustForce,basis.up);
   drag=q*config.dragCoefficient*config.referenceArea;

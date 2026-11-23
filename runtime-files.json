@@ -16423,6 +16423,7 @@
     "js/core/gaia-city-builder.js",
     "js/core/gaia-road-grading.js",
     "js/core/gaia-road-spline.js",
+    "js/core/gaia-scene-portability.js",
     "js/core/gaia-terrain-physics.js",
     "js/core/gaia-terrain-sculpt.js",
     "js/core/gaia-world-import-preview.js",

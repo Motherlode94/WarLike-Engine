@@ -2,6 +2,8 @@ import {validateScript} from '../../script-editor/core.js';
 import {variableTypes} from './blueprint-types.js';
 import {resolveGameGenre} from './game-genres.js';
 import {restoreAnimatorControllerAssets} from './animator-controller-assets.js';
+import {validRoadSpline} from './gaia-road-spline.js';
+import {validTerrainHeightfield} from './gaia-terrain-physics.js';
 // Serializable game configuration, shared by the Hub, Blueprint and exported builds.
 export const freshGameProject=()=>({version:1,id:'untitled',title:'Mon jeu',genre:'sandbox',activeSceneId:'main',startupSceneId:'main',scenes:[],animatorControllers:[],variables:[],functions:[],scripts:[],runtimeBackend:'web',physics3d:'rapier',uiSkin:'kenney-blue'});
 export const gameProject=freshGameProject();
@@ -11,7 +13,9 @@ export function validEntities(entities){
  if(!Array.isArray(entities)||entities.length>10000)return false;
  const ids=new Set();
  return entities.every(o=>o&&Number.isSafeInteger(o.id)&&o.id>0&&!ids.has(o.id)&&ids.add(o.id)&&
-  ['x','y','w','h'].every(k=>Number.isFinite(o[k]))&&o.w>0&&o.h>0);
+  ((['x','y','w','h'].every(k=>Number.isFinite(o[k]))&&o.w>0&&o.h>0)
+   ||(o.type==='road'&&validRoadSpline(o.roadSpline))
+   ||(o.type==='terrain3d'&&validTerrainHeightfield(o.terrainHeightfield))));
 }
 export function restoreGameProject(value,{entities=null,genre=null}={}){
  const next=freshGameProject();

@@ -7,6 +7,7 @@ import {initializeEditableTerrain,applyTerrainBrush,terrainBrushModes,terrainLay
 import {initializeRustGizmo,axisRayParameter,gizmoPointerRay} from './rust-gizmo-acceleration.js';
 import {heightfieldAt3d,validTerrainHeightfield} from './gaia-terrain-physics.js';
 import {createRoadSpline,sampleRoadSpline,roadSplineEntity,editRoadSpline} from './gaia-road-spline.js';
+import {previewRoadGrade,applyRoadGradePlan} from './gaia-road-grading.js';
 
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
@@ -79,6 +80,13 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const roadWidth=document.createElement('input');roadWidth.type='number';roadWidth.min='1';roadWidth.max='60';roadWidth.step='.5';roadWidth.value='6';roadWidth.setAttribute('aria-label','Largeur de route en mètres');
  roadWidth.style.cssText=radiusControl.style.cssText;
  terrainTools.append(document.createTextNode('Route'),roadButton,document.createTextNode('m'),roadWidth,roadFinish);
+ const gradePreview=document.createElement('button');gradePreview.type='button';gradePreview.textContent='Aperçu terrassement';gradePreview.title='Calculer les modifications Gaia sans modifier le relief';
+ const gradeApply=document.createElement('button');gradeApply.type='button';gradeApply.textContent='Appliquer';gradeApply.disabled=true;
+ const shoulderWidth=document.createElement('input');shoulderWidth.type='number';shoulderWidth.min='0';shoulderWidth.max='32';shoulderWidth.step='.5';shoulderWidth.value='2';shoulderWidth.setAttribute('aria-label','Largeur des accotements en mètres');shoulderWidth.style.cssText=radiusControl.style.cssText;
+ const gradeInfo=document.createElement('span');gradeInfo.setAttribute('role','status');gradeInfo.style.maxWidth='180px';
+ terrainTools.append(document.createTextNode('Accotement'),shoulderWidth,gradePreview,gradeApply,gradeInfo);
+ let pendingGrade=null;
+ const invalidateGrade=()=>{pendingGrade=null;gradeApply.disabled=true;gradeInfo.textContent=''};
  let roadMode=false,roadDraft=null,roadDrag=null;
  const gaiaTiles=()=>state.entities.filter(o=>validTerrainHeightfield(o.terrainHeightfield)&&o.enabled!==false);
  const terrainAt=(x,z)=>{
@@ -125,22 +133,41 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
    }
   }
  };
+ gradePreview.onclick=()=>{
+  invalidateGrade();
+  const road=selectedRoad();if(state.playing||!road)return;
+  try{
+   const plan=previewRoadGrade(road.roadSpline,gaiaTiles(),{shoulderWidth:Number(shoulderWidth.value)});
+   pendingGrade={roadId:road.id,plan,roadSignature:JSON.stringify(road.roadSpline)};
+   gradeApply.disabled=!plan.changedSamples;
+   gradeInfo.textContent=plan.changedSamples+' échantillons Gaia à modifier';
+  }catch(error){gradeInfo.textContent=String(error.message||error)}
+ };
+ gradeApply.onclick=()=>{
+  const preview=pendingGrade,road=selectedRoad();
+  if(state.playing||!preview||!road||preview.roadId!==road.id||preview.roadSignature!==JSON.stringify(road.roadSpline)){invalidateGrade();return}
+  try{
+   const changed=applyRoadGradePlan(preview.plan,gaiaTiles());
+   if(changed){record('Gaia Road · terrassement');notify()}
+   invalidateGrade();
+  }catch(error){invalidateGrade();gradeInfo.textContent=String(error.message||error)}
+ };
  const syncRoadControls=()=>{
   roadButton.textContent=roadMode?'Arrêter le tracé':selectedRoad()?'Éditer la route':'＋ Route';
   roadFinish.hidden=!roadMode;
-  roadWidth.disabled=!selectedRoad();
+  roadWidth.disabled=!selectedRoad();gradePreview.disabled=!selectedRoad()||state.playing;
   if(selectedRoad()&&document.activeElement!==roadWidth)roadWidth.value=String(selectedRoad().roadSpline.width);
  };
  roadButton.onclick=()=>{
   if(state.playing)return;
   if(!roadMode&&!selectedRoad()&&!gaiaTiles().length)return;
-  roadMode=!roadMode;roadDraft=null;roadDrag=null;terrainMode.value='off';syncRoadControls();redrawRoad();
+  invalidateGrade();roadMode=!roadMode;roadDraft=null;roadDrag=null;terrainMode.value='off';syncRoadControls();redrawRoad();
  };
- roadFinish.onclick=()=>{roadMode=false;roadDraft=null;roadDrag=null;syncRoadControls();redrawRoad()};
+ roadFinish.onclick=()=>{invalidateGrade();roadMode=false;roadDraft=null;roadDrag=null;syncRoadControls();redrawRoad()};
  roadWidth.onchange=()=>{
   const road=selectedRoad();if(!road||state.playing)return;
   const width=Number(roadWidth.value);if(!Number.isFinite(width)||width<1||width>60){roadWidth.value=String(road.roadSpline.width);return}
-  if(width!==road.roadSpline.width){road.roadSpline=editRoadSpline(road.roadSpline,{action:'width',width});record('Road Editor · largeur');notify();redrawRoad()}
+  if(width!==road.roadSpline.width){invalidateGrade();road.roadSpline=editRoadSpline(road.roadSpline,{action:'width',width});record('Road Editor · largeur');notify();redrawRoad()}
  };
  const roadControlHit=event=>{
   const road=selectedRoad();if(!road)return -1;
@@ -157,7 +184,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  canvas.addEventListener('pointerdown',event=>{
   if(!roadMode||state.playing||!view3d.enabled||event.button!==0||event.altKey)return;
   const point=roadPointer(event);if(!point)return;
-  const road=selectedRoad(),hit=roadControlHit(event);
+  invalidateGrade();const road=selectedRoad(),hit=roadControlHit(event);
   if(road&&hit>=0){roadDrag={id:road.id,index:hit,pointer:event.pointerId,changed:false};canvas.setPointerCapture(event.pointerId)}
   else if(road){try{road.roadSpline=editRoadSpline(road.roadSpline,{action:'append',point});record('Road Editor · ajouter point');notify()}catch(error){console.warn('Road Editor:',error.message)}}
   else if(roadDraft){
@@ -171,7 +198,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  canvas.addEventListener('pointermove',event=>{
   if(!roadDrag||roadDrag.pointer!==event.pointerId)return;
   const road=state.entities.find(o=>o.id===roadDrag.id),point=roadPointer(event);
-  if(road&&point){try{road.roadSpline=editRoadSpline(road.roadSpline,{action:'move',index:roadDrag.index,point});roadDrag.changed=true;notify();redrawRoad()}catch{ /* Ignore degenerate overlapping control points. */ }}
+  if(road&&point){try{invalidateGrade();road.roadSpline=editRoadSpline(road.roadSpline,{action:'move',index:roadDrag.index,point});roadDrag.changed=true;notify();redrawRoad()}catch{ /* Ignore degenerate overlapping control points. */ }}
   event.preventDefault();event.stopImmediatePropagation();
  },true);
  const finishRoadDrag=event=>{

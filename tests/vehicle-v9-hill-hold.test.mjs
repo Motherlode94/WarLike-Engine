@@ -52,19 +52,22 @@ test('moving wheels retain anti-reversal braking with gravity projection',()=>{
 });
 test('Rapier adapter uses the actual Rigidbody3D gravity rather than hardcoded 9.81',()=>{
  const config=defaultGroundVehiclePhysics('car');
- const calls=[];
  const q={x:Math.sin(angle/2),y:0,z:0,w:Math.cos(angle/2)};
- const body={rotation:()=>q,translation:()=>({x:0,y:1,z:0}),
- linvel:()=>({x:0,y:0,z:0}),angvel:()=>({x:0,y:0,z:0}),
- applyImpulseAtPoint:(impulse)=>calls.push(impulse)};
- const scene={api:{Ray:class{constructor(origin,direction){Object.assign(this,{origin,direction})}},
- QueryFilterFlags:{EXCLUDE_SENSORS:8}},
- world:{castRayAndGetNormal:()=>({timeOfImpact:.55,normal:contact.normal})},
- actors:new Map([[1,{body,isDynamic:true,entity:{id:1,groundVehiclePhysics:config,
-  groundVehicleInput:{brake:1},rigidbody3d:{lockRotations:false,gravity:6}}}]])};
- const result=applyGroundVehicleForces(scene,dt);
- assert.equal(result[0].contacts,4);
- assert.equal(calls.length,4);
- const resultant=calls.reduce((sum,v)=>sum+v.z,0);
- assert.ok(Number.isFinite(resultant));
+ function impulseAlongForward(gravity){
+  const calls=[];
+  const body={rotation:()=>q,translation:()=>({x:0,y:1,z:0}),
+   linvel:()=>({x:0,y:0,z:0}),angvel:()=>({x:0,y:0,z:0}),
+   applyImpulseAtPoint:(impulse)=>calls.push(impulse)};
+  const scene={api:{Ray:class{constructor(origin,direction){Object.assign(this,{origin,direction})}},
+   QueryFilterFlags:{EXCLUDE_SENSORS:8}},
+   world:{castRayAndGetNormal:()=>({timeOfImpact:.55,normal:contact.normal})},
+   actors:new Map([[1,{body,isDynamic:true,entity:{id:1,groundVehiclePhysics:config,
+    groundVehicleInput:{brake:1},rigidbody3d:{lockRotations:false,gravity}}}]])};
+  const result=applyGroundVehicleForces(scene,dt);
+  assert.equal(result[0].contacts,4);
+  assert.equal(calls.length,4);
+  return calls.reduce((sum,v)=>sum+dot(v,forward),0);
+ }
+ const low=impulseAlongForward(6),high=impulseAlongForward(12);
+ assert.ok(high>low*1.99&&high<low*2.01,'brake impulse must follow authored body gravity');
 });

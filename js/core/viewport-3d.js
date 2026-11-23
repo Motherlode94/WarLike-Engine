@@ -4,6 +4,7 @@ import {cacheAnimationGeometry,skeletalClips,sampleEntityRigPose,hasSkeletalPrev
 import {waterSettings,waterSurface3d,waterColor} from './stylized-water.js';
 import {validTerrainHeightfield} from './gaia-terrain-physics.js';
 import {terrainSurfaceMesh3d} from './gaia-terrain-sculpt.js';
+import {gaiaPreviewFrame} from './gaia-preview-camera.js';
 import {validRoadSpline,roadSurfaceBuffers3d} from './gaia-road-spline.js';
 import {runRuntimeFrame} from './runtime-session.js';
 import {companyController,commandCompany,selectCompanySquad} from './company-runtime.js';
@@ -1296,8 +1297,11 @@ export function init3d(canvas,host,buttons){
   if(!state.playing&&now-(view3d._cameraPreviewAt||0)>300){
    const selectedCamera=state.entities.find(o=>state.selected.includes(o.id)&&o.sceneCamera3d);
    const preview=document.querySelector('.warlike-camera-frame-preview');
-   if(preview&&!preview.hidden&&selectedCamera?.sceneCamera3d?.showPreview!==false){
-    const previewCam=sceneCameraView(selectedCamera,state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});
+   const gaiaFrame=view3d.gaiaPreview?gaiaPreviewFrame(state.entities,{
+    yaw:view3d.gaiaPreviewYaw,pitch:view3d.gaiaPreviewPitch,zoom:view3d.gaiaPreviewZoom}):null;
+   if(preview&&!preview.hidden&&(gaiaFrame||selectedCamera?.sceneCamera3d?.showPreview!==false)){
+    const previewCam=gaiaFrame?sceneCamera3d(gaiaFrame.target,gaiaFrame.yaw,gaiaFrame.pitch,gaiaFrame.radius):
+     sceneCameraView(selectedCamera,state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});
     if(previewCam){
      try{
       const pw=preview.width,ph=preview.height;
@@ -1350,7 +1354,7 @@ export function init3d(canvas,host,buttons){
       context.fillStyle='rgba(12,24,31,.85)';
       context.fillRect(0,0,pw,21);
       context.fillStyle='#e1eff4';context.font='11px system-ui';
-      context.fillText('CAMERA · RENDU 3D',9,15);
+      context.fillText(gaiaFrame?'GAIA · APERÇU 3D ('+gaiaFrame.tiles+' tuiles)':'CAMERA · RENDU 3D',9,15);
       preview.dataset.liveRenderer='webgl';
       view3d._cameraPreviewAt=now;
       cam=previousCam;

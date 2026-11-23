@@ -24,6 +24,17 @@ test('WebGL triangles and Rapier triangle mesh contain identical road coordinate
   assert(mesh.renderVertices[render+4]>.1,'top face should point upwards');
  }
 });
+test('Gaia road centreline clears a raised ridge between the shoulders',()=>{
+ const {terrain,road}=fixture();
+ const surface=roadSurfaceBuffers3d(road.roadSpline,[terrain],{segmentsPerSpan:4});
+ // The middle sample is centred on the Gaia brush peak. A wheel must see
+ // the road before the underlying terrain when crossing the centreline.
+ const midpoint=surface.positions.length/6-1;
+ const leftY=surface.positions[midpoint*6+1];
+ const rightY=surface.positions[midpoint*6+4];
+ assert.ok(Number.isFinite(leftY)&&Number.isFinite(rightY));
+ assert.ok(Math.abs(leftY-rightY)<1e-6,'cross-section must not sink through centre ridge');
+});
 test('generated road preserves all Gaia height samples and survives JSON roundtrip',()=>{
  const {terrain,road}=fixture(),before=terrain.terrainHeightfield.heights.slice();
  const a=roadSurfaceBuffers3d(road.roadSpline,[terrain]);

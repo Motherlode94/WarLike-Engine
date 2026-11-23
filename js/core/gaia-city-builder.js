@@ -29,7 +29,7 @@ function sampleAtDistance(samples,target){
  }
  return null;
 }
-const overlaps=(a,b,margin=0)=>a.x<a.x+a.w&&b.x<b.x+b.w&&a.x<b.x+b.w+margin&&a.x+a.w+margin>b.x&&a.y<b.y+b.depth3d+margin&&a.y+(a.depth3d??a.h)+margin>b.y;
+const overlaps=(a,b,margin=0)=>a.x<b.x+b.w+margin&&a.x+a.w+margin>b.x&&a.y<b.y+(b.depth3d??b.h)+margin&&a.y+(a.depth3d??a.h)+margin>b.y;
 export function cityBuildingsAlongRoad(roadEntity,terrainEntities,existingEntities,{firstId=1,spacing=18,setback=4,maxBuildings=40,assets=['building-house','building-garage','building-hangar']}={}){
  const road=roadEntity?.roadSpline;
  if(!validRoadSpline(road))throw Error('City Builder needs a valid Gaia road');

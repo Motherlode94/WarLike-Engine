@@ -34,7 +34,13 @@ export function aircraftCameraView(entity,{mode}={}){
   eye=add(center,add(scale(forward,-settings.distance),[0,settings.height,0]));
   target=add(center,scale(forward,3));
  }
- return {...cameraPose(target,eye),mode:viewMode};
+ const pose=cameraPose(target,eye);
+ // Preserve real aircraft bank and pitch in cockpit, unlike a horizon-locked chase camera.
+ if(viewMode==='cockpit'){
+  const right=norm(toArray(rotateAircraftVector(q,{x:1,y:0,z:0})));
+  return {...pose,forward,right,up,mode:viewMode};
+ }
+ return {...pose,mode:viewMode};
 }
 export function aircraftFlightInstruments(entity){
  const rb=entity?.rigidbody3d||{};

@@ -76,7 +76,8 @@ export function roadSurfaceGeometry3d(road,terrains,{segmentsPerSpan=12}={}){
  for(const {left,right} of crossSections)vertices.push(left,right);
  for(let i=0;i<crossSections.length-1;i++){
   const a=2*i,b=a+1,c=a+2,d=a+3;
-  triangles.push([a,b,c],[b,d,c]);
+  // Upward-facing winding in Y-up world coordinates for the road surface.
+  triangles.push([a,c,b],[b,c,d]);
  }
  // These very same indexed triangles are the authoritative road-surface
  // geometry for the future renderer AND physics bridge; no fake collider.

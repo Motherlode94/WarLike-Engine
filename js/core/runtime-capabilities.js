@@ -3,6 +3,7 @@ import {inspectInputActions} from './input-actions.js';
 import {inspectAnimalController} from './animal-controller.js';
 import {inspectNavigationAgent} from './navigation-agent.js';
 import {inspectVehicleController} from './vehicle-controller.js';
+import {validateGroundVehiclePhysics} from './ground-vehicle-rapier.js';
 import {getRegisteredComponentManifests} from './component-registry.js';
 import {inspectAnimationStudio} from './animation-clips.js';
 import {inspectAnimatorGraph} from './animator-graph.js';
@@ -31,6 +32,11 @@ export function inspectRuntimeCompatibility(entities,{target='web',backend='web'
   if(e.animalController&&e.animalController.enabled!==false)for(const error of inspectAnimalController(e.animalController))add((e.name||'#'+e.id)+' · '+error,e.id);
   if(e.navigationAgent&&e.navigationAgent.enabled!==false)for(const error of inspectNavigationAgent(e.navigationAgent))add((e.name||'#'+e.id)+' · '+error,e.id);
   if(e.vehicleController&&e.vehicleController.enabled!==false)for(const error of inspectVehicleController(e.vehicleController))add((e.name||'#'+e.id)+' · '+error,e.id);
+  if(e.groundVehiclePhysics?.enabled){
+   for(const error of validateGroundVehiclePhysics(e.groundVehiclePhysics))add((e.name||'#'+e.id)+' · '+error,e.id);
+   if(!e.rigidbody3d?.enabled||e.rigidbody3d.kinematic||e.rigidbody3d.lockRotations!==false||e.collider3d?.enabled===false||!e.collider3d)add((e.name||'#'+e.id)+' · Vehicle Physics nécessite un Rigidbody3D dynamique, rotations libres et Collider3D actif.',e.id);
+   if(target==='web'&&project?.physics3d==='builtin')add((e.name||'#'+e.id)+' · Vehicle Physics nécessite Rapier : choisis le backend Rapier avant export.',e.id);
+  }
   if(Array.isArray(e.animatorGraph?.layers)&&e.animatorGraph.layers.some(l=>l?.avatarMask&&l.enabled!==false)&&(!e.animationRig||e.animationRig.enabled===false||!e.animationRig.avatar||e.animationRig.avatar.enabled===false))add((e.name||'#'+e.id)+' · masque humanoïde sans Avatar actif.',e.id);
   if(e.animationRig&&e.animationRig.enabled!==false)for(const error of inspectAnimationRig(e.animationRig))add((e.name||'#'+e.id)+' · '+error,e.id);
   if(e.animatorGraph&&e.animatorGraph.enabled!==false)for(const error of inspectAnimatorGraph(e.animatorGraph))add((e.name||'#'+e.id)+' · '+error,e.id);

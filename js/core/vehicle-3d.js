@@ -9,7 +9,7 @@ import {stepArcadeVehicle} from './arcade-driving.js';
 import {vehicleConfiguration,tickVehicleArticulation} from './vehicle-articulation.js';
 import {get3dAsset} from '../assets/catalog-3d.js';
 const center=o=>({x:o.x+(o.w||32)/2,y:o.y+(o.depth3d||o.h||32)/2});
-export const isDriveable3d=o=>!!o&&o.vehicleController?.enabled!==false&&(o.vehicleController?.enabled===true||o.vehicleConfig?.driveable===true||vehicleConfiguration(o)?.enabled===true&&vehicleConfiguration(o)?.drive!=='static'||o.tags?.includes('race-vehicle')||get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles');
+export const isDriveable3d=o=>!!o&&o.vehicleController?.enabled!==false&&(o.vehicleController?.enabled===true||o.groundVehiclePhysics?.enabled===true||o.vehicleConfig?.driveable===true||vehicleConfiguration(o)?.enabled===true&&vehicleConfiguration(o)?.drive!=='static'||o.tags?.includes('race-vehicle')||get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles');
 export const driving3d={vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0};
 export const currentVehicle3d=entities=>entities.find(o=>o.id===driving3d.vehicleId&&isDriveable3d(o))||null;
 export const resetDriving3d=()=>Object.assign(driving3d,{vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0});
@@ -38,7 +38,7 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
    ];
    const backend=collisionBackend3d();
    const free=exits.find(pos=>backend?.owns(player)?backend.canPlace(player,{...pos,elevation3d:car.elevation3d||0},{ignore:car}):!entities.some(o=>solid(o,car,player)&&intersects({...player,depth3d:depth},pos.x,pos.y,o)));
-   if(free){player._vehicleInputConsumed=true;recordEngineEvent('vehicle-exit',car.name);player.x=free.x;player.y=free.y;player.elevation3d=car.elevation3d||0;player._hiddenInVehicle=false;player.animation='idle';vehicleComponents(car).seats.driverId=null;resetDriving3d()}
+   if(free){if(car.groundVehiclePhysics?.enabled)car.groundVehicleInput={throttle:0,steer:0,brake:0,handbrake:0};player._vehicleInputConsumed=true;recordEngineEvent('vehicle-exit',car.name);player.x=free.x;player.y=free.y;player.elevation3d=car.elevation3d||0;player._hiddenInVehicle=false;player.animation='idle';vehicleComponents(car).seats.driverId=null;resetDriving3d()}
   }else if(player){
    const p=center(player);
    const candidates=entities.filter(o=>o!==player&&isDriveable3d(o)&&o.sequenceEnabled!==false&&!o._sequenceDestroyed).map(o=>({o,d:Math.hypot(center(o).x-p.x,center(o).y-p.y)})).sort((a,b)=>a.d-b.d);
@@ -64,6 +64,23 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
  const throttle=canDriveVehicle(drivingCar)&&allowedGear?inputThrottle:0;
  const steer=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('q')||keys.has('arrowleft'));
  const handbrake=keys.has(' ')||keys.has('space');
+ // Ground vehicles use live Rapier impulses, not the legacy arcade transform.
+ // The controls are authored per-frame and consumed by the fixed physics step.
+ if(drivingCar.groundVehiclePhysics?.enabled){
+  const brake=Number(inputThrottle<0&&driving3d.speed>1);
+  drivingCar.groundVehicleInput={throttle,steer,brake,handbrake:Number(handbrake)};
+  tickVehicleSystems(drivingCar,step,{speed:driving3d.speed,throttle});
+  // Entity speed is updated by the physics backend; use the measured horizontal
+  // Rigidbody velocity for HUD / brake intent (scene units per second).
+  const rb=drivingCar.rigidbody3d;
+  if(rb)driving3d.speed=Math.hypot(Number(rb.vx)||0,Number(rb.vz)||0);
+  player.x=drivingCar.x+((drivingCar.w||32)-(player.w||32))/2;
+  player.y=drivingCar.y+((drivingCar.depth3d||drivingCar.h||32)-(player.depth3d||player.h||32))/2;
+  player.elevation3d=drivingCar.elevation3d||0;
+  player._hiddenInVehicle=true;player.animation='drive';
+  drivingCar.animation=handbrake?'brake':driving3d.speed>2?'drive':'idle';
+  return true;
+ }
  const state=stepArcadeVehicle({speed:driving3d.speed,steer:driving3d.steer,rotation:drivingCar.rotation||0},
   {throttle,steer,handbrake},step,vehicleTuning(drivingCar));
  driving3d.speed=state.speed;driving3d.steer=state.steer;

@@ -1,7 +1,7 @@
 // Opt-in terrestrial vehicle chassis dynamics for Rapier 3D (Y-up, SI units).
 // Existing arcade vehicles stay unchanged unless groundVehiclePhysics.enabled=true.
 // Forces are applied as timestep impulses, avoiding persistent Rapier force accumulation.
-import {defaultWheelPhysics,solveWheelForces} from './vehicle-wheel-physics.js';
+import {defaultWheelPhysics,validateWheelPhysics,solveWheelForces} from './vehicle-wheel-physics.js';
 const finite=(v,d=0)=>typeof v==='number'&&Number.isFinite(v)?v:d;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,finite(v)));
 const add=(a,b)=>({x:a.x+b.x,y:a.y+b.y,z:a.z+b.z});
@@ -34,7 +34,7 @@ export function validateGroundVehiclePhysics(config){
  if(!Array.isArray(config.wheels)||config.wheels.length<2||config.wheels.length>24)errors.push('Ground vehicle: invalid wheel count');
  else for(const wheel of config.wheels){
   if(!wheel?.position||!['x','y','z'].every(k=>Number.isFinite(wheel.position[k]))||!wheel.wheel)errors.push('Ground vehicle: invalid wheel mount');
-  else if(!(Number.isFinite(wheel.wheel.radius)&&wheel.wheel.radius>0&&Number.isFinite(wheel.wheel.spring)&&wheel.wheel.spring>0))errors.push('Ground vehicle: invalid wheel configuration');
+  else if(validateWheelPhysics(wheel.wheel).length)errors.push('Ground vehicle: invalid wheel configuration');
  }
  return errors;
 }

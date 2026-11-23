@@ -33,7 +33,7 @@ const unityCategories=Object.freeze({
  'Physics 2D':['collider2d','rigidbody2d','joint2d','effector2d'],
  Physics:['collider3d','rigidbody3d','grab3d','data-Rigidbody'],
  Rendering:['light','sceneCamera3d','camera2d','environmentProbe3d'],
- Vehicles:['vehicleController'],
+ Vehicles:['vehicleController','groundVehiclePhysics'],
  Gameplay:['animalController'],
  Scripts:['webScripts','warScripts'],
  Gameplay:['stats','inventory','adventureInteractable','superhero','rpgProgression','horrorHideConfig','horrorFearConfig','data-Weapon','data-Damageable','data-Health','data-Projectile','data-Team','data-Score','data-Respawn','data-DeathmatchRules','data-SpawnPoint','data-AmmoPickup','data-HealthPickup','data-KillZone','data-ObjectiveZone','data-Roleplay','data-RacingRules','data-SimulationEconomy','data-RpgProgression','data-FourXEmpire']

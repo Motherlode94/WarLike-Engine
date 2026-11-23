@@ -1,0 +1,93 @@
+// WB 1.1 — Gaia-backed road geometry. No separate terrain database.
+// Points and widths are in metres; entity x/y and 2D coordinates are 64 units/m.
+import {heightfieldAt3d,validTerrainHeightfield} from './gaia-terrain-physics.js';
+
+export const ROAD_SPLINE_SCHEMA='warlike.road.spline.v1';
+const finite=v=>typeof v==='number'&&Number.isFinite(v);
+const clonePoint=p=>({x:p.x,z:p.z});
+const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+const lerp=(a,b,t)=>a+(b-a)*t;
+const interp=(p0,p1,p2,p3,t)=>{
+ // Centripetal-safe cubic Hermite: local segment tangents are clamped to
+ // segment length, preventing loops or overshoot on uneven control spacing.
+ const len=distance(p1,p2);
+ const tangent=(prev,next)=> {
+  const d=distance(prev,next)||1;
+  const magnitude=Math.min(len,d/2);
+  return {x:(next.x-prev.x)/d*magnitude,z:(next.z-prev.z)/d*magnitude};
+ };
+ const a=tangent(p0,p2),b=tangent(p1,p3),t2=t*t,t3=t2*t;
+ return {x:(2*t3-3*t2+1)*p1.x+(t3-2*t2+t)*a.x+(-2*t3+3*t2)*p2.x+(t3-t2)*b.x,
+  z:(2*t3-3*t2+1)*p1.z+(t3-2*t2+t)*a.z+(-2*t3+3*t2)*p2.z+(t3-t2)*b.z};
+};
+
+export function validRoadSpline(road){
+ return !!road&&road.schema===ROAD_SPLINE_SCHEMA
+  &&Array.isArray(road.points)&&road.points.length>=2&&road.points.length<=256
+  &&road.points.every(p=>finite(p?.x)&&finite(p?.z))
+  &&road.points.some((p,i)=>i>0&&distance(p,road.points[i-1])>1e-6)
+  &&finite(road.width)&&road.width>=1&&road.width<=60
+  &&finite(road.elevationOffset)&&road.elevationOffset>=0&&road.elevationOffset<=10;
+}
+export function createRoadSpline(points,{width=6,elevationOffset=.05}={}){
+ const road={schema:ROAD_SPLINE_SCHEMA,points:points?.map(clonePoint),width,elevationOffset};
+ if(!validRoadSpline(road))throw Error('Invalid road spline geometry');
+ return road;
+}
+export function sampleRoadSpline(road,{segmentsPerSpan=12}={}){
+ if(!validRoadSpline(road))throw Error('Invalid road spline');
+ if(!Number.isInteger(segmentsPerSpan)||segmentsPerSpan<1||segmentsPerSpan>64)throw Error('Invalid road sample density');
+ const source=road.points.filter((p,i,a)=>i===0||distance(p,a[i-1])>1e-6);
+ const samples=[];
+ for(let i=0;i<source.length-1;i++){
+  const a=source[Math.max(0,i-1)],b=source[i],c=source[i+1],d=source[Math.min(source.length-1,i+2)];
+  for(let j=0;j<segmentsPerSpan;j++)samples.push(interp(a,b,c,d,j/segmentsPerSpan));
+ }
+ samples.push(clonePoint(source[source.length-1]));
+ return samples;
+}
+function roadHeightAt(terrains,x,z){
+ let height=null;
+ for(const entry of terrains){
+  const t=entry?.terrainHeightfield||entry;
+  if(!validTerrainHeightfield(t)||entry?.enabled===false)continue;
+  const y=heightfieldAt3d(t,x,z);
+  if(y!==null)height=height===null?y:Math.max(y,height);
+ }
+ return height;
+}
+export function roadSurfaceGeometry3d(road,terrains,{segmentsPerSpan=12}={}){
+ if(!Array.isArray(terrains))throw Error('Gaia terrain list required');
+ const samples=sampleRoadSpline(road,{segmentsPerSpan}),crossSections=[];
+ for(let i=0;i<samples.length;i++){
+  const p=samples[i],prev=samples[Math.max(0,i-1)],next=samples[Math.min(samples.length-1,i+1)];
+  const dx=next.x-prev.x,dz=next.z-prev.z,len=Math.hypot(dx,dz);
+  if(len<1e-9)continue;
+  const nx=-dz/len,nz=dx/len,half=road.width/2;
+  const left={x:p.x+nx*half,z:p.z+nz*half},right={x:p.x-nx*half,z:p.z-nz*half};
+  const ly=roadHeightAt(terrains,left.x,left.z),ry=roadHeightAt(terrains,right.x,right.z);
+  // Failing explicitly prevents creating floating or invisible sections at
+  // Gaia tile boundaries. Multi-tile roads need actual adjacent Gaia tiles.
+  if(ly===null||ry===null)throw Error('Road crosses outside Gaia terrain coverage');
+  crossSections.push({left:{...left,y:ly+road.elevationOffset},right:{...right,y:ry+road.elevationOffset}});
+ }
+ if(crossSections.length<2)throw Error('Road requires two non-degenerate sections');
+ const vertices=[],triangles=[];
+ for(const {left,right} of crossSections)vertices.push(left,right);
+ for(let i=0;i<crossSections.length-1;i++){
+  const a=2*i,b=a+1,c=a+2,d=a+3;
+  // Upward-facing winding in Y-up world coordinates for the road surface.
+  triangles.push([a,c,b],[b,c,d]);
+ }
+ // These very same indexed triangles are the authoritative road-surface
+ // geometry for the future renderer AND physics bridge; no fake collider.
+ return {vertices,triangles,crossSections};
+}
+export function roadPolyline2d(road,{segmentsPerSpan=12,unitsPerMeter=64}={}){
+ if(!finite(unitsPerMeter)||unitsPerMeter<=0)throw Error('Invalid scene scale');
+ return sampleRoadSpline(road,{segmentsPerSpan}).map(p=>({x:p.x*unitsPerMeter,y:p.z*unitsPerMeter}));
+}
+export function roadSplineEntity(id,road,{name='Gaia Road'}={}){
+ if(!Number.isSafeInteger(id)||id<1||!validRoadSpline(road))throw Error('Invalid Gaia road entity');
+ return {id,name,type:'road',roadSpline:structuredClone(road),enabled:true,visible:true};
+}

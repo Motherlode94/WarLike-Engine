@@ -42,6 +42,7 @@ export function moveVehicleWithCollision(vehicle,delta,blocked,{maxStep=10}={}){
  const dx=Number.isFinite(delta.dx)?delta.dx:0,dy=Number.isFinite(delta.dy)?delta.dy:0;
  const steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)/Math.max(1,Number(maxStep)||10)));
  const startX=vehicle.x,startY=vehicle.y;
+ if(dx===0&&dy===0)return {collision:false,moved:false};
  let moved=false;
  for(let i=1;i<=steps;i++){
   const x=startX+dx*i/steps,y=startY+dy*i/steps;

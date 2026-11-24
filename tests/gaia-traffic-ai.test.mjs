@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRoadSpline,roadSplineEntity} from '../js/core/gaia-road-spline.js';
 import {findGaiaRoadJunctions,roadJunctionEntity} from '../js/core/gaia-road-junctions.js';
-import {buildGaiaTrafficNetwork,controlGaiaTrafficVehicle,gaiaTrafficLight} from '../js/core/gaia-traffic-ai.js';
+import {buildGaiaTrafficNetwork,controlGaiaTrafficVehicle,gaiaTrafficLight,gaiaJunctionSignalPositions,setGaiaTrafficSignalSeconds,gaiaTrafficSignalSeconds} from '../js/core/gaia-traffic-ai.js';
 
 const fixture=()=>{
  const a=roadSplineEntity(1,createRoadSpline([{x:0,z:-40},{x:0,z:40}],{width:6}));
@@ -75,4 +75,30 @@ test('road network survives save/reopen without changing the lane geometry',()=>
  const before=buildGaiaTrafficNetwork(all);
  const after=buildGaiaTrafficNetwork(JSON.parse(JSON.stringify(all)));
  assert.deepEqual(after,before);
+});
+
+test('WB 2.8a road signal meshes use the same legal phases as autonomous driving',()=>{
+ const {a,b,j}=fixture(),junction=j.roadJunction3d;
+ for(const seconds of [0,3,14,20,29]){
+  const signals=gaiaJunctionSignalPositions(junction,[a,b],seconds);
+  assert.equal(signals.length,4,'two signals per incoming road');
+  assert(signals.every(s=>Number.isFinite(s.x)&&Number.isFinite(s.z)));
+  for(const signal of signals){
+   assert.equal(signal.color,gaiaTrafficLight(junction,signal.roadId,seconds));
+  }
+ }
+ assert.deepEqual(gaiaJunctionSignalPositions(junction,[a,b],14).map(s=>s.color),
+  ['red','red','red','red'],'all-red clearance must illuminate red for every approach');
+});
+test('WB 2.8a signal layout does not mutate authored Gaia roads or junctions',()=>{
+ const {a,b,j}=fixture(),snapshot=structuredClone([a,b,j]);
+ const first=gaiaJunctionSignalPositions(j.roadJunction3d,[a,b],3);
+ const after=gaiaJunctionSignalPositions(JSON.parse(JSON.stringify(j.roadJunction3d)),
+  JSON.parse(JSON.stringify([a,b])),3);
+ assert.deepEqual(first,after);
+ assert.deepEqual([a,b,j],snapshot);
+ setGaiaTrafficSignalSeconds(20);
+ assert.equal(gaiaTrafficSignalSeconds(),20);
+ assert(gaiaJunctionSignalPositions(j.roadJunction3d,[a,b]).some(s=>s.color==='green'));
+ setGaiaTrafficSignalSeconds(0);
 });

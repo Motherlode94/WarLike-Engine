@@ -7,6 +7,7 @@ import {terrainSurfaceMesh3d} from './gaia-terrain-sculpt.js';
 import {validRoadSpline,roadSurfaceBuffers3d} from './gaia-road-spline.js';
 import {roadStreetscapeBuffers3d} from './gaia-road-streetscape.js';
 import {validRoadJunction,roadJunctionBuffers3d} from './gaia-road-junctions.js';
+import {gaiaJunctionSignalPositions,gaiaTrafficSignalSeconds} from './gaia-traffic-ai.js';
 import {runRuntimeFrame} from './runtime-session.js';
 import {companyController,commandCompany,selectCompanySquad} from './company-runtime.js';
 import {moveCompanyCamera} from './company-camera.js';
@@ -1019,7 +1020,7 @@ export function init3d(canvas,host,buttons){
     let cached=terrainMeshes.get(o.id);
     if(!cached||cached.signature!==signature){
      if(cached){gl.deleteBuffer(cached.mesh.buffer);if(cached.mesh.colorBuffer)gl.deleteBuffer(cached.mesh.colorBuffer)}
-     try{const patch=roadJunctionBuffers3d(o.roadJunction3d,roads,tiles);cached={mesh:makeBuffer(patch.renderVertices),signature};terrainMeshes.set(o.id,cached)}
+     try{const patch=roadJunctionBuffers3d(o.roadJunction3d,roads,tiles);cached={mesh:makeBuffer(patch.renderVertices),surfaceY:patch.positions[1],signature};terrainMeshes.set(o.id,cached)}
      catch(error){console.warn('[WarLike Junction]',o.name,error.message);continue}
     }
     submit([0,0,0],()=>{
@@ -1027,6 +1028,24 @@ export function init3d(canvas,host,buttons){
      bind(cached.mesh);model([0,0,0],[1,1,1],[.20,.22,.26,1]);
      profileDraw(cached.mesh.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,cached.mesh.count);
     },false,o);
+    // Traffic lights share the exact WB 2.5 signal function and simulation clock.
+    // Housing and illuminated lenses are ordinary 3D geometry, not UI overlays.
+    const signals=gaiaJunctionSignalPositions(o.roadJunction3d,roads,gaiaTrafficSignalSeconds());
+    for(const signal of signals){
+     const y=cached.surfaceY;
+     const drawBox=(x,cy,z,w,h,d,color)=>submit([x,cy,z],()=>{
+      gl.uniform1f(u.roughness,.55);gl.uniform1f(u.metallic,0);
+      bind(cubes);model([x,cy,z],[w,h,d],color);
+      profileDraw(cubes.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,cubes.count);
+     },false,o);
+     drawBox(signal.x,y+1.55,signal.z,.13,3.1,.13,[.28,.31,.32,1]);
+     drawBox(signal.x,y+3.22,signal.z,.57,1.18,.38,[.10,.12,.14,1]);
+     for(const [index,name] of ['red','amber','green'].entries()){
+      const on=signal.color===name;
+      const color=name==='red'?[on?1:.20,.035,.025,1]:name==='amber'?[.18,.14,.025,1]:[.025,on?.95:.18,.045,1];
+      drawBox(signal.x,y+3.58-index*.36,signal.z+.205,.34,.24,.045,color);
+     }
+    }
     continue;
    }
    if(o.roadSpline&&validRoadSpline(o.roadSpline)){

@@ -84,6 +84,29 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const roadWidth=document.createElement('input');roadWidth.type='number';roadWidth.min='1';roadWidth.max='60';roadWidth.step='.5';roadWidth.value='6';roadWidth.setAttribute('aria-label','Largeur de route en mètres');
  roadWidth.style.cssText=radiusControl.style.cssText;
  terrainTools.append(document.createTextNode('Route'),roadButton,document.createTextNode('m'),roadWidth,roadFinish);
+ // WB 2.6: editable road-owned streetscape settings; no duplicate geometry source.
+ const streetscapeInputs={};
+ for(const [key,label,min,max,step,fallback] of [
+  ['sidewalkWidth','Trottoir (m)',.6,6,.1,1.8],
+  ['curbHeight','Bordure (m)',.04,.35,.01,.12],
+  ['stripeWidth','Passage (m)',.15,.7,.01,.48]
+ ]){
+  const control=document.createElement('input');control.type='number';
+  Object.assign(control,{min:String(min),max:String(max),step:String(step),value:String(fallback)});
+  control.style.cssText=radiusControl.style.cssText;
+  control.setAttribute('aria-label',label);
+  streetscapeInputs[key]={control,min,max,fallback};
+  terrainTools.append(document.createTextNode(label),control);
+  control.onchange=()=>{
+   const road=selectedRoad();if(!road||state.playing)return;
+   const value=Number(control.value);
+   if(!Number.isFinite(value)||value<min||value>max){control.value=String(road.roadStreetscape3d?.[key]??fallback);return;}
+   if(value===(road.roadStreetscape3d?.[key]??fallback))return;
+   invalidateGrade();
+   road.roadStreetscape3d={...road.roadStreetscape3d,[key]:value};
+   record('Road Editor · '+label);notify();redrawRoad();
+  };
+ }
  const gradePreview=document.createElement('button');gradePreview.type='button';gradePreview.textContent='Aperçu terrassement';gradePreview.title='Calculer les modifications Gaia sans modifier le relief';
  const gradeApply=document.createElement('button');gradeApply.type='button';gradeApply.textContent='Appliquer';gradeApply.disabled=true;
  const shoulderWidth=document.createElement('input');shoulderWidth.type='number';shoulderWidth.min='0';shoulderWidth.max='32';shoulderWidth.step='.5';shoulderWidth.value='2';shoulderWidth.setAttribute('aria-label','Largeur des accotements en mètres');shoulderWidth.style.cssText=radiusControl.style.cssText;
@@ -223,8 +246,10 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const syncRoadControls=()=>{
   roadButton.textContent=roadMode?'Arrêter le tracé':selectedRoad()?'Éditer la route':'＋ Route';
   roadFinish.hidden=!roadMode;
-  roadWidth.disabled=!selectedRoad();gradePreview.disabled=!selectedRoad()||state.playing;cityButton.disabled=!selectedRoad()||state.playing;junctionButton.disabled=state.playing||state.entities.filter(o=>o.roadSpline&&o.enabled!==false).length<2;trafficButton.disabled=state.playing||!selectedTrafficVehicle();trafficButton.textContent=selectedTrafficVehicle()?.trafficAI?.enabled?'Trafic IA ✓':'Trafic IA';
+  roadWidth.disabled=!selectedRoad();for(const {control} of Object.values(streetscapeInputs))control.disabled=!selectedRoad()||state.playing;gradePreview.disabled=!selectedRoad()||state.playing;cityButton.disabled=!selectedRoad()||state.playing;junctionButton.disabled=state.playing||state.entities.filter(o=>o.roadSpline&&o.enabled!==false).length<2;trafficButton.disabled=state.playing||!selectedTrafficVehicle();trafficButton.textContent=selectedTrafficVehicle()?.trafficAI?.enabled?'Trafic IA ✓':'Trafic IA';
   if(selectedRoad()&&document.activeElement!==roadWidth)roadWidth.value=String(selectedRoad().roadSpline.width);
+  for(const [key,{control,fallback}] of Object.entries(streetscapeInputs))
+   if(selectedRoad()&&document.activeElement!==control)control.value=String(selectedRoad().roadStreetscape3d?.[key]??fallback);
  };
  roadButton.onclick=()=>{
   if(state.playing)return;

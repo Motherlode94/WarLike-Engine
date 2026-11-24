@@ -75,6 +75,7 @@ export function roadJunctionBuffers3d(j,roads,terrains,{clearance=.035}={}){
  // Conservative limit: do not hide an abrupt mountain slope behind a flat plaza.
  if(height-Math.min(center,...corners.map(p=>p.y))>1.25)throw Error('Junction needs terrain grading before physical construction');
  const roadOffsets=pair.map(r=>r.roadSpline.elevationOffset);
+ if(Math.max(...roadOffsets)-Math.min(...roadOffsets)>.4)throw Error('Separated road levels need an overpass, not a junction');
  const y=height+Math.max(...roadOffsets)+clearance;
  const vertices=[{x:j.center.x,y,z:j.center.z},...corners.map(p=>({x:p.x,y,z:p.z}))];
  const positions=new Float32Array(vertices.length*3);

@@ -16423,6 +16423,7 @@
     "js/core/fx-runtime.js",
     "js/core/gaia-city-builder.js",
     "js/core/gaia-pedestrian-crosswalks.js",
+    "js/core/gaia-pedestrian-sidewalk-ai.js",
     "js/core/gaia-road-grading.js",
     "js/core/gaia-road-junctions.js",
     "js/core/gaia-road-spline.js",

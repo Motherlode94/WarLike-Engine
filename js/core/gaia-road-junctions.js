@@ -81,7 +81,7 @@ export function roadJunctionBuffers3d(j,roads,terrains,{clearance=.035}={}){
  for(let i=0;i<vertices.length;i++)positions.set([vertices[i].x,vertices[i].y,vertices[i].z],3*i);
  const indices=new Uint32Array(j.sides*3),renderVertices=new Float32Array(j.sides*18);
  for(let i=0;i<j.sides;i++){
-  const triangle=[0,i+1,(i+1)%j.sides+1];
+  const triangle=[0,(i+1)%j.sides+1,i+1];
   for(let k=0;k<3;k++){
    indices[i*3+k]=triangle[k];
    const v=vertices[triangle[k]];

@@ -104,12 +104,13 @@ export function controlGaiaTrafficVehicle(network,{position,forward,speedMps=0,s
  clear=Math.min(clear,nextStop(lane,network,position,closest.progress,seconds));
  for(const other of vehicles){
   if(other.id===vehicleId||!other.position)continue;
-  const lateral=dist(other.position,lane.points[Math.min(lane.points.length-1,closest.index)]);
-  if(lateral>7)continue;
+  // Compare against the continuous lane, not one sampled vertex: sparse
+  // road samples otherwise miss a vehicle immediately ahead.
+  const leader=closestPointOnPath(lane,other.position);
+  const gap=leader.progress-closest.progress;
+  if(leader.distance>2.2||gap<=0)continue;
   const relative={x:other.position.x-position.x,z:other.position.z-position.z};
-  const ahead=dot(facing,relative);
-  const across=Math.abs(cross(facing,relative));
-  if(ahead>0&&across<2.2)clear=Math.min(clear,ahead-5);
+  if(dot(facing,relative)>0)clear=Math.min(clear,gap-5);
  }
  const targetSpeed=Math.min(maxSpeedMps,lane.speedLimitMps,Math.sqrt(Math.max(0,clear)*4));
  const brake=speedMps>targetSpeed+.4?clamp((speedMps-targetSpeed)/3,0,1):0;

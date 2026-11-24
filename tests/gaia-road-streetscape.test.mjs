@@ -42,6 +42,18 @@ test('streetscape is stable after saving and reloading the authored road and Gai
   assert.deepEqual([...actual[key].indices],[...expected[key].indices]);
  }
 });
+test('WB 2.6 authored streetscape settings persist and change the authoritative surface',()=>{
+ const {t,a}=fixture();
+ a.roadStreetscape3d={sidewalkWidth:3.2,curbHeight:.24,stripeWidth:.3};
+ const before=roadStreetscapeBuffers3d(a.roadSpline,[t],[],a.roadStreetscape3d);
+ const stored=JSON.parse(JSON.stringify(a));
+ const after=roadStreetscapeBuffers3d(stored.roadSpline,[t],[],stored.roadStreetscape3d);
+ assert.deepEqual([...before.sidewalks.positions],[...after.sidewalks.positions]);
+ assert.deepEqual([...before.curbs.indices],[...after.curbs.indices]);
+ const standard=roadStreetscapeBuffers3d(a.roadSpline,[t]);
+ assert.notDeepEqual([...before.sidewalks.positions],[...standard.sidewalks.positions]);
+ assert.notDeepEqual([...before.curbs.positions],[...standard.curbs.positions]);
+});
 test('invalid road or unsafe sidewalk dimensions fail explicitly',()=>{
  const {t,a}=fixture();
  assert.throws(()=>roadStreetscapeBuffers3d({schema:'bad'},[t]),/Invalid Gaia/);

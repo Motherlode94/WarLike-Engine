@@ -1032,7 +1032,7 @@ export function init3d(canvas,host,buttons){
    if(o.roadSpline&&validRoadSpline(o.roadSpline)){
     const tiles=state.entities.filter(t=>validTerrainHeightfield(t.terrainHeightfield)&&t.enabled!==false);
     const junctions=state.entities.filter(e=>e.enabled!==false&&e.roadJunction3d?.roadIds?.includes(o.id)).map(e=>e.roadJunction3d);
-    const signature=JSON.stringify([o.roadSpline,tiles.map(t=>[t.id,t.terrainRevision3d||0]),junctions]);
+    const signature=JSON.stringify([o.roadSpline,o.roadStreetscape3d,tiles.map(t=>[t.id,t.terrainRevision3d||0]),junctions]);
     let cached=terrainMeshes.get(o.id);
     if(!cached||cached.signature!==signature){
      if(cached){
@@ -1041,7 +1041,7 @@ export function init3d(canvas,host,buttons){
      }
      try{
       const road=roadSurfaceBuffers3d(o.roadSpline,tiles),mesh=makeBuffer(road.renderVertices),
-       street=roadStreetscapeBuffers3d(o.roadSpline,tiles,junctions);
+       street=roadStreetscapeBuffers3d(o.roadSpline,tiles,junctions,o.roadStreetscape3d||{});
       cached={mesh,signature,streetMeshes:[
        makeBuffer(street.sidewalks.renderVertices),makeBuffer(street.curbs.renderVertices),
        makeBuffer(street.crosswalks.renderVertices)]};

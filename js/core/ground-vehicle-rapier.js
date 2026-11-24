@@ -2,6 +2,7 @@
 // Existing arcade vehicles stay unchanged unless groundVehiclePhysics.enabled=true.
 // Forces are applied as timestep impulses, avoiding persistent Rapier force accumulation.
 import {defaultWheelPhysics,validateWheelPhysics,solveWheelForces} from './vehicle-wheel-physics.js';
+import {buildGaiaTrafficNetwork,controlGaiaTrafficVehicle} from './gaia-traffic-ai.js';
 const finite=(v,d=0)=>typeof v==='number'&&Number.isFinite(v)?v:d;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,finite(v)));
 const add=(a,b)=>({x:a.x+b.x,y:a.y+b.y,z:a.z+b.z});
@@ -63,9 +64,26 @@ export function wheelDriveInput(config,wheel,input){
  * The vehicle chassis must have rigidbody3d.enabled and lockRotations:false.
  * Typical authored mass should match rigidbody3d.mass (physics mass).
  */
+const trafficSessions=new WeakMap();
+function trafficSession(scene,dt){
+ let runtime=trafficSessions.get(scene);
+ if(!runtime){runtime={time:0,signature:null,network:null};trafficSessions.set(scene,runtime)}
+ runtime.time+=dt;
+ const entities=[...scene.actors.values()].map(a=>a.entity);
+ const references=entities.filter(e=>e.roadSpline||e.roadJunction3d);
+ const signature=JSON.stringify(references.map(e=>[e.id,e.enabled,e.roadSpline,e.roadJunction3d,e.roadSpeedLimitMps]));
+ if(runtime.signature!==signature){
+  runtime.signature=signature;runtime.network=buildGaiaTrafficNetwork(references);
+ }
+ return runtime;
+}
 export function applyGroundVehicleForces(scene,dt){
  if(!scene?.api?.Ray||!scene?.world?.castRayAndGetNormal||!(dt>0&&Number.isFinite(dt)))return [];
  const outputs=[];
+ const traffic=trafficSession(scene,dt);
+ const otherVehicles=[...scene.actors.values()]
+  .filter(a=>a.isDynamic&&a.entity.groundVehiclePhysics?.enabled&&typeof a.body?.translation==='function')
+  .map(a=>{const p=a.body.translation();return {id:a.entity.id,position:{x:p.x,z:p.z}};});
  for(const actor of scene.actors.values()){
   const entity=actor.entity,config=entity?.groundVehiclePhysics;
   if(!config?.enabled||!actor.isDynamic)continue;
@@ -78,7 +96,18 @@ export function applyGroundVehicleForces(scene,dt){
   const q=body.rotation(),center=body.translation(),forward=rotate(q,{x:0,y:0,z:-1});
   const right=rotate(q,{x:1,y:0,z:0}),up=rotate(q,{x:0,y:1,z:0});
   const velocity=body.linvel(),angularVelocity=body.angvel();
-  const inputs=groundVehicleInputs(entity.groundVehicleInput);
+  let inputs=groundVehicleInputs(entity.groundVehicleInput);
+  if(entity.trafficAI?.enabled&&entity.vehicleSystems?.seats?.driverId==null){
+   const plan=controlGaiaTrafficVehicle(traffic.network,{
+    position:{x:center.x,z:center.z},forward:{x:forward.x,z:forward.z},
+    speedMps:Math.max(0,velocity.x*forward.x+velocity.z*forward.z),
+    seconds:traffic.time,vehicleId:entity.id,vehicles:otherVehicles,
+    maxSpeedMps:Math.max(2,Math.min(20,Number(entity.trafficAI.maxSpeedMps)||8))
+   });
+   inputs=groundVehicleInputs(plan);
+   // Inspectable telemetry only; AI doesn't overwrite player input or teleport.
+   entity.trafficMotion={status:plan.status,roadId:plan.roadId??null,laneId:plan.laneId??null};
+  }
   const driven=config.wheels.filter(w=>w.wheel.driven).length||1;
   const braking=config.wheels.filter(w=>w.wheel.braking).length||1;
   let contacts=0;

@@ -74,6 +74,8 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  host.append(terrainTools);
  const selectedTerrain=()=>state.entities.find(o=>state.selected.includes(o.id)&&(o.name==='Terrain'||o.terrainHeightfield||o.type==='terrain3d'));
  const selectedRoad=()=>state.entities.find(o=>state.selected.includes(o.id)&&o.roadSpline);
+ const selectedTrafficVehicle=()=>state.entities.find(o=>state.selected.includes(o.id)&&o.groundVehiclePhysics?.enabled);
+
  const roadOverlay=el('svg',{class:'warlike-gaia-road-overlay','aria-label':'Tracé Road Editor sur Gaia'});
  roadOverlay.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:11;pointer-events:none;overflow:visible';
  host.append(roadOverlay);
@@ -96,6 +98,28 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  junctionButton.title='Créer des carrefours natifs entre les routes Gaia existantes';
  const junctionStatus=document.createElement('span');junctionStatus.setAttribute('role','status');
  terrainTools.append(junctionButton,junctionStatus);
+ const trafficButton=document.createElement('button');trafficButton.type='button';
+ trafficButton.textContent='Trafic IA';
+ trafficButton.title='Activer/désactiver le suivi autonome des routes Gaia pour le véhicule sélectionné';
+ trafficButton.setAttribute('aria-label','Activer ou désactiver le trafic IA du véhicule sélectionné');
+ const trafficInfo=document.createElement('span');trafficInfo.setAttribute('role','status');
+ terrainTools.append(trafficButton,trafficInfo);
+ trafficButton.onclick=()=>{
+  const vehicle=selectedTrafficVehicle();
+  if(state.playing||!view3d.enabled||!vehicle)return;
+  if(vehicle.rigidbody3d?.enabled!==true||vehicle.rigidbody3d.kinematic===true||vehicle.rigidbody3d.lockRotations!==false){
+   trafficInfo.textContent='Véhicule : Rigidbody3D dynamique et rotations libres requis';return;
+  }
+  if(!state.entities.some(e=>e.roadSpline&&e.enabled!==false)){
+   trafficInfo.textContent='Créer au moins une route Gaia';return;
+  }
+  vehicle.trafficAI={schema:'warlike.traffic.ai.v1',enabled:!vehicle.trafficAI?.enabled,maxSpeedMps:8};
+  if(vehicle.trafficAI.enabled)vehicle.groundVehicleInput={throttle:0,steer:0,brake:0,handbrake:0};
+  record('World Builder · trafic IA '+(vehicle.trafficAI.enabled?'activé':'désactivé'));
+  notify();syncRoadControls();
+  trafficInfo.textContent=vehicle.trafficAI.enabled?'Suivi Gaia activé':'Conduite autonome désactivée';
+ };
+
  junctionButton.onclick=()=>{
   if(state.playing||!view3d.enabled)return;
   const roads=state.entities.filter(o=>o.roadSpline&&o.enabled!==false);
@@ -199,7 +223,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const syncRoadControls=()=>{
   roadButton.textContent=roadMode?'Arrêter le tracé':selectedRoad()?'Éditer la route':'＋ Route';
   roadFinish.hidden=!roadMode;
-  roadWidth.disabled=!selectedRoad();gradePreview.disabled=!selectedRoad()||state.playing;cityButton.disabled=!selectedRoad()||state.playing;junctionButton.disabled=state.playing||state.entities.filter(o=>o.roadSpline&&o.enabled!==false).length<2;
+  roadWidth.disabled=!selectedRoad();gradePreview.disabled=!selectedRoad()||state.playing;cityButton.disabled=!selectedRoad()||state.playing;junctionButton.disabled=state.playing||state.entities.filter(o=>o.roadSpline&&o.enabled!==false).length<2;trafficButton.disabled=state.playing||!selectedTrafficVehicle();trafficButton.textContent=selectedTrafficVehicle()?.trafficAI?.enabled?'Trafic IA ✓':'Trafic IA';
   if(selectedRoad()&&document.activeElement!==roadWidth)roadWidth.value=String(selectedRoad().roadSpline.width);
  };
  roadButton.onclick=()=>{

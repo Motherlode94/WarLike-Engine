@@ -6,6 +6,7 @@ import {applyAircraftLandingGearForces} from './aircraft-landing-gear.js';
 import {validTerrainHeightfield} from './gaia-terrain-physics.js';
 import {terrainSurfaceMesh3d} from './gaia-terrain-sculpt.js';
 import {validRoadSpline,roadSurfaceBuffers3d} from './gaia-road-spline.js';
+import {roadStreetscapeBuffers3d} from './gaia-road-streetscape.js';
 import {validRoadJunction,roadJunctionBuffers3d} from './gaia-road-junctions.js';
 import {updateAffineEditorPose3d,affineCorrection3d,legacyReferenceMatrix3d,hasAffinePose} from './scene-graph-v2.js';
 import {characterBody3d,colliderGeometry3d,colliderPosition3d,rotationQuaternion3d,quaternionEuler3d,affineBoxHull3d,affineHullSignature3d} from './collider-3d.js';
@@ -80,7 +81,15 @@ export function createRapierScene(RAPIER,entities,gravity=15){
     const colliderDesc=RAPIER.ColliderDesc.trimesh(mesh.positions,mesh.indices);
     colliderDesc.setFriction?.(clamp(o.roadFriction??1.1,0,2));colliderDesc.setRestitution?.(0);
     const collider=world.createCollider(colliderDesc,body);
-    actors.set(o.id,{body,collider,controller:null,entity:o,geometry:null,width:n(o.w,32)/64,depth:n(o.depth3d,o.h||32)/64,height:n(o.h,32)/64,isDynamic:false,isKinematic:false,isCharacter:false,config:bodyConfig(o),affineHullSignature:null,lastPosition:scenePosition(o),lastVelocity:velocity(o),lastRotation:{x:0,y:0,z:0,w:1}});
+    const street=roadStreetscapeBuffers3d(o.roadSpline,tiles);
+    // Raised pedestrian pavement and the curb are physical surfaces; painted
+    // crosswalk stripes are intentionally visual-only, not separate colliders.
+    const streetColliders=[street.sidewalks,street.curbs].filter(m=>m.indices.length).map(mesh=>{
+     const desc=RAPIER.ColliderDesc.trimesh(mesh.positions,mesh.indices);
+     desc.setFriction?.(.95);desc.setRestitution?.(0);
+     return world.createCollider(desc,body);
+    });
+    actors.set(o.id,{body,collider,streetColliders,controller:null,entity:o,geometry:null,width:n(o.w,32)/64,depth:n(o.depth3d,o.h||32)/64,height:n(o.h,32)/64,isDynamic:false,isKinematic:false,isCharacter:false,config:bodyConfig(o),affineHullSignature:null,lastPosition:scenePosition(o),lastVelocity:velocity(o),lastRotation:{x:0,y:0,z:0,w:1}});
    }catch(error){errors.push(o.name+' : route sans collision — '+String(error.message||error));skipped.set(o.id,{entity:o,signature:skippedColliderSignature(o)})}
    continue;
   }

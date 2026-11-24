@@ -66,3 +66,46 @@ export function planGaiaPedestrianSidewalkStep(entities,config,position,dt){
  const step=Math.min(speed*dt,length);
  return {status:'walking',dx:vx/length*step,dz:vz/length*step,roadId:best.road.id,side:best.side,direction};
 }
+
+/**
+ * WB 2.8b.3 — Opt-in zebra crossing route for an existing Rapier character.
+ * Only a red vehicle signal permits entering the crossing; once committed,
+ * the pedestrian completes the traverse even if the phase changes.
+ * A "completed" state prevents immediately walking back across the road.
+ */
+import {buildGaiaPedestrianCrosswalks} from './gaia-pedestrian-crosswalks.js';
+import {gaiaTrafficLight} from './gaia-traffic-ai.js';
+export function planGaiaPedestrianCrossingStep(entities,config,position,dt,{stage=null,seconds=0}={}){
+ if(!config?.enabled||!config.crosswalkId)return null;
+ if(!Array.isArray(entities)||!position||![position.x,position.z,dt,seconds].every(Number.isFinite)||dt<=0)
+  return {status:'invalid',dx:0,dz:0,stage:stage||'waiting'};
+ const crossing=buildGaiaPedestrianCrosswalks(entities).find(c=>c.id===config.crosswalkId);
+ if(!crossing)return {status:'missing-crosswalk',dx:0,dz:0,stage:'waiting'};
+ const junction=entities.find(e=>e.id===crossing.junctionId)?.roadJunction3d;
+ if(!junction)return {status:'missing-junction',dx:0,dz:0,stage:'waiting'};
+ const normal=crossing.normal,relative={x:position.x-crossing.center.x,z:position.z-crossing.center.z};
+ const across=relative.x*normal.x+relative.z*normal.z;
+ const along=relative.x*crossing.tangent.x+relative.z*crossing.tangent.z;
+ if(Math.abs(along)>crossing.halfDepth+2.5)return null;
+ const startSign=stage==='crossing'&&config.crossingStartSide?config.crossingStartSide:(across>=0?1:-1);
+ const bank=crossing.halfWidth+.55;
+ const entrance={x:crossing.center.x+normal.x*startSign*bank,z:crossing.center.z+normal.z*startSign*bank};
+ const exit={x:crossing.center.x-normal.x*startSign*bank,z:crossing.center.z-normal.z*startSign*bank};
+ if(stage==='completed')return null;
+ if(stage!=='crossing'&&distance(position,entrance)>6)return null;
+ const speed=clamp(Number(config.speedMps)||1.2,.25,2.2);
+ const movement=target=>{
+  const dx=target.x-position.x,dz=target.z-position.z,d=Math.hypot(dx,dz);
+  const step=Math.min(d,speed*dt);
+  return {dx:d>1e-6?dx/d*step:0,dz:d>1e-6?dz/d*step:0};
+ };
+ if(stage==='crossing'){
+  if(distance(position,exit)<.35)return {status:'crossed',stage:'completed',dx:0,dz:0};
+  return {status:'crossing',stage:'crossing',crossingStartSide:startSign,...movement(exit)};
+ }
+ if(distance(position,entrance)>.35)
+  return {status:'approaching-crosswalk',stage:'approaching',dx:movement(entrance).dx,dz:movement(entrance).dz};
+ if(gaiaTrafficLight(junction,crossing.roadId,seconds)!=='red')
+  return {status:'waiting-for-crossing',stage:'waiting',dx:0,dz:0};
+ return {status:'crossing',stage:'crossing',crossingStartSide:startSign,...movement(exit)};
+}

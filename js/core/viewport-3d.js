@@ -5,6 +5,7 @@ import {waterSettings,waterSurface3d,waterColor} from './stylized-water.js';
 import {validTerrainHeightfield} from './gaia-terrain-physics.js';
 import {terrainSurfaceMesh3d} from './gaia-terrain-sculpt.js';
 import {validRoadSpline,roadSurfaceBuffers3d} from './gaia-road-spline.js';
+import {roadStreetscapeBuffers3d} from './gaia-road-streetscape.js';
 import {validRoadJunction,roadJunctionBuffers3d} from './gaia-road-junctions.js';
 import {runRuntimeFrame} from './runtime-session.js';
 import {companyController,commandCompany,selectCompanySquad} from './company-runtime.js';
@@ -1030,13 +1031,21 @@ export function init3d(canvas,host,buttons){
    }
    if(o.roadSpline&&validRoadSpline(o.roadSpline)){
     const tiles=state.entities.filter(t=>validTerrainHeightfield(t.terrainHeightfield)&&t.enabled!==false);
-    const signature=JSON.stringify([o.roadSpline,tiles.map(t=>[t.id,t.terrainRevision3d||0])]);
+    const junctions=state.entities.filter(e=>e.enabled!==false&&e.roadJunction3d?.roadIds?.includes(o.id)).map(e=>e.roadJunction3d);
+    const signature=JSON.stringify([o.roadSpline,tiles.map(t=>[t.id,t.terrainRevision3d||0]),junctions]);
     let cached=terrainMeshes.get(o.id);
     if(!cached||cached.signature!==signature){
-     if(cached){gl.deleteBuffer(cached.mesh.buffer);if(cached.mesh.colorBuffer)gl.deleteBuffer(cached.mesh.colorBuffer)}
+     if(cached){
+      for(const item of [cached.mesh,...(cached.streetMeshes||[])])if(item?.buffer)gl.deleteBuffer(item.buffer);
+      if(cached.mesh?.colorBuffer)gl.deleteBuffer(cached.mesh.colorBuffer);
+     }
      try{
-      const road=roadSurfaceBuffers3d(o.roadSpline,tiles),mesh=makeBuffer(road.renderVertices);
-      cached={mesh,signature};terrainMeshes.set(o.id,cached);
+      const road=roadSurfaceBuffers3d(o.roadSpline,tiles),mesh=makeBuffer(road.renderVertices),
+       street=roadStreetscapeBuffers3d(o.roadSpline,tiles,junctions);
+      cached={mesh,signature,streetMeshes:[
+       makeBuffer(street.sidewalks.renderVertices),makeBuffer(street.curbs.renderVertices),
+       makeBuffer(street.crosswalks.renderVertices)]};
+      terrainMeshes.set(o.id,cached);
      }catch(error){console.warn('[WarLike Road Editor]',o.name,error.message);continue}
     }
     submit([0,0,0],()=>{
@@ -1044,6 +1053,14 @@ export function init3d(canvas,host,buttons){
      bind(cached.mesh);model([0,0,0],[1,1,1],[.21,.24,.28,1]);
      profileDraw(cached.mesh.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,cached.mesh.count);
     },false,o);
+    for(const [index,color] of [[0,[.44,.46,.47,1]],[1,[.35,.36,.38,1]],[2,[.9,.86,.68,1]]]){
+     const mesh=cached.streetMeshes[index];if(!mesh?.count)continue;
+     submit([0,0,0],()=>{
+      gl.uniform1f(u.roughness,.86);gl.uniform1f(u.metallic,0);
+      bind(mesh);model([0,0,0],[1,1,1],color);
+      profileDraw(mesh.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,mesh.count);
+     },false,o);
+    }
     continue;
    }
    if(o.terrainHeightfield&&validTerrainHeightfield(o.terrainHeightfield)){

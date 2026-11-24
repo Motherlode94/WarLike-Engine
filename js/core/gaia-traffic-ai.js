@@ -120,3 +120,42 @@ export function controlGaiaTrafficVehicle(network,{position,forward,speedMps=0,s
  const throttle=brake>0?0:clamp((targetSpeed-speedMps)*.32,0,1);
  return {throttle,steer:steering,brake,handbrake:0,status:targetSpeed<.3?'stopped':'following',laneId:lane.id,roadId:lane.roadId,targetSpeedMps:targetSpeed};
 }
+
+/**
+ * WB 2.8a: render-only signal coordinates from authored junction and roads.
+ * Signal locations have no physics or independent state; the same
+ * gaiaTrafficLight() function determines both traffic decisions and colors.
+ */
+let visibleTrafficSeconds=0;
+export const setGaiaTrafficSignalSeconds=seconds=>{
+ if(Number.isFinite(seconds))visibleTrafficSeconds=seconds;
+};
+export const gaiaTrafficSignalSeconds=()=>visibleTrafficSeconds;
+export function gaiaJunctionSignalPositions(junction,roadEntities,seconds=visibleTrafficSeconds){
+ if(!validRoadJunction(junction)||!Array.isArray(roadEntities)||!Number.isFinite(seconds))
+  throw Error('Invalid Gaia traffic signal sources');
+ const signals=[];
+ for(const roadId of junction.roadIds){
+  const entity=roadEntities.find(e=>e.id===roadId&&validRoadSpline(e.roadSpline)&&e.enabled!==false);
+  if(!entity)continue;
+  const pts=sampleRoadSpline(entity.roadSpline),center=junction.center;
+  let tangent=null,distance=Infinity;
+  for(let i=1;i<pts.length;i++){
+   const a=pts[i-1],b=pts[i],dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz);
+   if(len<1e-6)continue;
+   const t=clamp(((center.x-a.x)*dx+(center.z-a.z)*dz)/(len*len),0,1);
+   const dist=Math.hypot(center.x-(a.x+dx*t),center.z-(a.z+dz*t));
+   if(dist<distance){distance=dist;tangent={x:dx/len,z:dz/len};}
+  }
+  if(!tangent||distance>junction.radius+2)continue;
+  const lateral={x:-tangent.z,z:tangent.x};
+  const setback=junction.radius+2.5,side=entity.roadSpline.width/2+1.1;
+  for(const direction of [-1,1]){
+   const approach={x:center.x+tangent.x*setback*direction,z:center.z+tangent.z*setback*direction};
+   // On the right side of approaching traffic (opposite travel direction).
+   const x=approach.x+lateral.x*side*direction,z=approach.z+lateral.z*side*direction;
+   signals.push({roadId,direction,x,z,color:gaiaTrafficLight(junction,roadId,seconds)});
+  }
+ }
+ return signals;
+}

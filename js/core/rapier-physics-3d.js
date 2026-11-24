@@ -1,5 +1,6 @@
 import {solidBody3d,activeBody3d,supportBody3d} from './collision-3d.js';
 import {applyGroundVehicleForces,signedGroundVehicleSpeed} from './ground-vehicle-rapier.js';
+import {planGaiaPedestrianSidewalkStep} from './gaia-pedestrian-sidewalk-ai.js';
 import {tickVehicleArticulation} from './vehicle-articulation.js';
 import {applyAircraftForces} from './aircraft-rapier.js';
 import {applyAircraftLandingGearForces} from './aircraft-landing-gear.js';
@@ -260,6 +261,20 @@ export function raycastRapierScene3d(scene,origin,direction,entities,{exclude=nu
 }
 export function stepRapierScene(scene,dt){
  const t=Math.min(.05,Math.max(0,n(dt)));if(!t)return;scene.world.timestep=t;
+ // WB 2.8b.2: opted-in pedestrian characters use the existing Rapier
+ // character controller, not direct setTranslation or a duplicate physics body.
+ const authored=[...scene.actors.values()].map(a=>a.entity);
+ for(const actor of scene.actors.values()){
+  const entity=actor.entity;
+  if(!entity?.pedestrianAI?.enabled||!actor.controller||!actor.collider||!actor.body?.translation)continue;
+  const p=actor.body.translation();
+  const plan=planGaiaPedestrianSidewalkStep(authored,{...entity.pedestrianAI,
+   direction:entity.pedestrianMotion?.direction??entity.pedestrianAI.direction},
+   {x:p.x,z:p.z},t);
+  if(plan.status==='walking')moveRapierCharacter3d(scene,entity,plan.dx*64,plan.dz*64,0);
+  entity.pedestrianMotion={status:plan.status,roadId:plan.roadId??null,side:plan.side??null,
+   direction:plan.direction??entity.pedestrianMotion?.direction??1};
+ }
  // Only entities with groundVehiclePhysics.enabled receive wheel impulses.
  // Existing arcade vehicles and regular rigidbodies remain untouched.
  applyGroundVehicleForces(scene,t);

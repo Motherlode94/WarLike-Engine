@@ -168,6 +168,65 @@ export function controlGaiaCongestedTrafficVehicle(network,state={}){
 }
 
 /**
+ * WB 2.9b — Stateless deterministic stop-and-go driving planner.
+ * A caller keeps 'previousTargetSpeedMps' between physics ticks. This planner
+ * never moves a chassis: Rapier/vehicle dynamics remain authoritative.
+ * Braking imposed by signals, crossings and WB 2.9a is never weakened.
+ */
+export function controlGaiaStopGoTrafficVehicle(network,state={},options={}){
+ const {deltaSeconds=1/60,reactionSeconds=.75,headwaySeconds=1.25,
+  standstillGapM=5,comfortableBrakeMps2=3,maxAccelerationMps2=1.8,
+  previousTargetSpeedMps=null}=options;
+ for(const v of [deltaSeconds,reactionSeconds,headwaySeconds,standstillGapM,
+  comfortableBrakeMps2,maxAccelerationMps2]){
+  if(!Number.isFinite(v))throw Error('Invalid stop-and-go tuning');
+ }
+ if(deltaSeconds<=0||deltaSeconds>1||reactionSeconds<0||reactionSeconds>5||
+  headwaySeconds<0||headwaySeconds>5||standstillGapM<0||
+  comfortableBrakeMps2<=0||maxAccelerationMps2<=0)
+  throw Error('Invalid stop-and-go tuning');
+ const baseline=controlGaiaCongestedTrafficVehicle(network,state);
+ if(!baseline.laneId)return {...baseline,stopGo:'unavailable',leaderGapM:null,
+  nextTargetSpeedMps:0};
+ const lane=network.lanes.find(item=>item.id===baseline.laneId);
+ const own=closestPointOnPath(lane,state.position);
+ const speed=Math.max(0,Number.isFinite(state.speedMps)?state.speedMps:0);
+ let gap=Infinity,leaderSpeed=null;
+ for(const car of state.vehicles||[]){
+  if(!car?.position||car.id===state.vehicleId)continue;
+  if(car.laneId!=null&&car.laneId!==lane.id)continue;
+  const point=closestPointOnPath(lane,car.position);
+  if(point.distance>2.2||point.progress<=own.progress)continue;
+  const distance=point.progress-own.progress-standstillGapM;
+  if(distance<gap){gap=distance;leaderSpeed=Number.isFinite(car.speedMps)?Math.max(0,car.speedMps):0;}
+ }
+ // An approaching stationary queue must not be treated like a moving target.
+ // Reaction time and following headway both enlarge the required clearance.
+ const required=standstillGapM+speed*(reactionSeconds+headwaySeconds);
+ const available=Math.max(0,gap);
+ const followingLimit=leaderSpeed===null?Infinity:
+  Math.max(0,leaderSpeed+Math.sqrt(Math.max(0,2*comfortableBrakeMps2*
+   Math.max(0,available-speed*reactionSeconds))));
+ // If the preceding vehicle is inside the required following distance,
+ // do not command a speed above its own speed.
+ const safeLeaderSpeed=leaderSpeed!==null&&gap<required-standstillGapM?
+  Math.min(followingLimit,leaderSpeed):followingLimit;
+ const safeTarget=Math.min(baseline.targetSpeedMps,safeLeaderSpeed);
+ const prior=Number.isFinite(previousTargetSpeedMps)?
+  Math.max(0,previousTargetSpeedMps):speed;
+ const smoothTarget=Math.min(safeTarget,prior+maxAccelerationMps2*deltaSeconds);
+ const brake=Math.max(baseline.brake,speed>smoothTarget+.25?
+  clamp((speed-smoothTarget)/comfortableBrakeMps2,0,1):0);
+ const throttle=brake>0?0:Math.min(baseline.throttle,
+  clamp((smoothTarget-speed)*.32,0,1));
+ return {...baseline,throttle,brake,targetSpeedMps:smoothTarget,
+  nextTargetSpeedMps:smoothTarget,leaderGapM:leaderSpeed===null?null:gap,
+  stopGo:leaderSpeed!==null&&gap<=standstillGapM?'queued':
+   leaderSpeed!==null&&gap<required?'following':'cruising',
+  status:smoothTarget<.3?'stopped':baseline.status};
+}
+
+/**
  * WB 2.8a: render-only signal coordinates from authored junction and roads.
  * Signal locations have no physics or independent state; the same
  * gaiaTrafficLight() function determines both traffic decisions and colors.

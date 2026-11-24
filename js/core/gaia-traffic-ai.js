@@ -2,6 +2,7 @@
 // Network is derived from authored Gaia road splines; no duplicate road storage.
 import {sampleRoadSpline,validRoadSpline} from './gaia-road-spline.js';
 import {validRoadJunction} from './gaia-road-junctions.js';
+import {buildGaiaPedestrianCrosswalks,gaiaPedestrianYieldClearance} from './gaia-pedestrian-crosswalks.js';
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const dot=(a,b)=>a.x*b.x+a.z*b.z;
@@ -28,7 +29,7 @@ export function buildGaiaTrafficNetwork(entities,{laneOffsetRatio=.25,segmentsPe
  }
  const junctions=entities.filter(e=>e.enabled!==false&&validRoadJunction(e.roadJunction3d))
   .map(e=>({...e.roadJunction3d,id:e.id}));
- return {lanes,junctions};
+ return {lanes,junctions,crosswalks:buildGaiaPedestrianCrosswalks(entities)};
 }
 function closestPointOnPath(lane,pos){
  let best={distance:Infinity,index:0,t:0,progress:0},elapsed=0;
@@ -77,7 +78,7 @@ function nextStop(lane,network,pos,elapsed,seconds){
  }
  return closest;
 }
-export function controlGaiaTrafficVehicle(network,{position,forward,speedMps=0,seconds=0,vehicleId=null,vehicles=[],maxSpeedMps=10,preferredLaneId=null}={}){
+export function controlGaiaTrafficVehicle(network,{position,forward,speedMps=0,seconds=0,vehicleId=null,vehicles=[],pedestrians=[],maxSpeedMps=10,preferredLaneId=null}={}){
  if(!network||!Array.isArray(network.lanes)||!position||!forward)throw Error('Invalid traffic controller');
  const fw=Math.hypot(forward.x,forward.z);
  if(fw<1e-6)return {throttle:0,steer:0,brake:1,handbrake:0,status:'no-heading'};
@@ -105,6 +106,7 @@ export function controlGaiaTrafficVehicle(network,{position,forward,speedMps=0,s
  const total=lane.points.reduce((sum,p,i,a)=>i?sum+dist(a[i-1],p):0,0);
  let clear=Math.max(0,total-closest.progress-2);
  clear=Math.min(clear,nextStop(lane,network,position,closest.progress,seconds));
+ clear=Math.min(clear,gaiaPedestrianYieldClearance(network.crosswalks||[],pedestrians,{roadId:lane.roadId,position,forward:facing}));
  for(const other of vehicles){
   if(other.id===vehicleId||!other.position)continue;
   // Compare against the continuous lane, not one sampled vertex: sparse

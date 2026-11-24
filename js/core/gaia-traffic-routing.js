@@ -114,7 +114,7 @@ import {controlGaiaTrafficVehicle,gaiaTrafficLight} from './gaia-traffic-ai.js';
 export function controlGaiaRoutedTrafficVehicle(network,options={}){
  const baseline=controlGaiaTrafficVehicle(network,options);
  const {position,seconds=0,destinationLaneId,activeConnectorId=null}=options;
- if(!destinationLaneId||!position||!baseline.laneId)return {...baseline,routeConnectorId:null};
+ if(!destinationLaneId||!position||(!baseline.laneId&&!activeConnectorId))return {...baseline,routeConnectorId:null};
  const current=activeConnectorId
   ? buildGaiaJunctionLaneConnectors(network).find(c=>c.id===activeConnectorId)
   : null;

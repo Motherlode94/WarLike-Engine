@@ -2,7 +2,7 @@
 // Existing arcade vehicles stay unchanged unless groundVehiclePhysics.enabled=true.
 // Forces are applied as timestep impulses, avoiding persistent Rapier force accumulation.
 import {defaultWheelPhysics,validateWheelPhysics,solveWheelForces} from './vehicle-wheel-physics.js';
-import {buildGaiaTrafficNetwork,controlGaiaTrafficVehicle} from './gaia-traffic-ai.js';
+import {buildGaiaTrafficNetwork,controlGaiaTrafficVehicle,setGaiaTrafficSignalSeconds} from './gaia-traffic-ai.js';
 import {controlGaiaRoutedTrafficVehicle} from './gaia-traffic-routing.js';
 const finite=(v,d=0)=>typeof v==='number'&&Number.isFinite(v)?v:d;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,finite(v)));
@@ -70,6 +70,7 @@ function trafficSession(scene,dt){
  let runtime=trafficSessions.get(scene);
  if(!runtime){runtime={time:0,signature:null,network:null};trafficSessions.set(scene,runtime)}
  runtime.time+=dt;
+ setGaiaTrafficSignalSeconds(runtime.time);
  const entities=[...scene.actors.values()].map(a=>a.entity);
  const references=entities.filter(e=>e.roadSpline||e.roadJunction3d);
  const signature=JSON.stringify(references.map(e=>[e.id,e.enabled,e.roadSpline,e.roadJunction3d,e.roadSpeedLimitMps]));

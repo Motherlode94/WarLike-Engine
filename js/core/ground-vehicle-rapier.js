@@ -81,8 +81,9 @@ export function applyGroundVehicleForces(scene,dt){
  if(!scene?.api?.Ray||!scene?.world?.castRayAndGetNormal||!(dt>0&&Number.isFinite(dt)))return [];
  const outputs=[];
  const traffic=trafficSession(scene,dt);
- const otherVehicles=[...scene.actors.values()].filter(a=>a.isDynamic&&a.entity.groundVehiclePhysics?.enabled)
-  .map(a=>({id:a.entity.id,position:{x:a.body.translation().x,z:a.body.translation().z}}));
+ const otherVehicles=[...scene.actors.values()]
+  .filter(a=>a.isDynamic&&a.entity.groundVehiclePhysics?.enabled&&typeof a.body?.translation==='function')
+  .map(a=>{const p=a.body.translation();return {id:a.entity.id,position:{x:p.x,z:p.z}};});
  for(const actor of scene.actors.values()){
   const entity=actor.entity,config=entity?.groundVehiclePhysics;
   if(!config?.enabled||!actor.isDynamic)continue;

@@ -124,6 +124,50 @@ export function controlGaiaTrafficVehicle(network,{position,forward,speedMps=0,s
 }
 
 /**
+ * WB 2.9a: deterministic, opt-in urban density feedback.
+ * Vehicles remain real Rapier-driven chassis; this controller only changes
+ * throttle/brake requests. Do not use it as a replacement for collision physics.
+ */
+export function gaiaTrafficLaneDensity(network,vehicles,{queueSpeedMps=1.4,vehicleLengthM=5}={}){
+ if(!network||!Array.isArray(network.lanes)||!Array.isArray(vehicles)||
+  !Number.isFinite(queueSpeedMps)||queueSpeedMps<0||
+  !Number.isFinite(vehicleLengthM)||vehicleLengthM<=0)
+  throw Error('Invalid Gaia traffic density input');
+ return network.lanes.map(lane=>{
+  const length=lane.points.reduce((sum,p,i,a)=>i?sum+dist(a[i-1],p):0,0);
+  const members=[];
+  for(const car of vehicles){
+   if(!car?.position||!Number.isFinite(car.position.x)||!Number.isFinite(car.position.z))continue;
+   const point=closestPointOnPath(lane,car.position);
+   if(point.distance>2.2)continue;
+   if(car.laneId!=null&&car.laneId!==lane.id)continue;
+   members.push({id:car.id,progress:point.progress,speedMps:Number.isFinite(car.speedMps)?Math.max(0,car.speedMps):null});
+  }
+  members.sort((a,b)=>a.progress-b.progress||(String(a.id).localeCompare(String(b.id))));
+  const queued=members.filter(car=>car.speedMps!==null&&car.speedMps<=queueSpeedMps).length;
+  return {laneId:lane.id,roadId:lane.roadId,lengthM:length,vehicles:members.length,
+   queued,occupiedRatio:length>0?clamp(members.length*vehicleLengthM/length,0,1):0,
+   vehiclesPerKm:length>0?members.length*1000/length:0};
+ });
+}
+export function controlGaiaCongestedTrafficVehicle(network,state={}){
+ const base=controlGaiaTrafficVehicle(network,state);
+ if(!base.laneId||base.status==='off-road'||base.status==='no-heading')return {...base,congestion:'unavailable'};
+ const summaries=gaiaTrafficLaneDensity(network,state.vehicles||[]);
+ const lane=summaries.find(item=>item.laneId===base.laneId);
+ if(!lane)return {...base,congestion:'unavailable'};
+ // Use occupancy as a *non-increasing* speed limit. A queue cannot override
+ // a red light, pedestrian crossing, or a stopped vehicle already ahead.
+ const congestionFactor=lane.occupiedRatio>=.8?.3:lane.occupiedRatio>=.5?.55:lane.occupiedRatio>=.25?.8:1;
+ const limit=Math.min(base.targetSpeedMps,(state.maxSpeedMps??10)*congestionFactor);
+ const actualSpeed=Math.max(0,Number.isFinite(state.speedMps)?state.speedMps:0);
+ const brake=Math.max(base.brake,actualSpeed>limit+.4?clamp((actualSpeed-limit)/3,0,1):0);
+ return {...base,targetSpeedMps:limit,brake,throttle:brake>0?0:Math.min(base.throttle,clamp((limit-actualSpeed)*.32,0,1)),
+  status:limit<.3?'stopped':base.status,congestion:lane.occupiedRatio>=.5?'dense':lane.queued>0?'slow':'free',
+  laneOccupancy:lane.occupiedRatio,queuedVehicles:lane.queued};
+}
+
+/**
  * WB 2.8a: render-only signal coordinates from authored junction and roads.
  * Signal locations have no physics or independent state; the same
  * gaiaTrafficLight() function determines both traffic decisions and colors.

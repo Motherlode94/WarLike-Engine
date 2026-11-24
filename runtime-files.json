@@ -16429,6 +16429,7 @@
     "js/core/gaia-scene-portability.js",
     "js/core/gaia-terrain-physics.js",
     "js/core/gaia-terrain-sculpt.js",
+    "js/core/gaia-traffic-ai.js",
     "js/core/gaia-world-import-preview.js",
     "js/core/gaia-world-preview-3d.js",
     "js/core/game-build.js",

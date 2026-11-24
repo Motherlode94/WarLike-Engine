@@ -10,6 +10,7 @@ import {createRoadSpline,sampleRoadSpline,roadSplineEntity,editRoadSpline} from 
 import {previewRoadGrade,applyRoadGradePlan} from './gaia-road-grading.js';
 import {cityBuildingsAlongRoad} from './gaia-city-builder.js';
 import {findGaiaRoadJunctions,roadJunctionEntity,roadJunctionBuffers3d} from './gaia-road-junctions.js';
+import {buildGaiaTrafficNetwork} from './gaia-traffic-ai.js';
 
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
@@ -127,6 +128,41 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  trafficButton.setAttribute('aria-label','Activer ou désactiver le trafic IA du véhicule sélectionné');
  const trafficInfo=document.createElement('span');trafficInfo.setAttribute('role','status');
  terrainTools.append(trafficButton,trafficInfo);
+ const destinationLabel=document.createElement('label');destinationLabel.textContent='Destination IA';
+ const destinationSelect=document.createElement('select');
+ destinationSelect.setAttribute('aria-label','Voie de destination pour le véhicule IA sélectionné');
+ destinationSelect.style.cssText=terrainMode.style.cssText;
+ destinationLabel.append(destinationSelect);terrainTools.append(destinationLabel);
+ const destinationStatus=document.createElement('span');destinationStatus.setAttribute('role','status');
+ terrainTools.append(destinationStatus);
+ const syncTrafficDestination=()=>{
+  const vehicle=selectedTrafficVehicle(),current=vehicle?.trafficAI?.destinationLaneId||'';
+  const network=buildGaiaTrafficNetwork(state.entities);
+  const options=[{id:'',label:'Suivi libre (aucune destination)'},...network.lanes.map(l=>({
+   id:l.id,label:(state.entities.find(e=>e.id===l.roadId)?.name||'Route '+l.roadId)+' · '+(l.direction===1?'aller':'retour')+' ('+l.id+')'
+  }))];
+  const signature=JSON.stringify(options);
+  if(destinationSelect.dataset.options!==signature){
+   destinationSelect.replaceChildren();
+   for(const option of options){const el=document.createElement('option');el.value=option.id;el.textContent=option.label;destinationSelect.append(el)}
+   destinationSelect.dataset.options=signature;
+  }
+  destinationSelect.disabled=state.playing||!vehicle;
+  if(document.activeElement!==destinationSelect)destinationSelect.value=options.some(o=>o.id===current)?current:'';
+  destinationStatus.textContent=!vehicle||!current?'':options.some(o=>o.id===current)?'Destination : '+current:'Destination absente du réseau';
+ };
+ destinationSelect.onchange=()=>{
+  const vehicle=selectedTrafficVehicle();if(!vehicle||state.playing)return;
+  const network=buildGaiaTrafficNetwork(state.entities),destinationLaneId=destinationSelect.value;
+  if(destinationLaneId&&!network.lanes.some(l=>l.id===destinationLaneId)){
+   destinationStatus.textContent='Destination invalide';syncTrafficDestination();return;
+  }
+  if((vehicle.trafficAI?.destinationLaneId||'')===destinationLaneId)return;
+  vehicle.trafficAI={schema:'warlike.traffic.ai.v1',maxSpeedMps:8,...vehicle.trafficAI,
+   destinationLaneId:destinationLaneId||null};
+  vehicle.trafficMotion=null;
+  record('World Builder · destination trafic IA');notify();syncTrafficDestination();
+ };
  trafficButton.onclick=()=>{
   const vehicle=selectedTrafficVehicle();
   if(state.playing||!view3d.enabled||!vehicle)return;
@@ -136,7 +172,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   if(!state.entities.some(e=>e.roadSpline&&e.enabled!==false)){
    trafficInfo.textContent='Créer au moins une route Gaia';return;
   }
-  vehicle.trafficAI={schema:'warlike.traffic.ai.v1',enabled:!vehicle.trafficAI?.enabled,maxSpeedMps:8};
+  vehicle.trafficAI={schema:'warlike.traffic.ai.v1',maxSpeedMps:8,...vehicle.trafficAI,enabled:!vehicle.trafficAI?.enabled};
   if(vehicle.trafficAI.enabled)vehicle.groundVehicleInput={throttle:0,steer:0,brake:0,handbrake:0};
   record('World Builder · trafic IA '+(vehicle.trafficAI.enabled?'activé':'désactivé'));
   notify();syncRoadControls();
@@ -247,6 +283,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   roadButton.textContent=roadMode?'Arrêter le tracé':selectedRoad()?'Éditer la route':'＋ Route';
   roadFinish.hidden=!roadMode;
   roadWidth.disabled=!selectedRoad();for(const {control} of Object.values(streetscapeInputs))control.disabled=!selectedRoad()||state.playing;gradePreview.disabled=!selectedRoad()||state.playing;cityButton.disabled=!selectedRoad()||state.playing;junctionButton.disabled=state.playing||state.entities.filter(o=>o.roadSpline&&o.enabled!==false).length<2;trafficButton.disabled=state.playing||!selectedTrafficVehicle();trafficButton.textContent=selectedTrafficVehicle()?.trafficAI?.enabled?'Trafic IA ✓':'Trafic IA';
+  syncTrafficDestination();
   if(selectedRoad()&&document.activeElement!==roadWidth)roadWidth.value=String(selectedRoad().roadSpline.width);
   for(const [key,{control,fallback}] of Object.entries(streetscapeInputs))
    if(selectedRoad()&&document.activeElement!==control)control.value=String(selectedRoad().roadStreetscape3d?.[key]??fallback);

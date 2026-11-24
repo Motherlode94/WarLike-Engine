@@ -5,6 +5,7 @@ import {waterSettings,waterSurface3d,waterColor} from './stylized-water.js';
 import {validTerrainHeightfield} from './gaia-terrain-physics.js';
 import {terrainSurfaceMesh3d} from './gaia-terrain-sculpt.js';
 import {validRoadSpline,roadSurfaceBuffers3d} from './gaia-road-spline.js';
+import {validRoadJunction,roadJunctionBuffers3d} from './gaia-road-junctions.js';
 import {runRuntimeFrame} from './runtime-session.js';
 import {companyController,commandCompany,selectCompanySquad} from './company-runtime.js';
 import {moveCompanyCamera} from './company-camera.js';
@@ -1011,6 +1012,22 @@ export function init3d(canvas,host,buttons){
   for(const o of objects){
    const b=o.roadSpline?{x:0,y:0,z:0,w:1,h:1,d:1}:objectBounds3d(o),color=assetColor(o),asset=getAsset(o.assetId),category=asset?.category;
    const angle=(o.rotation||0)*Math.PI/180;
+   if(o.roadJunction3d&&validRoadJunction(o.roadJunction3d)){
+    const roads=state.entities.filter(r=>r.roadSpline),tiles=state.entities.filter(t=>validTerrainHeightfield(t.terrainHeightfield)&&t.enabled!==false);
+    const signature=JSON.stringify([o.roadJunction3d,roads.filter(r=>o.roadJunction3d.roadIds.includes(r.id)).map(r=>r.roadSpline),tiles.map(t=>[t.id,t.terrainRevision3d||0])]);
+    let cached=terrainMeshes.get(o.id);
+    if(!cached||cached.signature!==signature){
+     if(cached){gl.deleteBuffer(cached.mesh.buffer);if(cached.mesh.colorBuffer)gl.deleteBuffer(cached.mesh.colorBuffer)}
+     try{const patch=roadJunctionBuffers3d(o.roadJunction3d,roads,tiles);cached={mesh:makeBuffer(patch.renderVertices),signature};terrainMeshes.set(o.id,cached)}
+     catch(error){console.warn('[WarLike Junction]',o.name,error.message);continue}
+    }
+    submit([0,0,0],()=>{
+     gl.uniform1f(u.roughness,.92);gl.uniform1f(u.metallic,0);
+     bind(cached.mesh);model([0,0,0],[1,1,1],[.20,.22,.26,1]);
+     profileDraw(cached.mesh.count,'triangles');gl.drawArrays(gl.TRIANGLES,0,cached.mesh.count);
+    },false,o);
+    continue;
+   }
    if(o.roadSpline&&validRoadSpline(o.roadSpline)){
     const tiles=state.entities.filter(t=>validTerrainHeightfield(t.terrainHeightfield)&&t.enabled!==false);
     const signature=JSON.stringify([o.roadSpline,tiles.map(t=>[t.id,t.terrainRevision3d||0])]);

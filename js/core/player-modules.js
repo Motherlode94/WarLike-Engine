@@ -75,6 +75,7 @@ export const playerModules=[
   "js/core/fx-renderer-3d.js",
   "js/core/fx-runtime.js",
   "js/core/gaia-pedestrian-crosswalks.js",
+  "js/core/gaia-pedestrian-sidewalk-ai.js",
   "js/core/gaia-road-junctions.js",
   "js/core/gaia-road-spline.js",
   "js/core/gaia-road-streetscape.js",

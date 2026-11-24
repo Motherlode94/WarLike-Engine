@@ -16425,6 +16425,7 @@
     "js/core/gaia-road-grading.js",
     "js/core/gaia-road-junctions.js",
     "js/core/gaia-road-spline.js",
+    "js/core/gaia-road-streetscape.js",
     "js/core/gaia-scene-portability.js",
     "js/core/gaia-terrain-physics.js",
     "js/core/gaia-terrain-sculpt.js",

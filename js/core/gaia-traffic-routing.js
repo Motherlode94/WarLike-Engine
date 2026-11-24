@@ -102,3 +102,50 @@ export function findGaiaLaneRoute(network,fromLaneId,toLaneId){
  }
  return null;
 }
+
+/**
+ * WB 2.7b — Opt-in directed turn guidance.
+ * Reuses the WB 2.5 throttle/steer/brake controller. The connector is a
+ * temporary navigation lane; it NEVER sets chassis position or velocity.
+ * The persistent lane destination belongs to trafficAI.destinationLaneId.
+ */
+import {controlGaiaTrafficVehicle,gaiaTrafficLight} from './gaia-traffic-ai.js';
+
+export function controlGaiaRoutedTrafficVehicle(network,options={}){
+ const baseline=controlGaiaTrafficVehicle(network,options);
+ const {position,seconds=0,destinationLaneId,activeConnectorId=null}=options;
+ if(!destinationLaneId||!position||!baseline.laneId)return {...baseline,routeConnectorId:null};
+ const current=activeConnectorId
+  ? buildGaiaJunctionLaneConnectors(network).find(c=>c.id===activeConnectorId)
+  : null;
+ const route=current?null:findGaiaLaneRoute(network,baseline.laneId,destinationLaneId);
+ const connector=current||route?.connectors?.[0];
+ if(!connector)return {...baseline,routeConnectorId:null};
+ // Without an active turn, the source lane must be the one currently driven.
+ if(!current&&connector.fromLaneId!==baseline.laneId)return {...baseline,routeConnectorId:null};
+ const start=connector.points[0],end=connector.points.at(-1);
+ const toEntry=distance(position,start),toExit=distance(position,end);
+ if(!current&&toEntry>Math.max(9,options.speedMps*2+5))return {...baseline,routeConnectorId:null};
+ const junction=network.junctions.find(j=>(connector.junctionId!==null&&j.id===connector.junctionId)||
+  (j.roadIds.includes(connector.fromRoadId)&&j.roadIds.includes(connector.toRoadId)&&distance(j.center,start)<j.radius+8));
+ if(!current&&junction&&gaiaTrafficLight(junction,connector.fromRoadId,seconds)!=='green'){
+  // Never override WB 2.5's red-light stop with an eager turn command.
+  return {...baseline,routeConnectorId:null};
+ }
+ if(current&&toExit<2.5){
+  const exit=controlGaiaTrafficVehicle(network,{...options,preferredLaneId:connector.toLaneId});
+  return {...exit,routeConnectorId:null};
+ }
+ // Plan a smooth curve into the outgoing lane. A low cap prevents
+ // unsafe high-speed steering at city intersections.
+ const targetLane=network.lanes.find(l=>l.id===connector.toLaneId);
+ const turnLane={id:'turn:'+connector.id,roadId:connector.fromRoadId,
+  speedLimitMps:Math.min(5,targetLane?.speedLimitMps||5),points:connector.points};
+ const guided=controlGaiaTrafficVehicle({lanes:[turnLane],junctions:[]},{
+  ...options,maxSpeedMps:Math.min(5,options.maxSpeedMps??10)
+ });
+ // Until the entry point, use regular road following, never a sudden snap.
+ if(!current&&toEntry>3)return {...baseline,routeConnectorId:null};
+ return {...guided,status:'turning',laneId:connector.fromLaneId,roadId:connector.fromRoadId,
+  routeConnectorId:connector.id,nextLaneId:connector.toLaneId};
+}

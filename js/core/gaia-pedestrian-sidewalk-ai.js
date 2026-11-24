@@ -8,7 +8,7 @@ const lerp=(a,b,t)=>({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t});
 export function gaiaSidewalkPath(road,{side='right',sidewalkWidth=1.8}={}){
  if(!validRoadSpline(road)||!['left','right'].includes(side)||
  !Number.isFinite(sidewalkWidth)||sidewalkWidth<.6||sidewalkWidth>6)throw Error('Invalid Gaia sidewalk');
- const sampled=sampleRoadSpline(road),sign=side==='left'?1:-1,offset=road.width/2+sidewalkWidth/2;
+ const sampled=sampleRoadSpline(road),sign=side==='left'?-1:1,offset=road.width/2+sidewalkWidth/2;
  return sampled.map((p,i)=>{
   const a=sampled[Math.max(0,i-1)],b=sampled[Math.min(sampled.length-1,i+1)];
   const dx=b.x-a.x,dz=b.z-a.z,length=Math.hypot(dx,dz)||1;

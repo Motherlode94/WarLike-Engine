@@ -77,7 +77,7 @@ function nextStop(lane,network,pos,elapsed,seconds){
  }
  return closest;
 }
-export function controlGaiaTrafficVehicle(network,{position,forward,speedMps=0,seconds=0,vehicleId=null,vehicles=[],maxSpeedMps=10}={}){
+export function controlGaiaTrafficVehicle(network,{position,forward,speedMps=0,seconds=0,vehicleId=null,vehicles=[],maxSpeedMps=10,preferredLaneId=null}={}){
  if(!network||!Array.isArray(network.lanes)||!position||!forward)throw Error('Invalid traffic controller');
  const fw=Math.hypot(forward.x,forward.z);
  if(fw<1e-6)return {throttle:0,steer:0,brake:1,handbrake:0,status:'no-heading'};
@@ -90,7 +90,10 @@ export function controlGaiaTrafficVehicle(network,{position,forward,speedMps=0,s
   const alignment=dot(facing,{x:delta.x/n,z:delta.z/n});
   // Direction matters: nearby oncoming lanes must not hijack AI.
   const cost=closest.distance+(1-alignment)*3;
-  if(!best||cost<best.cost)best={lane,closest,cost,alignment};
+  // A directed junction transition may keep an outgoing lane selected while
+  // the chassis is still steering onto it. Normal acquisition remains unchanged.
+  const guidedCost=lane.id===preferredLaneId&&closest.distance<8?cost-10:cost;
+  if(!best||guidedCost<best.cost)best={lane,closest,cost:guidedCost,alignment};
  }
  if(!best||best.closest.distance>Math.max(8,best.lane.points.length?best.lane.speedLimitMps:8))
   return {throttle:0,steer:0,brake:1,handbrake:0,status:'off-road'};

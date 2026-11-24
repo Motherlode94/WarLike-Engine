@@ -96,7 +96,7 @@ export function applyGroundVehicleForces(scene,dt){
   const right=rotate(q,{x:1,y:0,z:0}),up=rotate(q,{x:0,y:1,z:0});
   const velocity=body.linvel(),angularVelocity=body.angvel();
   let inputs=groundVehicleInputs(entity.groundVehicleInput);
-  if(entity.trafficAI?.enabled&&!entity.vehicleComponents?.seats?.driverId&&entity.vehicleSystems?.seats?.driverId==null){
+  if(entity.trafficAI?.enabled&&entity.vehicleSystems?.seats?.driverId==null){
    const plan=controlGaiaTrafficVehicle(traffic.network,{
     position:{x:center.x,z:center.z},forward:{x:forward.x,z:forward.z},
     speedMps:Math.max(0,velocity.x*forward.x+velocity.z*forward.z),

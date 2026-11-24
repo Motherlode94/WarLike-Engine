@@ -3,6 +3,7 @@
 // Forces are applied as timestep impulses, avoiding persistent Rapier force accumulation.
 import {defaultWheelPhysics,validateWheelPhysics,solveWheelForces} from './vehicle-wheel-physics.js';
 import {buildGaiaTrafficNetwork,controlGaiaTrafficVehicle} from './gaia-traffic-ai.js';
+import {controlGaiaRoutedTrafficVehicle} from './gaia-traffic-routing.js';
 const finite=(v,d=0)=>typeof v==='number'&&Number.isFinite(v)?v:d;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,finite(v)));
 const add=(a,b)=>({x:a.x+b.x,y:a.y+b.y,z:a.z+b.z});
@@ -98,15 +99,19 @@ export function applyGroundVehicleForces(scene,dt){
   const velocity=body.linvel(),angularVelocity=body.angvel();
   let inputs=groundVehicleInputs(entity.groundVehicleInput);
   if(entity.trafficAI?.enabled&&entity.vehicleSystems?.seats?.driverId==null){
-   const plan=controlGaiaTrafficVehicle(traffic.network,{
+   const guided=typeof entity.trafficAI.destinationLaneId==='string'&&entity.trafficAI.destinationLaneId.length>0;
+   const plan=(guided?controlGaiaRoutedTrafficVehicle:controlGaiaTrafficVehicle)(traffic.network,{
     position:{x:center.x,z:center.z},forward:{x:forward.x,z:forward.z},
     speedMps:Math.max(0,velocity.x*forward.x+velocity.z*forward.z),
     seconds:traffic.time,vehicleId:entity.id,vehicles:otherVehicles,
+    destinationLaneId:entity.trafficAI.destinationLaneId,
+    activeConnectorId:entity.trafficMotion?.routeConnectorId||null,
     maxSpeedMps:Math.max(2,Math.min(20,Number(entity.trafficAI.maxSpeedMps)||8))
    });
    inputs=groundVehicleInputs(plan);
    // Inspectable telemetry only; AI doesn't overwrite player input or teleport.
-   entity.trafficMotion={status:plan.status,roadId:plan.roadId??null,laneId:plan.laneId??null};
+   entity.trafficMotion={status:plan.status,roadId:plan.roadId??null,laneId:plan.laneId??null,
+    routeConnectorId:plan.routeConnectorId??null,nextLaneId:plan.nextLaneId??null};
   }
   const driven=config.wheels.filter(w=>w.wheel.driven).length||1;
   const braking=config.wheels.filter(w=>w.wheel.braking).length||1;

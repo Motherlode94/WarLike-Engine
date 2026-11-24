@@ -77,6 +77,7 @@ export const playerModules=[
   "js/core/gaia-road-junctions.js",
   "js/core/gaia-road-spline.js",
   "js/core/gaia-road-streetscape.js",
+  "js/core/gaia-traffic-ai.js",
   "js/core/gaia-terrain-physics.js",
   "js/core/gaia-terrain-sculpt.js",
   "js/core/game-dialogue.js",

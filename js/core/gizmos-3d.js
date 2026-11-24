@@ -9,6 +9,7 @@ import {heightfieldAt3d,validTerrainHeightfield} from './gaia-terrain-physics.js
 import {createRoadSpline,sampleRoadSpline,roadSplineEntity,editRoadSpline} from './gaia-road-spline.js';
 import {previewRoadGrade,applyRoadGradePlan} from './gaia-road-grading.js';
 import {cityBuildingsAlongRoad} from './gaia-city-builder.js';
+import {findGaiaRoadJunctions,roadJunctionEntity,roadJunctionBuffers3d} from './gaia-road-junctions.js';
 
 // Lightweight scene-view transform gizmo: works in the existing WebGL 3D workspace.
 const ns='http://www.w3.org/2000/svg';
@@ -91,6 +92,30 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  cityButton.setAttribute('aria-label','Générer un quartier le long de la route sélectionnée');
  const cityInfo=document.createElement('span');cityInfo.setAttribute('role','status');
  terrainTools.append(cityButton,cityInfo);
+ const junctionButton=document.createElement('button');junctionButton.type='button';junctionButton.textContent='＋ Carrefours';
+ junctionButton.title='Créer des carrefours natifs entre les routes Gaia existantes';
+ const junctionStatus=document.createElement('span');junctionStatus.setAttribute('role','status');
+ terrainTools.append(junctionButton,junctionStatus);
+ junctionButton.onclick=()=>{
+  if(state.playing||!view3d.enabled)return;
+  const roads=state.entities.filter(o=>o.roadSpline&&o.enabled!==false);
+  if(roads.length<2){junctionStatus.textContent='Créer au moins deux routes Gaia';return}
+  try{
+   const candidates=findGaiaRoadJunctions(roads),existing=state.entities.filter(o=>o.roadJunction3d);
+   const fresh=[];
+   for(const junction of candidates){
+    if(existing.some(o=>o.roadJunction3d?.roadIds?.join(',')===junction.roadIds.join(',')&&Math.hypot(o.roadJunction3d.center.x-junction.center.x,o.roadJunction3d.center.z-junction.center.z)<junction.radius*.35))continue;
+    // Reject crossings without adequate terrain or with an unresolved level gap.
+    roadJunctionBuffers3d(junction,roads,gaiaTiles());
+    fresh.push(roadJunctionEntity(state.nextId+fresh.length,junction));
+   }
+   if(!fresh.length){junctionStatus.textContent='Aucun nouveau carrefour valide';return}
+   state.entities.push(...fresh);state.nextId+=fresh.length;
+   record('World Builder · '+fresh.length+' carrefour(s) Gaia');notify();
+   junctionStatus.textContent=fresh.length+' carrefour(s) créé(s)';
+  }catch(error){junctionStatus.textContent='Carrefours : '+String(error.message||error)}
+ };
+
  cityButton.onclick=()=>{
   const road=selectedRoad();
   if(state.playing||!view3d.enabled||!road)return;
@@ -174,7 +199,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const syncRoadControls=()=>{
   roadButton.textContent=roadMode?'Arrêter le tracé':selectedRoad()?'Éditer la route':'＋ Route';
   roadFinish.hidden=!roadMode;
-  roadWidth.disabled=!selectedRoad();gradePreview.disabled=!selectedRoad()||state.playing;cityButton.disabled=!selectedRoad()||state.playing;
+  roadWidth.disabled=!selectedRoad();gradePreview.disabled=!selectedRoad()||state.playing;cityButton.disabled=!selectedRoad()||state.playing;junctionButton.disabled=state.playing||state.entities.filter(o=>o.roadSpline&&o.enabled!==false).length<2;
   if(selectedRoad()&&document.activeElement!==roadWidth)roadWidth.value=String(selectedRoad().roadSpline.width);
  };
  roadButton.onclick=()=>{

@@ -23,7 +23,7 @@ const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,n(v)));
 const included=o=>(o.roadSpline||o.roadJunction3d)?o.enabled!==false&&o.collision3d!==false:activeBody3d(o)&&o.collision3d!==false&&o.collider3d?.enabled!==false&&(solidBody3d(o)||characterBody3d(o));
 const dynamic=o=>!!o.rigidbody3d?.enabled&&!o.rigidbody3d.kinematic&&!characterBody3d(o)&&!o.ai?.enabled;
-const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,o.collider3d,o.controller3d,o.joint3d,!!o.ai?.enabled,o.terrainHeightfield?o.terrainRevision3d||0:null,o.roadSpline?o.roadSpline:null,o.roadJunction3d?o.roadJunction3d:null].map((v,i)=>i===2&&v?Object.fromEntries(Object.entries(v).filter(([k])=>!['vx','vy','vz'].includes(k))):v));
+const bodyConfig=o=>JSON.stringify([dynamic(o),characterBody3d(o),o.rigidbody3d,o.collider3d,o.controller3d,o.joint3d,!!o.ai?.enabled,o.terrainHeightfield?o.terrainRevision3d||0:null,o.roadSpline?o.roadSpline:null,o.roadJunction3d?o.roadJunction3d:null,o.roadStreetscape3d||null].map((v,i)=>i===2&&v?Object.fromEntries(Object.entries(v).filter(([k])=>!['vx','vy','vz'].includes(k))):v));
 const scenePosition=o=>({x:n(o.x),y:n(o.y),z:n(o.elevation3d)});
 const terrainPose=o=>(o.roadSpline||o.roadJunction3d)?{x:0,y:0,z:0}:o.terrainHeightfield&&validTerrainHeightfield(o.terrainHeightfield)?{x:o.terrainHeightfield.offsetX,y:n(o.elevation3d),z:o.terrainHeightfield.offsetZ}:colliderPosition3d(o);
 const velocity=o=>({x:n(o.rigidbody3d?.vx),y:n(o.rigidbody3d?.vy),z:n(o.rigidbody3d?.vz)});
@@ -81,7 +81,8 @@ export function createRapierScene(RAPIER,entities,gravity=15){
     const colliderDesc=RAPIER.ColliderDesc.trimesh(mesh.positions,mesh.indices);
     colliderDesc.setFriction?.(clamp(o.roadFriction??1.1,0,2));colliderDesc.setRestitution?.(0);
     const collider=world.createCollider(colliderDesc,body);
-    const street=roadStreetscapeBuffers3d(o.roadSpline,tiles);
+    const junctions=entities.filter(e=>e.enabled!==false&&e.roadJunction3d?.roadIds?.includes(o.id)).map(e=>e.roadJunction3d);
+    const street=roadStreetscapeBuffers3d(o.roadSpline,tiles,junctions,o.roadStreetscape3d||{});
     // Raised pedestrian pavement and the curb are physical surfaces; painted
     // crosswalk stripes are intentionally visual-only, not separate colliders.
     const streetColliders=[street.sidewalks,street.curbs].filter(m=>m.indices.length).map(mesh=>{

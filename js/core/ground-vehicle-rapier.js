@@ -83,6 +83,9 @@ export function applyGroundVehicleForces(scene,dt){
  if(!scene?.api?.Ray||!scene?.world?.castRayAndGetNormal||!(dt>0&&Number.isFinite(dt)))return [];
  const outputs=[];
  const traffic=trafficSession(scene,dt);
+ const pedestrians=[...scene.actors.values()]
+  .filter(a=>a.entity?.pedestrianAI?.enabled&&typeof a.body?.translation==='function')
+  .map(a=>{const p=a.body.translation();return {id:a.entity.id,position:{x:p.x,z:p.z}};});
  const otherVehicles=[...scene.actors.values()]
   .filter(a=>a.isDynamic&&a.entity.groundVehiclePhysics?.enabled&&typeof a.body?.translation==='function')
   .map(a=>{const p=a.body.translation();return {id:a.entity.id,position:{x:p.x,z:p.z}};});
@@ -104,7 +107,7 @@ export function applyGroundVehicleForces(scene,dt){
    const plan=(guided?controlGaiaRoutedTrafficVehicle:controlGaiaTrafficVehicle)(traffic.network,{
     position:{x:center.x,z:center.z},forward:{x:forward.x,z:forward.z},
     speedMps:Math.max(0,velocity.x*forward.x+velocity.z*forward.z),
-    seconds:traffic.time,vehicleId:entity.id,vehicles:otherVehicles,
+    seconds:traffic.time,vehicleId:entity.id,vehicles:otherVehicles,pedestrians,
     destinationLaneId:entity.trafficAI.destinationLaneId,
     activeConnectorId:entity.trafficMotion?.routeConnectorId||null,
     maxSpeedMps:Math.max(2,Math.min(20,Number(entity.trafficAI.maxSpeedMps)||8))

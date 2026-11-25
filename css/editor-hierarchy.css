@@ -44,3 +44,36 @@
   display:flex!important;flex:0 1 auto;max-width:110px;
  }
 }
+
+/* #objects button in the legacy base stylesheet sets width:100% on EVERY
+   descendant button. In a flex Hierarchy row the visibility/tree buttons
+   therefore consume the available width and collapse the GameObject label.
+   Size action buttons explicitly and give the name the remaining space. */
+#hierarchyPanel #objects .unity-hierarchy-row > :is(.hierarchy-eye,.hierarchy-tree-toggle){
+  box-sizing:border-box;
+  flex:0 0 19px!important;
+  width:19px!important;
+  min-width:19px!important;
+  max-width:19px!important;
+  padding:0!important;
+  margin:0!important;
+}
+#hierarchyPanel #objects .unity-hierarchy-row > .hierarchy-object-label{
+  box-sizing:border-box;
+  display:flex!important;
+  flex:1 1 0%!important;
+  width:0!important;
+  min-width:0!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:2px 4px!important;
+  overflow:hidden;
+}
+#hierarchyPanel #objects .unity-hierarchy-row .hierarchy-object-name{
+  flex:1 1 0%!important;
+  min-width:0!important;
+  width:auto!important;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}

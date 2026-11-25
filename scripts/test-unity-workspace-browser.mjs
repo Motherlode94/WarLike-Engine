@@ -98,9 +98,17 @@ try{
  await page.waitForFunction(()=>!!document.querySelector('#hierarchyPanel .hierarchy-object-name'));
  const labels=await page.locator('#hierarchyPanel .hierarchy-object-name').allTextContents();
  assert(labels.some(name=>name.trim().length>0),'Hierarchy must show real GameObject names');
- const shown=await page.locator('#hierarchyPanel .hierarchy-object-name').first().boundingBox();
- assert(shown&&shown.width>25,'GameObject name must be readable, not only an icon');
+ const sizes=await page.locator('#hierarchyPanel .unity-hierarchy-row').evaluateAll(rows=>rows.map(row=>{
+  const name=row.querySelector('.hierarchy-object-name');
+  const label=row.querySelector('.hierarchy-object-label');
+  const box=name?.getBoundingClientRect();
+  return {name:name?.textContent?.trim(),width:box?.width??0,
+   visible:!!(box&&box.width>0&&box.height>0),labelWidth:label?.getBoundingClientRect().width??0};
+ }));
+ console.log('P0 Hierarchy name widths',JSON.stringify(sizes));
  await page.screenshot({path:path.join(out,'editor-3d-clean-scene-and-hierarchy.png')});
+ assert(sizes.some(item=>item.name&&item.visible&&item.width>40),
+  'GameObject name must be readable, not only an icon');
  // P0 certification: actual tab switching, panel detachment and restoration.
  await page.setViewportSize({width:1440,height:900});
  await page.locator('#consoleTab').click();

@@ -93,8 +93,9 @@ try{
   await page.waitForFunction(panelId=>document.getElementById(panelId)?.classList.contains('floating-panel'),id);
   const rect=await page.locator('#'+id).boundingBox();
   assert(rect&&rect.width>=240&&rect.height>=180,kind+' floating window has a usable size');
-  assert(rect.x>=-1&&rect.y>=-1&&rect.x+rect.width<=1441&&rect.y+rect.height<=901,kind+' floating window remains within viewport');
+  console.log('P0 floating window bounds',JSON.stringify({kind,rect,viewport:{width:1440,height:900}}));
   await page.screenshot({path:path.join(out,'dock-'+kind+'-floating.png')});
+  assert(rect.x>=-1&&rect.y>=-1&&rect.x+rect.width<=1441&&rect.y+rect.height<=901,kind+' floating window remains within viewport');
   await toggle.click();
   await page.waitForFunction(panelId=>!document.getElementById(panelId)?.classList.contains('floating-panel'),id);
  }

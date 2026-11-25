@@ -1,79 +1,79 @@
-/* WarLike Engine hierarchy structure. The user's selected theme owns colors.
-   Layout only: rows, controls, metadata and keyboard accessibility. */
-#hierarchyPanel #objects{min-width:0;min-height:0;overflow:auto}
-#hierarchyPanel .unity-hierarchy-quicktools{display:flex;align-items:center;gap:4px;padding:3px 6px;position:sticky;top:0;z-index:5;background:var(--wl-theme-panel,var(--wl-surface,#29323c))}
-#hierarchyPanel .unity-hierarchy-quicktools button{flex:none;min-width:23px;min-height:23px}
-#hierarchyPanel .unity-hierarchy-total{margin-left:auto;font-size:11px;color:var(--wl-text-muted,#bbc5ce)}
-#hierarchyPanel .unity-hierarchy-row{display:flex;align-items:center;gap:3px;min-width:0;min-height:24px;white-space:nowrap;color:var(--wl-text-panel,inherit)}
-#hierarchyPanel .unity-hierarchy-row[aria-selected="true"]{background:var(--wl-editor-selected-bg,var(--wl-selected,#375264));color:var(--wl-text-selected,#fff)}
-#hierarchyPanel .unity-hierarchy-row .hierarchy-object-label{display:flex;align-items:center;gap:4px;flex:1;min-width:0;min-height:22px;text-align:left}
-#hierarchyPanel .hierarchy-object-name{min-width:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#hierarchyPanel .hierarchy-row-metadata{display:flex;align-items:center;gap:3px;flex:none;max-width:135px;min-width:0;overflow:hidden;color:var(--wl-text-muted,#bbc5ce)}
-#hierarchyPanel .hierarchy-row-tag,#hierarchyPanel .hierarchy-row-layer{max-width:65px;overflow:hidden;text-overflow:ellipsis;font-size:10px}
-#hierarchyPanel .hierarchy-row-tag{display:none}
-#hierarchyPanel .hierarchy-row-static{font-size:10px}
-#hierarchyPanel .hierarchy-eye,#hierarchyPanel .hierarchy-tree-toggle{flex:none;min-width:19px;min-height:19px;padding:0}
-#hierarchyPanel .unity-hierarchy-row :is(button,[tabindex]):focus-visible{outline:2px solid var(--wl-focus,var(--wl-accent,#48cba9));outline-offset:-2px}
-@container hierarchy-pane (min-width:370px){#hierarchyPanel .hierarchy-row-tag{display:inline}}
-
-
-/* Give the GameObject name first claim on horizontal space. Unity-style Hierarchy
-   keeps secondary tag/layer metadata out of the narrow dock. */
-#hierarchyPanel .unity-hierarchy-row{
- width:100%;max-width:100%;box-sizing:border-box;
+/* Hierarchy: a single layout contract, following the PlayCanvas TreeView model.
+   Theme colors are inherited. Do not stretch nested buttons via #objects rules. */
+#hierarchyPanel {
+  container:hierarchy-pane / inline-size;
+  min-width:0;
 }
-#hierarchyPanel .unity-hierarchy-row .hierarchy-object-label{
- flex:1 1 auto!important;width:auto!important;min-width:0!important;
- max-width:100%;box-sizing:border-box;overflow:hidden;
- padding:2px 4px!important;
+#hierarchyPanel #objects{
+  flex:1 1 0;
+  min-width:0;
+  min-height:0;
+  overflow:auto;
+  overscroll-behavior:contain;
 }
-#hierarchyPanel .unity-hierarchy-row .hierarchy-object-icon{
- flex:0 0 15px;width:15px;min-width:15px;
+#hierarchyPanel .unity-hierarchy-quicktools{
+  display:flex;align-items:center;gap:4px;
+  padding:3px 6px;position:sticky;top:0;z-index:5;
+  background:var(--wl-theme-panel,var(--wl-surface,#29323c));
 }
-#hierarchyPanel .unity-hierarchy-row .hierarchy-object-name{
- display:block!important;flex:1 1 auto!important;
- min-width:40px!important;max-width:100%;
- overflow:hidden!important;white-space:nowrap;text-overflow:ellipsis;
- font-size:12px;line-height:18px;
+#hierarchyPanel .unity-hierarchy-quicktools button{
+  flex:0 0 23px;width:23px;min-width:23px;min-height:23px;
+  margin:0;padding:0;
 }
-#hierarchyPanel .unity-hierarchy-row .hierarchy-row-metadata{
- display:none!important;
+#hierarchyPanel .unity-hierarchy-total{
+  flex:1 1 auto;min-width:0;margin-left:auto;
+  text-align:right;font-size:11px;
+  color:var(--wl-text-muted,#bbc5ce);
 }
-@container hierarchy-pane (min-width:370px){
- #hierarchyPanel .unity-hierarchy-row .hierarchy-row-metadata{
-  display:flex!important;flex:0 1 auto;max-width:110px;
- }
+#hierarchyPanel #objects .unity-hierarchy-row{
+  display:flex;align-items:center;gap:3px;
+  box-sizing:border-box;width:100%;max-width:100%;
+  min-width:0;min-height:24px;
+  overflow:hidden;white-space:nowrap;
+  color:var(--wl-text-panel,inherit);
 }
-
-/* #objects button in the legacy base stylesheet sets width:100% on EVERY
-   descendant button. In a flex Hierarchy row the visibility/tree buttons
-   therefore consume the available width and collapse the GameObject label.
-   Size action buttons explicitly and give the name the remaining space. */
+#hierarchyPanel #objects .unity-hierarchy-row:hover{
+  background:var(--wl-theme-header,#343a42);
+}
+#hierarchyPanel #objects .unity-hierarchy-row[aria-selected="true"]{
+  background:var(--wl-editor-selected-bg,var(--wl-selected,#375264));
+  color:var(--wl-text-selected,#fff);
+}
 #hierarchyPanel #objects .unity-hierarchy-row > :is(.hierarchy-eye,.hierarchy-tree-toggle){
-  box-sizing:border-box;
-  flex:0 0 19px!important;
-  width:19px!important;
-  min-width:19px!important;
-  max-width:19px!important;
-  padding:0!important;
-  margin:0!important;
+  box-sizing:border-box;display:grid;place-items:center;
+  flex:0 0 19px;width:19px;min-width:19px;max-width:19px;
+  min-height:19px;height:19px;
+  padding:0;margin:0;border:0;
 }
 #hierarchyPanel #objects .unity-hierarchy-row > .hierarchy-object-label{
-  box-sizing:border-box;
-  display:flex!important;
-  flex:1 1 0%!important;
-  width:0!important;
-  min-width:0!important;
-  max-width:none!important;
-  margin:0!important;
-  padding:2px 4px!important;
-  overflow:hidden;
+  box-sizing:border-box;display:flex;align-items:center;gap:4px;
+  flex:1 1 0%;width:0;min-width:0;max-width:none;
+  min-height:22px;padding:2px 4px;margin:0;
+  text-align:left;overflow:hidden;
+}
+#hierarchyPanel #objects .unity-hierarchy-row .hierarchy-object-icon{
+  flex:0 0 15px;width:15px;min-width:15px;
 }
 #hierarchyPanel #objects .unity-hierarchy-row .hierarchy-object-name{
-  flex:1 1 0%!important;
-  min-width:0!important;
-  width:auto!important;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  display:block;flex:1 1 0%;width:auto;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:12px;line-height:18px;
+}
+#hierarchyPanel #objects .unity-hierarchy-row .hierarchy-row-metadata{
+  display:none;align-items:center;gap:3px;
+  flex:0 1 110px;max-width:110px;min-width:0;
+  overflow:hidden;color:var(--wl-text-muted,#bbc5ce);
+}
+#hierarchyPanel #objects .hierarchy-row-tag,
+#hierarchyPanel #objects .hierarchy-row-layer{
+  max-width:65px;overflow:hidden;text-overflow:ellipsis;font-size:10px;
+}
+#hierarchyPanel #objects .hierarchy-row-static{font-size:10px}
+#hierarchyPanel #objects .unity-hierarchy-row :is(button,[tabindex]):focus-visible{
+  outline:2px solid var(--wl-focus,var(--wl-accent,#48cba9));
+  outline-offset:-2px;
+}
+@container hierarchy-pane (min-width:370px){
+  #hierarchyPanel #objects .unity-hierarchy-row .hierarchy-row-metadata{display:flex}
+  #hierarchyPanel #objects .hierarchy-row-tag{display:inline}
 }

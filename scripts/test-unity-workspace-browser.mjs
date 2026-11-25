@@ -109,6 +109,21 @@ try{
  assert(unityWindows.assetGridHeight>=70&&unityWindows.assetItems>0,
   'Project must render real asset items in a usable grid, not just toolbars');
  assert(unityWindows.inspectorScroll==='auto','Inspector properties scroll inside the dock');
+
+ const panelGeometry=await page.evaluate(()=>{
+  const rect=selector=>{const n=document.querySelector(selector);return n?.getBoundingClientRect()};
+  const folders=rect('#assetFolders'),content=rect('#projectPanel .asset-content');
+  const properties=rect('#inspectorPanel #properties'),inspector=rect('#inspectorPanel');
+  return {folderRight:folders?.right??0,contentLeft:content?.left??0,
+   contentWidth:content?.width??0,propertiesRight:properties?.right??0,
+   inspectorRight:inspector?.right??0};
+ });
+ assert(panelGeometry.folderRight<=panelGeometry.contentLeft+3,
+  'Project folders and asset content are separate non-overlapping columns');
+ assert(panelGeometry.contentWidth>120,'Project assets remain usable');
+ assert(panelGeometry.propertiesRight<=panelGeometry.inspectorRight+3,
+  'Inspector content remains within its dock');
+
  assert.equal(unityWindows.repeatedInspectorTitle,false,'Inspector must not display duplicate headings');
 
  // Unity 2023 editor hierarchy: a single + dropdown, preserving real actions.
@@ -139,6 +154,25 @@ try{
    visible:!!(box&&box.width>0&&box.height>0),labelWidth:label?.getBoundingClientRect().width??0};
  }));
  console.log('P0 Hierarchy name widths',JSON.stringify(sizes));
+
+ // A row must not push its controls beyond the Hierarchy viewport.
+ const hierarchyBounds=await page.locator('#hierarchyPanel .unity-hierarchy-row').evaluateAll(rows=>rows.map(row=>{
+  const bounds=row.getBoundingClientRect();
+  const name=row.querySelector('.hierarchy-object-name')?.getBoundingClientRect();
+  const label=row.querySelector('.hierarchy-object-label')?.getBoundingClientRect();
+  const eye=row.querySelector('.hierarchy-eye')?.getBoundingClientRect();
+  return {rowWidth:bounds.width,labelWidth:label?.width??0,
+   nameWidth:name?.width??0,eyeWidth:eye?.width??0,
+   nameRight:name?.right??0,rowRight:bounds.right};
+ }));
+ assert(hierarchyBounds.length>0,'Hierarchy has rendered object rows');
+ assert(hierarchyBounds.every(row=>row.eyeWidth>=18&&row.eyeWidth<=20),
+  'Hierarchy visibility buttons occupy a fixed narrow column');
+ assert(hierarchyBounds.some(row=>row.labelWidth>=90&&row.nameWidth>40),
+  'GameObject name takes the remaining row width');
+ assert(hierarchyBounds.every(row=>row.nameRight<=row.rowRight+2),
+  'Hierarchy name does not overflow its row');
+
  await page.screenshot({path:path.join(out,'editor-3d-clean-scene-and-hierarchy.png')});
  assert(sizes.some(item=>item.name&&item.visible&&item.labelWidth>=90&&item.width>40),
   'GameObject label must have real usable space, not only a forced minimum text width');

@@ -5,7 +5,7 @@ import {collisionBackend3d} from './collision-backend-3d.js';
 import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle} from './vehicle-components.js';
 import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle-weapons-3d.js';
 import {recordEngineEvent} from './engine-diagnostics.js';
-import {gaiaDriverSeatAccess,placeGaiaDriverAtSeat,gaiaDriverSeatPose,beginGaiaDriverTransition,advanceGaiaDriverTransition} from './gaia-parking-runtime.js';
+import {gaiaDriverSeatAccess,placeGaiaDriverAtSeat,gaiaDriverSeatPose,beginGaiaDriverTransition,advanceGaiaDriverTransition,gaiaSafeDriverExit} from './gaia-parking-runtime.js';
 import {stepArcadeVehicle} from './arcade-driving.js';
 import {aircraftPilotInput,releaseAircraftControls,canSafelyExitAircraft} from './aircraft-pilot-input.js';
 import {stepAircraftSystems} from './aircraft-systems.js';
@@ -23,6 +23,15 @@ const intersects=(car,x,y,o)=>{
  const verticalBase=Number(car.elevation3d)||0,verticalTop=verticalBase+Math.max(.1,(car.h||32)/64);
  const otherBase=Number(o.elevation3d)||0,otherTop=otherBase+Math.max(.1,(o.h||32)/64);
  return verticalBase<otherTop&&verticalTop>otherBase&&x<o.x+otherW&&x+w>o.x&&y<o.y+otherD&&y+d>o.y;
+};
+// Use the actual Rapier collider query when available; fallback preserves legacy
+// solid-body checks. The current vehicle and hidden driver are excluded.
+const canExitAt=(entities,car,player,pose)=>{
+ const backend=collisionBackend3d();
+ if(backend?.owns(player))
+  return backend.canPlace(player,pose,{ignore:car});
+ return !entities.some(o=>solid(o,car,player)&&intersects(
+  {...player,elevation3d:pose.elevation3d},pose.x,pose.y,o));
 };
 export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}={}){
  const inputVehicle=currentVehicle3d(entities);
@@ -48,6 +57,14 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
   }
   driving3d.enterHeld=enter;
   if(result.done){
+   // A moving obstacle may occupy the selected exit while its animation runs.
+   // Cancel safely and retain driver ownership, rather than release into a wall.
+   if(transition.action==='exit'&&!canExitAt(entities,car,player,transition.to)){
+    driving3d.transition=null;
+    if(car.vehicleArticulation)car.vehicleArticulation.doorOpen=false;
+    placeGaiaDriverAtSeat(car,player);
+    return true;
+   }
    driving3d.transition=null;
    if(transition.action==='enter'){
     if(car.vehicleArticulation)car.vehicleArticulation.doorOpen=false;
@@ -71,13 +88,9 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
     driving3d.enterHeld=enter;
     return true;
    }
-   const width=Math.max(1,player.w||32),depth=Math.max(1,player.depth3d||player.h||32);
-   const exits=[
-    {x:car.x-width-12,y:car.y+((car.depth3d||car.h||32)-depth)/2},
-    {x:car.x+(car.w||32)+12,y:car.y+((car.depth3d||car.h||32)-depth)/2}
-   ];
-   const backend=collisionBackend3d();
-   const free=exits.find(pos=>backend?.owns(player)?backend.canPlace(player,{...pos,elevation3d:car.elevation3d||0},{ignore:car}):!entities.some(o=>solid(o,car,player)&&intersects({...player,depth3d:depth},pos.x,pos.y,o)));
+   const free=gaiaSafeDriverExit(car,player,{
+    canPlace:pose=>canExitAt(entities,car,player,pose)
+   });
    if(free){
     // Optional authored exit clip: complete before driver ownership is released.
     const transition=beginGaiaDriverTransition(car,player,'exit',{...free,elevation3d:car.elevation3d||0});

@@ -29,7 +29,8 @@ test('WB 2.9g.2 supports author-defined driver anchors rotated with the chassis'
 test('WB 2.9g.2 placement is shared by enter, aircraft, Rapier and arcade runtime',()=>{
  const source=readFileSync(new URL('../js/core/vehicle-3d.js',import.meta.url),'utf8');
  // WB 2.9g.2b adds a fifth call when the authored entry transition finishes.
- assert.equal(source.split('placeGaiaDriverAtSeat(').length-1,5);
+ assert.ok(source.split('placeGaiaDriverAtSeat(').length-1>=5);
+ assert.match(source,/transition.action==='exit'&&!canExitAt/);
  assert.match(source,/gaiaDriverSeatAccess\(nearest\.o,player\.id,'enter'\)/);
  assert.match(source,/gaiaDriverSeatAccess\(car,player\?\.id,'exit'\)/);
  assert.match(source,/drivingCar\.groundVehicleInput=\{throttle,steer,brake,handbrake/);

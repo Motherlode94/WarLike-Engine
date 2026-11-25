@@ -108,7 +108,9 @@ export async function mountPrivateWorkspace(){
  $('[data-account-save]').onclick=()=>run(save);
  $('[data-account-refresh]').onclick=()=>run(list);
  $('[data-account-disconnect]').onclick=()=>run(disconnect);
- try{await returnPairing();await identity();}catch{clearIdentity();}
+ if(location.protocol==='https:'){
+  try{await returnPairing();await identity();}catch{clearIdentity();}
+ }else{clearIdentity();setMessage('Connexion cloud uniquement sur le site HTTPS WarLike Engine.');}
  render();
  // Autosave is active only with verified cloud identity; no invisible claim of ownership for legacy data.
  setInterval(()=>{if(!account||busy||!hub.projectId||!remoteMap.has(hub.projectId)||document.hidden)return;let raw;try{raw=localStorage.getItem(PREFIX+hub.projectId)}catch{return}if(raw&&raw!==saveFingerprint)void run(save);},30000);

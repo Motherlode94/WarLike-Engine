@@ -101,9 +101,13 @@ async function disconnect(){
  await fetch('/api/engine/session',{method:'DELETE',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'});
  clearIdentity();setMessage('Compte déconnecté. Les projets locaux du navigateur sont toujours présents.');
 }
+let workspaceMounted=false;
 export async function mountPrivateWorkspace(){
- const hubPanel=document.querySelector('#hubOverlay .hub-window');if(!hubPanel)return;
- document.head.append(style);hubPanel.querySelector('.hub-heading')?.after(box);
+ const target=document.getElementById('hubCloudPanel');
+ if(!target||workspaceMounted)return;
+ workspaceMounted=true;
+ document.head.append(style);
+ target.append(box);
  $('[data-account-connect]').onclick=()=>run(connect);
  $('[data-account-save]').onclick=()=>run(save);
  $('[data-account-refresh]').onclick=()=>run(list);
@@ -115,4 +119,5 @@ export async function mountPrivateWorkspace(){
  // Autosave is active only with verified cloud identity; no invisible claim of ownership for legacy data.
  setInterval(()=>{if(!account||busy||!hub.projectId||!remoteMap.has(hub.projectId)||document.hidden)return;let raw;try{raw=localStorage.getItem(PREFIX+hub.projectId)}catch{return}if(raw&&raw!==saveFingerprint)void run(save);},30000);
 }
+document.addEventListener('warlike:hub-ui-ready',()=>void mountPrivateWorkspace());
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>void mountPrivateWorkspace(),{once:true});else void mountPrivateWorkspace();

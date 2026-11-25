@@ -40,16 +40,25 @@ try{
  assert.equal(await page.locator('#hubOverlay .simple-hub-main').getAttribute('data-hub-tab'),'projects');
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false,
   'Appearance is not mixed into the project browser');
+ const hubGeometry=await page.evaluate(()=>{
+  const bounds=selector=>{const e=document.querySelector(selector);if(!e)return null;const r=e.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
+  return {window:bounds('#hubOverlay .hub-window[data-simple-hub]'),nav:bounds('#hubOverlay .simple-hub-nav'),main:bounds('#hubOverlay .simple-hub-main'),heading:bounds('#hubOverlay .simple-hub-heading')};
+ });
+ assert(hubGeometry.window&&hubGeometry.nav&&hubGeometry.main&&hubGeometry.heading,'runtime Hub sections exist');
+ assert(hubGeometry.nav.right<=hubGeometry.main.x+8,'Hub navigation does not overlap project content');
+ assert(hubGeometry.heading.bottom<=hubGeometry.main.y+10,'Hub heading does not overlay content');
+ assert(hubGeometry.window.right<=1441&&hubGeometry.window.bottom<=901,'Hub fits within desktop viewport');
  await page.screenshot({path:path.join(out,'hub-before-open.png')});
  await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="appearance"]').click();
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),true,
   'Appearance is a separate navigable Hub screen');
  assert.equal(await page.locator('#hubAccentColor').isVisible(),true,'color picker remains available');
+ await page.screenshot({path:path.join(out,'hub-appearance-1440.png')});
  await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="projects"]').click();
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false);
  await page.getByRole('button',{name:'Unity UI QA',exact:true}).click();
  await page.locator('#hubOverlay').waitFor({state:'hidden'});
- for(const viewport of [{width:1440,height:900},{width:1366,height:768}]){
+ for(const viewport of [{width:1920,height:1080},{width:1440,height:900},{width:1366,height:768}]){
   await page.setViewportSize(viewport);
   const boxes=await page.evaluate(()=>{
    const rect=sel=>{const r=document.querySelector(sel).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
@@ -69,6 +78,37 @@ try{
   await page.locator('.reference-scene-menu>summary').click();
   await page.screenshot({path:path.join(out,`editor-${viewport.width}x${viewport.height}.png`)});
  }
+ // P0 certification: actual tab switching, panel detachment and restoration.
+ await page.setViewportSize({width:1440,height:900});
+ await page.locator('#consoleTab').click();
+ assert.equal(await page.locator('#consoleContent').isVisible(),true,'Console tab opens');
+ assert.equal(await page.locator('#projectContent').isVisible(),false,'Project content hides while Console is active');
+ await page.screenshot({path:path.join(out,'console-tab-1440.png')});
+ await page.locator('#projectTab').click();
+ assert.equal(await page.locator('#projectContent').isVisible(),true,'Project tab restores browser');
+ assert.equal(await page.locator('#consoleContent').isVisible(),false,'Console content closes');
+ for(const [kind,id] of [['hierarchy','hierarchyPanel'],['inspector','inspectorPanel'],['project','projectPanel']]){
+  const toggle=page.locator('[data-dock-toggle="'+kind+'"]');
+  await toggle.click();
+  await page.waitForFunction(panelId=>document.getElementById(panelId)?.classList.contains('floating-panel'),id);
+  const rect=await page.locator('#'+id).boundingBox();
+  assert(rect&&rect.width>=240&&rect.height>=180,kind+' floating window has a usable size');
+  console.log('P0 floating window bounds',JSON.stringify({kind,rect,viewport:{width:1440,height:900}}));
+  await page.screenshot({path:path.join(out,'dock-'+kind+'-floating.png')});
+  assert(rect.x>=-1&&rect.y>=-1&&rect.x+rect.width<=1441&&rect.y+rect.height<=901,kind+' floating window remains within viewport');
+  await toggle.click();
+  await page.waitForFunction(panelId=>!document.getElementById(panelId)?.classList.contains('floating-panel'),id);
+ }
+ const savedLayout=await page.evaluate(()=>JSON.parse(localStorage.getItem('warlike.workspace.layout.v1')||'{}'));
+ assert.deepEqual(savedLayout.float||{}, {},'all certification panels are re-docked');
+ const restored=await page.evaluate(()=>{
+  const get=id=>{const r=document.getElementById(id).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}};
+  return {left:get('hierarchyPanel'),scene:get('viewport'),right:get('inspectorPanel'),bottom:get('projectPanel')};
+ });
+ assert(restored.left.right<=restored.scene.left+12,'Hierarchy docks left after floating');
+ assert(restored.scene.right<=restored.right.left+12,'Inspector docks right after floating');
+ assert(restored.bottom.top>=restored.scene.bottom-12,'Project docks below Scene after floating');
+ await page.screenshot({path:path.join(out,'editor-redocked-1440.png')});
  console.log('PASS: Hub settings accessible and Unity-like dock geometry at 1440x900 + 1366x768');
 }finally{
  await browser.close();

@@ -37,6 +37,15 @@ try{
  // initSimpleHub() replaces the static HTML Hub with its tabbed runtime shell.
  await page.locator('#hubOverlay .hub-window[data-simple-hub="true"]').waitFor();
  await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="projects"]').waitFor();
+ assert.equal(await page.locator('#hubOverlay .hub-project-welcome').count(),0,'No marketing hero in Unity Hub Projects');
+ assert.equal(await page.locator('#hubOverlay .simple-hub-projects').getAttribute('data-project-view'),'list','Project list is default');
+ const hubZones=await page.evaluate(()=>{
+  const r=sel=>{const v=document.querySelector(sel).getBoundingClientRect();return {left:v.left,right:v.right,top:v.top,bottom:v.bottom}};
+  return {nav:r('#hubOverlay .simple-hub-nav'),header:r('#hubOverlay .simple-hub-heading'),main:r('#hubOverlay .simple-hub-main')};
+ });
+ assert(hubZones.nav.right<=hubZones.main.left+4,'Sidebar does not overlap projects');
+ assert(hubZones.header.bottom<=hubZones.main.top+4,'Header does not overlap list');
+
  assert.equal(await page.locator('#hubOverlay .simple-hub-main').getAttribute('data-hub-tab'),'projects');
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false,
   'Appearance is not mixed into the project browser');

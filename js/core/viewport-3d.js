@@ -614,7 +614,7 @@ export function init3d(canvas,host,buttons){
   if(p.adventure?.combatEnabled!==false&&!inVehicle&&healthOf(p)>0&&(!gameplayInputBlocked()&&fpsFiring||input.has('f')||!gameplayInputBlocked()&&state.keyPresses?.has('f'))&&p._attackCooldown===0){if(isFps()){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit){p.animation='attack';emitFx('electric',heroCenter(hit,'3d'),{mode:'3d',color:'#ffd899',count:16,ring:true,lifetime:.3,scale:.7})}}
  };
  const isFps=()=>state.playing&&workspace.mode==='3d'&&!currentVehicle3d(state.entities)&&(activeSceneCamera(state.entities)?.sceneCamera3d?.mode==='firstPerson'||!activeSceneCamera(state.entities)&&cameraRigFor(playableActor(state.entities)).mode==='firstPerson');
- let boomDistance=null,cameraFrame=1/60,lastCameraActor=null,lastCameraScene=null;
+ let boomDistance=null,cameraFrame=1/60,lastCameraActor=null,lastCameraScene=null,cameraHandoffRemaining=0;
  const camera=()=>{
   if(state.playing){
    const vehicle=currentVehicle3d(state.entities);
@@ -670,7 +670,7 @@ export function init3d(canvas,host,buttons){
  const stopRapier=()=>{physicsGeneration++;disposeRapierScene(physicsSession);physicsSession=null;physicsAccumulator=0;};
  const enterPlay=()=>{
   resetBattlefield(state.entities);fpsAiming=false;fpsFiring=false;
-  view3d.drag=null;boomDistance=null;resetDriving3d();aircraftViewMode=null;aircraftViewFor=null;aircraftCameraKeyHeld=false;
+  view3d.drag=null;boomDistance=null;cameraHandoffRemaining=0;lastCameraActor=null;lastCameraScene=null;resetDriving3d();aircraftViewMode=null;aircraftViewFor=null;aircraftCameraKeyHeld=false;
   const p=playableActor(state.entities),pt=playerTarget(),rig=cameraRigFor(p);view3d.followPlayer=!!pt&&!activeSceneCamera(state.entities);if(pt){view3d.target=pt.slice();view3d.radius=rig.distance;view3d.yaw=Math.PI-(Number(p.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18}
   if(companyController(state.entities)){view3d.followPlayer=false;view3d.target=[14,0,14];view3d.radius=32;view3d.pitch=.92;view3d.yaw=-.55;return}
   if(gameProject.physics3d==='builtin')return;
@@ -912,13 +912,15 @@ export function init3d(canvas,host,buttons){
    if(pt){
     const sceneChanged=lastCameraScene!==null&&gameSession.currentSceneId!==lastCameraScene;
     const handoff=!!lastCameraActor&&actor!==lastCameraActor&&!sceneChanged;
+    if(handoff)cameraHandoffRemaining=.65;
+    if(sceneChanged)cameraHandoffRemaining=0;
     const far= Math.hypot(...V.sub(pt,view3d.target))>12;
     const snap=sceneChanged||(!handoff&&far);
     const rig=cameraRigFor(actor,!!vehicle);
     const result=cameraHandoffStep(view3d.target,pt,view3d.radius,rig.distance,dt,
      {sharpness:rig.followSharpness,snap});
     view3d.target=result.target;
-    if(handoff||lastCameraActor!==actor)view3d.radius=result.distance;
+    if(cameraHandoffRemaining>0){view3d.radius=result.distance;cameraHandoffRemaining=Math.max(0,cameraHandoffRemaining-dt)}
     if(snap)boomDistance=null;
    }
    lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;

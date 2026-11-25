@@ -5,7 +5,8 @@ import {defaultWheelPhysics,validateWheelPhysics,solveWheelForces} from './vehic
 import {buildGaiaTrafficNetwork,controlGaiaTrafficVehicle,setGaiaTrafficSignalSeconds} from './gaia-traffic-ai.js';
 import {controlGaiaRoutedTrafficVehicle} from './gaia-traffic-routing.js';
 import {planGaiaParkingSteering} from './gaia-parking-steering.js';
-// Public Player entry point keeps seat transactions in the generated runtime closure.
+export {evaluateGaiaParkingRuntime,commitGaiaParkingSeatAction} from './gaia-parking-runtime.js';
+// Preserve WB 2.9e Player API when integrating WB 2.9f.
 export {planGaiaVehicleSeatTransition,applyGaiaVehicleSeatTransition} from './gaia-vehicle-seat-interactions.js';
 const finite=(v,d=0)=>typeof v==='number'&&Number.isFinite(v)?v:d;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,finite(v)));

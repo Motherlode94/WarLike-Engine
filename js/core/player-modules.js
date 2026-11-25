@@ -74,6 +74,7 @@ export const playerModules=[
   "js/core/environment-probes-3d.js",
   "js/core/fx-renderer-3d.js",
   "js/core/fx-runtime.js",
+  "js/core/gaia-parking-runtime.js",
   "js/core/gaia-parking-steering.js",
   "js/core/gaia-pedestrian-crosswalks.js",
   "js/core/gaia-pedestrian-sidewalk-ai.js",

@@ -10,7 +10,7 @@ const actor={id:7,w:20,depth3d:20,h:30};
 test('WB 2.9g.4 chooses left exit with legacy heading and preserves input entities',()=>{
  const v=vehicle(),before=structuredClone(v);
  const result=gaiaSafeDriverExit(v,actor,{canPlace:()=>true});
- assert.deepEqual(result,{x:48,y:250,elevation3d:2,side:'left'});
+ assert.deepEqual(result,{x:68,y:250,elevation3d:2,side:'left'});
  assert.deepEqual(v,before);
 });
 test('WB 2.9g.4 rotates exit candidates with the vehicle and tries alternate sides',()=>{

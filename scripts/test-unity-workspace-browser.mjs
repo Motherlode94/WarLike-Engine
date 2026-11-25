@@ -86,6 +86,21 @@ try{
  await page.screenshot({path:path.join(out,'unity-2023-hierarchy-create.png')});
  await page.locator('#hierarchyPanel .unity-hierarchy-create>summary').click();
  assert.equal(await page.locator('#view3dStatus').isVisible(),false,'no permanent tutorial overlay in 3D Scene');
+ // The 3D authoring view must not show 2D Tilemap painting controls.
+ await page.setViewportSize({width:1440,height:900});
+ await page.locator('#workspace3d').click();
+ await page.waitForFunction(()=>document.querySelector('#viewport .warlike-tilemap-toolbar')!==null);
+ assert.equal(await page.locator('#viewport .warlike-tilemap-toolbar').isVisible(),false,
+  '2D Tilemap controls must not cover 3D Scene');
+ const createMenu=page.locator('#hierarchyPanel .unity-hierarchy-create>summary');
+ await createMenu.click();
+ await page.locator('#quickCreateObject').click();
+ await page.waitForFunction(()=>!!document.querySelector('#hierarchyPanel .hierarchy-object-name'));
+ const labels=await page.locator('#hierarchyPanel .hierarchy-object-name').allTextContents();
+ assert(labels.some(name=>name.trim().length>0),'Hierarchy must show real GameObject names');
+ const shown=await page.locator('#hierarchyPanel .hierarchy-object-name').first().boundingBox();
+ assert(shown&&shown.width>25,'GameObject name must be readable, not only an icon');
+ await page.screenshot({path:path.join(out,'editor-3d-clean-scene-and-hierarchy.png')});
  // P0 certification: actual tab switching, panel detachment and restoration.
  await page.setViewportSize({width:1440,height:900});
  await page.locator('#consoleTab').click();

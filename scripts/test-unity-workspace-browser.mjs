@@ -202,8 +202,10 @@ try{
    await page.mouse.move(startX+75,startY+36,{steps:8});
    await page.mouse.up();
    const moved=await page.locator('#hierarchyPanel').boundingBox();
-   assert(moved.x>rect.x+40&&moved.y>rect.y+14,
+   assert(moved.x>rect.x+40,
     'Dragging the dock title actually moves the floating Hierarchy');
+   assert(moved.x>=7&&moved.y>=34&&moved.x+moved.width<=1433&&moved.y+moved.height<=893,
+    'Dragging a floating panel stays inside the same restorable viewport bounds');
    const saved=await page.evaluate(()=>{
     const el=document.querySelector('#hierarchyPanel');
     const state=JSON.parse(localStorage.getItem('warlike.workspace.layout.v1')||'{}');

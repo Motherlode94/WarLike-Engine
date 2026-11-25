@@ -69,6 +69,36 @@ try{
   await page.locator('.reference-scene-menu>summary').click();
   await page.screenshot({path:path.join(out,`editor-${viewport.width}x${viewport.height}.png`)});
  }
+ // P0 certification: actual tab switching, panel detachment and restoration.
+ await page.setViewportSize({width:1440,height:900});
+ await page.locator('#consoleTab').click();
+ assert.equal(await page.locator('#consoleContent').isVisible(),true,'Console tab opens');
+ assert.equal(await page.locator('#projectContent').isVisible(),false,'Project content hides while Console is active');
+ await page.screenshot({path:path.join(out,'console-tab-1440.png')});
+ await page.locator('#projectTab').click();
+ assert.equal(await page.locator('#projectContent').isVisible(),true,'Project tab restores browser');
+ assert.equal(await page.locator('#consoleContent').isVisible(),false,'Console content closes');
+ for(const [kind,id] of [['hierarchy','hierarchyPanel'],['inspector','inspectorPanel'],['project','projectPanel']]){
+  const toggle=page.locator('[data-dock-toggle="'+kind+'"]');
+  await toggle.click();
+  await page.waitForFunction(panelId=>document.getElementById(panelId)?.classList.contains('floating-panel'),id);
+  const rect=await page.locator('#'+id).boundingBox();
+  assert(rect&&rect.width>=240&&rect.height>=180,kind+' floating window has a usable size');
+  assert(rect.x>=-1&&rect.y>=-1&&rect.x+rect.width<=1441&&rect.y+rect.height<=901,kind+' floating window remains within viewport');
+  await page.screenshot({path:path.join(out,'dock-'+kind+'-floating.png')});
+  await toggle.click();
+  await page.waitForFunction(panelId=>!document.getElementById(panelId)?.classList.contains('floating-panel'),id);
+ }
+ const savedLayout=await page.evaluate(()=>JSON.parse(localStorage.getItem('warlike.workspace.layout.v1')||'{}'));
+ assert.deepEqual(savedLayout.float||{}, {},'all certification panels are re-docked');
+ const restored=await page.evaluate(()=>{
+  const get=id=>{const r=document.getElementById(id).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}};
+  return {left:get('hierarchyPanel'),scene:get('viewport'),right:get('inspectorPanel'),bottom:get('projectPanel')};
+ });
+ assert(restored.left.right<=restored.scene.left+12,'Hierarchy docks left after floating');
+ assert(restored.scene.right<=restored.right.left+12,'Inspector docks right after floating');
+ assert(restored.bottom.top>=restored.scene.bottom-12,'Project docks below Scene after floating');
+ await page.screenshot({path:path.join(out,'editor-redocked-1440.png')});
  console.log('PASS: Hub settings accessible and Unity-like dock geometry at 1440x900 + 1366x768');
 }finally{
  await browser.close();

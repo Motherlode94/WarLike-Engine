@@ -1,153 +1,148 @@
-/* WarLike Hub: faithful Unity Hub project manager layout (Projects window).
-   Scoped to the JS-built Simple Hub. Engine/editor theme is unchanged. */
-#hubOverlay{padding:0!important;display:grid!important;place-items:center!important}
+/* Unity Hub reference — Projects window. A single, component-scoped Hub stylesheet.
+   The editor palette and canvas are deliberately outside this stylesheet. */
+#hubOverlay{display:grid!important;place-items:center!important;padding:18px!important}
 #hubOverlay>.hub-window[data-simple-hub]{
- display:grid!important;
- grid-template-columns:190px minmax(0,1fr)!important;
- grid-template-rows:minmax(0,1fr)!important;
- width:min(1190px,calc(100vw - 48px))!important;
- height:min(790px,calc(100dvh - 48px))!important;
- min-height:400px!important;max-height:calc(100dvh - 48px)!important;
- padding:0!important;margin:auto!important;overflow:hidden!important;
- border:1px solid #383838!important;border-radius:7px!important;
- background:#1c1c1c!important;box-shadow:0 25px 75px #0009!important;
- color:#e4e4e4!important;
+ display:grid!important;grid-template-columns:198px minmax(0,1fr)!important;
+ grid-template-rows:105px minmax(0,1fr)!important;
+ width:min(1160px,calc(100vw - 36px))!important;
+ height:min(760px,calc(100dvh - 36px))!important;
+ min-height:400px!important;max-height:calc(100dvh - 36px)!important;
+ margin:0!important;padding:0!important;overflow:hidden!important;
+ border:1px solid #3b3b3b!important;border-radius:7px!important;
+ background:#1c1c1c!important;color:#e9e9e9!important;
+ box-shadow:0 22px 60px #0009!important;
 }
-#hubOverlay .hub-window[data-simple-hub] .simple-hub-brand{
- grid-column:1!important;grid-row:1!important;
- position:absolute;top:15px;left:16px;z-index:2;
- display:flex!important;align-items:center!important;gap:7px!important;
- height:31px!important;font-size:15px!important;color:#eee!important;
-}
-#hubOverlay .hub-window[data-simple-hub] .simple-hub-mark{
- display:grid!important;place-items:center!important;
- width:23px!important;height:23px!important;border-radius:4px!important;
- background:#333!important;color:#f5f5f5!important;
-}
-#hubOverlay .hub-window[data-simple-hub] .simple-hub-heading{
- grid-column:2!important;grid-row:1!important;
- display:flex!important;align-items:flex-start!important;gap:10px!important;
- align-self:stretch!important;
- height:auto!important;min-height:0!important;padding:24px 24px 0!important;
- border:0!important;border-radius:0!important;background:#1c1c1c!important;
- box-sizing:border-box!important;flex-direction:column!important;
-}
-#hubOverlay .hub-window[data-simple-hub] .simple-hub-heading h1{
- display:block!important;margin:0 0 18px!important;
- font-size:27px!important;font-weight:600!important;line-height:1.25!important;
- color:#f1f1f1!important;
-}
-#hubOverlay .hub-window[data-simple-hub] .simple-hub-toolbar{
- display:flex!important;flex:0 0 auto!important;width:100%!important;
- align-items:center!important;justify-content:flex-end!important;
- flex-wrap:nowrap!important;gap:8px!important;min-height:38px!important;
- padding:0 0 15px!important;box-sizing:border-box!important;
-}
-#hubOverlay .simple-hub-toolbar #hubProjectSearch{
- flex:1 1 190px!important;min-width:110px!important;
- max-width:360px!important;width:100%!important;
- height:34px!important;padding:6px 10px!important;
-}
-#hubOverlay .simple-hub-toolbar #hubProjectFilter{
- flex:0 0 108px!important;height:34px!important;
-}
-#hubOverlay .simple-hub-toolbar #hubNewProject{
- flex:0 0 auto!important;min-width:130px!important;
- background:#376eb2!important;border-color:#376eb2!important;
- color:#fff!important;font-weight:600!important;height:34px!important;
-}
-#hubOverlay .simple-hub-toolbar #hubClose{
- min-width:32px!important;width:32px!important;height:34px!important;
-}
-#hubOverlay .simple-hub-toolbar [hidden]{display:none!important}
 #hubOverlay .hub-window[data-simple-hub] .simple-hub-nav{
- grid-column:1!important;grid-row:1!important;
+ grid-column:1!important;grid-row:1 / 3!important;
  display:flex!important;flex-direction:column!important;
- width:190px!important;min-width:190px!important;
- padding:60px 8px 12px!important;gap:2px!important;
- min-height:0!important;max-height:none!important;
- align-self:stretch!important;overflow:auto!important;
- background:#242424!important;border:0!important;
- border-right:1px solid #303030!important;box-sizing:border-box!important;
+ width:auto!important;min-width:0!important;min-height:0!important;
+ padding:14px 10px!important;gap:4px!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ background:#252525!important;border:0!important;border-right:1px solid #383838!important;
+}
+#hubOverlay .simple-hub-brand{
+ display:flex!important;flex:0 0 auto!important;align-items:center!important;
+ gap:8px!important;padding:4px 9px 24px!important;font-size:15px!important;
+ color:#f2f2f2!important;
+}
+#hubOverlay .simple-hub-mark{
+ display:grid!important;place-items:center!important;width:26px;height:26px;
+ background:#414141!important;color:#fff!important;border-radius:5px!important;
 }
 #hubOverlay .simple-hub-nav .simple-hub-nav-item{
- flex:0 0 auto!important;display:flex!important;
- width:100%!important;min-height:36px!important;padding:8px 12px!important;
- text-align:left!important;align-items:center!important;
+ display:flex!important;flex:0 0 auto!important;align-items:center!important;
+ width:100%!important;min-height:37px!important;
+ padding:8px 12px!important;text-align:left!important;
  font-size:13px!important;font-weight:500!important;
- background:transparent!important;border:0!important;
- border-radius:5px!important;color:#d4d4d4!important;
- box-shadow:none!important;
+ white-space:normal!important;border:0!important;border-radius:4px!important;
+ background:transparent!important;color:#d7d7d7!important;box-shadow:none!important;
 }
-#hubOverlay .simple-hub-nav .simple-hub-nav-item.active,
-#hubOverlay .simple-hub-nav .simple-hub-nav-item[aria-current=page]{
- background:#393939!important;color:#fff!important;
- box-shadow:none!important;font-weight:600!important;
+#hubOverlay .simple-hub-nav .simple-hub-nav-item:hover{background:#343434!important}
+#hubOverlay .simple-hub-nav .simple-hub-nav-item.active{
+ background:#404040!important;color:#fff!important;font-weight:600!important;
+ box-shadow:inset 3px 0 #669fe8!important;
 }
 #hubOverlay .simple-hub-nav .hub-settings-item{
- margin-top:auto!important;border-top:1px solid #3a3a3a!important;
+ margin-top:auto!important;border-top:1px solid #414141!important;
 }
 #hubOverlay .simple-hub-nav .simple-hub-docs{
- display:block!important;flex:0 0 auto!important;
- margin:3px 0 0!important;padding:8px 12px!important;
- font-size:12px!important;color:#a9b6c5!important;
+ display:block!important;margin:2px 0 0!important;padding:9px 12px!important;
+ font-size:12px!important;color:#afc4dc!important;
 }
 #hubOverlay .simple-hub-nav .simple-hub-developer{display:none!important}
-#hubOverlay .hub-window[data-simple-hub] .simple-hub-main{
+#hubOverlay .hub-window[data-simple-hub] .simple-hub-heading{
  grid-column:2!important;grid-row:1!important;
- display:block!important;min-width:0!important;min-height:0!important;
- margin:112px 0 0!important;padding:0 24px 22px!important;
- background:#1c1c1c!important;overflow-x:hidden!important;overflow-y:auto!important;
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ gap:10px!important;height:auto!important;min-height:0!important;
+ padding:19px 24px 0!important;border:0!important;
+ background:#1c1c1c!important;box-sizing:border-box!important;
+}
+#hubOverlay .simple-hub-heading h1{
+ flex:0 0 auto!important;font-size:25px!important;font-weight:600!important;
+ margin:0!important;line-height:1.35!important;color:#f2f2f2!important;
+}
+#hubOverlay .simple-hub-toolbar{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ flex:0 0 auto!important;gap:8px!important;flex-wrap:nowrap!important;
+ min-height:35px!important;width:100%!important;
+}
+#hubOverlay .simple-hub-toolbar :is(button,select,input){
+ box-sizing:border-box!important;margin:0!important;min-height:34px!important;
+ font-size:12px!important;
+}
+#hubOverlay .simple-hub-toolbar #hubProjectSearch{
+ flex:1 1 auto!important;width:auto!important;min-width:100px!important;
+ max-width:400px!important;padding:5px 10px!important;
+}
+#hubOverlay .simple-hub-toolbar #hubProjectFilter{flex:0 0 112px!important;max-width:112px!important}
+#hubOverlay .simple-hub-toolbar #hubNewProject{
+ flex:0 0 auto!important;min-width:130px!important;padding:5px 12px!important;
+ background:#3775c2!important;border-color:#3775c2!important;color:#fff!important;
+ font-weight:600!important;
+}
+#hubOverlay .simple-hub-toolbar #hubClose{
+ flex:0 0 33px!important;width:33px!important;min-width:33px!important;
+}
+#hubOverlay .simple-hub-toolbar>[hidden]{display:none!important}
+#hubOverlay .hub-window[data-simple-hub] .simple-hub-main{
+ grid-column:2!important;grid-row:2!important;display:block!important;
+ min-width:0!important;min-height:0!important;
+ padding:8px 24px 20px!important;margin:0!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ background:#1c1c1c!important;box-sizing:border-box!important;
 }
 #hubOverlay .simple-hub-main>[hidden],
-#hubOverlay .simple-hub-main :is(.hub-create,.hub-appearance,.hub-diagnostics)[hidden]{display:none!important}
-#hubOverlay .simple-hub-projects{width:100%!important;padding:0!important;min-width:0!important}
-#hubOverlay .hub-project-welcome{display:none!important}
-#hubOverlay .hub-browser-tools{
- display:flex!important;align-items:center!important;
- justify-content:flex-end!important;min-height:34px!important;
- gap:10px!important;margin:0 0 8px!important;padding:0!important;
+#hubOverlay .simple-hub-main :is(.hub-create,.hub-appearance,.hub-diagnostics)[hidden]{
+ display:none!important;
 }
-#hubOverlay .hub-view-switch{display:flex!important;gap:2px!important}
+#hubOverlay .simple-hub-main>:not([hidden]){
+ width:100%!important;max-width:100%!important;margin:0!important;
+ box-sizing:border-box!important;
+}
+#hubOverlay .hub-project-welcome{display:none!important}
+#hubOverlay .simple-hub-projects{padding:0!important;border:0!important;background:transparent!important}
+#hubOverlay .hub-browser-tools{
+ display:flex!important;justify-content:flex-end!important;align-items:center!important;
+ gap:8px!important;min-height:30px!important;margin:0 0 8px!important;padding:0!important;
+}
+#hubOverlay .hub-view-switch{display:flex!important;gap:3px!important}
 #hubOverlay .hub-view-switch button{
- padding:6px 10px!important;min-height:29px!important;font-size:12px!important;
+ min-height:29px!important;padding:5px 9px!important;font-size:11px!important;
 }
 #hubOverlay .hub-project-table-heading{
- display:grid!important;grid-template-columns:42px minmax(0,1fr) 150px 120px 40px!important;
- align-items:center!important;gap:0!important;padding:0 10px!important;
- min-height:37px!important;font-size:12px!important;color:#c2c2c2!important;
- background:#252525!important;border-bottom:1px solid #444!important;
+ display:grid!important;grid-template-columns:42px minmax(0,1fr) 150px 115px 36px!important;
+ gap:0!important;align-items:center!important;min-height:36px!important;
+ padding:0 8px!important;background:#282828!important;
+ border-bottom:1px solid #454545!important;font-size:12px!important;
 }
 #hubOverlay .simple-hub-projects[data-project-view=list] #hubProjects{
- display:flex!important;flex-direction:column!important;
- gap:0!important;overflow-y:visible!important;max-height:none!important;
+ display:flex!important;flex-direction:column!important;gap:0!important;
+ max-height:none!important;overflow:visible!important;
 }
 #hubOverlay .simple-hub-projects[data-project-view=list] #hubProjects>.hub-project-card{
- display:grid!important;grid-template-columns:42px minmax(0,1fr) 150px 120px 40px!important;
- gap:0!important;align-items:center!important;width:100%!important;
- min-height:59px!important;padding:7px 10px!important;
- border:0!important;border-bottom:1px solid #363636!important;
- border-radius:0!important;background:#1c1c1c!important;
- box-shadow:none!important;box-sizing:border-box!important;
+ display:grid!important;grid-template-columns:42px minmax(0,1fr) 150px 115px 36px!important;
+ gap:0!important;align-items:center!important;min-height:58px!important;
+ width:100%!important;padding:6px 8px!important;
+ background:#1c1c1c!important;border:0!important;border-bottom:1px solid #333!important;
+ border-radius:0!important;box-shadow:none!important;
 }
 #hubOverlay .simple-hub-projects[data-project-view=list] #hubProjects>.hub-project-card:hover{
- background:#292929!important;
+ background:#2a2a2a!important;
 }
-#hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-preview{display:none!important}
-#hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-favorite{
- grid-column:1!important;justify-self:center!important;
- border:0!important;background:transparent!important;font-size:18px!important;
+#hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-preview,
+#hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-stats{
+ display:none!important;
 }
+#hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-favorite{grid-column:1!important}
 #hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-card>div{
  grid-column:2!important;min-width:0!important;padding:0 8px!important;
 }
 #hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-open{
- min-height:27px!important;padding:0!important;background:transparent!important;
- border:0!important;text-align:left!important;font-size:13px!important;
- font-weight:600!important;white-space:nowrap!important;text-overflow:ellipsis;
- overflow:hidden!important;
+ display:block!important;width:100%!important;padding:2px 0!important;
+ min-height:23px!important;border:0!important;background:transparent!important;
+ font-size:13px!important;font-weight:600!important;text-align:left!important;
+ white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
 }
-#hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-stats{display:none!important}
 #hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-modified{
  grid-column:3!important;font-size:12px!important;color:#b8b8b8!important;
 }
@@ -155,56 +150,48 @@
  grid-column:4!important;font-size:12px!important;color:#b8b8b8!important;
 }
 #hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-options{
- grid-column:5!important;justify-self:end!important;position:relative!important;
+ grid-column:5!important;justify-self:end!important;
 }
 #hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-options summary{
- min-height:28px!important;padding:4px 7px!important;
+ min-height:26px!important;padding:4px 7px!important;
 }
 #hubOverlay .simple-hub-list-actions{
- display:flex!important;align-items:center!important;justify-content:space-between!important;
- padding:14px 2px!important;gap:12px!important;
+ display:flex!important;justify-content:space-between!important;align-items:center!important;
+ gap:9px!important;flex-wrap:wrap!important;margin-top:12px!important;
 }
-#hubOverlay .simple-hub-list-actions #hubBackupAll{
- font-size:12px!important;min-height:30px!important;
-}
-#hubOverlay .simple-hub-main>.hub-appearance,
-#hubOverlay .simple-hub-main>.hub-create,
-#hubOverlay .simple-hub-main>.simple-hub-about,
-#hubOverlay .simple-hub-main>.hub-diagnostics{
+/* Settings, About and New Project are different pages, not sections of Projects. */
+#hubOverlay .simple-hub-main>:is(.hub-create,.hub-appearance,.hub-diagnostics,.simple-hub-about){
  padding:0!important;background:transparent!important;border:0!important;
 }
-@media(max-width:850px){
+@media(max-width:830px){
+ #hubOverlay{padding:0!important}
  #hubOverlay>.hub-window[data-simple-hub]{
-  width:100%!important;height:100dvh!important;max-height:100dvh!important;
-  border-radius:0!important;
-  grid-template-columns:1fr!important;grid-template-rows:auto auto minmax(0,1fr)!important;
+  width:100vw!important;height:100dvh!important;max-height:100dvh!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto auto minmax(0,1fr)!important;border-radius:0!important;
  }
+ #hubOverlay .hub-window[data-simple-hub] .simple-hub-nav{
+  grid-column:1!important;grid-row:2!important;flex-direction:row!important;
+  overflow-x:auto!important;overflow-y:hidden!important;padding:5px!important;
+  border-right:0!important;border-bottom:1px solid #444!important;
+ }
+ #hubOverlay .simple-hub-brand{display:none!important}
+ #hubOverlay .simple-hub-nav .simple-hub-nav-item{width:auto!important;white-space:nowrap!important}
+ #hubOverlay .simple-hub-nav .hub-settings-item{margin-top:0!important;border:0!important}
+ #hubOverlay .simple-hub-nav .simple-hub-docs{display:none!important}
  #hubOverlay .hub-window[data-simple-hub] .simple-hub-heading{
   grid-column:1!important;grid-row:1!important;padding:12px!important;
  }
- #hubOverlay .hub-window[data-simple-hub] .simple-hub-brand{
-  position:static!important;align-self:flex-start!important;
- }
- #hubOverlay .hub-window[data-simple-hub] .simple-hub-nav{
-  grid-column:1!important;grid-row:2!important;
-  width:100%!important;min-width:0!important;
-  flex-direction:row!important;padding:5px!important;
-  overflow-x:auto!important;overflow-y:hidden!important;
- }
- #hubOverlay .simple-hub-nav .simple-hub-nav-item{
-  white-space:nowrap!important;width:auto!important;min-width:max-content!important;
- }
- #hubOverlay .simple-hub-nav .hub-settings-item{margin-top:0!important}
- #hubOverlay .simple-hub-nav .simple-hub-docs{display:none!important}
+ #hubOverlay .simple-hub-heading h1{font-size:20px!important}
+ #hubOverlay .simple-hub-toolbar{flex-wrap:wrap!important}
  #hubOverlay .hub-window[data-simple-hub] .simple-hub-main{
-  grid-column:1!important;grid-row:3!important;margin:0!important;padding:12px!important;
+  grid-column:1!important;grid-row:3!important;padding:10px!important;
  }
- #hubOverlay .hub-project-table-heading{grid-template-columns:35px minmax(0,1fr) 84px 32px!important}
+ #hubOverlay .hub-project-table-heading{grid-template-columns:30px minmax(0,1fr) 82px 34px!important}
  #hubOverlay .hub-project-table-heading span:nth-child(4){display:none!important}
  #hubOverlay .simple-hub-projects[data-project-view=list] #hubProjects>.hub-project-card{
-  grid-template-columns:35px minmax(0,1fr) 84px 32px!important;
+  grid-template-columns:30px minmax(0,1fr) 82px 34px!important;
  }
  #hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-version{display:none!important}
  #hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-options{grid-column:4!important}
- #hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-modified{grid-column:3!important}
 }

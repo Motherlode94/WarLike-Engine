@@ -94,3 +94,32 @@ export function advanceGaiaDriverTransition(transition,vehicle,actor,dt){
  actor._hiddenInVehicle=false;
  return {done:t>=1,invalid:false,progress:t};
 }
+
+/**
+ * Plan a collision-tested exit around the actual heading of the chassis.
+ * All values use the existing 3D scene entity units. The caller supplies
+ * its active Rapier/collision query as canPlace; no scene transforms mutate.
+ */
+export function gaiaSafeDriverExit(vehicle,actor,{canPlace,clearance=12}={}){
+ if(!vehicle||!actor||typeof canPlace!=='function')throw Error('Invalid Gaia exit query');
+ const w=Math.max(1,Number(vehicle.w)||32),d=Math.max(1,Number(vehicle.depth3d||vehicle.h)||32);
+ const aw=Math.max(1,Number(actor.w)||32),ad=Math.max(1,Number(actor.depth3d||actor.h)||32);
+ const cx=(Number(vehicle.x)||0)+w/2,cy=(Number(vehicle.y)||0)+d/2;
+ const a=(Number(vehicle.rotation)||0)*Math.PI/180;
+ const right={x:Math.cos(a),y:Math.sin(a)},forward={x:Math.sin(a),y:-Math.cos(a)};
+ const space=Math.max(4,Math.min(128,Number(clearance)||12));
+ const offsets=[
+  {dx:-(w/2+aw/2+space),dy:0,side:'left'},
+  {dx:w/2+aw/2+space,dy:0,side:'right'},
+  {dx:0,dy:-(d/2+ad/2+space),side:'rear'},
+  {dx:0,dy:d/2+ad/2+space,side:'front'}
+ ];
+ const elevation3d=Number(vehicle.elevation3d)||0;
+ for(const offset of offsets){
+  const x=cx+right.x*offset.dx+forward.x*offset.dy-aw/2;
+  const y=cy+right.y*offset.dx+forward.y*offset.dy-ad/2;
+  const pose={x,y,elevation3d};
+  if(canPlace(pose))return {...pose,side:offset.side};
+ }
+ return null;
+}

@@ -64,7 +64,7 @@ body.reference-engine:not(.hub-open) .scene-header{
 body.reference-engine:not(.hub-open) .scene-header .scene-tabs{flex:0 0 auto}
 body.reference-engine:not(.hub-open) .scene-header .scene-actions{
  display:flex!important;align-items:center!important;justify-content:flex-end!important;
- min-width:0;overflow:hidden!important;gap:3px!important;
+ min-width:0;overflow:visible!important;gap:3px!important;
 }
 body.reference-engine:not(.hub-open) .scene-header .scene-actions #view3dFocus{display:none!important}
 body.reference-engine:not(.hub-open) .scene-view-options{position:relative!important;flex:0 0 auto!important}

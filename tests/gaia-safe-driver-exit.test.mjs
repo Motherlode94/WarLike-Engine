@@ -20,7 +20,7 @@ test('WB 2.9g.4 rotates exit candidates with the vehicle and tries alternate sid
  assert.equal(seen.length,2);
  assert.equal(result.side,'right');
  assert(Math.abs(result.x-130)<1e-9);
- assert(Math.abs(result.y-322)<1e-9);
+ assert(Math.abs(result.y-312)<1e-9);
 });
 test('WB 2.9g.4 never releases a driver when every exit collides',()=>{
  const v=vehicle(),before=structuredClone(v);

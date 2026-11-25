@@ -50,6 +50,7 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
   if(result.done){
    driving3d.transition=null;
    if(transition.action==='enter'){
+    if(car.vehicleArticulation)car.vehicleArticulation.doorOpen=false;
     placeGaiaDriverAtSeat(car,player);
    }else{
     player._hiddenInVehicle=false;player.animation='idle';

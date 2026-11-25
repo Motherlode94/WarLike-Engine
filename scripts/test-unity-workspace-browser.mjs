@@ -78,6 +78,24 @@ try{
   await page.locator('.reference-scene-menu>summary').click();
   await page.screenshot({path:path.join(out,`editor-${viewport.width}x${viewport.height}.png`)});
  }
+ // Unity window organization: History is a menu in the Hierarchy header,
+ // while Project/Assets and Inspector keep usable scrolling areas.
+ const unityWindows=await page.evaluate(()=>{
+  const h=document.querySelector('#hierarchyPanel .hierarchy-history');
+  const p=document.querySelector('#projectPanel');
+  const body=p?.querySelector('#projectContent > .asset-body');
+  const inspector=document.querySelector('#inspectorPanel #properties');
+  return {historyInHeader:!!h?.closest('.dock-title-actions'),
+   projectBodyHeight:body?.getBoundingClientRect().height??0,
+   projectDockHeight:p?.getBoundingClientRect().height??0,
+   inspectorScroll:getComputedStyle(inspector).overflowY,
+   repeatedInspectorTitle:!!inspector?.querySelector('.inspector-window-toolbar>strong')&&getComputedStyle(inspector.querySelector('.inspector-window-toolbar>strong')).display!=='none'};
+ });
+ assert(unityWindows.historyInHeader,'History belongs to the Hierarchy title menu');
+ assert(unityWindows.projectBodyHeight>60,'Project assets retain a useful scrollable content area');
+ assert(unityWindows.inspectorScroll==='auto','Inspector properties scroll inside the dock');
+ assert.equal(unityWindows.repeatedInspectorTitle,false,'Inspector must not display duplicate headings');
+
  // Unity 2023 editor hierarchy: a single + dropdown, preserving real actions.
  await page.setViewportSize({width:1440,height:900});
  await page.locator('#hierarchyPanel .unity-hierarchy-create>summary').click();

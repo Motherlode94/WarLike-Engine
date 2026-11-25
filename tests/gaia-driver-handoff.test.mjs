@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {gaiaDriverSeatAccess} from '../js/core/gaia-driver-handoff.js';
+import {gaiaDriverSeatAccess} from '../js/core/gaia-parking-runtime.js';
 
 const vehicle=driverId=>({id:31,vehicleSystems:{seats:{capacity:4,driverId}}});
 test('WB 2.9g reserves the driver seat without changing the original vehicle',()=>{

@@ -131,17 +131,19 @@ body.reference-engine:not(.hub-open) #projectPanel #assetGrid{
  flex:1 1 0!important;min-height:0!important;max-height:none!important;
  overflow-y:auto!important;align-content:start!important;
 }
+/* Legacy docks can be only 180px tall: preserve a real asset viewport
+   and let the contents scroll instead of shrinking the grid to zero. */
 body.reference-engine:not(.hub-open) #projectPanel #warlikeVisualPacks{
- display:flex;flex-direction:column;flex:1 1 0!important;
- min-height:0!important;max-height:none!important;
- overflow:hidden!important;
+ display:flex;flex-direction:column;flex:1 0 auto!important;
+ min-height:100px!important;max-height:none!important;
+ overflow:visible!important;
 }
 body.reference-engine:not(.hub-open) #projectPanel #warlikeVisualPacks .visual-pack-results{
- display:flex;flex-direction:column;flex:1 1 0!important;
- min-height:0!important;overflow:hidden!important;
+ display:flex;flex-direction:column;flex:1 0 auto!important;
+ min-height:90px!important;overflow:visible!important;
 }
 body.reference-engine:not(.hub-open) #projectPanel #warlikeVisualPacks #visualPackItems{
- flex:1 1 0!important;min-height:0!important;max-height:none!important;
+ flex:1 0 90px!important;min-height:90px!important;max-height:none!important;
  overflow-y:auto!important;overflow-x:hidden!important;
  align-content:start!important;
 }

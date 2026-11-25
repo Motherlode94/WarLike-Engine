@@ -83,16 +83,21 @@ try{
  const unityWindows=await page.evaluate(()=>{
   const h=document.querySelector('#hierarchyPanel .hierarchy-history');
   const p=document.querySelector('#projectPanel');
-  const body=p?.querySelector('#projectContent > .asset-body');
+  const grids=[...p.querySelectorAll('#visualPackItems,#assetGrid')].filter(node=>{
+   const style=getComputedStyle(node);
+   return style.display!=='none'&&style.visibility!=='hidden'&&node.getClientRects().length>0;
+  });
   const inspector=document.querySelector('#inspectorPanel #properties');
   return {historyInHeader:!!h?.closest('.dock-title-actions'),
-   projectBodyHeight:body?.getBoundingClientRect().height??0,
+   assetGridHeight:Math.max(0,...grids.map(node=>node.getBoundingClientRect().height)),
+   assetItems:grids.reduce((total,node)=>total+node.children.length,0),
    projectDockHeight:p?.getBoundingClientRect().height??0,
    inspectorScroll:getComputedStyle(inspector).overflowY,
    repeatedInspectorTitle:!!inspector?.querySelector('.inspector-window-toolbar>strong')&&getComputedStyle(inspector.querySelector('.inspector-window-toolbar>strong')).display!=='none'};
  });
  assert(unityWindows.historyInHeader,'History belongs to the Hierarchy title menu');
- assert(unityWindows.projectBodyHeight>60,'Project assets retain a useful scrollable content area');
+ assert(unityWindows.assetGridHeight>=70&&unityWindows.assetItems>0,
+  'Project must render real asset items in a usable grid, not just toolbars');
  assert(unityWindows.inspectorScroll==='auto','Inspector properties scroll inside the dock');
  assert.equal(unityWindows.repeatedInspectorTitle,false,'Inspector must not display duplicate headings');
 

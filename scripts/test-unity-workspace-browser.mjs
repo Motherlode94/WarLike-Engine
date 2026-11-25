@@ -107,8 +107,8 @@ try{
  }));
  console.log('P0 Hierarchy name widths',JSON.stringify(sizes));
  await page.screenshot({path:path.join(out,'editor-3d-clean-scene-and-hierarchy.png')});
- assert(sizes.some(item=>item.name&&item.visible&&item.width>40),
-  'GameObject name must be readable, not only an icon');
+ assert(sizes.some(item=>item.name&&item.visible&&item.labelWidth>=90&&item.width>40),
+  'GameObject label must have real usable space, not only a forced minimum text width');
  // P0 certification: actual tab switching, panel detachment and restoration.
  await page.setViewportSize({width:1440,height:900});
  await page.locator('#consoleTab').click();

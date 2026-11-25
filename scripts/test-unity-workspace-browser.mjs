@@ -37,6 +37,11 @@ try{
  // initSimpleHub() replaces the static HTML Hub with its tabbed runtime shell.
  await page.locator('#hubOverlay .hub-window[data-simple-hub="true"]').waitFor();
  await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="projects"]').waitFor();
+ assert.equal(await page.locator('#hubOverlay .hub-project-welcome').count(),0,'No marketing hero in Unity Hub Projects');
+ assert.equal(await page.locator('#hubOverlay .simple-hub-projects').getAttribute('data-project-view'),'list','Project list is default');
+ const hubZones=await page.evaluate(()=>{const r=sel=>{const v=document.querySelector(sel).getBoundingClientRect();return {left:v.left,right:v.right,top:v.top,bottom:v.bottom}};return {nav:r('#hubOverlay .simple-hub-nav'),header:r('#hubOverlay .simple-hub-heading'),main:r('#hubOverlay .simple-hub-main')}});
+ assert(hubZones.nav.right<=hubZones.main.left+4,'Sidebar does not overlap projects');
+ assert(hubZones.header.bottom<=hubZones.main.top+4,'Header does not overlap list');
  assert.equal(await page.locator('#hubOverlay .simple-hub-main').getAttribute('data-hub-tab'),'projects');
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false,
   'Appearance is not mixed into the project browser');
@@ -53,7 +58,9 @@ try{
   const rect=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width}};
   return {heading:rect('#hubOverlay .simple-hub-heading h1'),toolbar:rect('#hubOverlay .simple-hub-toolbar'),backup:rect('#hubBackupAll'),count:rect('#hubProjectCount'),newProjectButtons:[...document.querySelectorAll('#hubOverlay button')].filter(b=>b.textContent.includes('Nouveau projet')&&!b.hidden).length};
  });
- assert(hubHeader.toolbar.left>=hubHeader.heading.right-2,'Hub project tools begin after heading, without overlap');
+ assert(hubHeader.toolbar.left>=hubHeader.heading.right-2||
+  hubHeader.toolbar.top>=hubHeader.heading.bottom-2,
+  'Hub project tools must be beside or below heading, never overlapping');
  assert(hubHeader.backup.left>=hubHeader.count.right-2||hubHeader.backup.top>=hubHeader.count.bottom-2,
   'project backup button does not overlap the project counter');
  assert.equal(hubHeader.newProjectButtons,1,'Hub exposes one visible New Project button');

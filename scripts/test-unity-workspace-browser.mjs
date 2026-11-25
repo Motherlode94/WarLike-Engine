@@ -78,6 +78,14 @@ try{
   await page.locator('.reference-scene-menu>summary').click();
   await page.screenshot({path:path.join(out,`editor-${viewport.width}x${viewport.height}.png`)});
  }
+ // Unity 2023 editor hierarchy: a single + dropdown, preserving real actions.
+ await page.setViewportSize({width:1440,height:900});
+ await page.locator('#hierarchyPanel .unity-hierarchy-create>summary').click();
+ assert.equal(await page.locator('#quickCreateObject').isVisible(),true,'GameObject command available from Hierarchy +');
+ assert.equal(await page.locator('#quickCreateCharacter').isVisible(),true,'Character command available from Hierarchy +');
+ await page.screenshot({path:path.join(out,'unity-2023-hierarchy-create.png')});
+ await page.locator('#hierarchyPanel .unity-hierarchy-create>summary').click();
+ assert.equal(await page.locator('#view3dStatus').isVisible(),false,'no permanent tutorial overlay in 3D Scene');
  // P0 certification: actual tab switching, panel detachment and restoration.
  await page.setViewportSize({width:1440,height:900});
  await page.locator('#consoleTab').click();

@@ -86,6 +86,8 @@ jobs:
           WARLIKE_EXPORT_BROWSER_OUTPUT_DIR: .validation-tools/export-browser
       - name: Reference editor, Blueprint and old/new project round trips
         run: node scripts/test-reference-editor-browser.mjs
+      - name: Unity-like dock layout and Hub visual regression in Chromium
+        run: node scripts/test-unity-workspace-browser.mjs
       - name: CHAMBRE 07 export and isolated Play
         run: npm run test:chambre07:browser
         env:
@@ -105,6 +107,7 @@ jobs:
             .validation-tools/script-security/*.png
             .validation-tools/script-security/report.json
             .validation-tools/reference-editor/*.png
+            .validation-tools/unity-workspace/*.png
             .validation-tools/chambre07/chambre07-play.png
             .validation-tools/chambre07/chambre07-ending-*.png
             .validation-tools/chambre07/legacy-2d-outcome.png

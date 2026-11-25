@@ -19,7 +19,7 @@ export function initReferenceWorkspace(){
  if(fileMenu&&$('exportGame'))fileMenu.append($('exportGame'));if(gameMenu&&$('loadAssetTest3d'))gameMenu.prepend($('loadAssetTest3d'));
  const tools=document.querySelector('.scene-tools'),header=document.querySelector('.scene-header'),center=document.querySelector('.center-stack');
  const toolHost=document.createElement('div');toolHost.className='reference-editor-tools';toolHost.setAttribute('aria-label','Outils de transformation');
- if($('studioQuickCreate'))toolHost.append($('studioQuickCreate'));document.querySelector('.studio-menubar').append(toolHost);
+ if($('studioQuickCreate')){const quick=$('studioQuickCreate');const parent=document.querySelector('.studio-menubar');if(parent)parent.append(quick);}document.querySelector('.studio-menubar').append(toolHost);
  const sceneMenu=document.createElement('details');sceneMenu.className='reference-scene-menu';const summary=document.createElement('summary');summary.textContent='Affichage';const options=document.createElement('div');options.className='reference-scene-options';sceneMenu.append(summary,options);
  const sceneActions=header.querySelector('.scene-actions');for(const n of [...sceneActions.children]){if(['workspace2d','workspace3d','view3dFocus','resetView'].includes(n.id))continue;if(n.matches('.scene-view-options')){const group=n.querySelector('.scene-view-options-menu');if(group)for(const child of [...group.children])options.append(child);n.remove();}else options.append(n);}
  for(const n of [...tools.querySelectorAll('.tool-option')])if(!n.querySelector('#snapEnabled'))options.append(n);

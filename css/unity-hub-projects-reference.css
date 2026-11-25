@@ -1,6 +1,7 @@
 /* Unity Hub reference — Projects window. A single, component-scoped Hub stylesheet.
    The editor palette and canvas are deliberately outside this stylesheet. */
-#hubOverlay{display:grid!important;place-items:center!important;padding:18px!important}
+#hubOverlay[hidden]{display:none!important}
+#hubOverlay:not([hidden]){display:grid!important;place-items:center!important;padding:18px!important}
 #hubOverlay>.hub-window[data-simple-hub]{
  display:grid!important;grid-template-columns:198px minmax(0,1fr)!important;
  grid-template-rows:105px minmax(0,1fr)!important;

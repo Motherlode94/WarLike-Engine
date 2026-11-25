@@ -166,3 +166,10 @@ body.reference-engine:not(.hub-open) #inspectorPanel #properties{min-height:0;ov
 
 #hubOverlay .simple-hub-main>[hidden]{display:none!important}
 #hubOverlay .hub-window[data-simple-hub]{grid-template-columns:190px minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important}
+#hubOverlay .hub-window[data-simple-hub]{display:grid!important;width:min(1040px,calc(100vw - 40px))!important;height:min(780px,calc(100dvh - 40px))!important;max-height:calc(100dvh - 40px)!important;overflow:hidden!important}
+#hubOverlay .hub-window[data-simple-hub] .simple-hub-heading{grid-column:1/-1!important;grid-row:1!important;display:flex!important;align-items:center!important;gap:12px!important;padding:10px 15px!important;min-height:60px!important}
+#hubOverlay .hub-window[data-simple-hub] .simple-hub-nav{grid-column:1!important;grid-row:2!important;display:flex!important;flex-direction:column!important;gap:4px!important;min-width:0;min-height:0;overflow-y:auto!important;padding:12px 8px!important}
+#hubOverlay .hub-window[data-simple-hub] .simple-hub-main{grid-column:2!important;grid-row:2!important;min-width:0!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;padding:18px 22px!important}
+#hubOverlay .simple-hub-nav-item{display:block!important;flex:0 0 auto!important;min-height:35px!important;text-align:left!important;white-space:normal!important}
+#hubOverlay .simple-hub-nav-item.active{box-shadow:inset 3px 0 var(--hub-accent,#48cba9)}
+#hubOverlay .simple-hub-main>:not([hidden]){max-width:100%;min-width:0;margin:0!important}

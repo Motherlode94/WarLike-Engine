@@ -32,8 +32,17 @@ try{
   localStorage.setItem('warlike.workspace.layout.v1',JSON.stringify({leftWidth:240,rightWidth:320,float:{}}));
   localStorage.setItem('warlike.projectHeight','220');
  });
- await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'load'});
+ await page.goto('http://127.0.0.1:'+server.address().port+'/index.html',{waitUntil:'load'});
  await page.locator('#hubOverlay').waitFor({state:'visible'});
+ const hubDom=await page.evaluate(()=>({
+  url:location.href,
+  overlay:!!document.querySelector('#hubOverlay'),
+  count:document.querySelectorAll('.hub-appearance-settings').length,
+  hasColor:!!document.querySelector('#hubAccentColor'),
+  appearance:document.querySelector('#hubOverlay .hub-list')?.innerHTML.slice(0,1000)
+ }));
+ console.log('UI Hub DOM diagnosis',JSON.stringify(hubDom));
+ assert.equal(hubDom.count,1,'Hub appearance must be present as a collapsible details element');
  assert.equal(await page.locator('.hub-appearance-settings').getAttribute('open'),null,'Hub appearance is collapsed by default');
  await page.screenshot({path:path.join(out,'hub-before-open.png')});
  await page.locator('.hub-appearance-settings>summary').click();

@@ -62,3 +62,35 @@ export function placeGaiaDriverAtSeat(vehicle,actor){
  actor.animation='drive';
  return pose;
 }
+
+/**
+ * Opt-in Play transition. Clip names are authored by the vehicle/prefab;
+ * fallback clips preserve the legacy behaviour if no clips are provided.
+ * Scene coordinates are used by the existing vehicle-3d controller.
+ */
+export function beginGaiaDriverTransition(vehicle,actor,action,target){
+ const cfg=vehicle?.vehicleSystems?.seats?.transition;
+ if(cfg?.enabled!==true)return null;
+ if(!vehicle||!actor||!['enter','exit'].includes(action)||!target||
+  !Number.isFinite(target.x)||!Number.isFinite(target.y))return null;
+ const seconds=Number(cfg[action==='enter'?'enterSeconds':'exitSeconds']);
+ return {action,vehicleId:vehicle.id,actorId:actor.id,elapsed:0,
+  duration:Number.isFinite(seconds)?Math.max(.1,Math.min(5,seconds)):0.85,
+  from:{x:actor.x,y:actor.y,elevation3d:actor.elevation3d||0},
+  to:{x:target.x,y:target.y,elevation3d:target.elevation3d||0},
+  clip:cfg[action==='enter'?'enterClip':'exitClip']||(action==='enter'?'vehicle-enter':'vehicle-exit')};
+}
+export function advanceGaiaDriverTransition(transition,vehicle,actor,dt){
+ if(!transition||vehicle?.id!==transition.vehicleId||actor?.id!==transition.actorId)
+  return {done:true,invalid:true};
+ const step=Math.max(0,Math.min(.1,Number(dt)||0));
+ transition.elapsed=Math.min(transition.duration,transition.elapsed+step);
+ const t=transition.elapsed/transition.duration;
+ const smooth=t*t*(3-2*t);
+ for(const key of ['x','y','elevation3d'])
+  actor[key]=transition.from[key]+(transition.to[key]-transition.from[key])*smooth;
+ actor.animation=transition.clip;
+ // Keep the actor visible during the authored clip; hide only once seated.
+ actor._hiddenInVehicle=false;
+ return {done:t>=1,invalid:false,progress:t};
+}

@@ -5,6 +5,7 @@ import {collisionBackend3d} from './collision-backend-3d.js';
 import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle} from './vehicle-components.js';
 import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle-weapons-3d.js';
 import {recordEngineEvent} from './engine-diagnostics.js';
+import {gaiaDriverSeatAccess} from './gaia-driver-handoff.js';
 import {stepArcadeVehicle} from './arcade-driving.js';
 import {aircraftPilotInput,releaseAircraftControls,canSafelyExitAircraft} from './aircraft-pilot-input.js';
 import {stepAircraftSystems} from './aircraft-systems.js';
@@ -33,6 +34,8 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
  const car=currentVehicle3d(entities);
  if(enter&&!driving3d.enterHeld){
   if(car){
+   // Only the reserved driver may release controls or exit the vehicle.
+   if(!gaiaDriverSeatAccess(car,player?.id,'exit').allowed){driving3d.enterHeld=enter;return true;}
    // An aircraft exit requires a safe landing. No ejection/parachute yet.
    if(car.aircraftPhysics?.enabled&&!canSafelyExitAircraft(car)){
     driving3d.enterHeld=enter;
@@ -50,7 +53,7 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
    const p=center(player);
    const candidates=entities.filter(o=>o!==player&&isDriveable3d(o)&&o.sequenceEnabled!==false&&!o._sequenceDestroyed).map(o=>({o,d:Math.hypot(center(o).x-p.x,center(o).y-p.y)})).sort((a,b)=>a.d-b.d);
    const nearest=candidates[0];
-   if(nearest&&Math.abs((Number(nearest.o.elevation3d)||0)-(Number(player.elevation3d)||0))<1.8&&nearest.d<Math.max(150,(nearest.o.w||64)*.85)&&canDriveVehicle(nearest.o)){
+   if(nearest&&Math.abs((Number(nearest.o.elevation3d)||0)-(Number(player.elevation3d)||0))<1.8&&nearest.d<Math.max(150,(nearest.o.w||64)*.85)&&canDriveVehicle(nearest.o)&&gaiaDriverSeatAccess(nearest.o,player.id,'enter').allowed){
     vehicleComponents(nearest.o).seats.driverId=player.id;
     if(player.battlefield?.enabled)nearest.o.team=player.team;
     player._vehicleInputConsumed=true;recordEngineEvent('vehicle-enter',nearest.o.name);driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;player._hiddenInVehicle=true;player.animation='drive';

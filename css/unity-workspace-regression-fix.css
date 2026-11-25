@@ -176,3 +176,68 @@ body.reference-engine:not(.hub-open) #inspectorPanel #properties{min-height:0;ov
 
 /* Keep live Scene menu actions visible after reference-workspace relocates them. */
 body.reference-engine:not(.hub-open) .scene-header .reference-scene-menu[open] .reference-scene-options :is(#zoomIn,#zoomOut,#resetView,#zoomLabel,#sunHour,#sunClock,#dayNightSpeed,#dayNightPeriod,[data-day-night-hour],.lighting-control){display:inline-flex!important;visibility:visible!important;opacity:1!important}
+
+
+/* Unity Editor 2023.1 reference: chrome and authoring controls only.
+   Runtime canvas, model content, saved scenes, and user-selected themes remain intact. */
+body.reference-engine:not(.hub-open) #hierarchyPanel .warlike-create-bar{
+ min-height:26px!important;padding:2px 6px!important;border-bottom:1px solid var(--wl-theme-border,#555)!important;
+ justify-content:flex-start!important;overflow:visible!important;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-create{position:relative;z-index:30;display:inline-block}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-create>summary{
+ display:grid;place-items:center;cursor:pointer;list-style:none;
+ width:27px;height:23px;min-height:23px!important;padding:0!important;
+ border:1px solid var(--wl-theme-border,#555);border-radius:2px;
+ font-size:16px;line-height:1;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-create>summary::-webkit-details-marker{display:none}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-create-options{
+ position:absolute;top:calc(100% + 3px);left:0;z-index:300;
+ display:flex;flex-direction:column;gap:2px;
+ min-width:190px;padding:5px;background:var(--wl-theme-panel,#292929);
+ border:1px solid var(--wl-theme-border,#555);box-shadow:0 7px 18px #0008;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-create:not([open]) .unity-hierarchy-create-options{display:none!important}
+body.reference-engine:not(.hub-open) #hierarchyPanel .unity-hierarchy-create-options button{
+ display:block!important;max-width:none!important;width:100%!important;
+ padding:6px 10px!important;text-align:left!important;min-height:29px!important;
+ white-space:nowrap!important;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .dock-title,
+body.reference-engine:not(.hub-open) #inspectorPanel .dock-title,
+body.reference-engine:not(.hub-open) #projectPanel .dock-title{
+ font-size:11px!important;font-weight:500!important;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel #objects{
+ flex:1 1 auto!important;min-height:0!important;overflow:auto!important;
+}
+body.reference-engine:not(.hub-open) .scene-header .scene-tabs{margin-right:auto}
+body.reference-engine:not(.hub-open) .scene-header .reference-scene-menu>summary{
+ border:0!important;background:transparent!important;font-size:11px!important;
+ padding:5px 9px!important;
+}
+body.reference-engine:not(.hub-open) .scene-header .scene-actions>button{
+ padding:3px 7px!important;min-height:24px!important;
+}
+body.reference-engine:not(.hub-open)[data-workspace="3d"] #view3dStatus,
+body.reference-engine:not(.hub-open):not(.warlike-game-build) #viewport>footer{
+ display:none!important;
+}
+/* The editor's scene is the central authoring surface. Do not create a fixed
+   banner or status row over it; all real tools remain available from toolbar. */
+body.reference-engine:not(.hub-open) .center-stack>.scene-tools{display:none!important}
+body.reference-engine:not(.hub-open) #projectPanel .asset-toolbar{
+ padding:5px 7px!important;min-height:31px!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel #assetFolders{
+ min-width:150px!important;max-width:230px!important;
+ border-right:1px solid var(--wl-theme-border,#555)!important;
+ overflow:auto!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel .asset-content{
+ min-width:0!important;overflow:auto!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel .asset-grid{
+ min-width:0!important;
+}

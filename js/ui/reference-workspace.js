@@ -18,8 +18,23 @@ export function initReferenceWorkspace(){
  const gameMenu=[...menus.children].find(n=>n.querySelector('summary')?.textContent==='Game')?.querySelector('.studio-dropdown');
  if(fileMenu&&$('exportGame'))fileMenu.append($('exportGame'));if(gameMenu&&$('loadAssetTest3d'))gameMenu.prepend($('loadAssetTest3d'));
  const tools=document.querySelector('.scene-tools'),header=document.querySelector('.scene-header'),center=document.querySelector('.center-stack');
+// Unity 2023 Hierarchy: create through a single + dropdown; keep the original
+// GameObject/character buttons and their existing event listeners.
+const hierarchyCreate=document.querySelector('#hierarchyPanel .warlike-create-bar');
+if(hierarchyCreate&&!hierarchyCreate.querySelector('.unity-hierarchy-create')){
+ const menu=document.createElement('details');menu.className='unity-hierarchy-create';
+ const label=document.createElement('summary');label.textContent='＋';
+ label.setAttribute('aria-label','Créer dans la Hierarchy');
+ label.title='Créer un GameObject';
+ const entries=document.createElement('div');entries.className='unity-hierarchy-create-options';
+ for(const id of ['quickCreateObject','quickCreateCharacter']){
+  const button=$(id);if(button)entries.append(button);
+ }
+ menu.append(label,entries);hierarchyCreate.append(menu);
+}
+
  const toolHost=document.createElement('div');toolHost.className='reference-editor-tools';toolHost.setAttribute('aria-label','Outils de transformation');
- if($('studioQuickCreate'))toolHost.append($('studioQuickCreate'));document.querySelector('.studio-menubar').append(toolHost);
+ if($('studioQuickCreate')){const quick=$('studioQuickCreate');const gameObjectMenu=[...menus.children].find(n=>n.querySelector(':scope>summary')?.textContent.trim()==='GameObject')?.querySelector('.studio-dropdown');(gameObjectMenu||toolHost).append(quick);}document.querySelector('.studio-menubar').append(toolHost);
  const sceneMenu=document.createElement('details');sceneMenu.className='reference-scene-menu';const summary=document.createElement('summary');summary.textContent='Affichage';const options=document.createElement('div');options.className='reference-scene-options';sceneMenu.append(summary,options);
  const sceneActions=header.querySelector('.scene-actions');for(const n of [...sceneActions.children]){if(['workspace2d','workspace3d','view3dFocus','resetView'].includes(n.id))continue;if(n.matches('.scene-view-options')){const group=n.querySelector('.scene-view-options-menu');if(group)for(const child of [...group.children])options.append(child);n.remove();}else options.append(n);}
  for(const n of [...tools.querySelectorAll('.tool-option')])if(!n.querySelector('#snapEnabled'))options.append(n);

@@ -1,0 +1,3 @@
+/* Runtime hub exclusivity. */
+#hubOverlay .simple-hub-main > [hidden]{display:none!important}
+#hubOverlay .simple-hub-main :is(.hub-create,.hub-appearance,.hub-diagnostics)[hidden]{display:none!important}

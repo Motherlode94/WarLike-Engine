@@ -31,7 +31,7 @@ import {createFxRenderer3d} from './fx-renderer-3d.js';
 import {tickFxRuntime,emitFx} from './fx-runtime.js';
 import {isTypingTarget} from './editor-clipboard.js';
 import {sampleRigPose,deformGlbParts,animationClipForState} from './gltf-animation.js';
-import {cameraObstacleForEntity,cameraRigFor,cameraTargetFor,resolveCameraBoom,cameraPose,cameraDamping} from './play-camera.js';
+import {cameraObstacleForEntity,cameraRigFor,cameraTargetFor,resolveCameraBoom,cameraPose,cameraDamping,cameraHandoffStep} from './play-camera.js';
 import {activeSceneCamera,sceneCameraView,cameraMovementYaw} from './scene-camera-3d.js';
 import {CameraTransition3d} from './camera-transition-3d.js';
 import {gameIsRunning,gameSession} from './game-session.js';
@@ -614,7 +614,7 @@ export function init3d(canvas,host,buttons){
   if(p.adventure?.combatEnabled!==false&&!inVehicle&&healthOf(p)>0&&(!gameplayInputBlocked()&&fpsFiring||input.has('f')||!gameplayInputBlocked()&&state.keyPresses?.has('f'))&&p._attackCooldown===0){if(isFps()){shootFps();return;}const weapon=p.inventory?.equipment?.weapon;const hit=attack3d(p,state.entities,{range:weapon?180:110,damageAmount:weapon?35:15});p._attackCooldown=.45;if(hit){p.animation='attack';emitFx('electric',heroCenter(hit,'3d'),{mode:'3d',color:'#ffd899',count:16,ring:true,lifetime:.3,scale:.7})}}
  };
  const isFps=()=>state.playing&&workspace.mode==='3d'&&!currentVehicle3d(state.entities)&&(activeSceneCamera(state.entities)?.sceneCamera3d?.mode==='firstPerson'||!activeSceneCamera(state.entities)&&cameraRigFor(playableActor(state.entities)).mode==='firstPerson');
- let boomDistance=null,cameraFrame=1/60,lastCameraActor=null,lastCameraScene=null;
+ let boomDistance=null,cameraFrame=1/60,lastCameraActor=null,lastCameraScene=null,cameraHandoffRemaining=0;
  const camera=()=>{
   if(state.playing){
    const vehicle=currentVehicle3d(state.entities);
@@ -670,7 +670,7 @@ export function init3d(canvas,host,buttons){
  const stopRapier=()=>{physicsGeneration++;disposeRapierScene(physicsSession);physicsSession=null;physicsAccumulator=0;};
  const enterPlay=()=>{
   resetBattlefield(state.entities);fpsAiming=false;fpsFiring=false;
-  view3d.drag=null;boomDistance=null;resetDriving3d();aircraftViewMode=null;aircraftViewFor=null;aircraftCameraKeyHeld=false;
+  view3d.drag=null;boomDistance=null;cameraHandoffRemaining=0;lastCameraActor=null;lastCameraScene=null;resetDriving3d();aircraftViewMode=null;aircraftViewFor=null;aircraftCameraKeyHeld=false;
   const p=playableActor(state.entities),pt=playerTarget(),rig=cameraRigFor(p);view3d.followPlayer=!!pt&&!activeSceneCamera(state.entities);if(pt){view3d.target=pt.slice();view3d.radius=rig.distance;view3d.yaw=Math.PI-(Number(p.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18}
   if(companyController(state.entities)){view3d.followPlayer=false;view3d.target=[14,0,14];view3d.radius=32;view3d.pitch=.92;view3d.yaw=-.55;return}
   if(gameProject.physics3d==='builtin')return;
@@ -838,10 +838,11 @@ export function init3d(canvas,host,buttons){
   canvas.setPointerCapture(e.pointerId);
  });
  // Free mouse look in Play: no click or pointer lock required, including TPS rigs.
- const shouldMouseLook=()=>state.playing&&workspace.mode==='3d'&&view3d.enabled&&gameIsRunning()&&!gameplayInputBlocked()&&!companyController(state.entities)&&!currentVehicle3d(state.entities)&&!!playableActor(state.entities);
+ const shouldMouseLook=()=>state.playing&&workspace.mode==='3d'&&view3d.enabled&&gameIsRunning()&&!gameplayInputBlocked()&&!companyController(state.entities)&&!!(currentVehicle3d(state.entities)||playableActor(state.entities));
  const applyMouseLook=e=>{
   if(!shouldMouseLook()||e.pointerType==='touch')return;
-  const rig=cameraRigFor(playableActor(state.entities));
+  const activeVehicle=currentVehicle3d(state.entities);
+  const rig=cameraRigFor(activeVehicle||playableActor(state.entities),!!activeVehicle);
   const sensitivity=(Number.isFinite(rig.sensitivity)?rig.sensitivity:.003)*(fpsAiming?.65:1);
   const dx=Number.isFinite(e.movementX)?e.movementX:0,dy=Number.isFinite(e.movementY)?e.movementY:0;
   view3d.yaw-=dx*sensitivity;view3d.pitch=clamp(view3d.pitch+dy*sensitivity,-1.25,1.25);
@@ -905,7 +906,25 @@ export function init3d(canvas,host,buttons){
   updateLighting(dt,state.playing&&workspace.mode==='3d');
   syncPlayCamera(state.playing&&workspace.mode==='3d');
   if(state.playing&&workspace.mode==='3d'&&!isLanGuest()){runRuntimeFrame(dt,{update(dt){update3dPlay(dt);updateSequences(dt,{mode:'3d',yaw:view3d.yaw,playing:true,entities:state.entities,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}});}
-  if(state.playing&&gameIsRunning()&&view3d.followPlayer){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),pt=playerTarget();if(pt){const cut=actor!==lastCameraActor||gameSession.currentSceneId!==lastCameraScene||Math.hypot(...V.sub(pt,view3d.target))>12,t=cut?1:cameraDamping(cameraRigFor(actor).followSharpness,dt);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t));if(cut)boomDistance=null}lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;}
+  if(state.playing&&gameIsRunning()&&view3d.followPlayer){
+   const vehicle=currentVehicle3d(state.entities);
+   const actor=vehicle||playableActor(state.entities),pt=playerTarget();
+   if(pt){
+    const sceneChanged=lastCameraScene!==null&&gameSession.currentSceneId!==lastCameraScene;
+    const handoff=!!lastCameraActor&&actor!==lastCameraActor&&!sceneChanged;
+    if(handoff)cameraHandoffRemaining=.65;
+    if(sceneChanged)cameraHandoffRemaining=0;
+    const far= Math.hypot(...V.sub(pt,view3d.target))>12;
+    const snap=sceneChanged||(!handoff&&far);
+    const rig=cameraRigFor(actor,!!vehicle);
+    const result=cameraHandoffStep(view3d.target,pt,view3d.radius,rig.distance,dt,
+     {sharpness:rig.followSharpness,snap});
+    view3d.target=result.target;
+    if(cameraHandoffRemaining>0){view3d.radius=result.distance;cameraHandoffRemaining=Math.max(0,cameraHandoffRemaining-dt)}
+    if(snap)boomDistance=null;
+   }
+   lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;
+  }
   if(state.playing&&workspace.mode==='3d'){
    const selectedCamera=activeSceneCamera(state.entities);
    const desired=sceneCameraView(selectedCamera,state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});

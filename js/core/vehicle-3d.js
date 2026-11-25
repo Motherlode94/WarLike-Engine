@@ -5,7 +5,7 @@ import {collisionBackend3d} from './collision-backend-3d.js';
 import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle} from './vehicle-components.js';
 import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle-weapons-3d.js';
 import {recordEngineEvent} from './engine-diagnostics.js';
-import {gaiaDriverSeatAccess} from './gaia-driver-handoff.js';
+import {gaiaDriverSeatAccess} from './gaia-parking-runtime.js';
 import {stepArcadeVehicle} from './arcade-driving.js';
 import {aircraftPilotInput,releaseAircraftControls,canSafelyExitAircraft} from './aircraft-pilot-input.js';
 import {stepAircraftSystems} from './aircraft-systems.js';

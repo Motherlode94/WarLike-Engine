@@ -5,7 +5,7 @@ import {collisionBackend3d} from './collision-backend-3d.js';
 import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle} from './vehicle-components.js';
 import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle-weapons-3d.js';
 import {recordEngineEvent} from './engine-diagnostics.js';
-import {gaiaDriverSeatAccess,placeGaiaDriverAtSeat} from './gaia-parking-runtime.js';
+import {gaiaDriverSeatAccess,placeGaiaDriverAtSeat,gaiaDriverSeatPose,beginGaiaDriverTransition,advanceGaiaDriverTransition} from './gaia-parking-runtime.js';
 import {stepArcadeVehicle} from './arcade-driving.js';
 import {aircraftPilotInput,releaseAircraftControls,canSafelyExitAircraft} from './aircraft-pilot-input.js';
 import {stepAircraftSystems} from './aircraft-systems.js';
@@ -13,9 +13,9 @@ import {vehicleConfiguration,tickVehicleArticulation} from './vehicle-articulati
 import {get3dAsset} from '../assets/catalog-3d.js';
 const center=o=>({x:o.x+(o.w||32)/2,y:o.y+(o.depth3d||o.h||32)/2});
 export const isDriveable3d=o=>!!o&&o.vehicleController?.enabled!==false&&(o.vehicleController?.enabled===true||o.groundVehiclePhysics?.enabled===true||o.aircraftPhysics?.enabled===true||o.vehicleConfig?.driveable===true||vehicleConfiguration(o)?.enabled===true&&vehicleConfiguration(o)?.drive!=='static'||o.tags?.includes('race-vehicle')||get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles');
-export const driving3d={vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0};
+export const driving3d={vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0,transition:null};
 export const currentVehicle3d=entities=>entities.find(o=>o.id===driving3d.vehicleId&&isDriveable3d(o))||null;
-export const resetDriving3d=()=>Object.assign(driving3d,{vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0});
+export const resetDriving3d=()=>Object.assign(driving3d,{vehicleId:null,speed:0,steer:0,enterHeld:false,impact:0,transition:null});
 const solid=(o,car,player)=>o!==car&&o!==player&&solidBody3d(o);
 const intersects=(car,x,y,o)=>{
  const w=Math.max(1,car.w||32),d=Math.max(1,car.depth3d||car.h||32);
@@ -32,6 +32,35 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
  driving3d.impact=Math.max(0,driving3d.impact-step);
  const enter=keys.has('e')||pressedKeys.has('e');
  const car=currentVehicle3d(entities);
+ // Transitions block driving input until the authored character clip completes.
+ if(driving3d.transition){
+  const transition=driving3d.transition;
+  if(!car||!player||!gaiaDriverSeatAccess(car,player.id,'exit').allowed){
+   driving3d.transition=null;resetDriving3d();return false;
+  }
+  if(car.groundVehiclePhysics?.enabled)
+   car.groundVehicleInput={throttle:0,steer:0,brake:1,handbrake:1};
+  const result=advanceGaiaDriverTransition(transition,car,player,step);
+  if(vehicleConfiguration(car)?.enabled){
+   car.vehicleArticulation??={wheelAngle:0,steer:0,doors:0,doorOpen:false,turretYaw:0,barrelPitch:0};
+   car.vehicleArticulation.doorOpen=true;
+   tickVehicleArticulation(car,step);
+  }
+  driving3d.enterHeld=enter;
+  if(result.done){
+   driving3d.transition=null;
+   if(transition.action==='enter'){
+    placeGaiaDriverAtSeat(car,player);
+   }else{
+    player._hiddenInVehicle=false;player.animation='idle';
+    vehicleComponents(car).seats.driverId=null;
+    if(car.vehicleArticulation)car.vehicleArticulation.doorOpen=false;
+    recordEngineEvent('vehicle-exit',car.name);
+    resetDriving3d();
+   }
+  }
+  return true;
+ }
  if(enter&&!driving3d.enterHeld){
   if(car){
    // Only the reserved driver may release controls or exit the vehicle.
@@ -48,7 +77,15 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
    ];
    const backend=collisionBackend3d();
    const free=exits.find(pos=>backend?.owns(player)?backend.canPlace(player,{...pos,elevation3d:car.elevation3d||0},{ignore:car}):!entities.some(o=>solid(o,car,player)&&intersects({...player,depth3d:depth},pos.x,pos.y,o)));
-   if(free){if(car.groundVehiclePhysics?.enabled)car.groundVehicleInput={throttle:0,steer:0,brake:0,handbrake:0};if(car.aircraftPhysics?.enabled)car.aircraftInput=releaseAircraftControls(car.aircraftInput);player._vehicleInputConsumed=true;recordEngineEvent('vehicle-exit',car.name);player.x=free.x;player.y=free.y;player.elevation3d=car.elevation3d||0;player._hiddenInVehicle=false;player.animation='idle';vehicleComponents(car).seats.driverId=null;resetDriving3d()}
+   if(free){
+    // Optional authored exit clip: complete before driver ownership is released.
+    const transition=beginGaiaDriverTransition(car,player,'exit',{...free,elevation3d:car.elevation3d||0});
+    if(transition){
+     driving3d.transition=transition;
+     driving3d.enterHeld=enter;
+     return true;
+    }
+    if(car.groundVehiclePhysics?.enabled)car.groundVehicleInput={throttle:0,steer:0,brake:0,handbrake:0};if(car.aircraftPhysics?.enabled)car.aircraftInput=releaseAircraftControls(car.aircraftInput);player._vehicleInputConsumed=true;recordEngineEvent('vehicle-exit',car.name);player.x=free.x;player.y=free.y;player.elevation3d=car.elevation3d||0;player._hiddenInVehicle=false;player.animation='idle';vehicleComponents(car).seats.driverId=null;resetDriving3d()}
   }else if(player){
    const p=center(player);
    const candidates=entities.filter(o=>o!==player&&isDriveable3d(o)&&o.sequenceEnabled!==false&&!o._sequenceDestroyed).map(o=>({o,d:Math.hypot(center(o).x-p.x,center(o).y-p.y)})).sort((a,b)=>a.d-b.d);
@@ -56,7 +93,10 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
    if(nearest&&Math.abs((Number(nearest.o.elevation3d)||0)-(Number(player.elevation3d)||0))<1.8&&nearest.d<Math.max(150,(nearest.o.w||64)*.85)&&canDriveVehicle(nearest.o)&&gaiaDriverSeatAccess(nearest.o,player.id,'enter').allowed){
     vehicleComponents(nearest.o).seats.driverId=player.id;
     if(player.battlefield?.enabled)nearest.o.team=player.team;
-    player._vehicleInputConsumed=true;recordEngineEvent('vehicle-enter',nearest.o.name);driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;placeGaiaDriverAtSeat(nearest.o,player);
+    player._vehicleInputConsumed=true;recordEngineEvent('vehicle-enter',nearest.o.name);driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;
+    const transition=beginGaiaDriverTransition(nearest.o,player,'enter',gaiaDriverSeatPose(nearest.o,player));
+    if(transition)driving3d.transition=transition;
+    else placeGaiaDriverAtSeat(nearest.o,player);
    }
   }
  }

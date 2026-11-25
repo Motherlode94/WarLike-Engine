@@ -39,7 +39,12 @@ try{
   overlay:!!document.querySelector('#hubOverlay'),
   count:document.querySelectorAll('.hub-appearance-settings').length,
   hasColor:!!document.querySelector('#hubAccentColor'),
-  appearance:document.querySelector('#hubOverlay .hub-list')?.innerHTML.slice(0,1000)
+  title:document.title,
+  bodyAttrs:document.body.getAttributeNames().map(n=>[n,document.body.getAttribute(n)]),
+  totalDetails:document.querySelectorAll('details').length,
+  inHtml:document.documentElement.outerHTML.includes('hub-appearance-settings'),
+  overlayHtml:document.querySelector('#hubOverlay')?.outerHTML.slice(0,2800),
+  allClass:[...document.querySelectorAll('[class*=hub]')].slice(0,30).map(x=>x.className)
  }));
  console.log('UI Hub DOM diagnosis',JSON.stringify(hubDom));
  assert.equal(hubDom.count,1,'Hub appearance must be present as a collapsible details element');

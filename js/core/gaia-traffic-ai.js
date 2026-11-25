@@ -227,6 +227,97 @@ export function controlGaiaStopGoTrafficVehicle(network,state={},options={}){
 }
 
 /**
+ * WB 2.9c — Derived curbside parking and opt-in stopping interactions.
+ * These are planning/interaction decisions only. Rapier remains responsible
+ * for steering, wheel forces, colliders and physical parking manoeuvres.
+ */
+export function gaiaTrafficParkingSpots(network,{spacingM=14,endMarginM=12,curbOffsetM=3,
+ junctionClearanceM=12}={}){
+ if(!network||!Array.isArray(network.lanes)||!Array.isArray(network.junctions)||
+  ![spacingM,endMarginM,curbOffsetM,junctionClearanceM].every(Number.isFinite)||
+  spacingM<5||endMarginM<0||curbOffsetM<=0||junctionClearanceM<0)
+  throw Error('Invalid Gaia parking configuration');
+ const spots=[];
+ for(const lane of network.lanes){
+  const total=lane.points.reduce((sum,p,i,a)=>i?sum+dist(a[i-1],p):0,0);
+  for(let progress=endMarginM;progress<=total-endMarginM;progress+=spacingM){
+   const point=targetAt(lane,progress);
+   const prev=targetAt(lane,Math.max(0,progress-.2)),next=targetAt(lane,Math.min(total,progress+.2));
+   const dx=next.x-prev.x,dz=next.z-prev.z,length=Math.hypot(dx,dz);
+   if(length<1e-6)continue;
+   // Gaia traffic lanes are already offset from road centre. The left-hand
+   // normal here points outward to the same side as each offset lane.
+   const normal={x:-dz/length,z:dx/length};
+   const curb={x:point.x+normal.x*curbOffsetM,z:point.z+normal.z*curbOffsetM};
+   if(network.junctions.some(j=>dist(j.center,point)<j.radius+junctionClearanceM))continue;
+   spots.push({id:lane.id+':park:'+Math.round(progress*100),
+    laneId:lane.id,roadId:lane.roadId,progressM:progress,
+    approach:{x:point.x,z:point.z},position:curb,
+    heading:{x:dx/length,z:dz/length}});
+  }
+ }
+ return spots;
+}
+export function gaiaTrafficParkingOccupancy(spots,vehicles,{occupancyRadiusM=2.8}={}){
+ if(!Array.isArray(spots)||!Array.isArray(vehicles)||
+  !Number.isFinite(occupancyRadiusM)||occupancyRadiusM<=0)throw Error('Invalid parking occupancy input');
+ // A physical vehicle occupying a stall takes priority over a stale ID.
+ return spots.map(spot=>{
+  const occupying=vehicles.find(car=>car?.position&&Number.isFinite(car.position.x)&&
+   Number.isFinite(car.position.z)&&dist(car.position,spot.position)<=occupancyRadiusM);
+  return {...spot,occupiedBy:occupying?.id??null,available:!occupying};
+ });
+}
+export function controlGaiaParkingVehicle(network,state={},options={}){
+ const {parkingSpotId=null,parkingSpots=null,previousTargetSpeedMps=null,
+  deltaSeconds=1/60,parkedSpeedMps=.3,stopBufferM=1.5}=options;
+ if(!Number.isFinite(parkedSpeedMps)||parkedSpeedMps<0||
+  !Number.isFinite(stopBufferM)||stopBufferM<0)throw Error('Invalid Gaia parking control');
+ const baseline=controlGaiaStopGoTrafficVehicle(network,state,{deltaSeconds,previousTargetSpeedMps});
+ if(parkingSpotId===null)return {...baseline,parking:'not-requested'};
+ const spots=parkingSpots??gaiaTrafficParkingSpots(network);
+ const spot=spots.find(s=>s.id===parkingSpotId);
+ if(!spot)return {...baseline,throttle:0,brake:1,parking:'invalid-spot'};
+ if(!baseline.laneId||spot.laneId!==baseline.laneId)return {...baseline,throttle:0,brake:1,parking:'wrong-lane'};
+ const taken=gaiaTrafficParkingOccupancy([spot],state.vehicles||[])[0];
+ if(!taken.available&&taken.occupiedBy!==state.vehicleId)
+  return {...baseline,throttle:0,brake:1,parking:'occupied'};
+ const lane=network.lanes.find(l=>l.id===spot.laneId);
+ const current=closestPointOnPath(lane,state.position).progress;
+ const remaining=spot.progressM-current-stopBufferM;
+ const speed=Math.max(0,Number.isFinite(state.speedMps)?state.speedMps:0);
+ // Approaching a parking entrance is a longitudinal speed plan, not an
+ // unsupported lateral manoeuvre or a teleport to the curbside stall.
+ const limit=remaining<=0?0:Math.sqrt(2*2.5*remaining);
+ const targetSpeed=Math.min(baseline.targetSpeedMps,limit);
+ const brake=Math.max(baseline.brake,speed>targetSpeed+.2?
+  clamp((speed-targetSpeed)/2.5,0,1):0);
+ const stopped=remaining<=.5&&speed<=parkedSpeedMps;
+ return {...baseline,parking:stopped?'stopped':remaining<0?'overshot':'approaching',
+  parkingSpotId:spot.id,remainingToStopM:remaining,
+  targetSpeedMps:targetSpeed,nextTargetSpeedMps:targetSpeed,
+  throttle:stopped||brake>0?0:Math.min(baseline.throttle,clamp((targetSpeed-speed)*.32,0,1)),
+  brake:stopped?1:brake,handbrake:stopped?1:baseline.handbrake,
+  status:stopped?'parked':baseline.status};
+}
+export function gaiaVehicleParkingInteraction(spot,actor,vehicle,{action='enter',
+ maxDistanceM=2.5,maxExitSpeedMps=.3}={}){
+ if(!spot?.position||!actor?.position||!vehicle?.position||
+  !['enter','exit'].includes(action)||!Number.isFinite(maxDistanceM)||
+  maxDistanceM<=0||!Number.isFinite(maxExitSpeedMps)||maxExitSpeedMps<0)
+  throw Error('Invalid Gaia vehicle parking interaction');
+ const actorDistanceM=dist(actor.position,vehicle.position),
+  parkedDistanceM=dist(spot.position,vehicle.position),
+  speed=Math.max(0,Number.isFinite(vehicle.speedMps)?vehicle.speedMps:Infinity);
+ const stopped=speed<=maxExitSpeedMps;
+ const atSpot=parkedDistanceM<=3;
+ const allowed=stopped&&atSpot&&(action==='exit'||actorDistanceM<=maxDistanceM);
+ return {action,allowed,reason:!stopped?'vehicle-moving':!atSpot?'not-parked':
+  action==='enter'&&actorDistanceM>maxDistanceM?'out-of-range':'ready',
+  actorDistanceM,parkedDistanceM};
+}
+
+/**
  * WB 2.8a: render-only signal coordinates from authored junction and roads.
  * Signal locations have no physics or independent state; the same
  * gaiaTrafficLight() function determines both traffic decisions and colors.

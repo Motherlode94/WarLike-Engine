@@ -1,0 +1,144 @@
+/* Regression repair 2026-11-25. Scoped editor chrome, never the rendering canvas.
+   Keep Unity-like hierarchy: menu/tool row, Hierarchy | Scene/Game | Inspector,
+   Project/Console below Scene. Preserve dock splitters and existing actions. */
+@media (min-width:1101px){
+ body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .studio-menubar{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
+  grid-template-rows:25px 35px!important;min-height:60px!important;height:60px!important;
+  padding:0 10px!important;column-gap:10px!important;row-gap:0!important;
+  overflow:visible!important;
+ }
+ body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build){
+  --warlike-menubar-height:60px!important;
+ }
+ body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .workspace{
+  height:calc(100dvh / var(--editor-ui-scale,1) - 60px - var(--warlike-toolbar-height,0px) - var(--warlike-footer-height,26px))!important;
+  max-height:calc(100dvh / var(--editor-ui-scale,1) - 60px - var(--warlike-toolbar-height,0px) - var(--warlike-footer-height,26px))!important;
+  grid-template-columns:clamp(215px,var(--left-pane-width,240px),32vw) 5px minmax(0,1fr) 5px clamp(260px,var(--right-pane-width,320px),34vw)!important;
+  min-width:0!important;
+ }
+ body.reference-engine:not(.hub-open):not(.compact-workspace) .center-stack{
+  min-width:0!important;min-height:0!important;overflow:hidden!important;
+  grid-template-rows:29px minmax(180px,1fr) 5px minmax(150px,var(--project-height,220px))!important;
+ }
+ body.reference-engine:not(.hub-open):not(.compact-workspace) :is(#hierarchyPanel,#inspectorPanel,#projectPanel){
+  min-width:0!important;min-height:0!important;overflow:hidden!important;
+  border-radius:0!important;
+ }
+}
+/* Fixed dock title strips: no redundant labels, no huge empty rows. */
+body.reference-engine:not(.hub-open) :is(#hierarchyPanel,#inspectorPanel,#projectPanel) .dock-title{
+ min-height:29px!important;max-height:35px!important;padding:3px 8px!important;
+ display:flex!important;align-items:center!important;gap:6px!important;
+ font-size:12px!important;font-weight:600!important;
+}
+body.reference-engine:not(.hub-open) #inspectorPanel .dock-title-actions small{display:none!important}
+body.reference-engine:not(.hub-open) #hierarchyPanel .dock-title-actions small{font-size:10px;opacity:.7}
+body.reference-engine:not(.hub-open) #hierarchyPanel .warlike-create-bar{
+ display:flex!important;align-items:center;gap:4px;min-height:31px!important;
+ padding:3px 6px!important;flex-wrap:nowrap!important;
+ border-bottom:1px solid var(--wl-theme-border,var(--wl-border,#56616e));
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .warlike-create-bar button{
+ min-height:24px!important;padding:3px 8px!important;font-size:11px!important;
+ white-space:nowrap!important;max-width:50%;
+}
+body.reference-engine:not(.hub-open) #hierarchySearch{
+ width:calc(100% - 12px)!important;box-sizing:border-box!important;
+ min-height:27px!important;margin:5px 6px!important;padding:5px 8px!important;
+}
+body.reference-engine:not(.hub-open) #objects{overflow:auto!important;min-height:0}
+body.reference-engine:not(.hub-open) #hierarchyPanel>small{display:none!important}
+body.reference-engine:not(.hub-open) #hierarchyPanel .hierarchy-history{
+ margin-top:auto!important;max-height:25vh;overflow:auto;
+ border-top:1px solid var(--wl-theme-border,var(--wl-border,#56616e));
+}
+/* The Scene header shows just Scene/Game and its two workspace toggles.
+   Nonessential viewport commands are still available in editor menus or
+   their dedicated tooling, rather than overlaying the scene. */
+body.reference-engine:not(.hub-open) .center-stack>.scene-tools{display:none!important}
+body.reference-engine:not(.hub-open) .scene-header{
+ min-height:29px!important;max-height:29px!important;padding:0 6px!important;
+ display:flex!important;align-items:center!important;gap:6px!important;
+}
+body.reference-engine:not(.hub-open) .scene-header .scene-tabs{flex:0 0 auto}
+body.reference-engine:not(.hub-open) .scene-header .scene-actions{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ min-width:0;overflow:hidden!important;gap:3px!important;
+}
+body.reference-engine:not(.hub-open) .scene-header .scene-actions :is(.lighting-control,#dayNightSpeed,#dayNightPeriod,[data-day-night-hour],#zoomIn,#zoomOut,#zoomLabel,#resetView,#view3dFocus){display:none!important}
+body.reference-engine:not(.hub-open) .scene-header .scene-actions :is(#workspace2d,#workspace3d,#view3dToggle){
+ flex:0 0 auto;min-height:22px!important;padding:2px 7px!important;font-size:10px!important;
+}
+body.reference-engine:not(.hub-open) #viewport{
+ min-height:0!important;overflow:hidden!important;position:relative!important;
+}
+body.reference-engine:not(.hub-open) #viewport>footer{
+ max-width:100%;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;opacity:.72;font-size:10px;
+}
+body.reference-engine:not(.hub-open) #projectPanel .browser-title{
+ display:flex;align-items:center;justify-content:space-between;
+ min-height:26px!important;padding:3px 8px!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel .asset-toolbar{
+ display:flex;align-items:center;gap:5px;flex-wrap:wrap!important;
+ padding:5px 7px!important;min-height:30px!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel #assetSearch{
+ flex:1 1 160px;min-width:120px!important;max-width:100%!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel .asset-body{min-height:0;overflow:hidden}
+body.reference-engine:not(.hub-open) #projectPanel .asset-content{min-width:0;min-height:0;overflow:auto}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties{min-height:0;overflow:auto!important;padding:8px!important}
+/* The Hub is a project launcher, not a full-screen palette editor. */
+#hubOverlay{padding:22px!important;align-items:center!important;justify-items:center!important}
+#hubOverlay>.hub-window{
+ width:min(1040px,calc(100vw - 44px))!important;
+ max-height:min(88dvh,900px)!important;overflow-y:auto!important;
+ border-radius:8px!important;
+}
+#hubOverlay .hub-heading{
+ padding:16px 22px!important;display:flex!important;align-items:center!important;
+ gap:12px!important;justify-content:space-between!important;
+}
+#hubOverlay .hub-heading h2{font-size:23px!important;margin:4px 0!important}
+#hubOverlay .hub-heading p{font-size:12px!important;margin:0!important}
+#hubOverlay .hub-suite{padding:12px 20px!important}
+#hubOverlay .hub-suite-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+#hubOverlay .hub-suite-grid>.hub-app-card{min-width:0;min-height:70px;padding:10px!important;box-sizing:border-box}
+#hubOverlay .hub-suite-roadmap{display:none!important}
+#hubOverlay .hub-stats{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px!important;padding:9px 20px!important}
+#hubOverlay .hub-layout{display:grid!important;grid-template-columns:minmax(260px,340px) minmax(0,1fr)!important;gap:16px!important;padding:14px 20px 24px!important}
+#hubOverlay .hub-create,#hubOverlay .hub-list{min-width:0!important;box-sizing:border-box!important}
+#hubOverlay .hub-create{padding:15px!important;border-radius:6px!important}
+#hubOverlay .hub-project-toolbar{display:flex!important;flex-wrap:wrap;gap:6px!important}
+#hubOverlay .hub-project-toolbar #hubProjectSearch{flex:1 1 160px!important;min-width:0!important}
+#hubOverlay .hub-project-list-title{display:flex!important;justify-content:space-between;align-items:center;gap:10px;margin:12px 0!important}
+#hubOverlay .hub-project-list-title h3{margin:0!important}
+#hubOverlay .hub-appearance-settings{
+ margin:10px 0 0!important;padding:0!important;
+ border:1px solid var(--hub-ui-border,#657586);border-radius:6px;
+ background:var(--hub-ui-surface,#2d343d);
+}
+#hubOverlay .hub-appearance-settings>summary{
+ cursor:pointer;display:list-item;list-style:disclosure-closed inside!important;
+ padding:9px 12px!important;font-size:12px;font-weight:600;
+ color:var(--hub-ui-fg,#f3f6fa);
+}
+#hubOverlay .hub-appearance-settings[open]>summary{list-style:disclosure-open inside!important;border-bottom:1px solid var(--hub-ui-border,#657586)}
+#hubOverlay .hub-appearance-settings .hub-appearance{margin:0!important;padding:12px!important;box-shadow:none!important}
+#hubOverlay .hub-theme-palette{display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:6px!important}
+#hubOverlay .hub-theme-palette>*{min-width:0!important}
+@media(max-width:850px){
+ #hubOverlay .hub-layout{grid-template-columns:minmax(0,1fr)!important}
+ #hubOverlay .hub-suite-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #hubOverlay .hub-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:520px){
+ #hubOverlay{padding:6px!important}
+ #hubOverlay>.hub-window{width:calc(100vw - 12px)!important;max-height:96dvh!important}
+ #hubOverlay .hub-heading{padding:10px!important}
+ #hubOverlay .hub-suite,#hubOverlay .hub-layout{padding:10px!important}
+ #hubOverlay .hub-suite-grid{grid-template-columns:1fr!important}
+}

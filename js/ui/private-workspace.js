@@ -2,7 +2,9 @@ import {hub,saveProject,createProject,openProject} from '../core/project-hub.js'
 const PAIR_KEY='warlike-engine-pkce';
 const PREFIX='warlike.hub.project.';
 const SERVER='https://warlike-server.pages.dev';
-const identityKey='warlike.engine.private.v1';
+const accountMapKey=id=>'warlike.engine.private-map.'+id;
+function remember(){if(account)try{sessionStorage.setItem(accountMapKey(account.userId),JSON.stringify([...remoteMap]));}catch{}}
+function hydrate(id){remoteMap.clear();try{const saved=JSON.parse(sessionStorage.getItem(accountMapKey(id))||'[]');if(Array.isArray(saved))for(const [local,item] of saved){if(typeof local==='string'&&/^[0-9a-f-]{36}$/i.test(item?.id)&&Number.isInteger(item.revision)&&item.revision>0)remoteMap.set(local,item)}}catch{}}
 const idRegex=/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
 let account=null,remoteMap=new Map(),busy=false,saveFingerprint='',lastAccount='';
 const encode=bytes=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
@@ -50,7 +52,7 @@ async function identity(){
  if(!idRegex.test(next.userId||'')||next.engineAccess!==true)throw Error('Compte Engine non vérifié.');
  if(account?.userId&&account.userId!==next.userId)clearIdentity();
  account=next;
- if(lastAccount!==next.userId){remoteMap.clear();saveFingerprint='';lastAccount=next.userId;}
+ if(lastAccount!==next.userId){hydrate(next.userId);saveFingerprint='';lastAccount=next.userId;}
  render();return next;
 }
 async function list(){
@@ -71,7 +73,7 @@ async function list(){
    localStorage.setItem(PREFIX+id,JSON.stringify(cloned));
    localStorage.removeItem(PREFIX+id+'.backup.v1');
    if(!openProject(id))throw Error('Impossible de rouvrir la copie cloud.');
-   remoteMap.set(id,{id:p.id,revision:item.revision});saveFingerprint='';setMessage('Copie cloud ouverte. Les changements devront être sauvegardés.');
+   remoteMap.set(id,{id:p.id,revision:item.revision});remember();saveFingerprint='';setMessage('Copie cloud ouverte. Les changements devront être sauvegardés.');
   });
   row.append(label,button);region.append(row);
  }
@@ -85,7 +87,7 @@ async function save(){
  let result;
  if(entry)result=await send('projects/'+encodeURIComponent(entry.id),{method:'PUT',body:{project,expectedRevision:entry.revision}});
  else result=await send('projects',{method:'POST',body:{project}});
- remoteMap.set(local,{id:result.id,revision:result.revision});
+ remoteMap.set(local,{id:result.id,revision:result.revision});remember();
  saveFingerprint=JSON.stringify(project);setMessage('Jeu sauvegardé dans ton espace privé.');
 }
 async function disconnect(){
@@ -102,6 +104,6 @@ export async function mountPrivateWorkspace(){
  try{await returnPairing();await identity();}catch{clearIdentity();}
  render();
  // Autosave is active only with verified cloud identity; no invisible claim of ownership for legacy data.
- setInterval(()=>{if(!account||busy||!hub.projectId||document.hidden)return;let raw;try{raw=localStorage.getItem(PREFIX+hub.projectId)}catch{return}if(raw&&raw!==saveFingerprint)void run(save);},30000);
+ setInterval(()=>{if(!account||busy||!hub.projectId||!remoteMap.has(hub.projectId)||document.hidden)return;let raw;try{raw=localStorage.getItem(PREFIX+hub.projectId)}catch{return}if(raw&&raw!==saveFingerprint)void run(save);},30000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>void mountPrivateWorkspace(),{once:true});else void mountPrivateWorkspace();

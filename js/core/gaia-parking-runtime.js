@@ -33,3 +33,32 @@ export function gaiaDriverSeatAccess(vehicle,actorId,action='enter'){
   return {allowed:false,reason:'not-driver'};
  return {allowed:true,reason:'ready'};
 }
+
+/**
+ * Compute the driver's Play anchor in scene units. Authored local offsets are
+ * optional; the existing vehicle center remains the backwards-compatible default.
+ * The position is derived on every frame, never baked into the project entity.
+ */
+export function gaiaDriverSeatPose(vehicle,actor){
+ if(!vehicle||!actor)throw Error('Missing vehicle or actor');
+ const width=Number(vehicle.w)||32,depth=Number(vehicle.depth3d||vehicle.h)||32;
+ const actorWidth=Number(actor.w)||32,actorDepth=Number(actor.depth3d||actor.h)||32;
+ const anchor=vehicle.vehicleSystems?.seats?.driverAnchor;
+ const localX=Number.isFinite(anchor?.x)?anchor.x:0;
+ const localY=Number.isFinite(anchor?.y)?anchor.y:0;
+ const radians=(Number(vehicle.rotation)||0)*Math.PI/180;
+ const x=localX*Math.cos(radians)-localY*Math.sin(radians);
+ const y=localX*Math.sin(radians)+localY*Math.cos(radians);
+ return {
+  x:(Number(vehicle.x)||0)+(width-actorWidth)/2+x,
+  y:(Number(vehicle.y)||0)+(depth-actorDepth)/2+y,
+  elevation3d:(Number(vehicle.elevation3d)||0)+(Number.isFinite(anchor?.elevation3d)?anchor.elevation3d:0)
+ };
+}
+export function placeGaiaDriverAtSeat(vehicle,actor){
+ const pose=gaiaDriverSeatPose(vehicle,actor);
+ actor.x=pose.x;actor.y=pose.y;actor.elevation3d=pose.elevation3d;
+ actor._hiddenInVehicle=true;
+ actor.animation='drive';
+ return pose;
+}

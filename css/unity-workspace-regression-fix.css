@@ -173,3 +173,6 @@ body.reference-engine:not(.hub-open) #inspectorPanel #properties{min-height:0;ov
 #hubOverlay .simple-hub-nav-item{display:block!important;flex:0 0 auto!important;min-height:35px!important;text-align:left!important;white-space:normal!important}
 #hubOverlay .simple-hub-nav-item.active{box-shadow:inset 3px 0 var(--hub-accent,#48cba9)}
 #hubOverlay .simple-hub-main>:not([hidden]){max-width:100%;min-width:0;margin:0!important}
+
+/* Keep live Scene menu actions visible after reference-workspace relocates them. */
+body.reference-engine:not(.hub-open) .scene-header .reference-scene-menu[open] .reference-scene-options :is(#zoomIn,#zoomOut,#resetView,#zoomLabel,#sunHour,#sunClock,#dayNightSpeed,#dayNightPeriod,[data-day-night-hour],.lighting-control){display:inline-flex!important;visibility:visible!important;opacity:1!important}

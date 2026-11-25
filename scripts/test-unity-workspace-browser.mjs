@@ -34,25 +34,19 @@ try{
  });
  await page.goto('http://127.0.0.1:'+server.address().port+'/index.html',{waitUntil:'load'});
  await page.locator('#hubOverlay').waitFor({state:'visible'});
- const hubDom=await page.evaluate(()=>({
-  url:location.href,
-  overlay:!!document.querySelector('#hubOverlay'),
-  count:document.querySelectorAll('.hub-appearance-settings').length,
-  hasColor:!!document.querySelector('#hubAccentColor'),
-  title:document.title,
-  bodyAttrs:document.body.getAttributeNames().map(n=>[n,document.body.getAttribute(n)]),
-  totalDetails:document.querySelectorAll('details').length,
-  inHtml:document.documentElement.outerHTML.includes('hub-appearance-settings'),
-  overlayHtml:document.querySelector('#hubOverlay')?.outerHTML.slice(0,2800),
-  allClass:[...document.querySelectorAll('[class*=hub]')].slice(0,30).map(x=>x.className)
- }));
- console.log('UI Hub DOM diagnosis',JSON.stringify(hubDom));
- assert.equal(hubDom.count,1,'Hub appearance must be present as a collapsible details element');
- assert.equal(await page.locator('.hub-appearance-settings').getAttribute('open'),null,'Hub appearance is collapsed by default');
+ // initSimpleHub() replaces the static HTML Hub with its tabbed runtime shell.
+ await page.locator('#hubOverlay .hub-window[data-simple-hub="true"]').waitFor();
+ await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="projects"]').waitFor();
+ assert.equal(await page.locator('#hubOverlay .simple-hub-main').getAttribute('data-hub-tab'),'projects');
+ assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false,
+  'Appearance is not mixed into the project browser');
  await page.screenshot({path:path.join(out,'hub-before-open.png')});
- await page.locator('.hub-appearance-settings>summary').click();
- assert.equal(await page.locator('#hubAccentColor').isVisible(),true,'appearance remains accessible');
- await page.locator('.hub-appearance-settings>summary').click();
+ await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="appearance"]').click();
+ assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),true,
+  'Appearance is a separate navigable Hub screen');
+ assert.equal(await page.locator('#hubAccentColor').isVisible(),true,'color picker remains available');
+ await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="projects"]').click();
+ assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false);
  await page.getByRole('button',{name:'Unity UI QA',exact:true}).click();
  await page.locator('#hubOverlay').waitFor({state:'hidden'});
  for(const viewport of [{width:1440,height:900},{width:1366,height:768}]){

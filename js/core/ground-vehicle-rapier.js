@@ -5,6 +5,7 @@ import {defaultWheelPhysics,validateWheelPhysics,solveWheelForces} from './vehic
 import {buildGaiaTrafficNetwork,controlGaiaTrafficVehicle,setGaiaTrafficSignalSeconds} from './gaia-traffic-ai.js';
 import {controlGaiaRoutedTrafficVehicle} from './gaia-traffic-routing.js';
 import {planGaiaParkingSteering} from './gaia-parking-steering.js';
+export {evaluateGaiaParkingRuntime,commitGaiaParkingSeatAction} from './gaia-parking-runtime.js';
 const finite=(v,d=0)=>typeof v==='number'&&Number.isFinite(v)?v:d;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,finite(v)));
 const add=(a,b)=>({x:a.x+b.x,y:a.y+b.y,z:a.z+b.z});

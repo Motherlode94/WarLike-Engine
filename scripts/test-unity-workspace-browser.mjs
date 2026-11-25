@@ -75,6 +75,25 @@ try{
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false);
  await page.getByRole('button',{name:'Unity UI QA',exact:true}).click();
  await page.locator('#hubOverlay').waitFor({state:'hidden'});
+ // Shared P1 editor design tokens must preserve existing window stacking and
+ // selected palette rather than adding a second set of theme colors.
+ const uiMetrics=await page.evaluate(()=>{
+  const root=getComputedStyle(document.documentElement);
+  const read=name=>root.getPropertyValue(name).trim();
+  return {toolbar:read('--wl-editor-z-toolbar'),
+   sceneMenu:read('--wl-editor-z-scene-menu'),
+   blueprint:read('--wl-editor-z-blueprint'),
+   inspectorMenu:read('--wl-editor-z-inspector-menu'),
+   componentPopup:read('--wl-editor-z-component-popup'),
+   hierarchyRow:read('--wl-editor-size-hierarchy-row'),
+   accent:getComputedStyle(document.body).getPropertyValue('--editor-accent').trim()};
+ });
+ assert.deepEqual([uiMetrics.toolbar,uiMetrics.sceneMenu,uiMetrics.blueprint,
+  uiMetrics.inspectorMenu,uiMetrics.componentPopup],['51','90','9000','8','99999'],
+  'P1 stacking tokens retain established editor layer order');
+ assert.equal(uiMetrics.hierarchyRow,'24px','Hierarchy retains existing row dimensions');
+ assert(uiMetrics.accent,'Editor still inherits an active palette accent');
+
  for(const viewport of [{width:1920,height:1080},{width:1440,height:900},{width:1366,height:768}]){
   await page.setViewportSize(viewport);
   const boxes=await page.evaluate(()=>{

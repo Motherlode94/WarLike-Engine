@@ -1,6 +1,6 @@
 import {getToken,validAccount,ACCOUNT_HEADER,guardOrigin,forwardServer,forwarded,privateJson,readLimited} from '../../_engine-session.js';
 const uuid='[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
-const routes=[{regex:/^me$/,verbs:['GET']},{regex:/^projects$/,verbs:['GET','POST']},{regex:new RegExp('^projects/'+uuid+'$'),verbs:['GET','PUT','DELETE']}];
+const routes=[{regex:/^publish$/,verbs:['POST']},{regex:/^me$/,verbs:['GET']},{regex:/^projects$/,verbs:['GET','POST']},{regex:new RegExp('^projects/'+uuid+'$'),verbs:['GET','PUT','DELETE']}];
 export async function onRequest(context){
  const {request}=context,path=Array.isArray(context.params.path)?context.params.path.join('/'):String(context.params.path||'');
  const route=routes.find(r=>r.regex.test(path));if(!route)return privateJson({error:'Route inconnue.'},404);

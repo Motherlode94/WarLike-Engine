@@ -37,6 +37,17 @@ try{
  // initSimpleHub() replaces the static HTML Hub with its tabbed runtime shell.
  await page.locator('#hubOverlay .hub-window[data-simple-hub="true"]').waitFor();
  await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="projects"]').waitFor();
+ assert.equal(await page.locator('#hubOverlay .hub-project-welcome').count(),0,
+  'Projects must have no marketing hero');
+ assert.equal(await page.locator('#hubOverlay .simple-hub-projects').getAttribute('data-project-view'),'list',
+  'Hub defaults to Unity-style project list');
+ const hubZones=await page.evaluate(()=>{
+  const r=sel=>{const box=document.querySelector(sel).getBoundingClientRect();return {left:box.left,right:box.right,top:box.top,bottom:box.bottom}};
+  return {nav:r('#hubOverlay .simple-hub-nav'),header:r('#hubOverlay .simple-hub-heading'),main:r('#hubOverlay .simple-hub-main')};
+ });
+ assert(hubZones.nav.right<=hubZones.main.left+3,'Hub sidebar must not overlap projects');
+ assert(hubZones.header.bottom<=hubZones.main.top+4,'Hub project header must not overlap project rows');
+
  assert.equal(await page.locator('#hubOverlay .simple-hub-main').getAttribute('data-hub-tab'),'projects');
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false,
   'Appearance is not mixed into the project browser');

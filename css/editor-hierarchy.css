@@ -23,7 +23,7 @@
  width:100%;max-width:100%;box-sizing:border-box;
 }
 #hierarchyPanel .unity-hierarchy-row .hierarchy-object-label{
- flex:1 1 0!important;width:0!important;min-width:0!important;
+ flex:1 1 auto!important;width:auto!important;min-width:0!important;
  max-width:100%;box-sizing:border-box;overflow:hidden;
  padding:2px 4px!important;
 }

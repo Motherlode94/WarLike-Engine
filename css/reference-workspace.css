@@ -171,3 +171,41 @@ body.reference-engine:not(.hub-open) #properties .inspector-window-toolbar :is(b
   right:-35px;width:min(250px,calc(100vw - 20px));
  }
 }
+
+/* Editor panel geometry contract, following PlayCanvas layout-cell rules.
+   Only shell geometry lives here; content styles belong to their components. */
+body.reference-engine:not(.hub-open):not(.compact-workspace) .workspace{
+  min-width:0;min-height:0;
+}
+body.reference-engine:not(.hub-open) :is(#hierarchyPanel,#projectPanel,#inspectorPanel,.center-stack){
+  box-sizing:border-box;min-width:0;min-height:0;
+}
+body.reference-engine:not(.hub-open) #projectPanel #projectContent>.asset-body{
+  min-width:0;min-height:0;
+  flex:1 1 0;overflow:hidden;
+}
+body.reference-engine:not(.hub-open) #projectPanel #assetFolders{
+  box-sizing:border-box;
+  min-height:0;overflow-x:hidden;overflow-y:auto;
+  scrollbar-width:thin;
+  border-right:1px solid var(--wl-theme-border,#535a62);
+}
+body.reference-engine:not(.hub-open) #projectPanel .asset-content{
+  box-sizing:border-box;min-width:0;min-height:0;
+  flex:1 1 0;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+}
+body.reference-engine:not(.hub-open) #projectPanel #assetGrid{
+  box-sizing:border-box;min-width:0;min-height:90px;
+  align-content:start;
+}
+body.reference-engine:not(.hub-open) #projectPanel #visualPackItems{
+  box-sizing:border-box;min-width:0;min-height:90px;
+  align-content:start;
+}
+/* Do not create additional global scroll containers around the editor. */
+body.reference-engine:not(.hub-open) #projectPanel #projectContent,
+body.reference-engine:not(.hub-open) #inspectorPanel{
+  overscroll-behavior:contain;
+}

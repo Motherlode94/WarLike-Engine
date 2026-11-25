@@ -66,3 +66,106 @@ body.reference-engine #warlikeVisualPacks .free-asset-grid:not(.free-asset-list)
 body.reference-engine #blueprintDialog .bp-run-button{border-color:#609776!important;color:#c7edd7!important}body.reference-engine #blueprintDialog .bp-run-button[aria-pressed=true]{border-color:#bf7474!important;color:#ffd0cc!important}
 
 body.reference-engine #projectAdvancedFiles:not([open]){padding:0!important;margin:0!important;border:0!important;min-height:0!important}body.reference-engine #projectAdvancedFiles:not([open])>summary{display:none}body.reference-engine #projectAdvancedFiles[open]>summary{cursor:pointer;min-height:27px;padding:5px 8px;font-size:11px}
+
+/* Unity 2023.1 window organization: existing windows and controls only.
+   Hierarchy > Scene/Game > Inspector, Project/Console beneath Scene.
+   Keep the chosen WarLike theme and preserve asset operations. */
+body.reference-engine:not(.hub-open) #hierarchyPanel{
+ display:flex;flex-direction:column;min-height:0!important;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .dock-title{
+ flex:0 0 auto;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel #hierarchySearch{
+ flex:0 0 auto;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel #objects{
+ flex:1 1 0!important;min-height:0!important;
+ overflow:auto!important;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel>.hierarchy-history{
+ display:none!important;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .dock-title-actions{
+ display:flex;align-items:center;gap:5px;position:relative;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .dock-title-actions>.hierarchy-history{
+ position:relative;flex:none;min-width:0;margin:0!important;
+ padding:0!important;border:0!important;background:transparent!important;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .dock-title-actions>.hierarchy-history>summary{
+ display:block;list-style:none;padding:3px 6px!important;min-height:21px!important;
+ font-size:11px!important;font-weight:400!important;cursor:pointer;
+ border:1px solid var(--wl-theme-border,#555)!important;
+ border-radius:2px!important;background:var(--wl-theme-header,#303236)!important;
+}
+body.reference-engine:not(.hub-open) #hierarchyPanel .dock-title-actions>.hierarchy-history>summary::-webkit-details-marker{display:none}
+body.reference-engine:not(.hub-open) #hierarchyPanel .dock-title-actions>.hierarchy-history> #history{
+ position:absolute;right:0;top:calc(100% + 3px);z-index:120;
+ width:250px;max-height:min(45vh,300px);overflow:auto!important;
+ border:1px solid var(--wl-theme-border,#555);
+ background:var(--wl-theme-panel,#2c3137);box-shadow:0 8px 20px #0008;
+}
+body.reference-engine:not(.hub-open) #projectPanel{
+ display:flex;flex-direction:column;min-height:0!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel #projectContent{
+ display:flex;flex:1 1 0;flex-direction:column;min-height:0!important;
+ height:auto!important;overflow:hidden!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel #projectContent[hidden]{display:none!important}
+body.reference-engine:not(.hub-open) #projectPanel #projectContent>.asset-body{
+ display:flex;flex:1 1 0!important;min-height:0!important;overflow:hidden!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel #assetFolders{
+ flex:0 0 clamp(135px,19%,210px)!important;
+ width:clamp(135px,19%,210px)!important;min-width:0!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel .asset-content{
+ display:flex;flex-direction:column;
+ flex:1 1 0!important;min-height:0!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel #assetGrid{
+ flex:1 1 0!important;min-height:0!important;max-height:none!important;
+ overflow-y:auto!important;align-content:start!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel #warlikeVisualPacks{
+ display:flex;flex-direction:column;flex:1 1 0!important;
+ min-height:0!important;max-height:none!important;
+ overflow:hidden!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel #warlikeVisualPacks .visual-pack-results{
+ display:flex;flex-direction:column;flex:1 1 0!important;
+ min-height:0!important;overflow:hidden!important;
+}
+body.reference-engine:not(.hub-open) #projectPanel #warlikeVisualPacks #visualPackItems{
+ flex:1 1 0!important;min-height:0!important;max-height:none!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ align-content:start!important;
+}
+/* Inspector presents selected object and real components; not a second
+   Inspector title bar. No component is hidden or removed. */
+body.reference-engine:not(.hub-open) #inspectorPanel #properties{
+ flex:1 1 0;min-height:0!important;overflow-y:auto!important;
+ overflow-x:hidden!important;padding:0!important;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-window-toolbar{
+ justify-content:flex-end!important;gap:6px!important;
+ padding:4px 8px!important;min-height:29px!important;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-window-toolbar>strong{
+ display:none!important;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-window-toolbar :is(button,select){
+ min-height:23px!important;
+}
+@media(max-width:700px){
+ body.reference-engine:not(.hub-open) #projectPanel #assetFolders{
+  flex-basis:108px!important;width:108px!important;
+ }
+ body.reference-engine:not(.hub-open) #hierarchyPanel .dock-title-actions>.hierarchy-history>#history{
+  right:-35px;width:min(250px,calc(100vw - 20px));
+ }
+}

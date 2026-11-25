@@ -62,10 +62,11 @@ try{
   assert(boxes.scene.right<=boxes.inspector.left+12,'Scene must not overlap Inspector');
   assert(boxes.project.top>=boxes.scene.bottom-12,'Project remains docked under Scene');
   assert(boxes.header.bottom<=boxes.scene.top+40,'Top menu should not overlap Scene');
-  await page.locator('.scene-view-options>summary').click();
+  await page.locator('.reference-scene-menu>summary').click();
   assert(await page.locator('#zoomIn').isVisible(),'zoom remains available');
   assert(await page.locator('#sunHour').isVisible(),'lighting remains available');
-  await page.locator('.scene-view-options>summary').click();
+  assert.equal(await page.locator('.scene-view-options').count(),0,'no nested hidden scene menu');
+  await page.locator('.reference-scene-menu>summary').click();
   await page.screenshot({path:path.join(out,`editor-${viewport.width}x${viewport.height}.png`)});
  }
  console.log('PASS: Hub settings accessible and Unity-like dock geometry at 1440x900 + 1366x768');

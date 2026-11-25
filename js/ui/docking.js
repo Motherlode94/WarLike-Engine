@@ -109,7 +109,22 @@ function applyLayout(){
   const el=$(id),f=layout.float[kind],button=document.querySelector('[data-dock-toggle="'+kind+'"]');
   if(!el)continue;
   el.classList.toggle('floating-panel',!!f);if(f&&Number(el.style.zIndex||0)<1000)bringToFront(el);
-  if(f&&!el.hasAttribute('data-window-maximized')){const viewport=viewportSize(),width=Math.min(viewport.width,Math.max(260,f.width)),height=Math.min(viewport.height-35,Math.max(210,f.height));Object.assign(f,{x:clamp(f.x,0,Math.max(0,viewport.width-width)),y:clamp(f.y,35,Math.max(35,viewport.height-height)),width,height});el.style.left=f.x+'px';el.style.top=f.y+'px';el.style.width=width+'px';el.style.height=height+'px'}
+  if(f&&!el.hasAttribute('data-window-maximized')){
+   const viewport=viewportSize();
+   const width=Math.min(Math.max(260,viewport.width-16),Math.max(260,f.width));
+   const height=Math.min(Math.max(210,viewport.height-52),Math.max(210,f.height));
+   Object.assign(f,{x:clamp(f.x,8,Math.max(8,viewport.width-width-8)),
+    y:clamp(f.y,35,Math.max(35,viewport.height-height-8)),width,height});
+   // Floating panels must override their dock-only grid bounds and min sizes.
+   // In particular, Project keeps its dock height unless explicitly reset here.
+   for(const [key,value] of Object.entries({left:f.x,top:f.y,width,height})){
+    el.style.setProperty(key,value+'px','important');
+   }
+   el.style.setProperty('right','auto','important');
+   el.style.setProperty('bottom','auto','important');
+   el.style.setProperty('max-width','calc(100vw - 16px)','important');
+   el.style.setProperty('max-height','calc(100dvh - 43px)','important');
+  }
   else if(!f){for(const property of ['left','top','width','height','min-width','min-height','max-width','max-height','right','bottom'])el.style.removeProperty(property)}
   if(button){button.textContent=f?'↧':'▣';button.title=f?'Ancrer '+kind:'Détacher '+kind}
  }

@@ -163,3 +163,6 @@ body.reference-engine:not(.hub-open) #inspectorPanel #properties{min-height:0;ov
  #hubOverlay .hub-suite,#hubOverlay .hub-layout{padding:10px!important}
  #hubOverlay .hub-suite-grid{grid-template-columns:1fr!important}
 }
+
+#hubOverlay .simple-hub-main>[hidden]{display:none!important}
+#hubOverlay .hub-window[data-simple-hub]{grid-template-columns:190px minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important}

@@ -241,3 +241,111 @@ body.reference-engine:not(.hub-open) #projectPanel .asset-content{
 body.reference-engine:not(.hub-open) #projectPanel .asset-grid{
  min-width:0!important;
 }
+
+/* P0 Hub project browser — keep title and actions in separate flexible areas.
+   This overrides the inherited editor button dimensions, without changing
+   the editor, the selected theme, or adding new interface controls. */
+@media (min-width:701px){
+ #hubOverlay .hub-window[data-simple-hub]{
+  grid-template-columns:190px minmax(0,1fr)!important;
+ }
+ #hubOverlay .hub-window[data-simple-hub] .simple-hub-heading{
+  display:grid!important;
+  grid-template-columns:auto minmax(80px,1fr) auto!important;
+  column-gap:20px!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+ }
+ #hubOverlay .simple-hub-heading .simple-hub-brand{display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
+ #hubOverlay .simple-hub-heading h1{margin:0!important;min-width:0;white-space:nowrap}
+ #hubOverlay .simple-hub-heading .simple-hub-toolbar{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  flex-wrap:nowrap!important;
+  gap:8px!important;
+  min-width:0!important;
+  max-width:100%!important;
+ }
+ #hubOverlay .simple-hub-toolbar #hubProjectSearch{
+  box-sizing:border-box!important;
+  flex:0 1 220px!important;
+  width:220px!important;
+  min-width:120px!important;
+  max-width:220px!important;
+ }
+ #hubOverlay .simple-hub-toolbar #hubProjectFilter{
+  flex:0 0 95px!important;
+  width:95px!important;
+  min-width:0!important;
+ }
+ #hubOverlay .simple-hub-toolbar #hubNewProject{
+  flex:0 0 auto!important;
+  width:auto!important;
+  white-space:nowrap!important;
+ }
+ #hubOverlay .simple-hub-toolbar #hubClose{
+  flex:0 0 30px!important;
+  width:30px!important;
+  min-width:30px!important;
+  padding:4px!important;
+ }
+}
+#hubOverlay .simple-hub-main .simple-hub-projects{
+ box-sizing:border-box;
+ min-width:0!important;
+ width:100%!important;
+ max-width:none!important;
+}
+#hubOverlay .simple-hub-projects .simple-hub-list-actions{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:space-between!important;
+ flex-wrap:wrap!important;
+ gap:12px!important;
+ min-width:0!important;
+ width:100%!important;
+ box-sizing:border-box!important;
+ padding:12px 26px!important;
+}
+#hubOverlay .simple-hub-list-actions #hubProjectCount{
+ position:static!important;
+ display:inline-block!important;
+ width:auto!important;
+ min-width:0!important;
+ flex:0 0 auto!important;
+ margin:0!important;
+ white-space:nowrap;
+}
+#hubOverlay .simple-hub-list-actions #hubBackupAll{
+ position:static!important;
+ display:inline-flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ flex:0 0 auto!important;
+ width:auto!important;
+ min-width:0!important;
+ max-width:100%!important;
+ margin:0!important;
+ white-space:nowrap;
+}
+#hubOverlay .simple-hub-projects #hubProjects{min-width:0;max-width:100%}
+@media (max-width:1000px) and (min-width:701px){
+ #hubOverlay .hub-window[data-simple-hub] .simple-hub-heading{grid-template-columns:auto minmax(0,1fr)!important;row-gap:8px!important}
+ #hubOverlay .simple-hub-heading .simple-hub-toolbar{grid-column:1/-1;justify-content:flex-end!important}
+}
+@media(max-width:700px){
+ #hubOverlay .hub-window[data-simple-hub] .simple-hub-heading{
+  display:flex!important;
+  flex-wrap:wrap!important;
+ }
+ #hubOverlay .simple-hub-heading .simple-hub-toolbar{
+  display:flex!important;
+  width:100%!important;
+  flex-wrap:wrap!important;
+  gap:6px!important;
+ }
+ #hubOverlay .simple-hub-toolbar #hubProjectSearch{flex:1 1 160px!important;min-width:0!important}
+ #hubOverlay .simple-hub-toolbar #hubNewProject{white-space:nowrap}
+ #hubOverlay .simple-hub-list-actions{padding:12px!important}
+}

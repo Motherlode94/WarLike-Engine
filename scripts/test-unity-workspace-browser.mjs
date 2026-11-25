@@ -217,11 +217,15 @@ try{
    assert.equal(saved.leftPriority,'important','Drag positioning respects dock CSS priority');
    assert.equal(saved.topPriority,'important','Drag positioning respects dock CSS priority');
    await page.reload({waitUntil:'load'});
-   if(await page.locator('#hubOverlay').isVisible()){
-    await page.getByRole('button',{name:'Unity UI QA',exact:true}).click();
-    await page.locator('#hubOverlay').waitFor({state:'hidden'});
-   }
+   // The Hub opens asynchronously after document load. isVisible() here races
+   // initialization and can see the old hidden state before the Hub appears.
+   // Reopen the actual project and confirm the overlay releases pointer events.
+   await page.locator('#hubOverlay').waitFor({state:'visible'});
+   await page.getByRole('button',{name:'Unity UI QA',exact:true}).click();
+   await page.locator('#hubOverlay').waitFor({state:'hidden'});
    await page.waitForFunction(()=>document.querySelector('#hierarchyPanel')?.classList.contains('floating-panel'));
+   assert.equal(await page.locator('#hubOverlay').isVisible(),false,
+    'Hub closes before re-docking the restored project');
    const reopened=await page.locator('#hierarchyPanel').boundingBox();
    assert(Math.abs(reopened.x-moved.x)<6&&Math.abs(reopened.y-moved.y)<6,
     'Floating Hierarchy coordinates survive a full editor reload');

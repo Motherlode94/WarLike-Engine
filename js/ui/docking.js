@@ -181,9 +181,15 @@ function bindFloating(kind){
    document.body.classList.add('dragging-window');
    bringToFront(panel);
   }
-  const left=clamp(drag.x+dx/uiScale(),0,Math.max(0,viewportSize().width-panel.offsetWidth));
-  const top=clamp(drag.y+dy/uiScale(),35,Math.max(35,viewportSize().height-panel.offsetHeight));
-  panel.style.left=left+'px';panel.style.top=top+'px';
+  // Match applyLayout's viewport margins exactly. Otherwise a tall floating
+  // window can be dragged outside the restorable area and jump on reload.
+  const viewport=viewportSize();
+  const left=clamp(drag.x+dx/uiScale(),8,Math.max(8,viewport.width-panel.offsetWidth-8));
+  const top=clamp(drag.y+dy/uiScale(),35,Math.max(35,viewport.height-panel.offsetHeight-8));
+  // applyLayout() uses important positioning. Assignment via style.left/top
+  // cannot override those declarations, so dragging must use setProperty too.
+  panel.style.setProperty('left',left+'px','important');
+  panel.style.setProperty('top',top+'px','important');
   const f=layout.float[kind];if(f){f.x=left;f.y=top}
  });
  const stop=e=>{
@@ -283,4 +289,12 @@ export function initDocking(){
  bindWindows();new MutationObserver(bindWindows).observe(document.body,{childList:true,subtree:true});
  applyLayout();window.addEventListener('resize',()=>applyLayout());
 }
-export function resetLayout(){layout={leftWidth:205,rightWidth:325,float:{}};applyLayout();save();const center=document.querySelector('.center-stack');center.style.removeProperty('--project-height');localStorage.removeItem('warlike.projectHeight')}
+export function resetLayout(){
+ // Reset every part of the docking state, not just the three window bounds.
+ // Otherwise stale tabGroups make later re-docking/grouping inconsistent.
+ layout={leftWidth:defaults.leftWidth,rightWidth:defaults.rightWidth,float:{},tabGroups:[],activeTabs:{}};
+ const center=document.querySelector('.center-stack');
+ center?.style.removeProperty('--project-height');
+ try{localStorage.removeItem('warlike.projectHeight')}catch{}
+ applyLayout();save();window.dispatchEvent(new Event('resize'));
+}

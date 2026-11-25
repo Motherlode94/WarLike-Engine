@@ -70,6 +70,9 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
     if(car.vehicleArticulation)car.vehicleArticulation.doorOpen=false;
     placeGaiaDriverAtSeat(car,player);
    }else{
+    if(car.groundVehiclePhysics?.enabled)
+     car.groundVehicleInput={throttle:0,steer:0,brake:0,handbrake:0};
+    if(car.aircraftPhysics?.enabled)car.aircraftInput=releaseAircraftControls(car.aircraftInput);
     player._hiddenInVehicle=false;player.animation='idle';
     vehicleComponents(car).seats.driverId=null;
     if(car.vehicleArticulation)car.vehicleArticulation.doorOpen=false;
@@ -109,8 +112,13 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
     if(player.battlefield?.enabled)nearest.o.team=player.team;
     player._vehicleInputConsumed=true;recordEngineEvent('vehicle-enter',nearest.o.name);driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;
     const transition=beginGaiaDriverTransition(nearest.o,player,'enter',gaiaDriverSeatPose(nearest.o,player));
-    if(transition)driving3d.transition=transition;
-    else placeGaiaDriverAtSeat(nearest.o,player);
+    if(transition){
+     // Do not let the same input frame instantly snap the actor to the seat.
+     driving3d.transition=transition;
+     driving3d.enterHeld=enter;
+     return true;
+    }
+    placeGaiaDriverAtSeat(nearest.o,player);
    }
   }
  }

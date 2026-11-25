@@ -75,7 +75,14 @@ async function list(){
    if(!openProject(id))throw Error('Impossible de rouvrir la copie cloud.');
    remoteMap.set(id,{id:p.id,revision:item.revision});remember();saveFingerprint='';setMessage('Copie cloud ouverte. Les changements devront être sauvegardés.');
   });
-  row.append(label,button);region.append(row);
+  const publish=document.createElement('button');publish.type='button';publish.textContent='Publier la fiche';publish.title='Publier uniquement le titre et la description, pas les sources du jeu';
+  publish.onclick=()=>run(async()=>{
+   if(!confirm('Publier une fiche publique de ce jeu ? Le projet source reste privé. La version jouable n’est pas encore incluse.'))return;
+   await identity();
+   const result=await send('publish',{method:'POST',body:{sourceId:p.id,title:p.name,description:''}});
+   setMessage('Fiche publiée : '+result.title+' (version jouable non encore disponible).');
+  });
+  row.append(label,button,publish);region.append(row);
  }
  if(!data.projects?.length)region.textContent='Aucun jeu privé dans ce compte.';
 }

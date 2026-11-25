@@ -84,6 +84,7 @@ export const playerModules=[
   "js/core/gaia-terrain-sculpt.js",
   "js/core/gaia-traffic-ai.js",
   "js/core/gaia-traffic-routing.js",
+  "js/core/gaia-vehicle-seat-interactions.js",
   "js/core/game-dialogue.js",
   "js/core/game-elements.js",
   "js/core/game-genres.js",

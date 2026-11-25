@@ -181,8 +181,11 @@ function bindFloating(kind){
    document.body.classList.add('dragging-window');
    bringToFront(panel);
   }
-  const left=clamp(drag.x+dx/uiScale(),0,Math.max(0,viewportSize().width-panel.offsetWidth));
-  const top=clamp(drag.y+dy/uiScale(),35,Math.max(35,viewportSize().height-panel.offsetHeight));
+  // Match applyLayout's viewport margins exactly. Otherwise a tall floating
+  // window can be dragged outside the restorable area and jump on reload.
+  const viewport=viewportSize();
+  const left=clamp(drag.x+dx/uiScale(),8,Math.max(8,viewport.width-panel.offsetWidth-8));
+  const top=clamp(drag.y+dy/uiScale(),35,Math.max(35,viewport.height-panel.offsetHeight-8));
   // applyLayout() uses important positioning. Assignment via style.left/top
   // cannot override those declarations, so dragging must use setProperty too.
   panel.style.setProperty('left',left+'px','important');

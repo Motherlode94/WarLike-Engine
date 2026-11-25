@@ -30,7 +30,7 @@ export function initTilemapEditor2d(canvas){
  host.append(bar);
  let editing=false,stroke=null;
  const selected=()=>state.entities.find(e=>state.selected.includes(e.id)&&e.tilemap2d)||null;
- const drawState=()=>{bar.hidden=workspace.mode!=='2d'||state.playing;const active=selected();toggle.disabled=!active;info.textContent=active?active.name:'Sélectionne un Tilemap';toggle.setAttribute('aria-pressed',String(editing))};
+ const drawState=()=>{const visible=workspace.mode==='2d'&&!state.playing;bar.hidden=!visible;bar.style.display=visible?'flex':'none';const active=selected();toggle.disabled=!active;info.textContent=active?active.name:'Sélectionne un Tilemap';toggle.setAttribute('aria-pressed',String(editing))};
  toggle.onclick=()=>{editing=!editing;toggle.textContent=editing?'Peinture : active':'Peindre';drawState()};
  const pointerWorld=e=>{
   const r=canvas.getBoundingClientRect();return toWorld({x:(e.clientX-r.left)*canvas.clientWidth/r.width,y:(e.clientY-r.top)*canvas.clientHeight/r.height});

@@ -39,13 +39,9 @@ try{
  await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="projects"]').waitFor();
  assert.equal(await page.locator('#hubOverlay .hub-project-welcome').count(),0,'No marketing hero in Unity Hub Projects');
  assert.equal(await page.locator('#hubOverlay .simple-hub-projects').getAttribute('data-project-view'),'list','Project list is default');
- const hubZones=await page.evaluate(()=>{
-  const r=sel=>{const v=document.querySelector(sel).getBoundingClientRect();return {left:v.left,right:v.right,top:v.top,bottom:v.bottom}};
-  return {nav:r('#hubOverlay .simple-hub-nav'),header:r('#hubOverlay .simple-hub-heading'),main:r('#hubOverlay .simple-hub-main')};
- });
+ const hubZones=await page.evaluate(()=>{const r=sel=>{const v=document.querySelector(sel).getBoundingClientRect();return {left:v.left,right:v.right,top:v.top,bottom:v.bottom}};return {nav:r('#hubOverlay .simple-hub-nav'),header:r('#hubOverlay .simple-hub-heading'),main:r('#hubOverlay .simple-hub-main')}});
  assert(hubZones.nav.right<=hubZones.main.left+4,'Sidebar does not overlap projects');
  assert(hubZones.header.bottom<=hubZones.main.top+4,'Header does not overlap list');
-
  assert.equal(await page.locator('#hubOverlay .simple-hub-main').getAttribute('data-hub-tab'),'projects');
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false,
   'Appearance is not mixed into the project browser');
@@ -57,6 +53,16 @@ try{
  assert(hubGeometry.nav.right<=hubGeometry.main.x+8,'Hub navigation does not overlap project content');
  assert(hubGeometry.heading.bottom<=hubGeometry.main.y+10,'Hub heading does not overlay content');
  assert(hubGeometry.window.right<=1441&&hubGeometry.window.bottom<=901,'Hub fits within desktop viewport');
+
+ const hubHeader=await page.evaluate(()=>{
+  const rect=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width}};
+  return {heading:rect('#hubOverlay .simple-hub-heading h1'),toolbar:rect('#hubOverlay .simple-hub-toolbar'),backup:rect('#hubBackupAll'),count:rect('#hubProjectCount'),newProjectButtons:[...document.querySelectorAll('#hubOverlay button')].filter(b=>b.textContent.includes('Nouveau projet')&&!b.hidden).length};
+ });
+ assert(hubHeader.toolbar.left>=hubHeader.heading.right-2,'Hub project tools begin after heading, without overlap');
+ assert(hubHeader.backup.left>=hubHeader.count.right-2||hubHeader.backup.top>=hubHeader.count.bottom-2,
+  'project backup button does not overlap the project counter');
+ assert.equal(hubHeader.newProjectButtons,1,'Hub exposes one visible New Project button');
+
  await page.screenshot({path:path.join(out,'hub-before-open.png')});
  await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="appearance"]').click();
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),true,
@@ -95,6 +101,29 @@ try{
  await page.screenshot({path:path.join(out,'unity-2023-hierarchy-create.png')});
  await page.locator('#hierarchyPanel .unity-hierarchy-create>summary').click();
  assert.equal(await page.locator('#view3dStatus').isVisible(),false,'no permanent tutorial overlay in 3D Scene');
+ // The 3D authoring view must not show 2D Tilemap painting controls.
+ await page.setViewportSize({width:1440,height:900});
+ await page.locator('#workspace3d').click();
+ await page.waitForFunction(()=>document.querySelector('#viewport .warlike-tilemap-toolbar')!==null);
+ assert.equal(await page.locator('#viewport .warlike-tilemap-toolbar').isVisible(),false,
+  '2D Tilemap controls must not cover 3D Scene');
+ const createMenu=page.locator('#hierarchyPanel .unity-hierarchy-create>summary');
+ await createMenu.click();
+ await page.locator('#quickCreateObject').click();
+ await page.waitForFunction(()=>!!document.querySelector('#hierarchyPanel .hierarchy-object-name'));
+ const labels=await page.locator('#hierarchyPanel .hierarchy-object-name').allTextContents();
+ assert(labels.some(name=>name.trim().length>0),'Hierarchy must show real GameObject names');
+ const sizes=await page.locator('#hierarchyPanel .unity-hierarchy-row').evaluateAll(rows=>rows.map(row=>{
+  const name=row.querySelector('.hierarchy-object-name');
+  const label=row.querySelector('.hierarchy-object-label');
+  const box=name?.getBoundingClientRect();
+  return {name:name?.textContent?.trim(),width:box?.width??0,
+   visible:!!(box&&box.width>0&&box.height>0),labelWidth:label?.getBoundingClientRect().width??0};
+ }));
+ console.log('P0 Hierarchy name widths',JSON.stringify(sizes));
+ await page.screenshot({path:path.join(out,'editor-3d-clean-scene-and-hierarchy.png')});
+ assert(sizes.some(item=>item.name&&item.visible&&item.labelWidth>=90&&item.width>40),
+  'GameObject label must have real usable space, not only a forced minimum text width');
  // P0 certification: actual tab switching, panel detachment and restoration.
  await page.setViewportSize({width:1440,height:900});
  await page.locator('#consoleTab').click();

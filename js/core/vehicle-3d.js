@@ -5,7 +5,7 @@ import {collisionBackend3d} from './collision-backend-3d.js';
 import {vehicleComponents,canDriveVehicle,tickVehicleSystems,impactVehicle} from './vehicle-components.js';
 import {fireVehicleWeapon,tickVehicleWeapon,vehicleWeaponConfig} from './vehicle-weapons-3d.js';
 import {recordEngineEvent} from './engine-diagnostics.js';
-import {gaiaDriverSeatAccess} from './gaia-parking-runtime.js';
+import {gaiaDriverSeatAccess,placeGaiaDriverAtSeat} from './gaia-parking-runtime.js';
 import {stepArcadeVehicle} from './arcade-driving.js';
 import {aircraftPilotInput,releaseAircraftControls,canSafelyExitAircraft} from './aircraft-pilot-input.js';
 import {stepAircraftSystems} from './aircraft-systems.js';
@@ -56,7 +56,7 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
    if(nearest&&Math.abs((Number(nearest.o.elevation3d)||0)-(Number(player.elevation3d)||0))<1.8&&nearest.d<Math.max(150,(nearest.o.w||64)*.85)&&canDriveVehicle(nearest.o)&&gaiaDriverSeatAccess(nearest.o,player.id,'enter').allowed){
     vehicleComponents(nearest.o).seats.driverId=player.id;
     if(player.battlefield?.enabled)nearest.o.team=player.team;
-    player._vehicleInputConsumed=true;recordEngineEvent('vehicle-enter',nearest.o.name);driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;player._hiddenInVehicle=true;player.animation='drive';
+    player._vehicleInputConsumed=true;recordEngineEvent('vehicle-enter',nearest.o.name);driving3d.vehicleId=nearest.o.id;driving3d.speed=0;driving3d.steer=0;placeGaiaDriverAtSeat(nearest.o,player);
    }
   }
  }
@@ -82,10 +82,7 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
   if(drivingCar.aircraftSystems?.enabled)stepAircraftSystems(drivingCar.aircraftSystems,drivingCar.aircraftPhysics.kind,keys,step,drivingCar.aircraftPhysics.kind==='helicopter'?drivingCar.aircraftInput.collective:drivingCar.aircraftInput.throttle);
   const v=drivingCar.rigidbody3d;
   driving3d.speed=v?Math.hypot(Number(v.vx)||0,Number(v.vy)||0,Number(v.vz)||0):0;
-  player.x=drivingCar.x+((drivingCar.w||32)-(player.w||32))/2;
-  player.y=drivingCar.y+((drivingCar.depth3d||drivingCar.h||32)-(player.depth3d||player.h||32))/2;
-  player.elevation3d=drivingCar.elevation3d||0;
-  player._hiddenInVehicle=true;player.animation='drive';
+  placeGaiaDriverAtSeat(drivingCar,player);
   drivingCar.animation='fly';
   return true;
  }
@@ -102,10 +99,7 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
   // Rigidbody velocity for HUD / brake intent (scene units per second).
   const rb=drivingCar.rigidbody3d;
   if(rb)driving3d.speed=Math.hypot(Number(rb.vx)||0,Number(rb.vz)||0);
-  player.x=drivingCar.x+((drivingCar.w||32)-(player.w||32))/2;
-  player.y=drivingCar.y+((drivingCar.depth3d||drivingCar.h||32)-(player.depth3d||player.h||32))/2;
-  player.elevation3d=drivingCar.elevation3d||0;
-  player._hiddenInVehicle=true;player.animation='drive';
+  placeGaiaDriverAtSeat(drivingCar,player);
   // Animation follows longitudinal signed speed, not total horizontal speed:
   // slipping sideways must not look like forward acceleration, or hide reverse.
   drivingCar.animation=handbrake&&driving3d.speed>2?'brake':Math.abs(signedSpeed)<=2?'idle':signedSpeed<0?'reverse':'drive';
@@ -140,9 +134,7 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
   drivingCar._doorKeyHeld=keys.has('o');
  }
  if(move.collision){recordEngineEvent('collision',drivingCar.name);impactVehicle(drivingCar,driving3d.speed);driving3d.speed=-driving3d.speed*.12;driving3d.impact=.25}
- player.x=drivingCar.x+((drivingCar.w||32)-(player.w||32))/2;
- player.y=drivingCar.y+((drivingCar.depth3d||drivingCar.h||32)-(player.depth3d||player.h||32))/2;
- player.elevation3d=drivingCar.elevation3d||0;player._hiddenInVehicle=true;player.animation='drive';
+ placeGaiaDriverAtSeat(drivingCar,player);
  drivingCar.animation=Math.abs(driving3d.speed)<2?'idle':handbrake?'brake':driving3d.speed<0?'reverse':'drive';
  return true;
 }

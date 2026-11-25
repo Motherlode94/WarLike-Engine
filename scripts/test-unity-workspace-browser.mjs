@@ -29,7 +29,7 @@ try{
   const slot={entities:[],selected:[],nextId:1,camera:{x:0,y:0,zoom:1}};
   localStorage.setItem('warlike.hub.project.unity-ui-qa',JSON.stringify({version:3,name:'Unity UI QA',workspaceMode:'3d',workspaces:{'2d':slot,'3d':slot}}));
   localStorage.setItem('warlike.workspace.ui-schema.v2','done');
-  localStorage.setItem('warlike.workspace.layout.v1',JSON.stringify({leftWidth:240,rightWidth:320,float:{}}));
+  if(!localStorage.getItem('warlike.workspace.layout.v1'))localStorage.setItem('warlike.workspace.layout.v1',JSON.stringify({leftWidth:240,rightWidth:320,float:{}}));
   localStorage.setItem('warlike.projectHeight','220');
  });
  await page.goto('http://127.0.0.1:'+server.address().port+'/index.html',{waitUntil:'load'});
@@ -193,6 +193,39 @@ try{
   assert(rect&&rect.width>=240&&rect.height>=180,kind+' floating window has a usable size');
   console.log('P0 floating window bounds',JSON.stringify({kind,rect,viewport:{width:1440,height:900}}));
   await page.screenshot({path:path.join(out,'dock-'+kind+'-floating.png')});
+  if(kind==='hierarchy'){
+   const title=await page.locator('#hierarchyPanel .dock-title > span').first().boundingBox();
+   assert(title&&title.width>0,'Floating Hierarchy keeps a draggable title');
+   const startX=title.x+Math.min(35,title.width/2),startY=title.y+title.height/2;
+   await page.mouse.move(startX,startY);
+   await page.mouse.down();
+   await page.mouse.move(startX+75,startY+36,{steps:8});
+   await page.mouse.up();
+   const moved=await page.locator('#hierarchyPanel').boundingBox();
+   assert(moved.x>rect.x+40&&moved.y>rect.y+14,
+    'Dragging the dock title actually moves the floating Hierarchy');
+   const saved=await page.evaluate(()=>{
+    const el=document.querySelector('#hierarchyPanel');
+    const state=JSON.parse(localStorage.getItem('warlike.workspace.layout.v1')||'{}');
+    return {floating:state.float?.hierarchy,leftPriority:el.style.getPropertyPriority('left'),
+     topPriority:el.style.getPropertyPriority('top')};
+   });
+   assert(saved.floating&&Math.abs(saved.floating.x-moved.x)<4,
+    'Dragged Hierarchy coordinates are persisted');
+   assert.equal(saved.leftPriority,'important','Drag positioning respects dock CSS priority');
+   assert.equal(saved.topPriority,'important','Drag positioning respects dock CSS priority');
+   await page.reload({waitUntil:'load'});
+   if(await page.locator('#hubOverlay').isVisible()){
+    await page.getByRole('button',{name:'Unity UI QA',exact:true}).click();
+    await page.locator('#hubOverlay').waitFor({state:'hidden'});
+   }
+   await page.waitForFunction(()=>document.querySelector('#hierarchyPanel')?.classList.contains('floating-panel'));
+   const reopened=await page.locator('#hierarchyPanel').boundingBox();
+   assert(Math.abs(reopened.x-moved.x)<6&&Math.abs(reopened.y-moved.y)<6,
+    'Floating Hierarchy coordinates survive a full editor reload');
+   await page.screenshot({path:path.join(out,'dock-hierarchy-reloaded.png')});
+  }
+
   assert(rect.x>=-1&&rect.y>=-1&&rect.x+rect.width<=1441&&rect.y+rect.height<=901,kind+' floating window remains within viewport');
   await toggle.click();
   await page.waitForFunction(panelId=>!document.getElementById(panelId)?.classList.contains('floating-panel'),id);

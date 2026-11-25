@@ -58,7 +58,9 @@ try{
   const rect=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width}};
   return {heading:rect('#hubOverlay .simple-hub-heading h1'),toolbar:rect('#hubOverlay .simple-hub-toolbar'),backup:rect('#hubBackupAll'),count:rect('#hubProjectCount'),newProjectButtons:[...document.querySelectorAll('#hubOverlay button')].filter(b=>b.textContent.includes('Nouveau projet')&&!b.hidden).length};
  });
- assert(hubHeader.toolbar.left>=hubHeader.heading.right-2,'Hub project tools begin after heading, without overlap');
+ assert(hubHeader.toolbar.left>=hubHeader.heading.right-2||
+  hubHeader.toolbar.top>=hubHeader.heading.bottom-2,
+  'Hub project tools must be beside or below heading, never overlapping');
  assert(hubHeader.backup.left>=hubHeader.count.right-2||hubHeader.backup.top>=hubHeader.count.bottom-2,
   'project backup button does not overlap the project counter');
  assert.equal(hubHeader.newProjectButtons,1,'Hub exposes one visible New Project button');

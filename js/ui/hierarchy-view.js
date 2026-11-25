@@ -23,6 +23,16 @@ const foldsAll=value=>{
 const iconFor=o=>o.lightType?'☀':o.audioEnabled?'♫':(workspace.mode==='3d'?get3dAsset(o.model3dId||o.assetId):getAsset(o.assetId))?.category==='Characters'?'♙':o.assetId?'◇':'□';
 export function renderSceneHierarchy(){
  const root=document.querySelector('#objects');if(!root)return;
+ const panel=document.getElementById('hierarchyPanel');
+ // Keep History available from the Hierarchy header instead of reserving an
+ // unrelated full-width row below the GameObject tree.
+ const history=panel?.querySelector('.hierarchy-history');
+ const headerActions=panel?.querySelector('.dock-title-actions');
+ if(history&&headerActions&&history.parentElement!==headerActions){
+  history.open=false;
+  headerActions.insertBefore(history,headerActions.firstChild);
+ }
+
  const scroll=root.scrollTop,query=(document.querySelector('#hierarchySearch')?.value||'').trim().toLocaleLowerCase('fr');root.replaceChildren();
  const toolbar=el('div','unity-hierarchy-quicktools');
  const command=(text,title,callback)=>{const b=el('button','',text);b.type='button';b.title=title;b.setAttribute('aria-label',title);b.onclick=callback;return b};

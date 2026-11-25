@@ -75,3 +75,15 @@ export function resolveCameraBoom(target,desiredEye,obstacles,{previousDistance=
  const distance=allowed<=prior?allowed:Math.min(allowed,prior+(allowed-prior)*cameraDamping(sharpness,dt));
  return {eye:desiredEye.map((v,i)=>target[i]+(v-target[i])*distance/length),distance};
 }
+
+/** Keep a continuous Play camera when control changes between a character and a vehicle.
+ * Scene changes still cut; only a same-scene handoff interpolates.
+ */
+export function cameraHandoffStep(current,target,currentDistance,targetDistance,dt,{sharpness=8,snap=false}={}){
+ if(!Array.isArray(current)||!Array.isArray(target)||current.length!==3||target.length!==3||
+  ![...current,...target].every(Number.isFinite))throw Error('Invalid camera handoff target');
+ const t=snap?1:cameraDamping(sharpness,dt);
+ const distance=Number.isFinite(targetDistance)?Math.max(1.2,targetDistance):Math.max(1.2,Number(currentDistance)||4.8);
+ return {target:current.map((n,i)=>n+(target[i]-n)*t),
+  distance:(Number.isFinite(currentDistance)?currentDistance:distance)*(1-t)+distance*t};
+}

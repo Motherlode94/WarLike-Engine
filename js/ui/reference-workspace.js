@@ -21,7 +21,7 @@ export function initReferenceWorkspace(){
  const toolHost=document.createElement('div');toolHost.className='reference-editor-tools';toolHost.setAttribute('aria-label','Outils de transformation');
  if($('studioQuickCreate'))toolHost.append($('studioQuickCreate'));document.querySelector('.studio-menubar').append(toolHost);
  const sceneMenu=document.createElement('details');sceneMenu.className='reference-scene-menu';const summary=document.createElement('summary');summary.textContent='Affichage';const options=document.createElement('div');options.className='reference-scene-options';sceneMenu.append(summary,options);
- const sceneActions=header.querySelector('.scene-actions');for(const n of [...sceneActions.children])if(!['workspace2d','workspace3d','view3dFocus','resetView'].includes(n.id))options.append(n);
+ const sceneActions=header.querySelector('.scene-actions');for(const n of [...sceneActions.children]){if(['workspace2d','workspace3d','view3dFocus','resetView'].includes(n.id))continue;if(n.matches('.scene-view-options')){const group=n.querySelector('.scene-view-options-menu');if(group)for(const child of [...group.children])options.append(child);n.remove();}else options.append(n);}
  for(const n of [...tools.querySelectorAll('.tool-option')])if(!n.querySelector('#snapEnabled'))options.append(n);
  sceneActions.append(sceneMenu);
  const compact=matchMedia('(max-width:1100px)');const arrange=()=>{if(compact.matches)center.insertBefore(tools,header);else toolHost.append(tools);window.dispatchEvent(new Event('resize'));};compact.addEventListener('change',arrange);arrange();

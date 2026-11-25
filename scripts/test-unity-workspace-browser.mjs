@@ -40,16 +40,25 @@ try{
  assert.equal(await page.locator('#hubOverlay .simple-hub-main').getAttribute('data-hub-tab'),'projects');
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false,
   'Appearance is not mixed into the project browser');
+ const hubGeometry=await page.evaluate(()=>{
+  const bounds=selector=>{const e=document.querySelector(selector);if(!e)return null;const r=e.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
+  return {window:bounds('#hubOverlay .hub-window[data-simple-hub]'),nav:bounds('#hubOverlay .simple-hub-nav'),main:bounds('#hubOverlay .simple-hub-main'),heading:bounds('#hubOverlay .simple-hub-heading')};
+ });
+ assert(hubGeometry.window&&hubGeometry.nav&&hubGeometry.main&&hubGeometry.heading,'runtime Hub sections exist');
+ assert(hubGeometry.nav.right<=hubGeometry.main.x+8,'Hub navigation does not overlap project content');
+ assert(hubGeometry.heading.bottom<=hubGeometry.main.y+10,'Hub heading does not overlay content');
+ assert(hubGeometry.window.right<=1441&&hubGeometry.window.bottom<=901,'Hub fits within desktop viewport');
  await page.screenshot({path:path.join(out,'hub-before-open.png')});
  await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="appearance"]').click();
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),true,
   'Appearance is a separate navigable Hub screen');
  assert.equal(await page.locator('#hubAccentColor').isVisible(),true,'color picker remains available');
+ await page.screenshot({path:path.join(out,'hub-appearance-1440.png')});
  await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="projects"]').click();
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),false);
  await page.getByRole('button',{name:'Unity UI QA',exact:true}).click();
  await page.locator('#hubOverlay').waitFor({state:'hidden'});
- for(const viewport of [{width:1440,height:900},{width:1366,height:768}]){
+ for(const viewport of [{width:1920,height:1080},{width:1440,height:900},{width:1366,height:768}]){
   await page.setViewportSize(viewport);
   const boxes=await page.evaluate(()=>{
    const rect=sel=>{const r=document.querySelector(sel).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};

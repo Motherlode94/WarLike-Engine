@@ -2,3 +2,4 @@
 #hubOverlay .simple-hub-main > [hidden]{display:none!important}
 #hubOverlay .simple-hub-main :is(.hub-create,.hub-appearance,.hub-diagnostics)[hidden]{display:none!important}
 #hubOverlay .hub-window[data-simple-hub]{display:grid!important;grid-template-columns:190px minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important}
+#hubOverlay .hub-window[data-simple-hub]{width:min(1040px,calc(100vw - 40px))!important;height:min(780px,calc(100dvh - 40px))!important;max-height:calc(100dvh - 40px)!important;overflow:hidden!important}

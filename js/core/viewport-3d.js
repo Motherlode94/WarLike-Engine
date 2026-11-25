@@ -31,7 +31,7 @@ import {createFxRenderer3d} from './fx-renderer-3d.js';
 import {tickFxRuntime,emitFx} from './fx-runtime.js';
 import {isTypingTarget} from './editor-clipboard.js';
 import {sampleRigPose,deformGlbParts,animationClipForState} from './gltf-animation.js';
-import {cameraObstacleForEntity,cameraRigFor,cameraTargetFor,resolveCameraBoom,cameraPose,cameraDamping} from './play-camera.js';
+import {cameraObstacleForEntity,cameraRigFor,cameraTargetFor,resolveCameraBoom,cameraPose,cameraDamping,cameraHandoffStep} from './play-camera.js';
 import {activeSceneCamera,sceneCameraView,cameraMovementYaw} from './scene-camera-3d.js';
 import {CameraTransition3d} from './camera-transition-3d.js';
 import {gameIsRunning,gameSession} from './game-session.js';
@@ -838,10 +838,11 @@ export function init3d(canvas,host,buttons){
   canvas.setPointerCapture(e.pointerId);
  });
  // Free mouse look in Play: no click or pointer lock required, including TPS rigs.
- const shouldMouseLook=()=>state.playing&&workspace.mode==='3d'&&view3d.enabled&&gameIsRunning()&&!gameplayInputBlocked()&&!companyController(state.entities)&&!currentVehicle3d(state.entities)&&!!playableActor(state.entities);
+ const shouldMouseLook=()=>state.playing&&workspace.mode==='3d'&&view3d.enabled&&gameIsRunning()&&!gameplayInputBlocked()&&!companyController(state.entities)&&!!(currentVehicle3d(state.entities)||playableActor(state.entities));
  const applyMouseLook=e=>{
   if(!shouldMouseLook()||e.pointerType==='touch')return;
-  const rig=cameraRigFor(playableActor(state.entities));
+  const activeVehicle=currentVehicle3d(state.entities);
+  const rig=cameraRigFor(activeVehicle||playableActor(state.entities),!!activeVehicle);
   const sensitivity=(Number.isFinite(rig.sensitivity)?rig.sensitivity:.003)*(fpsAiming?.65:1);
   const dx=Number.isFinite(e.movementX)?e.movementX:0,dy=Number.isFinite(e.movementY)?e.movementY:0;
   view3d.yaw-=dx*sensitivity;view3d.pitch=clamp(view3d.pitch+dy*sensitivity,-1.25,1.25);
@@ -905,7 +906,23 @@ export function init3d(canvas,host,buttons){
   updateLighting(dt,state.playing&&workspace.mode==='3d');
   syncPlayCamera(state.playing&&workspace.mode==='3d');
   if(state.playing&&workspace.mode==='3d'&&!isLanGuest()){runRuntimeFrame(dt,{update(dt){update3dPlay(dt);updateSequences(dt,{mode:'3d',yaw:view3d.yaw,playing:true,entities:state.entities,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,player:playableActor(state.entities),allocateId(){state.nextId=Math.max(state.nextId,...state.entities.map(o=>o.id+1));return state.nextId++},onSceneChange(){state.nextId=Math.max(0,...state.entities.map(o=>o.id))+1}});}});}
-  if(state.playing&&gameIsRunning()&&view3d.followPlayer){const actor=currentVehicle3d(state.entities)||playableActor(state.entities),pt=playerTarget();if(pt){const cut=actor!==lastCameraActor||gameSession.currentSceneId!==lastCameraScene||Math.hypot(...V.sub(pt,view3d.target))>12,t=cut?1:cameraDamping(cameraRigFor(actor).followSharpness,dt);view3d.target=V.add(V.mul(view3d.target,1-t),V.mul(pt,t));if(cut)boomDistance=null}lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;}
+  if(state.playing&&gameIsRunning()&&view3d.followPlayer){
+   const vehicle=currentVehicle3d(state.entities);
+   const actor=vehicle||playableActor(state.entities),pt=playerTarget();
+   if(pt){
+    const sceneChanged=lastCameraScene!==null&&gameSession.currentSceneId!==lastCameraScene;
+    const handoff=!!lastCameraActor&&actor!==lastCameraActor&&!sceneChanged;
+    const far= Math.hypot(...V.sub(pt,view3d.target))>12;
+    const snap=sceneChanged||(!handoff&&far);
+    const rig=cameraRigFor(actor,!!vehicle);
+    const result=cameraHandoffStep(view3d.target,pt,view3d.radius,rig.distance,dt,
+     {sharpness:rig.followSharpness,snap});
+    view3d.target=result.target;
+    if(handoff||lastCameraActor!==actor)view3d.radius=result.distance;
+    if(snap)boomDistance=null;
+   }
+   lastCameraActor=actor;lastCameraScene=gameSession.currentSceneId;
+  }
   if(state.playing&&workspace.mode==='3d'){
    const selectedCamera=activeSceneCamera(state.entities);
    const desired=sceneCameraView(selectedCamera,state.entities,{yaw:view3d.yaw,pitch:view3d.pitch});

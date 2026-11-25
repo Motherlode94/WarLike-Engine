@@ -48,6 +48,16 @@ try{
  assert(hubGeometry.nav.right<=hubGeometry.main.x+8,'Hub navigation does not overlap project content');
  assert(hubGeometry.heading.bottom<=hubGeometry.main.y+10,'Hub heading does not overlay content');
  assert(hubGeometry.window.right<=1441&&hubGeometry.window.bottom<=901,'Hub fits within desktop viewport');
+
+ const hubHeader=await page.evaluate(()=>{
+  const rect=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width}};
+  return {heading:rect('#hubOverlay .simple-hub-heading h1'),toolbar:rect('#hubOverlay .simple-hub-toolbar'),backup:rect('#hubBackupAll'),count:rect('#hubProjectCount'),newProjectButtons:[...document.querySelectorAll('#hubOverlay button')].filter(b=>b.textContent.includes('Nouveau projet')&&!b.hidden).length};
+ });
+ assert(hubHeader.toolbar.left>=hubHeader.heading.right-2,'Hub project tools begin after heading, without overlap');
+ assert(hubHeader.backup.left>=hubHeader.count.right-2||hubHeader.backup.top>=hubHeader.count.bottom-2,
+  'project backup button does not overlap the project counter');
+ assert.equal(hubHeader.newProjectButtons,1,'Hub exposes one visible New Project button');
+
  await page.screenshot({path:path.join(out,'hub-before-open.png')});
  await page.locator('#hubOverlay .simple-hub-nav-item[data-hub-tab="appearance"]').click();
  assert.equal(await page.locator('#hubOverlay .hub-appearance').isVisible(),true,

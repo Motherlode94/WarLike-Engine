@@ -6,6 +6,8 @@ import {buildGaiaTrafficNetwork,controlGaiaTrafficVehicle,setGaiaTrafficSignalSe
 import {controlGaiaRoutedTrafficVehicle} from './gaia-traffic-routing.js';
 import {planGaiaParkingSteering} from './gaia-parking-steering.js';
 export {evaluateGaiaParkingRuntime,commitGaiaParkingSeatAction} from './gaia-parking-runtime.js';
+// Preserve WB 2.9e Player API when integrating WB 2.9f.
+export {planGaiaVehicleSeatTransition,applyGaiaVehicleSeatTransition} from './gaia-vehicle-seat-interactions.js';
 const finite=(v,d=0)=>typeof v==='number'&&Number.isFinite(v)?v:d;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,finite(v)));
 const add=(a,b)=>({x:a.x+b.x,y:a.y+b.y,z:a.z+b.z});

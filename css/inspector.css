@@ -71,3 +71,50 @@ body>.unity-component-popup .component-browser-option small{display:block;font-s
 body>.unity-component-popup .component-browser-option:disabled{opacity:.48;cursor:default}
 body>.unity-component-popup .component-browser-empty{font-size:12px;padding:12px}
 body>.unity-component-popup .component-browser-hint{display:block;padding:9px 5px 2px;color:#a6b0be;font-size:10px;border-top:1px solid #4a4f55;margin-top:5px}
+
+/* Inspector panel contract: PCUI-style header, scrollable component content.
+   Component metadata and editing behavior remain owned by inspector.js. */
+body.reference-engine:not(.hub-open) #inspectorPanel{
+  --inspector-row-height:26px;
+  --inspector-line:var(--wl-theme-border,var(--wl-border,#4d5661));
+  --inspector-surface:var(--wl-theme-panel,var(--wl-surface,#252a30));
+}
+body.reference-engine:not(.hub-open) #inspectorPanel #properties{
+  box-sizing:border-box;
+  min-width:0;min-height:0;
+  flex:1 1 0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  background:var(--inspector-surface);
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component{
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+  border-color:var(--inspector-line);
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component>summary{
+  box-sizing:border-box;
+  min-width:0;
+  min-height:var(--inspector-row-height);
+  align-items:center;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component>summary :is(strong,span){
+  min-width:0;
+}
+body.reference-engine:not(.hub-open) #properties :is(.property-row,.warlike-component-field){
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+}
+body.reference-engine:not(.hub-open) #properties :is(input,select,textarea){
+  box-sizing:border-box;
+  max-width:100%;
+}
+body.reference-engine:not(.hub-open) #properties .inspector-component-actions{
+  background:var(--inspector-surface);
+  border-color:var(--inspector-line);
+}

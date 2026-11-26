@@ -137,3 +137,21 @@ export function stampTilePattern2d(map,origin,pattern){
  for(const [key,kind] of Object.entries(pattern.tiles)){if(!/^\d+,\d+$/.test(key)||!Object.hasOwn(TILE_TYPES,kind)&&!tileAtlasDefinition2d(map,kind))return 0;const [x,y]=key.split(',').map(Number);if(x>=pattern.width||y>=pattern.height)return 0;updates.push([(origin.col+x)+','+(origin.row+y),kind]);}
  const cells=activeTileCells2d(map);let changed=0;for(const [key,kind] of updates)if(cells[key]!==kind){cells[key]=kind;changed++;}return changed;
 }
+
+/** Paint a bounded road corridor using an existing tile kind, with clipped edges. */
+export function paintRoad2d(entity,from,to,kind,width=1){
+ const map=entity?.tilemap2d;if(!map||!Number.isInteger(map.columns)||!Number.isInteger(map.rows)||map.columns*map.rows>262144||!Number.isInteger(width)||width<1||width>9||!from||!to||![from.col,from.row,to.col,to.row].every(Number.isInteger))return 0;
+ if(!Object.hasOwn(TILE_TYPES,kind)&&!tileAtlasDefinition2d(map,kind))return 0;
+ const inside=(x,y)=>x>=0&&y>=0&&x<map.columns&&y<map.rows;
+ if(!inside(from.col,from.row)||!inside(to.col,to.row))return 0;
+ let x=from.col,y=from.row,changed=0;const dx=Math.abs(to.col-x),dy=-Math.abs(to.row-y),sx=x<to.col?1:-1,sy=y<to.row?1:-1;let err=dx+dy;
+ const size=tileSizeFor(map),ox=Number(entity.x)||0,oy=Number(entity.y)||0,lo=-Math.floor((width-1)/2),hi=lo+width;
+ for(;;){for(let a=lo;a<hi;a++)for(let b=lo;b<hi;b++)if(inside(x+a,y+b)&&paintTile2d(entity,ox+(x+a+.5)*size,oy+(y+b+.5)*size,kind))changed++;if(x===to.col&&y===to.row)break;const e=2*err;if(e>=dy){err+=dy;x+=sx;}if(e<=dx){err+=dx;y+=sy;}}
+ return changed;
+}
+/** Repeat an authored pattern on a district grid without overwriting empty pattern cells. */
+export function stampDistrict2d(map,origin,pattern,columns,rows,gap=1){
+ if(!map||!origin||!pattern||![origin.col,origin.row,pattern.width,pattern.height,columns,rows,gap].every(Number.isInteger)||columns<1||rows<1||columns*rows>64||gap<0||gap>16||pattern.width<1||pattern.height<1||pattern.width*pattern.height*columns*rows>262144)return 0;
+ if(origin.col<0||origin.row<0||origin.col+columns*pattern.width+(columns-1)*gap>map.columns||origin.row+rows*pattern.height+(rows-1)*gap>map.rows)return 0;
+ let changed=0;for(let y=0;y<rows;y++)for(let x=0;x<columns;x++)changed+=stampTilePattern2d(map,{col:origin.col+x*(pattern.width+gap),row:origin.row+y*(pattern.height+gap)},pattern);return changed;
+}

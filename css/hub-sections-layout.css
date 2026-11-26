@@ -1,0 +1,40 @@
+
+/* Hub section layout: preserve existing palette and application behavior. */
+#hubOverlay .simple-hub-nav .simple-hub-nav-item:not(:disabled){border:0!important;background:transparent!important;box-shadow:none!important}
+#hubOverlay .simple-hub-nav .simple-hub-nav-item:hover:not(:disabled){background:var(--hub-ui-surface)!important}
+#hubOverlay .simple-hub-nav .simple-hub-nav-item.active:not(:disabled){background:var(--hub-ui-elevated)!important;box-shadow:inset 3px 0 var(--hub-accent,#669fe8)!important}
+#hubOverlay .simple-hub-main :is(.hub-create,.hub-appearance,.hub-diagnostics,.simple-hub-cloud){min-width:0;overflow-wrap:anywhere}
+#hubOverlay .simple-hub-main :is(.hub-create,.hub-appearance,.hub-diagnostics,.simple-hub-cloud) :is(input,select,button){max-width:100%;box-sizing:border-box}
+#hubOverlay .hub-create-settings{position:static;min-width:0;box-sizing:border-box}
+#hubOverlay .hub-create-settings :is(input,select){min-width:0;width:100%}
+#hubOverlay .hub-create-advanced{padding:10px 0;min-width:0}
+#hubOverlay .hub-create-advanced label{min-width:0}
+#hubOverlay .hub-create-advanced select{width:100%;max-width:100%;box-sizing:border-box}
+#hubOverlay .hub-design-themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(135px,100%),1fr));gap:10px}
+#hubOverlay .hub-design-theme{display:flex;flex-direction:column;gap:8px;align-items:stretch;text-align:left;padding:8px;min-width:0}
+#hubOverlay .hub-theme-miniature{display:block;min-height:44px;border-radius:3px;background:linear-gradient(90deg,var(--theme-surface) 75%,var(--theme-accent) 75%)}
+#hubOverlay .hub-design-theme[aria-pressed=true]{outline:2px solid var(--hub-accent,#669fe8);outline-offset:1px}
+#hubOverlay .hub-design-choice{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 0}
+#hubOverlay .hub-editor-palette{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:8px 16px}
+#hubOverlay .hub-editor-palette h3{grid-column:1/-1}
+#hubOverlay .hub-editor-palette label{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0}
+#hubOverlay .hub-editor-palette input[type=color]{width:44px;height:30px;flex:none}
+#hubOverlay .hub-theme-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#hubOverlay .hub-theme-palette{display:flex;flex-wrap:wrap;gap:8px}
+#hubOverlay .engine-private-workspace{background:var(--hub-ui-surface)!important;color:var(--hub-ui-fg)!important;border-color:var(--hub-ui-border)!important;box-sizing:border-box;min-width:0}
+#hubOverlay .engine-private-actions{display:flex;flex-wrap:wrap;gap:8px}
+#hubOverlay .engine-private-actions>[hidden]{display:none!important}
+#hubOverlay .engine-cloud-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border-color:var(--hub-ui-border)!important}
+#hubOverlay .engine-cloud-row>span{flex:1 1 150px;min-width:0;overflow-wrap:anywhere}
+#hubOverlay .hub-diagnostics header{flex-wrap:wrap}
+#hubOverlay .hub-diagnostics ul{max-height:none;overflow:visible;overflow-wrap:anywhere}
+#hubOverlay #hubDiagnosticsResult{min-width:0;overflow-wrap:anywhere}
+#hubOverlay .hub-browser-tools{flex-wrap:wrap}
+#hubOverlay .hub-project-card :is(.hub-project-open,.hub-project-stats){min-width:0}
+@media(max-width:700px){
+ #hubOverlay .simple-hub-main>.hub-create:not([hidden]){display:flex!important;flex-direction:column;gap:14px}
+ #hubOverlay .hub-create-settings,#hubOverlay .hub-create-templates{width:100%;max-width:100%}
+ #hubOverlay .hub-design-themes{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #hubOverlay .engine-cloud-row>span{flex-basis:100%}
+ #hubOverlay .simple-hub-toolbar #hubProjectSearch{min-width:0!important;flex:1 1 120px!important}
+}

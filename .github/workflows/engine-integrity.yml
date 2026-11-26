@@ -8,7 +8,9 @@ permissions:
   contents: read
 jobs:
   runtime-acceptance:
-    runs-on: ubuntu-latest
+    # Ubuntu 22.04 avoids the 24.04 AppArmor user-namespace restrictions.
+    # Keep Bubblewrap's network, user and PID namespaces mandatory.
+    runs-on: ubuntu-22.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +22,26 @@ jobs:
           dotnet-version: '8.0.x'
       - run: npm install --no-package-lock
       - name: Install native OS isolation tools
-        run: sudo apt-get update && sudo apt-get install -y bubblewrap util-linux
+        run: sudo apt-get update && sudo apt-get install -y util-linux meson ninja-build pkg-config libcap-dev libselinux1-dev build-essential
+      - name: Build checksum-pinned Bubblewrap with nested user namespace protection
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          trap 'rm -rf "$work"' EXIT
+          cd "$work"
+          curl --fail --location --retry 3 --proto '=https' -o bubblewrap.tar.xz https://github.com/containers/bubblewrap/releases/download/v0.13.1/bubblewrap-0.13.1.tar.xz
+          echo '0e85c8702248b8dd64144f594147553650cdd0e4c951690345faace79c217c4d  bubblewrap.tar.xz' | sha256sum --check
+          tar -xf bubblewrap.tar.xz
+          meson setup build bubblewrap-0.13.1 -Dman=disabled -Dbash_completion=disabled -Dzsh_completion=disabled -Dtests=false
+          meson compile -C build
+          sudo install -m 0755 build/bwrap /usr/local/bin/bwrap
+          /usr/local/bin/bwrap --version
+          /usr/local/bin/bwrap --help | grep -- --disable-userns
+          echo /usr/local/bin >> "$GITHUB_PATH"
+      - name: Verify native isolation before runtime acceptance
+        run: |
+          bwrap --unshare-all --unshare-user --disable-userns --new-session --die-with-parent --cap-drop ALL --ro-bind /usr /usr --ro-bind /bin /bin --ro-bind /lib /lib --ro-bind /lib64 /lib64 --proc /proc --dev /dev -- /bin/true
       - run: dotnet build csharp/WarLike.Bridge --configuration Release
       - run: npx playwright install --with-deps chromium
       - name: Real debugger, shared C# Play and isolated exports in Chromium
@@ -33,7 +54,7 @@ jobs:
           path: .validation-tools/runtime-acceptance/
           if-no-files-found: ignore
   complex-production:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -54,7 +75,7 @@ jobs:
             .validation-tools/complex-production/*.png
           if-no-files-found: ignore
   core-and-export:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -121,7 +142,7 @@ jobs:
           if-no-files-found: ignore
 
   p6-fps-tps-browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 14
     steps:
       - uses: actions/checkout@v4
@@ -145,7 +166,7 @@ jobs:
           if-no-files-found: ignore
 
   p7-editor-lifecycle:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -167,7 +188,7 @@ jobs:
           if-no-files-found: ignore
 
   complete-3d:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4

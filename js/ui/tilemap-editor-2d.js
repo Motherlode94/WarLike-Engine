@@ -4,7 +4,7 @@ import {state,notify} from '../core/state.js';
 import {workspace} from '../core/workspaces.js';
 import {record} from '../core/history.js';
 import {toWorld} from '../core/camera.js';
-import {defaultTilemap2d,paintTile2d,TILE_TYPES} from '../core/tilemap-2d.js';
+import {defaultTilemap2d,paintTile2d,paintTileArea2d,tileAt,TILE_TYPES} from '../core/tilemap-2d.js';
 
 export function createTilemap2d(){
  if(state.playing||workspace.mode!=='2d')return null;
@@ -26,7 +26,9 @@ export function initTilemapEditor2d(canvas){
  for(const [id,data] of Object.entries(TILE_TYPES)){const option=document.createElement('option');option.value=id;option.textContent=data.label;select.append(option)}
  const erase=document.createElement('option');erase.value='erase';erase.textContent='Effacer';select.append(erase);
  const info=document.createElement('span');info.textContent='Sélectionne un Tilemap';
- bar.append(create,toggle,select,info);
+ const tool=document.createElement('select');tool.setAttribute('aria-label','Outil de peinture Tilemap');
+ for(const [value,label] of [['brush','Pinceau'],['line','Ligne'],['rectangle','Rectangle'],['fill','Remplissage']]){const option=document.createElement('option');option.value=value;option.textContent=label;tool.append(option);}
+ bar.append(create,toggle,tool,select,info);
  host.append(bar);
  let editing=false,stroke=null;
  const selected=()=>state.entities.find(e=>state.selected.includes(e.id)&&e.tilemap2d)||null;
@@ -44,17 +46,19 @@ export function initTilemapEditor2d(canvas){
  canvas.addEventListener('pointerdown',e=>{
   if(!editing||state.playing||workspace.mode!=='2d'||e.button!==0||e.altKey||!selected())return;
   e.preventDefault();e.stopImmediatePropagation();
-  stroke={pointer:e.pointerId,moved:false};
+  const entity=selected(),w=pointerWorld(e),start=tileAt(entity,w.x,w.y);if(!start)return;
+  stroke={pointer:e.pointerId,moved:false,owner:entity,start,last:start,tool:tool.value,kind:select.value};
   canvas.setPointerCapture(e.pointerId);
-  draw(e);
+  if(stroke.tool==='brush')draw(e);
+  else if(stroke.tool==='fill'){stroke.moved=paintTileArea2d(stroke.owner,start,start,stroke.kind,'fill')>0;if(stroke.moved)notify();}
  },true);
  canvas.addEventListener('pointermove',e=>{
   if(!stroke||e.pointerId!==stroke.pointer)return;
-  e.preventDefault();e.stopImmediatePropagation();draw(e);
+  e.preventDefault();e.stopImmediatePropagation();if(state.playing||selected()!==stroke.owner)return;const w=pointerWorld(e),cell=tileAt(stroke.owner,w.x,w.y);if(!cell)return;if(stroke.tool==='brush'){if(paintTileArea2d(stroke.owner,stroke.last,cell,stroke.kind,'line')){stroke.moved=true;notify();}}stroke.last=cell;
  },true);
  const finish=e=>{
   if(!stroke||e.pointerId!==stroke.pointer)return;
-  e.stopImmediatePropagation();if(stroke.moved)record('Peindre Tilemap 2D');
+  e.stopImmediatePropagation();if(e.type==='pointerup'&&!state.playing&&selected()===stroke.owner&&['line','rectangle'].includes(stroke.tool)){const w=pointerWorld(e),end=tileAt(stroke.owner,w.x,w.y);if(end)stroke.moved=paintTileArea2d(stroke.owner,stroke.start,end,stroke.kind,stroke.tool)>0;}if(stroke.moved){record('Peindre Tilemap 2D');notify();}
   stroke=null;drawState();
  };
  canvas.addEventListener('pointerup',finish,true);

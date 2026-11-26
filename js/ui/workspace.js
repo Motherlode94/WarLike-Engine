@@ -1,3 +1,4 @@
+import {openAnimationStudio,closeAnimationStudio} from '../core/animation-studio.js';
 import {addSpriteClip2d,switchSpriteClip2d,renameSpriteClip2d,saveSpriteClip2d} from '../core/sprite-animation-2d.js';
 import {applyInspectorPrefab} from '../core/inspector-prefabs.js';
 import {paginateAssets,uniqueAssets} from '../core/asset-browser.js';
@@ -42,7 +43,11 @@ const spritePanel=document.createElement('div');spritePanel.id='spriteFramesCont
 const tileTabs=['TileMap','TileSet'].map(label=>{const button=document.createElement('button');button.type='button';button.className='bottom-tab';button.id=label==='TileMap'?'tileMapTab':'tileSetTab';button.textContent=label;spriteTab.after(button);return button;});
 const tileMapPanel=document.createElement('div');tileMapPanel.id='tileMapContent';tileMapPanel.hidden=true;spritePanel.after(tileMapPanel);
 const tileSetPanel=document.createElement('div');tileSetPanel.id='tileSetContent';tileSetPanel.hidden=true;tileMapPanel.after(tileSetPanel);
+const animationTab=document.createElement('button');animationTab.type='button';animationTab.className='bottom-tab';animationTab.textContent='Animation';animationTab.id='animationDockTab';spriteTab.before(animationTab);
+const animationDock=document.createElement('div');animationDock.id='animationDockContent';animationDock.hidden=true;spritePanel.before(animationDock);
 let currentTab='project',selectedFrame=0,previousOwner=null;
+animationTab.onclick=()=>tab('animation');
+document.getElementById('openAnimationStudio')?.addEventListener('click',()=>tab('animation'));
 tileTabs.forEach((button,i)=>button.onclick=()=>tab(i===0?'tilemap':'tileset'));
 function renderTileTabs(){
  const visible=workspace.mode==='2d'&&!state.playing;
@@ -94,7 +99,7 @@ function renderSpriteFrames(){
  const draw=()=>{if(!image.naturalWidth||!image.naturalHeight)return;const fw=image.naturalWidth/columns,fh=image.naturalHeight/rows,scale=Math.min(96/fw,80/fh),ctx=canvas.getContext('2d');if(!ctx)return;ctx.imageSmoothingEnabled=false;ctx.drawImage(image,(cell%columns)*fw,Math.floor(cell/columns)*fh,fw,fh,(96-fw*scale)/2,(80-fh*scale)/2,fw*scale,fh*scale);};image.addEventListener('load',draw,{once:true});});
  image.src=owner.spriteDataUrl;right.append(toolbar,frames);spritePanel.append(left,right);
 }
-function tab(which){currentTab=which;project.hidden=which!=='project';consolePanel.hidden=which!=='console';spritePanel.hidden=which!=='spriteframes';tileMapPanel.hidden=which!=='tilemap';tileSetPanel.hidden=which!=='tileset';tileTabs.forEach((button,i)=>button.classList.toggle('active',which===(i===0?'tilemap':'tileset')));document.dispatchEvent(new CustomEvent('warlike:bottom-tab',{detail:{tab:which}}));$('#projectTab').classList.toggle('active',which==='project');$('#consoleTab').classList.toggle('active',which==='console');spriteTab.classList.toggle('active',which==='spriteframes');if(which==='spriteframes')renderSpriteFrames();}
+function tab(which){if(currentTab==='animation'&&which!=='animation')closeAnimationStudio();currentTab=which;animationDock.hidden=which!=='animation';animationTab.classList.toggle('active',which==='animation');if(which==='animation')openAnimationStudio();project.hidden=which!=='project';consolePanel.hidden=which!=='console';spritePanel.hidden=which!=='spriteframes';tileMapPanel.hidden=which!=='tilemap';tileSetPanel.hidden=which!=='tileset';tileTabs.forEach((button,i)=>button.classList.toggle('active',which===(i===0?'tilemap':'tileset')));document.dispatchEvent(new CustomEvent('warlike:bottom-tab',{detail:{tab:which}}));$('#projectTab').classList.toggle('active',which==='project');$('#consoleTab').classList.toggle('active',which==='console');spriteTab.classList.toggle('active',which==='spriteframes');if(which==='spriteframes')renderSpriteFrames();}
 spriteTab.onclick=()=>tab('spriteframes');
 document.addEventListener('warlike:change',renderSpriteFrames);
 $('#projectTab').onclick=()=>tab('project');$('#consoleTab').onclick=()=>tab('console');$('#consoleClear').onclick=()=>{lines=[];drawLogs()};

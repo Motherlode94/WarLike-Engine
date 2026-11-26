@@ -529,7 +529,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const finish=event=>{
   if(!drag||event.pointerId!==drag.pointer)return;
   const changed=drag.objects.some(start=>{const o=state.entities.find(o=>o.id===start.id);return o&&(o.x!==start.x||o.y!==start.y||o.elevation3d!==start.elevation3d||o.w!==start.w||o.h!==start.h||o.depth3d!==start.depth3d||o.rotation!==start.rotation||o.rotationX3d!==start.rotationX3d||o.rotationZ3d!==start.rotationZ3d)});
-  if(changed)record('Gizmo 3D : '+drag.mode);
+  if(changed){document.dispatchEvent(new CustomEvent('warlike:transform-committed',{detail:{ids:drag.objects.map(o=>o.id)}}));record('Gizmo 3D : '+drag.mode);}
   drag=null;notify();
  };
  layer.addEventListener('pointerup',finish);

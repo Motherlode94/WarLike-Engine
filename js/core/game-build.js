@@ -3,7 +3,7 @@ import {MAX_SCENE_MODEL_BYTES} from '../assets/model-capacity.js';
 import {portableModelBytes,portableModelDescriptor} from './portable-assets.js';
 import {loadProjectHdri} from './project-hdri-assets.js';
 import {portableRemoteModelBytes,portableRemoteModelDescriptor} from './portable-remote-models.js';
-import {animationEditorPreview} from './animation-clips.js';
+import {stopAnimationEditorPreviews} from './animation-clips.js';
 import {inspectRuntimeCompatibility} from './runtime-capabilities.js';
 import {canonicalScene} from './scene-contract.js';
 import {survivalTools} from './survival-tools.js';
@@ -27,7 +27,7 @@ export function createZip(entries){
  return new Blob([...local,...central,end.bytes],{type:'application/zip'});
 }
 export function prepareGameDefinition({entities,camera,mode='2d',project=gameProject}){
- if(entities?.includes(animationEditorPreview.owner))animationEditorPreview.stop();
+ stopAnimationEditorPreviews(entities);
  if(!['2d','3d'].includes(mode))throw Error('Type de projet invalide.');
  if(!validEntities(entities))throw Error('La scène active est invalide.');
  const definition=structuredClone(project),scene={id:definition.activeSceneId,name:definition.scenes.find(s=>s.id===definition.activeSceneId)?.name||'Scène principale',entities:structuredClone(entities),camera:structuredClone(camera||{x:0,y:0,zoom:1})};

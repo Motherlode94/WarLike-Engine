@@ -1,4 +1,5 @@
 import {validateScript} from '../../script-editor/core.js';
+import {stopAnimationEditorPreviews} from './animation-clips.js';
 import {variableTypes} from './blueprint-types.js';
 import {resolveGameGenre} from './game-genres.js';
 import {restoreAnimatorControllerAssets} from './animator-controller-assets.js';
@@ -37,6 +38,7 @@ export function restoreGameProject(value,{entities=null,genre=null}={}){
 }
 export function captureGameScene(entities,camera,{id=gameProject.activeSceneId,name=id}={}){
  if(!safeKey(id)||!validEntities(entities))throw Error('La scène ou son identifiant est invalide.');
+ stopAnimationEditorPreviews(entities);
  const scene={id,name:String(name||id).slice(0,80),entities:clone(entities),camera:clone(camera||{x:0,y:0,zoom:1})};
  const index=gameProject.scenes.findIndex(s=>s.id===id);
  if(index<0){if(gameProject.scenes.length>=40)throw Error('40 scènes maximum par projet.');gameProject.scenes.push(scene)}else gameProject.scenes[index]=scene;

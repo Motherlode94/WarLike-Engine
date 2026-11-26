@@ -8,7 +8,7 @@ const objects=()=>[{id:1,name:'Car',type:'mesh3d',x:100,y:100,w:64,h:64,color:'#
 const saved=store=>{const list=objects();return savePrefabHierarchy(list[0],list,store,{mode:'3d'})};
 test('nested source stays linked and expands updates, remaps joints and preserves placement in two copies',()=>{
  const store=memory(),child=saved(store),nested=instantiatePrefabHierarchy(child,10,500,500),outer={id:20,name:'Garage',type:'mesh3d',x:300,y:300,w:100,h:100,color:'#ffffff'};
- nested.entities[0].parentId=20;const parent=savePrefabHierarchy(outer,[outer,...nested.entities],store,{mode:'3d'});assert.equal(parent.version,3);assert.equal(parent.nodes.length,2);assert.equal(parent.nodes[1].nested.prefabId,child.id);
+ nested.entities[0].parentId=20;const parent=savePrefabHierarchy(outer,[outer,...nested.entities],store,{mode:'3d'});assert.equal(parent.version,4);assert.equal(parent.nodes.length,2);assert.equal(parent.nodes[1].nested.prefabId,child.id);
  const oldRaw=store.getItem('warlike.prefabs.library.v1');updatePrefabNodeProperties(child.id,'node-2',{rigidbody3d:{mass:7}},[],store);
  const resolved=readPrefabs(store).find(p=>p.id===parent.id);assert.equal(resolved.nodes.length,3);
  const first=instantiatePrefabHierarchy(resolved,100,800,800),second=instantiatePrefabHierarchy(resolved,200,1000,1000);

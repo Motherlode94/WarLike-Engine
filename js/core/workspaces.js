@@ -1,4 +1,4 @@
-import {animationEditorPreview} from './animation-clips.js';
+import {stopAnimationEditorPreviews} from './animation-clips.js';
 import {genreForMode} from './game-genres.js';
 import {gameProject,restoreGameProject} from './game-project.js';
 import {createCleanStarterScene3d} from './clean-starter-scene.js';
@@ -11,6 +11,7 @@ export const workspace={mode:'3d',scenes:{
 }};
 const clone=v=>structuredClone(v);
 export function captureWorkspace(){
+ stopAnimationEditorPreviews();
  const slot=workspace.scenes[workspace.mode];
  Object.assign(slot,{entities:clone(state.entities),selected:clone(state.selected),nextId:state.nextId,camera:clone(state.camera),game:clone(gameProject)});
 }
@@ -18,7 +19,7 @@ export function switchWorkspace(mode){
  if(!['2d','3d'].includes(mode))return false;
  if(state.playing)return false;
  if(workspace.mode===mode)return true;
- animationEditorPreview.stop();captureWorkspace();state.keys.clear();const slot=workspace.scenes[mode];
+ captureWorkspace();state.keys.clear();const slot=workspace.scenes[mode];
  workspace.mode=mode;
  restoreGameProject(slot.game,{entities:slot.entities});gameProject.genre=genreForMode(gameProject.genre,mode);
  state.entities=clone(slot.entities||[]);state.selected=clone(slot.selected||[]);
@@ -50,6 +51,7 @@ export function restoreWorkspaces(data,retainCurrent=false){
   }
  }catch{return false}
  const mode=retainCurrent?workspace.mode:(data.workspaceMode==='3d'?'3d':'2d');
+ stopAnimationEditorPreviews();
  workspace.scenes=next;workspace.mode=mode;
  const slot=next[mode];restoreGameProject(slot.game,{entities:slot.entities,genre:data.genre});gameProject.genre=genreForMode(gameProject.genre,mode);
  state.entities=clone(slot.entities);state.selected=clone(slot.selected);

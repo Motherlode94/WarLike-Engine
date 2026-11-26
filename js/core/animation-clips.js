@@ -7,8 +7,9 @@ export function validBezierCurve(curve){return Array.isArray(curve)&&curve.lengt
 export function cubicBezierEase(t,curve=[.25,.1,.25,1]){
  if(!validBezierCurve(curve))return t;
  if(t<=0||t>=1)return clamp(t,0,1);
- const [x1,y1,x2,y2]=curve,axis=(u,a,b)=>3*(1-u)**2*u*a+3*(1-u)*u*u*b+u**3;
- let lo=0,hi=1;for(let i=0;i<32;i++){const mid=(lo+hi)/2;if(axis(mid,x1,x2)<t)lo=mid;else hi=mid;}
+ const [x1,y1,x2,y2]=curve;if(x1===y1&&x2===y2)return t;
+ const axis=(u,a,b)=>3*(1-u)**2*u*a+3*(1-u)*u*u*b+u**3;
+ let lo=0,hi=1;for(let i=0;i<48;i++){const mid=(lo+hi)/2;if(axis(mid,x1,x2)<t)lo=mid;else hi=mid;}
  return axis((lo+hi)/2,y1,y2);
 }
 const poseOf=key=>Object.fromEntries(animationFields.filter(field=>Number.isFinite(key[field])).map(field=>[field,key[field]]));

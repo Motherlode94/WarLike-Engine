@@ -65,3 +65,21 @@ export function stepAnimationClip(owner,dt,{onEvent=()=>{}}={}){
  const time=clip.loop?track.time%clip.duration:track.time,pose=sampleClip(clip,time);if(pose)Object.assign(owner,pose);
  return {name:clip.name,time,duration:clip.duration,finished:!clip.loop&&track.time>=clip.duration};
 }
+
+/** Author one sparse property key without replacing other channels at the same time.
+ * Existing clips share easing per timestamp; preserve that easing when merging. */
+export function putAnimationPropertyKey(clip,time,field,value,{easing='linear'}={}){
+ if(!animationFields.includes(field)||!Number.isFinite(value)||Math.abs(value)>1e8||(['w','h','depth3d'].includes(field)&&value<=0))throw Error('Propriété animable invalide.');
+ if(!Number.isFinite(time)||time<0||time>clip.duration)throw Error('Instant hors du clip.');
+ const previous=clip.keys.find(k=>Math.abs(k.time-time)<.00001);
+ if(previous){previous[field]=value;return previous;}
+ return putAnimationKey(clip,time,{[field]:value},{easing});
+}
+export function removeAnimationPropertyKey(clip,time,field){
+ if(!animationFields.includes(field))return false;
+ const index=clip.keys.findIndex(k=>Math.abs(k.time-time)<.00001);
+ if(index<0||!Object.hasOwn(clip.keys[index],field))return false;
+ delete clip.keys[index][field];
+ if(!animationFields.some(f=>Object.hasOwn(clip.keys[index],f)))clip.keys.splice(index,1);
+ return true;
+}

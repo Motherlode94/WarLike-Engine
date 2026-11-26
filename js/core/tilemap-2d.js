@@ -120,3 +120,20 @@ export function connectTerrain2d(map,variants){
  for(const [key,kind] of Object.entries(cells)){if(!kinds.has(kind)||!/^\d+,\d+$/.test(key))continue;const [x,y]=key.split(',').map(Number);if(x>=map.columns||y>=map.rows)continue;const next=variants[terrainMask2d(map,x,y,variants)];if(next!==kind)updates.push([key,next]);}
  for(const [key,kind] of updates)cells[key]=kind;return updates.length;
 }
+
+/** Capture a bounded rectangle on the active layer, retaining sparse offsets. */
+export function captureTilePattern2d(map,from,to,name='Pattern'){
+ if(!map||!from||!to||![from.col,from.row,to.col,to.row].every(Number.isInteger))return null;
+ const x=Math.min(from.col,to.col),y=Math.min(from.row,to.row),width=Math.abs(to.col-from.col)+1,height=Math.abs(to.row-from.row)+1;
+ if(x<0||y<0||x+width>map.columns||y+height>map.rows||width*height>4096)return null;
+ const cells=activeTileCells2d(map),tiles={};
+ for(let row=0;row<height;row++)for(let col=0;col<width;col++){const kind=cells[(x+col)+','+(y+row)];if(Object.hasOwn(TILE_TYPES,kind)||tileAtlasDefinition2d(map,kind))tiles[col+','+row]=kind;}
+ if(!Object.keys(tiles).length)return null;
+ return {name:String(name).trim().slice(0,60)||'Pattern',width,height,tiles};
+}
+export function stampTilePattern2d(map,origin,pattern){
+ if(!map||!origin||!pattern||![origin.col,origin.row,pattern.width,pattern.height].every(Number.isInteger)||pattern.width<1||pattern.height<1||pattern.width*pattern.height>4096||origin.col<0||origin.row<0||origin.col+pattern.width>map.columns||origin.row+pattern.height>map.rows||!pattern.tiles||typeof pattern.tiles!=='object')return 0;
+ const updates=[];
+ for(const [key,kind] of Object.entries(pattern.tiles)){if(!/^\d+,\d+$/.test(key)||!Object.hasOwn(TILE_TYPES,kind)&&!tileAtlasDefinition2d(map,kind))return 0;const [x,y]=key.split(',').map(Number);if(x>=pattern.width||y>=pattern.height)return 0;updates.push([(origin.col+x)+','+(origin.row+y),kind]);}
+ const cells=activeTileCells2d(map);let changed=0;for(const [key,kind] of updates)if(cells[key]!==kind){cells[key]=kind;changed++;}return changed;
+}

@@ -4,7 +4,7 @@ import {state,notify} from '../core/state.js';
 import {workspace} from '../core/workspaces.js';
 import {record} from '../core/history.js';
 import {toWorld} from '../core/camera.js';
-import {defaultTilemap2d,paintTile2d,paintTileArea2d,tileAt,TILE_TYPES,tilemapLayers2d,connectTerrain2d,captureTilePattern2d,stampTilePattern2d} from '../core/tilemap-2d.js';
+import {defaultTilemap2d,paintTile2d,paintTileArea2d,tileAt,TILE_TYPES,tilemapLayers2d,connectTerrain2d,captureTilePattern2d,stampTilePattern2d,paintRoad2d,stampDistrict2d} from '../core/tilemap-2d.js';
 
 export function createTilemap2d(){
  if(state.playing||workspace.mode!=='2d')return null;
@@ -27,7 +27,7 @@ export function initTilemapEditor2d(canvas){
  const erase=document.createElement('option');erase.value='erase';erase.textContent='Effacer';select.append(erase);
  const info=document.createElement('span');info.textContent='Sélectionne un Tilemap';
  const tool=document.createElement('select');tool.setAttribute('aria-label','Outil de peinture Tilemap');
- for(const [value,label] of [['brush','Pinceau'],['line','Ligne'],['rectangle','Rectangle'],['fill','Remplissage'],['patternCapture','Capturer motif'],['patternStamp','Poser motif']]){const option=document.createElement('option');option.value=value;option.textContent=label;tool.append(option);}
+ for(const [value,label] of [['brush','Pinceau'],['line','Ligne'],['rectangle','Rectangle'],['fill','Remplissage'],['patternCapture','Capturer motif'],['patternStamp','Poser motif'],['road','Route'],['district','Quartier']]){const option=document.createElement('option');option.value=value;option.textContent=label;tool.append(option);}
  const layerSelect=document.createElement('select');layerSelect.setAttribute('aria-label','Couche TileMap');
  const layerAdd=document.createElement('button');layerAdd.type='button';layerAdd.textContent='＋ Couche';
  const layerVisible=document.createElement('button');layerVisible.type='button';layerVisible.textContent='Visibilité';
@@ -41,7 +41,8 @@ export function initTilemapEditor2d(canvas){
  connect.onclick=()=>{const map=selected()?.tilemap2d;if(state.playing||stroke||!map?.atlas)return;const input=prompt('Indices des 16 variantes (masques 0–15), séparés par virgules',Array.from({length:16},(_,i)=>i).join(','));if(input===null)return;const values=input.split(',').map(s=>s.trim());if(values.length!==16||values.some(v=>!/^\d+$/.test(v)))return;const count=connectTerrain2d(map,values.map(v=>'atlas:'+Number(v)));if(count){record('TileMap · Raccords terrain');notify();}}; 
  const patternSelect=document.createElement('select');patternSelect.setAttribute('aria-label','Motif TileMap');let patternOwner=null;
  function refreshPatterns(owner){const previous=patternOwner===owner?patternSelect.value:'';patternOwner=owner;const patterns=owner?.tilemap2d?.patterns||[];patternSelect.replaceChildren(...patterns.map((p,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=p.name;return option;}));if(previous!==''&&patterns[Number(previous)])patternSelect.value=previous;patternSelect.disabled=state.playing||!patterns.length;}
- bar.append(create,toggle,tool,select,layerSelect,layerAdd,layerVisible,layerCollision,connect,patternSelect,info);
+ const urbanWidth=document.createElement('input');urbanWidth.type='number';urbanWidth.min='1';urbanWidth.max='9';urbanWidth.value='3';urbanWidth.setAttribute('aria-label','Largeur route en tuiles');
+ bar.append(create,toggle,tool,select,layerSelect,layerAdd,layerVisible,layerCollision,connect,patternSelect,urbanWidth,info);
  const dock=document.getElementById('tileMapContent'),setDock=document.getElementById('tileSetContent');
  const palette=document.createElement('div');palette.className='wb2d-palette';
  if(dock){bar.style.cssText='display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:5px';dock.append(bar,palette);}else host.append(bar);
@@ -95,7 +96,8 @@ export function initTilemapEditor2d(canvas){
   const entity=selected(),w=pointerWorld(e),start=tileAt(entity,w.x,w.y);if(!start)return;
   stroke={pointer:e.pointerId,moved:false,owner:entity,start,last:start,tool:tool.value,kind:select.value};
   canvas.setPointerCapture(e.pointerId);
-  if(stroke.tool==='patternStamp'){const pattern=entity.tilemap2d.patterns?.[Number(patternSelect.value)];stroke.moved=stampTilePattern2d(entity.tilemap2d,start,pattern)>0;if(stroke.moved)notify();}
+  if(stroke.tool==='district'){const pattern=entity.tilemap2d.patterns?.[Number(patternSelect.value)];if(pattern){const input=prompt('Colonnes,lignes,espacement','2,2,1');if(input!==null){const [cols,rows,gap]=input.split(',').map(Number);stroke.moved=stampDistrict2d(entity.tilemap2d,start,pattern,cols,rows,gap)>0;if(stroke.moved)notify();}}}
+  else if(stroke.tool==='patternStamp'){const pattern=entity.tilemap2d.patterns?.[Number(patternSelect.value)];stroke.moved=stampTilePattern2d(entity.tilemap2d,start,pattern)>0;if(stroke.moved)notify();}
   else if(stroke.tool==='brush')draw(e);
   else if(stroke.tool==='fill'){stroke.moved=paintTileArea2d(stroke.owner,start,start,stroke.kind,'fill')>0;if(stroke.moved)notify();}
  },true);
@@ -105,7 +107,7 @@ export function initTilemapEditor2d(canvas){
  },true);
  const finish=e=>{
   if(!stroke||e.pointerId!==stroke.pointer)return;
-  e.stopImmediatePropagation();if(e.type==='pointerup'&&!state.playing&&selected()===stroke.owner&&stroke.tool==='patternCapture'){const w=pointerWorld(e),end=tileAt(stroke.owner,w.x,w.y),map=stroke.owner.tilemap2d;if(end&&(map.patterns?.length??0)<64){const name=prompt('Nom du motif','Motif '+((map.patterns?.length??0)+1));if(name?.trim()){const pattern=captureTilePattern2d(map,stroke.start,end,name);if(pattern){(map.patterns??=[]).push(pattern);stroke.moved=true;}}}}if(e.type==='pointerup'&&!state.playing&&selected()===stroke.owner&&['line','rectangle'].includes(stroke.tool)){const w=pointerWorld(e),end=tileAt(stroke.owner,w.x,w.y);if(end)stroke.moved=paintTileArea2d(stroke.owner,stroke.start,end,stroke.kind,stroke.tool)>0;}if(stroke.moved){record('Peindre Tilemap 2D');notify();}
+  e.stopImmediatePropagation();if(e.type==='pointerup'&&!state.playing&&selected()===stroke.owner&&stroke.tool==='road'){const w=pointerWorld(e),end=tileAt(stroke.owner,w.x,w.y);if(end)stroke.moved=paintRoad2d(stroke.owner,stroke.start,end,stroke.kind,Number(urbanWidth.value))>0;}if(e.type==='pointerup'&&!state.playing&&selected()===stroke.owner&&stroke.tool==='patternCapture'){const w=pointerWorld(e),end=tileAt(stroke.owner,w.x,w.y),map=stroke.owner.tilemap2d;if(end&&(map.patterns?.length??0)<64){const name=prompt('Nom du motif','Motif '+((map.patterns?.length??0)+1));if(name?.trim()){const pattern=captureTilePattern2d(map,stroke.start,end,name);if(pattern){(map.patterns??=[]).push(pattern);stroke.moved=true;}}}}if(e.type==='pointerup'&&!state.playing&&selected()===stroke.owner&&['line','rectangle'].includes(stroke.tool)){const w=pointerWorld(e),end=tileAt(stroke.owner,w.x,w.y);if(end)stroke.moved=paintTileArea2d(stroke.owner,stroke.start,end,stroke.kind,stroke.tool)>0;}if(stroke.moved){record('Peindre Tilemap 2D');notify();}
   stroke=null;drawState();
  };
  canvas.addEventListener('pointerup',finish,true);

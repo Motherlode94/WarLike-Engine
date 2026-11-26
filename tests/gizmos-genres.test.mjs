@@ -62,3 +62,17 @@ test('E04.3 scale preserves fractional dimensions and automatic collider bounds'
  assert.equal(colliderGeometry3d({w:127,h:64,depth3d:64}).w,127/64);
  assert.equal(colliderGeometry3d({w:127,h:64,depth3d:64,collider3d:{width:1}}).w,1);
 });
+
+import {snapSelected3d,projectedAxisRotation3d} from '../js/core/scene-editing-3d-tools.js';
+test('relative snapping preserves offsets and is idempotent after serialization',()=>{
+ const objects=[{id:2,x:20,y:30,elevation3d:.2},{id:1,x:41,y:51,elevation3d:.3},{id:3,x:7,y:9}];
+ assert.equal(snapSelected3d(objects,[1,2],{step:.5,preserveOffsets:true}),2);
+ assert.equal(objects[1].x,32);assert.equal(objects[1].y,64);assert.equal(objects[1].elevation3d,.5);
+ assert.equal(objects[1].x-objects[0].x,21);assert.equal(objects[1].y-objects[0].y,21);
+ assert.deepEqual(objects[2],{id:3,x:7,y:9});
+ const reopened=JSON.parse(JSON.stringify(objects));assert.equal(snapSelected3d(reopened,[1,2],{step:.5,preserveOffsets:true}),0);
+});
+test('rotation projection preserves winding and rejects degenerate pivots',()=>{
+ const p={x:0,y:0},a={x:20,y:0},b={x:0,y:20};
+ assert.equal(projectedAxisRotation3d(p,a,b),90);assert.equal(projectedAxisRotation3d(p,a,b,{directionSign:-1}),-90);assert.equal(projectedAxisRotation3d(p,p,b),0);
+});

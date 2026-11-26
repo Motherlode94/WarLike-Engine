@@ -17,7 +17,11 @@ export function spriteSheetFrame2d(animation,timeSeconds,playing=false){
 }
 export function drawSpriteSheet2d(ctx,image,entity,timeSeconds,playing=false){
  if(!image?.complete||!image.naturalWidth||!image.naturalHeight)return false;
- const animation=entity.spriteAnimation2d;
+ const base=entity.spriteAnimation2d;
+ const frameState=playing?entity._animatorFrame:null;
+ const named=frameState&&Array.isArray(base?.clips)?base.clips.find(c=>c.name===entity.animation):null;
+ const animation=named?{...base,...named,grid:named.grid,preview:false}:base;
+ if(named&&Number.isFinite(frameState.time))timeSeconds=frameState.time;
  const {index,count}=spriteSheetFrame2d(animation,timeSeconds,playing);
  if(animation?.enabled&&animation.grid){
   const grid=animation.grid,columns=grid.columns,rows=grid.rows;

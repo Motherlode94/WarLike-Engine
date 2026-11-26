@@ -84,3 +84,12 @@ test('WB2D rectangle, line and connected fill use sparse serialized cells',()=>{
  assert.deepEqual(JSON.parse(JSON.stringify(entity)).tilemap2d.cells,entity.tilemap2d.cells);
  assert.equal(paintTileArea2d(entity,{col:-1,row:0},{col:0,row:0},'wall','line'),0);
 });
+
+import {addSpriteClip2d,switchSpriteClip2d,renameSpriteClip2d,saveSpriteClip2d} from '../js/core/sprite-animation-2d.js';
+test('named sprite clips retain independent sequences, fps and loop flags',()=>{
+ const a={enabled:true,frames:4,fps:8,loop:true,grid:{columns:4,rows:2,sequence:[0,1]}};
+ assert.equal(addSpriteClip2d(a,'Run'),true);a.grid.sequence=[4,5,6];a.fps=12;a.loop=false;saveSpriteClip2d(a);
+ assert.equal(switchSpriteClip2d(a,'default'),true);assert.deepEqual(a.grid.sequence,[0,1]);assert.equal(a.fps,8);assert.equal(a.loop,true);
+ const restored=JSON.parse(JSON.stringify(a));assert.equal(switchSpriteClip2d(restored,'Run'),true);assert.deepEqual(restored.grid.sequence,[4,5,6]);assert.equal(restored.fps,12);assert.equal(restored.loop,false);
+ assert.equal(renameSpriteClip2d(restored,'Sprint'),true);assert.equal(restored.activeClip,'Sprint');assert.equal(addSpriteClip2d(restored,'Sprint'),false);
+});

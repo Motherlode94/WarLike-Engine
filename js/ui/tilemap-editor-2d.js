@@ -48,9 +48,29 @@ export function initTilemapEditor2d(canvas){
  const dock=document.getElementById('tileMapContent'),setDock=document.getElementById('tileSetContent');
  const palette=document.createElement('div');palette.className='wb2d-palette';
  if(dock){bar.style.cssText='display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:5px';dock.append(bar,palette);}else host.append(bar);
+ const atlasWorkspace=document.createElement('div');atlasWorkspace.className='wb2d-atlas-workspace';atlasWorkspace.hidden=true;
+ atlasWorkspace.style.cssText='border:1px solid var(--editor-border,#667);padding:4px;min-width:0';
+ const atlasLayout=document.createElement('div');atlasLayout.style.cssText='display:grid;grid-template-columns:minmax(90px,26%) minmax(0,1fr);gap:6px';
+ const atlasSource=document.createElement('div');atlasSource.style.cssText='padding:6px;overflow-wrap:anywhere';
+ const atlasRight=document.createElement('div');atlasRight.style.minWidth='0';
+ const atlasTools=document.createElement('div');atlasTools.style.cssText='display:flex;gap:4px;align-items:center';
+ const atlasScroll=document.createElement('div');atlasScroll.style.cssText='overflow:auto;max-height:220px;min-height:70px;background:var(--editor-surface,#242830)';
+ const atlasSurface=document.createElement('div');atlasSurface.style.cssText='position:relative;width:max-content;line-height:0';
+ const atlasImage=document.createElement('img');atlasImage.alt='Texture originale du TileSet';atlasImage.draggable=false;atlasImage.style.cssText='display:block;max-width:none;image-rendering:pixelated';
+ const atlasGrid=document.createElement('div');atlasGrid.style.cssText='position:absolute;inset:0;pointer-events:none';
+ const atlasHighlight=document.createElement('div');atlasHighlight.style.cssText='position:absolute;pointer-events:none;box-sizing:border-box;border:2px solid #69aaff;background:#69aaff44';
+ atlasHighlight.hidden=true;
+ let atlasZoom=1;
+ const zoomLabel=document.createElement('span');
+ function applyAtlasZoom(){if(!atlasImage.naturalWidth)return;atlasImage.style.width=Math.round(atlasImage.naturalWidth*atlasZoom)+'px';zoomLabel.textContent=Math.round(atlasZoom*100)+'%';}
+ for(const [label,factor] of [['−',.8],['＋',1.25]]){const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-label',factor<1?'Réduire atlas':'Agrandir atlas');b.onclick=()=>{atlasZoom=Math.min(8,Math.max(.25,atlasZoom*factor));applyAtlasZoom();};atlasTools.append(b);}
+ atlasTools.append(zoomLabel);atlasImage.onload=applyAtlasZoom;
+ atlasSurface.append(atlasImage,atlasGrid,atlasHighlight);atlasScroll.append(atlasSurface);atlasRight.append(atlasTools,atlasScroll);atlasLayout.append(atlasSource,atlasRight);atlasWorkspace.append(atlasLayout);palette.after(atlasWorkspace);
+ atlasSurface.addEventListener('click',event=>{const atlas=selected()?.tilemap2d?.atlas;if(!atlas||state.playing)return;const r=atlasImage.getBoundingClientRect();if(!r.width||!r.height)return;const x=Math.floor((event.clientX-r.left)/r.width*atlas.columns),y=Math.floor((event.clientY-r.top)/r.height*atlas.rows);if(x<0||y<0||x>=atlas.columns||y>=atlas.rows)return;select.value='atlas:'+(y*atlas.columns+x);refreshPalette();});
+ function refreshAtlasHighlight(){if(atlasWorkspace.hidden)return;const atlas=selected()?.tilemap2d?.atlas;if(!atlas)return;atlasGrid.style.backgroundImage='linear-gradient(to right,#ffffff66 1px,transparent 1px),linear-gradient(to bottom,#ffffff66 1px,transparent 1px)';atlasGrid.style.backgroundSize=(100/atlas.columns)+'% '+(100/atlas.rows)+'%';const index=select.value.startsWith('atlas:')?Number(select.value.slice(6)):-1;atlasHighlight.hidden=index<0||index>=atlas.columns*atlas.rows;if(!atlasHighlight.hidden){atlasHighlight.style.left=(index%atlas.columns*100/atlas.columns)+'%';atlasHighlight.style.top=(Math.floor(index/atlas.columns)*100/atlas.rows)+'%';atlasHighlight.style.width=(100/atlas.columns)+'%';atlasHighlight.style.height=(100/atlas.rows)+'%';}}
  const swatches=new Map();
  for(const [id,data] of Object.entries(TILE_TYPES)){const b=document.createElement('button');b.type='button';b.className='wb2d-tile';const color=document.createElement('span');color.style.background=data.color;b.append(color,document.createTextNode(data.label));b.onclick=()=>{select.value=id;refreshPalette();};palette.append(b);swatches.set(id,b);}
- function refreshPalette(){for(const [id,b] of swatches){b.classList.toggle('active',select.value===id);b.setAttribute('aria-pressed',String(select.value===id));}for(const b of palette.querySelectorAll('[data-atlas]')){const chosen=b.dataset.tileId===select.value;b.classList.toggle('active',chosen);b.setAttribute('aria-pressed',String(chosen));}}
+ function refreshPalette(){refreshAtlasHighlight();for(const [id,b] of swatches){b.classList.toggle('active',select.value===id);b.setAttribute('aria-pressed',String(select.value===id));}for(const b of palette.querySelectorAll('[data-atlas]')){const chosen=b.dataset.tileId===select.value;b.classList.toggle('active',chosen);b.setAttribute('aria-pressed',String(chosen));}}
  select.addEventListener('change',refreshPalette);refreshPalette();
  if(setDock){const title=document.createElement('strong');title.textContent='TileSet · Tuiles intégrées';setDock.append(title);for(const data of Object.values(TILE_TYPES)){const row=document.createElement('div');row.className='wb2d-tile-definition';const color=document.createElement('span');color.style.background=data.color;row.append(color,document.createTextNode(data.label+' — '+(data.solid?'Collision solide':'Sans collision')));setDock.append(row);}}
  const atlasControls=document.createElement('div'),atlasFile=document.createElement('input'),atlasCols=document.createElement('input'),atlasRows=document.createElement('input'),atlasStatus=document.createElement('span');atlasFile.type='file';atlasFile.accept='image/png';for(const [input,label] of [[atlasCols,'Colonnes'],[atlasRows,'Lignes']]){input.type='number';input.min='1';input.max='64';input.value='1';input.setAttribute('aria-label',label);atlasControls.append(document.createTextNode(label+' '),input);}atlasControls.append(atlasFile,atlasStatus);setDock?.append(atlasControls);
@@ -69,10 +89,10 @@ export function initTilemapEditor2d(canvas){
   const atlas=selected()?.tilemap2d?.atlas;if(shownAtlas===atlas)return;shownAtlas=atlas;renderAtlasCollisions(atlas,selected());
   const previous=select.value;
   select.querySelectorAll('[data-atlas]').forEach(e=>e.remove());palette.querySelectorAll('[data-atlas]').forEach(e=>e.remove());
-  if(!atlas){refreshPalette();return;}
+  atlasWorkspace.hidden=true;if(!atlas){atlasImage.removeAttribute('src');refreshPalette();return;}
   if(!Number.isInteger(atlas.columns)||!Number.isInteger(atlas.rows)||atlas.columns<1||atlas.rows<1||atlas.columns*atlas.rows>4096){refreshPalette();return;}
-  for(let index=0;index<atlas.columns*atlas.rows;index++){const id='atlas:'+index,option=document.createElement('option');option.value=id;option.textContent='Atlas '+index;option.dataset.atlas='';select.append(option);
-   const button=document.createElement('button'),thumb=document.createElement('span');button.type='button';button.className='wb2d-tile';button.dataset.atlas='';button.dataset.tileId=id;button.setAttribute('aria-label','Tuile atlas '+index);thumb.style.backgroundImage='url("'+atlas.dataUrl+'")';thumb.style.backgroundSize=(atlas.columns*100)+'% '+(atlas.rows*100)+'%';thumb.style.backgroundPosition=(atlas.columns===1?0:(index%atlas.columns)*100/(atlas.columns-1))+'% '+(atlas.rows===1?0:Math.floor(index/atlas.columns)*100/(atlas.rows-1))+'%';button.append(thumb,document.createTextNode(String(index)));button.onclick=()=>{select.value=id;refreshPalette();};palette.append(button);}
+  for(let index=0;index<atlas.columns*atlas.rows;index++){const option=document.createElement('option');option.value='atlas:'+index;option.textContent='Atlas '+index;option.dataset.atlas='';select.append(option);}
+  atlasImage.src=atlas.dataUrl;atlasWorkspace.hidden=false;atlasSource.textContent='▧ Atlas PNG · '+atlas.columns+' × '+atlas.rows;
   if([...select.options].some(o=>o.value===previous))select.value=previous;refreshPalette();
  }
  atlasFile.onchange=()=>{const owner=selected(),file=atlasFile.files?.[0],columns=Number(atlasCols.value),rows=Number(atlasRows.value);if(state.playing||!owner||!file||file.type!=='image/png'||file.size>2*1024*1024||!Number.isInteger(columns)||!Number.isInteger(rows)||columns<1||rows<1||columns>64||rows>64){atlasStatus.textContent='PNG ≤ 2 Mio, grille 1–64 et TileMap sélectionné requis.';return;}

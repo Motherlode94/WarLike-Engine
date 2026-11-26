@@ -34,8 +34,10 @@ layout.activeTabs=layout.activeTabs&&typeof layout.activeTabs==='object'&&!Array
 
 for(const kind of Object.keys(layout.float)){
  const f=layout.float[kind];
- if(!panelMap[kind]||!f||!['x','y','width','height'].every(key=>Number.isFinite(f[key])))delete layout.float[kind];
+ if(!Object.hasOwn(panelMap,kind)||!f||!['x','y','width','height'].every(key=>Number.isFinite(f[key])))delete layout.float[kind];
 }
+layout.tabGroups=normalizeDockGroups(layout.tabGroups,layout.float);
+layout.activeTabs=normalizeDockTabs(layout.activeTabs,layout.float,layout.tabGroups);
 if(!Number.isFinite(layout.leftWidth))layout.leftWidth=defaults.leftWidth;
 if(!Number.isFinite(layout.rightWidth))layout.rightWidth=defaults.rightWidth;
 // Preserve user-customized layouts. Upgrade only untouched legacy defaults once.
@@ -250,8 +252,11 @@ function normalizeDockGroups(groups,floating){
  }
  return result;
 }
-function normalizeDockTabs(tabs,floating){
- return Object.fromEntries(Object.entries(tabs&&typeof tabs==='object'&&!Array.isArray(tabs)?tabs:{}).filter(([id,value])=>Object.hasOwn(floating,id)&&typeof value==='string'&&Object.hasOwn(floating,value)));
+function normalizeDockTabs(tabs,floating,groups=normalizeDockGroups([],floating)){
+ const source=tabs&&typeof tabs==='object'&&!Array.isArray(tabs)?tabs:{};
+ const result={};
+ for(const group of groups){const active=group.find(id=>group.includes(source[id])) ;const selected=active?source[active]:group[0];for(const id of group)result[id]=selected;}
+ return result;
 }
 const customLayoutKey='warlike.workspace.layout.custom.v1';
 export function saveCustomLayout(){
@@ -272,7 +277,7 @@ export function loadCustomLayout(){
    if(panel&&['x','y','width','height'].every(key=>Number.isFinite(panel[key])))safeFloat[kind]=panel;
   }
  }
- layout={leftWidth:clamp(saved.leftWidth,160,640),rightWidth:clamp(saved.rightWidth,190,880),float:safeFloat,tabGroups:normalizeDockGroups(saved.tabGroups,safeFloat),activeTabs:normalizeDockTabs(saved.activeTabs,safeFloat)};
+ layout={leftWidth:clamp(saved.leftWidth,160,640),rightWidth:clamp(saved.rightWidth,190,880),float:safeFloat,tabGroups:normalizeDockGroups(saved.tabGroups,safeFloat),activeTabs:normalizeDockTabs(saved.activeTabs,safeFloat,normalizeDockGroups(saved.tabGroups,safeFloat))};
  const center=document.querySelector('.center-stack');
  if(center&&Number.isFinite(saved.projectHeight)){const height=clamp(saved.projectHeight,120,650);center.style.setProperty('--project-height',height+'px');try{localStorage.setItem('warlike.projectHeight',String(height))}catch{}}
  applyLayout();save();window.dispatchEvent(new Event('resize'));return true;

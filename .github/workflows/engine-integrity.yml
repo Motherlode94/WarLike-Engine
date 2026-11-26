@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   runtime-acceptance:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
           path: .validation-tools/runtime-acceptance/
           if-no-files-found: ignore
   complex-production:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -54,7 +54,7 @@ jobs:
             .validation-tools/complex-production/*.png
           if-no-files-found: ignore
   core-and-export:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -121,7 +121,7 @@ jobs:
           if-no-files-found: ignore
 
   p6-fps-tps-browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 14
     steps:
       - uses: actions/checkout@v4
@@ -145,7 +145,7 @@ jobs:
           if-no-files-found: ignore
 
   p7-editor-lifecycle:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -167,7 +167,7 @@ jobs:
           if-no-files-found: ignore
 
   complete-3d:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4

@@ -5,7 +5,14 @@ export function spriteSheetFrame2d(animation,timeSeconds,playing=false){
  if(!animation?.enabled||!(playing||animation.preview))return {index:0,count:1};
  const count=Math.max(1,Math.min(256,Math.floor(finite(animation.frames,1))));
  const fps=Math.max(.1,Math.min(120,finite(animation.fps,8)));
- const frame=Math.max(0,Math.floor(Math.max(0,finite(timeSeconds,0))*fps));
+ const elapsed=Math.max(0,finite(timeSeconds,0))*fps;
+ const durations=animation.grid?.durations;
+ if(Array.isArray(durations)&&durations.length===count&&durations.every(v=>Number.isFinite(v)&&v>=.1&&v<=100)){
+  const total=durations.reduce((a,b)=>a+b,0);let cursor=animation.loop===false?Math.min(elapsed,total):elapsed%total;
+  for(let i=0;i<count;i++){if(cursor<durations[i])return {index:i,count};cursor-=durations[i];}
+  return {index:count-1,count};
+ }
+ const frame=Math.max(0,Math.floor(elapsed));
  return {index:animation.loop===false?Math.min(count-1,frame):frame%count,count};
 }
 export function drawSpriteSheet2d(ctx,image,entity,timeSeconds,playing=false){

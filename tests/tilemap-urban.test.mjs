@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {defaultTilemap2d,paintRoad2d,stampDistrict2d} from '../js/core/tilemap-2d.js';
+test('road width clips at boundaries and district repeats sparse patterns',()=>{const map=defaultTilemap2d(),entity={x:0,y:0,tilemap2d:map};assert.equal(paintRoad2d(entity,{col:0,row:0},{col:3,row:0},'earth',3),10);const pattern={name:'House',width:2,height:2,tiles:{'0,0':'wall'}};assert.equal(stampDistrict2d(map,{col:5,row:4},pattern,2,2,1),4);assert.equal(map.cells['8,7'],'wall');assert.equal(stampDistrict2d(map,{col:19,row:11},pattern,2,2,1),0);});

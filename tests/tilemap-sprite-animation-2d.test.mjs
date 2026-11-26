@@ -61,3 +61,14 @@ test('sprite sheet renders the selected source frame without modifying image',()
  assert.equal(drawSpriteSheet2d(ctx,image,entity,1.5,true),true);
  assert.deepEqual(draws[0],[image,192,0,64,64,8,16,64,64]);
 });
+
+test('SpriteFrames grid supports ordered cells from multiple rows and retains a static first frame',()=>{
+ const draws=[],ctx={drawImage(...args){draws.push(args)}},image={complete:true,naturalWidth:128,naturalHeight:64};
+ const entity={x:0,y:0,w:32,h:32,spriteAnimation2d:{enabled:true,fps:2,loop:true,grid:{columns:4,rows:2,sequence:[5,2,7]}}};
+ assert.equal(drawSpriteSheet2d(ctx,image,entity,0,false),true);
+ assert.deepEqual(draws.at(-1),[image,32,32,32,32,0,0,32,32]);
+ assert.equal(drawSpriteSheet2d(ctx,image,entity,.5,true),true);
+ assert.deepEqual(draws.at(-1),[image,64,0,32,32,0,0,32,32]);
+ entity.spriteAnimation2d.grid.sequence=[8];
+ assert.equal(drawSpriteSheet2d(ctx,image,entity,0,true),false);
+});

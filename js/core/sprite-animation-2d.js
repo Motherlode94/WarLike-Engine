@@ -10,7 +10,19 @@ export function spriteSheetFrame2d(animation,timeSeconds,playing=false){
 }
 export function drawSpriteSheet2d(ctx,image,entity,timeSeconds,playing=false){
  if(!image?.complete||!image.naturalWidth||!image.naturalHeight)return false;
- const {index,count}=spriteSheetFrame2d(entity.spriteAnimation2d,timeSeconds,playing);
+ const animation=entity.spriteAnimation2d;
+ const {index,count}=spriteSheetFrame2d(animation,timeSeconds,playing);
+ if(animation?.enabled&&animation.grid){
+  const grid=animation.grid,columns=grid.columns,rows=grid.rows;
+  if(!Number.isInteger(columns)||!Number.isInteger(rows)||columns<1||rows<1||columns*rows>4096)return false;
+  const sequence=Array.isArray(grid.sequence)?grid.sequence:Array.from({length:Math.min(256,columns*rows)},(_,i)=>i);
+  if(!sequence.length||sequence.length>256||sequence.some(i=>!Number.isInteger(i)||i<0||i>=columns*rows))return false;
+  const frame=spriteSheetFrame2d({...animation,frames:sequence.length},timeSeconds,playing).index;
+  const cell=sequence[frame],fw=image.naturalWidth/columns,fh=image.naturalHeight/rows;
+  if(fw<1||fh<1)return false;
+  ctx.drawImage(image,(cell%columns)*fw,Math.floor(cell/columns)*fh,fw,fh,entity.x,entity.y,entity.w,entity.h);
+  return true;
+ }
  const frameWidth=image.naturalWidth/count;
  if(!Number.isFinite(frameWidth)||frameWidth<1)return false;
  ctx.drawImage(image,index*frameWidth,0,frameWidth,image.naturalHeight,entity.x,entity.y,entity.w,entity.h);

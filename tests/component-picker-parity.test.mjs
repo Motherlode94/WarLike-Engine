@@ -72,7 +72,9 @@ test('native behavior catalogue is not reduced to a single Rigidbody or confused
 });
 test('catalogue separates movement, gameplay, vehicle behavior and 2D\/3D physics',()=>{
  const source=readFileSync(new URL('../js/ui/component-browser.js',import.meta.url),'utf8');
- assert.match(source,/Vehicles:\['data-VehicleController'\]/);
+ for(const id of ['data-VehicleController','vehicleController','groundVehiclePhysics','aircraftPhysics','aircraftSystems','aircraftLandingGear'])assert.equal(unityComponentCategory({id,name:id}),'Vehicles');
+ for(const [id,category] of [['animalController','Gameplay'],['navigationAgent','Navigation'],['spriteRenderer2d','Rendering'],['tilemap2d','Tilemap']])assert.equal(unityComponentCategory({id,name:id}),category);
+ assert.equal((source.match(/^\s*Vehicles:\[/gm)||[]).length,1,'Vehicles category must not be overwritten by a duplicate declaration');
  assert.match(source,/Movement:\['controller2d','controller3d'\]/);
  assert.match(source,/Physics:\['collider3d','rigidbody3d'/);
  assert.equal(unityComponentCategory({id:'data-VehicleController',name:'VehicleController'}),'Vehicles');

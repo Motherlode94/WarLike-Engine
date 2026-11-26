@@ -4,7 +4,7 @@ import {state,notify} from '../core/state.js';
 import {workspace} from '../core/workspaces.js';
 import {record} from '../core/history.js';
 import {toWorld} from '../core/camera.js';
-import {defaultTilemap2d,paintTile2d,paintTileArea2d,tileAt,TILE_TYPES,tilemapLayers2d,connectTerrain2d,captureTilePattern2d,stampTilePattern2d,paintRoad2d,stampDistrict2d} from '../core/tilemap-2d.js';
+import {defaultTilemap2d,paintTile2d,paintTileArea2d,tileAt,TILE_TYPES,tilemapLayers2d,connectTerrain2d,captureTilePattern2d,stampTilePattern2d,paintRoad2d,stampDistrict2d,generateTerrainLayer2d} from '../core/tilemap-2d.js';
 
 export function createTilemap2d(){
  if(state.playing||workspace.mode!=='2d')return null;
@@ -42,7 +42,9 @@ export function initTilemapEditor2d(canvas){
  const patternSelect=document.createElement('select');patternSelect.setAttribute('aria-label','Motif TileMap');let patternOwner=null;
  function refreshPatterns(owner){const previous=patternOwner===owner?patternSelect.value:'';patternOwner=owner;const patterns=owner?.tilemap2d?.patterns||[];patternSelect.replaceChildren(...patterns.map((p,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=p.name;return option;}));if(previous!==''&&patterns[Number(previous)])patternSelect.value=previous;patternSelect.disabled=state.playing||!patterns.length;}
  const urbanWidth=document.createElement('input');urbanWidth.type='number';urbanWidth.min='1';urbanWidth.max='9';urbanWidth.value='3';urbanWidth.setAttribute('aria-label','Largeur route en tuiles');
- bar.append(create,toggle,tool,select,layerSelect,layerAdd,layerVisible,layerCollision,connect,patternSelect,urbanWidth,info);
+ const generate=document.createElement('button');generate.type='button';generate.textContent='Générer terrain';
+ generate.onclick=()=>{const map=selected()?.tilemap2d;if(!map||state.playing||stroke||(map.layers?.length??0)>=15)return;const input=prompt('Seed, niveau eau (0–1), échelle du relief','1,0.3,8');if(input===null)return;const parts=input.split(',');if(parts.length!==3||parts.some(p=>!p.trim()))return;const [seed,water,scale]=parts.map(Number);const layer=generateTerrainLayer2d(map,{seed,water,scale});if(!layer)return;(map.layers??=[]).push(layer);map.activeLayer=map.layers.length;record('TileMap · Génération terrain');notify();};
+ bar.append(create,toggle,tool,select,layerSelect,layerAdd,layerVisible,layerCollision,connect,patternSelect,urbanWidth,generate,info);
  const dock=document.getElementById('tileMapContent'),setDock=document.getElementById('tileSetContent');
  const palette=document.createElement('div');palette.className='wb2d-palette';
  if(dock){bar.style.cssText='display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:5px';dock.append(bar,palette);}else host.append(bar);

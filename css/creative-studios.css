@@ -56,3 +56,12 @@
 #spriteFramesContent .sf-frame{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;border:1px solid transparent;background:transparent;color:inherit}
 #spriteFramesContent .sf-frame.active{background:#8884;border-color:#8888}
 #spriteFramesContent canvas{image-rendering:pixelated}
+
+/* World Builder 2D dock, separate from Gaia. */
+#tileMapContent:not([hidden]),#tileSetContent:not([hidden]){flex:1;min-height:0;overflow:auto;padding:6px}
+#tileMapContent[hidden],#tileSetContent[hidden]{display:none!important}
+.wb2d-palette{display:flex;flex-wrap:wrap;gap:5px;padding:5px}
+.wb2d-tile{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;padding:5px;color:inherit}
+.wb2d-tile span,.wb2d-tile-definition span{display:inline-block;width:32px;height:32px;border:1px solid #8888}
+.wb2d-tile.active{outline:2px solid #6589bd}
+.wb2d-tile-definition{display:flex;align-items:center;gap:8px;padding:4px}

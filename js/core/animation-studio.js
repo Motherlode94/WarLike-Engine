@@ -1,6 +1,6 @@
 import {state,active,notify} from './state.js';
 import {record} from './history.js';
-import {animationEditorPreview,animationFields,animationEasings,sampleClip,createClip,putAnimationKey,putAnimationPropertyKey,removeAnimationPropertyKey,inspectAnimationStudio} from './animation-clips.js';
+import {animationEditorPreview,animationFields,animationEasings,sampleClip,createClip,putAnimationKey,putAnimationPropertyKey,removeAnimationPropertyKey,inspectAnimationStudio,validBezierCurve,cubicBezierEase} from './animation-clips.js';
 export {sampleClip,createClip} from './animation-clips.js';
 const preview=animationEditorPreview;let autoKey=false,panel=null,displayOwner=null,clipIndex=0,raf=0,playing=false,playStart=0,lastPlaying=false;
 const el=(tag,text)=>{const node=document.createElement(tag);if(text!=null)node.textContent=text;return node};
@@ -42,6 +42,11 @@ function render(){
   for(const [index,key] of current.keys.entries()){
    const row=el('tr'),stamp=el('input');stamp.type='number';stamp.min='0';stamp.max=current.duration;stamp.step='.01';stamp.value=key.time;stamp.disabled=state.playing;stamp.setAttribute('aria-label','Temps de l’image clé '+(index+1));stamp.onchange=()=>mutate('Déplacer une image clé',()=>{const t=Number(stamp.value);if(!Number.isFinite(t)||t<0||t>current.duration||current.keys.some(k=>k!==key&&Math.abs(k.time-t)<.00001))throw Error('Instant hors du clip ou déjà occupé.');key.time=t;current.keys.sort((a,b)=>a.time-b.time)});const cell=el('td');cell.append(stamp);row.append(cell);
    const choices=el('select');for(const easing of animationEasings){const option=el('option',easing);option.value=easing;choices.append(option)}choices.value=key.easing||'linear';choices.disabled=state.playing;choices.setAttribute('aria-label','Interpolation de l’image clé '+(index+1));choices.onchange=()=>mutate('Interpolation de l’image clé',()=>key.easing=choices.value);const type=el('td');type.append(choices);row.append(type);
+   if(key.easing==='bezier'){
+    const curve=key.bezier||[.25,.1,.25,1],editor=el('div');editor.style.display='grid';editor.style.gap='3px';
+    const canvas=el('canvas');canvas.width=120;canvas.height=52;const ctx=canvas.getContext('2d');if(ctx){ctx.strokeStyle='#79b8e8';ctx.beginPath();for(let i=0;i<=120;i++){const y=51-cubicBezierEase(i/120,curve)*50;if(i===0)ctx.moveTo(i,y);else ctx.lineTo(i,y);}ctx.stroke();}editor.append(canvas);
+    for(const [i,label] of ['X1','Y1','X2','Y2'].entries()){const wrap=el('label',label+' '),input=el('input');input.type='number';input.min='0';input.max='1';input.step='.05';input.value=curve[i];input.disabled=state.playing;input.onchange=()=>{const next=[...curve];next[i]=Number(input.value);if(!validBezierCurve(next)){input.value=curve[i];return;}mutate('Courbe Bézier',()=>key.bezier=next);};wrap.append(input);editor.append(wrap);}type.append(editor);
+   }
    row.append(el('td',animationFields.filter(field=>Number.isFinite(key[field])).map(field=>field+' '+Number(key[field].toFixed(2))).join(' · ')));const remove=el('button','Retirer');remove.type='button';remove.disabled=state.playing;remove.setAttribute('aria-label','Retirer l’image clé '+(index+1));remove.onclick=()=>mutate('Retirer une image clé',()=>current.keys.splice(index,1));const action=el('td');action.append(remove);row.append(action);table.append(row);
   }keys.append(table);
   for(const [index,event] of current.events.entries()){const row=el('div');row.className='anim-event-row';row.append(el('span','Signal '+event.name+' · '+event.time.toFixed(2)+' s'));const b=el('button','Retirer le signal');b.type='button';b.disabled=state.playing;b.onclick=()=>mutate('Retirer un événement animation',()=>current.events.splice(index,1));row.append(b);keys.append(row)}

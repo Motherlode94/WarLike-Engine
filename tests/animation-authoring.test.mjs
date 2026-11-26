@@ -97,3 +97,5 @@ test('property keys preserve existing animation serialization and runtime',()=>{
 });
 
 test('custom Bezier interpolation preserves endpoints and serialized curve',()=>{const clip=createClip('Curve',1);clip.keys=[{time:0,x:0,easing:'bezier',bezier:[0,0,1,1]},{time:1,x:100}];near(sampleClip(clip,.25).x,25);assert.equal(sampleClip(clip,1).x,100);clip.keys[0].bezier=[.25,0,.75,0];assert.ok(sampleClip(JSON.parse(JSON.stringify(clip)),.5).x<20);});
+
+test('component property tracks interpolate light and audio and restore preview',()=>{const clip=createClip('Components',1);putAnimationPropertyKey(clip,0,'lightIntensity',0);putAnimationPropertyKey(clip,1,'lightIntensity',4);putAnimationPropertyKey(clip,0,'audioGain',.2);putAnimationPropertyKey(clip,1,'audioGain',.8);const owner={lightIntensity:1,audioGain:.1},preview=new AnimationPreview();preview.seek(owner,clip,.5);near(owner.lightIntensity,2);near(owner.audioGain,.5);preview.stop();assert.deepEqual(owner,{lightIntensity:1,audioGain:.1});assert.throws(()=>putAnimationPropertyKey(clip,0,'audioGain',2),/invalide/);});

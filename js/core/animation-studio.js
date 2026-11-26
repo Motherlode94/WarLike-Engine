@@ -22,7 +22,7 @@ function render(){
  const markers=at('#animMarkers');markers.replaceChildren();for(const [index,key] of (current?.keys||[]).entries()){const b=el('button','◆');b.type='button';b.title='Image clé '+key.time.toFixed(2)+' s';b.setAttribute('aria-label',b.title);b.style.left=(key.time/current.duration*100)+'%';b.disabled=state.playing;b.onclick=()=>{stop();slider.value=String(key.time);seek(key.time);at('#animEasing').value=key.easing||'linear'};markers.append(b)}
  const tracks=at('#animPropertyTracks');tracks.replaceChildren();
  if(current){
-  const labels={x:'Position X',y:'Position Y / Z (3D)',elevation3d:'Élévation 3D',rotation:'Rotation principale',rotationX3d:'Rotation X',rotationZ3d:'Rotation Z',w:'Largeur',h:'Hauteur',depth3d:'Profondeur'};
+  const labels={x:'Position X',y:'Position Y / Z (3D)',elevation3d:'Élévation 3D',rotation:'Rotation principale',rotationX3d:'Rotation X',rotationZ3d:'Rotation Z',w:'Largeur',h:'Hauteur',depth3d:'Profondeur',lightIntensity:'Light · Intensité',lightRange:'Light · Portée',lightAngle:'Light · Angle',audioGain:'Audio · Gain',audioRange:'Audio · Portée'};
   for(const field of animationFields.filter(f=>Number.isFinite(owner[f])||current.keys.some(k=>Number.isFinite(k[f])))){
    const row=el('div');row.className='anim-property-row';
    const label=el('span',labels[field]);row.append(label);

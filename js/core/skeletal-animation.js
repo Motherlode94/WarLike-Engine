@@ -36,7 +36,7 @@ export function compileSkeletalClip(rig,clip){
  return {name:clip.name,duration:clip.duration,channels};
 }
 export function recordBoneKey(clip,bone,path,time,value){
- if(!['translation','rotation','scale'].includes(path)||!vector(value,path==='rotation'?4:3))throw Error('Pose invalide.');if(time<0||time>clip.duration)throw Error('Image clé hors durée.');
+ if(typeof bone!=='string'||!bone.trim()||bone.length>160||!['translation','rotation','scale'].includes(path)||!vector(value,path==='rotation'?4:3)||path==='rotation'&&Math.hypot(...value)<1e-6||path==='scale'&&value.some(v=>v<=0))throw Error('Pose invalide.');if(!Number.isFinite(time)||time<0||time>clip.duration)throw Error('Image clé hors durée.');
  let channel=clip.channels.find(c=>c.bone===bone&&c.path===path);if(!channel){if(clip.channels.length>=256)throw Error('256 pistes maximum.');channel={bone,path,interpolation:'LINEAR',keys:[]};clip.channels.push(channel)}
  const key={time,value:path==='rotation'?qnorm(value):value.slice(),inTangent:Array(value.length).fill(0),outTangent:Array(value.length).fill(0)},index=channel.keys.findIndex(k=>Math.abs(k.time-time)<1e-5);if(index<0&&channel.keys.length>=512)throw Error('512 clés maximum par piste.');if(index>=0)channel.keys[index]=key;else channel.keys.push(key);channel.keys.sort((a,b)=>a.time-b.time);return channel;
 }

@@ -65,3 +65,5 @@
 .wb2d-tile span,.wb2d-tile-definition span{display:inline-block;width:32px;height:32px;border:1px solid #8888}
 .wb2d-tile.active{outline:2px solid #6589bd}
 .wb2d-tile-definition{display:flex;align-items:center;gap:8px;padding:4px}
+
+.wb2d-tile[aria-pressed=true]{outline:2px solid #6589bd;outline-offset:-2px}.wb2d-tile[data-atlas] span{image-rendering:pixelated}.wb2d-tile:focus-visible{outline:2px solid currentColor}

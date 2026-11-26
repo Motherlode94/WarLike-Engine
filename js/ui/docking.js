@@ -238,6 +238,19 @@ export function applyLayoutPreset(name){
  window.dispatchEvent(new Event('resize'));
  return true;
 }
+function normalizeDockGroups(groups,floating){
+ const used=new Set(),result=[];
+ for(const group of Array.isArray(groups)?groups:[]){
+  if(!Array.isArray(group))continue;
+  const members=[...new Set(group)].filter(id=>typeof id==='string'&&Object.hasOwn(floating,id)&&!used.has(id));
+  if(members.length<2)continue;
+  members.forEach(id=>used.add(id));result.push(members);
+ }
+ return result;
+}
+function normalizeDockTabs(tabs,floating){
+ return Object.fromEntries(Object.entries(tabs&&typeof tabs==='object'&&!Array.isArray(tabs)?tabs:{}).filter(([id,value])=>Object.hasOwn(floating,id)&&typeof value==='string'&&Object.hasOwn(floating,value)));
+}
 const customLayoutKey='warlike.workspace.layout.custom.v1';
 export function saveCustomLayout(){
  const center=document.querySelector('.center-stack');
@@ -256,9 +269,9 @@ export function loadCustomLayout(){
    if(panel&&['x','y','width','height'].every(key=>Number.isFinite(panel[key])))safeFloat[kind]=panel;
   }
  }
- layout={leftWidth:clamp(saved.leftWidth,160,640),rightWidth:clamp(saved.rightWidth,190,880),float:safeFloat,tabGroups:(saved.tabGroups||[]).filter(g=>Array.isArray(g)&&g.length>1&&g.every(id=>safeFloat[id])),activeTabs:saved.activeTabs||{}};
+ layout={leftWidth:clamp(saved.leftWidth,160,640),rightWidth:clamp(saved.rightWidth,190,880),float:safeFloat,tabGroups:normalizeDockGroups(saved.tabGroups,safeFloat),activeTabs:normalizeDockTabs(saved.activeTabs,safeFloat)};
  const center=document.querySelector('.center-stack');
- if(center&&Number.isFinite(saved.projectHeight))center.style.setProperty('--project-height',clamp(saved.projectHeight,120,650)+'px');
+ if(center&&Number.isFinite(saved.projectHeight)){const height=clamp(saved.projectHeight,120,650);center.style.setProperty('--project-height',height+'px');try{localStorage.setItem('warlike.projectHeight',String(height))}catch{}}
  applyLayout();save();window.dispatchEvent(new Event('resize'));return true;
 }
 let maximizedScene=false;

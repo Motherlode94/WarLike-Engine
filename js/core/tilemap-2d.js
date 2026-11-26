@@ -12,7 +12,7 @@ export function tileAtlasDefinition2d(map,kind){
  const atlas=map?.atlas,m=/^atlas:(\d+)$/.exec(kind);
  if(!atlas||!m||!Number.isInteger(atlas.columns)||!Number.isInteger(atlas.rows)||atlas.columns<1||atlas.rows<1||atlas.columns*atlas.rows>4096)return null;
  const index=Number(m[1]);if(index>=atlas.columns*atlas.rows)return null;
- return {index,solid:false};
+ return {index,solid:atlas.solidTiles?.includes(index)===true};
 }
 function atlasImage(atlas){
  if(typeof Image==='undefined'||typeof atlas?.dataUrl!=='string'||!atlas.dataUrl.startsWith('data:image/png;base64,'))return null;
@@ -51,7 +51,7 @@ export function tilemapColliders2d(entities){
   const map=entity?.tilemap2d;if(!map||entity.enabled===false||entity.collider2d?.enabled===false)continue;
   const size=tileSizeFor(map);
   for(const layer of tilemapLayers2d(map)){if(layer.collision===false)continue;for(const [key,tile] of Object.entries(layer.cells)){
-   if(!TILE_TYPES[tile]?.solid)continue;
+   if(!TILE_TYPES[tile]?.solid&&!tileAtlasDefinition2d(map,tile)?.solid)continue;
    const match=/^(\d+),(\d+)$/.exec(key);if(!match)continue;
    const col=Number(match[1]),row=Number(match[2]);
    if(col>=map.columns||row>=map.rows)continue;

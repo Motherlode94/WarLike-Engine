@@ -47,9 +47,19 @@ export function initTilemapEditor2d(canvas){
  select.addEventListener('change',refreshPalette);refreshPalette();
  if(setDock){const title=document.createElement('strong');title.textContent='TileSet · Tuiles intégrées';setDock.append(title);for(const data of Object.values(TILE_TYPES)){const row=document.createElement('div');row.className='wb2d-tile-definition';const color=document.createElement('span');color.style.background=data.color;row.append(color,document.createTextNode(data.label+' — '+(data.solid?'Collision solide':'Sans collision')));setDock.append(row);}}
  const atlasControls=document.createElement('div'),atlasFile=document.createElement('input'),atlasCols=document.createElement('input'),atlasRows=document.createElement('input'),atlasStatus=document.createElement('span');atlasFile.type='file';atlasFile.accept='image/png';for(const [input,label] of [[atlasCols,'Colonnes'],[atlasRows,'Lignes']]){input.type='number';input.min='1';input.max='64';input.value='1';input.setAttribute('aria-label',label);atlasControls.append(document.createTextNode(label+' '),input);}atlasControls.append(atlasFile,atlasStatus);setDock?.append(atlasControls);
+ const collisionEditor=document.createElement('div'),collisionTitle=document.createElement('strong'),collisionGrid=document.createElement('div');collisionTitle.textContent='Collisions des tuiles PNG';collisionGrid.className='wb2d-palette';collisionEditor.append(collisionTitle,collisionGrid);setDock?.append(collisionEditor);
  let shownAtlas=null;
+ function renderAtlasCollisions(atlas,owner){
+  collisionGrid.replaceChildren();if(!atlas||!owner||!Number.isInteger(atlas.columns)||!Number.isInteger(atlas.rows)||atlas.columns<1||atlas.rows<1||atlas.columns*atlas.rows>4096)return;
+  for(let index=0;index<atlas.columns*atlas.rows;index++){
+   const button=document.createElement('button'),thumb=document.createElement('span');button.type='button';button.className='wb2d-tile';button.disabled=state.playing;
+   thumb.style.backgroundImage='url("'+atlas.dataUrl+'")';thumb.style.backgroundSize=(atlas.columns*100)+'% '+(atlas.rows*100)+'%';thumb.style.backgroundPosition=(atlas.columns===1?0:(index%atlas.columns)*100/(atlas.columns-1))+'% '+(atlas.rows===1?0:Math.floor(index/atlas.columns)*100/(atlas.rows-1))+'%';
+   const refresh=()=>{const solid=atlas.solidTiles?.includes(index)===true;button.setAttribute('aria-pressed',String(solid));button.setAttribute('aria-label','Tuile '+index+' : '+(solid?'solide':'traversable'));button.replaceChildren(thumb,document.createTextNode(index+' '+(solid?'■':'□')));};
+   refresh();button.onclick=()=>{if(state.playing||selected()!==owner||owner.tilemap2d.atlas!==atlas)return;const values=new Set(Array.isArray(atlas.solidTiles)?atlas.solidTiles:[]);if(values.has(index))values.delete(index);else values.add(index);atlas.solidTiles=[...values].sort((a,b)=>a-b);refresh();record('TileSet · Collision tuile '+index);notify();};collisionGrid.append(button);
+  }
+ }
  function syncAtlas(){
-  const atlas=selected()?.tilemap2d?.atlas;if(shownAtlas===atlas)return;shownAtlas=atlas;
+  const atlas=selected()?.tilemap2d?.atlas;if(shownAtlas===atlas)return;shownAtlas=atlas;renderAtlasCollisions(atlas,selected());
   const previous=select.value;
   select.querySelectorAll('[data-atlas]').forEach(e=>e.remove());palette.querySelectorAll('[data-atlas]').forEach(e=>e.remove());
   if(!atlas){refreshPalette();return;}

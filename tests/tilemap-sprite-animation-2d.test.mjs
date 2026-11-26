@@ -93,3 +93,8 @@ test('named sprite clips retain independent sequences, fps and loop flags',()=>{
  const restored=JSON.parse(JSON.stringify(a));assert.equal(switchSpriteClip2d(restored,'Run'),true);assert.deepEqual(restored.grid.sequence,[4,5,6]);assert.equal(restored.fps,12);assert.equal(restored.loop,false);
  assert.equal(renameSpriteClip2d(restored,'Sprint'),true);assert.equal(restored.activeClip,'Sprint');assert.equal(addSpriteClip2d(restored,'Sprint'),false);
 });
+
+test('atlas collision flags survive JSON roundtrip and respect layer collision settings',()=>{
+ const entity={id:9,x:0,y:0,tilemap2d:{tileSize:32,columns:4,rows:4,cells:{'0,0':'atlas:1','1,0':'atlas:2'},atlas:{columns:2,rows:2,solidTiles:[1]},layers:[{name:'Decor',collision:false,cells:{'2,0':'atlas:1'}}]}};
+ const result=tilemapColliders2d([JSON.parse(JSON.stringify(entity))]);assert.equal(result.length,1);assert.equal(result[0].x,0);assert.equal(result[0].w,32);
+});

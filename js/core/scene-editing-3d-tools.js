@@ -38,10 +38,19 @@ export function alignSceneObjects3d(entities,ids,{axis='x',to='first'}={}){
  }
  return changed;
 }
-export function snapSelected3d(entities,ids,{step=.5}={}){
+export function snapSelected3d(entities,ids,{step=.5,preserveOffsets=false}={}){
  if(!Number.isFinite(step)||step<=0||step>20)throw Error('Pas de grille invalide');
+ const selected=entities.filter(o=>ids.includes(o.id));
+ const anchor=selected.find(o=>o.id===ids[0])||selected[0];
+ if(preserveOffsets&&anchor){
+  const coords=[anchor.x,anchor.y,anchor.elevation3d??0];if(!coords.every(Number.isFinite)||selected.some(o=>![o.x,o.y,o.elevation3d??0].every(Number.isFinite)))return 0;
+  const delta=coords.map((v,i)=>{const unit=i===2?step:step*64;return Math.round(v/unit)*unit-v});
+  if(delta.every(v=>v===0))return 0;
+  for(const o of selected){o.x+=delta[0];o.y+=delta[1];if(delta[2])o.elevation3d=(o.elevation3d??0)+delta[2];}
+  return selected.length;
+ }
  let changed=0;
- for(const object of entities.filter(o=>ids.includes(o.id))){
+ for(const object of selected){
   const before=[object.x,object.y,object.elevation3d||0];
   object.x=Math.round(object.x/(step*64))*step*64;
   object.y=Math.round(object.y/(step*64))*step*64;

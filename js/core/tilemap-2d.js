@@ -7,6 +7,18 @@ export const TILE_TYPES=Object.freeze({
  stone:{label:'Pierre',color:'#8494a5',solid:true},
  water:{label:'Eau',color:'#3877a5',solid:false}
 });
+const atlasCache=new Map();
+export function tileAtlasDefinition2d(map,kind){
+ const atlas=map?.atlas,m=/^atlas:(\d+)$/.exec(kind);
+ if(!atlas||!m||!Number.isInteger(atlas.columns)||!Number.isInteger(atlas.rows)||atlas.columns<1||atlas.rows<1||atlas.columns*atlas.rows>4096)return null;
+ const index=Number(m[1]);if(index>=atlas.columns*atlas.rows)return null;
+ return {index,solid:false};
+}
+function atlasImage(atlas){
+ if(typeof Image==='undefined'||typeof atlas?.dataUrl!=='string'||!atlas.dataUrl.startsWith('data:image/png;base64,'))return null;
+ if(!atlasCache.has(atlas.dataUrl)){if(atlasCache.size>=16)atlasCache.delete(atlasCache.keys().next().value);const image=new Image();image.src=atlas.dataUrl;atlasCache.set(atlas.dataUrl,image);}
+ return atlasCache.get(atlas.dataUrl);
+}
 const validNumber=(v,fallback)=>Number.isFinite(Number(v))?Number(v):fallback;
 export const tileSizeFor=tilemap=>Math.max(8,Math.min(128,Math.round(validNumber(tilemap?.tileSize,32))));
 export const defaultTilemap2d=()=>({tileSize:32,columns:20,rows:12,cells:{},visible:true});
@@ -19,7 +31,7 @@ export function tileAt(entity,x,y){
 }
 export function paintTile2d(entity,x,y,kind='grass'){
  const tile=tileAt(entity,x,y);if(!tile)return false;
- if(kind!=='erase'&&!Object.hasOwn(TILE_TYPES,kind))return false;
+ if(kind!=='erase'&&!Object.hasOwn(TILE_TYPES,kind)&&!tileAtlasDefinition2d(entity.tilemap2d,kind))return false;
  const cells=entity.tilemap2d.cells||(entity.tilemap2d.cells={});
  const previous=cells[tile.key]||null,next=kind==='erase'?null:kind;
  if(previous===next)return false;
@@ -45,11 +57,11 @@ export function renderTilemap2d(ctx,entity,{editor=false,showGrid=true}={}){
  const map=entity?.tilemap2d;if(!map||map.visible===false)return;
  const size=tileSizeFor(map),x=Number(entity.x)||0,y=Number(entity.y)||0;
  for(const [key,kind] of Object.entries(map.cells||{})){
-  const type=TILE_TYPES[kind],m=/^(\d+),(\d+)$/.exec(key);
-  if(!type||!m)continue;const col=Number(m[1]),row=Number(m[2]);
+  const atlasTile=tileAtlasDefinition2d(map,kind),type=TILE_TYPES[kind],m=/^(\d+),(\d+)$/.exec(key);
+  if((!type&&!atlasTile)||!m)continue;const col=Number(m[1]),row=Number(m[2]);
   if(col>=map.columns||row>=map.rows)continue;
   const px=x+col*size,py=y+row*size;
-  ctx.fillStyle=type.color;ctx.fillRect(px,py,size,size);
+  if(atlasTile){const image=atlasImage(map.atlas);if(image?.complete&&image.naturalWidth&&image.naturalHeight){const fw=image.naturalWidth/map.atlas.columns,fh=image.naturalHeight/map.atlas.rows;ctx.drawImage(image,atlasTile.index%map.atlas.columns*fw,Math.floor(atlasTile.index/map.atlas.columns)*fh,fw,fh,px,py,size,size);}continue;}ctx.fillStyle=type.color;ctx.fillRect(px,py,size,size);
   if(type.solid){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(px,py,size,Math.max(2,size*.16));}
  }
  if(editor&&showGrid){
@@ -65,7 +77,7 @@ export function renderTilemap2d(ctx,entity,{editor=false,showGrid=true}={}){
 export function paintTileArea2d(entity,from,to,kind,tool='rectangle'){
  const map=entity?.tilemap2d;
  if(!map||!Number.isInteger(map.columns)||!Number.isInteger(map.rows)||map.columns<1||map.rows<1||map.columns*map.rows>262144)return 0;
- if(kind!=='erase'&&!Object.hasOwn(TILE_TYPES,kind))return 0;
+ if(kind!=='erase'&&!Object.hasOwn(TILE_TYPES,kind)&&!tileAtlasDefinition2d(entity.tilemap2d,kind))return 0;
  if(!from||!to||![from.col,from.row,to.col,to.row].every(Number.isInteger))return 0;
  const inside=(x,y)=>x>=0&&y>=0&&x<map.columns&&y<map.rows;
  if(!inside(from.col,from.row)||!inside(to.col,to.row))return 0;

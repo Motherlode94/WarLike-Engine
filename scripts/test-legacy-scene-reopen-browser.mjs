@@ -49,7 +49,11 @@ try{
    blueprintOverrides:{vitesse:7},
    animationRig:{clips:[],playOnStart:false},
   });
-  state.entities=scene;state.selected=[4];state.nextId=5;
+  scene.push({
+   id:5,name:'Ancien projecteur à 90°',type:'object',x:64,y:64,w:32,h:32,
+   lightType:'spot',lightEnabled:true,lightIntensity:3,lightRange:10,rotation:90,
+  });
+  state.entities=scene;state.selected=[4];state.nextId=6;
   if(!saveProject())throw Error('Save failed');
   return {id,entities:structuredClone(state.entities)};
  });
@@ -75,6 +79,23 @@ try{
  assert.equal(reopened.entities[3].blueprintOverrides.vitesse,7);
  assert.equal(reopened.entities[1].materialRoughness,.31);
  await page.locator('#hubClose').click().catch(()=>{});
+ // Inspect the actual renderer uniforms after re-opening the yaw-only fixture.
+ // This catches both the mathematical regression and a renderer wiring error.
+ await page.waitForFunction(async()=>{
+  const {view3d}=await import('/js/core/viewport-3d.js');
+  const gl=view3d.gl,program=gl?.getParameter(gl.CURRENT_PROGRAM);
+  if(!program)return false;
+  const location=gl.getUniformLocation(program,'uLightDir[0]');
+  const direction=location&&gl.getUniform(program,location);
+  return direction&&Math.abs(direction[0]-1)<1e-6&&Math.abs(direction[1]+.45)<1e-6&&Math.abs(direction[2])<1e-6;
+ });
+ report.spotlight=await page.evaluate(async()=>{
+  const {view3d}=await import('/js/core/viewport-3d.js');
+  const gl=view3d.gl,program=gl.getParameter(gl.CURRENT_PROGRAM);
+  return {direction:Array.from(gl.getUniform(program,gl.getUniformLocation(program,'uLightDir[0]'))).slice(0,3),glError:gl.getError()};
+ });
+ assert.equal(report.spotlight.glError,0);
+ report.checks.push('Legacy 90-degree spotlight sends [1, -.45, 0] to the real WebGL renderer after reload');
  await page.screenshot({path:path.join(output,'after-reopen.png')});
  assert.deepEqual(errors,[],'No browser JavaScript errors during visual re-open');
  report.status='PASS';report.objects=created.entities.length;

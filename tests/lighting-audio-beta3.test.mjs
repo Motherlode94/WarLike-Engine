@@ -29,6 +29,29 @@ test('spot pitch and roll rotate its beam while legacy yaw-only lights keep thei
  assert.ok(Math.abs(pitched[1]+1)<1e-9);assert.ok(Math.abs(pitched[2]+.45)<1e-9);
  const rolled=lightFromEntity({...base,rotationZ3d:90}).direction;assert.ok(Math.abs(rolled[0]-.45)<1e-9);
 });
+test('saved yaw-only spotlights retain their historical beam direction without mutating their data',()=>{
+ const base={x:0,y:0,w:32,h:32,lightType:'spot',lightIntensity:2,lightRange:10};
+ for(const rotation of [undefined,0,45,90,180,270,-90,450,'90'])for(const axes of [{},{rotationX3d:0,rotationZ3d:0}]){
+  const saved=JSON.stringify({...base,...axes,...(rotation===undefined?{}:{rotation})});
+  const entity=JSON.parse(saved),angle=(Number(rotation)||0)*Math.PI/180;
+  const expected=[Math.sin(angle),-.45,Math.cos(angle)];
+  const actual=lightFromEntity(entity).direction;
+  expected.forEach((value,i)=>assert.ok(Math.abs(actual[i]-value)<1e-9,`yaw ${rotation}, axis ${i}: ${actual}`));
+  assert.equal(JSON.stringify(entity),saved,'Rendering must not migrate or rewrite saved rotations');
+ }
+});
+test('spotlight pitch and roll compose continuously with the historical positive yaw',()=>{
+ const base={x:0,y:0,w:32,h:32,lightType:'spot',lightIntensity:2,lightRange:10};
+ for(const [rotationX3d,rotation,rotationZ3d] of [[25,90,0],[0,-90,35],[20,45,-30],[1e-7,90,0]]){
+  const [x,y,z]=[rotationX3d,rotation,rotationZ3d].map(value=>value*Math.PI/180);
+  // Apply Z, then X, then legacy positive Y, independently of the quaternion helper.
+  const rolled=[.45*Math.sin(z),-.45*Math.cos(z),1];
+  const pitched=[rolled[0],rolled[1]*Math.cos(x)-rolled[2]*Math.sin(x),rolled[1]*Math.sin(x)+rolled[2]*Math.cos(x)];
+  const expected=[pitched[0]*Math.cos(y)+pitched[2]*Math.sin(y),pitched[1],-pitched[0]*Math.sin(y)+pitched[2]*Math.cos(y)];
+  const actual=lightFromEntity({...base,rotation,rotationX3d,rotationZ3d}).direction;
+  expected.forEach((value,i)=>assert.ok(Math.abs(actual[i]-value)<1e-9,`pitch/yaw/roll ${rotationX3d}/${rotation}/${rotationZ3d}, axis ${i}: ${actual}`));
+ }
+});
 test('directional Transform mode uses authored rotation/color and disabled scene lights do not restore a global sun',()=>{
  const light={lightType:'directional',lightEnabled:true,lightIntensity:2,lightDirectionMode:'transform',rotationX3d:90,lightColor:'#ff0000'};
  const frame=sunAt(0,[light]);assert.equal(frame.intensity,2);assert.deepEqual(frame.color,[1,0,0]);assert.ok(Math.abs(frame.direction[1]-1)<1e-9);

@@ -33,10 +33,12 @@ export function lightFromEntity(o){
  const intensity=clamp(Number(o.lightIntensity)||0,0,10),range=clamp(Number(o.lightRange)||5,.2,120);
  if(intensity<=0)return null;
  const position=[(o.x+o.w/2)/64,(Number(o.elevation3d)||0)+Math.max(.5,(Number(o.h)||64)/64), (o.y+(Number(o.depth3d??o.h)||64)/2)/64];
- // Keep the historical downward tilt for old scenes at zero X/Z rotation,
- // while applying the full authored orientation to spot lights.
+ // Spotlights historically use positive yaw, unlike the mesh/collider helper.
+ // Adapt only that helper's input, preserving saved data and the old downward
+ // tilt while composing authored pitch/roll for both old and new spotlights.
+ const orientation={rotation:-(Number(o.rotation)||0),rotationX3d:o.rotationX3d,rotationZ3d:o.rotationZ3d};
  return {position,color:colorRgb(o.lightColor||'#ffd48b'),intensity,range,
- direction:lightVector(o,[0,-.45,1]),cone:Math.cos(clamp(Number(o.lightAngle)||40,5,170)*Math.PI/360),spot:o.lightType==='spot'};
+ direction:lightVector(orientation,[0,-.45,1]),cone:Math.cos(clamp(Number(o.lightAngle)||40,5,170)*Math.PI/360),spot:o.lightType==='spot'};
 }
 export function visibleLights(entities,cam,max=8){
  return entities.map(lightFromEntity).filter(Boolean).sort((a,b)=>{

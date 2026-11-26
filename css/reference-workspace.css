@@ -14,7 +14,7 @@
 /* Authoring shell based on the supplied Unity reference: one menu, one toolbar. */
 .reference-engine #viewport>#gameFlowUi{position:absolute;inset:0;z-index:40}.reference-engine #viewport>#gameFlowUi .game-menu-veil{overflow:auto}.reference-engine #viewport>#gameFlowUi .game-menu-card{max-height:100%;overflow:auto}
 @media(min-width:1101px){
-body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build){--left-pane-width:inherit!important;--right-pane-width:inherit!important;--warlike-menubar-height:56px!important;--warlike-toolbar-height:0px!important}
+body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build){--warlike-toolbar-height:0px!important}
 body.reference-engine.warlike-toolbar-expanded{--warlike-toolbar-height:42px!important}
 body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .studio-menubar{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;grid-template-rows:23px 33px!important;height:56px!important;min-height:56px!important;padding:0 8px!important;gap:0 8px!important;background:var(--warlike-palette-menu,#303136)!important}
 body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .studio-menubar>.studio-menus{grid-column:1 / 4!important;grid-row:1!important;display:flex!important;gap:0!important;padding-right:145px;min-width:0}
@@ -29,7 +29,7 @@ body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-b
 body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .studio-menubar #studioToolbarToggle{position:fixed!important;top:auto;right:8px;bottom:2px;min-height:20px!important;padding:1px 6px!important;border-radius:2px;font-size:10px;z-index:var(--wl-editor-z-toolbar,51)}
 body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .reference-editor-tools .scene-tools{height:30px!important;min-height:30px!important;border:0!important;padding:0!important;background:transparent!important;overflow:visible}
 .reference-engine .reference-editor-tools #toolStatus{display:none}.reference-engine .reference-editor-tools .tools-left{gap:2px}.reference-engine .reference-editor-tools .scene-tools button[data-tool]{height:25px;min-height:25px!important;min-width:27px;padding:2px 5px!important}.reference-engine .reference-editor-tools .studio-quick-create>summary{font-size:10px;min-height:25px;padding:4px 7px}
-body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .workspace{height:calc(100dvh / var(--editor-ui-scale,1) - 56px - var(--warlike-toolbar-height) - var(--warlike-footer-height,26px))!important;max-height:calc(100dvh / var(--editor-ui-scale,1) - 56px - var(--warlike-toolbar-height) - var(--warlike-footer-height,26px))!important;grid-template-columns:var(--left-pane-width,205px) 5px minmax(0,1fr) 5px var(--right-pane-width,325px)!important}
+/* Desktop workspace geometry is owned by unity-workspace-regression-fix.css. */
 body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .center-stack{--project-height:205px;grid-template-rows:29px minmax(0,1fr) 5px var(--project-height,205px)!important}
 body.reference-engine.scene-maximized .center-stack{grid-template-rows:29px minmax(0,1fr) 0 0!important}
 body.reference-engine.project-floating .center-stack{grid-template-rows:29px minmax(0,1fr) 0 0!important}

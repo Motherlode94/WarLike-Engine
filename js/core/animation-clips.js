@@ -1,8 +1,16 @@
 // Authored transform clips use scene units for X/Y and metres for elevation.
 export const animationFields=['x','y','rotation','elevation3d','rotationX3d','rotationZ3d','w','h','depth3d'];
-export const animationEasings=['linear','step','easeIn','easeOut','easeInOut'];
+export const animationEasings=['linear','step','easeIn','easeOut','easeInOut','bezier'];
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+export function validBezierCurve(curve){return Array.isArray(curve)&&curve.length===4&&curve.every(v=>Number.isFinite(v)&&v>=0&&v<=1);}
+export function cubicBezierEase(t,curve=[.25,.1,.25,1]){
+ if(!validBezierCurve(curve))return t;
+ if(t<=0||t>=1)return clamp(t,0,1);
+ const [x1,y1,x2,y2]=curve,axis=(u,a,b)=>3*(1-u)**2*u*a+3*(1-u)*u*u*b+u**3;
+ let lo=0,hi=1;for(let i=0;i<32;i++){const mid=(lo+hi)/2;if(axis(mid,x1,x2)<t)lo=mid;else hi=mid;}
+ return axis((lo+hi)/2,y1,y2);
+}
 const poseOf=key=>Object.fromEntries(animationFields.filter(field=>Number.isFinite(key[field])).map(field=>[field,key[field]]));
 export function createClip(name='Nouveau clip',duration=2){return {name:String(name).slice(0,60),duration:clamp(finite(duration,2),.1,3600),loop:false,speed:1,keys:[],events:[],transitions:[]}}
 export function inspectAnimationStudio(studio){
@@ -12,7 +20,7 @@ export function inspectAnimationStudio(studio){
   if(!clip||typeof clip.name!=='string'||!clip.name||clip.name.length>60||!Number.isFinite(clip.duration)||clip.duration<.1||clip.duration>3600){errors.push('Nom ou durée de clip invalide.');continue}
   if(clip.speed!=null&&(!Number.isFinite(clip.speed)||clip.speed<.05||clip.speed>4))errors.push('Vitesse du clip entre 0,05 et 4 attendue.');
   if(!Array.isArray(clip.keys)||clip.keys.length>256){errors.push('256 images clés maximum par clip.');continue}
-  const times=new Set();for(const key of clip.keys){if(!key||!Number.isFinite(key.time)||key.time<0||key.time>clip.duration||times.has(key.time)){errors.push('Instants des images clés invalides ou dupliqués.');continue}times.add(key.time);if(key.easing!=null&&!animationEasings.includes(key.easing))errors.push('Interpolation d’image clé inconnue.');for(const field of animationFields)if(key[field]!=null&&(!Number.isFinite(key[field])||Math.abs(key[field])>1e8||['w','h','depth3d'].includes(field)&&key[field]<=0))errors.push('Valeur de transformation invalide.');}
+  const times=new Set();for(const key of clip.keys){if(!key||!Number.isFinite(key.time)||key.time<0||key.time>clip.duration||times.has(key.time)){errors.push('Instants des images clés invalides ou dupliqués.');continue}times.add(key.time);if(key.bezier!=null&&!validBezierCurve(key.bezier))errors.push('Courbe Bézier invalide.');if(key.easing!=null&&!animationEasings.includes(key.easing))errors.push('Interpolation d’image clé inconnue.');for(const field of animationFields)if(key[field]!=null&&(!Number.isFinite(key[field])||Math.abs(key[field])>1e8||['w','h','depth3d'].includes(field)&&key[field]<=0))errors.push('Valeur de transformation invalide.');}
   if(!Array.isArray(clip.events)||clip.events.length>64||clip.events.some(event=>!event||!Number.isFinite(event.time)||event.time<0||event.time>clip.duration||typeof event.name!=='string'||!event.name.trim()||event.name.length>80))errors.push('Événement de clip invalide.');
  }
  if(studio.playOnStart&&(!Number.isInteger(studio.defaultClip??0)||(studio.defaultClip??0)<0||(studio.defaultClip??0)>=studio.clips.length))errors.push('Clip de démarrage absent.');
@@ -27,7 +35,7 @@ export function sampleClip(clip,time){
   const channel=keys.filter(key=>Number.isFinite(key[field]));if(!channel.length)continue;
   const right=channel.find(key=>key.time>=t)||channel.at(-1),left=channel.findLast(key=>key.time<=t)||channel[0];
   let u=clamp((t-left.time)/(right.time-left.time||1),0,1);
-  switch(left.easing){case 'step':u=0;break;case 'easeIn':u*=u;break;case 'easeOut':u=1-(1-u)**2;break;case 'easeInOut':u=u*u*(3-2*u);break;}
+  switch(left.easing){case 'bezier':u=cubicBezierEase(u,left.bezier);break;case 'step':u=0;break;case 'easeIn':u*=u;break;case 'easeOut':u=1-(1-u)**2;break;case 'easeInOut':u=u*u*(3-2*u);break;}
   result[field]=left===right?left[field]:left[field]+(right[field]-left[field])*u;
  }
  return result;

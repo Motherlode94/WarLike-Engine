@@ -55,7 +55,13 @@ export const componentBrowserCategory=option=>{
  if(['webScripts','warScripts'].includes(option.id))return 'Scripts';
  return option.category||'Autres';
 };
-export const componentBrowserMatches=(option,query)=>!query||[option.name,option.category,option.description,option.id,option.runtime].some(part=>String(part||'').toLocaleLowerCase('fr').includes(query.toLocaleLowerCase('fr')));
+const normalizeComponentSearch=value=>String(value??'').normalize('NFD').replace(/\p{M}/gu,'').toLocaleLowerCase('fr');
+export const componentBrowserMatches=(option,query)=>{
+ const terms=normalizeComponentSearch(query).trim().split(/\s+/).filter(Boolean);
+ const path=componentMenuPath(option,unityComponentCategory(option));
+ const index=normalizeComponentSearch([option.name,option.category,option.description,option.id,option.runtime,...path].join(' '));
+ return terms.every(term=>index.includes(term));
+};
 export const orderComponentBrowserOptions=options=>[...options].sort((a,b)=>
  Number(!featuredKinds.has(a.id))-Number(!featuredKinds.has(b.id))||
  componentBrowserCategory(a).localeCompare(componentBrowserCategory(b),'fr')||

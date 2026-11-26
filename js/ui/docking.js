@@ -230,7 +230,8 @@ const layoutPresets={
 };
 export function applyLayoutPreset(name){
  const preset=layoutPresets[name];
- if(!preset)return false;
+ if(!Object.hasOwn(layoutPresets,name)||!preset)return false;
+ if(maximizedScene)toggleMaximizeScene(false);
  layout={leftWidth:preset.leftWidth,rightWidth:preset.rightWidth,float:{},tabGroups:[],activeTabs:{}};
  const center=document.querySelector('.center-stack');
  if(center)center.style.setProperty('--project-height',preset.projectHeight+'px');
@@ -255,7 +256,7 @@ function normalizeDockTabs(tabs,floating){
 const customLayoutKey='warlike.workspace.layout.custom.v1';
 export function saveCustomLayout(){
  const center=document.querySelector('.center-stack');
- const height=parseInt(getComputedStyle(center).getPropertyValue('--project-height'),10)||320;
+ const height=center?parseInt(getComputedStyle(center).getPropertyValue('--project-height'),10)||320:320;
  const snapshot={leftWidth:layout.leftWidth,rightWidth:layout.rightWidth,float:JSON.parse(JSON.stringify(layout.float)),tabGroups:layout.tabGroups.map(g=>[...g]),activeTabs:{...layout.activeTabs},projectHeight:height};
  try{localStorage.setItem(customLayoutKey,JSON.stringify(snapshot));return true}catch{return false}
 }
@@ -263,6 +264,7 @@ export function loadCustomLayout(){
  let saved;
  try{saved=JSON.parse(localStorage.getItem(customLayoutKey)||'null')}catch{return false}
  if(!saved||!Number.isFinite(saved.leftWidth)||!Number.isFinite(saved.rightWidth))return false;
+ if(maximizedScene)toggleMaximizeScene(false);
  const safeFloat={};
  if(saved.float&&typeof saved.float==='object'&&!Array.isArray(saved.float)){
   for(const kind of Object.keys(panelMap)){

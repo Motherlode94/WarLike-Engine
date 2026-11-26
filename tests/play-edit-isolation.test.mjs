@@ -27,6 +27,7 @@ const {gameProject,restoreGameProject,freshGameProject}=await import('../js/core
 const {workspace}=await import('../js/core/workspaces.js');
 const {record,undo,redo,resetHistory}=await import('../js/core/history.js');
 const {webScriptRuntime}=await import('../js/core/web-script-runtime.js');
+const {AnimationPreview,animationEditorPreview,createClip,hasAnimationEditorPreviews}=await import('../js/core/animation-clips.js');
 
 function setup(mode){
  if(state.playing)togglePlay();
@@ -57,6 +58,12 @@ for(const mode of ['2d','3d'])test(mode+' Play/Stop isolates runtime objects, se
  assert.equal(state.nextId,3);
  assert.deepEqual(gameProject,expected.game);
  assert.equal(state.playBackup,null);
+});
+for(const mode of ['2d','3d'])test(mode+' Play snapshots authored poses instead of active multi-object previews',()=>{
+ const expected=setup(mode),clip=createClip('Group',2);clip.keys=[{time:0,x:200,elevation3d:2},{time:2,x:300,elevation3d:4}];
+ animationEditorPreview.seek(state.entities[1],clip,1);new AnimationPreview({editor:true}).seek(state.entities[0],clip,1);
+ togglePlay();assert.equal(hasAnimationEditorPreviews(),false);assert.deepEqual(JSON.parse(state.playBackup),expected.entities);
+ togglePlay();assert.deepEqual(state.entities,expected.entities);
 });
 test('compiled Blueprint instructions never leak back into authored graph',()=>{
  const expected=setup('2d');

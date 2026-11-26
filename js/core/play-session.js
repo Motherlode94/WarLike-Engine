@@ -4,7 +4,7 @@ import {state,notify} from './state.js';
 import {gameProject} from './game-project.js';
 import {workspace} from './workspaces.js';
 import {horror} from './horror-survival.js';
-import {animationEditorPreview} from './animation-clips.js';
+import {stopAnimationEditorPreviews} from './animation-clips.js';
 import {inspectRuntimeCompatibility} from './runtime-capabilities.js';
 import {inspectBlueprintGame} from './blueprint-validation.js';
 import {applyGraph} from './blueprint-graph.js';
@@ -48,7 +48,7 @@ export function togglePlay(){
   if(error)console.error('[WarLike Stop] Nettoyage incomplet :',error);
   return;
  }
- animationEditorPreview.stop();
+ stopAnimationEditorPreviews();
  // Make a snapshot before any runtime mutation. Startup failures must not
  // leave Play active or damage the editable scene.
  const compatibility=inspectRuntimeCompatibility(state.entities,{target:gameProject.runtimeBackend==='native'?'native':'web',backend:gameProject.runtimeBackend,project:gameProject});

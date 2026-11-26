@@ -18,7 +18,7 @@ const prefab=()=>({...makePrefabHierarchy(source()[0],source(),{mode:'3d'}),id:'
 test('prefab captures root and descendants but no unrelated entity or scene IDs',()=>{
  const p=prefab();
  assert.deepEqual(p.nodes.map(n=>n.name),['Véhicule','Porte gauche','Poignée']);
- assert.equal(p.version,3);
+ assert.equal(p.version,4);
  assert.equal(p.nodes[1].parentKey,p.nodes[0].key);
  assert.equal(p.nodes[2].parentKey,p.nodes[1].key);
  assert.equal(p.nodes[1].data.joint3d.targetNodeKey,p.nodes[0].key);

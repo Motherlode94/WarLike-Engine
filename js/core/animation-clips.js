@@ -55,17 +55,25 @@ export function animationEventsBetween(events,before,after,duration,{loop=false,
  for(let cycle=first;cycle<=last;cycle++)for(const event of events||[]){const position=finite(event.time)*(normalized?duration:1),at=cycle*duration+position;if(at>before+1e-9&&at<=after+1e-9||at===0&&before===0&&after>0)result.push({event,at});}
  return result.sort((a,b)=>a.at-b.at).slice(0,512).map(item=>item.event);
 }
+// Keep editor previews together at the data boundary. Save/Play/export must
+// restore every temporary pose without importing the Animation Studio UI.
+const editorPreviews=new Set();
 export class AnimationPreview {
- constructor(){this.owner=null;this.original=null;this.time=0}
+ constructor({editor=false}={}){this.owner=null;this.original=null;this.time=0;this.editor=editor}
  seek(owner,clip,time){
   if(this.owner!==owner)this.stop();if(!owner||!clip)return null;
   const pose=sampleClip(clip,clamp(finite(time),0,clip.duration));if(!pose||!Object.keys(pose).length)return null;
-  if(!this.original){this.owner=owner;this.original=Object.fromEntries(animationFields.map(field=>[field,{exists:Object.hasOwn(owner,field),value:owner[field]}]));}
+  if(!this.original){this.owner=owner;this.original=Object.fromEntries(animationFields.map(field=>[field,{exists:Object.hasOwn(owner,field),value:owner[field]}]));if(this.editor)editorPreviews.add(this);}
   this.time=clamp(finite(time),0,clip.duration);Object.assign(owner,pose);return pose;
  }
- stop(){if(this.owner&&this.original)for(const [field,saved] of Object.entries(this.original)){if(saved.exists)this.owner[field]=saved.value;else delete this.owner[field];}this.owner=null;this.original=null;this.time=0;}
+ stop(){if(this.owner&&this.original)for(const [field,saved] of Object.entries(this.original)){if(saved.exists)this.owner[field]=saved.value;else delete this.owner[field];}this.owner=null;this.original=null;this.time=0;editorPreviews.delete(this);}
 }
-export const animationEditorPreview=new AnimationPreview();
+export const animationEditorPreview=new AnimationPreview({editor:true});
+export const hasAnimationEditorPreviews=()=>editorPreviews.size>0;
+export function stopAnimationEditorPreviews(entities=null){
+ const owners=entities==null?null:new Set(entities);
+ for(const preview of [...editorPreviews])if(!owners||owners.has(preview.owner))preview.stop();
+}
 let tracks=new WeakMap();
 export function resetAnimationClips(){tracks=new WeakMap()}
 export function stepAnimationClip(owner,dt,{onEvent=()=>{}}={}){

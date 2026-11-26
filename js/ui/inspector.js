@@ -622,17 +622,18 @@ if(o.audioEnabled!==undefined||o.audioClip)component(root,'Audio Source',body=>{
 });
 if(workspace.mode==='3d'){
 if(o.lightType&&o.lightType!=='none')component(root,'Lighting 3D',body=>{
- selectField(body,o,'lightType','Type',['none','point','spot']);
+ selectField(body,o,'lightType','Type',['none','directional','point','spot']);
  if(o.lightType!=='none'&&o.lightType){
   const flag=document.createElement('label');flag.className='logic-flag';
   const cb=document.createElement('input');cb.type='checkbox';cb.checked=o.lightEnabled!==false;cb.disabled=state.playing;
   cb.onchange=()=>{o.lightEnabled=cb.checked;record('Light On/Off');notify()};
   flag.append(cb,document.createTextNode(' Enabled'));body.append(flag);
   if(o.lightColor===undefined)o.lightColor='#ffd48b';
-  colorPalette(body,o,'lightColor','Couleur de la lumière');
-  for(const [key,label,type] of [['lightIntensity','Intensity','number'],['lightRange','Range (meters)','number'],['lightAngle','Spot Angle','number']]){if(key==='lightAngle'&&o.lightType!=='spot')continue;field(body,o,key,label,type)}
+  if(o.lightType==='directional')selectField(body,o,'lightDirectionMode','Direction',[{value:'dayNight',label:'Cycle jour/nuit (historique)'},{value:'transform',label:'Transform · rotation et couleur'}]);
+  if(o.lightType!=='directional'||o.lightDirectionMode==='transform')colorPalette(body,o,'lightColor','Couleur de la lumière');
+  for(const [key,label,type] of [['lightIntensity','Intensity','number'],['lightRange','Range (meters)','number'],['lightAngle','Spot Angle','number']]){if(key==='lightAngle'&&o.lightType!=='spot'||key==='lightRange'&&o.lightType==='directional')continue;field(body,o,key,label,type)}
  }
- const tip=document.createElement('p');tip.textContent='Les lumières modifient les volumes dans la vue 3D. 8 lumières proches rendues simultanément.';body.append(tip);
+ const tip=document.createElement('p');tip.textContent=o.lightType==='directional'?'Transform applique la rotation et la couleur du GameObject. Le mode historique conserve le soleil piloté par l’heure.':'Les lumières modifient les volumes dans la vue 3D. 8 lumières proches rendues simultanément.';body.append(tip);
 });
 if(workspace.mode==='3d'&&o.type==='mesh3d'&&(get3dAsset(o.assetId||o.model3dId)?.category==='Vehicles'||o.tags?.includes('race-vehicle'))){
  component(root,'Vehicle Controller 3D',body=>{

@@ -1,17 +1,17 @@
 import {state,active,notify} from './state.js';
 import {record} from './history.js';
-import {AnimationPreview,animationEditorPreview,animationFields,animationEasings,sampleClip,createClip,putAnimationKey,putAnimationPropertyKey,removeAnimationPropertyKey,inspectAnimationStudio,validBezierCurve,cubicBezierEase} from './animation-clips.js';
+import {AnimationPreview,animationEditorPreview,hasAnimationEditorPreviews,stopAnimationEditorPreviews,animationFields,animationEasings,sampleClip,createClip,putAnimationKey,putAnimationPropertyKey,removeAnimationPropertyKey,inspectAnimationStudio,validBezierCurve,cubicBezierEase} from './animation-clips.js';
 export {sampleClip,createClip} from './animation-clips.js';
 const groupPreviews=new Map();const preview=animationEditorPreview;let autoKey=false,panel=null,displayOwner=null,clipIndex=0,raf=0,playing=false,playStart=0,lastPlaying=false;
 const el=(tag,text)=>{const node=document.createElement(tag);if(text!=null)node.textContent=text;return node};
 const at=selector=>panel.querySelector(selector),clip=()=>displayOwner?.animationStudio?.clips?.[clipIndex];
 const time=()=>Number(at('#animTime').value)||0;
 const tell=message=>{at('#animHint').textContent=message;};
-export const isAnimationStudioPreviewing=()=>preview.owner!==null;
-export function stopAnimationStudioPreview(){playing=false;if(raf)globalThis.cancelAnimationFrame?.(raf);raf=0;preview.stop();for(const p of groupPreviews.values())p.stop();groupPreviews.clear();}
+export const isAnimationStudioPreviewing=()=>hasAnimationEditorPreviews();
+export function stopAnimationStudioPreview(){playing=false;if(raf)globalThis.cancelAnimationFrame?.(raf);raf=0;stopAnimationEditorPreviews();groupPreviews.clear();}
 function stop(){const had=isAnimationStudioPreviewing();stopAnimationStudioPreview();if(had)notify();}
 function save(label){record(label);notify();render();}
-function seek(value){if(state.playing||!clip()||!displayOwner)return;preview.seek(displayOwner,clip(),value);const selected=at('#animGroupPreview').checked?state.entities.filter(o=>o!==displayOwner&&state.selected.includes(o.id)&&o.enabled!==false):[];for(const [o,p] of groupPreviews)if(!selected.includes(o)){p.stop();groupPreviews.delete(o);}for(const o of selected){const match=o.animationStudio?.clips?.find(c=>c.name===clip().name);if(!match)continue;let p=groupPreviews.get(o);if(!p){p=new AnimationPreview();groupPreviews.set(o,p);}p.seek(o,match,value);}at('#animTimeLabel').textContent=Number(value).toFixed(2)+' s';notify();}
+function seek(value){if(state.playing||!clip()||!displayOwner)return;preview.seek(displayOwner,clip(),value);const selected=at('#animGroupPreview').checked?state.entities.filter(o=>o!==displayOwner&&state.selected.includes(o.id)&&o.enabled!==false):[];for(const [o,p] of groupPreviews)if(!selected.includes(o)){p.stop();groupPreviews.delete(o);}for(const o of selected){const match=o.animationStudio?.clips?.find(c=>c.name===clip().name);if(!match)continue;let p=groupPreviews.get(o);if(!p){p=new AnimationPreview({editor:true});groupPreviews.set(o,p);}p.seek(o,match,value);}at('#animTimeLabel').textContent=Number(value).toFixed(2)+' s';notify();}
 function mutate(label,fn){if(state.playing)return;stop();try{fn();save(label)}catch(error){tell(error.message)}}
 function render(){
  if(!panel)return;const owner=active();if(owner!==displayOwner){stopAnimationStudioPreview();displayOwner=owner;clipIndex=0;}

@@ -1,4 +1,4 @@
-import {readPrefabs,updatePrefabNodeProperties,savePrefabVariant} from './prefab-library.js';
+import {readPrefabs,updatePrefabNodeProperties,savePrefabVariant,prefabObjectReferences,prefabReferenceSlots} from './prefab-library.js';
 const instanceKeys=new Set(['id','name','x','y','parentId','prefabSourceId','prefabOverrides','prefabNodeKey','prefabInstanceRootId','prefabLinks','inspectorOrder','sceneObjectId']);
 function templateFor(prefab,entity,instances=[]){
  if(!prefab?.components||entity?.prefabSourceId!==prefab.id)return null;
@@ -6,12 +6,21 @@ function templateFor(prefab,entity,instances=[]){
  const node=prefab.nodes.find(n=>n.key===entity.prefabNodeKey);
  if(!node)return null;
  const template=structuredClone(node.data);
- for(const joint of ['joint3d','joint2d'])if(template[joint]?.targetNodeKey){
-  const instance=instances.find(item=>item.prefabSourceId===prefab.id&&item.prefabNodeKey===template[joint].targetNodeKey&&prefabInstanceRoot(item,instances)===prefabInstanceRoot(entity,instances));
-  if(instance)template[joint].targetId=instance.id;
-  delete template[joint].targetNodeKey;
+ const references=prefabObjectReferences(prefab)[node.key]||{};
+ for(const {path,value} of prefabReferenceSlots(template)){
+  const key=references[path];
+  const instance=key&&instances.find(item=>instanceNodeKey(prefab,entity,item,instances)===key);
+  if(instance)value.targetId=instance.id;
+  delete value.targetNodeKey;
  }
  return template;
+}
+function instanceNodeKey(prefab,owner,target,entities){
+ const scope=owner.prefabLinks?.find(link=>link.prefabId===prefab.id)?.rootId??prefabInstanceRoot(owner,entities);
+ const link=target.prefabLinks?.find(link=>link.prefabId===prefab.id&&link.rootId===scope);
+ if(link)return link.nodeKey;
+ if(target.prefabSourceId===prefab.id&&prefabInstanceRoot(target,entities)===scope)return target.prefabNodeKey;
+ return null;
 }
 export function prefabPropertyOverrides(prefab,entity,instances=[]){
  const template=templateFor(prefab,entity,instances);if(!template)return [];
@@ -34,7 +43,11 @@ function diffFields(base,next){
 }
 function sourceDifference(prefab,entity,entities){
  const template=templateFor(prefab,entity,entities);if(!template)throw Error('Nœud prefab absent.');const diff=diffFields(template,entity);
- for(const joint of ['joint3d','joint2d'])if(diff.patch[joint]?.targetId){const target=entities.find(e=>e.id===diff.patch[joint].targetId&&prefabInstanceRoot(e,entities)===prefabInstanceRoot(entity,entities));if(!target)throw Error('Cible d’articulation extérieure au prefab.');diff.patch[joint].targetNodeKey=target.prefabNodeKey;delete diff.patch[joint].targetId;}
+ for(const {path,value} of prefabReferenceSlots(diff.patch))if(value.targetId){
+  const target=entities.find(e=>e.id===value.targetId),key=target&&instanceNodeKey(prefab,entity,target,entities);
+  if(key){value.targetNodeKey=key;delete value.targetId;}
+  else if(path==='joint2d'||path==='joint3d')throw Error('Cible d’articulation extérieure au prefab.');
+ }
  return diff;
 }
 export function createInspectorPrefabVariant(prefab,entity,entities,storage=globalThis.localStorage){

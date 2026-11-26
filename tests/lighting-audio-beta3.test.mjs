@@ -17,6 +17,26 @@ test('up to eight nearest lights are used',()=>{
  const e=Array.from({length:12},(_,i)=>({x:i*64,y:0,w:32,h:32,lightType:'point',lightIntensity:1,lightRange:10}));
  assert.equal(visibleLights(e,[0,0,0]).length,8);
 });
+test('disabled and destroyed light GameObjects do not consume a light slot',()=>{
+ const base={x:0,y:0,w:32,h:32,lightType:'point',lightIntensity:2,lightRange:10};
+ for(const flags of [{enabled:false},{sequenceEnabled:false},{_sequenceDestroyed:true},{lightEnabled:false}])assert.equal(lightFromEntity({...base,...flags}),null);
+ const lights=Array.from({length:8},()=>({...base,enabled:false}));lights.push({...base,x:500});assert.equal(visibleLights(lights,[0,0,0]).length,1);
+});
+test('spot pitch and roll rotate its beam while legacy yaw-only lights keep their direction',()=>{
+ const base={x:0,y:0,w:32,h:32,lightType:'spot',lightIntensity:2,lightRange:10,rotation:0};
+ assert.deepEqual(lightFromEntity(base).direction,[0,-.45,1]);
+ const pitched=lightFromEntity({...base,rotationX3d:90}).direction;
+ assert.ok(Math.abs(pitched[1]+1)<1e-9);assert.ok(Math.abs(pitched[2]+.45)<1e-9);
+ const rolled=lightFromEntity({...base,rotationZ3d:90}).direction;assert.ok(Math.abs(rolled[0]-.45)<1e-9);
+});
+test('directional Transform mode uses authored rotation/color and disabled scene lights do not restore a global sun',()=>{
+ const light={lightType:'directional',lightEnabled:true,lightIntensity:2,lightDirectionMode:'transform',rotationX3d:90,lightColor:'#ff0000'};
+ const frame=sunAt(0,[light]);assert.equal(frame.intensity,2);assert.deepEqual(frame.color,[1,0,0]);assert.ok(Math.abs(frame.direction[1]-1)<1e-9);
+ assert.notDeepEqual(frame.direction,sunAt(0,[{...light,rotationX3d:0}]).direction);
+ assert.equal(sunAt(12,[{...light,enabled:false}]).intensity,0);assert.equal(sunAt(12,[{...light,sequenceEnabled:false}]).intensity,0);
+ const legacy={...light};delete legacy.lightDirectionMode;
+ assert.deepEqual(sunAt(12,[legacy]).direction,sunAt(12).direction);assert.deepEqual(sunAt(12,[legacy]).color,sunAt(12).color);
+});
 test('day-night advances only during play',()=>{
  const initial={...lighting};
  try{lighting.dayNight=true;lighting.speed=60;lighting.hour=8;updateLighting(60,false);assert.equal(lighting.hour,8);for(let frame=0;frame<600;frame++)updateLighting(.1,true);assert.ok(Math.abs(lighting.hour-9)<1e-9);updateLighting(60,true);assert.ok(lighting.hour<9.01,'long background frames are clamped')}

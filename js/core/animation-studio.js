@@ -72,3 +72,12 @@ function init(){
 }
 export function closeAnimationStudio(){if(!panel)return;stopAnimationStudioPreview();panel.hidden=true;}
 export function openAnimationStudio(){if(!panel)init();else stop();panel.hidden=false;lastPlaying=state.playing;render()}
+
+export function insertInspectorAnimationKey(owner,field){
+ if(state.playing||active()!==owner||!animationFields.includes(field)||!Number.isFinite(owner[field]))return false;
+ const value=owner[field];if(panel?.hidden||!panel||displayOwner!==owner){const tab=document.getElementById('animationDockTab');if(tab)tab.click();else openAnimationStudio();}
+ if(displayOwner!==owner)return false;
+ const current=clip();if(!current){tell('Crée un clip dans Animation avant d’ajouter une clé.');return false;}
+ const stamp=time(),easing=at('#animEasing').value;
+ mutate('Inspector · Image clé '+field,()=>putAnimationPropertyKey(current,stamp,field,value,{easing}));return true;
+}

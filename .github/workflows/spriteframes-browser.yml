@@ -12,6 +12,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci
+      - run: npm install --no-package-lock
       - run: npx playwright install --with-deps chromium
       - run: node scripts/test-spriteframes-browser.mjs

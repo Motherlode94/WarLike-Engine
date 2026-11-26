@@ -52,3 +52,34 @@ export function registeredComponentChoices(mode){
   create:()=>safeClone(spec.defaults)
  }));
 }
+
+// WarGame Creator: portable definition contract, distinct from scene instances.
+// Import never grants execution trust or claims a runtime certification.
+const WGC_VERSION=/^(0|[1-9]\d{0,5})\.(0|[1-9]\d{0,5})\.(0|[1-9]\d{0,5})$/;
+const WGC_KINDS=new Set(['blueprint','script','composite','native']);
+function portableJson(value,depth=0){
+ if(depth>40)throw Error('Component data too deeply nested');
+ if(value===null||typeof value==='string'||typeof value==='boolean'||typeof value==='number'&&Number.isFinite(value))return;
+ if(Array.isArray(value)){for(const item of value)portableJson(item,depth+1);return;}
+ if(!plain(value)||Object.getPrototypeOf(value)!==Object.prototype&&Object.getPrototypeOf(value)!==null)throw Error('Component requires JSON data');
+ for(const [key,item] of Object.entries(value)){if(['__proto__','prototype','constructor'].includes(key))throw Error('Unsafe component key');portableJson(item,depth+1);}
+}
+export function validateWarComponent(definition,{builtinIds=[]}={}){
+ portableJson(definition);
+ if(!plain(definition)||definition.schema!=='warlike.component.v1'||!WGC_KINDS.has(definition.kind)||!WGC_VERSION.test(definition.version||''))throw Error('Invalid WarComponent contract');
+ if(JSON.stringify(definition).length>262144)throw Error('WarComponent exceeds 256 KiB character limit');
+ const manifest=validateComponentManifest(definition.manifest,builtinIds);
+ if(Object.keys(manifest.defaults).some(key=>!Object.hasOwn(manifest.properties,key)))throw Error('Undeclared component default');
+ const dependencies=definition.dependencies??[];
+ if(!Array.isArray(dependencies)||dependencies.length>32||dependencies.some(d=>!plain(d)||!idPattern.test(d.id||'')||!WGC_VERSION.test(d.version||'')||d.id===manifest.id)||new Set(dependencies.map(d=>d.id)).size!==dependencies.length)throw Error('Invalid component dependencies');
+ if(!plain(definition.payload))throw Error('Invalid component payload');
+ return {schema:'warlike.component.v1',kind:definition.kind,version:definition.version,manifest:{id:manifest.id,name:manifest.name,category:manifest.category,description:manifest.description,supportedModes:manifest.modes,properties:manifest.properties,defaults:manifest.defaults},dependencies:safeClone(dependencies),payload:safeClone(definition.payload),certification:'unverified'};
+}
+export function instantiateWarComponent(definition,{instanceId,mode,overrides={}}={}){
+ const def=validateWarComponent(definition);
+ if(typeof instanceId!=='string'||!/^[a-zA-Z0-9_-]{1,100}$/.test(instanceId)||!def.manifest.supportedModes.includes(mode))throw Error('Invalid component instance or mode');
+ portableJson(overrides);if(!plain(overrides)||Object.keys(overrides).some(k=>!Object.hasOwn(def.manifest.properties,k)))throw Error('Unknown component property');
+ const values={...def.manifest.defaults,...safeClone(overrides)};
+ validateComponentManifest({...def.manifest,defaults:values});
+ return {instanceId,componentId:def.manifest.id,version:def.version,enabled:true,values:safeClone(values)};
+}

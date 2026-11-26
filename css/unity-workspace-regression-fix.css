@@ -15,11 +15,11 @@
   height:calc(100dvh / var(--editor-ui-scale,1) - 60px - var(--warlike-toolbar-height,0px) - var(--warlike-footer-height,26px))!important;
   max-height:calc(100dvh / var(--editor-ui-scale,1) - 60px - var(--warlike-toolbar-height,0px) - var(--warlike-footer-height,26px))!important;
   grid-template-columns:clamp(215px,var(--left-pane-width,240px),32vw) 5px minmax(0,1fr) 5px clamp(260px,var(--right-pane-width,320px),34vw)!important;
-  min-width:0!important;
+  min-width:0!important;min-height:0!important;
  }
  body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build):not(.scene-maximized):not(.project-floating) .center-stack{
   min-width:0!important;min-height:0!important;overflow:hidden!important;
-  grid-template-rows:29px minmax(180px,1fr) 5px minmax(150px,var(--project-height,220px))!important;
+  grid-template-rows:29px minmax(0,1fr) 5px clamp(0px,var(--project-height,220px),50%)!important;
  }
  body.reference-engine:not(.hub-open):not(.compact-workspace) :is(#hierarchyPanel,#inspectorPanel,#projectPanel){
   min-width:0!important;min-height:0!important;overflow:hidden!important;

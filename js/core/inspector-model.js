@@ -12,14 +12,14 @@ export class InspectorSelection {
 }
 const forbidden=new Set(['__proto__','prototype','constructor']);
 export const safeInspectorPath=path=>Array.isArray(path)&&path.length>0&&path.every(key=>typeof key==='string'&&!forbidden.has(key));
-export const inspectValue=(object,path)=>safeInspectorPath(path)?path.reduce((value,key)=>value?.[key],object):undefined;
+export const inspectValue=(object,path)=>safeInspectorPath(path)?path.reduce((value,key)=>value!=null&&Object.hasOwn(value,key)?value[key]:undefined,object):undefined;
 export function mixedInspectorValue(objects,path){
  const values=objects.map(object=>inspectValue(object,path));
  return {value:values[0],mixed:values.some(value=>JSON.stringify(value)!==JSON.stringify(values[0]))};
 }
 export function setInspectorValue(objects,path,value){
  if(!objects.length||!safeInspectorPath(path)||!['string','number','boolean'].includes(typeof value)||typeof value==='number'&&!Number.isFinite(value))return false;
- const parents=objects.map(object=>path.slice(0,-1).reduce((parent,key)=>parent?.[key],object)),key=path.at(-1);
+ const parents=objects.map(object=>path.slice(0,-1).reduce((parent,key)=>parent!=null&&Object.hasOwn(parent,key)?parent[key]:undefined,object)),key=path.at(-1);
  if(parents.some(parent=>!parent||typeof parent!=='object'||!Object.hasOwn(parent,key)||typeof parent[key]!==typeof value))return false;
  for(const parent of parents)parent[key]=value;
  return true;
@@ -42,7 +42,9 @@ export function copyInspectorComponent(owner,keys){
 }
 export function pasteInspectorComponent(owner,keys,values){
  if(!values||typeof values!=='object'||!keys.length||Object.keys(values).some(key=>!keys.includes(key)||forbidden.has(key)))return false;
- for(const key of keys){if(Object.hasOwn(values,key))owner[key]=structuredClone(values[key]);else delete owner[key]}
+ if(keys.some(key=>typeof key!=='string'||forbidden.has(key)))return false;
+ let snapshot;try{snapshot=structuredClone(values)}catch{return false}
+ for(const key of keys){if(Object.hasOwn(snapshot,key))owner[key]=snapshot[key];else delete owner[key]}
  return true;
 }
 export function inspectorMetadata(entity){

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {componentChoices} from '../js/core/component-definitions.js';
+import {componentChoices,componentRemovalBlockers,removeObjectComponent,addObjectComponent} from '../js/core/component-definitions.js';
 import {componentBrowserMatches,componentBrowserCategory,orderComponentBrowserOptions,unityComponentCategory,unityComponentCategories} from '../js/ui/component-browser.js';
 
 test('Add Component exposes every Web component supported by the active mode',()=>{
@@ -98,4 +98,18 @@ test('E03.2 searches accent-insensitive names and canonical nested categories',(
  assert.equal(componentBrowserMatches({id:'animalController',name:'Contrôleur animal'},'controleur gameplay'),true);
  assert.equal(componentBrowserMatches({id:'tilemap2d',name:'Carte'},'tilemap'),true);
  assert.equal(componentBrowserMatches({id:'collider3d',name:'Collision 3D'},'physics introuvable'),false);
+});
+
+test('E03.3 required vehicle and aircraft dependencies cannot be removed prematurely',()=>{
+ const vehicle={};assert.equal(addObjectComponent(vehicle,'groundVehiclePhysics','3d'),true);
+ assert.deepEqual(componentRemovalBlockers(vehicle,'vehicleController'),['groundVehiclePhysics']);
+ assert.equal(removeObjectComponent(vehicle,'vehicleController'),false);
+ assert.equal(removeObjectComponent(vehicle,'groundVehiclePhysics'),true);
+ assert.equal(removeObjectComponent(vehicle,'vehicleController'),true);
+ const aircraft={};assert.equal(addObjectComponent(aircraft,'aircraftLandingGear','3d'),true);
+ assert.deepEqual(componentRemovalBlockers(aircraft,'aircraftSystems'),['aircraftLandingGear']);
+ assert.equal(removeObjectComponent(aircraft,'aircraftSystems'),false);
+ assert.equal(removeObjectComponent(aircraft,'aircraftLandingGear'),true);
+ assert.equal(removeObjectComponent(aircraft,'aircraftSystems'),true);
+ assert.deepEqual(componentRemovalBlockers({},'constructor'),[]);
 });

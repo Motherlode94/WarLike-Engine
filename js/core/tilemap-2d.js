@@ -106,3 +106,17 @@ export function paintTileArea2d(entity,from,to,kind,tool='rectangle'){
  }
  return changed;
 }
+
+/** Cardinal adjacency: N=1, E=2, S=4, W=8. Uses the active layer only. */
+export function terrainMask2d(map,col,row,kinds){
+ if(!Number.isInteger(col)||!Number.isInteger(row)||!Array.isArray(kinds)||!map)return 0;
+ const cells=activeTileCells2d(map),same=new Set(kinds);let mask=0;
+ for(const [dx,dy,bit] of [[0,-1,1],[1,0,2],[0,1,4],[-1,0,8]]){const x=col+dx,y=row+dy;if(x>=0&&y>=0&&x<map.columns&&y<map.rows&&same.has(cells[x+','+y]))mask|=bit;}
+ return mask;
+}
+export function connectTerrain2d(map,variants){
+ if(!map||!Array.isArray(variants)||variants.length!==16||variants.some(v=>typeof v!=='string'||!tileAtlasDefinition2d(map,v)))return 0;
+ const cells=activeTileCells2d(map),kinds=new Set(variants),updates=[];
+ for(const [key,kind] of Object.entries(cells)){if(!kinds.has(kind)||!/^\d+,\d+$/.test(key))continue;const [x,y]=key.split(',').map(Number);if(x>=map.columns||y>=map.rows)continue;const next=variants[terrainMask2d(map,x,y,variants)];if(next!==kind)updates.push([key,next]);}
+ for(const [key,kind] of updates)cells[key]=kind;return updates.length;
+}

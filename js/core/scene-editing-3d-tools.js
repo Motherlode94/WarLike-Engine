@@ -3,9 +3,9 @@ import {dot3} from './math-kernel.js';
 export function projectedAxisDrag3d(origin,endpoint,dx,dy,axisLength=1){
  if(!origin||!endpoint||![origin.x,origin.y,endpoint.x,endpoint.y,dx,dy,axisLength].every(Number.isFinite))return 0;
  const sx=endpoint.x-origin.x,sy=endpoint.y-origin.y,length2=sx*sx+sy*sy;
- if(length2<4)return 0; // Ignore foreshortened axes rather than making them jump.
+ if(axisLength<=0||!Number.isFinite(length2)||length2<4)return 0; // Ignore foreshortened axes rather than making them jump.
  const metres=dot3([dx,dy,0],[sx,sy,0])/length2*axisLength;
- return Math.max(-250,Math.min(250,metres));
+ return Number.isFinite(metres)?Math.max(-250,Math.min(250,metres)):0;
 }
 // Screen-space scale follows the visible handle, irrespective of camera yaw/pitch.
 // The same projected-axis contract as translation avoids inverted drags.

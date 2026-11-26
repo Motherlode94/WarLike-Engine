@@ -4,7 +4,7 @@ import {state,notify} from '../core/state.js';
 import {workspace} from '../core/workspaces.js';
 import {record} from '../core/history.js';
 import {toWorld} from '../core/camera.js';
-import {defaultTilemap2d,paintTile2d,paintTileArea2d,tileAt,TILE_TYPES} from '../core/tilemap-2d.js';
+import {defaultTilemap2d,paintTile2d,paintTileArea2d,tileAt,TILE_TYPES,tilemapLayers2d} from '../core/tilemap-2d.js';
 
 export function createTilemap2d(){
  if(state.playing||workspace.mode!=='2d')return null;
@@ -28,7 +28,16 @@ export function initTilemapEditor2d(canvas){
  const info=document.createElement('span');info.textContent='Sélectionne un Tilemap';
  const tool=document.createElement('select');tool.setAttribute('aria-label','Outil de peinture Tilemap');
  for(const [value,label] of [['brush','Pinceau'],['line','Ligne'],['rectangle','Rectangle'],['fill','Remplissage']]){const option=document.createElement('option');option.value=value;option.textContent=label;tool.append(option);}
- bar.append(create,toggle,tool,select,info);
+ const layerSelect=document.createElement('select');layerSelect.setAttribute('aria-label','Couche TileMap');
+ const layerAdd=document.createElement('button');layerAdd.type='button';layerAdd.textContent='＋ Couche';
+ const layerVisible=document.createElement('button');layerVisible.type='button';layerVisible.textContent='Visibilité';
+ const layerCollision=document.createElement('button');layerCollision.type='button';layerCollision.textContent='Collision';
+ function refreshLayers(owner){const map=owner?.tilemap2d;const layers=map?tilemapLayers2d(map):[];layerSelect.replaceChildren(...layers.map((l,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=l.name;return option;}));layerSelect.value=String(map?.activeLayer??0);layerAdd.disabled=!map||state.playing;layerSelect.disabled=!map||state.playing;layerVisible.disabled=layerCollision.disabled=!map||!(map.activeLayer>0)||state.playing;}
+ layerSelect.onchange=()=>{const map=selected()?.tilemap2d;if(!map||state.playing||stroke)return;map.activeLayer=Number(layerSelect.value);record('TileMap · Couche active');notify();};
+ layerAdd.onclick=()=>{const map=selected()?.tilemap2d;if(!map||state.playing||stroke)return;map.layers??=[];if(map.layers.length>=15)return;const name=prompt('Nom de la couche','Décoration '+(map.layers.length+1));if(!name?.trim())return;map.layers.push({name:name.trim().slice(0,60),cells:{},visible:true,collision:false});map.activeLayer=map.layers.length;record('TileMap · Ajouter couche');notify();};
+ layerVisible.onclick=()=>{const map=selected()?.tilemap2d,l=map?.layers?.[(map.activeLayer??0)-1];if(!l||state.playing||stroke)return;l.visible=l.visible===false;record('TileMap · Visibilité');notify();};
+ layerCollision.onclick=()=>{const map=selected()?.tilemap2d,l=map?.layers?.[(map.activeLayer??0)-1];if(!l||state.playing||stroke)return;l.collision=l.collision===false;record('TileMap · Collision');notify();};
+ bar.append(create,toggle,tool,select,layerSelect,layerAdd,layerVisible,layerCollision,info);
  const dock=document.getElementById('tileMapContent'),setDock=document.getElementById('tileSetContent');
  const palette=document.createElement('div');palette.className='wb2d-palette';
  if(dock){bar.style.cssText='display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:5px';dock.append(bar,palette);}else host.append(bar);
@@ -50,12 +59,12 @@ export function initTilemapEditor2d(canvas){
   if([...select.options].some(o=>o.value===previous))select.value=previous;refreshPalette();
  }
  atlasFile.onchange=()=>{const owner=selected(),file=atlasFile.files?.[0],columns=Number(atlasCols.value),rows=Number(atlasRows.value);if(state.playing||!owner||!file||file.type!=='image/png'||file.size>2*1024*1024||!Number.isInteger(columns)||!Number.isInteger(rows)||columns<1||rows<1||columns>64||rows>64){atlasStatus.textContent='PNG ≤ 2 Mio, grille 1–64 et TileMap sélectionné requis.';return;}
- if(owner.tilemap2d.atlas&&Object.values(owner.tilemap2d.cells||{}).some(v=>String(v).startsWith('atlas:'))){atlasStatus.textContent='Efface les cellules de l’atlas précédent avant de le remplacer.';return;}
+ if(owner.tilemap2d.atlas&&tilemapLayers2d(owner.tilemap2d).some(l=>Object.values(l.cells).some(v=>String(v).startsWith('atlas:')))){atlasStatus.textContent='Efface les cellules de l’atlas précédent avant de le remplacer.';return;}
  const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{if(state.playing||selected()!==owner||img.naturalWidth%columns||img.naturalHeight%rows){atlasStatus.textContent='Grille incompatible ou sélection modifiée.';return;}owner.tilemap2d.atlas={dataUrl:reader.result,columns,rows};record('TileSet · Importer atlas PNG');atlasStatus.textContent='Atlas importé';notify();};img.onerror=()=>atlasStatus.textContent='PNG invalide.';img.src=reader.result;};reader.readAsDataURL(file);};
  document.addEventListener('warlike:bottom-tab',e=>{if(e.detail.tab!=='tilemap'){editing=false;toggle.textContent='Peindre';drawState();}});
  let editing=false,stroke=null;
  const selected=()=>state.entities.find(e=>state.selected.includes(e.id)&&e.tilemap2d)||null;
- const drawState=()=>{const visible=workspace.mode==='2d'&&!state.playing;bar.hidden=!visible;bar.style.display=visible?'flex':'none';const active=selected();toggle.disabled=!active;info.textContent=active?active.name:'Sélectionne un Tilemap';toggle.setAttribute('aria-pressed',String(editing));syncAtlas();};
+ const drawState=()=>{const visible=workspace.mode==='2d'&&!state.playing;bar.hidden=!visible;bar.style.display=visible?'flex':'none';const active=selected();toggle.disabled=!active;info.textContent=active?active.name:'Sélectionne un Tilemap';toggle.setAttribute('aria-pressed',String(editing));syncAtlas();refreshLayers(active);};
  toggle.onclick=()=>{editing=!editing;toggle.textContent=editing?'Peinture : active':'Peindre';drawState()};
  const pointerWorld=e=>{
   const r=canvas.getBoundingClientRect();return toWorld({x:(e.clientX-r.left)*canvas.clientWidth/r.width,y:(e.clientY-r.top)*canvas.clientHeight/r.height});

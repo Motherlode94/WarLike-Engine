@@ -4,7 +4,7 @@ import {state,notify} from '../core/state.js';
 import {workspace} from '../core/workspaces.js';
 import {record} from '../core/history.js';
 import {toWorld} from '../core/camera.js';
-import {defaultTilemap2d,paintTile2d,paintTileArea2d,tileAt,TILE_TYPES,tilemapLayers2d} from '../core/tilemap-2d.js';
+import {defaultTilemap2d,paintTile2d,paintTileArea2d,tileAt,TILE_TYPES,tilemapLayers2d,connectTerrain2d} from '../core/tilemap-2d.js';
 
 export function createTilemap2d(){
  if(state.playing||workspace.mode!=='2d')return null;
@@ -37,7 +37,9 @@ export function initTilemapEditor2d(canvas){
  layerAdd.onclick=()=>{const map=selected()?.tilemap2d;if(!map||state.playing||stroke)return;map.layers??=[];if(map.layers.length>=15)return;const name=prompt('Nom de la couche','Décoration '+(map.layers.length+1));if(!name?.trim())return;map.layers.push({name:name.trim().slice(0,60),cells:{},visible:true,collision:false});map.activeLayer=map.layers.length;record('TileMap · Ajouter couche');notify();};
  layerVisible.onclick=()=>{const map=selected()?.tilemap2d,l=map?.layers?.[(map.activeLayer??0)-1];if(!l||state.playing||stroke)return;l.visible=l.visible===false;record('TileMap · Visibilité');notify();};
  layerCollision.onclick=()=>{const map=selected()?.tilemap2d,l=map?.layers?.[(map.activeLayer??0)-1];if(!l||state.playing||stroke)return;l.collision=l.collision===false;record('TileMap · Collision');notify();};
- bar.append(create,toggle,tool,select,layerSelect,layerAdd,layerVisible,layerCollision,info);
+ const connect=document.createElement('button');connect.type='button';connect.textContent='Raccorder terrain';connect.title='Atlas de 16 variantes dans l’ordre des masques N=1 E=2 S=4 O=8';
+ connect.onclick=()=>{const map=selected()?.tilemap2d;if(state.playing||stroke||!map?.atlas)return;const input=prompt('Indices des 16 variantes (masques 0–15), séparés par virgules',Array.from({length:16},(_,i)=>i).join(','));if(input===null)return;const values=input.split(',').map(s=>s.trim());if(values.length!==16||values.some(v=>!/^\d+$/.test(v)))return;const count=connectTerrain2d(map,values.map(v=>'atlas:'+Number(v)));if(count){record('TileMap · Raccords terrain');notify();}}; 
+ bar.append(create,toggle,tool,select,layerSelect,layerAdd,layerVisible,layerCollision,connect,info);
  const dock=document.getElementById('tileMapContent'),setDock=document.getElementById('tileSetContent');
  const palette=document.createElement('div');palette.className='wb2d-palette';
  if(dock){bar.style.cssText='display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:5px';dock.append(bar,palette);}else host.append(bar);

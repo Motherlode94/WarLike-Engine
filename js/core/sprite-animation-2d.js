@@ -24,7 +24,7 @@ export function drawSpriteSheet2d(ctx,image,entity,timeSeconds,playing=false){
   if(!Number.isInteger(columns)||!Number.isInteger(rows)||columns<1||rows<1||columns*rows>4096)return false;
   const sequence=Array.isArray(grid.sequence)?grid.sequence:Array.from({length:Math.min(256,columns*rows)},(_,i)=>i);
   if(!sequence.length||sequence.length>256||sequence.some(i=>!Number.isInteger(i)||i<0||i>=columns*rows))return false;
-  const frame=spriteSheetFrame2d({...animation,frames:sequence.length},timeSeconds,playing).index;
+  const frame=!playing&&!animation.preview&&Number.isInteger(animation.editorFrame)?Math.max(0,Math.min(sequence.length-1,animation.editorFrame)):spriteSheetFrame2d({...animation,frames:sequence.length},timeSeconds,playing).index;
   const cell=sequence[frame],fw=image.naturalWidth/columns,fh=image.naturalHeight/rows;
   if(fw<1||fh<1)return false;
   ctx.drawImage(image,(cell%columns)*fw,Math.floor(cell/columns)*fh,fw,fh,entity.x,entity.y,entity.w,entity.h);
@@ -32,7 +32,9 @@ export function drawSpriteSheet2d(ctx,image,entity,timeSeconds,playing=false){
  }
  const frameWidth=image.naturalWidth/count;
  if(!Number.isFinite(frameWidth)||frameWidth<1)return false;
- ctx.drawImage(image,index*frameWidth,0,frameWidth,image.naturalHeight,entity.x,entity.y,entity.w,entity.h);
+ const manual=!playing&&animation?.enabled&&!animation.preview&&Number.isInteger(animation.editorFrame)?Math.max(0,Math.min(Math.max(1,Math.min(256,Math.floor(finite(animation.frames,1))))-1,animation.editorFrame)):null;
+ const width=manual===null?frameWidth:image.naturalWidth/Math.max(1,Math.min(256,Math.floor(finite(animation.frames,1))));
+ if(width<1)return false;ctx.drawImage(image,(manual??index)*width,0,width,image.naturalHeight,entity.x,entity.y,entity.w,entity.h);
  return true;
 }
 
@@ -45,7 +47,7 @@ export function saveSpriteClip2d(animation){
 export function switchSpriteClip2d(animation,name){
  if(!Array.isArray(animation.clips)||!animation.clips.some(c=>c.name===name))return false;
  saveSpriteClip2d(animation);const clip=animation.clips.find(c=>c.name===name);
- animation.activeClip=name;animation.frames=clip.frames;animation.fps=clip.fps;animation.loop=clip.loop;animation.preview=false;
+ animation.activeClip=name;animation.editorFrame=0;animation.frames=clip.frames;animation.fps=clip.fps;animation.loop=clip.loop;animation.preview=false;
  if(clip.grid)animation.grid=structuredClone(clip.grid);else delete animation.grid;return true;
 }
 export function addSpriteClip2d(animation,name){

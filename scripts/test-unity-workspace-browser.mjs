@@ -293,6 +293,29 @@ try{
  assert(restored.scene.right<=restored.right.left+12,'Inspector docks right after floating');
  assert(restored.bottom.top>=restored.scene.bottom-12,'Project docks below Scene after floating');
  await page.screenshot({path:path.join(out,'editor-redocked-1440.png')});
+ // E01.5: certify the actual splitter after the dock/reload round trip.
+ const splitter=await page.locator('#projectSplitter').boundingBox();
+ assert(splitter&&splitter.width>0&&splitter.height>0,'Project splitter is available after redocking');
+ const before=await page.locator('#projectPanel').boundingBox();
+ const x=splitter.x+splitter.width/2,y=splitter.y+splitter.height/2;
+ await page.mouse.move(x,y);await page.mouse.down();
+ await page.mouse.move(x,y-35,{steps:10});await page.mouse.up();
+ const resized=await page.locator('#projectPanel').boundingBox();
+ assert(resized&&before&&resized.height>before.height+10,'Dragging Project splitter increases dock height');
+ await page.mouse.move(x,y-35);await page.mouse.down();
+ await page.mouse.move(x,y,{steps:10});await page.mouse.up();
+ for(const viewport of [{width:1280,height:600},{width:1920,height:1080},{width:1440,height:900}]){
+  await page.setViewportSize(viewport);
+  const scene=await page.locator('#viewport').boundingBox();
+  const project=await page.locator('#projectPanel').boundingBox();
+  const stack=await page.locator('.center-stack').boundingBox();
+  assert(scene&&project&&stack&&scene.height>=100,'Scene remains usable after resizing and redocking');
+  assert(project.y>=scene.y+scene.height-12,'Project stays below Scene');
+  assert(project.y+project.height<=stack.y+stack.height+4,'Project remains inside its stack');
+  await page.screenshot({path:path.join(out,'e01-final-'+viewport.width+'x'+viewport.height+'.png')});
+ }
+ console.log('PASS: E01 splitter interaction and viewport round trip');
+
  console.log('PASS: Hub settings accessible and Unity-like dock geometry at 1440x900 + 1366x768');
 }finally{
  await browser.close();

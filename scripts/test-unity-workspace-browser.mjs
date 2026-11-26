@@ -94,7 +94,7 @@ try{
  assert.equal(uiMetrics.hierarchyRow,'24px','Hierarchy retains existing row dimensions');
  assert(uiMetrics.accent,'Editor still inherits an active palette accent');
 
- for(const viewport of [{width:1920,height:1080},{width:1440,height:900},{width:1366,height:768}]){
+ for(const viewport of [{width:1920,height:1080},{width:1440,height:900},{width:1366,height:768},{width:1280,height:600}]){
   await page.setViewportSize(viewport);
   const boxes=await page.evaluate(()=>{
    const rect=sel=>{const r=document.querySelector(sel).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
@@ -114,6 +114,27 @@ try{
   await page.locator('.reference-scene-menu>summary').click();
   await page.screenshot({path:path.join(out,`editor-${viewport.width}x${viewport.height}.png`)});
  }
+ // E01.4: stress the Project preference without persisting a layout change.
+ await page.setViewportSize({width:1280,height:600});
+ const stress=await page.evaluate(()=>{
+  const stack=document.querySelector('.center-stack');
+  const old=stack.style.getPropertyValue('--project-height');
+  const priority=stack.style.getPropertyPriority('--project-height');
+  try{
+   stack.style.setProperty('--project-height','2000px','important');
+   const center=stack.getBoundingClientRect();
+   const scene=document.querySelector('#viewport').getBoundingClientRect();
+   const project=document.querySelector('#projectPanel').getBoundingClientRect();
+   return {sceneHeight:scene.height,projectHeight:project.height,centerHeight:center.height,projectBottom:project.bottom,centerBottom:center.bottom};
+  }finally{
+   if(old)stack.style.setProperty('--project-height',old,priority);
+   else stack.style.removeProperty('--project-height');
+  }
+ });
+ assert(stress.sceneHeight>=100,'Oversized Project preference must preserve usable Scene space');
+ assert(stress.projectHeight<=stress.centerHeight*.5+3,'Project cannot consume more than half the center stack');
+ assert(stress.projectBottom<=stress.centerBottom+3,'Project remains inside the center stack');
+ await page.setViewportSize({width:1366,height:768});
  // Unity window organization: History is a menu in the Hierarchy header,
  // while Project/Assets and Inspector keep usable scrolling areas.
  const unityWindows=await page.evaluate(()=>{

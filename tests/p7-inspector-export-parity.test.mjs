@@ -5,6 +5,8 @@ import {canonicalScene,runtimeEntities} from '../js/core/scene-contract.js';
 import {prepareGameDefinition} from '../js/core/game-build.js';
 import {inspectRuntimeCompatibility} from '../js/core/runtime-capabilities.js';
 
+import {copyInspectorComponent,pasteInspectorComponent,setInspectorValue} from '../js/core/inspector-model.js';
+
 const authored=mode=>{
  const p=p5CertificationScene(mode);
  const hero=p.entities.find(e=>e.id===p.ids.player);
@@ -12,10 +14,14 @@ const authored=mode=>{
  const door=p.entities.find(e=>e.id===p.ids.door);
  // Simulate actual Inspector-editable component properties. These changes
  // must not be replaced by defaults on serialization or exported packaging.
- hero.controller3d.walkSpeed=4.75;
+ const clipboard=copyInspectorComponent(hero,['controller3d']);
+ clipboard.controller3d.walkSpeed=4.75;
+ assert.equal(pasteInspectorComponent(hero,['controller3d'],clipboard),true);
+ clipboard.controller3d.walkSpeed=99;
+ assert.equal(hero.controller3d.walkSpeed,4.75);
  hero.cameraRig.collision=true;
  hero.animatorGraph.states.find(s=>s.id==='motion').speed=1.35;
- moving.navigationAgent.speed=1.75;
+ assert.equal(setInspectorValue([moving],['navigationAgent','speed'],1.75),true);
  moving.navigationAgent.waypoints=[{x:100,y:-120},{x:76,y:-120}];
  door.color='#64748b';
  door.collision3d=true;

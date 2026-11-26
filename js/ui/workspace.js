@@ -36,7 +36,36 @@ $('#gridEnabled').onchange=e=>{toolsState.grid=e.target.checked};
 $('#colliderVisible').onchange=e=>{toolsState.colliders=e.target.checked};
 $('#hierarchySearch').oninput=notify;
 const project=$('#projectContent'),consolePanel=$('#consoleContent');
-function tab(which){project.hidden=which!=='project';consolePanel.hidden=which!=='console';$('#projectTab').classList.toggle('active',which==='project');$('#consoleTab').classList.toggle('active',which==='console')}
+const spriteTab=document.createElement('button');spriteTab.type='button';spriteTab.className='bottom-tab';spriteTab.id='spriteFramesTab';spriteTab.textContent='SpriteFrames';$('#consoleTab').after(spriteTab);
+const spritePanel=document.createElement('div');spritePanel.id='spriteFramesContent';spritePanel.hidden=true;consolePanel.after(spritePanel);
+let currentTab='project',selectedFrame=0,previousOwner=null;
+function renderSpriteFrames(){
+ if(currentTab!=='spriteframes')return;
+ const owner=state.entities.find(o=>o.id===state.selected.at(-1));
+ if(owner!==previousOwner){selectedFrame=0;previousOwner=owner;}
+ spritePanel.replaceChildren();
+ if(workspace.mode!=='2d'||!owner?.spriteAnimation2d||!owner.spriteDataUrl){spritePanel.textContent='Sélectionne un objet 2D avec Sprite Animation 2D et une texture PNG importée.';return;}
+ const animation=owner.spriteAnimation2d,grid=animation.grid;
+ const columns=grid?.columns??Math.max(1,Math.min(256,Math.floor(Number(animation.frames)||1))),rows=grid?.rows??1;
+ if(!Number.isInteger(columns)||!Number.isInteger(rows)||columns<1||rows<1||columns*rows>4096){spritePanel.textContent='Grille invalide.';return;}
+ const sequence=grid?.sequence??Array.from({length:Math.min(256,columns*rows)},(_,i)=>i);
+ if(!Array.isArray(sequence)||!sequence.length||sequence.length>256||sequence.some(i=>!Number.isInteger(i)||i<0||i>=columns*rows)){spritePanel.textContent='Séquence invalide.';return;}
+ selectedFrame=Math.min(selectedFrame,sequence.length-1);
+ const left=document.createElement('div'),right=document.createElement('div');left.className='sf-list';right.className='sf-detail';
+ const heading=document.createElement('strong');heading.textContent='Animations :';const name=document.createElement('button');name.type='button';name.textContent='default';name.className='sf-current';left.append(heading,name);
+ const toolbar=document.createElement('div');toolbar.className='sf-toolbar';const title=document.createElement('strong');title.textContent='Trames d’animation :';
+ const fps=document.createElement('input');fps.type='number';fps.min='.1';fps.max='120';fps.step='.1';fps.value=animation.fps??8;fps.setAttribute('aria-label','Images par seconde');fps.disabled=state.playing;fps.onchange=()=>{if(state.playing)return;const value=Number(fps.value);if(!Number.isFinite(value)||value<.1||value>120){fps.value=animation.fps??8;return;}animation.fps=value;record('SpriteFrames · FPS');notify();};
+ const loop=document.createElement('button');loop.type='button';loop.textContent='↻ Boucle';loop.setAttribute('aria-pressed',String(animation.loop!==false));loop.disabled=state.playing;loop.onclick=()=>{if(state.playing)return;animation.loop=animation.loop===false;record('SpriteFrames · Boucle');notify();};
+ const play=document.createElement('button');play.type='button';play.textContent=animation.preview?'■ Stop':'▶ Aperçu';play.disabled=state.playing||!animation.enabled;play.onclick=()=>{if(state.playing)return;animation.preview=!animation.preview;notify();};
+ toolbar.append(title,loop,fps,document.createTextNode('IPS'),play);
+ const frames=document.createElement('div');frames.className='sf-frames';const image=new Image();
+ sequence.forEach((cell,index)=>{const button=document.createElement('button');button.type='button';button.className='sf-frame'+(index===selectedFrame?' active':'');button.setAttribute('aria-label','Frame '+index);const canvas=document.createElement('canvas');canvas.width=96;canvas.height=80;const label=document.createElement('span');label.textContent=String(index);button.append(canvas,label);button.onclick=()=>{selectedFrame=index;frames.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('active',i===index));};frames.append(button);
+ const draw=()=>{if(!image.naturalWidth||!image.naturalHeight)return;const fw=image.naturalWidth/columns,fh=image.naturalHeight/rows,scale=Math.min(96/fw,80/fh),ctx=canvas.getContext('2d');if(!ctx)return;ctx.imageSmoothingEnabled=false;ctx.drawImage(image,(cell%columns)*fw,Math.floor(cell/columns)*fh,fw,fh,(96-fw*scale)/2,(80-fh*scale)/2,fw*scale,fh*scale);};image.addEventListener('load',draw,{once:true});});
+ image.src=owner.spriteDataUrl;right.append(toolbar,frames);spritePanel.append(left,right);
+}
+function tab(which){currentTab=which;project.hidden=which!=='project';consolePanel.hidden=which!=='console';spritePanel.hidden=which!=='spriteframes';$('#projectTab').classList.toggle('active',which==='project');$('#consoleTab').classList.toggle('active',which==='console');spriteTab.classList.toggle('active',which==='spriteframes');if(which==='spriteframes')renderSpriteFrames();}
+spriteTab.onclick=()=>tab('spriteframes');
+document.addEventListener('warlike:change',renderSpriteFrames);
 $('#projectTab').onclick=()=>tab('project');$('#consoleTab').onclick=()=>tab('console');$('#consoleClear').onclick=()=>{lines=[];drawLogs()};
 ['showInfo','showWarn','showError'].forEach(id=>$('#'+id).onchange=drawLogs);
 window.addEventListener('error',e=>log(e.message,'error'));window.addEventListener('unhandledrejection',e=>log(String(e.reason),'error'));

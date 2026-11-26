@@ -39,8 +39,8 @@ const overrides={
 };
 export function componentMenuPath(option,category){
  if(!option||typeof option.id!=='string')throw new TypeError('Component entry required');
- const root=category in rootByCategory?rootByCategory[category]:'Miscellaneous';
- return overrides[option.id]||[root];
+ const root=Object.hasOwn(rootByCategory,category)?rootByCategory[category]:'Miscellaneous';
+ return Object.hasOwn(overrides,option.id)?[...overrides[option.id]]:[root];
 }
 export function componentMenuChildren(options,category,pathOf){
  const matches=options.filter(o=>pathOf(o)[0]===category);

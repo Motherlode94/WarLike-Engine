@@ -51,3 +51,9 @@ test('prefab revert restores components and removes additions without moving or 
  assert.deepEqual(prefabPropertyOverrides(prefab,entity),['color','stats','ai']);assert.equal(revertInspectorPrefab(prefab,entity),true);assert.equal(entity.id,3);assert.equal(entity.name,'My instance');assert.equal(entity.x,120);assert.equal(entity.y,20);assert.equal(entity.ai,undefined);assert.equal(entity.stats.health,100);entity.stats.health=40;assert.equal(prefab.components.stats.health,100);
  assert.equal(revertInspectorPrefab({...prefab,id:'other'},entity),false);
 });
+
+test('E03.4 rejects uncloneable clipboard payloads before changing any field',()=>{
+ const target={a:1,b:2};assert.equal(pasteInspectorComponent(target,['a','b'],{a:3,b:()=>0}),false);assert.deepEqual(target,{a:1,b:2});
+ assert.equal(pasteInspectorComponent(target,['a','constructor'],{a:3}),false);assert.deepEqual(target,{a:1,b:2});
+ const inherited={speed:3},entity=Object.create({config:inherited});assert.equal(setInspectorValue([entity],['config','speed'],9),false);assert.equal(inherited.speed,3);
+});

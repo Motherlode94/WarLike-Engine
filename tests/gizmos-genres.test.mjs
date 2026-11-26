@@ -52,3 +52,13 @@ test('E04.1 projected translation follows the visible axis without invalid jumps
  assert.equal(projectedAxisDrag3d(origin,right,25,0,-2),0);
  assert.equal(projectedAxisDrag3d(origin,{x:Number.MAX_VALUE,y:100},Number.MAX_VALUE,0),0);
 });
+
+import {gizmoScaledDimension3d} from '../js/core/scene-editing-3d-tools.js';
+import {colliderGeometry3d} from '../js/core/collider-3d.js';
+test('E04.3 scale preserves fractional dimensions and automatic collider bounds',()=>{
+ assert.equal(gizmoScaledDimension3d(63.5,1,.5),63.5);
+ assert.equal(gizmoScaledDimension3d(63.5,2),127);
+ assert.equal(gizmoScaledDimension3d(63.5,2,.5),128);
+ assert.equal(colliderGeometry3d({w:127,h:64,depth3d:64}).w,127/64);
+ assert.equal(colliderGeometry3d({w:127,h:64,depth3d:64,collider3d:{width:1}}).w,1);
+});

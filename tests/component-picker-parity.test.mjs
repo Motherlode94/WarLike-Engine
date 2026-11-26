@@ -91,3 +91,11 @@ test('portable components are explicitly Web; native only components remain .NET
  assert.match(inspector,/portableComponentKinds\.has\(definition\.kind\)/);
  assert.match(source,/if\(owner\.csharpComponents\.some\(c=>c\.kind===kind\)\)return false/);
 });
+
+test('E03.2 searches accent-insensitive names and canonical nested categories',()=>{
+ assert.equal(componentBrowserMatches({id:'collider3d',name:'Collision 3D'},'physics colliders'),true);
+ assert.equal(componentBrowserMatches({id:'animalController',name:'Contrôleur animal'},'controleur animaux'),false);
+ assert.equal(componentBrowserMatches({id:'animalController',name:'Contrôleur animal'},'controleur gameplay'),true);
+ assert.equal(componentBrowserMatches({id:'tilemap2d',name:'Carte'},'tilemap'),true);
+ assert.equal(componentBrowserMatches({id:'collider3d',name:'Collision 3D'},'physics introuvable'),false);
+});

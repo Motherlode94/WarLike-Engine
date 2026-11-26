@@ -455,7 +455,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  };
  layer.addEventListener('pointerdown',event=>{
   const axis=event.target.getAttribute('data-gizmo-axis');
-  if(!axis||event.button!==0||event.altKey||state.playing)return;
+  if(drag||!axis||event.button!==0||event.altKey||state.playing)return;
   const selected=state.entities.filter(o=>state.selected.includes(o.id));
   if(!selected.length)return;
   event.preventDefault();event.stopPropagation();
@@ -477,7 +477,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
     return ray?axisRayParameter(ray.origin,ray.direction,pivot,direction):null;
    })(),
    rustPivot:pivot,rustAxis:direction,
-   objects:selected.map(o=>({id:o.id,x:o.x,y:o.y,elevation3d:o.elevation3d||0,w:o.w,h:o.h,depth3d:o.depth3d??o.h,rotation:o.rotation||0,rotationX3d:o.rotationX3d||0,rotationZ3d:o.rotationZ3d||0,worldMatrix3d:Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,matrixReference3d:Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null}))};
+   objects:selected.map(o=>({original:Object.fromEntries(['x','y','elevation3d','w','h','depth3d','rotation','rotationX3d','rotationZ3d','worldMatrix3d','matrixReference3d'].filter(k=>Object.hasOwn(o,k)).map(k=>[k,structuredClone(o[k])])),id:o.id,x:o.x,y:o.y,elevation3d:o.elevation3d||0,w:o.w,h:o.h,depth3d:o.depth3d??o.h,rotation:o.rotation||0,rotationX3d:o.rotationX3d||0,rotationZ3d:o.rotationZ3d||0,worldMatrix3d:Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,matrixReference3d:Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null}))};
   event.target.setPointerCapture(event.pointerId);
  });
  layer.addEventListener('pointermove',event=>{
@@ -506,7 +506,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
     else if(drag.axis==='y')o.h=scaled(start.h);
     else o.depth3d=scaled(start.depth3d);
    }else{
-    const direction=axisVector(drag.axis,{...o,rotation:start.rotation,rotationX3d:start.rotationX3d,rotationZ3d:start.rotationZ3d});
+    const direction=drag.rustAxis;
     if(surfaceHit){
      // Project the pointer-to-feature displacement on the selected gizmo axis.
      const center=[start.x/64+(start.w||64)/128,start.elevation3d+(start.h||64)/128,start.y/64+(start.depth3d||start.h||64)/128];
@@ -533,7 +533,19 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   drag=null;notify();
  };
  layer.addEventListener('pointerup',finish);
- layer.addEventListener('pointercancel',finish);
- layer.addEventListener('lostpointercapture',finish);
+ const cancel=event=>{
+  if(!drag||event.pointerId!==drag.pointer)return;
+  const transaction=drag;drag=null;
+  for(const start of transaction.objects){
+   const o=state.entities.find(o=>o.id===start.id);if(!o)continue;
+   for(const key of ['x','y','elevation3d','w','h','depth3d','rotation','rotationX3d','rotationZ3d','worldMatrix3d','matrixReference3d']){
+    if(Object.hasOwn(start.original,key))o[key]=structuredClone(start.original[key]);else delete o[key];
+   }
+  }
+  updateEditorEntityHierarchy3d(state.entities,{worldOverrideIds:new Set(transaction.objects.map(o=>o.id))});
+  notify();redraw();
+ };
+ layer.addEventListener('pointercancel',cancel);
+ layer.addEventListener('lostpointercapture',cancel);
  return redraw;
 }

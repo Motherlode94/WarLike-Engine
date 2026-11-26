@@ -29,7 +29,15 @@ export function initTilemapEditor2d(canvas){
  const tool=document.createElement('select');tool.setAttribute('aria-label','Outil de peinture Tilemap');
  for(const [value,label] of [['brush','Pinceau'],['line','Ligne'],['rectangle','Rectangle'],['fill','Remplissage']]){const option=document.createElement('option');option.value=value;option.textContent=label;tool.append(option);}
  bar.append(create,toggle,tool,select,info);
- host.append(bar);
+ const dock=document.getElementById('tileMapContent'),setDock=document.getElementById('tileSetContent');
+ const palette=document.createElement('div');palette.className='wb2d-palette';
+ if(dock){bar.style.cssText='display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:5px';dock.append(bar,palette);}else host.append(bar);
+ const swatches=new Map();
+ for(const [id,data] of Object.entries(TILE_TYPES)){const b=document.createElement('button');b.type='button';b.className='wb2d-tile';const color=document.createElement('span');color.style.background=data.color;b.append(color,document.createTextNode(data.label));b.onclick=()=>{select.value=id;refreshPalette();};palette.append(b);swatches.set(id,b);}
+ function refreshPalette(){for(const [id,b] of swatches){b.classList.toggle('active',select.value===id);b.setAttribute('aria-pressed',String(select.value===id));}}
+ select.addEventListener('change',refreshPalette);refreshPalette();
+ if(setDock){const title=document.createElement('strong');title.textContent='TileSet · Tuiles intégrées';setDock.append(title);for(const data of Object.values(TILE_TYPES)){const row=document.createElement('div');row.className='wb2d-tile-definition';const color=document.createElement('span');color.style.background=data.color;row.append(color,document.createTextNode(data.label+' — '+(data.solid?'Collision solide':'Sans collision')));setDock.append(row);}}
+ document.addEventListener('warlike:bottom-tab',e=>{if(e.detail.tab!=='tilemap'){editing=false;toggle.textContent='Peindre';drawState();}});
  let editing=false,stroke=null;
  const selected=()=>state.entities.find(e=>state.selected.includes(e.id)&&e.tilemap2d)||null;
  const drawState=()=>{const visible=workspace.mode==='2d'&&!state.playing;bar.hidden=!visible;bar.style.display=visible?'flex':'none';const active=selected();toggle.disabled=!active;info.textContent=active?active.name:'Sélectionne un Tilemap';toggle.setAttribute('aria-pressed',String(editing))};

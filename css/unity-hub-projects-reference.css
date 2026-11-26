@@ -196,3 +196,28 @@
  #hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-version{display:none!important}
  #hubOverlay .simple-hub-projects[data-project-view=list] .hub-project-options{grid-column:4!important}
 }
+
+
+/* About/Sources: structured navigation and readable attribution, scoped to this page. */
+#hubOverlay #hubAboutSources{line-height:1.5;overflow-wrap:anywhere}
+#hubOverlay #hubAboutSources h2{margin:12px 0 14px;font-size:20px}
+#hubOverlay #hubAboutSources h3{margin:20px 0 10px;font-size:15px}
+#hubOverlay #hubAboutSources p{margin:8px 0 12px}
+#hubOverlay #hubAboutSources .hub-about-links{display:flex!important;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:14px 0;padding:10px 0;border-block:1px solid color-mix(in srgb,currentColor 20%,transparent)}
+#hubOverlay #hubAboutSources .hub-about-links>a{display:inline-flex!important;align-items:center;min-height:30px;padding:4px 10px;border:1px solid color-mix(in srgb,currentColor 25%,transparent);border-radius:4px;text-decoration:none;white-space:normal}
+#hubOverlay #hubAboutSources a:hover{text-decoration:underline}
+#hubOverlay #hubAboutSources a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+#hubOverlay #hubAboutSources .hub-runtime-capabilities{padding:10px 0}
+#hubOverlay #hubAboutSources .hub-source-systems{margin:0}
+#hubOverlay #hubAboutSources .hub-source-systems dt{font-weight:600;margin:12px 0 2px}
+#hubOverlay #hubAboutSources .hub-source-systems dd{margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+#hubOverlay #hubAboutSources input[type=search]{display:block;width:min(100%,360px)!important;box-sizing:border-box;min-height:32px;padding:6px 10px;margin:10px 0}
+#hubOverlay #hubAboutSources .hub-source-pack-list{display:grid;gap:0}
+#hubOverlay #hubAboutSources .hub-source-pack{display:grid!important;grid-template-columns:minmax(85px,1fr) minmax(0,3fr) minmax(130px,1.5fr);gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+#hubOverlay #hubAboutSources .hub-source-pack>*{min-width:0;overflow-wrap:anywhere}
+#hubOverlay #hubAboutSources .hub-source-pack small{font-size:11px;opacity:.85}
+#hubOverlay #hubAboutSources .hub-legacy-sources{margin-top:18px}
+@media(max-width:600px){
+ #hubOverlay #hubAboutSources .hub-source-pack{grid-template-columns:minmax(75px,1fr) minmax(0,2fr);gap:4px 10px}
+ #hubOverlay #hubAboutSources .hub-source-pack small{grid-column:2}
+}

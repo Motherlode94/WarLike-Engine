@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+test('Hub section layout loads after Hub reference',()=>{const html=read('index.html');assert.ok(html.indexOf('./css/hub-sections-layout.css')>html.indexOf('./css/unity-hub-projects-reference.css'));});
+test('section CSS stays inside Hub',()=>{const css=read('css/hub-sections-layout.css').replace(/\/\*[\s\S]*?\*\//g,'');for(const m of css.matchAll(/([^{}]+)\{/g)){const selector=m[1].trim();assert.ok(selector.startsWith('#hubOverlay')||selector.startsWith('@media'),selector);}for(const name of ['hub-design-themes','hub-editor-palette','hub-create-settings','engine-cloud-row','hub-diagnostics','hub-browser-tools'])assert.ok(css.includes(name),name);});

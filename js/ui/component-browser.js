@@ -26,22 +26,22 @@ const unityCategories=Object.freeze({
  Event:['sequence','adventureInteractable'],
  Input:['cameraRig','inputActions'],
  Movement:['controller2d','controller3d'],
- Vehicles:['data-VehicleController'],
  Layout:['uiCanvas','uiRect','uiElement'],
- Mesh:['spriteRenderer2d','tilemap2d'],
- Navigation:['ai','tacticalUnit','data-FollowActor','data-TacticalSquad'],
+ Mesh:[],
+ Tilemap:['tilemap2d'],
+ Navigation:['ai','navigationAgent','tacticalUnit','data-FollowActor','data-TacticalSquad'],
  'Physics 2D':['collider2d','rigidbody2d','joint2d','effector2d'],
  Physics:['collider3d','rigidbody3d','grab3d','data-Rigidbody'],
- Rendering:['light','sceneCamera3d','camera2d','environmentProbe3d'],
- Vehicles:['vehicleController','groundVehiclePhysics','aircraftPhysics','aircraftSystems','aircraftLandingGear'],
- Gameplay:['animalController'],
+ Rendering:['light','sceneCamera3d','camera2d','environmentProbe3d','spriteRenderer2d'],
+ Vehicles:['data-VehicleController','vehicleController','groundVehiclePhysics','aircraftPhysics','aircraftSystems','aircraftLandingGear'],
  Scripts:['webScripts','warScripts'],
- Gameplay:['stats','inventory','adventureInteractable','superhero','rpgProgression','horrorHideConfig','horrorFearConfig','data-Weapon','data-Damageable','data-Health','data-Projectile','data-Team','data-Score','data-Respawn','data-DeathmatchRules','data-SpawnPoint','data-AmmoPickup','data-HealthPickup','data-KillZone','data-ObjectiveZone','data-Roleplay','data-RacingRules','data-SimulationEconomy','data-RpgProgression','data-FourXEmpire']
+ Gameplay:['animalController','stats','inventory','adventureInteractable','superhero','rpgProgression','horrorHideConfig','horrorFearConfig','data-Weapon','data-Damageable','data-Health','data-Projectile','data-Team','data-Score','data-Respawn','data-DeathmatchRules','data-SpawnPoint','data-AmmoPickup','data-HealthPickup','data-KillZone','data-ObjectiveZone','data-Roleplay','data-RacingRules','data-SimulationEconomy','data-RpgProgression','data-FourXEmpire']
 });
 const categoryById=new Map(Object.entries(unityCategories).flatMap(([group,ids])=>ids.map(id=>[id,group])));
-export const unityComponentCategory=option=>categoryById.get(option.id)||(
+const fallbackComponentCategory=option=>categoryById.get(option.id)||(
  option.id?.startsWith('data-')?(nativeCategories[option.id.slice(5)]||'Miscellaneous'):option.runtime==='dotnet'?'Scripts':option.category==='Personnage'?'Gameplay':option.category==='Intelligence artificielle'?'Navigation':'Miscellaneous'
 );
+export const unityComponentCategory=option=>componentMenuPath(option,fallbackComponentCategory(option))[0];
 const categoryOrder=['Animation','Audio','Constraints','Effects','Event','Input','Layout','Mesh','Miscellaneous','Movement','Navigation','Physics 2D','Physics','Vehicles','Playables','Rendering','Scripts','Gameplay'];
 export const unityComponentCategories=options=>[...new Set(options.map(unityComponentCategory))].sort((a,b)=>{
  const ai=categoryOrder.indexOf(a),bi=categoryOrder.indexOf(b);

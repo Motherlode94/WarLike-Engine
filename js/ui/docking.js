@@ -155,9 +155,10 @@ function bindFloating(kind){
  const maximize=document.createElement('button');maximize.type='button';maximize.className='window-size-button dock-size-button';maximize.textContent='⛶';maximize.setAttribute('aria-label','Agrandir '+kind);maximize.title='Agrandir / restaurer '+kind;maximize.setAttribute('aria-pressed','false');(handle.querySelector('.dock-title-actions')||handle).append(maximize);
  maximize.onclick=e=>{e.stopPropagation();if(!layout.float[kind])floatPanel(kind);bringToFront(panel);resizer.toggleMaximize()};
  new MutationObserver(()=>{const active=panel.hasAttribute('data-window-maximized');maximize.textContent=active?'❐':'⛶';maximize.setAttribute('aria-pressed',String(active));maximize.setAttribute('aria-label',(active?'Restaurer ':'Agrandir ')+kind)}).observe(panel,{attributes:true,attributeFilter:['data-window-maximized']});
- button.addEventListener('click',e=>{e.stopPropagation();layout.float[kind]?dockPanel(kind):floatPanel(kind);if(layout.float[kind])bringToFront(panel)});
+ const toggleDock=()=>{if(layout.float[kind]){if(panel.hasAttribute('data-window-maximized'))resizer.toggleMaximize();dockPanel(kind);}else{floatPanel(kind);bringToFront(panel);}};
+ button.addEventListener('click',e=>{e.stopPropagation();toggleDock()});
  panel.addEventListener('pointerdown',()=>{if(layout.float[kind])bringToFront(panel)},true);
- handle.addEventListener('dblclick',e=>{if(e.target.closest('button,input,select,a'))return;layout.float[kind]?dockPanel(kind):floatPanel(kind)});
+ handle.addEventListener('dblclick',e=>{if(e.target.closest('button,input,select,a'))return;toggleDock()});
  let drag=null;
  handle.addEventListener('pointerdown',e=>{
   if(e.button!==0||e.target.closest('button,input,select,a,[role="button"]'))return;

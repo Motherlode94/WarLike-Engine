@@ -28,3 +28,25 @@ export function drawSpriteSheet2d(ctx,image,entity,timeSeconds,playing=false){
  ctx.drawImage(image,index*frameWidth,0,frameWidth,image.naturalHeight,entity.x,entity.y,entity.w,entity.h);
  return true;
 }
+
+const spriteClipSnapshot=a=>({frames:a.frames??4,fps:a.fps??8,loop:a.loop!==false,...(a.grid?{grid:structuredClone(a.grid)}:{})});
+export function saveSpriteClip2d(animation){
+ if(!Array.isArray(animation.clips))animation.clips=[{name:'default',...spriteClipSnapshot(animation)}];
+ const clip=animation.clips.find(c=>c.name===animation.activeClip)||animation.clips[0];
+ if(!clip)return false;Object.assign(clip,spriteClipSnapshot(animation));if(!animation.grid)delete clip.grid;animation.activeClip=clip.name;return true;
+}
+export function switchSpriteClip2d(animation,name){
+ if(!Array.isArray(animation.clips)||!animation.clips.some(c=>c.name===name))return false;
+ saveSpriteClip2d(animation);const clip=animation.clips.find(c=>c.name===name);
+ animation.activeClip=name;animation.frames=clip.frames;animation.fps=clip.fps;animation.loop=clip.loop;animation.preview=false;
+ if(clip.grid)animation.grid=structuredClone(clip.grid);else delete animation.grid;return true;
+}
+export function addSpriteClip2d(animation,name){
+ name=String(name??'').trim();if(!name||name.length>60)return false;
+ saveSpriteClip2d(animation);if(animation.clips.length>=64||animation.clips.some(c=>c.name===name))return false;
+ animation.clips.push({name,...spriteClipSnapshot(animation)});return switchSpriteClip2d(animation,name);
+}
+export function renameSpriteClip2d(animation,name){
+ name=String(name??'').trim();if(!name||name.length>60||!Array.isArray(animation.clips)||animation.clips.some(c=>c.name===name))return false;
+ const clip=animation.clips.find(c=>c.name===animation.activeClip);if(!clip)return false;clip.name=name;animation.activeClip=name;return true;
+}

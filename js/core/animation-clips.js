@@ -1,5 +1,5 @@
 // Authored transform clips use scene units for X/Y and metres for elevation.
-export const animationFields=['x','y','rotation','elevation3d','rotationX3d','rotationZ3d','w','h','depth3d'];
+export const animationFields=['x','y','rotation','elevation3d','rotationX3d','rotationZ3d','w','h','depth3d','lightIntensity','lightRange','lightAngle','audioGain','audioRange'];
 export const animationEasings=['linear','step','easeIn','easeOut','easeInOut','bezier'];
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -12,7 +12,9 @@ export function cubicBezierEase(t,curve=[.25,.1,.25,1]){
  let lo=0,hi=1;for(let i=0;i<48;i++){const mid=(lo+hi)/2;if(axis(mid,x1,x2)<t)lo=mid;else hi=mid;}
  return axis((lo+hi)/2,y1,y2);
 }
-const poseOf=key=>Object.fromEntries(animationFields.filter(field=>Number.isFinite(key[field])).map(field=>[field,key[field]]));
+const componentBounds={lightIntensity:[0,10],lightRange:[.2,120],lightAngle:[5,170],audioGain:[0,1],audioRange:[1,1e8]};
+const validField=(field,value)=>Number.isFinite(value)&&Math.abs(value)<=1e8&&(!['w','h','depth3d'].includes(field)||value>0)&&(!componentBounds[field]||value>=componentBounds[field][0]&&value<=componentBounds[field][1]);
+const poseOf=key=>Object.fromEntries(animationFields.filter(field=>validField(field,key[field])).map(field=>[field,key[field]]));
 export function createClip(name='Nouveau clip',duration=2){return {name:String(name).slice(0,60),duration:clamp(finite(duration,2),.1,3600),loop:false,speed:1,keys:[],events:[],transitions:[]}}
 export function inspectAnimationStudio(studio){
  if(!studio||!Array.isArray(studio.clips)||studio.clips.length>32)return ['Animation Studio : 32 clips maximum.'];
@@ -21,7 +23,7 @@ export function inspectAnimationStudio(studio){
   if(!clip||typeof clip.name!=='string'||!clip.name||clip.name.length>60||!Number.isFinite(clip.duration)||clip.duration<.1||clip.duration>3600){errors.push('Nom ou durée de clip invalide.');continue}
   if(clip.speed!=null&&(!Number.isFinite(clip.speed)||clip.speed<.05||clip.speed>4))errors.push('Vitesse du clip entre 0,05 et 4 attendue.');
   if(!Array.isArray(clip.keys)||clip.keys.length>256){errors.push('256 images clés maximum par clip.');continue}
-  const times=new Set();for(const key of clip.keys){if(!key||!Number.isFinite(key.time)||key.time<0||key.time>clip.duration||times.has(key.time)){errors.push('Instants des images clés invalides ou dupliqués.');continue}times.add(key.time);if(key.bezier!=null&&!validBezierCurve(key.bezier))errors.push('Courbe Bézier invalide.');if(key.easing!=null&&!animationEasings.includes(key.easing))errors.push('Interpolation d’image clé inconnue.');for(const field of animationFields)if(key[field]!=null&&(!Number.isFinite(key[field])||Math.abs(key[field])>1e8||['w','h','depth3d'].includes(field)&&key[field]<=0))errors.push('Valeur de transformation invalide.');}
+  const times=new Set();for(const key of clip.keys){if(!key||!Number.isFinite(key.time)||key.time<0||key.time>clip.duration||times.has(key.time)){errors.push('Instants des images clés invalides ou dupliqués.');continue}times.add(key.time);if(key.bezier!=null&&!validBezierCurve(key.bezier))errors.push('Courbe Bézier invalide.');if(key.easing!=null&&!animationEasings.includes(key.easing))errors.push('Interpolation d’image clé inconnue.');for(const field of animationFields)if(key[field]!=null&&!validField(field,key[field]))errors.push('Valeur de transformation invalide.');}
   if(!Array.isArray(clip.events)||clip.events.length>64||clip.events.some(event=>!event||!Number.isFinite(event.time)||event.time<0||event.time>clip.duration||typeof event.name!=='string'||!event.name.trim()||event.name.length>80))errors.push('Événement de clip invalide.');
  }
  if(studio.playOnStart&&(!Number.isInteger(studio.defaultClip??0)||(studio.defaultClip??0)<0||(studio.defaultClip??0)>=studio.clips.length))errors.push('Clip de démarrage absent.');
@@ -78,7 +80,7 @@ export function stepAnimationClip(owner,dt,{onEvent=()=>{}}={}){
 /** Author one sparse property key without replacing other channels at the same time.
  * Existing clips share easing per timestamp; preserve that easing when merging. */
 export function putAnimationPropertyKey(clip,time,field,value,{easing='linear'}={}){
- if(!animationFields.includes(field)||!Number.isFinite(value)||Math.abs(value)>1e8||(['w','h','depth3d'].includes(field)&&value<=0))throw Error('Propriété animable invalide.');
+ if(!animationFields.includes(field)||!validField(field,value))throw Error('Propriété animable invalide.');
  if(!Number.isFinite(time)||time<0||time>clip.duration)throw Error('Instant hors du clip.');
  const previous=clip.keys.find(k=>Math.abs(k.time-time)<.00001);
  if(previous){previous[field]=value;return previous;}

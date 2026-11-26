@@ -37,10 +37,22 @@ export function initTilemapEditor2d(canvas){
  function refreshPalette(){for(const [id,b] of swatches){b.classList.toggle('active',select.value===id);b.setAttribute('aria-pressed',String(select.value===id));}}
  select.addEventListener('change',refreshPalette);refreshPalette();
  if(setDock){const title=document.createElement('strong');title.textContent='TileSet · Tuiles intégrées';setDock.append(title);for(const data of Object.values(TILE_TYPES)){const row=document.createElement('div');row.className='wb2d-tile-definition';const color=document.createElement('span');color.style.background=data.color;row.append(color,document.createTextNode(data.label+' — '+(data.solid?'Collision solide':'Sans collision')));setDock.append(row);}}
+ const atlasControls=document.createElement('div'),atlasFile=document.createElement('input'),atlasCols=document.createElement('input'),atlasRows=document.createElement('input'),atlasStatus=document.createElement('span');atlasFile.type='file';atlasFile.accept='image/png';for(const [input,label] of [[atlasCols,'Colonnes'],[atlasRows,'Lignes']]){input.type='number';input.min='1';input.max='64';input.value='1';input.setAttribute('aria-label',label);atlasControls.append(document.createTextNode(label+' '),input);}atlasControls.append(atlasFile,atlasStatus);setDock?.append(atlasControls);
+ let shownAtlas=null;
+ function syncAtlas(){
+  const atlas=selected()?.tilemap2d?.atlas;if(shownAtlas===atlas)return;shownAtlas=atlas;
+  select.querySelectorAll('[data-atlas]').forEach(e=>e.remove());palette.querySelectorAll('[data-atlas]').forEach(e=>e.remove());
+  if(!atlas)return;
+  for(let index=0;index<atlas.columns*atlas.rows;index++){const id='atlas:'+index,option=document.createElement('option');option.value=id;option.textContent='Atlas '+index;option.dataset.atlas='';select.append(option);
+   const button=document.createElement('button'),thumb=document.createElement('span');button.type='button';button.className='wb2d-tile';button.dataset.atlas='';thumb.style.backgroundImage='url("'+atlas.dataUrl+'")';thumb.style.backgroundSize=(atlas.columns*100)+'% '+(atlas.rows*100)+'%';thumb.style.backgroundPosition=(atlas.columns===1?0:(index%atlas.columns)*100/(atlas.columns-1))+'% '+(atlas.rows===1?0:Math.floor(index/atlas.columns)*100/(atlas.rows-1))+'%';button.append(thumb,document.createTextNode(String(index)));button.onclick=()=>{select.value=id;refreshPalette();};palette.append(button);}
+ }
+ atlasFile.onchange=()=>{const owner=selected(),file=atlasFile.files?.[0],columns=Number(atlasCols.value),rows=Number(atlasRows.value);if(state.playing||!owner||!file||file.type!=='image/png'||file.size>2*1024*1024||!Number.isInteger(columns)||!Number.isInteger(rows)||columns<1||rows<1||columns>64||rows>64){atlasStatus.textContent='PNG ≤ 2 Mio, grille 1–64 et TileMap sélectionné requis.';return;}
+ if(owner.tilemap2d.atlas&&Object.values(owner.tilemap2d.cells||{}).some(v=>String(v).startsWith('atlas:'))){atlasStatus.textContent='Efface les cellules de l’atlas précédent avant de le remplacer.';return;}
+ const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{if(state.playing||selected()!==owner||img.naturalWidth%columns||img.naturalHeight%rows){atlasStatus.textContent='Grille incompatible ou sélection modifiée.';return;}owner.tilemap2d.atlas={dataUrl:reader.result,columns,rows};record('TileSet · Importer atlas PNG');atlasStatus.textContent='Atlas importé';notify();};img.onerror=()=>atlasStatus.textContent='PNG invalide.';img.src=reader.result;};reader.readAsDataURL(file);};
  document.addEventListener('warlike:bottom-tab',e=>{if(e.detail.tab!=='tilemap'){editing=false;toggle.textContent='Peindre';drawState();}});
  let editing=false,stroke=null;
  const selected=()=>state.entities.find(e=>state.selected.includes(e.id)&&e.tilemap2d)||null;
- const drawState=()=>{const visible=workspace.mode==='2d'&&!state.playing;bar.hidden=!visible;bar.style.display=visible?'flex':'none';const active=selected();toggle.disabled=!active;info.textContent=active?active.name:'Sélectionne un Tilemap';toggle.setAttribute('aria-pressed',String(editing))};
+ const drawState=()=>{const visible=workspace.mode==='2d'&&!state.playing;bar.hidden=!visible;bar.style.display=visible?'flex':'none';const active=selected();toggle.disabled=!active;info.textContent=active?active.name:'Sélectionne un Tilemap';toggle.setAttribute('aria-pressed',String(editing));syncAtlas();};
  toggle.onclick=()=>{editing=!editing;toggle.textContent=editing?'Peinture : active':'Peindre';drawState()};
  const pointerWorld=e=>{
   const r=canvas.getBoundingClientRect();return toWorld({x:(e.clientX-r.left)*canvas.clientWidth/r.width,y:(e.clientY-r.top)*canvas.clientHeight/r.height});

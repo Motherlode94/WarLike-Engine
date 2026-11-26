@@ -65,3 +65,5 @@
 .wb2d-tile span,.wb2d-tile-definition span{display:inline-block;width:32px;height:32px;border:1px solid #8888}
 .wb2d-tile.active{outline:2px solid #6589bd}
 .wb2d-tile-definition{display:flex;align-items:center;gap:8px;padding:4px}
+
+#animationDockContent:not([hidden]){flex:1;min-height:0;overflow:auto;padding:5px}#animationDockContent[hidden]{display:none!important}#animationDockContent .warlike-animation-studio{position:static;inset:auto;width:100%;height:auto;max-height:none;min-width:0;box-sizing:border-box;box-shadow:none;border:0;transform:none;overflow:visible}#animationDockContent .warlike-animation-studio[hidden]{display:none!important}

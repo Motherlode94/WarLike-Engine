@@ -72,3 +72,15 @@ test('SpriteFrames grid supports ordered cells from multiple rows and retains a 
  entity.spriteAnimation2d.grid.sequence=[8];
  assert.equal(drawSpriteSheet2d(ctx,image,entity,0,true),false);
 });
+
+import {paintTileArea2d} from '../js/core/tilemap-2d.js';
+test('WB2D rectangle, line and connected fill use sparse serialized cells',()=>{
+ const entity=map();entity.tilemap2d.columns=5;entity.tilemap2d.rows=4;
+ assert.equal(paintTileArea2d(entity,{col:2,row:0},{col:2,row:3},'wall','line'),4);
+ assert.equal(paintTileArea2d(entity,{col:0,row:0},{col:0,row:0},'grass','fill'),8);
+ assert.equal(entity.tilemap2d.cells['3,0'],undefined);
+ assert.equal(paintTileArea2d(entity,{col:4,row:3},{col:3,row:2},'earth','rectangle'),4);
+ assert.equal(tilemapColliders2d([entity]).length,4);
+ assert.deepEqual(JSON.parse(JSON.stringify(entity)).tilemap2d.cells,entity.tilemap2d.cells);
+ assert.equal(paintTileArea2d(entity,{col:-1,row:0},{col:0,row:0},'wall','line'),0);
+});

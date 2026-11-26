@@ -60,3 +60,30 @@ export function renderTilemap2d(ctx,entity,{editor=false,showGrid=true}={}){
   ctx.stroke();ctx.restore();
  }
 }
+
+/** Bounded, sparse tile painting operations shared by editor tools. */
+export function paintTileArea2d(entity,from,to,kind,tool='rectangle'){
+ const map=entity?.tilemap2d;
+ if(!map||!Number.isInteger(map.columns)||!Number.isInteger(map.rows)||map.columns<1||map.rows<1||map.columns*map.rows>262144)return 0;
+ if(kind!=='erase'&&!Object.hasOwn(TILE_TYPES,kind))return 0;
+ if(!from||!to||![from.col,from.row,to.col,to.row].every(Number.isInteger))return 0;
+ const inside=(x,y)=>x>=0&&y>=0&&x<map.columns&&y<map.rows;
+ if(!inside(from.col,from.row)||!inside(to.col,to.row))return 0;
+ const size=tileSizeFor(map),ox=Number(entity.x)||0,oy=Number(entity.y)||0;
+ let changed=0;
+ const paint=(x,y)=>{if(paintTile2d(entity,ox+(x+.5)*size,oy+(y+.5)*size,kind))changed++;};
+ if(tool==='rectangle'){
+  for(let y=Math.min(from.row,to.row);y<=Math.max(from.row,to.row);y++)for(let x=Math.min(from.col,to.col);x<=Math.max(from.col,to.col);x++)paint(x,y);
+ }else if(tool==='line'){
+  let x=from.col,y=from.row;const dx=Math.abs(to.col-x),dy=-Math.abs(to.row-y),sx=x<to.col?1:-1,sy=y<to.row?1:-1;let error=dx+dy;
+  while(true){paint(x,y);if(x===to.col&&y===to.row)break;const e=2*error;if(e>=dy){error+=dy;x+=sx}if(e<=dx){error+=dx;y+=sy}}
+ }else if(tool==='fill'){
+  const target=map.cells?.[from.col+','+from.row]??null;
+  if(target===(kind==='erase'?null:kind))return 0;
+  const queue=[[from.col,from.row]],seen=new Set([from.col+','+from.row]);
+  for(let i=0;i<queue.length;i++){const [x,y]=queue[i];if((map.cells?.[x+','+y]??null)!==target)continue;paint(x,y);
+   for(const [nx,ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){const key=nx+','+ny;if(inside(nx,ny)&&!seen.has(key)){seen.add(key);queue.push([nx,ny]);}}
+  }
+ }
+ return changed;
+}

@@ -98,3 +98,9 @@ test('atlas collision flags survive JSON roundtrip and respect layer collision s
  const entity={id:9,x:0,y:0,tilemap2d:{tileSize:32,columns:4,rows:4,cells:{'0,0':'atlas:1','1,0':'atlas:2'},atlas:{columns:2,rows:2,solidTiles:[1]},layers:[{name:'Decor',collision:false,cells:{'2,0':'atlas:1'}}]}};
  const result=tilemapColliders2d([JSON.parse(JSON.stringify(entity))]);assert.equal(result.length,1);assert.equal(result[0].x,0);assert.equal(result[0].w,32);
 });
+
+test('Animator named SpriteFrames clip renders using state time without mutating authored selection',()=>{
+ const image={complete:true,naturalWidth:64,naturalHeight:16},calls=[],ctx={drawImage(...args){calls.push(args);}};
+ const entity={x:0,y:0,w:16,h:16,animation:'Run',_animatorFrame:{time:.25},spriteAnimation2d:{enabled:true,frames:4,fps:8,activeClip:'Idle',clips:[{name:'Idle',frames:4,fps:8,grid:{columns:4,rows:1,sequence:[0,1]}},{name:'Run',frames:4,fps:4,grid:{columns:4,rows:1,sequence:[2,3]}}]}};
+ assert.equal(drawSpriteSheet2d(ctx,image,entity,100,true),true);assert.equal(calls[0][1],48);assert.equal(entity.spriteAnimation2d.activeClip,'Idle');
+});

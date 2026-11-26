@@ -155,3 +155,14 @@ export function stampDistrict2d(map,origin,pattern,columns,rows,gap=1){
  if(origin.col<0||origin.row<0||origin.col+columns*pattern.width+(columns-1)*gap>map.columns||origin.row+rows*pattern.height+(rows-1)*gap>map.rows)return 0;
  let changed=0;for(let y=0;y<rows;y++)for(let x=0;x<columns;x++)changed+=stampTilePattern2d(map,{col:origin.col+x*(pattern.width+gap),row:origin.row+y*(pattern.height+gap)},pattern);return changed;
 }
+
+/** Deterministic value noise terrain, independent of existing authored layers. */
+export function generateTerrainLayer2d(map,{seed=1,water=.3,scale=8,landTile='grass',waterTile='water',shoreTile='earth'}={}){
+ if(!map||!Number.isInteger(map.columns)||!Number.isInteger(map.rows)||map.columns<1||map.rows<1||map.columns*map.rows>262144||!Number.isSafeInteger(seed)||!Number.isFinite(water)||water<0||water>1||!Number.isFinite(scale)||scale<1||scale>128)return null;
+ if([landTile,waterTile,shoreTile].some(k=>!Object.hasOwn(TILE_TYPES,k)&&!tileAtlasDefinition2d(map,k)))return null;
+ const hash=(x,y)=>{let h=(Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(seed,1274126177))|0;h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967295;};
+ const lerp=(a,b,t)=>a+(b-a)*t,smooth=t=>t*t*(3-2*t);
+ const noise=(x,y)=>{const a=Math.floor(x),b=Math.floor(y),u=smooth(x-a),v=smooth(y-b);return lerp(lerp(hash(a,b),hash(a+1,b),u),lerp(hash(a,b+1),hash(a+1,b+1),u),v);};
+ const cells={};for(let y=0;y<map.rows;y++)for(let x=0;x<map.columns;x++){const h=.75*noise(x/scale,y/scale)+.25*noise(x/scale*2+71,y/scale*2+19);cells[x+','+y]=h<water?waterTile:h<water+.07?shoreTile:landTile;}
+ return {name:'Terrain · '+seed,cells,visible:true,collision:false,generator:{seed,water,scale,landTile,waterTile,shoreTile}};
+}

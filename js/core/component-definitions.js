@@ -94,10 +94,12 @@ export const componentDependencies=Object.freeze({
  rigidbody2d:['joint2d'],
  collider3d:['rigidbody3d','joint3d','controller3d','groundVehiclePhysics','aircraftPhysics'],
  aircraftPhysics:['aircraftSystems','aircraftLandingGear'],
+ aircraftSystems:['aircraftLandingGear'],
+ vehicleController:['groundVehiclePhysics'],
  rigidbody3d:['joint3d','groundVehiclePhysics','aircraftPhysics']
 });
 export function componentRemovalBlockers(object,id){
- return (componentDependencies[id]||[]).filter(dependent=>object?.[dependent]!=null);
+ return (Object.hasOwn(componentDependencies,id)?componentDependencies[id]:[]).filter(dependent=>object?.[dependent]!=null);
 }
 export const componentChoices=mode=>[...webComponentDefinitions.filter(d=>!d.modes||d.modes.includes(mode)),...registeredComponentChoices(mode).filter(d=>!webComponentDefinitions.some(core=>core.id===d.id))];
 export function hasObjectComponent(object,id){return id==='sequence'?!!object.sequence:object[id]!=null}

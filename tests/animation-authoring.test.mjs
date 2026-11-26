@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {sampleClip,createClip,putAnimationKey,inspectAnimationStudio,AnimationPreview,animationEditorPreview,stepAnimationClip,resetAnimationClips,animationEventsBetween} from '../js/core/animation-clips.js';
+import {sampleClip,createClip,putAnimationKey,putAnimationPropertyKey,removeAnimationPropertyKey,inspectAnimationStudio,AnimationPreview,animationEditorPreview,stepAnimationClip,resetAnimationClips,animationEventsBetween} from '../js/core/animation-clips.js';
 import {defaultAnimatorGraph,inspectAnimatorGraph,stepAnimator,animatorPoseOptions,setAnimatorParameter,setAnimatorTrigger,playAnimatorState,resetAnimators} from '../js/core/animator-graph.js';
 import {stepEntityAnimations} from '../js/core/animation-runtime.js';
 import {canonicalScene,runtimeEntities} from '../js/core/scene-contract.js';
@@ -70,4 +70,28 @@ test('legacy scene import preserves authored clips and Animator settings',async(
  const {state}=await import('../js/core/state.js'),{importScene}=await import('../js/core/scene.js');
  const originalDocument=globalThis.document,backup={...state};const element=()=>({replaceChildren(){},append(){},classList:{toggle(){}}});globalThis.document={querySelector:element,createElement:element,dispatchEvent(){}};
  try{state.playing=false;const actor=authored();actor.animatorGraph=graph();await importScene({text:async()=>JSON.stringify({entities:[actor]})});assert.deepEqual(state.entities[0].animationStudio,actor.animationStudio);assert.deepEqual(state.entities[0].animatorGraph,actor.animatorGraph);}finally{Object.assign(state,backup);globalThis.document=originalDocument}
+});
+
+test('property tracks preserve simultaneous keys and sparse interpolation',()=>{
+ const clip=createClip();
+ putAnimationPropertyKey(clip,0,'x',10);
+ putAnimationPropertyKey(clip,0,'y',20,{easing:'step'});
+ putAnimationPropertyKey(clip,2,'x',30);
+ assert.deepEqual(sampleClip(clip,1),{x:20,y:20});
+ assert.equal(clip.keys.length,2);
+ assert.equal(clip.keys[0].easing,'linear');
+ assert.equal(removeAnimationPropertyKey(clip,0,'x'),true);
+ assert.equal(clip.keys[0].y,20);
+ assert.equal(removeAnimationPropertyKey(clip,0,'y'),true);
+ assert.equal(clip.keys.length,1);
+ assert.throws(()=>putAnimationPropertyKey(clip,0,'w',0),/invalide/);
+ assert.throws(()=>putAnimationPropertyKey(clip,3,'x',1),/hors/);
+});
+test('property keys preserve existing animation serialization and runtime',()=>{
+ const owner=authored(),clip=owner.animationStudio.clips[0];
+ putAnimationPropertyKey(clip,0,'rotation',0);
+ putAnimationPropertyKey(clip,1,'rotation',90);
+ const reopened=runtimeEntities(canonicalScene([owner]))[0];
+ assert.deepEqual(reopened.animationStudio,owner.animationStudio);
+ assert.equal(sampleClip(reopened.animationStudio.clips[0],.5).rotation,45);
 });

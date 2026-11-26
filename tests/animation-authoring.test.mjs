@@ -95,3 +95,5 @@ test('property keys preserve existing animation serialization and runtime',()=>{
  assert.deepEqual(reopened.animationStudio,owner.animationStudio);
  assert.equal(sampleClip(reopened.animationStudio.clips[0],.5).rotation,45);
 });
+
+test('custom Bezier interpolation preserves endpoints and serialized curve',()=>{const clip=createClip('Curve',1);clip.keys=[{time:0,x:0,easing:'bezier',bezier:[0,0,1,1]},{time:1,x:100}];near(sampleClip(clip,.25).x,25);assert.equal(sampleClip(clip,1).x,100);clip.keys[0].bezier=[.25,0,.75,0];assert.ok(sampleClip(JSON.parse(JSON.stringify(clip)),.5).x<20);});

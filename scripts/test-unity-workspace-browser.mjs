@@ -315,6 +315,31 @@ try{
   await page.screenshot({path:path.join(out,'e01-final-'+viewport.width+'x'+viewport.height+'.png')});
  }
  console.log('PASS: E01 splitter interaction and viewport round trip');
+ // E02.5: exercise the actual maximize and dock controls.
+ const inspector=page.locator('#inspectorPanel');
+ const inspectorToggle=page.locator('[data-dock-toggle="inspector"]');
+ await inspectorToggle.click();
+ await page.waitForFunction(()=>document.querySelector('#inspectorPanel').classList.contains('floating-panel'));
+ await inspector.locator('.dock-size-button').click();
+ await page.waitForFunction(()=>document.querySelector('#inspectorPanel').hasAttribute('data-window-maximized'));
+ await inspectorToggle.click();
+ await page.waitForFunction(()=>{const p=document.querySelector('#inspectorPanel');return !p.classList.contains('floating-panel')&&!p.hasAttribute('data-window-maximized');});
+ const customRoundTrip=await page.evaluate(async()=>{
+  const {saveCustomLayout,loadCustomLayout,applyLayoutPreset,toggleMaximizeScene}=await import('/js/ui/docking.js');
+  const center=document.querySelector('.center-stack');
+  center.style.setProperty('--project-height','240px');
+  if(!saveCustomLayout())throw Error('Custom layout save failed');
+  const snapshot=JSON.parse(localStorage.getItem('warlike.workspace.layout.custom.v1'));
+  if(!applyLayoutPreset('scene'))throw Error('Preset switch failed');
+  toggleMaximizeScene(true);
+  if(!loadCustomLayout())throw Error('Custom layout restore failed');
+  return {height:localStorage.getItem('warlike.projectHeight'),expected:snapshot.projectHeight,maximized:document.body.classList.contains('scene-maximized')};
+ });
+ assert.equal(customRoundTrip.height,String(customRoundTrip.expected),'Custom Project height is persisted on restore');
+ assert.equal(customRoundTrip.maximized,false,'Restoring a custom workspace exits Scene maximization');
+ await page.screenshot({path:path.join(out,'e02-custom-restored.png')});
+ console.log('PASS: E02 maximized redocking and custom workspace restore');
+
 
  console.log('PASS: Hub settings accessible and Unity-like dock geometry at 1440x900 + 1366x768');
 }finally{

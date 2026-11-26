@@ -1,6 +1,6 @@
 import {updateAffineEditorPose3d,updateEditorEntityHierarchy3d,gizmoAxis3d,snap3d} from './scene-graph-v2.js';
 import {rotationQuaternion3d} from './collider-3d.js';
-import {projectedAxisDrag3d,projectedAxisScale3d,projectedAxisRotation3d,alignSceneObjects3d,snapSelected3d} from './scene-editing-3d-tools.js';
+import {gizmoScaledDimension3d,projectedAxisDrag3d,projectedAxisScale3d,projectedAxisRotation3d,alignSceneObjects3d,snapSelected3d} from './scene-editing-3d-tools.js';
 import {cameraFrustumCorners3d} from './editor-camera-frustum-3d.js';
 import {sceneCameraView} from './scene-camera-3d.js';
 import {initializeEditableTerrain,applyTerrainBrush,terrainBrushModes,terrainLayers} from './gaia-terrain-sculpt.js';
@@ -501,7 +501,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
     else o.rotation=start.rotation+degrees;
    }else if(drag.mode==='scale'||drag.mode==='rect'){
     const factor=projectedAxisScale3d(drag.pivotScreen,drag.endScreen,dx,dy);
-    const scaled=value=>Math.max(4,Math.round(quant(value*factor/64)*64));
+    const scaled=value=>gizmoScaledDimension3d(value,factor,snapStep);
     if(drag.axis==='x')o.w=scaled(start.w);
     else if(drag.axis==='y')o.h=scaled(start.h);
     else o.depth3d=scaled(start.depth3d);

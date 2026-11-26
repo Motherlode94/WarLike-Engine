@@ -50,3 +50,11 @@ export function snapSelected3d(entities,ids,{step=.5}={}){
  }
  return changed;
 }
+
+export function gizmoScaledDimension3d(value,factor,snapStep=0){
+ if(!Number.isFinite(value)||value<=0||!Number.isFinite(factor)||factor<=0||factor===1)return value;
+ const scaled=value*factor;
+ if(!Number.isFinite(scaled))return value;
+ const step=Number.isFinite(snapStep)&&snapStep>0?snapStep*64:0;
+ return Math.max(4,step?Math.round(scaled/step)*step:scaled);
+}

@@ -41,3 +41,14 @@ test('race clock and RTS unit HUD are connected to both render paths',()=>{
  const source=readFileSync(new URL('../js/core/logic-sequences.js',import.meta.url),'utf8');
  assert.match(source,/globals\.raceElapsed/);
 });
+
+import {projectedAxisDrag3d} from '../js/core/scene-editing-3d-tools.js';
+test('E04.1 projected translation follows the visible axis without invalid jumps',()=>{
+ const origin={x:100,y:100},right={x:150,y:100},left={x:50,y:100};
+ assert.equal(projectedAxisDrag3d(origin,right,25,0,2),1);
+ assert.equal(projectedAxisDrag3d(origin,left,25,0,2),-1);
+ assert.equal(projectedAxisDrag3d(origin,right,0,25,2),0);
+ assert.equal(projectedAxisDrag3d(origin,{x:101,y:100},100,0),0);
+ assert.equal(projectedAxisDrag3d(origin,right,25,0,-2),0);
+ assert.equal(projectedAxisDrag3d(origin,{x:Number.MAX_VALUE,y:100},Number.MAX_VALUE,0),0);
+});

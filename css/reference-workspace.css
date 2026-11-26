@@ -16,7 +16,7 @@
 @media(min-width:1101px){
 body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build){--warlike-toolbar-height:0px!important}
 body.reference-engine.warlike-toolbar-expanded{--warlike-toolbar-height:42px!important}
-body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .studio-menubar{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;grid-template-rows:23px 33px!important;height:56px!important;min-height:56px!important;padding:0 8px!important;gap:0 8px!important;background:var(--warlike-palette-menu,#303136)!important}
+body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .studio-menubar{background:var(--warlike-palette-menu,#303136)!important}
 body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .studio-menubar>.studio-menus{grid-column:1 / 4!important;grid-row:1!important;display:flex!important;gap:0!important;padding-right:145px;min-width:0}
 body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .studio-menus>details>summary{font-size:11px!important;min-height:23px!important;padding:3px 9px!important;border:0!important;border-radius:0!important;white-space:nowrap}
 body.reference-engine:not(.hub-open):not(.compact-workspace):not(.warlike-game-build) .studio-identity{grid-column:3;grid-row:1;justify-self:end;gap:5px;pointer-events:none}.reference-engine .studio-identity small{display:none}.reference-engine .studio-identity strong{font-size:9px;letter-spacing:.09em}.reference-engine .studio-mark{width:17px;height:17px;font-size:12px;border-radius:2px}

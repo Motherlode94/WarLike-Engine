@@ -8,7 +8,9 @@ permissions:
   contents: read
 jobs:
   runtime-acceptance:
-    runs-on: ubuntu-24.04
+    # Ubuntu 22.04 avoids the 24.04 AppArmor user-namespace restrictions.
+    # Keep Bubblewrap's network, user and PID namespaces mandatory.
+    runs-on: ubuntu-22.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +23,9 @@ jobs:
       - run: npm install --no-package-lock
       - name: Install native OS isolation tools
         run: sudo apt-get update && sudo apt-get install -y bubblewrap util-linux
+      - name: Verify native isolation before runtime acceptance
+        run: |
+          bwrap --unshare-all --unshare-user --disable-userns --new-session --die-with-parent --cap-drop ALL --ro-bind /usr /usr --ro-bind /bin /bin --ro-bind /lib /lib --ro-bind /lib64 /lib64 --proc /proc --dev /dev -- /bin/true
       - run: dotnet build csharp/WarLike.Bridge --configuration Release
       - run: npx playwright install --with-deps chromium
       - name: Real debugger, shared C# Play and isolated exports in Chromium

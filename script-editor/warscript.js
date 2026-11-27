@@ -328,7 +328,15 @@ function lowerGDScript(ast){
   const name=node.parts.join('.'),mapped=!methods.has(name)&&Object.hasOwn(builtins,name)?builtins[name]:name;
   return mapped+'('+node.args.map(a=>expr(a,scope,delta)).join(', ')+')';
  }
- function infer(n){if(n.kind==='literal'){if(n.literalType==='bool')return 'bool';if(n.literalType==='string')return 'String';if(n.literalType==='number'&&/^\d+$/.test(n.value))return 'int';}if(n.kind==='unary'&&n.op==='-'&&n.value.kind==='literal'&&n.value.literalType==='number'&&/^\d+$/.test(n.value.value))return 'int';if((n.kind==='call'||n.kind==='path')&&['Vector2','Vector3'].includes(n.parts[0]))return n.parts[0];return 'float';}
+ function infer(n){if(n.kind==='binary'){
+  const left=infer(n.left),right=infer(n.right),vector=t=>t==='Vector2'||t==='Vector3';
+  if(['==','!=','<','>','<=','>=','and','or','&&','||'].includes(n.op))return 'bool';
+  if(n.op==='+'&&(left==='String'||right==='String'))return 'String';
+  if(['+','-'].includes(n.op)&&vector(left)&&vector(right))return left==='Vector3'||right==='Vector3'?'Vector3':'Vector2';
+  if(['*','/'].includes(n.op)&&vector(left)&&!vector(right))return left;
+  if(n.op==='*'&&vector(right)&&!vector(left))return right;
+  return 'float';
+ }if(n.kind==='unary'&&['not','!'].includes(n.op))return 'bool';if(n.kind==='literal'){if(n.literalType==='bool')return 'bool';if(n.literalType==='string')return 'String';if(n.literalType==='number'&&/^\d+$/.test(n.value))return 'int';}if(n.kind==='unary'&&n.op==='-'&&n.value.kind==='literal'&&n.value.literalType==='number'&&/^\d+$/.test(n.value.value))return 'int';if((n.kind==='call'||n.kind==='path')&&['Vector2','Vector3'].includes(n.parts[0]))return n.parts[0];return 'float';}
  function block(body,scope,delta){for(const n of body){const e=v=>expr(v,scope,delta),t=n.token;
   if(n.kind==='var'){emit(type(n.declared||'var')+' '+n.name+' = '+e(n.value)+';',t);scope.add(n.name);}
   else if(n.kind==='assign'){emit(path(n.left,scope,delta)+' '+n.op+' '+e(n.value)+';',t);}

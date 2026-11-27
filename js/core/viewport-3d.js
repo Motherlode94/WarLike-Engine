@@ -359,6 +359,7 @@ const assetColor=o=>{
  c==='Characters'?[.23,.82,.66,1]:c==='Monsters'?[.78,.42,.46,1]:
  c==='Weapons'?[.9,.72,.42,1]:c==='VFX'?[.58,.43,.95,1]:rgba(o.color);
 };
+import {playMouseDown,playMouseUp,clearPlayMouse} from './script-mouse-input.js';
 export function init3d(canvas,host,buttons){
  const aircraftHud=document.createElement('div');
  aircraftHud.id='warlikeAircraft3dHud';aircraftHud.hidden=true;
@@ -663,13 +664,13 @@ export function init3d(canvas,host,buttons){
   if(hit){player.animation='attack';emitFx('electric',heroCenter(hit,'3d'),{mode:'3d',color:'#ffd899',count:16,ring:true,lifetime:.3,scale:.7})}
   return true;
  };
- const releasePlayMouse=e=>{if(!e||e.button===0)fpsFiring=false;if(!e||e.button===2)fpsAiming=false;};canvas.addEventListener('pointerup',releasePlayMouse);canvas.addEventListener('pointercancel',()=>releasePlayMouse());window.addEventListener('pointerup',releasePlayMouse);window.addEventListener('blur',()=>releasePlayMouse());
+ const releasePlayMouse=e=>{if(e)playMouseUp(e.button);else clearPlayMouse();if(!e||e.button===0)fpsFiring=false;if(!e||e.button===2)fpsAiming=false;};canvas.addEventListener('pointerup',releasePlayMouse);canvas.addEventListener('pointercancel',()=>releasePlayMouse());window.addEventListener('pointerup',releasePlayMouse);window.addEventListener('blur',()=>releasePlayMouse());
  const playerTarget=()=>{const vehicle=currentVehicle3d(state.entities),p=vehicle||playableActor(state.entities);return p?cameraTargetFor(objectBounds3d(p),cameraRigFor(p,!!vehicle)):null};
 
  let physicsSession=null,physicsGeneration=0,physicsAccumulator=0;
  const stopRapier=()=>{physicsGeneration++;disposeRapierScene(physicsSession);physicsSession=null;physicsAccumulator=0;};
  const enterPlay=()=>{
-  resetBattlefield(state.entities);fpsAiming=false;fpsFiring=false;
+  resetBattlefield(state.entities);clearPlayMouse();fpsAiming=false;fpsFiring=false;
   view3d.drag=null;boomDistance=null;cameraHandoffRemaining=0;lastCameraActor=null;lastCameraScene=null;resetDriving3d();aircraftViewMode=null;aircraftViewFor=null;aircraftCameraKeyHeld=false;
   const p=playableActor(state.entities),pt=playerTarget(),rig=cameraRigFor(p);view3d.followPlayer=!!pt&&!activeSceneCamera(state.entities);if(pt){view3d.target=pt.slice();view3d.radius=rig.distance;view3d.yaw=Math.PI-(Number(p.rotation)||0)*Math.PI/180;view3d.pitch=rig.mode==='firstPerson'?0:rig.mode==='orbit'?.62:.18}
   if(companyController(state.entities)){view3d.followPlayer=false;view3d.target=[14,0,14];view3d.radius=32;view3d.pitch=.92;view3d.yaw=-.55;return}
@@ -821,6 +822,7 @@ export function init3d(canvas,host,buttons){
    if((e.button===0||e.button===2)&&shouldMouseLook()&&document.pointerLockElement!==canvas&&typeof canvas.requestPointerLock==='function'){
     try{const pending=canvas.requestPointerLock();pending?.catch?.(()=>{});}catch{/* Browser denied capture; keep free-look. */}
    }
+   playMouseDown(e.button);
    if(isFps()){if(e.button===0){e.preventDefault();fpsFiring=true;shootFps()}else if(e.button===2){e.preventDefault();fpsAiming=true}return}
    if(e.button===0){e.preventDefault();fpsFiring=true;fireThirdPerson();return}if(e.button===2){e.preventDefault();fpsAiming=true;return}
    return;

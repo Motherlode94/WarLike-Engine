@@ -35,6 +35,7 @@ export const conditionLabels={dataBoolean:'Résultat booléen du graphe',invento
 export const eventLabels={start:'Au démarrage',interact:'À l’interaction',enter:'À l’entrée dans la zone',exit:'À la sortie de la zone',keyDown:'À l’appui d’une touche',interval:'À intervalle régulier',signal:'À la réception d’un signal',healthChanged:'Quand la santé change',death:'À la mort de l’objet',variableChanged:'Quand une variable change',objectiveCompleted:'Quand un objectif est terminé',timerExpired:'Quand le temps est écoulé',triggerEnter2d:'Trigger 2D · entrée',triggerStay2d:'Trigger 2D · maintien',triggerExit2d:'Trigger 2D · sortie',collisionEnter2d:'Collision 2D · contact',collisionStay2d:'Collision 2D · maintien',collisionExit2d:'Collision 2D · séparation'};
 Object.assign(eventLabels,{"damageReceived":"Dégâts reçus","healthRestored":"Santé restaurée","revived":"Résurrection"});
 Object.assign(eventLabels,{"aiStateChanged":"État IA modifié","aiTargetAcquired":"Cible IA acquise","aiTargetLost":"Cible IA perdue"});
+Object.assign(eventLabels,{"playerLanded":"Atterrissage","playerAirborne":"Quitte le sol"});
 const words=value=>String(value).replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());
 export const labelFor=(type,kind='action')=>(kind==='event'?eventLabels:kind==='condition'?conditionLabels:instructionLabels)[type]||words(type);
 export const actionGroup=type=>Object.entries(groups).find(([,types])=>types.includes(type))?.[0]||(/Vehicle|Fuel|Gear/.test(type)?'Véhicules':/Weapon/.test(type)?'Armes':'Gameplay avancé');

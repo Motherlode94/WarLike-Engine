@@ -26,6 +26,7 @@ import {healthOf,sameFaction,isHostileTo} from './ai-perception.js';
 // WarLike Sequences — no-code event, branch, instruction and signal runtime.
 // Independent of the legacy 2D Visual Logic component; works in either workspace.
 export const sequenceEvents=['start','interact','enter','exit','keyDown','interval','signal','healthChanged','death','variableChanged','objectiveCompleted','timerExpired','triggerEnter2d','triggerStay2d','triggerExit2d','collisionEnter2d','collisionStay2d','collisionExit2d'];
+sequenceEvents.push("damageReceived","healthRestored","revived");
 export const sequenceConditions=['dataBoolean','inventoryHasRoom','questItemAtLeast','survivalToolUsable','survivalToolDurabilityBelow','survivalMilestone','survivalPartyDefeated','survivalNeedBelow','survivalBuilt','survivalNightsAtLeast','animatorStateIs','heroEnergyAbove','heroPowerReady','heroFlightActive','rpgLevelAtLeast','heroReputationAtLeast','simulationPowered','simulationRescued','always','variable','localVariable','distanceLess','distanceGreater','objectEnabled','healthBelow','healthAbove','hasTag','playerInVehicle','playerOnFoot','randomChance','inventoryHas','inventoryMissing','tagMissing','speedAbove','speedBelow','distanceToPointLess','distanceToPointGreater','horrorThreatAbove','horrorFearAbove','gameTimeAbove','objectType','entityExists','aiStateIs','aiAwarenessAbove','aiCanSeeTarget','aiHasTarget','sameFaction','isHostile','weaponAmmoAbove','weaponReady','vehicleDriveable','vehicleFuelBelow','vehicleHealthBelow','vehicleHasDriver','objectiveActive','objectiveComplete','timerRunning','timerExpired','gamePhaseIs','saveExists'];
 export const sequenceInstructions=['callFunction','returnFunction','consumeQuestItem','repairSurvivalTool','survivalInteract','craftSurvivalItem','consumeSurvivalItem','playAnimatorState','setAnimatorParameter','emitOwnedFx','castHeroPower','restoreHeroEnergy','giveExperience','upgradeHeroSkill','emitFx','repairSimulationNode','rtsOrder','message','setVariable','addVariable','setLocal','addLocal','wait','moveObject','teleportObject','setColor','enableObject','setHealth','addHealth','setAnimation','setBehavior','emitSignal','destroyObject','giveItem','removeItem','equipItem','damageObject','healObject','setTag','removeTag','setSpeed','addSpeed','setPosition','setRotation','setScale','setVisibility','setCollision','setObjective','completeObjective','setCheckpoint','setTeam','setScore','addScore','setFuel','addFuel','setHunger','addHunger','setThirst','addThirst','setStamina','addStamina','setFear','setThreat','setLight','setAudio','setVehicleState','setAiState','setAiFaction','setAiTarget','setAiDetection','setAiAttackRange','setAiPatrolPoint','setWeaponAmmo','addWeaponAmmo','reloadWeapon','setWeaponDamage','fireVehicleWeapon','repairVehicle','refuelVehicle','setVehicleEngine','setVehicleGear','setVehicleWeapon','clearAiTarget','setAiEnabled','setAiLineOfSight','setAiFieldOfView','setAiMemory','setAiSearchDuration','branch','addObjectiveProgress','startTimer','stopTimer','saveGame','loadGame','restoreCheckpoint','loadScene','winGame','loseGame','pauseGame','resumeGame','showDialogue','closeDialogue','spawnObject'];
 export const newSequence=()=>({enabled:true,event:'interact',key:'e',radius:96,interval:2,signal:'',once:false,conditions:[],instructions:[{type:'message',value:'Bienvenue !'}]});
@@ -43,6 +44,15 @@ export function chooseSequenceDialogue(index,options={}){if(!gameIsRunning())ret
 export function sequenceEntries(owner){
  const entries=owner.sequence&&typeof owner.sequence==='object'?[{key:owner.id,sequence:owner.sequence}]:[];
  if(Array.isArray(owner.sequences))owner.sequences.slice(0,32).forEach((sequence,i)=>{if(sequence&&typeof sequence==='object')entries.push({key:owner.id+':extra:'+i,sequence})});
+ // A component owns a serializable copy of an existing WarNode sequence.
+ // Stable instance IDs keep pending jobs separate when attachments are reordered.
+ const seen=new Set();
+ if(Array.isArray(owner.blueprintComponents))for(const component of owner.blueprintComponents.slice(0,32)){
+  if(!component||typeof component.id!=='string'||!/^[A-Za-z0-9_-]{1,64}$/.test(component.id)||seen.has(component.id))continue;
+  seen.add(component.id);
+  if(component.enabled===false||!component.sequence||typeof component.sequence!=='object')continue;
+  entries.push({key:owner.id+':blueprint:'+component.id,sequence:component.sequence});
+ }
  return entries;
 }
 const jobSequence=(owner,job)=>sequenceEntries(owner).find(entry=>entry.key===(job.sequenceKey??owner.id))?.sequence;
@@ -368,6 +378,7 @@ export function updateSequences(dt,ctx){
   }
   case 'signal':trigger=signals.includes(String(s.signal||''));if(trigger&&signalActors.has(String(s.signal||'')))eventPlayer=objects.find(p=>p.id===signalActors.get(String(s.signal||'')))||player;break;
   case 'healthChanged':case 'death':{const hp=healthOf(o),previous=rt.observed.get(sequenceKey);trigger=previous!==undefined&&(s.event==='death'?previous>0&&hp<=0:previous!==hp);rt.observed.set(sequenceKey,hp);break}
+  case 'damageReceived':case 'healthRestored':case 'revived':{const hp=healthOf(o),previous=rt.observed.get(sequenceKey);trigger=previous!==undefined&&(s.event==='damageReceived'?hp<previous:s.event==='healthRestored'?hp>previous:previous<=0&&hp>0);rt.observed.set(sequenceKey,hp);break}
   case 'variableChanged':{const value=rt.globals[s.variable||'score'],previous=rt.observed.get(sequenceKey);trigger=rt.observed.has(sequenceKey)&&previous!==value;rt.observed.set(sequenceKey,value);break}
   case 'objectiveCompleted':trigger=signals.includes('objective:'+String(s.signal||s.variable||''));break;
   case 'timerExpired':trigger=signals.includes('timer:'+String(s.signal||s.variable||''));break;

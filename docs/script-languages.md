@@ -74,3 +74,7 @@ WarScript et JS/TS utilisent le même cycle d’activation. `Awake` s’exécute
 Les détails des API et de leurs limites figurent dans [WarScript](warscript.md) et [C# MonoBehaviour natif](../csharp/README.md). L’objectif est un workflow familier ; le runtime ne distribue pas `UnityEngine` et ne rend pas automatiquement compatibles tous les packages Unity.
 
 Voir aussi : [Animation Studio et API Animator](animation-studio.md).
+
+## GDScript — profil expérimental v0.1
+
+Ouvrir ou créer un fichier `.gd` depuis Script Studio lié à un objet, vérifier puis enregistrer. Le source original est conservé ; un frontend restreint compile vers l’interpréteur borné WarScript, jamais vers du JavaScript arbitraire. `extends Node`, `Node2D`, `Node3D`, champs `@export var` initialisés, types scalaires et Vector3, callbacks `_ready`, `_process(delta)`, `_physics_process(delta)`, `_enter_tree`, `_exit_tree`, affectations, `if`, `print`, `rotate_y` et `rotate` (radians), et quelques mathématiques. Les champs exportés sont inspectables. Les hooks suivent le cycle de vie WarLike, pas la sémantique complète de l’arbre Godot. `Move`, `Set`, `Signal` sont des extensions WarLike. Pas de SceneTree, signaux Godot, `@onready`, classes personnalisées, ressources `.tscn`, `Input` Godot, héritage complet, tableaux ou API de nœuds. Les constructions non prises en charge doivent produire un diagnostic. La coloration utilise Python comme approximation. Certification navigateur/export à poursuivre.

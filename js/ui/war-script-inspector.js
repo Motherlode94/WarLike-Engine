@@ -1,14 +1,15 @@
 import {compileWarScript,createWarScriptInstance,warScriptBuiltin,warScriptValue} from '../../script-editor/warscript.js';
-import {warScriptSource} from '../core/war-script-runtime.js';
+import {compileAttachedScript} from '../core/war-script-runtime.js';
 import {gameProject} from '../core/game-project.js';
 import {state,notify} from '../core/state.js';
 import {record} from '../core/history.js';
 export function renderWarScriptInspector(root,entity,{component}){
  for(const [index,script] of (entity.warScripts||[]).entries()){
-  component(root,'WarScript · '+script.name,body=>{
-   const info=document.createElement('p');info.textContent='.wls · Play Web / C# local · export Web';body.append(info);
-   const open=document.createElement('button');open.type='button';open.textContent='Modifier le WarScript';open.disabled=state.playing;open.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:script-open',{detail:{language:'warscript',entityId:entity.id,scriptId:script.scriptId}}));body.append(open);
-   const program=compileWarScript(warScriptSource(script,gameProject));
+  const gd=/\.gd$/i.test(script.name||'');
+  component(root,(gd?'GDScript':'WarScript')+' · '+script.name,body=>{
+   const info=document.createElement('p');info.textContent=gd?'.gd · compatibilité v0.1 · Play Web / export Web':'.wls · Play Web / C# local · export Web';body.append(info);
+   const open=document.createElement('button');open.type='button';open.textContent=gd?'Modifier le GDScript':'Modifier le WarScript';open.disabled=state.playing;open.onclick=()=>document.dispatchEvent(new CustomEvent('warlike:script-open',{detail:{language:gd?'gdscript':'warscript',entityId:entity.id,scriptId:script.scriptId}}));body.append(open);
+   const program=compileAttachedScript(script,gameProject);
    if(!program.ok){const error=document.createElement('p');error.textContent=program.diagnostics.map(d=>d.line+':'+d.column+' · '+d.message).join('\n');error.className='inspector-script-error';body.append(error);return}
    let defaults;try{defaults=createWarScriptInstance(program,{call:warScriptBuiltin,read(){throw Error('Valeur initiale inconnue.')}}).fields}catch(error){const p=document.createElement('p');p.textContent=error.message;body.append(p);return}
    for(const field of program.fields.filter(f=>f.public)){

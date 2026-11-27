@@ -1,7 +1,7 @@
 import {nativeBridgeRequest,setNativeBridgeToken} from '../js/core/native-bridge-client.js';
 import {setupWvcBridge} from './wvc-bridge.js';
 import {authorizeScripts} from '../js/core/script-trust.js';
-import {compileWarScript,runWarScriptPreview} from './warscript.js';
+import {compileGDScript,compileWarScript,runWarScriptPreview} from './warscript.js';
 import {convertWarScriptToCSharp} from './warscript-to-csharp.js';
 import {ScriptDocument,MAX_SOURCE,newId,languageFor,templates,templateFor,readLinkedFile,saveLinkedFile} from './core.js';
 
@@ -25,14 +25,14 @@ function tabs(){
  $('tabs').replaceChildren();$('fileList').replaceChildren();
  for(const d of docs.values()){
   const row=document.createElement('button');row.className='file-row'+(d.id===activeId?' active':'');row.title=d.name;row.onclick=()=>activate(d.id);
-  const icon=document.createElement('span');icon.className='file-icon '+d.language;icon.textContent={javascript:'JS',typescript:'TS',csharp:'C#',warscript:'W#',python:'PY',cpp:'C++',json:'{}'}[d.language]||'▤';
+  const icon=document.createElement('span');icon.className='file-icon '+d.language;icon.textContent={javascript:'JS',typescript:'TS',csharp:'C#',warscript:'W#',gdscript:'GD',python:'PY',cpp:'C++',json:'{}'}[d.language]||'▤';
   const name=document.createElement('span');name.className='file-name';name.textContent=d.name;row.append(icon,name);if(d.dirty){const dot=document.createElement('span');dot.className='dirty-dot';dot.textContent='●';row.append(dot)}$('fileList').append(row);
   const tab=document.createElement('button');tab.className='tab'+(d.id===activeId?' active':'');tab.title=d.name;tab.onclick=()=>activate(d.id);tab.append(icon.cloneNode(true),document.createTextNode(labelName(d)));
   const close=document.createElement('span');close.className='close-tab';close.textContent='×';close.setAttribute('role','button');close.tabIndex=0;close.setAttribute('aria-label','Fermer '+d.name);const action=e=>{e.stopPropagation();closeDocument(d)};close.onclick=action;close.onkeydown=e=>{if(e.key==='Enter')action(e)};tab.append(close);$('tabs').append(tab);
  }
  const d=current();$('saveFile').disabled=!d||d.saving;$('saveAs').disabled=!d;$('downloadFile').disabled=!d;$('refreshFile').disabled=!d?.handle;
  $('breadcrumb').textContent='Scripts  ›  '+(d?.name||'');$('language').value=d?.language||'plaintext';
- $('executionHint').textContent=d?.language==='warscript'?'WarScript · exécution dans Play et l’export Web':d?.language==='csharp'?'C# natif · compilation .NET locale':d?.language==='typescript'?'TypeScript → JavaScript · Play et export Web':d?.language==='javascript'?'JavaScript natif · Play et export Web':'Fichier source · exécution selon son runtime';
+ $('executionHint').textContent=d?.language==='gdscript'?'GDScript v0.1 · Play Web / export Web':d?.language==='warscript'?'WarScript · exécution dans Play et l’export Web':d?.language==='csharp'?'C# natif · compilation .NET locale':d?.language==='typescript'?'TypeScript → JavaScript · Play et export Web':d?.language==='javascript'?'JavaScript natif · Play et export Web':'Fichier source · exécution selon son runtime';
  $('conflict').hidden=d?.external===null||!d;
  $('fileLinkState').textContent=d?.handle?d.handle.name+' · suivi des sauvegardes externes actif':d?'Source conservée dans cet espace. « Enregistrer sous » permet de lier un fichier sur ton PC.':'Ouvre un fichier pour suivre ses sauvegardes externes.';
  document.title=(d?.dirty?'● ':'')+(d?.name||'Scripts')+' — WarLike Script Studio';
@@ -41,7 +41,7 @@ function fallbackUpdate(){if(editor)return;const d=current(),text=d?.text||'';$(
 function changed(text){if(updating||!current())return;try{current().edit(text);delete current().nativeDiagnostics;tabs();fallbackUpdate();updateProblems();preserve()}catch(error){status(error.message,true)}}
 function ensureModel(doc){
  if(!monaco)return null;
- const editorLanguage=doc.language==='warscript'?'csharp':doc.language;let model=models.get(doc.id);if(!model){model=monaco.editor.createModel(doc.text,editorLanguage,monaco.Uri.parse('file:///warlike/'+encodeURIComponent(doc.id)+'/'+encodeURIComponent(doc.name)));model.onDidChangeContent(()=>{if(current()?.id===doc.id)changed(model.getValue());else{doc.edit(model.getValue());preserve();tabs()}});models.set(doc.id,model)}
+ const editorLanguage=doc.language==='warscript'?'csharp':doc.language==='gdscript'?'python':doc.language;let model=models.get(doc.id);if(!model){model=monaco.editor.createModel(doc.text,editorLanguage,monaco.Uri.parse('file:///warlike/'+encodeURIComponent(doc.id)+'/'+encodeURIComponent(doc.name)));model.onDidChangeContent(()=>{if(current()?.id===doc.id)changed(model.getValue());else{doc.edit(model.getValue());preserve();tabs()}});models.set(doc.id,model)}
  if(model.getLanguageId()!==editorLanguage)monaco.editor.setModelLanguage(model,editorLanguage);
  return model;
 }
@@ -90,7 +90,7 @@ async function save(){
 async function openFile(){
  try{
   if(typeof window.showOpenFilePicker!=='function'){ $('fileImport').click();return }
-  const [handle]=await window.showOpenFilePicker({multiple:false,types:[{description:'Scripts et code source',accept:{'text/plain':['.cs','.js','.ts','.py','.cpp','.c','.h','.json','.html','.css','.md','.txt']}}]});
+  const [handle]=await window.showOpenFilePicker({multiple:false,types:[{description:'Scripts et code source',accept:{'text/plain':['.gd','.wls','.cs','.js','.ts','.py','.cpp','.c','.h','.json','.html','.css','.md','.txt']}}]});
   for(const d of docs.values())if(d.handle&&await d.handle.isSameEntry(handle)){activate(d.id);await refresh(d);return}
   const file=await handle.getFile();if(file.size>MAX_SOURCE*4)throw Error('Fichier limité à 1 Mo de texte.');
   const d=addRecord({id:newId(),name:file.name,source:await file.text(),revision:0});d.handle=handle;tabs();publishSave(d,d.text);status('Fichier lié · les sauvegardes externes seront relues automatiquement.');
@@ -122,7 +122,7 @@ $('openFile').onclick=openFile;$('saveFile').onclick=save;$('saveAs').onclick=sa
 for(const [id,choice] of [['keepLocal','keep'],['loadExternal','reload']])$(id).onclick=()=>{const d=current();if(!d)return;d.resolve(choice);if(d.pendingRevision!==undefined){d.revision=d.pendingRevision;delete d.pendingRevision}showText();preserve();status(choice==='keep'?'Modifications conservées · Ctrl S pour les enregistrer.':'Version du fichier chargée.')};
 $('source').addEventListener('input',()=>changed($('source').value));$('source').addEventListener('scroll',()=>{$('lineNumbers').scrollTop=$('source').scrollTop});$('source').addEventListener('keyup',fallbackUpdate);$('source').addEventListener('click',fallbackUpdate);
 $('source').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const area=e.target;area.setRangeText('    ',area.selectionStart,area.selectionEnd,'end');changed(area.value)}});
-$('language').onchange=()=>{const d=current();if(!d)return;d.language=$('language').value;if(monaco&&models.has(d.id))monaco.editor.setModelLanguage(models.get(d.id),d.language==='warscript'?'csharp':d.language);updateProblems();status('Coloration : '+d.language+' · l’extension du fichier détermine son exécution')};
+$('language').onchange=()=>{const d=current();if(!d)return;d.language=$('language').value;if(monaco&&models.has(d.id))monaco.editor.setModelLanguage(models.get(d.id),d.language==='warscript'?'csharp':d.language==='gdscript'?'python':d.language);updateProblems();status('Coloration : '+d.language+' · l’extension du fichier détermine son exécution')};
 $('wordWrap').onchange=()=>{editor?.updateOptions({wordWrap:$('wordWrap').checked?'on':'off'});$('source').wrap=$('wordWrap').checked?'soft':'off'};
 $('minimap').onchange=()=>editor?.updateOptions({minimap:{enabled:$('minimap').checked}});
 $('explorerButton').onclick=()=>document.body.classList.toggle('sidebar-hidden');$('settingsButton').onclick=()=>{editorFont=editorFont===13?16:13;editor?.updateOptions({fontSize:editorFont});$('source').style.fontSize=editorFont+'px'};
@@ -138,10 +138,10 @@ window.addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey))return;const ke
 window.addEventListener('beforeunload',e=>{preserve();if([...docs.values()].some(d=>d.dirty)){e.preventDefault();e.returnValue=''}});
 function updateProblems(){
  if(checkingProblems||!current())return;checkingProblems=true;
- try{const d=current(),model=models.get(activeId),program=d.language==='warscript'?compileWarScript(d.text):null;
+ try{const d=current(),model=models.get(activeId),program=d.language==='gdscript'?compileGDScript(d.text):d.language==='warscript'?compileWarScript(d.text):null;
  if(monaco&&model)monaco.editor.setModelMarkers(model,'warscript',(program?.diagnostics||d.nativeDiagnostics||[]).map(m=>({severity:m.severity==='warning'?monaco.MarkerSeverity.Warning:monaco.MarkerSeverity.Error,startLineNumber:m.line,startColumn:m.column,endLineNumber:m.line,endColumn:m.column+1,message:m.message})));
  const markers=d.language==='csharp'&&d.nativeDiagnostics?d.nativeDiagnostics.map(m=>({startLineNumber:m.line,startColumn:m.column,message:m.message})):program?program.diagnostics.map(m=>({startLineNumber:m.line,startColumn:m.column,message:m.message})):monaco&&model?monaco.editor.getModelMarkers({resource:model.uri}).filter(m=>m.severity>=monaco.MarkerSeverity.Warning):[];
- $('problemCount').textContent=markers.length;$('problems').replaceChildren();if(!markers.length)$('problems').textContent=d.language==='csharp'&&d.nativeDiagnostics?'✓ Compilation C# native réussie · exécuté dans le bridge .NET local.':program?'✓ WarScript valide · '+program.fields.filter(f=>f.public).length+' champ(s) exposé(s) · exécution dans Play et le jeu exporté.':['javascript','typescript','json','css','html'].includes(d.language)?'Aucun problème détecté.':'Coloration disponible · compilation de ce langage dans son environnement dédié.';
+ $('problemCount').textContent=markers.length;$('problems').replaceChildren();if(!markers.length)$('problems').textContent=d.language==='csharp'&&d.nativeDiagnostics?'✓ Compilation C# native réussie · exécuté dans le bridge .NET local.':program?'✓ '+(d.language==='gdscript'?'GDScript compatible':'WarScript valide')+' · '+program.fields.filter(f=>f.public).length+' champ(s) exposé(s) · exécution dans Play et le jeu exporté.':['javascript','typescript','json','css','html'].includes(d.language)?'Aucun problème détecté.':'Coloration disponible · compilation de ce langage dans son environnement dédié.';
  for(const m of markers.slice(0,60)){const row=document.createElement('button');row.className='problem-row';row.textContent=d.name+':'+m.startLineNumber+':'+m.startColumn+'  '+m.message;row.onclick=()=>{if(editor){editor.setPosition({lineNumber:m.startLineNumber,column:m.startColumn});editor.revealLineInCenter(m.startLineNumber);editor.focus()}else{$('source').focus();const offset=d.text.split('\n').slice(0,m.startLineNumber-1).reduce((sum,line)=>sum+line.length+1,0)+m.startColumn-1;$('source').setSelectionRange(offset,offset+1)}};$('problems').append(row)}
  }finally{checkingProblems=false}
 }
@@ -237,7 +237,7 @@ $('checkScript').onclick=async()=>{
  const d=current();if(!d)return;
  if(d.language==='typescript'){try{const ok=await compileTypeScript(d);$('problemsTab').click();status(ok?'✓ TypeScript compilé en JavaScript · Ctrl+S pour actualiser le moteur.':'Corrige les erreurs TypeScript avant Play.',!ok)}catch(error){status(error.message,true)}return}
  if(d.language==='javascript'){updateProblems();status('JavaScript exécuté comme module natif au lancement de Play.');return}
- if(d.language==='warscript'){updateProblems();$('problemsTab').click();status('Vérification WarScript terminée.');return}
+ if(['warscript','gdscript'].includes(d.language)){updateProblems();$('problemsTab').click();status('Vérification du script terminée.');return}
  if(d.language!=='csharp'){status('Choisis .wls pour WarScript ou .cs pour C# natif.');return}
  $('checkScript').disabled=true;status('Compilation C# dans le bridge .NET local…');
  try{const scripts=[...docs.values()].filter(doc=>doc.language==='csharp').map(doc=>({name:doc.name.replace(/\.cs$/i,''),source:doc.text}));

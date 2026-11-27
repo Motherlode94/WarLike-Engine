@@ -43,6 +43,15 @@ export function chooseSequenceDialogue(index,options={}){if(!gameIsRunning())ret
 export function sequenceEntries(owner){
  const entries=owner.sequence&&typeof owner.sequence==='object'?[{key:owner.id,sequence:owner.sequence}]:[];
  if(Array.isArray(owner.sequences))owner.sequences.slice(0,32).forEach((sequence,i)=>{if(sequence&&typeof sequence==='object')entries.push({key:owner.id+':extra:'+i,sequence})});
+ // A component owns a serializable copy of an existing WarNode sequence.
+ // Stable instance IDs keep pending jobs separate when attachments are reordered.
+ const seen=new Set();
+ if(Array.isArray(owner.blueprintComponents))for(const component of owner.blueprintComponents.slice(0,32)){
+  if(!component||typeof component.id!=='string'||!/^[A-Za-z0-9_-]{1,64}$/.test(component.id)||seen.has(component.id))continue;
+  seen.add(component.id);
+  if(component.enabled===false||!component.sequence||typeof component.sequence!=='object')continue;
+  entries.push({key:owner.id+':blueprint:'+component.id,sequence:component.sequence});
+ }
  return entries;
 }
 const jobSequence=(owner,job)=>sequenceEntries(owner).find(entry=>entry.key===(job.sequenceKey??owner.id))?.sequence;

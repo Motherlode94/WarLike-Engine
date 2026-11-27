@@ -1,7 +1,7 @@
 // WarScript v1: a bounded C#-inspired language. No JavaScript code generation.
 const types=new Set(['float','int','bool','string','var','Vector3']);
 const blocked=new Set(['__proto__','constructor','prototype']);
-export const warScriptCalls=['Log','Debug.Log','Move','transform.Translate','Rotate','transform.Rotate','SetVisible','SetLight','SetHealth','Get','Set','Signal','gameObject.SetActive','Animator.Play','Animator.SetFloat','Animator.SetInteger','Animator.SetBool','Animator.SetTrigger','Animator.ResetTrigger','Input.GetKey','Input.GetKeyDown','Mathf.Sin','Mathf.Cos','Mathf.Abs','Mathf.Min','Mathf.Max','Mathf.Clamp','Vector3'];
+export const warScriptCalls=['Log','Debug.Log','Move','transform.Translate','Rotate','transform.Rotate','SetVisible','SetLight','SetHealth','Get','Set','Signal','gameObject.SetActive','Animator.Play','Animator.SetFloat','Animator.SetInteger','Animator.SetBool','Animator.SetTrigger','Animator.ResetTrigger','Input.GetKey','Input.GetKeyDown','Input.GetAxis','Input.GetMouseButton','Input.GetMouseButtonDown','Mathf.Sin','Mathf.Cos','Mathf.Abs','Mathf.Min','Mathf.Max','Mathf.Clamp','Vector3'];
 const readable=new Set(['Time.deltaTime','Time.fixedDeltaTime','Time.time','transform.position','transform.position.x','transform.position.y','transform.position.z','transform.rotation.x','transform.rotation.y','transform.rotation.z','enabled','isActiveAndEnabled','gameObject.name','gameObject.activeSelf','gameObject.active','health','light.intensity','light.enabled','vehicle.maxSpeed','vehicle.acceleration','vehicle.brakeForce','vehicle.turnRate','controller.walkSpeed','controller.sprintSpeed','controller.jumpSpeed','controller.jumpForce','controller.gravity','controller.isGrounded','camera.mode','camera.distance','camera.height','world.timeScale','collision.otherId','collision.otherName','trigger.otherId','trigger.otherName']);
 const writable=new Set([...readable].filter(p=>!p.startsWith('Time.')&&!p.startsWith('collision.')&&!p.startsWith('trigger.')&&p!=='gameObject.name'&&p!=='isActiveAndEnabled'&&p!=='controller.isGrounded'));
 const failure=(token,message)=>Object.assign(Error(message),{line:token?.line||1,column:token?.column||1});
@@ -200,7 +200,7 @@ export function runWarScriptPreview(source,{frames=60,fps=60,maxLogs=120}={}){
    if(name==='SetVisible'){state.visible=Boolean(args[0]);emit(name,args);return null;}
    if(name==='SetHealth'){state.health=number(args[0]);emit(name,args);return null;}
    if(name==='gameObject.SetActive'){state.active=Boolean(args[0]);emit(name,args);return null;}
-   if(name==='Get'||name==='Input.GetKey'||name==='Input.GetKeyDown')return name==='Get'?0:false;
+   if(name==='Get'||name==='Input.GetAxis'||name==='Input.GetKey'||name==='Input.GetKeyDown'||name==='Input.GetMouseButton'||name==='Input.GetMouseButtonDown')return name==='Get'||name==='Input.GetAxis'?0:false;
    if(name==='Signal'||name==='Set'||name.startsWith('Animator.')||name==='SetLight'){emit('simulated:'+name,args);return null;}
    throw Error('API WarScript non simulée : '+name);
   }

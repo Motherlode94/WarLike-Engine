@@ -51,7 +51,7 @@ import {defaultLogic,eventTypes,actionTypes,conditionTypes} from '../core/visual
 import {getAsset} from '../assets/catalog.js';
 import {state,active,notify} from '../core/state.js';
 import {record} from '../core/history.js';
-import {deleteEntitySubtrees,validateBoneSocketTarget3d} from '../core/scene-graph-v2.js';
+import {updateAffineEditorPose3d,updateEditorEntityHierarchy3d,deleteEntitySubtrees,validateBoneSocketTarget3d} from '../core/scene-graph-v2.js';
 let inspectorFieldSerial=0;
 function deleteInspectedObject(object){if(state.playing)return;const result=deleteEntitySubtrees(state.entities,[object.id]);if(!result.removed.size)return;state.entities=result.entities;state.selected=state.selected.filter(id=>!result.removed.has(id));record('Supprimer '+object.name+' et ses enfants');notify()}
 function field(parent,o,key,label,type='number'){const line=document.createElement('div');line.className='property-row';const name=document.createElement('label');name.textContent=label;const input=document.createElement('input');input.id='inspector-field-'+(++inspectorFieldSerial);name.htmlFor=input.id;input.type=type==='number'?'text':type;if(type==='number')input.inputMode='decimal';input.value=o[key]??(type==='number'?0:'');input.disabled=state.playing;input.onchange=()=>{let v;try{v=type==='number'?inspectorNumber(input.value):input.value;if(['w','h'].includes(key)&&v<=0)throw Error('La dimension doit être positive.');input.setCustomValidity('')}catch(error){input.setCustomValidity(error.message);input.reportValidity();return}o[key]=v;record('Inspector : '+label);notify()};input.oninput=()=>input.setCustomValidity('');line.append(name,input);if(type==='number'&&animationFields.includes(key)){const k=document.createElement('button');k.type='button';k.textContent='◆';k.title='Insérer une image clé dans le clip actif';k.setAttribute('aria-label','Image clé '+label);k.disabled=state.playing;k.onclick=()=>insertInspectorAnimationKey(o,key);line.append(k);line.style.gridTemplateColumns='minmax(0,1fr) minmax(0,1fr) 26px';}parent.append(line)}
@@ -426,14 +426,14 @@ component(root,'Transform',body=>{
   for(const [axis,key] of axes){
    const item=document.createElement('label');item.className='inspector-axis';
    const tag=document.createElement('span');tag.textContent=axis;tag.dataset.axis=axis;
-   const input=document.createElement('input');input.type='text';input.inputMode='decimal';const divisor=workspace.mode==='3d'&&key!=='elevation3d'?64:1;input.value=String(Number(((o[key]??(key==='depth3d'?o.w:0))/divisor).toFixed(3)));input.disabled=state.playing;input.setAttribute('aria-label',title+' '+axis);input.title=workspace.mode==='3d'?'Mètres':'Unités de scène';
-   input.onchange=()=>{let value;try{value=inspectorNumber(input.value)*divisor;if(title==='Dimensions'&&value<=0)throw Error('La dimension doit être positive.');input.setCustomValidity('')}catch(error){input.setCustomValidity(error.message);input.reportValidity();return}o[key]=value;record('Transform '+title+' '+axis);notify()};
+   const input=document.createElement('input');input.type='text';input.inputMode='decimal';const divisor=workspace.mode==='3d'&&!['elevation3d','rotation','rotationX3d','rotationZ3d'].includes(key)?64:1;input.value=String(Number(((o[key]??(key==='depth3d'?o.w:0))/divisor).toFixed(3)));input.disabled=state.playing;input.setAttribute('aria-label',title+' '+axis);input.title=title==='Rotation'?'Degrés':workspace.mode==='3d'?'Mètres':'Unités de scène';
+   input.onchange=()=>{let value;try{value=inspectorNumber(input.value)*divisor;if(title==='Dimensions'&&value<=0)throw Error('La dimension doit être positive.');input.setCustomValidity('')}catch(error){input.setCustomValidity(error.message);input.reportValidity();return}if(o[key]===value)return;const previous=Array.isArray(o.worldMatrix3d)?[...o.worldMatrix3d]:null,reference=Array.isArray(o.matrixReference3d)?[...o.matrixReference3d]:null;o[key]=value;if(workspace.mode==='3d'){if(previous&&reference)updateAffineEditorPose3d(o,previous,reference);updateEditorEntityHierarchy3d(state.entities,{worldOverrideIds:new Set([o.id])});document.dispatchEvent(new CustomEvent('warlike:transform-committed',{detail:{ids:[o.id]}}))}record('Transform '+title+' '+axis);notify()};
    input.oninput=()=>input.setCustomValidity('');item.append(tag,input);group.append(item);
   }
   row.append(group);body.append(row);
  };
  vector('Position',workspace.mode==='3d'?[['X','x'],['Y','elevation3d'],['Z','y']]:[['X','x'],['Y','y']]);
- field(body,o,'rotation',workspace.mode==='3d'?'Rotation Y (°)':'Rotation (°)');if(workspace.mode==='3d'){field(body,o,'rotationX3d','Inclinaison X (°)');field(body,o,'rotationZ3d','Inclinaison Z (°)')}
+ if(workspace.mode==='3d')vector('Rotation',[['X','rotationX3d'],['Y','rotation'],['Z','rotationZ3d']]);else field(body,o,'rotation','Rotation (°)');
  vector('Dimensions',workspace.mode==='3d'?[['X','w'],['Y','h'],['Z','depth3d']]:[['X','w'],['Y','h']]);
 });
 // Unity-style Inspector: component properties first, optional gameplay templates in one closed drawer.

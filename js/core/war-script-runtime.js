@@ -3,6 +3,10 @@ import {compileGDScript,compileWarScript,createWarScriptInstance,warScriptBuilti
 import {ScriptLifecycle} from './script-lifecycle.js';
 import {resolveInputKeys} from './input-actions.js';
 import {damage,ensureStats,setHealth} from './gameplay-components.js';
+import {adventureTarget} from './adventure-runtime.js';
+import {queueSequenceInteraction} from './logic-sequences.js';
+import {setVehicleEngine,setVehicleGear,repairVehicle,refuelVehicle} from './vehicle-components.js';
+import {castHeroPower,ensureHeroState} from './superhero-runtime.js';
 import {moveBody2d} from './physics-2d.js';
 import {moveBody3d} from './collision-3d.js';
 export const warScriptSource=(component,project)=>project?.scripts?.find(s=>s.id===component.scriptId&&['warscript','gdscript'].includes(s.language))?.source??component.source;
@@ -45,6 +49,15 @@ export function createScriptApi(entity,ctx,clock,component){
   if(name==='health')return Number(entity.stats?.health??entity.hp??100);
   if(name==='light.intensity')return Number(entity.lightIntensity??1);if(name==='light.enabled')return entity.lightEnabled!==false;
   if(name==='controller.isGrounded')return (three?entity.grounded3d:entity.grounded2d)===true;
+  if(name==='vehicle.fuel')return Number(entity.vehicleSystems?.fuel?.amount??0);
+  if(name==='vehicle.health')return Number(entity.vehicleSystems?.engine?.health??0);
+  if(name==='vehicle.hasDriver')return entity.vehicleSystems?.seats?.driverId!=null;
+  if(name==='flight.active')return entity.heroState?.flight===true;
+  if(name==='flight.speed')return Number(entity.superhero?.flightSpeed??0);
+  if(name==='flight.altitude')return three?Number(entity.elevation3d??0):0;
+  if(name==='camera.collision')return entity.cameraRig?.collision!==false;
+  if(name==='camera.sensitivity')return Number(entity.cameraRig?.sensitivity??.0026);
+  if(name==='camera.followSharpness')return Number(entity.cameraRig?.followSharpness??10);
   if(name==='camera.mode')return String(entity.cameraRig?.mode||'thirdPerson');
   if(name==='camera.distance'||name==='camera.height')return Number(entity.cameraRig?.[name.slice(7)]??(name==='camera.distance'?4:.75));
   const cfg=config[name];if(cfg)return Number((cfg.length===3?entity[cfg[0]]:entity[cfg[0]]?.[cfg[1]])??0);
@@ -59,6 +72,8 @@ export function createScriptApi(entity,ctx,clock,component){
   if(name==='health'){const hp=bounded(value,0,Number(entity.stats?.maxHealth??100));entity.hp=hp;if(entity.stats)entity.stats.health=hp;return}
   if(name==='light.intensity'){entity.lightIntensity=bounded(value,0,50);return}
   if(name==='light.enabled'){warScriptValue('bool',value);entity.lightEnabled=value;return}
+  if(name==='flight.speed'){if(!entity.superhero||entity.superhero.enabled===false)throw Error('Composant de vol absent.');entity.superhero.flightSpeed=bounded(value,.5,30);return}
+  if(['camera.collision','camera.sensitivity','camera.followSharpness'].includes(name)){if(!three||!entity.cameraRig)throw Error('Camera Rig 3D absent.');if(name==='camera.collision'){warScriptValue('bool',value);entity.cameraRig.collision=value}else entity.cameraRig[name.slice(7)]=name==='camera.sensitivity'?bounded(value,.0005,.02):bounded(value,1,30);return}
   if(name.startsWith('camera.')){if(!three||!entity.cameraRig)throw Error('Camera Rig 3D absent.');if(name==='camera.mode'){if(!['firstPerson','thirdPerson'].includes(value))throw Error('Mode caméra invalide.');entity.cameraRig.mode=value;return}if(name==='camera.distance'||name==='camera.height'){entity.cameraRig[name.slice(7)]=bounded(value,name==='camera.height'?-10:.1,100);return}}
   if(name==='controller.isGrounded')throw Error('État du sol en lecture seule.');
   if(three&&name==='controller.jumpSpeed'||!three&&['controller.jumpForce','controller.gravity'].includes(name))throw Error('Propriété incompatible avec la dimension.');
@@ -66,6 +81,9 @@ export function createScriptApi(entity,ctx,clock,component){
   throw Error('Propriété non modifiable : '+name);
  };
  const call=(name,args)=>{
+  if(name==='Interaction.FindTarget'||name==='Interaction.Use'){if(args.length)throw Error('Interaction attend zéro argument.');const target=adventureTarget(entity,ctx.entities,{mode:ctx.mode});return name==='Interaction.FindTarget'?target?.id??0:!!target&&queueSequenceInteraction(entity.id,target.id)}
+  if(['Vehicle.SetEngine','Vehicle.SetGear','Vehicle.Repair','Vehicle.Refuel'].includes(name)){if(args.length!==1||!entity.vehicleSystems)throw Error('Vehicle Systems et un argument requis.');if(name==='Vehicle.SetEngine'){warScriptValue('bool',args[0]);return setVehicleEngine(entity,args[0])}const amount=numeric(args[0]);if(name==='Vehicle.SetGear')return setVehicleGear(entity,amount);return (name==='Vehicle.Repair'?repairVehicle:refuelVehicle)(entity,Math.max(0,amount))}
+  if(name==='Flight.SetActive'){if(args.length!==1||!entity.superhero||entity.superhero.enabled===false)throw Error('Composant de vol et booléen requis.');warScriptValue('bool',args[0]);if(ensureHeroState(entity).flight===args[0])return true;return castHeroPower(entity,'flight',{...ctx,player:entity}).ok===true}
   if(name.startsWith('Animator.')){const method=name.slice(9);if(!entity.animatorGraph)throw Error('Composant Animator absent.');if(method==='Play'){if(args.length<1||args.length>2||typeof args[0]!=='string'||args.length===2&&!Number.isFinite(args[1]))throw Error('Animator.Play attend un état et une durée facultative.');if(!playAnimatorState(entity,args[0],args[1]))throw Error('État Animator absent : '+args[0]);return null;}if(['SetTrigger','ResetTrigger'].includes(method)){if(args.length!==1)throw Error(method+' attend un nom de paramètre.');const accepted=(method==='SetTrigger'?setAnimatorTrigger:resetAnimatorTrigger)(entity,key(args[0]));if(!accepted)throw Error('Trigger Animator invalide.');return null;}const valid=method==='SetBool'?typeof args[1]==='boolean':method==='SetInteger'?Number.isInteger(args[1]):method==='SetFloat'&&typeof args[1]==='number'&&Number.isFinite(args[1]);if(args.length!==2||!valid||!setAnimatorParameter(entity,key(args[0]),args[1]))throw Error('Paramètre Animator ou type incompatible.');return null;}
   if(name==='gameObject.SetActive'){if(args.length!==1)throw Error('SetActive attend un booléen.');write('gameObject.active',args[0]);return null}
   if(name==='Log'||name==='Debug.Log'){if(args.length!==1)throw Error('Log attend une valeur.');ctx.log?.(String(args[0]),'info',entity);return null}

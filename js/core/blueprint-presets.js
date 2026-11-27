@@ -656,6 +656,225 @@ const adventureDefinitions=[
   }
  }
 ];
-export const blueprintPresets=adventureDefinitions.map(({id,label,category,description,event,instructions,extra})=>({id,label,category,description,modes:['2d','3d'],create:()=>({...newSequence(),event,instructions:structuredClone(instructions),...structuredClone(extra)})}));
+const racingDefinitions=[
+ {
+  "id": "BP_Racing_Start",
+  "label": "BP_Racing_Start",
+  "category": "Racing · Circuit & Véhicule",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "setVariable",
+    "key": "raceActive",
+    "value": 1
+   },
+   {
+    "type": "setVariable",
+    "key": "raceGate",
+    "value": 0
+   },
+   {
+    "type": "setVariable",
+    "key": "raceLap",
+    "value": 0
+   },
+   {
+    "type": "setObjective",
+    "key": "race-laps",
+    "value": "Terminer trois tours",
+    "total": 3
+   }
+  ],
+  "extra": {
+   "once": true
+  },
+  "description": "Initialisation de la course, à placer au départ.",
+  "modes": [
+   "3d"
+  ]
+ },
+ {
+  "id": "BP_Racing_Checkpoint_A",
+  "label": "BP_Racing_Checkpoint_A",
+  "category": "Racing · Circuit & Véhicule",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "setVariable",
+    "key": "raceGate",
+    "value": 1
+   }
+  ],
+  "extra": {
+   "conditions": [
+    {
+     "type": "variable",
+     "key": "raceActive",
+     "value": 1
+    },
+    {
+     "type": "variable",
+     "key": "raceGate",
+     "value": 0
+    }
+   ]
+  },
+  "description": "Premier passage obligatoire.",
+  "modes": [
+   "3d"
+  ]
+ },
+ {
+  "id": "BP_Racing_Checkpoint_B",
+  "label": "BP_Racing_Checkpoint_B",
+  "category": "Racing · Circuit & Véhicule",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "setVariable",
+    "key": "raceGate",
+    "value": 2
+   }
+  ],
+  "extra": {
+   "conditions": [
+    {
+     "type": "variable",
+     "key": "raceActive",
+     "value": 1
+    },
+    {
+     "type": "variable",
+     "key": "raceGate",
+     "value": 1
+    }
+   ]
+  },
+  "description": "Deuxième passage obligatoire.",
+  "modes": [
+   "3d"
+  ]
+ },
+ {
+  "id": "BP_Racing_Lap",
+  "label": "BP_Racing_Lap",
+  "category": "Racing · Circuit & Véhicule",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "setVariable",
+    "key": "raceGate",
+    "value": 0
+   },
+   {
+    "type": "addVariable",
+    "key": "raceLap",
+    "value": 1
+   },
+   {
+    "type": "addObjectiveProgress",
+    "key": "race-laps",
+    "value": 1
+   }
+  ],
+  "extra": {
+   "conditions": [
+    {
+     "type": "variable",
+     "key": "raceActive",
+     "value": 1
+    },
+    {
+     "type": "variable",
+     "key": "raceGate",
+     "value": 2
+    }
+   ]
+  },
+  "description": "Compte un tour après les deux checkpoints.",
+  "modes": [
+   "3d"
+  ]
+ },
+ {
+  "id": "BP_Racing_Finish",
+  "label": "BP_Racing_Finish",
+  "category": "Racing · Circuit & Véhicule",
+  "event": "objectiveCompleted",
+  "instructions": [
+   {
+    "type": "setVariable",
+    "key": "raceActive",
+    "value": 0
+   },
+   {
+    "type": "winGame",
+    "value": "Course terminée !"
+   }
+  ],
+  "extra": {
+   "signal": "race-laps",
+   "once": true
+  },
+  "description": "Termine la course après trois tours.",
+  "modes": [
+   "3d"
+  ]
+ },
+ {
+  "id": "BP_Racing_Engine",
+  "label": "BP_Racing_Engine",
+  "category": "Racing · Circuit & Véhicule",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "setVehicleEngine",
+    "value": true
+   }
+  ],
+  "extra": {},
+  "description": "Sur un véhicule muni de Vehicle Systems : démarre le moteur.",
+  "modes": [
+   "3d"
+  ]
+ },
+ {
+  "id": "BP_Racing_Repair",
+  "label": "BP_Racing_Repair",
+  "category": "Racing · Circuit & Véhicule",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "repairVehicle",
+    "value": 100
+   }
+  ],
+  "extra": {},
+  "description": "Sur le véhicule : répare le moteur via le système natif.",
+  "modes": [
+   "3d"
+  ]
+ },
+ {
+  "id": "BP_Racing_Gear",
+  "label": "BP_Racing_Gear",
+  "category": "Racing · Circuit & Véhicule",
+  "event": "signal",
+  "instructions": [
+   {
+    "type": "setVehicleGear",
+    "value": 2
+   }
+  ],
+  "extra": {
+   "signal": "racing:gear"
+  },
+  "description": "Sur le véhicule : sélectionne un rapport configurable.",
+  "modes": [
+   "3d"
+  ]
+ }
+];
+export const blueprintPresets=[...adventureDefinitions,...racingDefinitions].map(({id,label,category,description,event,instructions,extra,modes=['2d','3d']})=>({id,label,category,description,modes,create:()=>({...newSequence(),event,instructions:structuredClone(instructions),...structuredClone(extra)})}));
 export function presetsForWorkspace(mode){return blueprintPresets.filter(p=>p.modes.includes(mode)).map(p=>({...p,category:p.category||'Essentiels'}))}
 export function createBlueprintPreset(id,mode){const preset=[...blueprintPresets,...legacyBlueprintPresets].find(p=>p.id===id&&p.modes.includes(mode));if(!preset)throw Error('Blueprint indisponible pour ce projet');return structuredClone(preset.create())}

@@ -365,8 +365,10 @@ function lowerGDScript(ast){
   block(f.body,new Set(f.params.map(p=>p.name)),frame?f.params[0].name:null);emit('}',f.token);
  }
  const last=ast.functions.at(-1)?.token||ast.fields.at(-1)?.token||{line:1,column:1};
- emit('float WLGdDegToRad(float v) { return v * 0.017453292519943295; }',last);
- emit('float WLGdRadToDeg(float v) { return v * 57.29577951308232; }',last);
+ // Generated helpers must not reserve any user field or function names.
+ let parameter='__wl_gd_angle';while(fields.has(parameter)||methods.has(parameter))parameter+='_';
+ emit('float WLGdDegToRad(float '+parameter+') { return '+parameter+' * 0.017453292519943295; }',last);
+ emit('float WLGdRadToDeg(float '+parameter+') { return '+parameter+' * 57.29577951308232; }',last);
  return {source:lines.join('\n'),map};
 }
 export function compileGDScript(source){

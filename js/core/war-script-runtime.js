@@ -2,6 +2,7 @@ import {setAnimatorParameter,setAnimatorTrigger,resetAnimatorTrigger,playAnimato
 import {compileGDScript,compileWarScript,createWarScriptInstance,warScriptBuiltin,warScriptValue} from '../../script-editor/warscript.js';
 import {ScriptLifecycle} from './script-lifecycle.js';
 import {resolveInputKeys} from './input-actions.js';
+import {damage,ensureStats,setHealth} from './gameplay-components.js';
 import {moveBody2d} from './physics-2d.js';
 import {moveBody3d} from './collision-3d.js';
 export const warScriptSource=(component,project)=>project?.scripts?.find(s=>s.id===component.scriptId&&['warscript','gdscript'].includes(s.language))?.source??component.source;
@@ -39,6 +40,8 @@ export function createScriptApi(entity,ctx,clock,component){
   if(name==='enabled')return component?.enabled!==false;if(name==='isActiveAndEnabled')return component?.enabled!==false&&entity.enabled!==false;
   if(name==='gameObject.activeSelf')return entity.enabled!==false;
   if(name==='gameObject.name')return String(entity.name||'');if(name==='gameObject.active')return entity.enabled!==false;
+  if(name==='health.max')return Number(entity.stats?.maxHealth??entity.maxHp??100);
+  if(name==='health.isDead')return Number(entity.stats?.health??entity.hp??100)<=0;
   if(name==='health')return Number(entity.stats?.health??entity.hp??100);
   if(name==='light.intensity')return Number(entity.lightIntensity??1);if(name==='light.enabled')return entity.lightEnabled!==false;
   if(name==='controller.isGrounded')return (three?entity.grounded3d:entity.grounded2d)===true;
@@ -75,6 +78,7 @@ export function createScriptApi(entity,ctx,clock,component){
   if(name==='Move'||name==='transform.Translate'){if(args.length!==3)throw Error('Move attend x, y, z en mètres.');const [x,y,z]=args.map(numeric);if(three)moveBody3d(entity,x*64,z*64,y*64,ctx.entities);else moveBody2d(entity,x*64,y*64,ctx.entities);return null}
   if(name==='Rotate'||name==='transform.Rotate'){if(args.length===1){entity.rotation=Number(entity.rotation||0)+numeric(args[0]);return null}if(args.length!==3)throw Error('Rotate attend un angle, ou x, y, z.');for(const [i,axis] of ['x','y','z'].entries())write('transform.rotation.'+axis,read('transform.rotation.'+axis)+numeric(args[i]));return null}
   if(name==='SetVisible'){if(args.length!==1)throw Error('SetVisible attend un booléen.');warScriptValue('bool',args[0]);entity.visible=args[0];return null}
+  if(['Health.TakeDamage','Health.Heal','Health.SetMax'].includes(name)){if(args.length!==1)throw Error('Health attend une valeur.');const amount=bounded(args[0],0,1e8);if(name==='Health.TakeDamage')return damage(entity,amount);if(name==='Health.Heal')return setHealth(entity,read('health')+amount);const stats=ensureStats(entity);stats.maxHealth=Math.max(1,amount);return setHealth(entity,stats.health);}
   if(name==='SetLight'||name==='SetHealth'){if(args.length!==1)throw Error(name+' attend une valeur.');write(name==='SetLight'?'light.enabled':'health',args[0]);return null}
   return warScriptBuiltin(name,args);
  };

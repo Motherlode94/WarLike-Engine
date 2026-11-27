@@ -1018,6 +1018,7 @@ export function init3d(canvas,host,buttons){
    objects.sort((a,b)=>depth(a)-depth(b)||order.get(a.id)-order.get(b.id));
   }
   if(state.playing&&survivalPlacement.active&&survivalPlacement.entity)objects.push(survivalPlacement.entity);
+  if(!state.playing&&view3d.assetPlacementPreview)objects.push(view3d.assetPlacementPreview);
   // Draw opaque surfaces first, then alpha surfaces across ALL entities.
   // Camera-space depth (not radial distance) keeps side-on surfaces ordered.
   const opaqueDraws=[],transparentDraws=[];

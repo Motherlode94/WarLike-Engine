@@ -1,8 +1,8 @@
 // WarScript v1: a bounded C#-inspired language. No JavaScript code generation.
 const types=new Set(['float','int','bool','string','var','Vector3']);
 const blocked=new Set(['__proto__','constructor','prototype']);
-export const warScriptCalls=['Log','Debug.Log','Move','transform.Translate','Rotate','transform.Rotate','SetVisible','SetLight','SetHealth','Get','Set','Signal','gameObject.SetActive','Animator.Play','Animator.SetFloat','Animator.SetInteger','Animator.SetBool','Animator.SetTrigger','Animator.ResetTrigger','Input.GetKey','Input.GetKeyDown','Mathf.Sin','Mathf.Cos','Mathf.Abs','Mathf.Min','Mathf.Max','Mathf.Clamp','Vector3'];
-const readable=new Set(['Time.deltaTime','Time.fixedDeltaTime','Time.time','transform.position','transform.position.x','transform.position.y','transform.position.z','transform.rotation.x','transform.rotation.y','transform.rotation.z','enabled','isActiveAndEnabled','gameObject.name','gameObject.activeSelf','gameObject.active','health','light.intensity','light.enabled','vehicle.maxSpeed','vehicle.acceleration','vehicle.brakeForce','vehicle.turnRate','controller.walkSpeed','controller.sprintSpeed','controller.jumpSpeed','controller.jumpForce','controller.gravity','controller.isGrounded','camera.mode','camera.distance','camera.height','world.timeScale','collision.otherId','collision.otherName','trigger.otherId','trigger.otherName']);
+export const warScriptCalls=['Log','Debug.Log','Move','transform.Translate','Rotate','transform.Rotate','SetVisible','SetLight','SetHealth','Get','Set','Signal','gameObject.SetActive','Animator.Play','Animator.SetFloat','Animator.SetInteger','Animator.SetBool','Animator.SetTrigger','Animator.ResetTrigger','Input.GetKey','Input.GetKeyDown','Mathf.Sin','Mathf.Cos','Mathf.Abs','Mathf.Min','Mathf.Max','Mathf.Clamp','Vector3','Vector2'];
+const readable=new Set(['Time.deltaTime','Time.fixedDeltaTime','Time.time','transform.position','transform.position.x','transform.position.y','transform.position.z','transform.rotation.x','transform.rotation.y','transform.rotation.z','enabled','isActiveAndEnabled','gameObject.name','gameObject.activeSelf','gameObject.active','health','light.intensity','light.enabled','vehicle.maxSpeed','vehicle.acceleration','vehicle.brakeForce','vehicle.turnRate','controller.walkSpeed','controller.sprintSpeed','controller.jumpSpeed','controller.jumpForce','controller.gravity','controller.isGrounded','camera.mode','camera.distance','camera.height','world.timeScale','collision.otherId','collision.otherName','trigger.otherId','trigger.otherName','gd.rotation2d','gd.rotation3d.x','gd.rotation3d.y','gd.rotation3d.z','gd.rotationDegrees2d','gd.rotationDegrees3d.x','gd.rotationDegrees3d.y','gd.rotationDegrees3d.z','gd.visible']);
 const writable=new Set([...readable].filter(p=>!p.startsWith('Time.')&&!p.startsWith('collision.')&&!p.startsWith('trigger.')&&p!=='gameObject.name'&&p!=='isActiveAndEnabled'&&p!=='controller.isGrounded'));
 const failure=(token,message)=>Object.assign(Error(message),{line:token?.line||1,column:token?.column||1});
 export function tokenizeWarScript(source){
@@ -80,7 +80,7 @@ if(at('while')){take();expect('(');const condition=expression();expect(')');cons
   if(fields.length>64||Object.keys(methods).length>32)throw failure(peek(),'64 variables et 32 méthodes maximum.');
   const names=new Set();for(const field of fields){if(names.has(field.name)||readable.has(field.name)||Object.hasOwn(methods,field.name))throw failure(field.token,'Variable déjà définie ou réservée : '+field.name);names.add(field.name)}
   function checkExpr(node,scope){if(!node)return;if(node.kind==='read'&&!scope.has(node.name)&&!readable.has(node.name))throw failure(node.token,'Variable ou propriété inconnue : '+node.name);if(node.kind==='call'){if(!warScriptCalls.includes(node.name)&&!Object.hasOwn(methods,node.name))throw failure(node.token,'Méthode inconnue : '+node.name);if(Object.hasOwn(methods,node.name)&&node.args.length!==methodSignatures[node.name].parameters.length)throw failure(node.token,'Nombre de paramètres incorrect : '+node.name);node.args.forEach(n=>checkExpr(n,scope))}if(node.kind==='binary'){checkExpr(node.left,scope);checkExpr(node.right,scope)}if(node.kind==='unary')checkExpr(node.value,scope)}
-  for(const field of fields){checkExpr(field.value,names);const constant=n=>{if(n.kind==='call'&&n.name!=='Vector3')throw failure(n.token,'Une valeur initiale doit être une constante ou un Vector3.');for(const child of [n.left,n.right,n.value,...(n.args||[])])if(child&&typeof child==='object'&&child.kind)constant(child)};constant(field.value);}
+  for(const field of fields){checkExpr(field.value,names);const constant=n=>{if(n.kind==='call'&&!['Vector3','Vector2'].includes(n.name))throw failure(n.token,'Une valeur initiale doit être une constante ou un Vector3.');for(const child of [n.left,n.right,n.value,...(n.args||[])])if(child&&typeof child==='object'&&child.kind)constant(child)};constant(field.value);}
   function checkBody(body,scope,{loop=false,signature=null}={}){for(const node of body){
    if(node.kind==='declare'){checkExpr(node.value,scope);if(scope.has(node.name)||readable.has(node.name)||Object.hasOwn(methods,node.name))throw failure(node.token,'Variable déjà définie : '+node.name);scope.add(node.name)}
    else if(node.kind==='assign'){if(!scope.has(node.name)&&!writable.has(node.name))throw failure(node.token,'Propriété non modifiable ou variable inconnue : '+node.name);checkExpr(node.value,scope)}
@@ -133,9 +133,9 @@ export function createWarScriptInstance(program,api,{values={},saved=null}={}){
 export const warScriptTemplate='// WarScript · C# simplifié · rotation en degrés/seconde\npublic float speed = 45;\n\nStart() {\n    Log("WarScript prêt !");\n}\n\nUpdate() {\n    Rotate(speed * Time.deltaTime);\n}\n';
 
 export function warScriptBuiltin(name,args){
- const arities={'Vector3':3,'Mathf.Sin':1,'Mathf.Cos':1,'Mathf.Abs':1,'Mathf.Min':2,'Mathf.Max':2,'Mathf.Clamp':3};
+ const arities={'Vector2':2,'Vector3':3,'Mathf.Sin':1,'Mathf.Cos':1,'Mathf.Abs':1,'Mathf.Min':2,'Mathf.Max':2,'Mathf.Clamp':3};
  if(args.length!==arities[name])throw Error('Arguments invalides pour '+name+'.');args.forEach(number);
- switch(name){case 'Vector3':return {x:args[0],y:args[1],z:args[2]};case 'Mathf.Sin':return Math.sin(args[0]);case 'Mathf.Cos':return Math.cos(args[0]);case 'Mathf.Abs':return Math.abs(args[0]);case 'Mathf.Min':return Math.min(...args);case 'Mathf.Max':return Math.max(...args);case 'Mathf.Clamp':return Math.min(args[2],Math.max(args[1],args[0]));default:throw Error('Méthode inconnue : '+name)}
+ switch(name){case 'Vector2':return {x:args[0],y:args[1],z:0};case 'Vector3':return {x:args[0],y:args[1],z:args[2]};case 'Mathf.Sin':return Math.sin(args[0]);case 'Mathf.Cos':return Math.cos(args[0]);case 'Mathf.Abs':return Math.abs(args[0]);case 'Mathf.Min':return Math.min(...args);case 'Mathf.Max':return Math.max(...args);case 'Mathf.Clamp':return Math.min(args[2],Math.max(args[1],args[0]));default:throw Error('Méthode inconnue : '+name)}
 }
 
 
@@ -221,65 +221,158 @@ export function runWarScriptPreview(source,{frames=60,fps=60,maxLogs=120}={}){
 }
 
 
-// GDScript compatibility frontend v0.1. The existing bounded interpreter is
-// the only execution engine; never evaluate generated JavaScript.
-export function compileGDScript(source){
- const fail=(line,message)=>({ok:false,diagnostics:[{severity:'error',line,column:1,message}]});
- if(typeof source!=='string'||source.length>65536)return fail(1,'GDScript limité à 64 Ko.');
- const lines=source.replace(/\r\n?/g,'\n').split('\n'),out=[],map=[],stack=[];let base=null,delta=null,extendsSeen=false,className=null;
- const gdType=t=>t==='String'?'string':t;
- const emit=(s,line)=>{out.push(s);map.push(line)};
- const error=(line,message)=>{throw Object.assign(Error(message),{line})};
- const expr=(s,line)=>{
-  // Preserve quoted strings; only transform tokens outside strings.
-  const parts=s.match(/"(?:[^"\\]|\\.)*"|[^"]+/g)||[];
-  if(parts.join('')!==s)error(line,'Chaîne non terminée.');
-  return parts.map(p=>p.startsWith('"')?p:p.replace(/\b(and|or|not)\b/g,x=>({and:'&&',or:'||',not:'!'})[x]).replace(/\bPI\b/g,'3.141592653589793').replace(/\bdeg_to_rad\s*\(/g,'WLGdDegToRad(').replace(/\brad_to_deg\s*\(/g,'WLGdRadToDeg(').replace(/\bposition(?=\.|\b)/g,'transform.position').replace(/\bprint\s*\(/g,'Log(').replace(/\b(sin|cos|abs|min|max|clamp)\s*\(/g,x=>'Mathf.'+x.trim().slice(0,x.trim().indexOf('(')).trim().replace(/^./,c=>c.toUpperCase())+'(').replace(delta?new RegExp('\\b'+delta+'\\b','g'):/\b(?!)\b/g,'Time.deltaTime')).join('');
- };
- const close=(indent,line)=>{let closed=null;while(stack.length&&indent<=stack.at(-1).indent){const b=stack.pop();if(!b.body)error(line,'Bloc indenté attendu.');closed=b;emit('}',line);if(b.kind==='func'){delta=null;base=null}}return closed};
- try{
- for(let i=0;i<lines.length;i++){const line=i+1,raw=lines[i];if(/^\s*$/.test(raw)||/^\s*#/.test(raw))continue;
-  const prefix=raw.match(/^[ \t]*/)[0];if(prefix.includes(' ')&&prefix.includes('\t'))error(line,'Indentation mixte non prise en charge.');
+// GDScript v0.4: source tokens -> indentation-aware AST -> bounded WarScript.
+// Only this restricted profile is accepted. No generated JavaScript is executed.
+const gdError=(token,message)=>Object.assign(Error(message),{line:token?.line||1,column:token?.column||1});
+const gdTypes=new Set(['float','int','bool','String','Vector2','Vector3']);
+const gdHooks={_ready:'Start',_process:'Update',_physics_process:'FixedUpdate',_enter_tree:'Awake',_exit_tree:'OnDestroy'};
+export function tokenizeGDScript(source){
+ if(typeof source!=='string'||source.length>65536)throw gdError(null,'GDScript limité à 64 Ko.');
+ const tokens=[],indents=[0],lines=source.replace(/\r\n?/g,'\n').split('\n');let style=null;
+ const push=(kind,value,line,column)=>{if(tokens.length>=12000)throw gdError({line,column},'Trop de symboles GDScript.');tokens.push({kind,value,line,column});};
+ for(const [i,raw] of lines.entries()){
+  const line=i+1,prefix=raw.match(/^[ \t]*/)[0];if(!raw.slice(prefix.length).trim()||raw.slice(prefix.length).startsWith('#'))continue;
+  if(prefix.includes(' ')&&prefix.includes('\t'))throw gdError({line,column:1},'Indentation mixte.');
+  if(prefix){const next=prefix.includes('\t')?'tabs':'spaces';if(style&&style!==next)throw gdError({line,column:1},'Indentation mixte.');style=next;}
   const indent=prefix.replace(/\t/g,'    ').length;
-  let s=raw.slice(prefix.length).replace(/("(?:[^"\\]|\\.)*")|#.*$/g,(m,q)=>q||'').trim();if(!s)continue;
-  const previous=stack.at(-1);if(previous&&!previous.body&&indent<=previous.indent)error(line,'Bloc indenté attendu.');
-  const closed=close(indent,line);
-  if(stack.length){const top=stack.at(-1);if(!top.body){top.body=true;top.child=indent}else if(indent!==top.child)error(line,'Indentation inattendue.');}
-  if(indent===0){
-   if(/^extends\s+(Node|Node2D|Node3D)$/.test(s)){if(extendsSeen||out.length)error(line,'extends doit précéder les déclarations.');extendsSeen=true;continue;}
-   const named=/^class_name\s+([A-Za-z_]\w*)$/.exec(s);if(named){if(className||out.length)error(line,'class_name doit précéder les champs et fonctions.');className=named[1];continue;}
-   let m=/^(@export\s+)?var\s+([A-Za-z_]\w*)\s*(?::\s*(float|int|bool|String|Vector3))?\s*=\s*(.+)$/.exec(s);
-   if(m){const [,ex,name,type,value]=m;const inferred=type||(/^(true|false)$/.test(value)?'bool':/^"/.test(value)?'String':/^Vector3\s*\(/.test(value)?'Vector3':/^-?\d+$/.test(value)?'int':'float');emit((ex?'public ':'private ')+(inferred==='String'?'string':inferred)+' '+name+' = '+expr(value,line)+';',line);continue;}
-   m=/^func\s+(_ready|_process|_physics_process|_enter_tree|_exit_tree)\s*\(\s*([A-Za-z_]\w*)?\s*(?::\s*float)?\s*\)\s*(?:->\s*void)?\s*:$/.exec(s);
-   if(m){const [,name,arg]=m,frame=['_process','_physics_process'].includes(name);if(frame!==!!arg)error(line,'Paramètres du callback incompatibles.');delta=arg||null;emit('void '+({_ready:'Start',_process:'Update',_physics_process:'FixedUpdate',_enter_tree:'Awake',_exit_tree:'OnDestroy'})[name]+'() {',line);stack.push({indent,kind:'func',body:false});continue;}
-   m=/^func\s+([A-Za-z_]\w*)\s*\(([^()]*)\)\s*(?:->\s*(void|float|int|bool|String|Vector3))?\s*:$/.exec(s);
-   if(m){const [,name,rawParams,ret='void']=m;if(name.startsWith('_')||/^(Awake|Start|Update|FixedUpdate|LateUpdate|OnEnable|OnDisable|OnDestroy|WLGdDegToRad|WLGdRadToDeg)$/.test(name))error(line,'Nom de fonction réservé ou callback non pris en charge.');
-    const params=rawParams.trim()?rawParams.split(',').map(p=>{const match=/^\s*([A-Za-z_]\w*)\s*:\s*(float|int|bool|String|Vector3)\s*$/.exec(p);if(!match)error(line,'Paramètre typé requis.');return gdType(match[2])+' '+match[1]}):[];
-    emit(gdType(ret)+' '+name+'('+params.join(', ')+') {',line);stack.push({indent,kind:'func',body:false});continue;
-   }
-   error(line,'Déclaration GDScript non prise en charge.');
+  if(indent>indents.at(-1)){if(indents.length>=40)throw gdError({line,column:1},'Blocs trop imbriqués.');indents.push(indent);push('indent','<indent>',line,1);}
+  while(indent<indents.at(-1)){indents.pop();push('dedent','<dedent>',line,1);}
+  if(indent!==indents.at(-1))throw gdError({line,column:1},'Indentation incohérente.');
+  let j=prefix.length;
+  while(j<raw.length){
+   const rest=raw.slice(j),column=j+1;let m;
+   if(rest[0]==='#')break;
+   if((m=/^[ \t]+/.exec(rest))){j+=m[0].length;continue;}
+   if((m=/^"(?:[^"\\\r\n]|\\["\\nrt])*"/.exec(rest))){push('string',JSON.parse(m[0]),line,column);}
+   else if((m=/^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/.exec(rest))){if(!Number.isFinite(Number(m[0])))throw gdError({line,column},'Nombre non fini.');push('number',m[0],line,column);}
+   else if((m=/^[A-Za-z_]\w*/.exec(rest))){if(blocked.has(m[0]))throw gdError({line,column},'Identifiant réservé.');push('id',m[0],line,column);}
+   else if((m=/^(?:->|==|!=|<=|>=|\+=|-=|\*=|\/=|&&|\|\||[().,:@=+\-*/%<>!])/.exec(rest))){push('symbol',m[0],line,column);}
+   else throw gdError({line,column},'Caractère ou chaîne non reconnu : '+rest[0]);
+   j+=m[0].length;
   }
-  if(!stack.length)error(line,'Instruction hors fonction.');
-  let m=/^if\s+(.+):$/.exec(s);if(m){emit('if ('+expr(m[1],line)+') {',line);stack.push({indent,kind:'if',body:false});continue;}
-  m=/^elif\s+(.+):$/.exec(s);
-  if(m||s==='else:'){if(closed?.kind!=='if'||closed.indent!==indent)error(line,'elif/else sans if correspondant.');emit(m?'else if ('+expr(m[1],line)+') {':'else {',line);stack.push({indent,kind:m?'if':'else',body:false});continue;}
-  m=/^while\s+(.+):$/.exec(s);if(m){emit('while ('+expr(m[1],line)+') {',line);stack.push({indent,kind:'loop',body:false});continue;}
-  m=/^for\s+([A-Za-z_]\w*)\s+in\s+range\(\s*(\d+)\s*\):$/.exec(s);if(m){const [,name,n]=m;if(Number(n)>1024)error(line,'range limité à 1024 itérations.');emit('for (int '+name+' = 0; '+name+' < '+n+'; '+name+' += 1) {',line);stack.push({indent,kind:'loop',body:false});continue;}
-  if(s==='break'||s==='continue'){emit(s+';',line);continue;}
-  if(s==='pass'){emit('// pass',line);continue;}
-  if(s==='return'){emit('return;',line);continue;}
-  m=/^return\s+(.+)$/.exec(s);if(m){emit('return '+expr(m[1],line)+';',line);continue;}
-  m=/^rotate_y\s*\((.+)\)$/.exec(s);if(m){emit('Rotate(0, ('+expr(m[1],line)+') * 57.29577951308232, 0);',line);continue;}
-  m=/^rotate\s*\((.+)\)$/.exec(s);if(m){emit('Rotate(('+expr(m[1],line)+') * 57.29577951308232);',line);continue;}
-  m=/^var\s+([A-Za-z_]\w*)\s*(?::\s*(float|int|bool|String|Vector3))?\s*=\s*(.+)$/.exec(s);if(m){emit(gdType(m[2]||'var')+' '+m[1]+' = '+expr(m[3],line)+';',line);continue;}
-  if(!/^(?:[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\s*(?:=|\+=|-=|\*=|\/=)|[A-Za-z_]\w*\s*\()/.test(s))error(line,'Instruction non prise en charge dans le profil GDScript v0.2.');
-  emit(expr(s,line)+';',line);
+  push('newline','<newline>',line,raw.length+1);
  }
- if(stack.some(b=>!b.body))error(lines.length,'Bloc indenté attendu.');close(0,lines.length);
- if(!extendsSeen)return fail(1,'extends Node, Node2D ou Node3D requis.');
- emit('float WLGdDegToRad(float v) { return v * 0.017453292519943295; }',lines.length);
- emit('float WLGdRadToDeg(float v) { return v * 57.29577951308232; }',lines.length);
- const result=compileWarScript(out.join('\n'));
- return {...result,className,diagnostics:result.diagnostics.map(d=>({...d,line:map[d.line-1]||lines.length}))};
- }catch(e){return fail(e.line||1,e.message);}
+ while(indents.length>1){indents.pop();push('dedent','<dedent>',lines.length,1);}
+ push('eof','<eof>',lines.length,1);return tokens;
+}
+export function parseGDScript(source){
+ const ts=tokenizeGDScript(source);let i=0,depth=0;const peek=()=>ts[i]||ts.at(-1),take=()=>ts[i++]||ts.at(-1);
+ const at=v=>peek().kind!=='string'&&peek().kind!=='number'&&peek().value===v;
+ const expect=v=>{if(!at(v))throw gdError(peek(),'« '+v+' » attendu.');return take()};
+ const id=()=>{const t=take();if(t.kind!=='id')throw gdError(t,'Identifiant attendu.');return t;};
+ const type=allowVoid=>{const t=id();if(!gdTypes.has(t.value)&&!(allowVoid&&t.value==='void'))throw gdError(t,'Type GDScript non pris en charge.');return t.value};
+ const end=()=>expect('<newline>');
+ const precedence={'or':1,'||':1,'and':2,'&&':2,'==':3,'!=':3,'<':4,'>':4,'<=':4,'>=':4,'+':5,'-':5,'*':6,'/':6,'%':6};
+ function expression(min=0){
+  if(++depth>40)throw gdError(peek(),'Expressions trop imbriquées.');
+  const t=peek();let node;
+  if(['not','!','-','+'].some(at)){take();node={kind:'unary',token:t,op:t.value,value:expression(7)};}
+  else if(at('(')){take();node=expression();expect(')');}
+  else if(t.kind==='number'||t.kind==='string'||at('true')||at('false')){take();node={kind:'literal',token:t,value:t.value,literalType:t.kind==='id'?'bool':t.kind};}
+  else{const first=id(),parts=[first.value];while(at('.')){take();parts.push(id().value);}node={kind:'path',token:first,parts};if(at('(')){take();const args=[];if(!at(')')){while(true){if(args.length>=8)throw gdError(peek(),'8 arguments maximum.');args.push(expression());if(!at(','))break;take();if(at(')'))break;}}expect(')');node={kind:'call',token:first,parts,args};}}
+  while(peek().kind!=='string'&&Object.hasOwn(precedence,peek().value)&&precedence[peek().value]>=min){const op=take();node={kind:'binary',token:op,op:op.value,left:node,right:expression(precedence[op.value]+1)};}
+  depth--;return node;
+ }
+ function declaration(exposed=false){const token=expect('var'),name=id().value;let declared=null;if(at(':')){take();declared=type(false);}expect('=');const value=expression();end();return {kind:'var',token,name,declared,value,exposed};}
+ function body(){expect(':');end();expect('<indent>');const statements=[];while(!at('<dedent>')){if(at('<eof>'))throw gdError(peek(),'Bloc non terminé.');statements.push(statement());}expect('<dedent>');if(!statements.length)throw gdError(peek(),'Bloc vide.');return statements;}
+ function statement(){
+  const token=peek();
+  if(at('var'))return declaration();
+  if(at('if')){take();const branches=[{token,condition:expression(),body:body()}];while(at('elif')){const t=take();branches.push({token:t,condition:expression(),body:body()});}let otherwise=null;if(at('else')){const t=take();otherwise={token:t,body:body()};}return {kind:'if',token,branches,otherwise};}
+  if(at('while')){take();const condition=expression();return {kind:'while',token,condition,body:body()};}
+  if(at('for')){take();const name=id().value;expect('in');expect('range');expect('(');const count=take();if(count.kind!=='number'||!/^\d+$/.test(count.value)||Number(count.value)>1024)throw gdError(count,'range attend un entier littéral entre 0 et 1024.');expect(')');return {kind:'for',token,name,count:Number(count.value),body:body()};}
+  if(['pass','break','continue'].some(at)){take();end();return {kind:token.value,token};}
+  if(at('return')){take();const value=at('<newline>')?null:expression();end();return {kind:'return',token,value};}
+  const left=expression();if(['=','+=','-=','*=','/='].some(at)){if(left.kind!=='path')throw gdError(token,'Cible d’affectation invalide.');const op=take().value,value=expression();end();return {kind:'assign',token,left,op,value};}
+  if(left.kind!=='call')throw gdError(token,'Appel de fonction ou affectation attendu.');end();return {kind:'expression',token,value:left};
+ }
+ const ast={kind:'script',base:null,className:null,fields:[],functions:[]};let declarations=false;
+ while(!at('<eof>')){
+  if(at('extends')){const t=take();if(ast.base||declarations)throw gdError(t,'extends doit précéder les déclarations.');const b=id();if(!['Node','Node2D','Node3D'].includes(b.value))throw gdError(b,'Classe de base non prise en charge.');ast.base=b.value;end();continue;}
+  if(at('class_name')){const t=take();if(ast.className||declarations)throw gdError(t,'class_name doit précéder les déclarations.');ast.className=id().value;end();continue;}
+  declarations=true;
+  if(at('@')){take();expect('export');ast.fields.push(declaration(true));continue;}
+  if(at('var')){ast.fields.push(declaration());continue;}
+  if(at('func')){const token=take(),name=id().value;expect('(');const params=[];if(!at(')')){while(true){const p=id();let declared=null;if(at(':')){take();declared=type(false);}if(params.length>=8||params.some(x=>x.name===p.value))throw gdError(p,'Paramètres dupliqués ou trop nombreux.');params.push({name:p.value,type:declared,token:p});if(!at(','))break;take();if(at(')'))break;}}expect(')');let returns='void';if(at('->')){take();returns=type(true);}ast.functions.push({kind:'function',token,name,params,returns,body:body()});continue;}
+  throw gdError(peek(),'Déclaration GDScript non prise en charge.');
+ }
+ if(!ast.base)throw gdError(ts[0],'extends Node, Node2D ou Node3D requis.');return ast;
+}
+function lowerGDScript(ast){
+ const lines=[],map=[],fields=new Set(ast.fields.map(f=>f.name)),methods=new Set(ast.functions.map(f=>f.name)),base=ast.base;
+ const emit=(line,token)=>{lines.push(line);map.push(token);};
+ const type=t=>t==='String'?'string':t==='Vector2'?'Vector3':t;
+ const builtins={print:'Log',sin:'Mathf.Sin',cos:'Mathf.Cos',abs:'Mathf.Abs',min:'Mathf.Min',max:'Mathf.Max',clamp:'Mathf.Clamp',deg_to_rad:'WLGdDegToRad',rad_to_deg:'WLGdRadToDeg'};
+ const spatial=t=>{if(base==='Node')throw gdError(t,'API réservée à Node2D ou Node3D.');};
+ function path(node,scope,delta){
+  const parts=node.parts,explicit=parts[0]==='self',p=explicit?parts.slice(1):parts,prop=p[0],axis=p[1];
+  if(!explicit&&prop===delta&&p.length===1)return 'Time.deltaTime';
+  if(!explicit&&(scope.has(prop)||fields.has(prop)))return parts.join('.');
+  if(!explicit&&p.length===1&&prop==='PI')return '3.141592653589793';
+  if(!explicit&&p.length===2&&['Vector2','Vector3'].includes(prop)&&axis==='ZERO')return prop==='Vector2'?'Vector2(0,0)':'Vector3(0,0,0)';
+  if(prop==='name'&&p.length===1)return 'gameObject.name';
+  if(['position','rotation','rotation_degrees','visible'].includes(prop)){
+   spatial(node.token);if(p.length>2||axis&&!['x','y','z'].includes(axis))throw gdError(node.token,'Axe invalide.');
+   if(prop==='visible'){if(axis)throw gdError(node.token,'visible est scalaire.');return 'gd.visible';}
+   if(prop==='position'){if(base==='Node2D'&&axis==='z')throw gdError(node.token,'Node2D ne possède pas de position.z.');return 'transform.position'+(axis?'.'+axis:'');}
+   if(base==='Node2D'){if(axis)throw gdError(node.token,'Rotation Node2D scalaire.');return prop==='rotation'?'gd.rotation2d':'gd.rotationDegrees2d';}
+   if(!axis)throw gdError(node.token,'Rotation Node3D : axe x/y/z requis.');return (prop==='rotation'?'gd.rotation3d.':'gd.rotationDegrees3d.')+axis;
+  }
+  if(explicit)throw gdError(node.token,'Propriété self non prise en charge.');return parts.join('.');
+ }
+ function expr(node,scope,delta){
+  if(node.kind==='literal')return node.literalType==='string'?JSON.stringify(node.value):node.value;
+  if(node.kind==='path')return path(node,scope,delta);
+  if(node.kind==='unary')return '('+(node.op==='not'?'!':node.op)+expr(node.value,scope,delta)+')';
+  if(node.kind==='binary')return '('+expr(node.left,scope,delta)+' '+({and:'&&',or:'||'}[node.op]||node.op)+' '+expr(node.right,scope,delta)+')';
+  const name=node.parts.join('.'),mapped=!methods.has(name)&&Object.hasOwn(builtins,name)?builtins[name]:name;
+  return mapped+'('+node.args.map(a=>expr(a,scope,delta)).join(', ')+')';
+ }
+ function infer(n){if(n.kind==='binary'){
+  const left=infer(n.left),right=infer(n.right),vector=t=>t==='Vector2'||t==='Vector3';
+  if(['==','!=','<','>','<=','>=','and','or','&&','||'].includes(n.op))return 'bool';
+  if(n.op==='+'&&(left==='String'||right==='String'))return 'String';
+  if(['+','-'].includes(n.op)&&vector(left)&&vector(right))return left==='Vector3'||right==='Vector3'?'Vector3':'Vector2';
+  if(['*','/'].includes(n.op)&&vector(left)&&!vector(right))return left;
+  if(n.op==='*'&&vector(right)&&!vector(left))return right;
+  return 'float';
+ }if(n.kind==='unary'&&['not','!'].includes(n.op))return 'bool';if(n.kind==='literal'){if(n.literalType==='bool')return 'bool';if(n.literalType==='string')return 'String';if(n.literalType==='number'&&/^\d+$/.test(n.value))return 'int';}if(n.kind==='unary'&&n.op==='-'&&n.value.kind==='literal'&&n.value.literalType==='number'&&/^\d+$/.test(n.value.value))return 'int';if((n.kind==='call'||n.kind==='path')&&['Vector2','Vector3'].includes(n.parts[0]))return n.parts[0];return 'float';}
+ function block(body,scope,delta){for(const n of body){const e=v=>expr(v,scope,delta),t=n.token;
+  if(n.kind==='var'){emit(type(n.declared||'var')+' '+n.name+' = '+e(n.value)+';',t);scope.add(n.name);}
+  else if(n.kind==='assign'){emit(path(n.left,scope,delta)+' '+n.op+' '+e(n.value)+';',t);}
+  else if(n.kind==='if'){for(const [i,b] of n.branches.entries()){emit((i?'else if':'if')+' ('+e(b.condition)+') {',b.token);block(b.body,new Set(scope),delta);emit('}',b.token);}if(n.otherwise){emit('else {',n.otherwise.token);block(n.otherwise.body,new Set(scope),delta);emit('}',n.otherwise.token);}}
+  else if(n.kind==='while'){emit('while ('+e(n.condition)+') {',t);block(n.body,new Set(scope),delta);emit('}',t);}
+  else if(n.kind==='for'){emit('for (int '+n.name+' = 0; '+n.name+' < '+n.count+'; '+n.name+' += 1) {',t);block(n.body,new Set([...scope,n.name]),delta);emit('}',t);}
+  else if(n.kind==='return'){emit('return'+(n.value?' '+e(n.value):'')+';',t);}
+  else if(n.kind==='pass'){emit('// pass',t);}
+  else if(n.kind==='break'||n.kind==='continue'){emit(n.kind+';',t);}
+  else if(n.kind==='expression'){
+   const call=n.value,name=call.parts.join('.'),args=call.args;
+   if(!methods.has(name)&&['rotate','rotate_x','rotate_y','rotate_z','translate','global_translate','show','hide'].includes(name)){
+    spatial(t);const arity=['show','hide'].includes(name)?0:1;if(args.length!==arity)throw gdError(t,'Nombre d’arguments incorrect : '+name);
+    if(name==='show'||name==='hide')emit('SetVisible('+(name==='show')+');',t);
+    else if(name==='translate'||name==='global_translate')emit('transform.position += '+e(args[0])+';',t);
+    else{const angle='('+e(args[0])+') * 57.29577951308232';if(name==='rotate'){if(base!=='Node2D')throw gdError(t,'rotate(angle) requiert Node2D.');emit('Rotate('+angle+');',t);}else{if(base!=='Node3D')throw gdError(t,'rotate_x/y/z requiert Node3D.');emit('Rotate('+['x','y','z'].map(a=>a===name.at(-1)?angle:'0').join(', ')+');',t);}}
+   }else emit(e(call)+';',t);
+  }
+ }}
+ for(const f of ast.fields)emit((f.exposed?'public ':'private ')+type(f.declared||infer(f.value))+' '+f.name+' = '+expr(f.value,new Set(),null)+';',f.token);
+ for(const f of ast.functions){
+  const hook=Object.hasOwn(gdHooks,f.name)?gdHooks[f.name]:null,frame=['_process','_physics_process'].includes(f.name);
+  if(hook){if(f.returns!=='void'||f.params.length!==(frame?1:0)||frame&&f.params[0].type&&!['float'].includes(f.params[0].type))throw gdError(f.token,'Paramètres du callback incompatibles.');}
+  else if(f.name.startsWith('_')||Object.values(gdHooks).includes(f.name)||['LateUpdate','OnEnable','OnDisable','WLGdDegToRad','WLGdRadToDeg'].includes(f.name)||f.params.some(p=>!p.type))throw gdError(f.token,'Fonction réservée ou paramètres non typés.');
+  emit(type(f.returns)+' '+(hook||f.name)+'('+(hook?'':f.params.map(p=>type(p.type)+' '+p.name).join(', '))+') {',f.token);
+  block(f.body,new Set(f.params.map(p=>p.name)),frame?f.params[0].name:null);emit('}',f.token);
+ }
+ const last=ast.functions.at(-1)?.token||ast.fields.at(-1)?.token||{line:1,column:1};
+ // Generated helpers must not reserve any user field or function names.
+ let parameter='wlGdAngleArgument';while(fields.has(parameter)||methods.has(parameter))parameter+='_';
+ emit('float WLGdDegToRad(float '+parameter+') { return '+parameter+' * 0.017453292519943295; }',last);
+ emit('float WLGdRadToDeg(float '+parameter+') { return '+parameter+' * 57.29577951308232; }',last);
+ return {source:lines.join('\n'),map};
+}
+export function compileGDScript(source){
+ try{const ast=parseGDScript(source),lowered=lowerGDScript(ast),result=compileWarScript(lowered.source);
+ return {...result,className:ast.className,gdBase:ast.base,diagnostics:result.diagnostics.map(d=>{const t=lowered.map[d.line-1];return {...d,line:t?.line||d.line,column:t?.column||d.column};})};
+ }catch(e){return {ok:false,fields:[],methods:{},diagnostics:[{severity:'error',line:e.line||1,column:e.column||1,message:e.message}]};}
 }

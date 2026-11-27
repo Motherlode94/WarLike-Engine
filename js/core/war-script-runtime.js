@@ -26,7 +26,7 @@ export function createScriptApi(entity,ctx,clock,component){
  const three=ctx.mode==='3d',position=()=>({x:entity.x/64,y:three?Number(entity.elevation3d||0):entity.y/64,z:three?entity.y/64:0});
  const config={
   'vehicle.maxSpeed':['maxSpeed',0,10000],'vehicle.acceleration':['acceleration',0,10000],'vehicle.brakeForce':['brakeForce',0,10000],'vehicle.turnRate':['turnRate',0,2000],
-  'controller.walkSpeed':['controller2d','walkSpeed',0,10000],'controller.sprintSpeed':['controller2d','sprintSpeed',0,10000],'controller.jumpSpeed':['controller2d','jumpSpeed',0,10000],
+  'controller.walkSpeed':[three?'controller3d':'controller2d','walkSpeed',0,three?100:10000],'controller.sprintSpeed':[three?'controller3d':'controller2d','sprintSpeed',0,three?100:10000],'controller.jumpForce':['controller3d','jumpForce',0,100],'controller.gravity':['controller3d','gravity',0,200],'controller.jumpSpeed':['controller2d','jumpSpeed',0,10000],
   'world.timeScale':['survivalWorld','timeScale',0,3600]
  };
  const read=name=>{
@@ -40,6 +40,9 @@ export function createScriptApi(entity,ctx,clock,component){
   if(name==='gameObject.name')return String(entity.name||'');if(name==='gameObject.active')return entity.enabled!==false;
   if(name==='health')return Number(entity.stats?.health??entity.hp??100);
   if(name==='light.intensity')return Number(entity.lightIntensity??1);if(name==='light.enabled')return entity.lightEnabled!==false;
+  if(name==='controller.isGrounded')return (three?entity.grounded3d:entity.grounded2d)===true;
+  if(name==='camera.mode')return String(entity.cameraRig?.mode||'thirdPerson');
+  if(name==='camera.distance'||name==='camera.height')return Number(entity.cameraRig?.[name.slice(7)]??(name==='camera.distance'?4:.75));
   const cfg=config[name];if(cfg)return Number((cfg.length===3?entity[cfg[0]]:entity[cfg[0]]?.[cfg[1]])??0);
   throw Error('Propriété inconnue : '+name);
  };
@@ -52,6 +55,9 @@ export function createScriptApi(entity,ctx,clock,component){
   if(name==='health'){const hp=bounded(value,0,Number(entity.stats?.maxHealth??100));entity.hp=hp;if(entity.stats)entity.stats.health=hp;return}
   if(name==='light.intensity'){entity.lightIntensity=bounded(value,0,50);return}
   if(name==='light.enabled'){warScriptValue('bool',value);entity.lightEnabled=value;return}
+  if(name.startsWith('camera.')){if(!three||!entity.cameraRig)throw Error('Camera Rig 3D absent.');if(name==='camera.mode'){if(!['firstPerson','thirdPerson'].includes(value))throw Error('Mode caméra invalide.');entity.cameraRig.mode=value;return}if(name==='camera.distance'||name==='camera.height'){entity.cameraRig[name.slice(7)]=bounded(value,name==='camera.height'?-10:.1,100);return}}
+  if(name==='controller.isGrounded')throw Error('État du sol en lecture seule.');
+  if(three&&name==='controller.jumpSpeed'||!three&&['controller.jumpForce','controller.gravity'].includes(name))throw Error('Propriété incompatible avec la dimension.');
   const cfg=config[name];if(cfg){if(cfg.length===3)entity[cfg[0]]=bounded(value,cfg[1],cfg[2]);else{if(!entity[cfg[0]])throw Error('Composant absent : '+cfg[0]);entity[cfg[0]][cfg[1]]=bounded(value,cfg[2],cfg[3])}return}
   throw Error('Propriété non modifiable : '+name);
  };

@@ -1,3 +1,4 @@
+import {rotationQuaternion3d} from './collider-3d.js';
 import {multiplyMatrix4Math,invertMatrix4Math} from './math-kernel.js';
 // WarLike Core V2 — independent, versioned scene graph. No browser dependency.
 const clone=value=>structuredClone(value);
@@ -291,7 +292,22 @@ export function snap3d(value,step=0){
  if(!Number.isFinite(value)||!Number.isFinite(step)||step<0)throw Error('Valeur de snapping invalide');
  return step>0?Math.round(value/step)*step:value;
 }
-export function placeEntityOnSurface3d(entity,hit,{snap=0,alignNormal=false}={}){
+// Minimum signed support along the contacted plane, using the same rotation as WebGL.
+export function placementSupport3d(entity,normal,{box,parts,normalizedSize}={}){
+ const b=box||{w:(Number(entity.w)||64)/64,h:(Number(entity.h)||64)/64,d:(Number(entity.depth3d??entity.h)||64)/64};
+ const q=rotationQuaternion3d(entity),len=Math.hypot(...normal),n=normal.map(x=>x/len);
+ // Rotate normal into object space; project vertices without allocating per vertex.
+ const r={x:-q.x,y:-q.y,z:-q.z,w:q.w},t=[2*(r.y*n[2]-r.z*n[1]),2*(r.z*n[0]-r.x*n[2]),2*(r.x*n[1]-r.y*n[0])];
+ const local=[n[0]+r.w*t[0]+r.y*t[2]-r.z*t[1],n[1]+r.w*t[1]+r.z*t[0]-r.x*t[2],n[2]+r.w*t[2]+r.x*t[1]-r.y*t[0]];
+ let minimum=Infinity;
+ if(parts?.length&&normalizedSize?.length===3&&normalizedSize.every(v=>Number.isFinite(v)&&v>0)){
+  const scale=[b.w/normalizedSize[0],b.h/normalizedSize[1],b.d/normalizedSize[2]];
+  for(const part of parts){const v=part.vertices;if(!v)continue;for(let i=0;i+2<v.length;i+=6){const dot=v[i]*scale[0]*local[0]+v[i+1]*scale[1]*local[1]+v[i+2]*scale[2]*local[2];if(Number.isFinite(dot)&&dot<minimum)minimum=dot}}
+ }
+ if(!Number.isFinite(minimum))minimum=-(Math.abs(local[0])*b.w+Math.abs(local[1])*b.h+Math.abs(local[2])*b.d)/2;
+ return {minimum,height:b.h,normal:n};
+}
+export function placeEntityOnSurface3d(entity,hit,{snap=0,alignNormal=false,smartContact=false,geometry=null}={}){
  if(!entity||!hit||!Array.isArray(hit.point)||hit.point.length!==3||!hit.point.every(Number.isFinite))throw Error('Point de placement 3D invalide');
  const [x,y,z]=hit.point;
  const width=(Number(entity.w)||64)/64,depth=(Number(entity.depth3d??entity.h)||64)/64;
@@ -305,6 +321,16 @@ export function placeEntityOnSurface3d(entity,hit,{snap=0,alignNormal=false}={})
    entity.rotationX3d=Math.atan2(n[2],n[1])*180/Math.PI;
    const roll=-Math.atan2(n[0],Math.hypot(n[1],n[2]))*180/Math.PI;entity.rotationZ3d=roll===0?0:roll;
   }
+ }
+ if(smartContact){
+  const n=Array.isArray(hit.normal)&&hit.normal.length===3&&hit.normal.every(Number.isFinite)&&Math.hypot(...hit.normal)>1e-8?hit.normal:[0,1,0];
+  const support=placementSupport3d(entity,n,geometry||{}),unit=support.normal;
+  // Start at snapped horizontal position but retain exact plane contact, even on slopes.
+  const center=[entity.x/64+width/2,y+support.height/2,entity.y/64+depth/2];
+  const signed=center.reduce((a,v,i)=>a+(v-hit.point[i])*unit[i],0)+support.minimum;
+  // Prefer vertical correction on floors; use normal displacement on walls.
+  if(Math.abs(unit[1])>.2){center[1]-=signed/unit[1]}else{for(let i=0;i<3;i++)center[i]-=signed*unit[i]}
+  entity.x=(center[0]-width/2)*64;entity.y=(center[2]-depth/2)*64;entity.elevation3d=center[1]-support.height/2;
  }
  return entity;
 }

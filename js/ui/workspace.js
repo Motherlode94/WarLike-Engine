@@ -138,10 +138,12 @@ assetPrevious.onclick=()=>{assetPage--;render();grid.scrollTop=0};assetNext.oncl
 
 const storedSize=Number(localStorage.getItem('warlike.assetSize'));if(storedSize>=90&&storedSize<=180)size.value=String(storedSize);
 function selectFolder(cat){select.value=cat;selectedAsset=null;assetPage=1;render()}
-function add3d(id,x,y){
- const obj=prefab3d(id,state.nextId++,x??120+(state.nextId%8)*60,y??120+(state.nextId%5)*60);
- if(!obj)return;
- state.entities.push(obj);state.selected=[obj.id];record('Ajouter mesh 3D '+obj.name);notify();
+function add3d(id,x,y,placement=null){
+ if(state.playing||!get3dAsset(id))return null;
+ const next=state.nextId,obj=prefab3d(id,next,x??120+((next+1)%8)*60,y??120+((next+1)%5)*60);
+ if(!obj)return null;
+ if(placement)placeEntityOnSurface3d(obj,placement.hit,placement.options);
+ state.nextId=next+1;state.entities.push(obj);state.selected=[obj.id];record('Ajouter mesh 3D '+obj.name);notify();return obj;
 }
 
 const prefabTools=document.createElement('details');prefabTools.className='asset-folder-import prefab-tools-collapsible';
@@ -380,17 +382,12 @@ canvas3d.addEventListener('drop',e=>{
  if(workspace.mode!=='3d'||state.playing)return;
  const id=e.dataTransfer.getData('application/x-warlike-asset');
  if(!get3dAsset(id))return;
- const rect=canvas3d.getBoundingClientRect();
  const hit=view3d.surfaceAt?.(e.clientX,e.clientY)||null;
- add3d(id);
- const obj=state.entities.find(o=>o.id===state.selected.at(-1));
- if(obj&&hit){
-  const snapMode=localStorage.getItem('warlike.snap3d.mode')||'grid';
-  const snapStep=(toolsState.snap||localStorage.getItem('warlike.snap3d.enabled')==='true')&&snapMode==='grid'?Math.max(.01,Number(localStorage.getItem('warlike.snap3d.step'))||.5):0;
-  placeEntityOnSurface3d(obj,hit,{snap:snapStep,alignNormal:e.shiftKey});
-  record('Positionner prefab 3D sur '+(hit.kind==='triangle'?'surface GLB':'plan du sol'));notify();
- }
- log('Prefab 3D déposé : '+id+(hit?' · '+(hit.kind==='triangle'?'surface du modèle':'sol'):' · placement par défaut'));
+ if(!hit){log('Placement annulé : aucune surface détectée','warn');return;}
+ const snapMode=localStorage.getItem('warlike.snap3d.mode')||'grid';
+ const snapStep=(toolsState.snap||localStorage.getItem('warlike.snap3d.enabled')==='true')&&snapMode==='grid'?Math.max(.01,Number(localStorage.getItem('warlike.snap3d.step'))||.5):0;
+ const obj=add3d(id,undefined,undefined,{hit,options:{snap:snapStep,alignNormal:e.shiftKey}});
+ if(obj)log('Prefab 3D déposé : '+id);
 });
 window.addEventListener('keydown',e=>{if(e.defaultPrevented||view3d.drag?.nav==='look')return;if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||e.ctrlKey||e.metaKey||state.playing)return;const map={q:'hand',w:'move',e:'rotate',r:'scale',t:'rect'};if(map[e.key.toLowerCase()])setTool(map[e.key.toLowerCase()])});
 log('WarLike Engine editor démarré');}

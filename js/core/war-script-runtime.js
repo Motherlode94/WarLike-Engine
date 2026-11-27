@@ -109,10 +109,17 @@ export class WarScriptRuntime {
    try{const program=compileAttachedScript(component,ctx.project);if(!program.ok)throw Error('WarScript invalide : '+program.diagnostics.map(d=>d.line+':'+d.column+' '+d.message).join(' ; '));if(program.gdBase&&program.gdBase!=='Node'&&(program.gdBase==='Node3D')!==(ctx.mode==='3d'))throw Error('Type '+program.gdBase+' incompatible avec la scène '+ctx.mode+'.');entry.gd=!!program.gdBase;entry.instance=createWarScriptInstance(program,createScriptApi(entity,entry.context,clock,component),{values:component.values||{},saved:component.runtime.started||component.runtime.awakened?component.runtime.fields:null});entry.lifecycle=new ScriptLifecycle(entry,(hook,cleanup)=>this.invoke(entry,hook,cleanup));this.instances.set(component,entry);
    }catch(error){this.instances.set(component,entry);this.report(entry,error)}
   }
-  const removed=[...this.instances.values()].filter(entry=>!live.has(entry.component));
-  for(const entry of orderGdEntries(removed,this.gdOrder.exit)){Object.assign(entry.context,ctx);entry.lifecycle?.dispose();this.instances.delete(entry.component)}
+  this.disposeDetached(ctx,entry=>!live.has(entry.component));
   if([...this.instances.values()].some(e=>e.gd&&!e.failed)){
    try{this.gdOrder=gdSceneOrder(ctx.entities);}catch(error){for(const entry of this.instances.values())if(entry.gd&&!entry.failed)this.report(entry,error);}
+  }
+ }
+ // Cleanup is shared between sync and late so a gameplay mutation in the
+ // middle of a frame cannot invoke ScriptLifecycle.dispose in flat order.
+ disposeDetached(ctx,detached=entry=>!entry.attached()){
+  const removed=[...this.instances.values()].filter(detached);
+  for(const entry of orderGdEntries(removed,this.gdOrder.exit)){
+   if(ctx)Object.assign(entry.context,ctx);entry.lifecycle?.dispose();this.instances.delete(entry.component);
   }
  }
  update(dt,ctx){
@@ -133,7 +140,7 @@ export class WarScriptRuntime {
    try{this.invoke(entry,method)}finally{delete entry.component.runtime.physicsContact}
   }
  }
- late(){for(const entry of this.instances.values())if(entry.lifecycle)this.phase(entry,'LateUpdate')}
+ late(){this.disposeDetached(this.context);for(const entry of this.instances.values())if(entry.lifecycle){if(!entry.attached()){this.disposeDetached(this.context);continue;}this.phase(entry,'LateUpdate')}this.disposeDetached(this.context)}
  stop(){for(const entry of orderGdEntries([...this.instances.values()],this.gdOrder.exit))entry.lifecycle?.dispose();this.instances.clear();this.elapsed=0;this.fixed=0;this.context=null;this.errors=[];this.gdOrder={enter:[],ready:[],exit:[]}}
 }
 export const warScriptRuntime=new WarScriptRuntime();

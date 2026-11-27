@@ -24,12 +24,7 @@ export function applyComponentDamage(target,amount,source=null){
  const damageable=first(target,'Damageable');if(!damageable||damageable.invulnerable)return 0;
  const ownTeam=first(target,'Team'),sourceTeam=source&&first(source,'Team');
  if(source&&source!==target&&ownTeam&&sourceTeam&&num(ownTeam.teamId)===num(sourceTeam.teamId)&&!ownTeam.friendlyFire)return 0;
- const damage=Math.max(0,num(amount));let dealt=damage*100/(100+Math.max(0,num(damageable.armor)));
- // Data-only behavior attachments: no arbitrary code execution.
- const policies=Array.isArray(target.blueprintComponents)?target.blueprintComponents.filter(b=>b?.enabled!==false&&b?.kind==='BP_Immortality'):[];
- if(policies.some(b=>b.ignoreDamage===true))return 0;
- if(policies.some(b=>b.preventDeath!==false))dealt=Math.min(dealt,Math.max(0,health(target)-1));
- if(policies.length&&dealt===0)return 0;
+ const damage=Math.max(0,num(amount));const dealt=damage*100/(100+Math.max(0,num(damageable.armor)));
  setHealth(target,Math.max(0,health(target)-dealt));
  emitGameplayEvent('actor:damaged',{targetId:target.id,sourceId:source?.id??null,damage:dealt});
  if(target.hp<=0){target._componentDead=true;target._respawnTimer=Math.max(0,num(first(target,'Respawn')?.delay,5));

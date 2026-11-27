@@ -783,6 +783,11 @@ export function init3d(canvas,host,buttons){
   const mode=snapping?(localStorage.getItem('warlike.snap3d.mode')||'grid'):'grid';
   return snapping&&['vertex','edge'].includes(mode)?nearbySnap(nearest,contexts,mode):nearest;
  };
+ view3d.placementGeometryFor=entity=>{
+  const id=entity.model3dId||entity.assetId,box=objectBounds3d(entity);
+  if(entity.model3dId||get3dAsset(entity.assetId)?.shape==='glb'){ensureModel(id);const loaded=realGlbBuffers.get(id);if(loaded?.status!=='ready')return null;return {box,parts:loaded.geometry.parts,normalizedSize:loaded.normalizedSize}}
+  return {box};
+ };
  const placementTerrainCache=new WeakMap();
  view3d.surfaceAt=(clientX,clientY,{excludeIds=[],groundFallback=true}={})=>{
   const rect=canvas.getBoundingClientRect(),point={x:clientX-rect.left,y:clientY-rect.top,w:rect.width,h:rect.height},cam=camera();

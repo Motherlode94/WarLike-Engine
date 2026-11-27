@@ -36,6 +36,7 @@ export const eventLabels={start:'Au démarrage',interact:'À l’interaction',en
 Object.assign(eventLabels,{"damageReceived":"Dégâts reçus","healthRestored":"Santé restaurée","revived":"Résurrection"});
 Object.assign(eventLabels,{"aiStateChanged":"État IA modifié","aiTargetAcquired":"Cible IA acquise","aiTargetLost":"Cible IA perdue"});
 Object.assign(eventLabels,{"playerLanded":"Atterrissage","playerAirborne":"Quitte le sol"});
+Object.assign(eventLabels,{vehicleDriverEntered:'Conducteur installé',vehicleDriverExited:'Conducteur sorti',vehicleEngineChanged:'État moteur modifié'});
 const words=value=>String(value).replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());
 export const labelFor=(type,kind='action')=>(kind==='event'?eventLabels:kind==='condition'?conditionLabels:instructionLabels)[type]||words(type);
 export const actionGroup=type=>Object.entries(groups).find(([,types])=>types.includes(type))?.[0]||(/Vehicle|Fuel|Gear/.test(type)?'Véhicules':/Weapon/.test(type)?'Armes':'Gameplay avancé');

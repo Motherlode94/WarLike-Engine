@@ -366,7 +366,7 @@ function lowerGDScript(ast){
  }
  const last=ast.functions.at(-1)?.token||ast.fields.at(-1)?.token||{line:1,column:1};
  // Generated helpers must not reserve any user field or function names.
- let parameter='__wl_gd_angle';while(fields.has(parameter)||methods.has(parameter))parameter+='_';
+ let parameter='wlGdAngleArgument';while(fields.has(parameter)||methods.has(parameter))parameter+='_';
  emit('float WLGdDegToRad(float '+parameter+') { return '+parameter+' * 0.017453292519943295; }',last);
  emit('float WLGdRadToDeg(float '+parameter+') { return '+parameter+' * 57.29577951308232; }',last);
  return {source:lines.join('\n'),map};

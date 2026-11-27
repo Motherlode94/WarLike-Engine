@@ -504,9 +504,11 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
    }else if(drag.mode==='scale'||drag.mode==='rect'){
     const factor=projectedAxisScale3d(drag.pivotScreen,drag.endScreen,dx,dy);
     const scaled=value=>gizmoScaledDimension3d(value,factor,snapStep);
-    if(drag.axis==='x')o.w=scaled(start.w);
-    else if(drag.axis==='y')o.h=scaled(start.h);
-    else o.depth3d=scaled(start.depth3d);
+    // Horizontal dimensions are stored from a corner; keep the visual centre fixed.
+    // Vertical scaling preserves the base (ground contact) rather than sinking it.
+    if(drag.axis==='x'){o.w=scaled(start.w);o.x=start.x+(start.w-o.w)/2}
+    else if(drag.axis==='y'){o.h=scaled(start.h);o.elevation3d=start.elevation3d}
+    else{o.depth3d=scaled(start.depth3d);o.y=start.y+(start.depth3d-o.depth3d)/2}
    }else{
     const direction=drag.rustAxis;
     if(surfaceHit){

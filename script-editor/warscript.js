@@ -228,14 +228,20 @@ export function compileGDScript(source){
  if(typeof source!=='string'||source.length>65536)return fail(1,'GDScript limité à 64 Ko.');
  const lines=source.replace(/\r\n?/g,'\n').split('\n'),out=[],map=[],stack=[];let base=null,delta=null,extendsSeen=false,className=null;
  const gdType=t=>t==='String'?'string':t==='Vector2'?'Vector3':t;
+ // Bindings are collected per lexical block. Fields are visible in methods
+ // regardless of declaration order, as in the existing WarScript compiler.
+ const fields=new Set(lines.flatMap(raw=>{const m=/^(?:@export\s+)?var\s+([A-Za-z_]\w*)\b/.exec(raw);return m?[m[1]]:[];}));
+ const bound=name=>fields.has(name)||stack.some(b=>b.bindings?.has(name));
  const emit=(s,line)=>{out.push(s);map.push(line)};
  const error=(line,message)=>{throw Object.assign(Error(message),{line})};
  const expr=(s,line)=>{
   // Preserve quoted strings; only transform tokens outside strings.
   const parts=s.match(/"(?:[^"\\]|\\.)*"|[^"]+/g)||[];
   if(parts.join('')!==s)error(line,'Chaîne non terminée.');
-  return parts.map(p=>p.startsWith('"')?p:p.replace(/\b(and|or|not)\b/g,x=>({and:'&&',or:'||',not:'!'})[x]).replace(/\bPI\b/g,'3.141592653589793').replace(/\bdeg_to_rad\s*\(/g,'WLGdDegToRad(').replace(/\brad_to_deg\s*\(/g,'WLGdRadToDeg(').replace(/\b(?:self\.)?(position|rotation_degrees|rotation|visible|name)\b(?:\.[xyz]\b)?/g,word=>{
+  return parts.map(p=>p.startsWith('"')?p:p.replace(/\b(and|or|not)\b/g,x=>({and:'&&',or:'||',not:'!'})[x]).replace(/\bPI\b/g,'3.141592653589793').replace(/\bdeg_to_rad\s*\(/g,'WLGdDegToRad(').replace(/\brad_to_deg\s*\(/g,'WLGdRadToDeg(').replace(/(?<![\w.])(?:self\.)?(position|rotation_degrees|rotation|visible|name)\b(?:\.[xyz]\b)?/g,word=>{
+   const explicit=word.startsWith('self.');
    const [prop,axis]=word.replace(/^self\./,'').split('.');
+   if(!explicit&&(prop===delta||bound(prop)))return word;
    if(prop==='name'){if(axis)error(line,'Propriété name invalide.');return 'gameObject.name'}
    if(base==='Node'||!base)error(line,'Transformations et visibilité requièrent Node2D ou Node3D.');
    if(prop==='visible'){if(axis)error(line,'Propriété visible invalide.');return 'gd.visible'}
@@ -243,7 +249,7 @@ export function compileGDScript(source){
    if(base==='Node2D'){if(axis)error(line,'Rotation Node2D scalaire.');return prop==='rotation'?'gd.rotation2d':'gd.rotationDegrees2d'}
    if(!axis)error(line,'Rotation Node3D : utilise rotation.x/y/z ou rotation_degrees.x/y/z.');
    return (prop==='rotation'?'gd.rotation3d.':'gd.rotationDegrees3d.')+axis;
-  }).replace(/\bVector2\.ZERO\b/g,'Vector2(0,0)').replace(/\bVector3\.ZERO\b/g,'Vector3(0,0,0)').replace(/\bprint\s*\(/g,'Log(').replace(/\b(sin|cos|abs|min|max|clamp)\s*\(/g,x=>'Mathf.'+x.trim().slice(0,x.trim().indexOf('(')).trim().replace(/^./,c=>c.toUpperCase())+'(').replace(delta?new RegExp('\\b'+delta+'\\b','g'):/\b(?!)\b/g,'Time.deltaTime')).join('');
+  }).replace(/\bVector2\.ZERO\b/g,'Vector2(0,0)').replace(/\bVector3\.ZERO\b/g,'Vector3(0,0,0)').replace(/\bprint\s*\(/g,'Log(').replace(/\b(sin|cos|abs|min|max|clamp)\s*\(/g,x=>'Mathf.'+x.trim().slice(0,x.trim().indexOf('(')).trim().replace(/^./,c=>c.toUpperCase())+'(').replace(delta?new RegExp('(?<![\\w.])'+delta+'\\b','g'):/\b(?!)\b/g,'Time.deltaTime')).join('');
  };
  const close=(indent,line)=>{let closed=null;while(stack.length&&indent<=stack.at(-1).indent){const b=stack.pop();if(!b.body)error(line,'Bloc indenté attendu.');closed=b;emit('}',line);if(b.kind==='func'){delta=null}}return closed};
  try{
@@ -260,11 +266,11 @@ export function compileGDScript(source){
    let m=/^(@export\s+)?var\s+([A-Za-z_]\w*)\s*(?::\s*(float|int|bool|String|Vector2|Vector3))?\s*=\s*(.+)$/.exec(s);
    if(m){const [,ex,name,type,value]=m;const inferred=type||(/^(true|false)$/.test(value)?'bool':/^"/.test(value)?'String':/^Vector[23](?:\s*\(|\.ZERO\b)/.test(value)?'Vector3':/^-?\d+$/.test(value)?'int':'float');emit((ex?'public ':'private ')+gdType(inferred)+' '+name+' = '+expr(value,line)+';',line);continue;}
    m=/^func\s+(_ready|_process|_physics_process|_enter_tree|_exit_tree)\s*\(\s*([A-Za-z_]\w*)?\s*(?::\s*float)?\s*\)\s*(?:->\s*void)?\s*:$/.exec(s);
-   if(m){const [,name,arg]=m,frame=['_process','_physics_process'].includes(name);if(frame!==!!arg)error(line,'Paramètres du callback incompatibles.');delta=arg||null;emit('void '+({_ready:'Start',_process:'Update',_physics_process:'FixedUpdate',_enter_tree:'Awake',_exit_tree:'OnDestroy'})[name]+'() {',line);stack.push({indent,kind:'func',body:false});continue;}
+   if(m){const [,name,arg]=m,frame=['_process','_physics_process'].includes(name);if(frame!==!!arg)error(line,'Paramètres du callback incompatibles.');delta=arg||null;emit('void '+({_ready:'Start',_process:'Update',_physics_process:'FixedUpdate',_enter_tree:'Awake',_exit_tree:'OnDestroy'})[name]+'() {',line);stack.push({indent,kind:'func',body:false,bindings:new Set(arg?[arg]:[])});continue;}
    m=/^func\s+([A-Za-z_]\w*)\s*\(([^()]*)\)\s*(?:->\s*(void|float|int|bool|String|Vector2|Vector3))?\s*:$/.exec(s);
    if(m){const [,name,rawParams,ret='void']=m;if(name.startsWith('_')||/^(Awake|Start|Update|FixedUpdate|LateUpdate|OnEnable|OnDisable|OnDestroy|WLGdDegToRad|WLGdRadToDeg)$/.test(name))error(line,'Nom de fonction réservé ou callback non pris en charge.');
     const params=rawParams.trim()?rawParams.split(',').map(p=>{const match=/^\s*([A-Za-z_]\w*)\s*:\s*(float|int|bool|String|Vector2|Vector3)\s*$/.exec(p);if(!match)error(line,'Paramètre typé requis.');return gdType(match[2])+' '+match[1]}):[];
-    emit(gdType(ret)+' '+name+'('+params.join(', ')+') {',line);stack.push({indent,kind:'func',body:false});continue;
+    emit(gdType(ret)+' '+name+'('+params.join(', ')+') {',line);stack.push({indent,kind:'func',body:false,bindings:new Set(params.map(p=>p.split(' ').at(-1)))});continue;
    }
    error(line,'Déclaration GDScript non prise en charge.');
   }
@@ -273,7 +279,7 @@ export function compileGDScript(source){
   m=/^elif\s+(.+):$/.exec(s);
   if(m||s==='else:'){if(closed?.kind!=='if'||closed.indent!==indent)error(line,'elif/else sans if correspondant.');emit(m?'else if ('+expr(m[1],line)+') {':'else {',line);stack.push({indent,kind:m?'if':'else',body:false});continue;}
   m=/^while\s+(.+):$/.exec(s);if(m){emit('while ('+expr(m[1],line)+') {',line);stack.push({indent,kind:'loop',body:false});continue;}
-  m=/^for\s+([A-Za-z_]\w*)\s+in\s+range\(\s*(\d+)\s*\):$/.exec(s);if(m){const [,name,n]=m;if(Number(n)>1024)error(line,'range limité à 1024 itérations.');emit('for (int '+name+' = 0; '+name+' < '+n+'; '+name+' += 1) {',line);stack.push({indent,kind:'loop',body:false});continue;}
+  m=/^for\s+([A-Za-z_]\w*)\s+in\s+range\(\s*(\d+)\s*\):$/.exec(s);if(m){const [,name,n]=m;if(Number(n)>1024)error(line,'range limité à 1024 itérations.');emit('for (int '+name+' = 0; '+name+' < '+n+'; '+name+' += 1) {',line);stack.push({indent,kind:'loop',body:false,bindings:new Set([name])});continue;}
   if(s==='break'||s==='continue'){emit(s+';',line);continue;}
   if(s==='pass'){emit('// pass',line);continue;}
   if(s==='return'){emit('return;',line);continue;}
@@ -282,7 +288,7 @@ export function compileGDScript(source){
   m=/^rotate\s*\((.+)\)$/.exec(s);if(m){if(base!=='Node2D')error(line,'rotate(angle) requiert Node2D ; pour Node3D utiliser rotate_x/y/z.');emit('Rotate(('+expr(m[1],line)+') * 57.29577951308232);',line);continue;}
   m=/^(?:translate|global_translate)\s*\((.+)\)$/.exec(s);if(m){if(base==='Node'||!base)error(line,'translate requiert Node2D ou Node3D.');emit('transform.position += '+expr(m[1],line)+';',line);continue;}
   if(s==='show()'||s==='hide()'){if(base==='Node'||!base)error(line,'Visibilité requiert Node2D ou Node3D.');emit('SetVisible('+(s==='show()')+');',line);continue;}
-  m=/^var\s+([A-Za-z_]\w*)\s*(?::\s*(float|int|bool|String|Vector2|Vector3))?\s*=\s*(.+)$/.exec(s);if(m){emit(gdType(m[2]||'var')+' '+m[1]+' = '+expr(m[3],line)+';',line);continue;}
+  m=/^var\s+([A-Za-z_]\w*)\s*(?::\s*(float|int|bool|String|Vector2|Vector3))?\s*=\s*(.+)$/.exec(s);if(m){emit(gdType(m[2]||'var')+' '+m[1]+' = '+expr(m[3],line)+';',line);const block=stack.at(-1);(block.bindings??=new Set()).add(m[1]);continue;}
   if(!/^(?:[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\s*(?:=|\+=|-=|\*=|\/=)|[A-Za-z_]\w*\s*\()/.test(s))error(line,'Instruction non prise en charge dans le profil GDScript v0.2.');
   emit(expr(s,line)+';',line);
  }

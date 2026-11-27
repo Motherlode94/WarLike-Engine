@@ -153,6 +153,7 @@ export const playerModules=[
   "js/core/scene-graph-v2.js",
   "js/core/scene-progress.js",
   "js/core/script-lifecycle.js",
+  "js/core/script-mouse-input.js",
   "js/core/script-trust.js",
   "js/core/shadow-map-3d.js",
   "js/core/simulation-nodes.js",

@@ -1,3 +1,4 @@
+import {scriptMouseSnapshot,clearPlayMouse,consumePlayMousePresses} from './script-mouse-input.js';
 import {profileScope} from './runtime-profiler.js';
 import {cleanupPlay} from './play-cleanup.js';
 import {nativeBridgeRequest} from './native-bridge-client.js';
@@ -44,7 +45,7 @@ export function stopRuntimeSession(){
  revision=null;initializedScene=null;pending=null;elapsed=0;nativeCanStop=false;
  webScene=null;webLoading=false;webElapsed=0;
  const errors=cleanupPlay([
-  ()=>physicsContactEvents2d.reset(),resetAnimationRuntime,()=>webScriptRuntime.stop(),
+  clearPlayMouse,()=>physicsContactEvents2d.reset(),resetAnimationRuntime,()=>webScriptRuntime.stop(),
   ()=>{if(stopNative)Promise.resolve(requestNative('/stop',{revision:stoppedRevision})).catch(()=>{})},
   ()=>warScriptRuntime.stop(),resetComponentRuntime,announce
  ]);
@@ -53,7 +54,7 @@ export function stopRuntimeSession(){
 // A frame has one writer. Native callbacks finish before browser components,
 // gameplay and Blueprint actions run against the same state.entities objects.
 // Late responses are never applied after Stop, scene replacement or reconnect.
-const scriptContext=()=>({entities:state.entities,project:gameProject,mode:workspace.mode,globals:sequenceRuntime.globals,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,signal:emitSequenceSignal,log:(message,level,entity)=>globalThis.document?.dispatchEvent(new CustomEvent('warlike:script-log',{detail:{message:(entity.name||'GameObject')+' · '+message,level}}))});
+const scriptContext=()=>({entities:state.entities,project:gameProject,mode:workspace.mode,...scriptMouseSnapshot(gameplayInputBlocked()||!gameIsRunning()),globals:sequenceRuntime.globals,keys:gameplayKeys(state.keys),pressedKeys:gameplayInputBlocked()?new Set():state.keyPresses,signal:emitSequenceSignal,log:(message,level,entity)=>globalThis.document?.dispatchEvent(new CustomEvent('warlike:script-log',{detail:{message:(entity.name||'GameObject')+' · '+message,level}}))});
 const animationEvent=(event,owner)=>{if(event.type==='signal')emitSequenceSignal(String(event.value||'animation:event').slice(0,100),owner.id);else if(event.type==='fx')emitFx(event.value||'energy',heroCenter(owner,workspace.mode),{...event.options,color:event.color||event.options?.color,mode:workspace.mode,ownerId:owner.id});else if(event.type==='sound')playSound(String(event.value||'impact'),{gain:.5,cooldown:.08});};
 function browserFrame(dt,update,run,canRun=gameIsRunning){if(run&&!isLanGuest()&&webScriptRuntime.isolated)return isolatedBrowserFrame(dt,update,canRun);return finishBrowserFrame(dt,update,run)}
 async function isolatedBrowserFrame(dt,update,canRun){
@@ -71,7 +72,7 @@ function finishBrowserFrame(dt,update,run,isolated=false){if(run){if(!isLanGuest
    emitSequenceSignal('physics2d:'+event.kind+':'+event.stage+':'+event.ownerId,event.otherId);
   }
  }
- if(run&&!isLanGuest()){profileScope('animation',()=>stepEntityAnimations(state.entities,dt,{mode:workspace.mode,onEvent:animationEvent}));profileScope('warscript',()=>warScriptRuntime.late());if(!isolated)webScriptRuntime.late();}captureWebComponents(state.entities,sequenceRuntime.globals)}
+ if(run&&!isLanGuest()){profileScope('animation',()=>stepEntityAnimations(state.entities,dt,{mode:workspace.mode,onEvent:animationEvent}));profileScope('warscript',()=>warScriptRuntime.late());if(!isolated)webScriptRuntime.late();}consumePlayMousePresses();captureWebComponents(state.entities,sequenceRuntime.globals)}
 export function runRuntimeFrame(dt,{update,canRun=gameIsRunning}={}){
  if(!state.playing||runtimeSession.phase==='error')return false;
  if(runtimeSession.phase==='stopped'){update?.(dt);return true} // standalone tools/tests

@@ -16553,6 +16553,7 @@
     "js/core/scene-progress.js",
     "js/core/scene.js",
     "js/core/script-lifecycle.js",
+    "js/core/script-mouse-input.js",
     "js/core/script-trust.js",
     "js/core/shadow-map-3d.js",
     "js/core/simulation-nodes.js",

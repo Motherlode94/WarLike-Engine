@@ -3,7 +3,7 @@ import {newSequence} from './logic-sequences.js';
 
 // Both workspace types store the same sequence data; geometry is expressed
 // in editor-plane coordinates (X/Y in 2D, ground X/Z in the 3D workspace).
-export const blueprintPresets=[
+const legacyBlueprintPresets=[
  {id:'pressure-plate-enter',label:'Plaque · Entrée du joueur',category:'Mécanismes reliés',modes:['2d','3d'],description:'Sur une plaque : émet mechanism:open à chaque entrée. Ajouter aussi Plaque · Sortie sur le même objet.',create:()=>({...newSequence(),event:'enter',radius:80,once:false,instructions:[{type:'emitSignal',value:'mechanism:open'}]})},
  {id:'pressure-plate-exit',label:'Plaque · Sortie du joueur',category:'Mécanismes reliés',modes:['2d','3d'],description:'Sur la même plaque : émet mechanism:close quand le joueur quitte la zone.',create:()=>({...newSequence(),event:'exit',radius:80,once:false,instructions:[{type:'emitSignal',value:'mechanism:close'}]})},
  {id:'mechanism-door-open',label:'Porte · Ouvrir par signal',category:'Mécanismes reliés',modes:['2d','3d'],description:'Sur une porte : reçoit mechanism:open, désactive sa collision et la masque. Conserver son signal avec celui de la plaque.',create:()=>({...newSequence(),event:'signal',signal:'mechanism:open',once:false,instructions:[{type:'setCollision',value:false},{type:'setVisibility',value:false}]})},
@@ -129,5 +129,533 @@ export const blueprintPresets=[
  {id:'game-spawn',label:'Monde · Créer une instance',category:'Partie & progression',modes:['2d','3d'],description:'Instancie un objet réel de la scène, à choisir comme modèle',create:()=>({...newSequence(),event:'interact',instructions:[{type:'spawnObject',value:1,x:400,y:250}]})},
 
 ];
+// Slime Adventure: only executable native sequences in the authoring library.
+const adventureDefinitions=[
+ {
+  "id": "BP_GameManager",
+  "label": "BP_GameManager",
+  "category": "Partie",
+  "description": "Initialise la quête principale.",
+  "event": "start",
+  "instructions": [
+   {
+    "type": "setObjective",
+    "key": "slime-crystals",
+    "value": "Retrouver les trois cristaux",
+    "total": 3
+   }
+  ],
+  "extra": {
+   "once": true
+  }
+ },
+ {
+  "id": "BP_Collectible",
+  "label": "BP_Collectible",
+  "category": "Monde",
+  "description": "Cristal à ramasser une seule fois.",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "giveItem",
+    "targetRole": "player",
+    "key": "slime-crystal",
+    "value": 1
+   },
+   {
+    "type": "addObjectiveProgress",
+    "key": "slime-crystals",
+    "value": 1
+   },
+   {
+    "type": "enableObject",
+    "value": false
+   }
+  ],
+  "extra": {
+   "once": true,
+   "conditions": [
+    {
+     "type": "objectiveActive",
+     "key": "slime-crystals"
+    },
+    {
+     "type": "inventoryHasRoom",
+     "targetRole": "player",
+     "key": "slime-crystal"
+    }
+   ]
+  }
+ },
+ {
+  "id": "BP_Experience",
+  "label": "BP_Experience",
+  "category": "RPG",
+  "description": "Attribue 25 XP via le système RPG natif.",
+  "event": "signal",
+  "instructions": [
+   {
+    "type": "giveExperience",
+    "targetRole": "player",
+    "value": 25
+   }
+  ],
+  "extra": {
+   "signal": "slime:reward"
+  }
+ },
+ {
+  "id": "BP_Health",
+  "label": "BP_Health",
+  "category": "Combat",
+  "description": "Zone de soin, quantité réglable.",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "healObject",
+    "targetRole": "player",
+    "value": 25
+   }
+  ],
+  "extra": {}
+ },
+ {
+  "id": "BP_Damage_Receiver",
+  "label": "BP_Damage_Receiver",
+  "category": "Combat",
+  "description": "Zone de dégâts de contact, à placer sur un danger.",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "damageObject",
+    "targetRole": "player",
+    "value": 10
+   }
+  ],
+  "extra": {}
+ },
+ {
+  "id": "BP_Loot",
+  "label": "BP_Loot",
+  "category": "RPG",
+  "description": "Récompense de mort, à ajouter à un ennemi.",
+  "event": "death",
+  "instructions": [
+   {
+    "type": "giveExperience",
+    "targetRole": "player",
+    "value": 25
+   },
+   {
+    "type": "giveItem",
+    "targetRole": "player",
+    "key": "slime-essence",
+    "value": 1
+   }
+  ],
+  "extra": {
+   "once": true
+  }
+ },
+ {
+  "id": "BP_Absorption",
+  "label": "BP_Absorption",
+  "category": "RPG",
+  "description": "Absorbe une ressource dédiée, pas un ennemi vivant.",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "giveItem",
+    "targetRole": "player",
+    "key": "slime-essence",
+    "value": 1
+   },
+   {
+    "type": "giveExperience",
+    "targetRole": "player",
+    "value": 10
+   },
+   {
+    "type": "enableObject",
+    "value": false
+   }
+  ],
+  "extra": {
+   "once": true,
+   "conditions": [
+    {
+     "type": "inventoryHasRoom",
+     "targetRole": "player",
+     "key": "slime-essence"
+    }
+   ]
+  }
+ },
+ {
+  "id": "BP_Evolution",
+  "label": "BP_Evolution",
+  "category": "RPG",
+  "description": "Autel : dépense trois essences et débloque la forme logique Nature.",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "removeItem",
+    "targetRole": "player",
+    "key": "slime-essence",
+    "value": 3
+   },
+   {
+    "type": "setVariable",
+    "key": "slimeForm",
+    "value": "nature"
+   },
+   {
+    "type": "emitSignal",
+    "value": "slime:evolution:nature"
+   }
+  ],
+  "extra": {
+   "once": true,
+   "conditions": [
+    {
+     "type": "inventoryHas",
+     "targetRole": "player",
+     "key": "slime-essence",
+     "value": 3
+    }
+   ]
+  }
+ },
+ {
+  "id": "BP_Slime_Animation",
+  "label": "BP_Slime_Animation",
+  "category": "Personnage",
+  "description": "Sur le slime : état idle via signal, clip à configurer.",
+  "event": "signal",
+  "instructions": [
+   {
+    "type": "setAnimation",
+    "value": "idle"
+   }
+  ],
+  "extra": {
+   "signal": "slime:idle"
+  }
+ },
+ {
+  "id": "BP_Slime_Interaction",
+  "label": "BP_Slime_Interaction",
+  "category": "Personnage",
+  "description": "Émet un signal d'interaction depuis un objet.",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "emitSignal",
+    "value": "slime:interact"
+   }
+  ],
+  "extra": {}
+ },
+ {
+  "id": "BP_Patrol",
+  "label": "BP_Patrol",
+  "category": "IA",
+  "description": "Active la patrouille native; configurer les points IA.",
+  "event": "start",
+  "instructions": [
+   {
+    "type": "setBehavior",
+    "value": "patrol"
+   },
+   {
+    "type": "setAiEnabled",
+    "value": true
+   }
+  ],
+  "extra": {
+   "once": true
+  }
+ },
+ {
+  "id": "BP_Chase",
+  "label": "BP_Chase",
+  "category": "IA",
+  "description": "Active la poursuite à proximité.",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "setBehavior",
+    "value": "chase"
+   },
+   {
+    "type": "setAiEnabled",
+    "value": true
+   }
+  ],
+  "extra": {}
+ },
+ {
+  "id": "BP_Passive_Animal",
+  "label": "BP_Passive_Animal",
+  "category": "IA",
+  "description": "Active l'errance native.",
+  "event": "start",
+  "instructions": [
+   {
+    "type": "setBehavior",
+    "value": "wander"
+   }
+  ],
+  "extra": {
+   "once": true
+  }
+ },
+ {
+  "id": "BP_Region",
+  "label": "BP_Region",
+  "category": "Monde",
+  "description": "Identifie une région lors de l'entrée.",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "setVariable",
+    "key": "slimeRegion",
+    "value": "forest"
+   }
+  ],
+  "extra": {}
+ },
+ {
+  "id": "BP_Dungeon_Gate",
+  "label": "BP_Dungeon_Gate",
+  "category": "Monde",
+  "description": "Ouvre le passage après la quête.",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "setCollision",
+    "value": false
+   },
+   {
+    "type": "setVisibility",
+    "value": false
+   }
+  ],
+  "extra": {
+   "conditions": [
+    {
+     "type": "objectiveComplete",
+     "key": "slime-crystals"
+    }
+   ]
+  }
+ },
+ {
+  "id": "BP_Teleport",
+  "label": "BP_Teleport",
+  "category": "Monde",
+  "description": "Téléporte le joueur aux coordonnées configurées.",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "teleportObject",
+    "targetRole": "player",
+    "x": 400,
+    "y": 400
+   }
+  ],
+  "extra": {}
+ },
+ {
+  "id": "BP_Checkpoint",
+  "label": "BP_Checkpoint",
+  "category": "Monde",
+  "description": "Capture un véritable checkpoint.",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "setCheckpoint"
+   }
+  ],
+  "extra": {
+   "once": true
+  }
+ },
+ {
+  "id": "BP_Dialogue",
+  "label": "BP_Dialogue",
+  "category": "Village",
+  "description": "Dialogue modifiable.",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "showDialogue",
+    "speaker": "Gardien",
+    "value": "Retrouve les cristaux de la forêt."
+   }
+  ],
+  "extra": {}
+ },
+ {
+  "id": "BP_Quest_Giver",
+  "label": "BP_Quest_Giver",
+  "category": "Village",
+  "description": "Attribue la quête de collecte.",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "setObjective",
+    "key": "slime-crystals",
+    "value": "Retrouver les trois cristaux",
+    "total": 3
+   }
+  ],
+  "extra": {
+   "once": true
+  }
+ },
+ {
+  "id": "BP_Quest_Manager",
+  "label": "BP_Quest_Manager",
+  "category": "Village",
+  "description": "Récompense la quête achevée.",
+  "event": "objectiveCompleted",
+  "instructions": [
+   {
+    "type": "giveExperience",
+    "targetRole": "player",
+    "value": 100
+   },
+   {
+    "type": "emitSignal",
+    "value": "slime:quest-complete"
+   }
+  ],
+  "extra": {
+   "signal": "slime-crystals",
+   "once": true
+  }
+ },
+ {
+  "id": "BP_Chest",
+  "label": "BP_Chest",
+  "category": "Village",
+  "description": "Coffre à récompense unique.",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "giveItem",
+    "targetRole": "player",
+    "key": "slime-essence",
+    "value": 2
+   },
+   {
+    "type": "message",
+    "value": "Coffre ouvert"
+   }
+  ],
+  "extra": {
+   "once": true,
+   "conditions": [
+    {
+     "type": "inventoryHasRoom",
+     "targetRole": "player",
+     "key": "slime-essence"
+    }
+   ]
+  }
+ },
+ {
+  "id": "BP_Pause",
+  "label": "BP_Pause",
+  "category": "Partie",
+  "description": "Pause par touche P.",
+  "event": "keyDown",
+  "instructions": [
+   {
+    "type": "pauseGame"
+   }
+  ],
+  "extra": {
+   "key": "p"
+  }
+ },
+ {
+  "id": "BP_Save_Load",
+  "label": "BP_Save_Load",
+  "category": "Partie",
+  "description": "Sauvegarde F5.",
+  "event": "keyDown",
+  "instructions": [
+   {
+    "type": "saveGame",
+    "key": "quick"
+   }
+  ],
+  "extra": {
+   "key": "f5"
+  }
+ },
+ {
+  "id": "BP_Load",
+  "label": "BP_Load",
+  "category": "Partie",
+  "description": "Chargement F9.",
+  "event": "keyDown",
+  "instructions": [
+   {
+    "type": "loadGame",
+    "key": "quick"
+   }
+  ],
+  "extra": {
+   "key": "f9",
+   "conditions": [
+    {
+     "type": "saveExists",
+     "key": "quick"
+    }
+   ]
+  }
+ },
+ {
+  "id": "BP_Respawn",
+  "label": "BP_Respawn",
+  "category": "Partie",
+  "description": "Restaure un checkpoint existant à la mort.",
+  "event": "death",
+  "instructions": [
+   {
+    "type": "restoreCheckpoint"
+   }
+  ],
+  "extra": {
+   "once": true
+  }
+ },
+ {
+  "id": "BP_Victory",
+  "label": "BP_Victory",
+  "category": "Partie",
+  "description": "Fin du chapitre après collecte.",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "winGame",
+    "value": "La forêt est sauvée !"
+   }
+  ],
+  "extra": {
+   "once": true,
+   "conditions": [
+    {
+     "type": "objectiveComplete",
+     "key": "slime-crystals"
+    }
+   ]
+  }
+ }
+];
+export const blueprintPresets=adventureDefinitions.map(({id,label,category,description,event,instructions,extra})=>({id,label,category,description,modes:['2d','3d'],create:()=>({...newSequence(),event,instructions:structuredClone(instructions),...structuredClone(extra)})}));
 export function presetsForWorkspace(mode){return blueprintPresets.filter(p=>p.modes.includes(mode)).map(p=>({...p,category:p.category||'Essentiels'}))}
-export function createBlueprintPreset(id,mode){const preset=blueprintPresets.find(p=>p.id===id&&p.modes.includes(mode));if(!preset)throw Error('Blueprint indisponible pour ce projet');return structuredClone(preset.create())}
+export function createBlueprintPreset(id,mode){const preset=[...blueprintPresets,...legacyBlueprintPresets].find(p=>p.id===id&&p.modes.includes(mode));if(!preset)throw Error('Blueprint indisponible pour ce projet');return structuredClone(preset.create())}

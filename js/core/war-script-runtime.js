@@ -32,7 +32,7 @@ export function createScriptApi(entity,ctx,clock,component){
  const gdRotation=name=>{const m=/^gd\.rotation(Degrees)?(2d|3d)(?:\.([xyz]))?$/.exec(name);if(!m)return null;const [,degrees,dimension,axis]=m;if((dimension==='3d')!==three)throw Error('Rotation GDScript incompatible avec la dimension de la scène.');return {property:'transform.rotation.'+(axis||'z'),factor:degrees?1:Math.PI/180};};
  const read=name=>{
   const gd=gdRotation(name);if(gd)return read(gd.property)*gd.factor;
-  if(name==='gd.visible')return entity.visible!==false;
+  if(name==='gd.visible')return (ctx.entities.find(o=>o.id===entity.godotNode?.visualId&&o.parentId===entity.id&&o.godotVisual===true)||entity).visible!==false;
   if(name==='collision.otherId'||name==='trigger.otherId')return component?.runtime?.physicsContact?.kind===name.split('.')[0]?component.runtime.physicsContact.otherId:0;
   if(name==='collision.otherName'||name==='trigger.otherName')return component?.runtime?.physicsContact?.kind===name.split('.')[0]?component.runtime.physicsContact.otherName:'';
   if(name==='Time.deltaTime')return clock.delta;if(name==='Time.fixedDeltaTime')return .02;if(name==='Time.time')return clock.elapsed;
@@ -48,7 +48,7 @@ export function createScriptApi(entity,ctx,clock,component){
  };
  const write=(name,value)=>{
   const gd=gdRotation(name);if(gd){write(gd.property,numeric(value)/gd.factor);return}
-  if(name==='gd.visible'){warScriptValue('bool',value);entity.visible=value;return}
+  if(name==='gd.visible'){warScriptValue('bool',value);const target=ctx.entities.find(o=>o.id===entity.godotNode?.visualId&&o.parentId===entity.id&&o.godotVisual===true)||entity;target.visible=value;return}
   if(name==='transform.position'){warScriptValue('Vector3',value);const x=numeric(value.x),y=numeric(value.y),z=numeric(value.z);entity.x=x*64;if(three){entity.elevation3d=y;entity.y=z*64}else entity.y=y*64;return}
   if(name.startsWith('transform.position.')){const p=position();p[name.at(-1)]=numeric(value);write('transform.position',p);return}
   if(name.startsWith('transform.rotation.')){entity[{x:'rotationX3d',y:three?'rotation':'rotationY3d',z:three?'rotationZ3d':'rotation'}[name.at(-1)]]=numeric(value);return}
@@ -70,7 +70,7 @@ export function createScriptApi(entity,ctx,clock,component){
   if(name==='Input.GetKey'||name==='Input.GetKeyDown'){if(args.length!==1||typeof args[0]!=='string')throw Error('Input attend une touche entre guillemets.');return (name==='Input.GetKey'?ctx.keys:ctx.pressedKeys)?.has(args[0].toLowerCase())||false}
   if(name==='Move'||name==='transform.Translate'){if(args.length!==3)throw Error('Move attend x, y, z en mètres.');const [x,y,z]=args.map(numeric);if(three)moveBody3d(entity,x*64,z*64,y*64,ctx.entities);else moveBody2d(entity,x*64,y*64,ctx.entities);return null}
   if(name==='Rotate'||name==='transform.Rotate'){if(args.length===1){entity.rotation=Number(entity.rotation||0)+numeric(args[0]);return null}if(args.length!==3)throw Error('Rotate attend un angle, ou x, y, z.');for(const [i,axis] of ['x','y','z'].entries())write('transform.rotation.'+axis,read('transform.rotation.'+axis)+numeric(args[i]));return null}
-  if(name==='SetVisible'){if(args.length!==1)throw Error('SetVisible attend un booléen.');warScriptValue('bool',args[0]);entity.visible=args[0];return null}
+  if(name==='SetVisible'){if(args.length!==1)throw Error('SetVisible attend un booléen.');warScriptValue('bool',args[0]);write('gd.visible',args[0]);return null}
   if(name==='SetLight'||name==='SetHealth'){if(args.length!==1)throw Error(name+' attend une valeur.');write(name==='SetLight'?'light.enabled':'health',args[0]);return null}
   return warScriptBuiltin(name,args);
  };

@@ -142,7 +142,7 @@ function add3d(id,x,y,placement=null){
  if(state.playing||!get3dAsset(id))return null;
  const next=state.nextId,obj=prefab3d(id,next,x??120+((next+1)%8)*60,y??120+((next+1)%5)*60);
  if(!obj)return null;
- if(placement)placeEntityOnSurface3d(obj,placement.hit,placement.options);
+ if(placement){const geometry=view3d.placementGeometryFor?.(obj);if(!geometry){log('Modèle en chargement : réessaie le placement','warn');return null}placeEntityOnSurface3d(obj,placement.hit,{...placement.options,smartContact:true,geometry});}
  state.nextId=next+1;state.entities.push(obj);state.selected=[obj.id];record('Ajouter mesh 3D '+obj.name);notify();return obj;
 }
 
@@ -312,7 +312,7 @@ let placementAsset=null,placementYaw=0,placementScale=1;
 function clearPlacement(){placementAsset=null;view3d.assetPlacementPreview=null;placementYaw=0;placementScale=1}
 function startPlacement(id){if(state.playing||workspace.mode!=='3d'||!get3dAsset(id))return;clearPlacement();placementAsset=id;log('Placement : clic pour déposer, Q/E rotation, +/- échelle, Échap annuler')}
 function placementOptions(e){const mode=localStorage.getItem('warlike.snap3d.mode')||'grid';return {snap:toolsState.snap&&mode==='grid'?Math.max(.01,Number(localStorage.getItem('warlike.snap3d.step'))||.5):0,alignNormal:e.shiftKey}}
-function previewPlacement(e){if(!placementAsset||state.playing||workspace.mode!=='3d'){clearPlacement();return null}const hit=view3d.surfaceAt?.(e.clientX,e.clientY);if(!hit){view3d.assetPlacementPreview=null;return null}const obj=prefab3d(placementAsset,-1,0,0);if(!obj)return null;obj.rotation=placementYaw;for(const key of ['w','h','depth3d'])obj[key]*=placementScale;placeEntityOnSurface3d(obj,hit,placementOptions(e));view3d.assetPlacementPreview={...obj,_survivalPreview:true};return {obj,hit}}
+function previewPlacement(e){if(!placementAsset||state.playing||workspace.mode!=='3d'){clearPlacement();return null}const hit=view3d.surfaceAt?.(e.clientX,e.clientY);if(!hit){view3d.assetPlacementPreview=null;return null}const obj=prefab3d(placementAsset,-1,0,0);if(!obj)return null;obj.rotation=placementYaw;for(const key of ['w','h','depth3d'])obj[key]*=placementScale;const geometry=view3d.placementGeometryFor?.(obj);if(!geometry){view3d.assetPlacementPreview=null;return null}placeEntityOnSurface3d(obj,hit,{...placementOptions(e),smartContact:true,geometry});view3d.assetPlacementPreview={...obj,_survivalPreview:true};return {obj,hit}}
 document.addEventListener('warlike:workspace',clearPlacement);
 window.addEventListener('keydown',e=>{if(!placementAsset||state.playing||e.ctrlKey||e.metaKey||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;const k=e.key.toLowerCase();if(!['escape','q','e','+','=','-'].includes(k))return;e.preventDefault();e.stopImmediatePropagation();if(k==='escape'){clearPlacement();return}if(k==='q'||k==='e')placementYaw+=(k==='q'?-15:15);else placementScale=Math.max(.1,Math.min(10,placementScale*(k==='-'?1/1.1:1.1)));if(lastPlacementPointer)previewPlacement(lastPlacementPointer)},true);
 let lastPlacementPointer=null;

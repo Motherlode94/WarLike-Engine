@@ -35,6 +35,8 @@ const canExitAt=(entities,car,player,pose)=>{
 };
 export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}={}){
  const inputVehicle=currentVehicle3d(entities);
+ // Requests are one-shot; discard stale commands when control is unavailable.
+ for(const o of entities)if(o!==inputVehicle||driving3d.transition||o.vehicleSystems?.seats?.driverId!==player?.id){delete o._warDrive;delete o._warAircraft;}
  keys=resolveInputKeys(inputVehicle||player,keys,{context:inputVehicle?'vehicle':'player'});
  pressedKeys=resolveInputKeys(inputVehicle||player,pressedKeys,{context:inputVehicle?'vehicle':'player'});
  const step=Math.min(.1,Math.max(0,Number(dt)||0));
@@ -130,8 +132,8 @@ export function updateDriving3d(entities,player,keys,dt,{pressedKeys=new Set()}=
   const shot=fireVehicleWeapon(drivingCar,entities);
   if(shot.fired)recordEngineEvent(shot.hit?'vehicle-weapon-hit':'vehicle-weapon-fire',shot.hit?shot.target:drivingCar.name);
  }
- const scriptedDrive=drivingCar._warDrive;delete drivingCar._warDrive;
- const scriptedAircraft=drivingCar._warAircraft;delete drivingCar._warAircraft;
+ const scriptedDrive=drivingCar.vehicleSystems?.seats?.driverId===player.id?drivingCar._warDrive:null;delete drivingCar._warDrive;
+ const scriptedAircraft=drivingCar.vehicleSystems?.seats?.driverId===player.id?drivingCar._warAircraft:null;delete drivingCar._warAircraft;
  const inputThrottle=scriptedDrive?.throttle??(Number(keys.has('w')||keys.has('z')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown')));
  const systems=vehicleComponents(drivingCar);
  const allowedGear=systems.transmission.mode!=='manual'||(inputThrottle<0?systems.transmission.gear===-1:systems.transmission.gear>0);

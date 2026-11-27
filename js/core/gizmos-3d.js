@@ -456,7 +456,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  layer.addEventListener('pointerdown',event=>{
   const axis=event.target.getAttribute('data-gizmo-axis');
   if(drag||!axis||event.button!==0||event.altKey||state.playing)return;
-  const selected=state.entities.filter(o=>state.selected.includes(o.id));
+  const selected=state.entities.filter(o=>state.selected.includes(o.id)&&!o.roadSpline);
   if(!selected.length)return;
   event.preventDefault();event.stopPropagation();
   const cam=getCamera(),rect=canvas.getBoundingClientRect(),pivot=center(),first=selected[0];
@@ -515,9 +515,11 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
      o.elevation3d=start.elevation3d+direction[1]*distance;
      o.y=(start.y/64+direction[2]*distance)*64;
     }else{
-     o.x=quant(start.x/64+direction[0]*amount)*64;
-     o.elevation3d=quant(start.elevation3d+direction[1]*amount);
-     o.y=quant(start.y/64+direction[2]*amount)*64;
+     // Quantize displacement once along the chosen axis, not three world coordinates.
+     const distance=quant(amount);
+     o.x=start.x+direction[0]*distance*64;
+     o.elevation3d=start.elevation3d+direction[1]*distance;
+     o.y=start.y+direction[2]*distance*64;
     }
    }
    // Keep the authored affine shear instead of throwing it away when the gizmo moves.

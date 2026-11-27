@@ -38,6 +38,11 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  const options=document.createElement('div');
  options.style.cssText='position:absolute;right:12px;top:12px;z-index:14;display:flex;gap:5px;align-items:center;background:#222832e8;border:1px solid #455363;border-radius:7px;padding:5px;color:#e5eaf1;font:12px Segoe UI,sans-serif';
  const mode=document.createElement('button');mode.type='button';mode.textContent='Global';mode.title='Basculer repère Local / Global';mode.setAttribute('aria-label','Repère Gizmo');mode.style.cssText='background:#303944;color:inherit;border:1px solid #455363;border-radius:4px;padding:4px 9px;cursor:pointer';mode.onclick=()=>{mode.textContent=mode.textContent==='Global'?'Local':'Global'};
+ const pivotMode=document.createElement('select');pivotMode.setAttribute('aria-label','Pivot du gizmo');pivotMode.title='Point de référence du gizmo (ne modifie pas le pivot du modèle importé)';pivotMode.style.cssText='background:#303944;color:inherit;border:1px solid #455363;border-radius:4px;padding:4px';
+ for(const [value,label] of [['center','Centre'],['base','Base'],['top','Sommet'],['custom','Personnalisé']]){const opt=document.createElement('option');opt.value=value;opt.textContent=label;pivotMode.append(opt)}
+ pivotMode.value=localStorage.getItem('warlike.gizmo.pivot')||'center';if(!pivotMode.value)pivotMode.value='center';
+ const pivotOffset=[0,1,2].map((axis)=>{const input=document.createElement('input');input.type='number';input.step='.1';input.value='0';input.style.cssText='width:48px;background:#151b23;color:inherit;border:1px solid #455363;padding:3px';input.setAttribute('aria-label','Décalage pivot '+['X','Y','Z'][axis]+' en mètres');input.hidden=true;input.onchange=()=>redraw();return input});
+ pivotMode.onchange=()=>{localStorage.setItem('warlike.gizmo.pivot',pivotMode.value);for(const input of pivotOffset)input.hidden=pivotMode.value!=='custom';redraw()};for(const input of pivotOffset)input.hidden=pivotMode.value!=='custom';
  const snap=document.createElement('input');snap.type='checkbox';snap.checked=localStorage.getItem('warlike.snap3d.enabled')==='true';snap.setAttribute('aria-label','Activer snapping 3D');snap.onchange=()=>{localStorage.setItem('warlike.snap3d.enabled',String(snap.checked));document.dispatchEvent(new CustomEvent('warlike:snap3d',{detail:{enabled:snap.checked}}))};
  document.addEventListener('warlike:snap3d',e=>{snap.checked=Boolean(e.detail?.enabled)});
  const step=document.createElement('input');step.type='number';step.min='.01';step.max='20';step.step='.05';step.value=localStorage.getItem('warlike.snap3d.step')||'.5';step.title='Pas de snapping en mètres (rotation en degrés)';step.setAttribute('aria-label','Pas de snapping 3D');step.style.cssText='width:55px;background:#151b23;color:inherit;border:1px solid #455363;padding:3px';step.onchange=()=>{step.value=String(Math.min(20,Math.max(.01,Number(step.value)||.5)));localStorage.setItem('warlike.snap3d.step',step.value)};
@@ -57,7 +62,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
  rustToggle.title='Activer les calculs Rust/WASM optionnels, repli JavaScript si indisponible';
  rustToggle.checked=localStorage.getItem('warlike.gizmo.rust.enabled')==='true';
  rustToggle.onchange=()=>{localStorage.setItem('warlike.gizmo.rust.enabled',String(rustToggle.checked));if(rustToggle.checked)void initializeRustGizmo()};
- options.append(mode,snap,document.createTextNode('Snap'),step,snapMode,gridButton,floorButton,alignX,alignZ,document.createTextNode('Rust'),rustToggle);options.style.flexWrap='wrap';options.style.maxWidth='min(650px,75%)';host.append(options);
+ options.append(mode,pivotMode,...pivotOffset,snap,document.createTextNode('Snap'),step,snapMode,gridButton,floorButton,alignX,alignZ,document.createTextNode('Rust'),rustToggle);options.style.flexWrap='wrap';options.style.maxWidth='min(650px,75%)';host.append(options);
  // Native terrain editing uses the existing Scene View, not a separate editor.
  const terrainTools=document.createElement('div');
  terrainTools.className='warlike-gaia-terrain-tools';
@@ -367,7 +372,11 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   const objects=state.entities.filter(o=>state.selected.includes(o.id)&&!o.roadSpline);
   if(!objects.length)return null;
   const pts=objects.map(objectBounds3d);
-  return pts.reduce((p,b)=>[p[0]+b.x/pts.length,p[1]+b.y/pts.length,p[2]+b.z/pts.length],[0,0,0]);
+  const point=pts.reduce((p,b)=>[p[0]+b.x/pts.length,p[1]+b.y/pts.length,p[2]+b.z/pts.length],[0,0,0]);
+  if(pivotMode.value==='base')point[1]=Math.min(...pts.map(b=>b.y-b.h/2));
+  else if(pivotMode.value==='top')point[1]=Math.max(...pts.map(b=>b.y+b.h/2));
+  else if(pivotMode.value==='custom')for(let i=0;i<3;i++)point[i]+=Number(pivotOffset[i].value)||0;
+  return point;
  };
  const axes={x:[1,0,0],y:[0,1,0],z:[0,0,1]};
  const axisVector=(axis,o)=>gizmoAxis3d(axis,rotationQuaternion3d(o||{}),{local:mode.textContent==='Local'});

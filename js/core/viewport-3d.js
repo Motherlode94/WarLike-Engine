@@ -124,6 +124,16 @@ export function raycastTriangles3d(origin,direction,vertices,transform,{maxDista
  }
  return result;
 }
+// Oriented bounds fallback for native primitives only; loaded GLBs use triangles.
+export function raycastPlacementBox3d(origin,direction,box,q,{maxDistance=1e4}={}){
+ const rotate=(v,r)=>{const t=[2*(r.y*v[2]-r.z*v[1]),2*(r.z*v[0]-r.x*v[2]),2*(r.x*v[1]-r.y*v[0])];return [v[0]+r.w*t[0]+r.y*t[2]-r.z*t[1],v[1]+r.w*t[1]+r.z*t[0]-r.x*t[2],v[2]+r.w*t[2]+r.x*t[1]-r.y*t[0]]};
+ const inv={x:-q.x,y:-q.y,z:-q.z,w:q.w},p=rotate(origin.map((v,i)=>v-[box.x,box.y,box.z][i]),inv),d=rotate(direction,inv),half=[box.w/2,box.h/2,box.d/2];
+ let enter=-Infinity,exit=Infinity,axis=-1,sign=0,exitAxis=-1,exitSign=0;
+ for(let i=0;i<3;i++){if(Math.abs(d[i])<1e-9){if(Math.abs(p[i])>half[i])return null;continue}let a=(-half[i]-p[i])/d[i],b=(half[i]-p[i])/d[i],sa=-1,sb=1;if(a>b){[a,b]=[b,a];[sa,sb]=[sb,sa]}if(a>enter){enter=a;axis=i;sign=sa}if(b<exit){exit=b;exitAxis=i;exitSign=sb}if(enter>exit)return null}
+ const distance=enter>1e-6?enter:exit;if(distance<=1e-6||distance>=maxDistance||!Number.isFinite(distance))return null;
+ const normal=[0,0,0];normal[enter>1e-6?axis:exitAxis]=enter>1e-6?sign:exitSign;
+ return {distance,point:origin.map((v,i)=>v+direction[i]*distance),normal:rotate(normal,q)};
+}
 export function sceneRay3d(x,y,cam,width,height){
  const f=1/Math.tan((cam.fieldOfView||60)*Math.PI/360);
  const direction=V.norm(V.add(cam.forward,V.add(V.mul(cam.right,(x-width/2)*2/(height*f)),V.mul(cam.up,(height/2-y)*2/(height*f)))));
@@ -743,7 +753,7 @@ export function init3d(canvas,host,buttons){
   let nearest=null;
   const contexts=[];
   for(const entity of state.entities){
-   if(excludeIds.includes(entity.id)||entity.editorHidden||entity.enabled===false)continue;
+   if(excludeIds.includes(entity.id)||entity.editorHidden||entity.enabled===false||entity.visible===false)continue;
    const id=entity.model3dId||entity.assetId,loaded=realGlbBuffers.get(id);
    if(loaded?.status!=='ready')continue;
    const box=objectBounds3d(entity),size=loaded.normalizedSize||[1,1,1];
@@ -773,15 +783,30 @@ export function init3d(canvas,host,buttons){
   const mode=snapping?(localStorage.getItem('warlike.snap3d.mode')||'grid'):'grid';
   return snapping&&['vertex','edge'].includes(mode)?nearbySnap(nearest,contexts,mode):nearest;
  };
+ const placementTerrainCache=new WeakMap();
  view3d.surfaceAt=(clientX,clientY,{excludeIds=[],groundFallback=true}={})=>{
   const rect=canvas.getBoundingClientRect(),point={x:clientX-rect.left,y:clientY-rect.top,w:rect.width,h:rect.height},cam=camera();
   const mode=localStorage.getItem('warlike.snap3d.enabled')==='true'?(localStorage.getItem('warlike.snap3d.mode')||'grid'):'grid';
-  const raw=meshHit(point,cam,{excludeIds});
-  const mesh=raw;
+  let mesh=meshHit(point,cam,{excludeIds});
+  const ray=sceneRay3d(point.x,point.y,cam,point.w,point.h);
+  for(const entity of state.entities){
+   if(excludeIds.includes(entity.id)||entity.editorHidden||entity.enabled===false||entity.visible===false)continue;
+   if(entity.terrainHeightfield&&validTerrainHeightfield(entity.terrainHeightfield)){
+    const t=entity.terrainHeightfield,signature=[entity.terrainRevision3d||0,t.resolution,t.size,t.height].join('|');
+    let cached=placementTerrainCache.get(entity);
+    if(!cached||cached.signature!==signature||cached.source!==t){cached={signature,source:t,vertices:terrainSurfaceMesh3d(t).vertices};placementTerrainCache.set(entity,cached)}
+    const hit=raycastTriangles3d(ray.origin,ray.direction,cached.vertices,v=>[v[0]+t.offsetX,v[1]+(Number(entity.elevation3d)||0),v[2]+t.offsetZ],{maxDistance:mesh?.distance??1e4});
+    if(hit)mesh={...hit,entity,kind:'terrain'};
+   }else if(!entity.roadSpline&&!entity.roadJunction3d&&!entity.water3d?.enabled&&!entity.model3dId&&get3dAsset(entity.assetId)?.shape!=='glb'&&!entity.sceneCamera3d&&!entity.lightType&&!entity.audioEnabled){
+    const b=objectBounds3d(entity),q=rotationQuaternion3d(entity);
+    const hit=raycastPlacementBox3d(ray.origin,ray.direction,b,q,{maxDistance:mesh?.distance??1e4});
+    if(hit)mesh={...hit,entity,kind:'bounds'};
+   }
+  }
+  // A real surface below zero must win over the invisible editor grid.
+  if(mesh)return mesh;
   const floor=groundFallback?groundHit3d(point.x,point.y,cam,point.w,point.h):null;
-  if(!floor)return mesh;
-  const dist=Math.hypot(...floor.map((v,i)=>v-cam.eye[i]));
-  return mesh&&mesh.distance<dist?mesh:{point:floor,normal:[0,1,0],distance:dist,kind:'ground'};
+  return floor?{point:floor,normal:[0,1,0],distance:Math.hypot(...floor.map((v,i)=>v-cam.eye[i])),kind:'ground'}:null;
  };
  const pick=(point,cam)=>{
   const mesh=meshHit(point,cam);

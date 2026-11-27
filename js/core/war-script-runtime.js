@@ -29,7 +29,10 @@ export function createScriptApi(entity,ctx,clock,component){
   'controller.walkSpeed':['controller2d','walkSpeed',0,10000],'controller.sprintSpeed':['controller2d','sprintSpeed',0,10000],'controller.jumpSpeed':['controller2d','jumpSpeed',0,10000],
   'world.timeScale':['survivalWorld','timeScale',0,3600]
  };
+ const gdRotation=name=>{const m=/^gd\.rotation(Degrees)?(2d|3d)(?:\.([xyz]))?$/.exec(name);if(!m)return null;const [,degrees,dimension,axis]=m;if((dimension==='3d')!==three)throw Error('Rotation GDScript incompatible avec la dimension de la scène.');return {property:'transform.rotation.'+(axis||'z'),factor:degrees?1:Math.PI/180};};
  const read=name=>{
+  const gd=gdRotation(name);if(gd)return read(gd.property)*gd.factor;
+  if(name==='gd.visible')return entity.visible!==false;
   if(name==='collision.otherId'||name==='trigger.otherId')return component?.runtime?.physicsContact?.kind===name.split('.')[0]?component.runtime.physicsContact.otherId:0;
   if(name==='collision.otherName'||name==='trigger.otherName')return component?.runtime?.physicsContact?.kind===name.split('.')[0]?component.runtime.physicsContact.otherName:'';
   if(name==='Time.deltaTime')return clock.delta;if(name==='Time.fixedDeltaTime')return .02;if(name==='Time.time')return clock.elapsed;
@@ -44,6 +47,8 @@ export function createScriptApi(entity,ctx,clock,component){
   throw Error('Propriété inconnue : '+name);
  };
  const write=(name,value)=>{
+  const gd=gdRotation(name);if(gd){write(gd.property,numeric(value)/gd.factor);return}
+  if(name==='gd.visible'){warScriptValue('bool',value);entity.visible=value;return}
   if(name==='transform.position'){warScriptValue('Vector3',value);const x=numeric(value.x),y=numeric(value.y),z=numeric(value.z);entity.x=x*64;if(three){entity.elevation3d=y;entity.y=z*64}else entity.y=y*64;return}
   if(name.startsWith('transform.position.')){const p=position();p[name.at(-1)]=numeric(value);write('transform.position',p);return}
   if(name.startsWith('transform.rotation.')){entity[{x:'rotationX3d',y:three?'rotation':'rotationY3d',z:three?'rotationZ3d':'rotation'}[name.at(-1)]]=numeric(value);return}
@@ -80,7 +85,7 @@ export class WarScriptRuntime {
   this.context=ctx;const live=new Set();let total=0;
   for(const entity of ctx.entities)for(const component of entity.warScripts||[]){live.add(component);let entry=this.instances.get(component);if(component.enabled!==false&&++total>64)break;if(entry){Object.assign(entry.context,ctx);continue;}
    const clock={delta:0,elapsed:this.elapsed};entry={entity,component,clock,context:{...ctx},failed:false};entry.attached=()=>entry.context.entities.includes(entity)&&entity.warScripts?.includes(component);component.runtime??={started:false,fields:{},error:''};component.runtime.error='';
-   try{const program=compileAttachedScript(component,ctx.project);if(!program.ok)throw Error('WarScript invalide : '+program.diagnostics.map(d=>d.line+':'+d.column+' '+d.message).join(' ; '));entry.instance=createWarScriptInstance(program,createScriptApi(entity,entry.context,clock,component),{values:component.values||{},saved:component.runtime.started||component.runtime.awakened?component.runtime.fields:null});entry.lifecycle=new ScriptLifecycle(entry,(hook,cleanup)=>this.invoke(entry,hook,cleanup));this.instances.set(component,entry);
+   try{const program=compileAttachedScript(component,ctx.project);if(!program.ok)throw Error('WarScript invalide : '+program.diagnostics.map(d=>d.line+':'+d.column+' '+d.message).join(' ; '));if(program.gdBase&&program.gdBase!=='Node'&&(program.gdBase==='Node3D')!==(ctx.mode==='3d'))throw Error('Type '+program.gdBase+' incompatible avec la scène '+ctx.mode+'.');entry.instance=createWarScriptInstance(program,createScriptApi(entity,entry.context,clock,component),{values:component.values||{},saved:component.runtime.started||component.runtime.awakened?component.runtime.fields:null});entry.lifecycle=new ScriptLifecycle(entry,(hook,cleanup)=>this.invoke(entry,hook,cleanup));this.instances.set(component,entry);
    }catch(error){this.instances.set(component,entry);this.report(entry,error)}
   }
   for(const [component,entry] of this.instances)if(!live.has(component)){Object.assign(entry.context,ctx);entry.lifecycle?.dispose();this.instances.delete(component)}

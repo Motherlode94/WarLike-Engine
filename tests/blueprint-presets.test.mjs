@@ -5,8 +5,8 @@ import {resetSequences,updateSequences,sequenceRuntime} from '../js/core/logic-s
 test('2D and 3D both expose interactive and conditional Blueprint templates',()=>{
  for(const mode of ['2d','3d']){
   const options=presetsForWorkspace(mode);
-  assert.ok(options.some(x=>x.id==='interact'));
-  assert.ok(options.some(x=>x.id==='door'));
+  assert.ok(options.some(x=>x.id==='BP_Slime_Interaction'));
+  assert.ok(options.some(x=>x.id==='BP_Dungeon_Gate'));
   assert.ok(options.every(x=>x.modes.includes(mode)));
   assert.equal(createBlueprintPreset('interact',mode).event,'interact');
  }
@@ -40,3 +40,5 @@ test('pressure plate opens, closes and reopens a linked door in both workspace m
   player.x=0;tick();assert.equal(door.visible,false,mode+' repeats');assert.equal(sequenceRuntime.errors.length,0);
  }
 });
+
+test('authoring library hides legacy templates but preserves their compatibility',()=>{for(const mode of ['2d','3d']){const options=presetsForWorkspace(mode);assert.ok(options.every(p=>p.id.startsWith('BP_')));assert.ok(!options.some(p=>p.id==='interact'));assert.equal(createBlueprintPreset('interact',mode).event,'interact');assert.equal(createBlueprintPreset('BP_Experience',mode).instructions[0].type,'giveExperience')}});

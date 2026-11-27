@@ -1,9 +1,10 @@
 import {setAnimatorParameter,setAnimatorTrigger,resetAnimatorTrigger,playAnimatorState} from './animator-graph.js';
-import {compileWarScript,createWarScriptInstance,warScriptBuiltin,warScriptValue} from '../../script-editor/warscript.js';
+import {compileGDScript,compileWarScript,createWarScriptInstance,warScriptBuiltin,warScriptValue} from '../../script-editor/warscript.js';
 import {ScriptLifecycle} from './script-lifecycle.js';
 import {moveBody2d} from './physics-2d.js';
 import {moveBody3d} from './collision-3d.js';
-export const warScriptSource=(component,project)=>project?.scripts?.find(s=>s.id===component.scriptId&&s.language==='warscript')?.source??component.source;
+export const warScriptSource=(component,project)=>project?.scripts?.find(s=>s.id===component.scriptId&&['warscript','gdscript'].includes(s.language))?.source??component.source;
+export const compileAttachedScript=(component,project)=>{const record=project?.scripts?.find(s=>s.id===component.scriptId);const gd=record?record.language==='gdscript':/\.gd$/i.test(component.name||'');return (gd?compileGDScript:compileWarScript)(warScriptSource(component,project));};
 export function inspectWarScripts(entities,project){
  const issues=[];let total=0;
  for(const entity of entities||[]){if(!Array.isArray(entity.warScripts)&&entity.warScripts!=null){issues.push({severity:'error',entityId:entity.id,message:'Liste WarScript invalide.'});continue}
@@ -11,7 +12,7 @@ export function inspectWarScripts(entities,project){
    if(component?.enabled===false)continue;total++;
    const add=message=>issues.push({severity:'error',entityId:entity.id,message:(entity.name||'#'+entity.id)+' · '+(component?.name||'WarScript')+' : '+message});
    if(!component||typeof component.scriptId!=='string'||ids.has(component.scriptId)){add('Référence de script absente ou dupliquée.');continue}ids.add(component.scriptId);
-   const program=compileWarScript(warScriptSource(component,project));
+   const program=compileAttachedScript(component,project);
    if(!program.ok){for(const d of program.diagnostics)add(d.line+':'+d.column+' · '+d.message);continue}
    try{createWarScriptInstance(program,{read(){throw Error('Valeur initiale inconnue.');},call:warScriptBuiltin},{values:component.values||{}})}catch(error){add(error.message)}
   }
@@ -79,7 +80,7 @@ export class WarScriptRuntime {
   this.context=ctx;const live=new Set();let total=0;
   for(const entity of ctx.entities)for(const component of entity.warScripts||[]){live.add(component);let entry=this.instances.get(component);if(component.enabled!==false&&++total>64)break;if(entry){Object.assign(entry.context,ctx);continue;}
    const clock={delta:0,elapsed:this.elapsed};entry={entity,component,clock,context:{...ctx},failed:false};entry.attached=()=>entry.context.entities.includes(entity)&&entity.warScripts?.includes(component);component.runtime??={started:false,fields:{},error:''};component.runtime.error='';
-   try{const program=compileWarScript(warScriptSource(component,ctx.project));if(!program.ok)throw Error('WarScript invalide : '+program.diagnostics.map(d=>d.line+':'+d.column+' '+d.message).join(' ; '));entry.instance=createWarScriptInstance(program,createScriptApi(entity,entry.context,clock,component),{values:component.values||{},saved:component.runtime.started||component.runtime.awakened?component.runtime.fields:null});entry.lifecycle=new ScriptLifecycle(entry,(hook,cleanup)=>this.invoke(entry,hook,cleanup));this.instances.set(component,entry);
+   try{const program=compileAttachedScript(component,ctx.project);if(!program.ok)throw Error('WarScript invalide : '+program.diagnostics.map(d=>d.line+':'+d.column+' '+d.message).join(' ; '));entry.instance=createWarScriptInstance(program,createScriptApi(entity,entry.context,clock,component),{values:component.values||{},saved:component.runtime.started||component.runtime.awakened?component.runtime.fields:null});entry.lifecycle=new ScriptLifecycle(entry,(hook,cleanup)=>this.invoke(entry,hook,cleanup));this.instances.set(component,entry);
    }catch(error){this.instances.set(component,entry);this.report(entry,error)}
   }
   for(const [component,entry] of this.instances)if(!live.has(component)){Object.assign(entry.context,ctx);entry.lifecycle?.dispose();this.instances.delete(component)}

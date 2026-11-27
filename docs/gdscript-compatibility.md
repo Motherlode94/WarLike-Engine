@@ -1,0 +1,2 @@
+# GDScript compatibility v0.2
+GD02 extends GD01 with typed helper functions, typed local variables, return expressions, if/elif/else, while, break/continue and for i in range(N), N a nonnegative integer literal at most 1024. class_name is metadata only, not a global type registry. No inheritance of user classes, arrays, dictionaries, overloads, dynamic range or SceneTree. All execution uses WarScript's existing operation budget; original .gd source remains intact. Test coverage is not proof of browser/export compatibility.

@@ -219,3 +219,67 @@ export function runWarScriptPreview(source,{frames=60,fps=60,maxLogs=120}={}){
   return {ok:true,diagnostics:[],logs,fields:structuredClone(instance.fields),state,frames,overflow,simulated:true};
  }catch(error){return {ok:false,diagnostics:[{severity:'error',line:error.line||1,column:error.column||1,message:error.message}],logs,state,simulated:true};}
 }
+
+
+// GDScript compatibility frontend v0.1. The existing bounded interpreter is
+// the only execution engine; never evaluate generated JavaScript.
+export function compileGDScript(source){
+ const fail=(line,message)=>({ok:false,diagnostics:[{severity:'error',line,column:1,message}]});
+ if(typeof source!=='string'||source.length>65536)return fail(1,'GDScript limité à 64 Ko.');
+ const lines=source.replace(/\r\n?/g,'\n').split('\n'),out=[],map=[],stack=[];let base=null,delta=null,extendsSeen=false,className=null;
+ const gdType=t=>t==='String'?'string':t;
+ const emit=(s,line)=>{out.push(s);map.push(line)};
+ const error=(line,message)=>{throw Object.assign(Error(message),{line})};
+ const expr=(s,line)=>{
+  // Preserve quoted strings; only transform tokens outside strings.
+  const parts=s.match(/"(?:[^"\\]|\\.)*"|[^"]+/g)||[];
+  if(parts.join('')!==s)error(line,'Chaîne non terminée.');
+  return parts.map(p=>p.startsWith('"')?p:p.replace(/\b(and|or|not)\b/g,x=>({and:'&&',or:'||',not:'!'})[x]).replace(/\bPI\b/g,'3.141592653589793').replace(/\bdeg_to_rad\s*\(/g,'WLGdDegToRad(').replace(/\brad_to_deg\s*\(/g,'WLGdRadToDeg(').replace(/\bposition(?=\.|\b)/g,'transform.position').replace(/\bprint\s*\(/g,'Log(').replace(/\b(sin|cos|abs|min|max|clamp)\s*\(/g,x=>'Mathf.'+x.trim().slice(0,x.trim().indexOf('(')).trim().replace(/^./,c=>c.toUpperCase())+'(').replace(delta?new RegExp('\\b'+delta+'\\b','g'):/\b(?!)\b/g,'Time.deltaTime')).join('');
+ };
+ const close=(indent,line)=>{let closed=null;while(stack.length&&indent<=stack.at(-1).indent){const b=stack.pop();if(!b.body)error(line,'Bloc indenté attendu.');closed=b;emit('}',line);if(b.kind==='func'){delta=null;base=null}}return closed};
+ try{
+ for(let i=0;i<lines.length;i++){const line=i+1,raw=lines[i];if(/^\s*$/.test(raw)||/^\s*#/.test(raw))continue;
+  const prefix=raw.match(/^[ \t]*/)[0];if(prefix.includes(' ')&&prefix.includes('\t'))error(line,'Indentation mixte non prise en charge.');
+  const indent=prefix.replace(/\t/g,'    ').length;
+  let s=raw.slice(prefix.length).replace(/("(?:[^"\\]|\\.)*")|#.*$/g,(m,q)=>q||'').trim();if(!s)continue;
+  const previous=stack.at(-1);if(previous&&!previous.body&&indent<=previous.indent)error(line,'Bloc indenté attendu.');
+  const closed=close(indent,line);
+  if(stack.length){const top=stack.at(-1);if(!top.body){top.body=true;top.child=indent}else if(indent!==top.child)error(line,'Indentation inattendue.');}
+  if(indent===0){
+   if(/^extends\s+(Node|Node2D|Node3D)$/.test(s)){if(extendsSeen||out.length)error(line,'extends doit précéder les déclarations.');extendsSeen=true;continue;}
+   const named=/^class_name\s+([A-Za-z_]\w*)$/.exec(s);if(named){if(className||out.length)error(line,'class_name doit précéder les champs et fonctions.');className=named[1];continue;}
+   let m=/^(@export\s+)?var\s+([A-Za-z_]\w*)\s*(?::\s*(float|int|bool|String|Vector3))?\s*=\s*(.+)$/.exec(s);
+   if(m){const [,ex,name,type,value]=m;const inferred=type||(/^(true|false)$/.test(value)?'bool':/^"/.test(value)?'String':/^Vector3\s*\(/.test(value)?'Vector3':/^-?\d+$/.test(value)?'int':'float');emit((ex?'public ':'private ')+(inferred==='String'?'string':inferred)+' '+name+' = '+expr(value,line)+';',line);continue;}
+   m=/^func\s+(_ready|_process|_physics_process|_enter_tree|_exit_tree)\s*\(\s*([A-Za-z_]\w*)?\s*(?::\s*float)?\s*\)\s*(?:->\s*void)?\s*:$/.exec(s);
+   if(m){const [,name,arg]=m,frame=['_process','_physics_process'].includes(name);if(frame!==!!arg)error(line,'Paramètres du callback incompatibles.');delta=arg||null;emit('void '+({_ready:'Start',_process:'Update',_physics_process:'FixedUpdate',_enter_tree:'Awake',_exit_tree:'OnDestroy'})[name]+'() {',line);stack.push({indent,kind:'func',body:false});continue;}
+   m=/^func\s+([A-Za-z_]\w*)\s*\(([^()]*)\)\s*(?:->\s*(void|float|int|bool|String|Vector3))?\s*:$/.exec(s);
+   if(m){const [,name,rawParams,ret='void']=m;if(name.startsWith('_')||/^(Awake|Start|Update|FixedUpdate|LateUpdate|OnEnable|OnDisable|OnDestroy|WLGdDegToRad|WLGdRadToDeg)$/.test(name))error(line,'Nom de fonction réservé ou callback non pris en charge.');
+    const params=rawParams.trim()?rawParams.split(',').map(p=>{const match=/^\s*([A-Za-z_]\w*)\s*:\s*(float|int|bool|String|Vector3)\s*$/.exec(p);if(!match)error(line,'Paramètre typé requis.');return gdType(match[2])+' '+match[1]}):[];
+    emit(gdType(ret)+' '+name+'('+params.join(', ')+') {',line);stack.push({indent,kind:'func',body:false});continue;
+   }
+   error(line,'Déclaration GDScript non prise en charge.');
+  }
+  if(!stack.length)error(line,'Instruction hors fonction.');
+  let m=/^if\s+(.+):$/.exec(s);if(m){emit('if ('+expr(m[1],line)+') {',line);stack.push({indent,kind:'if',body:false});continue;}
+  m=/^elif\s+(.+):$/.exec(s);
+  if(m||s==='else:'){if(closed?.kind!=='if'||closed.indent!==indent)error(line,'elif/else sans if correspondant.');emit(m?'else if ('+expr(m[1],line)+') {':'else {',line);stack.push({indent,kind:m?'if':'else',body:false});continue;}
+  m=/^while\s+(.+):$/.exec(s);if(m){emit('while ('+expr(m[1],line)+') {',line);stack.push({indent,kind:'loop',body:false});continue;}
+  m=/^for\s+([A-Za-z_]\w*)\s+in\s+range\(\s*(\d+)\s*\):$/.exec(s);if(m){const [,name,n]=m;if(Number(n)>1024)error(line,'range limité à 1024 itérations.');emit('for (int '+name+' = 0; '+name+' < '+n+'; '+name+' += 1) {',line);stack.push({indent,kind:'loop',body:false});continue;}
+  if(s==='break'||s==='continue'){emit(s+';',line);continue;}
+  if(s==='pass'){emit('// pass',line);continue;}
+  if(s==='return'){emit('return;',line);continue;}
+  m=/^return\s+(.+)$/.exec(s);if(m){emit('return '+expr(m[1],line)+';',line);continue;}
+  m=/^rotate_y\s*\((.+)\)$/.exec(s);if(m){emit('Rotate(0, ('+expr(m[1],line)+') * 57.29577951308232, 0);',line);continue;}
+  m=/^rotate\s*\((.+)\)$/.exec(s);if(m){emit('Rotate(('+expr(m[1],line)+') * 57.29577951308232);',line);continue;}
+  m=/^var\s+([A-Za-z_]\w*)\s*(?::\s*(float|int|bool|String|Vector3))?\s*=\s*(.+)$/.exec(s);if(m){emit(gdType(m[2]||'var')+' '+m[1]+' = '+expr(m[3],line)+';',line);continue;}
+  if(!/^(?:[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\s*(?:=|\+=|-=|\*=|\/=)|[A-Za-z_]\w*\s*\()/.test(s))error(line,'Instruction non prise en charge dans le profil GDScript v0.2.');
+  emit(expr(s,line)+';',line);
+ }
+ if(stack.some(b=>!b.body))error(lines.length,'Bloc indenté attendu.');close(0,lines.length);
+ if(!extendsSeen)return fail(1,'extends Node, Node2D ou Node3D requis.');
+ emit('float WLGdDegToRad(float v) { return v * 0.017453292519943295; }',lines.length);
+ emit('float WLGdRadToDeg(float v) { return v * 57.29577951308232; }',lines.length);
+ const result=compileWarScript(out.join('\n'));
+ return {...result,className,diagnostics:result.diagnostics.map(d=>({...d,line:map[d.line-1]||lines.length}))};
+ }catch(e){return fail(e.line||1,e.message);}
+}

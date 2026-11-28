@@ -146,6 +146,132 @@ export function initBlueprintWorkspace(){
    if(!results.length)grid.append(element('p','bp-hint','Aucun modèle ne correspond à cette recherche.'));
   }
   search.oninput=()=>{ui.search=search.value;draw()};page.append(controls,grid);draw();
+  // Explicit imports only: never attach or execute scripts on download.
+  const examples=element('section','bp-project-card');
+  examples.append(element('h3','','Exemples de gameplay · WarScript / C# / Blueprint / WarNode'),element('p','bp-hint','Exemples de mécanismes voisins, pas quatre implémentations strictement équivalentes. C# requiert le pont natif. Les graphes Blueprint et WarNode partagent le même runtime.'));
+  const definitions=[
+ {
+  "game": "Slime",
+  "id": "SlimeRegeneration",
+  "label": "Régénération",
+  "war": "public float rate = 5;\nvoid Update() { SetHealth(health + rate * Time.deltaTime); }",
+  "cs": "using WarLike.Runtime;\npublic sealed class SlimeRegeneration : MonoBehaviour {\n public float rate = 5f;\n void Update() { Actor.Health = System.Math.Min(Actor.MaxHealth, Actor.Health + rate * Time.deltaTime); }\n}\n",
+  "event": "interval",
+  "instructions": [
+   {
+    "type": "healObject",
+    "value": 5
+   }
+  ],
+  "extra": {
+   "interval": 1
+  }
+ },
+ {
+  "game": "Slime",
+  "id": "SlimePickupSpin",
+  "label": "Rotation de collectible",
+  "war": "public float speed = 60;\nvoid Update() { Rotate(0, speed * Time.deltaTime, 0); }",
+  "cs": "using WarLike.Runtime;\npublic sealed class SlimePickupSpin : MonoBehaviour {\n public float speed = 60f;\n void Update() { transform.Rotate(0, speed * Time.deltaTime, 0); }\n}\n",
+  "event": "interval",
+  "instructions": [
+   {
+    "type": "setRotation",
+    "value": 90
+   }
+  ],
+  "extra": {
+   "interval": 1
+  }
+ },
+ {
+  "game": "Racing",
+  "id": "RaceClock",
+  "label": "Chronomètre local",
+  "war": "public float elapsed = 0;\nvoid Update() { elapsed += Time.deltaTime; }",
+  "cs": "using WarLike.Runtime;\npublic sealed class RaceClock : MonoBehaviour {\n public float elapsed = 0f;\n void Update() { elapsed += Time.deltaTime; }\n}\n",
+  "event": "start",
+  "instructions": [
+   {
+    "type": "startTimer",
+    "key": "race-clock",
+    "value": 120
+   }
+  ],
+  "extra": {
+   "once": true
+  }
+ },
+ {
+  "game": "Racing",
+  "id": "RaceVehicleTuning",
+  "label": "Réglage du contrôleur arcade",
+  "war": "public float speed = 300;\nvoid Start() { vehicle.maxSpeed = speed; }",
+  "cs": "using WarLike.Runtime;\npublic sealed class RaceVehicleTuning : MonoBehaviour {\n public float speed = 300f;\n void Start() { var v = GetComponent<VehicleControllerComponent>(); if (v != null) v.MaxSpeed = speed; }\n}\n",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "setVehicleEngine",
+    "value": true
+   }
+  ],
+  "extra": {}
+ },
+ {
+  "game": "Horror",
+  "id": "HorrorDamage",
+  "label": "Dégâts périodiques sur objet porteur",
+  "war": "public float rate = 4;\nvoid Update() { SetHealth(health - rate * Time.deltaTime); }",
+  "cs": "using WarLike.Runtime;\npublic sealed class HorrorDamage : MonoBehaviour {\n public float rate = 4f;\n void Update() { Actor.Health = System.Math.Max(0, Actor.Health - rate * Time.deltaTime); }\n}\n",
+  "event": "interval",
+  "instructions": [
+   {
+    "type": "damageObject",
+    "value": 4
+   }
+  ],
+  "extra": {
+   "interval": 1
+  }
+ },
+ {
+  "game": "Horror",
+  "id": "HorrorDoor",
+  "label": "Ouverture par touche sur objet porteur",
+  "war": "void Update() { if (Input.GetKeyDown(\"e\")) { gameObject.SetActive(false); } }",
+  "cs": "using WarLike.Runtime;\npublic sealed class HorrorDoor : MonoBehaviour {\n void Update() { if (Input.GetKeyDown(\"e\")) { gameObject.SetActive(false); } }\n}\n",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "setCollision",
+    "value": false
+   },
+   {
+    "type": "setVisibility",
+    "value": false
+   }
+  ],
+  "extra": {
+   "once": true
+  }
+ }
+];
+  for(const d of definitions){
+   const item=element('div','bp-template-card');
+   item.append(element('strong','',d.game+' · '+d.label));
+   for(const [ext,source] of [['wls',d.war],['cs',d.cs]]){
+    button(item,'↓ '+ext,()=>download(new Blob([source],{type:'text/plain'}),d.id+'.'+ext),'bp-text-button');
+   }
+   const sequence={...newSequence(),name:d.id,event:d.event,instructions:structuredClone(d.instructions),...structuredClone(d.extra)};
+   for(const graph of [false,true]){
+    button(item,graph?'↓ WarNode JSON':'↓ Blueprint JSON',()=>{
+     const copy=structuredClone(sequence);if(graph)copy.graph=createGraph(copy);
+     download(new Blob([JSON.stringify({format:'warlike.blueprint.v1',sequence:copy,functions:[]},null,2)],{type:'application/json'}),d.id+(graph?'.warnode':'.blueprint')+'.json');
+    },'bp-text-button');
+   }
+  examples.append(item);
+  }
+  page.append(examples);
   const files=element('div','bp-transfer-bar');
   button(files,'↓ Exporter le comportement',()=>{if(!sequence)return;const blob=new Blob([JSON.stringify({format:'warlike.blueprint.v1',sequence,functions:gameProject.functions||[]},null,2)],{type:'application/json'});download(blob,'warlike-blueprint.json')},'bp-text-button').disabled=!sequence;
   const input=element('input');input.type='file';input.accept='.json';input.hidden=true;input.onchange=async()=>{try{const file=input.files[0];if(!file)return;if(file.size>512*1024)throw Error('512 Ko maximum.');const data=JSON.parse(await file.text());if(data.format!=='warlike.blueprint.v1'||!data.sequence||typeof data.sequence!=='object'||Array.isArray(data.sequence))throw Error('Blueprint invalide.');if(data.sequence.graph)applyGraph(data.sequence);const imported=data.functions||[],errors=validateFunctionDefinitions(imported);if(errors.length)throw Error(errors[0]);for(const f of imported){const existing=gameProject.functions?.find(other=>other.id===f.id);if(existing&&JSON.stringify(existing)!==JSON.stringify(f))throw Error('Une fonction différente possède déjà cet identifiant : '+f.id)}const merged=[...(gameProject.functions||[]),...imported.filter(f=>!gameProject.functions?.some(other=>other.id===f.id))];if(merged.length>64)throw Error('64 fonctions maximum.');addSequence(owner,data.sequence);gameProject.functions=merged;ui.tab='instructions';change('Importer un comportement')}catch(e){alert(e.message)}finally{input.value=''}};

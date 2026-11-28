@@ -148,7 +148,11 @@ export function applyAdventureActorKit(object,kit,mode='3d'){
  if(mode!=='3d'||!object||!Object.hasOwn(adventureActorKits,kit))return false;
  const ids=adventureActorKits[kit],choices=componentChoices(mode);
  if(!ids.every(id=>choices.some(d=>d.id===id)))return false;
- for(const id of ids)if(!hasObjectComponent(object,id))addObjectComponent(object,id,mode);
+ for(const id of ids)if(!hasObjectComponent(object,id)){
+  addObjectComponent(object,id,mode);
+  if(kit==='slime'&&id==='controller3d')Object.assign(object.controller3d,{walkSpeed:3,sprintSpeed:5,jumpForce:5.6,dodgeDistance:1.8,dodgeCooldown:.8,facingMode:'camera'});
+  if(kit==='slime'&&id==='cameraRig')Object.assign(object.cameraRig,{mode:'thirdPerson',distance:4.2,height:.85,followSharpness:12,collision:true});
+ }
  if(kit==='slime')object.playable3d=true;
  return true;
 }

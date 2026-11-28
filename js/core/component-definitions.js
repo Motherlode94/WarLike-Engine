@@ -152,6 +152,7 @@ export function applyAdventureActorKit(object,kit,mode='3d'){
   addObjectComponent(object,id,mode);
   if(kit==='slime'&&id==='controller3d')Object.assign(object.controller3d,{walkSpeed:3,sprintSpeed:5,jumpForce:5.6,dodgeDistance:1.8,dodgeCooldown:.8,facingMode:'camera'});
   if(kit==='slime'&&id==='cameraRig')Object.assign(object.cameraRig,{mode:'thirdPerson',distance:4.2,height:.85,followSharpness:12,collision:true});
+  if(kit==='racing'&&id==='cameraRig')Object.assign(object.cameraRig,{mode:'thirdPerson',distance:7.5,height:.9,followSharpness:8,collision:true});
  }
  if(kit==='slime')object.playable3d=true;
  return true;

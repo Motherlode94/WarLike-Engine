@@ -1,3 +1,4 @@
+import {activeSceneCamera,linkActorSceneCamera} from '../core/scene-camera-3d.js';
 import {inspectRuntimeCompatibility} from '../core/runtime-capabilities.js';
 import {validateFunctionDefinitions} from '../core/blueprint-data.js';
 import {objectBlueprintVariables,addBlueprintVariable} from '../core/blueprint-variables.js';
@@ -123,8 +124,10 @@ export function initBlueprintWorkspace(){
   if(workspace.mode==='3d'){
    const kits=element('div','bp-template-grid');
    for(const [id,title,description] of [
-    ['slime','BP_Slime_Player','Contrôleur 3D, capsule, santé, inventaire, RPG, caméra et Animator.'],
-    ['racing','BP_Racing_Vehicle','Physique automobile Rapier, Rigidbody, contrôleur et caméra.']
+    ['slime','BP_Slime_Player','Contrôleur 3D, capsule, santé, inventaire, RPG, caméra, Animator et commandes.'],
+    ['driver','BP_Racing_Driver','Joueur conducteur : déplacement à pied, interaction E avec le véhicule et touches configurables.'],
+    ['horror','BP_Horror_Player','Joueur FPS, santé, inventaire, interactions, lampe et touches configurables.'],
+    ['racing','BP_Racing_Vehicle','Physique automobile Rapier, Rigidbody, commandes et caméra. Ajoute un joueur conducteur, puis E pour entrer.']
    ]){
     const card=element('article','bp-template-card');
     card.append(element('span','bp-template-category','Kit de composants natifs'),element('h3','',title),element('p','',description));
@@ -135,6 +138,12 @@ export function initBlueprintWorkspace(){
      render();
     },'bp-secondary');
     apply.disabled=!owner||state.playing;
+    const link=button(card,'Relier la caméra de jeu',()=>{
+     if(!owner||state.playing||active()!==owner)return;
+     const camera=linkActorSceneCamera(state.entities,owner);if(camera){change('Relier '+camera.name+' à '+owner.name);render()}
+    },'bp-text-button');
+    link.disabled=!owner?.cameraRig||state.playing||!activeSceneCamera(state.entities);
+    link.title='La caméra de scène suivra cet objet ; ses paramètres optiques sont conservés.';
     kits.append(card);
    }
    const horrorCard=element('article','bp-template-card');

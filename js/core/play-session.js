@@ -3,7 +3,6 @@ import {cleanupPlay} from './play-cleanup.js';
 import {state,notify} from './state.js';
 import {gameProject} from './game-project.js';
 import {workspace} from './workspaces.js';
-import {horror} from './horror-survival.js';
 import {stopAnimationEditorPreviews} from './animation-clips.js';
 import {inspectRuntimeCompatibility} from './runtime-capabilities.js';
 import {inspectBlueprintGame} from './blueprint-validation.js';
@@ -27,7 +26,6 @@ function restoreEditorAfterPlay(){
   Object.assign(gameProject,saved);
  }
  state.nextId=state.playNextId??state.nextId;
- if(state.playHorrorBackup){Object.assign(horror,state.playHorrorBackup);state.playHorrorBackup=null}
  if(state.playCameraBackup)state.camera=structuredClone(state.playCameraBackup);
  state.playCameraBackup=null;state.playBackup=null;state.playNextId=null;
  state.playSelectedBackup=null;state.playProjectBackup=null;
@@ -71,7 +69,6 @@ export function togglePlay(){
    state.entities.unshift({id,name:workspace.mode==='3d'?'3D Test Player':'2D Test Player',type:'character',skin:'scout',animation:'idle',x:100,y:100,w:45,h:78,color:'#41cdb5',elevation3d:0});
   }
   resetHeroRuntime();resetGame();resetSequences();resetEngineDiagnostics(workspace.mode);startProfiler();startRuntimeSession();
-  const horrorActor=state.entities.find(o=>o.horrorSettings);if(horrorActor){state.playHorrorBackup=structuredClone(horror);Object.assign(horror,{...horrorActor.horrorSettings,battery:100,fear:0,threat:0,toggleHeld:false,jumpscare:0})}
   if(btn){btn.textContent='■ Stop';btn.classList.add('active');btn.setAttribute('aria-pressed','true')}
   document.querySelector('#status')?.replaceChildren(document.createTextNode('Play mode'));
   renderHistory();notify();

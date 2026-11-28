@@ -16,6 +16,16 @@ export function activeSceneCamera(entities){
   .filter(e=>e?.sceneCamera3d?.enabled!==false&&e?.sceneCamera3d&&e.enabled!==false)
   .sort((a,b)=>(finite(b.sceneCamera3d.priority,0)-finite(a.sceneCamera3d.priority,0))||a.id-b.id)[0]||null;
 }
+// Explicit authoring action: link the existing active camera without touching its
+// authored FOV, clipping, transform, other cameras or any actor settings.
+export function linkActorSceneCamera(entities,actor){
+ if(!actor||!entities?.includes(actor)||!actor.cameraRig)return null;
+ const camera=activeSceneCamera(entities);if(!camera||camera===actor)return null;
+ const rig=actor.cameraRig;
+ Object.assign(camera.sceneCamera3d,{mode:rig.mode==='firstPerson'?'firstPerson':'thirdPerson',targetId:actor.id,
+  distance:clamp(finite(rig.distance,4.8),.3,40),height:clamp(finite(rig.height,1.5),-5,12),shoulderOffset:clamp(finite(rig.shoulderOffset,0),-3,3)});
+ return camera;
+}
 export function cameraTargetEntity(camera,entities){
  if(!camera?.sceneCamera3d)return null;
  const id=Number(camera.sceneCamera3d.targetId);

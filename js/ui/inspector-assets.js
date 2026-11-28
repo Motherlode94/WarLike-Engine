@@ -14,10 +14,10 @@ export function inspectedAsset(){
  return selection.asset||(selection.mode==='3d'?get3dAsset(selection.id):getAsset(selection.id));
 }
 export const assetInspectorLock=()=>({locked:selection?.locked===true,toggle:()=>{if(selection)selection.locked=!selection.locked}});
-export function initAssetInspection(){
+export function initAssetInspection(refreshInspector=notify){
  if(installed)return;installed=true;
  document.addEventListener('warlike:inspect-asset',event=>{if(inspectorSelection.locked||selection?.locked)return;selection={id:event.detail?.id,mode:workspace.mode,context:inspectorContext(),asset:event.detail?.asset,kind:event.detail?.kind,open:event.detail?.open};selectionAtClick=state.selected.join(',');notify()});
- document.addEventListener('pointerdown',event=>{if(selection&&!selection.locked&&event.target.closest?.('#objects,#canvas,#canvas3d')){selection=null;notify()}if(!event.target.closest?.('.component-menu-toggle,.inspector-component-actions')){document.querySelectorAll('.inspector-component-actions').forEach(menu=>menu.hidden=true);document.querySelectorAll('.component-menu-toggle').forEach(button=>button.setAttribute('aria-expanded','false'))}},true);
+ document.addEventListener('pointerdown',event=>{if(selection&&!selection.locked&&event.target.closest?.('#objects,#canvas,#canvas3d')){selection=null;refreshInspector()}if(!event.target.closest?.('.component-menu-toggle,.inspector-component-actions')){document.querySelectorAll('.inspector-component-actions').forEach(menu=>menu.hidden=true);document.querySelectorAll('.component-menu-toggle').forEach(button=>button.setAttribute('aria-expanded','false'))}},true);
  document.addEventListener('warlike:workspace',()=>{selection=null});
 }
 export function renderAssetInspector(root,asset){

@@ -11,3 +11,18 @@ body:not(.hub-open) #properties .editor-camera-flag input{width:15px!important;h
 body:not(.hub-open) #properties .editor-camera-property input:focus-visible{outline:2px solid #8ac8dc;outline-offset:1px}
 body:not(.hub-open) #viewport .warlike-gizmo-3d [data-scene-camera-frustum]{pointer-events:none}
 @container (max-width:290px){body:not(.hub-open) #properties .editor-camera-property{grid-template-columns:1fr}}
+
+/* hidden must win over generic canvas display rules, including before first redraw. */
+#viewport .warlike-camera-frame-preview[hidden],#viewport .scene-placement-options[hidden]{display:none!important}
+#viewport .scene-placement-options{position:absolute;right:10px;top:10px;z-index:20;font:11px system-ui}
+#viewport .scene-placement-options>summary{cursor:pointer;list-style:none;padding:5px 9px;border:1px solid var(--wl-theme-border,#455363);border-radius:3px;background:var(--wl-theme-panel,#252c35);color:var(--wl-theme-fg,#e5eaf1)}
+#viewport .scene-placement-options>summary::after{content:' ▾'}
+#viewport .scene-placement-options:not([open])>.scene-placement-controls{display:none!important}
+#viewport .scene-placement-options .scene-placement-controls{position:absolute!important;top:calc(100% + 4px)!important;right:0!important;width:min(310px,70vw);max-height:50vh;overflow:auto;box-shadow:0 8px 24px #0007;background:var(--wl-theme-panel,#252c35)!important;color:var(--wl-theme-fg,#e5eaf1)!important}
+#viewport .scene-camera-marker{position:absolute;pointer-events:auto;transform:translate(-50%,-50%);display:flex;align-items:center;gap:4px;background:transparent!important;border:0!important;color:#b5dce9;padding:3px;cursor:pointer}
+#viewport .scene-camera-marker svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.5;filter:drop-shadow(0 1px 2px #111)}
+#viewport .scene-camera-marker span{display:none;padding:3px 5px;background:var(--wl-theme-panel,#252c35);color:var(--wl-theme-fg,#e5eaf1);font:11px system-ui;white-space:nowrap}
+#viewport .scene-camera-marker:is(:hover,:focus-visible,[aria-pressed=true]) span{display:inline}
+#viewport .scene-camera-marker:focus-visible{outline:2px solid var(--editor-accent,#48cba9)}
+
+#viewport:not(.view-3d-active) :is(.scene-placement-options,.warlike-camera-frame-preview,.warlike-scene-camera-markers,.warlike-gizmo-3d){display:none!important}

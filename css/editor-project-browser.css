@@ -1,0 +1,113 @@
+/* Project browser contract: a folder tree and an independently scrolling asset
+   view. Applies to the dock and its floating/maximized versions, including old projects. */
+body:not(.hub-open) #projectPanel #warlikeVisualPacks,
+body:not(.hub-open) #warlikeVisualPacks.warlike-asset-library-maximized{
+ display:flex;flex-direction:column;flex:1 1 0!important;
+ min-width:0;min-height:0!important;max-height:none!important;
+ padding:0;overflow:hidden!important;resize:none;
+}
+#warlikeVisualPacks[hidden]{display:none!important}
+#warlikeVisualPacks .free-asset-toolbar{
+ flex:0 0 auto;position:relative;height:28px;min-height:28px;max-height:28px;padding:2px 5px;
+ display:flex;align-items:center;gap:5px;flex-wrap:nowrap;
+ border-bottom:1px solid var(--wl-theme-border);
+}
+#warlikeVisualPacks .free-asset-toolbar>strong,
+#warlikeVisualPacks #visualPackSelect{display:none}
+#warlikeVisualPacks .free-asset-toolbar>input{flex:1;min-width:60px;width:0}
+#warlikeVisualPacks .free-asset-toolbar>button{flex:none;font-size:11px}
+#warlikeVisualPacks .unity-project-browser{
+ display:grid;grid-template-columns:clamp(160px,24%,250px) minmax(0,1fr);
+ flex:1 1 0;min-width:0;min-height:0;overflow:hidden;
+}
+#warlikeVisualPacks #visualPackFolders{
+ min-height:0;min-width:0;overflow:auto;padding:5px 0;
+ border-right:1px solid var(--wl-theme-border);
+ overscroll-behavior:contain;
+}
+#warlikeVisualPacks .project-folder-group{margin:0;padding:0;border:0}
+#warlikeVisualPacks .project-folder-group>summary{
+ cursor:pointer;list-style:disclosure-closed inside;
+ white-space:nowrap;min-height:23px;line-height:23px;padding:0 7px;
+ font-size:11px;font-weight:600;user-select:none;
+}
+#warlikeVisualPacks .project-folder-group[open]>summary{list-style-type:disclosure-open}
+#warlikeVisualPacks .project-folder-group .project-folder-group{margin-left:12px}
+body:not(.hub-open) #warlikeVisualPacks #visualPackFolders .project-folder{
+ display:flex;align-items:center;gap:7px;width:100%;max-width:100%;
+ min-height:23px;padding:2px 8px 2px 22px;margin:0;
+ border:0!important;border-radius:0!important;background:transparent!important;
+ text-align:left;font-size:11px;line-height:19px;
+}
+#warlikeVisualPacks .project-folder-name{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#warlikeVisualPacks .project-folder-name::before{
+ content:'';display:inline-block;width:12px;height:9px;margin-right:6px;
+ border:1px solid currentColor;border-radius:1px;opacity:.65;
+}
+#warlikeVisualPacks .project-folder-count{flex:none;opacity:.65;font-size:10px;font-variant-numeric:tabular-nums}
+body:not(.hub-open) #warlikeVisualPacks #visualPackFolders .project-folder.active{
+ background:var(--wl-editor-selected-bg,var(--wl-selected,#375264))!important;
+}
+body:not(.hub-open) #warlikeVisualPacks #visualPackFolders .project-folder:hover{
+ background:var(--wl-theme-header,#343a42)!important;
+}
+#warlikeVisualPacks #visualPackFolders :is(button,summary):focus-visible{outline:2px solid var(--editor-accent,#48cba9);outline-offset:-2px}
+body:not(.hub-open) #projectPanel #warlikeVisualPacks .visual-pack-results,
+#warlikeVisualPacks .visual-pack-results{
+ display:flex;flex-direction:column;min-width:0;min-height:0!important;
+ overflow:hidden!important;flex:1 1 0;
+}
+#warlikeVisualPacks .project-browser-location{
+ display:flex;align-items:center;gap:10px;flex:none;min-height:20px;height:20px;
+ padding:2px 7px;border-bottom:1px solid var(--wl-theme-border);font-size:11px;
+}
+#warlikeVisualPacks .project-browser-path{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#warlikeVisualPacks .project-browser-location>small{flex:none;opacity:.7;font-variant-numeric:tabular-nums}
+body:not(.hub-open) #projectPanel #warlikeVisualPacks #visualPackItems,
+#warlikeVisualPacks #visualPackItems{
+ display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+ align-content:start;grid-auto-rows:max-content;gap:5px;padding:6px;flex:1 1 0!important;
+ min-height:0!important;max-height:none!important;overflow:auto!important;
+ overscroll-behavior:contain;
+}
+#warlikeVisualPacks .free-asset-card{display:flex;flex-direction:column;min-width:0;min-height:88px;border:0;border-radius:2px;overflow:hidden}
+#warlikeVisualPacks .free-asset-preview{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;border:0!important;height:88px!important;min-height:88px!important;max-height:none!important;flex:0 0 88px!important;padding:4px!important;gap:3px!important;border-radius:2px!important}
+#warlikeVisualPacks .free-asset-preview img{width:100%;height:57px;max-height:57px;object-fit:contain}
+#warlikeVisualPacks .free-asset-name{width:100%;font-size:10px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#warlikeVisualPacks .free-asset-preview :is(.free-asset-meta,.free-asset-file){display:none}
+body:not(.hub-open) #warlikeVisualPacks .free-asset-preview[aria-pressed=true]{background:var(--wl-editor-selected-bg,#375264)!important;outline:1px solid var(--editor-accent,#48cba9);outline-offset:-1px}
+#warlikeVisualPacks #visualPackItems.free-asset-list{grid-template-columns:minmax(0,1fr);gap:1px}
+#warlikeVisualPacks .free-asset-list .free-asset-preview{flex-direction:row;justify-content:flex-start;min-height:28px!important;height:28px!important;flex:0 0 28px!important;text-align:left;padding:2px 8px!important}
+#warlikeVisualPacks .free-asset-list .free-asset-preview img{width:24px;height:24px;flex:none}
+#warlikeVisualPacks .free-asset-list .free-file-icon{font-size:18px}
+#warlikeVisualPacks .free-asset-pager{display:flex;align-items:center;justify-content:center;flex:none;height:24px;min-height:24px;padding:2px 5px;gap:5px;flex-wrap:nowrap;border-top:1px solid var(--wl-theme-border);font-size:10px}
+#warlikeVisualPacks .free-asset-pager :is(button,select){min-height:22px;padding:2px 6px!important;font-size:10px;max-width:95px}
+#warlikeVisualPacks .free-asset-pager[hidden]{display:none}
+#warlikeVisualPacks .free-asset-actions{display:flex;gap:5px;margin:0;flex:none}
+#warlikeVisualPacks .free-file-icon{font-size:28px}
+/* Touch layout keeps its existing explicit Dossiers toggle. */
+.compact-workspace #warlikeVisualPacks .unity-project-browser{display:block}
+.compact-workspace #warlikeVisualPacks #visualPackFolders{max-height:200px}
+.compact-workspace #warlikeVisualPacks .free-asset-toolbar{flex-wrap:wrap}
+
+#warlikeVisualPacks.warlike-asset-library-maximized{position:fixed;inset:12px auto auto 12px;z-index:10000;width:calc(100vw / var(--editor-ui-scale,1) - 24px);height:calc(100dvh / var(--editor-ui-scale,1) - 24px);box-shadow:0 20px 70px #0009;border:1px solid var(--wl-theme-border);border-radius:4px;resize:none}
+#warlikeVisualPacks .free-asset-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px}
+#warlikeVisualPacks .free-asset-filters[hidden]{display:none}
+#warlikeVisualPacks .free-asset-filters select{min-width:0;max-width:100%;flex:1}
+#warlikeVisualPacks .free-asset-filters label{display:flex;align-items:center;gap:6px;font-size:11px;white-space:nowrap}
+#warlikeVisualPacks .free-asset-filters input[type=checkbox]{width:15px!important;height:15px!important;min-height:0!important}
+#warlikeVisualPacks #visualPackInfo{font-size:11px;line-height:1.5;margin:4px 0;color:var(--wl-text-muted)}
+#warlikeVisualPacks .free-asset-grid img.pixel-art{image-rendering:pixelated}
+#warlikeVisualPacks .free-asset-empty{grid-column:1/-1;padding:15px;font-size:12px}
+#warlikeVisualPacks .free-asset-actions:empty{display:none}
+#projectAdvancedFiles .free-sprite-import{margin:8px;padding:8px;border:1px solid var(--wl-theme-border)}
+#warlikeVisualPacks .free-asset-pager button:disabled{opacity:.5;cursor:default}
+/* Chrome remains compact when a saved layout has a shallow Project dock. */
+body.reference-engine:not(.hub-open) #projectPanel>.bottom-tabs.dock-title{height:29px!important;min-height:29px!important;max-height:29px!important;padding:2px 6px!important}
+body.reference-engine:not(.hub-open) #projectPanel>.bottom-tabs button{min-height:23px!important;padding:2px 6px!important;font-size:11px!important}
+#warlikeVisualPacks .free-asset-toolbar :is(button,input,summary){height:22px!important;min-height:22px!important;padding:2px 6px!important;box-sizing:border-box}
+
+#warlikeVisualPacks .free-asset-list .free-asset-card{min-height:28px}
+
+.compact-workspace #warlikeVisualPacks .free-asset-toolbar{height:auto;max-height:none;min-height:44px}
+.compact-workspace #warlikeVisualPacks .free-asset-toolbar :is(button,input,summary){height:38px!important;min-height:38px!important}

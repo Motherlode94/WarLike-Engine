@@ -705,22 +705,29 @@ export function init3d(canvas,host,buttons){
  sceneCameraMarkers.className='warlike-scene-camera-markers';
  sceneCameraMarkers.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:10;overflow:hidden';
  host.append(sceneCameraMarkers);
+ const cameraMarkerNodes=new Map();
  const renderSceneCameraMarkers=()=>{
-  sceneCameraMarkers.replaceChildren();
+  sceneCameraMarkers.style.display=state.playing||!view3d.enabled?'none':'block';
   if(state.playing||!view3d.enabled)return;
+  const shown=new Set();
   const rect=canvas.getBoundingClientRect(),cam=camera();
   for(const actor of state.entities.filter(o=>o.sceneCamera3d)){
    const pos=[(Number(actor.x)||0)/64,(Number(actor.elevation3d)||0),(Number(actor.y)||0)/64];
    const point=project3d(pos,cam,rect.width,rect.height);
-   if(!point)continue;
-   const label=document.createElement('button');label.type='button';
-   label.textContent='▣ '+actor.name;
-   label.title='Sélectionner la Camera · réglages dans Inspector';
-   label.style.cssText='position:absolute;pointer-events:auto;transform:translate(-50%,-50%);padding:3px 7px;border-radius:5px;background:#182838dd;border:1px solid #7fc8e8;color:#e7faff;font:11px system-ui;cursor:pointer';
+   if(!point||point.x<0||point.x>rect.width||point.y<0||point.y>rect.height)continue;
+   shown.add(actor.id);let label=cameraMarkerNodes.get(actor.id);
+   if(!label){
+    label=document.createElement('button');label.type='button';label.className='scene-camera-marker';
+    label.innerHTML='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5h10v10H2z M12 8l6-3v10l-6-3"/></svg><span></span>';
+    label.title='Sélectionner la Camera · réglages dans Inspector';
+    label.onclick=()=>{state.selected=[actor.id];notify();};
+    cameraMarkerNodes.set(actor.id,label);sceneCameraMarkers.append(label);
+   }
+   label.setAttribute('aria-label','Caméra dans la scène : '+actor.name);label.setAttribute('aria-pressed',String(state.selected.includes(actor.id)));
+   label.querySelector('span').textContent=actor.name;
    label.style.left=point.x+'px';label.style.top=point.y+'px';
-   label.onclick=()=>{state.selected=[actor.id];notify();};
-   sceneCameraMarkers.append(label);
   }
+  for(const [id,node] of cameraMarkerNodes)if(!shown.has(id)){node.remove();cameraMarkerNodes.delete(id)}
  };
 
  const rectPoint=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,w:r.width,h:r.height}};

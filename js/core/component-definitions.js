@@ -21,6 +21,7 @@ import {defaultRigidbody3d} from './physics-3d.js';
 import {defaultGrab3d} from './grab-physics-3d.js';
 import {defaultEnvironmentProbe3d} from './environment-probes-3d.js';
 import {newSequence} from './logic-sequences.js';
+import {defaultHorrorSettings} from './horror-survival.js';
 import {defaultInputActions} from './input-actions.js';
 import {defaultAnimalController} from './animal-controller.js';
 import {defaultNavigationAgent} from './navigation-agent.js';
@@ -77,6 +78,7 @@ export const webComponentDefinitions=[
  {id:'environmentProbe3d',name:'Zone de réflexion HDR 3D',category:'Rendu',description:'Zone locale de teinte et intensité du HDRI global (pas encore une capture de cubemap locale).',modes:['3d'],create:defaultEnvironmentProbe3d},
  {id:'grab3d',name:'Objet saisissable 3D',category:'Interactions',description:'G saisir/déposer, T lancer. Nécessite Rigidbody3D et Collider3D ; portée, distance tenue et vitesse du lancer.',modes:['3d'],create:defaultGrab3d},
  {id:'sequence',name:'Déclencheur · Blueprint',category:'Comportements',description:'Événement → conditions → instructions. Ouvrir le graphe dans Blueprint.',multiple:true,create:newSequence},
+ {id:'horrorSettings',name:'Survival Horror · Joueur',category:'Survie',description:'Activation persistante du mode horreur, lampe et batterie initiale. Même exécution en Play et dans le jeu Web.',create:defaultHorrorSettings},
  {id:'horrorAiConfig',name:'IA · Survival Horror',category:'Intelligence artificielle',description:'Vision, audition, poursuite et recherche.',create:()=>({enabled:true,visionRange:230,hearingRange:220,chaseSpeed:75,searchSpeed:33,memorySeconds:5})},
  {id:'horrorHideConfig',name:'Cachette',category:'Interactions',description:'Cachette utilisable par le joueur.',create:()=>({enabled:true,radius:90})},
  {id:'horrorFearConfig',name:'Zone de peur',category:'Interactions',description:'Zone de peur avec rayon et intensité.',create:()=>({enabled:true,radius:170,strength:12})},
@@ -141,8 +143,10 @@ export function addObjectComponent(object,id,mode){
 }
 // Reusable authoring kits assemble native components; existing settings are retained.
 export const adventureActorKits=Object.freeze({
- slime:Object.freeze(['controller3d','stats','inventory','rpgProgression','cameraRig','animatorGraph']),
- racing:Object.freeze(['groundVehiclePhysics','cameraRig'])
+ slime:Object.freeze(['controller3d','stats','inventory','rpgProgression','cameraRig','animatorGraph','inputActions']),
+ driver:Object.freeze(['controller3d','stats','inventory','cameraRig','inputActions']),
+ horror:Object.freeze(['controller3d','stats','inventory','adventure','cameraRig','animatorGraph','horrorSettings','inputActions']),
+ racing:Object.freeze(['groundVehiclePhysics','cameraRig','inputActions'])
 });
 export function applyAdventureActorKit(object,kit,mode='3d'){
  if(mode!=='3d'||!object||!Object.hasOwn(adventureActorKits,kit))return false;
@@ -152,9 +156,11 @@ export function applyAdventureActorKit(object,kit,mode='3d'){
   addObjectComponent(object,id,mode);
   if(kit==='slime'&&id==='controller3d')Object.assign(object.controller3d,{walkSpeed:3,sprintSpeed:5,jumpForce:5.6,dodgeDistance:1.8,dodgeCooldown:.8,facingMode:'camera'});
   if(kit==='slime'&&id==='cameraRig')Object.assign(object.cameraRig,{mode:'thirdPerson',distance:4.2,height:.85,followSharpness:12,collision:true});
+  if(kit==='horror'&&id==='cameraRig')Object.assign(object.cameraRig,{mode:'firstPerson',height:1.6,collision:true});
+  if(kit==='horror'&&id==='inputActions')Object.assign(object.inputActions,{replaceDefaults:true,dodge:'alt'});
   if(kit==='racing'&&id==='cameraRig')Object.assign(object.cameraRig,{mode:'thirdPerson',distance:7.5,height:.9,followSharpness:8,collision:true});
  }
- if(kit==='slime')object.playable3d=true;
+ if(['slime','horror','driver'].includes(kit))object.playable3d=true;
  return true;
 }
 export function resetObjectComponent(object,id){const definition=[...webComponentDefinitions,...registeredComponentChoices('2d'),...registeredComponentChoices('3d')].find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}

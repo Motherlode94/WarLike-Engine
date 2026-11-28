@@ -66,3 +66,10 @@ export function perceiveTarget(actor,target,entities){
  return {distance,visible:inRange&&inView&&lineOfSight,
   detected:inRange&&inView&&(ai.requireLineOfSight!==true||lineOfSight)};
 }
+
+export function selectHostileTarget(actor,entities,player){
+ if(!actor||healthOf(actor)<=0)return null;
+ return entities.filter(target=>target&&target!==actor&&healthOf(target)>0&&isHostileTo(actor,target,player))
+ .filter(target=>perceiveTarget(actor,target,entities).detected)
+ .sort((a,b)=>actorDistance(actor,a)-actorDistance(actor,b))[0]??null;
+}

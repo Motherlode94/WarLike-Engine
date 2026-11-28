@@ -26,6 +26,7 @@ export function resolveInputKeys(owner,rawKeys,{context='player'}={}){
  if(!owner?.inputActions||owner.inputActions.enabled===false||inspectInputActions(owner.inputActions).length)return rawKeys;
  const bindings=owner.inputActions;
  const keys=new Set(rawKeys instanceof Set?rawKeys:Array.isArray(rawKeys)?rawKeys:[]);
+ const sourceKeys=new Set(keys);
  const active=context==='vehicle'?['forward','backward','left','right','handbrake','interact']:['forward','backward','left','right','sprint','jump','dodge','interact'];
  // Replace defaults only in this controller's projected view, not globally.
  if(bindings.replaceDefaults){
@@ -33,7 +34,26 @@ export function resolveInputKeys(owner,rawKeys,{context='player'}={}){
  }
  for(const action of active){
   const values=parseKeys(bindings[action]??inputActionDefaults[action]);
-  if(values.some(key=>aliases(key).some(alias=>rawKeys?.has?.(alias))))keys.add(targets[action]);
+  if(values.some(key=>aliases(key).some(alias=>sourceKeys.has(alias))))keys.add(targets[action]);
  }
  return keys;
+}
+
+ // Named action queries use the same bindings as native controller projection.
+ // Gamepad tokens are supplied by the caller's input adapter, not polled here.
+export function inputActionPressed(owner,action,rawKeys){
+ if(typeof action!=='string'||!(/^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/).test(action))return false;
+ const keys=new Set(rawKeys instanceof Set||Array.isArray(rawKeys)?rawKeys:[]);
+ const config=owner?.inputActions;
+ if(config?.enabled===false)return false;
+ const builtin=Object.hasOwn(inputActionDefaults,action);
+ const value=builtin?(config?.[action]??inputActionDefaults[action]):
+   (Object.hasOwn(config?.customActions??{},action)?config.customActions[action]:null);
+ const tokens=parseKeys(value);
+ if(!tokens.length||tokens.length>8||tokens.some(k=>!validKey.test(k)&&!/^gamepad[0-3]:button(?:[0-9]|1[0-6])$/.test(k)))return false;
+ return tokens.some(k=>aliases(k).some(alias=>keys.has(alias)));
+}
+export function inputActionState(owner,action,current,previous){
+ const held=inputActionPressed(owner,action,current),wasHeld=inputActionPressed(owner,action,previous);
+ return {held,pressed:held&&!wasHeld,released:!held&&wasHeld};
 }

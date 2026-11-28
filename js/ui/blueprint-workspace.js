@@ -4,6 +4,7 @@ import {objectBlueprintVariables,addBlueprintVariable} from '../core/blueprint-v
 import {renderBlueprintVariableDetails,blueprintTypeLabels} from './blueprint-variable-details.js';
 import {blueprintDebugger,pauseBlueprint,resumeBlueprint,stepBlueprint} from '../core/blueprint-debugger.js';
 import {workspace} from '../core/workspaces.js';
+import {applyAdventureActorKit} from '../core/component-definitions.js';
 import {presetsForWorkspace,createBlueprintPreset} from '../core/blueprint-presets.js';
 import {active,state,notify} from '../core/state.js';
 import {sequenceEntries,newSequence,sequenceRuntime} from '../core/logic-sequences.js';
@@ -117,7 +118,26 @@ export function initBlueprintWorkspace(){
   else{const actions=element('section','bp-project-card');editActions(actions,f.instructions,()=>change('Instructions de fonction'),0,{parameters:f.parameters,returnType:f.returnType});button(actions,'⬡ Ouvrir en graphe',()=>{f.graph=createGraph({event:'start',instructions:f.instructions});change('Graphe de fonction')},'bp-secondary');page.append(actions)}
  }
  function renderLibrary(page,owner,sequence){
-  const heading=element('div','bp-page-heading');heading.append(element('span','bp-eyebrow','COMPOSER SANS CODER'),element('h2','','WarLike RPG Adventure Kit · Slime Adventure'),element('p','','Choisis un Blueprint du nouveau kit, ajoute-le à un objet, puis règle ses paramètres dans le graphe. Les anciens comportements de tes scènes restent intacts.'));page.append(heading);
+  const heading=element('div','bp-page-heading');heading.append(element('span','bp-eyebrow','COMPOSER SANS CODER'),element('h2','','WarLike · Game Blueprint Kits'),element('p','','Choisis un Blueprint du nouveau kit, ajoute-le à un objet, puis règle ses paramètres dans le graphe. Les anciens comportements de tes scènes restent intacts.'));page.append(heading);
+  if(workspace.mode==='3d'){
+   const kits=element('div','bp-template-grid');
+   for(const [id,title,description] of [
+    ['slime','BP_Slime_Player','Contrôleur 3D, capsule, santé, inventaire, RPG, caméra et Animator.'],
+    ['racing','BP_Racing_Vehicle','Physique automobile Rapier, Rigidbody, contrôleur et caméra.']
+   ]){
+    const card=element('article','bp-template-card');
+    card.append(element('span','bp-template-category','Kit de composants natifs'),element('h3','',title),element('p','',description));
+    const apply=button(card,'＋ Configurer l’objet sélectionné',()=>{
+     if(!owner||state.playing||active()!==owner)return;
+     if(!applyAdventureActorKit(owner,id,workspace.mode)){alert('Kit indisponible pour cet objet.');return}
+     change('Appliquer '+title);
+     render();
+    },'bp-secondary');
+    apply.disabled=!owner||state.playing;
+    kits.append(card);
+   }
+   page.append(kits);
+  }
   const controls=element('div','bp-library-controls'),search=element('input');search.type='search';search.placeholder='Rechercher une mécanique, un objectif, une IA…';search.value=ui.search;search.setAttribute('aria-label','Rechercher un modèle');controls.append(search);
   const available=presetsForWorkspace(workspace.mode);const category=select(controls,'Catégorie',ui.category,['Toutes',...new Set(available.map(p=>p.category))],v=>{ui.category=v;draw()});
   const grid=element('div','bp-template-grid');

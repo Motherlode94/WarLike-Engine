@@ -118,3 +118,10 @@ body.reference-engine:not(.hub-open) #properties .inspector-component-actions{
   background:var(--inspector-surface);
   border-color:var(--inspector-line);
 }
+
+/* #properties is a scrolling flex column (flex:1 1 0; min-height:0). Its
+   children must keep their natural height and let the panel scroll; with the
+   default flex-shrink:1 they were crushed to a few pixels (Transform and every
+   component below it became unreadable). Presentation only: no component,
+   field or project data is touched (WL-COMPAT-001). */
+.inspector #properties>*{flex-shrink:0!important}

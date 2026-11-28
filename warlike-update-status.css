@@ -9,3 +9,10 @@
 .warlike-update-notice summary:focus-visible{outline:3px solid #fff;outline-offset:-4px}
 @media(max-width:480px){.warlike-update-notice{bottom:8px;right:8px;max-width:min(300px,calc(100vw - 16px))}}
 @media print{.warlike-update-notice{display:none!important}}
+/* Inside the editor the floating card covered the bottom of the Inspector
+   (« Supprimer GameObject »). Dock it as a compact chip in the status footer;
+   it still opens upward with the full message. The Hub keeps the card. */
+body.reference-engine:not(.hub-open) .warlike-update-notice{bottom:4px;right:10px;border-radius:8px;font-size:12px;box-shadow:none}
+body.reference-engine:not(.hub-open) .warlike-update-notice summary{min-height:24px;padding:2px 10px;gap:6px}
+body.reference-engine:not(.hub-open) .warlike-update-notice summary::before{font-size:12px}
+body.reference-engine:not(.hub-open) .warlike-update-notice p{padding:0 10px 10px;font-size:12px}

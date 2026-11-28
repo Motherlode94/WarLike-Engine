@@ -389,6 +389,12 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   const showingCamera=!!selectedObject&&selectedObject.sceneCamera3d.showFrustum!==false;
   // Hide the preview before the early return when Play starts or selection changes.
   preview.hidden=!selectedObject||selectedObject.sceneCamera3d.showPreview===false||state.playing||!view3d.enabled;
+  // A global `canvas{display:block}` rule overrides the [hidden] attribute, so the
+  // preview and the 3D-only option bar must also be hidden through inline display.
+  // Otherwise they stay drawn over the 2D Scene view and over Play mode.
+  preview.style.display=preview.hidden?'none':'block';
+  options.hidden=!view3d.enabled||state.playing;
+  options.style.display=options.hidden?'none':'flex';
   const active=view3d.enabled&&!state.playing&&!!selected&&(tool()!=='hand'||showingCamera);
   layer.style.display=active?'block':'none';if(!active)return;
   const rect=canvas.getBoundingClientRect();if(rect.width<1||rect.height<1)return;
@@ -397,6 +403,7 @@ export function initSceneGizmo3d({canvas,host,state,view3d,project3d,objectBound
   // Scene-only framing aid. This uses actual 3D camera projection, not a second game renderer.
   const selectedCam=state.entities.find(o=>state.selected.includes(o.id)&&o.sceneCamera3d);
   preview.hidden=!selectedCam||selectedCam.sceneCamera3d.showPreview===false||state.playing||!view3d.enabled;
+  preview.style.display=preview.hidden?'none':'block';
   if(!preview.hidden&&preview.dataset.liveRenderer!=='webgl'){
    const ctx=preview.getContext('2d'),w=preview.width,h=preview.height;
    ctx.clearRect(0,0,w,h);ctx.fillStyle='#142536';ctx.fillRect(0,0,w,h);

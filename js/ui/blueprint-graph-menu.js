@@ -10,5 +10,6 @@ export function installBlueprintGraphMenu(board,addAction,{getZoom=()=>1}={}){
  board.addEventListener('pointerdown',e=>{if(palette&&!e.target.closest('.bp-context-palette'))close();if(e.button!==1&&e.button!==2||e.target.closest('.bp-node-v2,.bp-context-palette'))return;e.preventDefault();gesture={id:e.pointerId,x:e.clientX,y:e.clientY,left:board.scrollLeft,top:board.scrollTop,moved:false};board.setPointerCapture(e.pointerId)});
  board.addEventListener('pointermove',e=>{if(gesture?.id!==e.pointerId)return;const scale=board.getBoundingClientRect().width/Math.max(1,board.offsetWidth),dx=(e.clientX-gesture.x)/scale,dy=(e.clientY-gesture.y)/scale;if(Math.hypot(dx,dy)>4)gesture.moved=true;board.scrollLeft=gesture.left-dx;board.scrollTop=gesture.top-dy});
  const end=e=>{if(gesture?.id!==e.pointerId)return;const moved=gesture.moved;if(board.hasPointerCapture(e.pointerId))board.releasePointerCapture(e.pointerId);if(e.button===2&&!moved){e.preventDefault();show(e.clientX,e.clientY)}setTimeout(()=>{gesture=null},0)};board.addEventListener('pointerup',end);board.addEventListener('pointercancel',()=>gesture=null);
- return {show:()=>{const rect=board.getBoundingClientRect();show(rect.left+20,rect.top+20)}};
+ // show(x,y) opens the palette at a screen point, e.g. where a wire was dropped (Unreal-style).
+ return {show:(clientX,clientY)=>{const rect=board.getBoundingClientRect();show(Number.isFinite(clientX)?clientX:rect.left+20,Number.isFinite(clientY)?clientY:rect.top+20)},isOpen:()=>!!palette};
 }

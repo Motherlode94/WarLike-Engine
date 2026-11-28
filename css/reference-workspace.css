@@ -222,3 +222,39 @@ body.reference-engine:not(.hub-open) #projectPanel #projectContent,
 body.reference-engine:not(.hub-open) #inspectorPanel{
   overscroll-behavior:contain;
 }
+
+/* Blueprint pins, Unreal Engine conventions (presentation only, graph data untouched):
+   white arrow-shaped execution pins on the first body row, round data pins
+   coloured by type with their name inside the node, solid typed data wires.
+   The pin element is the wire anchor, so labels are drawn as pseudo-elements. */
+body.reference-engine #blueprintDialog .bp-node-v2{padding:0 30px}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-node-drag{margin:0 -30px 13px;padding:0 12px}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-exec-pin,
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port{position:absolute!important;width:13px!important;min-width:13px!important;height:13px!important;min-height:13px!important;padding:0!important;margin:0!important;font-size:0!important;line-height:0!important;overflow:visible!important;cursor:crosshair}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-exec-pin{background:transparent!important;border:0!important;border-radius:0!important;top:47px}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-exec-pin::before{content:'';position:absolute;inset:0;background:#eef1f4;clip-path:polygon(0 0,58% 0,100% 50%,58% 100%,0 100%)}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-exec-pin.bp-input-port{left:9px}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-exec-pin.bp-output-port{right:9px}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-exec-pin.port-false{top:72px}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-exec-pin:hover,
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port:hover{filter:brightness(1.35);transform:scale(1.15)}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port{border:2px solid currentColor!important;border-radius:50%!important;background:#1c1e20!important;color:#a7b0bb!important}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port.is-input{left:9px}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port.is-output{right:9px;top:96px}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port.data-boolean{color:#d8403a!important}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port.data-number{color:#8fe05a!important}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port.data-string{color:#e64fcf!important}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port:is(.data-vector2,.data-vector3){color:#f2c418!important}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port.data-object{color:#1ea7f2!important}
+body.reference-engine #blueprintDialog .bp-node-v2 .bp-data-port.data-component{color:#f08a3c!important}
+body.reference-engine #blueprintDialog .bp-node-v2 [data-pin-label]::after{content:attr(data-pin-label);position:absolute;top:50%;transform:translateY(-50%);font:500 11px/1 system-ui,sans-serif;color:#d9dee3;white-space:nowrap;pointer-events:none}
+body.reference-engine #blueprintDialog .bp-node-v2 :is(.bp-input-port,.is-input)[data-pin-label]::after{left:19px}
+body.reference-engine #blueprintDialog .bp-node-v2 :is(.bp-output-port,.is-output)[data-pin-label]::after{right:19px}
+body.reference-engine #blueprintDialog .bp-wire.is-data{stroke-dasharray:none;stroke-width:2.2;opacity:.9}
+body.reference-engine #blueprintDialog .bp-wire.data-number{stroke:#8fe05a}
+body.reference-engine #blueprintDialog .bp-wire.data-string{stroke:#e64fcf}
+body.reference-engine #blueprintDialog .bp-wire.data-boolean{stroke:#d8403a}
+body.reference-engine #blueprintDialog .bp-wire:is(.data-vector2,.data-vector3){stroke:#f2c418}
+body.reference-engine #blueprintDialog .bp-wire.data-object{stroke:#1ea7f2}
+body.reference-engine #blueprintDialog .bp-wire.is-true{stroke:#eef1f4}
+body.reference-engine #blueprintDialog .bp-wire.is-false{stroke:#eef1f4}

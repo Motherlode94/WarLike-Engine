@@ -29,3 +29,9 @@ export function carrySceneParty(destination,source,{entryX,entryY}={}){
  });
  return result;
 }
+
+export function resolveSceneSpawn(entities,id){
+ const point=entities.find(o=>o.id===id&&o.elementEnabled!==false&&['checkpoint','spawn-pad'].includes(o.assetId));
+ if(!point||![point.x,point.y].every(Number.isFinite))return null;
+ return {x:point.x,y:point.y,elevation3d:Number.isFinite(point.elevation3d)?point.elevation3d:0};
+}

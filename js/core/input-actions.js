@@ -37,3 +37,13 @@ export function resolveInputKeys(owner,rawKeys,{context='player'}={}){
  }
  return keys;
 }
+
+// Presets are ordinary Input Actions components: editable and serialized with actors.
+export const gameInputProfiles=Object.freeze({
+ azerty:Object.freeze({forward:'z,arrowup',backward:'s,arrowdown',left:'q,arrowleft',right:'d,arrowright'}),
+ qwerty:Object.freeze({forward:'w,arrowup',backward:'s,arrowdown',left:'a,arrowleft',right:'d,arrowright'})
+});
+export function createGameInputProfile(game,layout='azerty'){
+ if(!['slime','racing','horror'].includes(game)||!Object.hasOwn(gameInputProfiles,layout))throw Error('Profil de commandes inconnu');
+ return {...defaultInputActions(),...gameInputProfiles[layout],replaceDefaults:true,interact:'e',sprint:'shift',jump:'space',dodge:'control',handbrake:'space'};
+}

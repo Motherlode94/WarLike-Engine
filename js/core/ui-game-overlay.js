@@ -75,3 +75,9 @@ export function createGameUiOverlay(host,{onSignal=()=>{}}={}){
  };
  return {root,update,destroy(){root.remove();elements.clear()},elements};
 }
+
+export function gameUiHealthText(actor){
+ const health=actor?.stats?.health,max=actor?.stats?.maxHealth;
+ if(!Number.isFinite(health)||!Number.isFinite(max)||max<=0)return '';
+ return Math.round(Math.max(0,Math.min(health,max)))+' / '+Math.round(max);
+}

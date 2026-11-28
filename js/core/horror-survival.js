@@ -8,14 +8,15 @@ const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
 export function resetHorror(){Object.assign(horror,{enabled:false,flashlight:true,battery:100,fear:0,threat:0,toggleHeld:false,noise:0,alerts:[],jumpscare:0})}
 // Authored components are the source of truth in Editor Play and the exported player.
 export const defaultHorrorSettings=()=>({enabled:true,flashlightOn:true,battery:100});
+export const horrorPlayerFor=(entities=[])=>entities.find(e=>e?.enabled!==false&&(e.playable3d||e.type==='player'||e.type==='character'))||entities.find(e=>e?.enabled!==false&&e.horrorSettings)||null;
 export function horrorEnabledForScene(entities=[],{genre='sandbox'}={}){
- const player=entities.find(e=>e?.enabled!==false&&(e.playable3d||e.type==='player'||e.type==='character'));
+ const player=horrorPlayerFor(entities);
  if(player?.horrorSettings?.enabled===false)return false;
  return genre==='horror'||entities.some(e=>e?.enabled!==false&&['horrorSettings','horrorAiConfig','horrorHideConfig','horrorFearConfig'].some(key=>e[key]&&e[key].enabled!==false));
 }
 export function beginHorrorSession(entities=[],options={}){
  resetHorror();horror.enabled=horrorEnabledForScene(entities,options);
- const player=entities.find(e=>e?.enabled!==false&&(e.playable3d||e.type==='player'||e.type==='character'));
+ const player=horrorPlayerFor(entities);
  const config=player?.horrorSettings;
  horror.battery=clamp(Number.isFinite(config?.battery)?config.battery:100,0,100);
  horror.flashlight=(config?.flashlightOn??config?.flashlight)!==false&&horror.battery>0;

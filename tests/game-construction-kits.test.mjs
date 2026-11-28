@@ -28,7 +28,7 @@ test('authored horror components activate actual runtime perception without a tr
  const player={id:1,x:0,y:0},enemy={id:2,x:100,y:0,horrorAiConfig:{enabled:true,visionRange:200,hearingRange:120,chaseSpeed:40}};
  const authored=JSON.stringify([player,enemy]);beginHorrorSession([player,enemy]);assert.equal(horror.enabled,true);assert.equal(JSON.stringify([player,enemy]),authored);
  for(let i=0;i<12;i++)updateHorrorPerception(.1,player,[player,enemy]);assert.equal(enemy.horrorAI.state,'chase');
- beginHorrorSession([{id:3,type:'player',horrorSettings:{enabled:true,flashlight:false,battery:27}}]);assert.equal(horror.flashlight,false);assert.equal(horror.battery,27);
+ beginHorrorSession([{id:3,type:'prefab',horrorSettings:{enabled:true,flashlight:false,battery:27}}]);assert.equal(horror.flashlight,false);assert.equal(horror.battery,27);
  beginHorrorSession([{id:4}]);assert.equal(horror.enabled,false);assert.equal(horror.battery,100);assert.equal(horror.fear,0);
  beginHorrorSession([{id:1,playable3d:true,horrorSettings:{enabled:false}},enemy]);assert.equal(horror.enabled,false,'saved player opt-out wins over enemy components');resetHorror();
 });

@@ -16252,6 +16252,7 @@
     "css/demo-scenes.css",
     "css/editor-camera-frustum.css",
     "css/editor-hierarchy.css",
+    "css/editor-project-browser.css",
     "css/focus-menu.css",
     "css/gaia-terrain-ui.css",
     "css/game-sound-browser.css",

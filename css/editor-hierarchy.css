@@ -26,7 +26,7 @@
   color:var(--wl-text-muted,#bbc5ce);
 }
 #hierarchyPanel #objects .unity-hierarchy-row{
-  display:flex;align-items:center;gap:3px;
+  display:flex;align-items:center;gap:0;
   box-sizing:border-box;width:100%;max-width:100%;
   min-width:0;min-height:var(--wl-editor-size-hierarchy-row,24px);
   overflow:hidden;white-space:nowrap;
@@ -77,3 +77,30 @@
   #hierarchyPanel #objects .unity-hierarchy-row .hierarchy-row-metadata{display:flex}
   #hierarchyPanel #objects .hierarchy-row-tag{display:inline}
 }
+
+/* A row is the selection surface. Nested controls never become separate tiles. */
+body:not(.hub-open) #hierarchyPanel #objects .unity-hierarchy-row > button{
+ background:transparent!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;color:inherit!important;margin:0!important;
+}
+body:not(.hub-open) #hierarchyPanel #objects .hierarchy-object-label{padding:1px 4px!important;min-height:22px!important;font-size:12px!important}
+#hierarchyPanel #objects .hierarchy-tree-spacer{flex:0 0 19px;width:19px}
+body:not(.hub-open) #hierarchyPanel #objects .unity-hierarchy-row > .hierarchy-eye{
+ padding:2px!important;min-height:19px!important;
+}
+#hierarchyPanel #objects .unity-hierarchy-row>.hierarchy-eye{opacity:0}
+#hierarchyPanel #objects .hierarchy-eye svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.1}
+#hierarchyPanel #objects .unity-hierarchy-row:is(:hover,:focus-within,.editor-hidden)>.hierarchy-eye{opacity:.7}
+#hierarchyPanel #objects .editor-hidden .hierarchy-object-label{opacity:.5}
+#hierarchyPanel #objects .hierarchy-object-icon{height:15px;opacity:.8}
+#hierarchyPanel #objects .unity-hierarchy-row:focus-within{outline:1px solid var(--editor-accent,#48cba9);outline-offset:-1px}
+#hierarchyPanel #objects .unity-scene-root{display:flex;align-items:center;gap:5px;padding:4px 9px;min-height:25px;font-size:12px}
+#hierarchyPanel #objects .unity-hierarchy-quicktools{background:transparent;font-size:10px;padding:2px 6px}
+@media(hover:none){#hierarchyPanel #objects .unity-hierarchy-row>.hierarchy-eye{opacity:.65!important}}
+
+body:not(.hub-open) #hierarchyPanel #objects .unity-hierarchy-row:not(.selected):not(:hover){background:transparent!important}
+
+#hierarchyPanel #objects .unity-scene-root>strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#hierarchyPanel #objects .unity-scene-root .unity-hierarchy-quicktools{position:static;flex:none;padding:0;gap:2px}
+#hierarchyPanel #objects .unity-scene-root .unity-hierarchy-quicktools button{width:17px;min-width:17px;flex-basis:17px;min-height:19px;padding:0;background:transparent!important;border:0!important}
+#hierarchyPanel #objects .unity-scene-root .unity-hierarchy-total{font-size:10px;margin-left:3px}

@@ -36,7 +36,8 @@ import {initVisualAssetPacks} from './ui/visual-asset-packs.js';
 import {initCommunityManager} from './ui/community-manager.js';
 import {initGodotSceneImport} from './ui/godot-scene-import.js';
 import {initUnityPackageImport} from './ui/unitypackage-import.js';
-import {horror} from './core/horror-survival.js';
+import {horror,horrorEnabledForScene,horrorPlayerFor,defaultHorrorSettings} from './core/horror-survival.js';
+import {gameProject} from './core/game-project.js';
 import {renderQuality,loadRenderQuality,setRenderQuality,saveRenderQuality,applyHorrorAtmosphere} from './core/render-quality.js';
 import {initBlueprintWorkspace} from './ui/blueprint-workspace.js?v=blueprint-game-builder-20261028';
 import {initEditorAppearance} from './ui/editor-appearance.js?v=theme-sync-20261027';
@@ -109,7 +110,12 @@ document.getElementById('render3dHdriClear')?.addEventListener('click',()=>{wind
 const shadows3dToggle=document.getElementById('render3dShadows');
 if(shadows3dToggle){shadows3dToggle.checked=renderQuality.shadows3d;shadows3dToggle.addEventListener('change',()=>{setRenderQuality({shadows3d:shadows3dToggle.checked});saveRenderQuality()})}
 const horrorToggle=document.getElementById('horrorSurvivalToggle');
-if(horrorToggle){horrorToggle.checked=horror.enabled;horrorToggle.addEventListener('change',()=>{horror.enabled=horrorToggle.checked})}
+if(horrorToggle){
+ const horrorPlayer=()=>horrorPlayerFor(state.entities);
+ const syncHorrorToggle=()=>{horrorToggle.checked=state.playing?horror.enabled:horrorEnabledForScene(state.entities,{genre:gameProject.genre});horrorToggle.disabled=state.playing||!horrorPlayer()};
+ horrorToggle.addEventListener('change',()=>{const player=horrorPlayer();if(!player||state.playing)return;player.horrorSettings??=defaultHorrorSettings();player.horrorSettings.enabled=horrorToggle.checked;record('Survival Horror : activation du joueur');notify()});
+ document.addEventListener('warlike:change',syncHorrorToggle);syncHorrorToggle();
+}
 const enableLight=document.getElementById('render2dLight');
 if(enableLight){enableLight.checked=renderQuality.lighting2d;enableLight.addEventListener('change',()=>{setRenderQuality({lighting2d:enableLight.checked});saveRenderQuality()})}
 if(!globalThis.__WARLIKE_BUILD__)try{await restoreLocalModels()}catch(error){log('Bibliothèque locale : '+error.message,'warn')}

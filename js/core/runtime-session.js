@@ -1,3 +1,4 @@
+import {beginHorrorSession,resetHorror} from './horror-survival.js';
 import {profileScope} from './runtime-profiler.js';
 import {cleanupPlay} from './play-cleanup.js';
 import {nativeBridgeRequest} from './native-bridge-client.js';
@@ -35,7 +36,7 @@ const sameWebScene=entities=>webScene!==null&&entities.filter(entity=>entity.web
 const announce=()=>globalThis.document?.dispatchEvent(new Event('warlike:runtime'));
 export function startRuntimeSession(){
  stopRuntimeSession();Object.assign(runtimeSession,{backend:gameProject.runtimeBackend||'web',phase:'ready',error:'',frame:0});
- startComponentRuntime();initializeWebComponents(state.entities,sequenceRuntime.globals);announce();
+ startComponentRuntime();beginHorrorSession(state.entities,{genre:gameProject.genre});initializeWebComponents(state.entities,sequenceRuntime.globals);announce();
 }
 export function stopRuntimeSession(){
  const stopNative=runtimeSession.backend==='native'&&nativeCanStop&&revision!==null,stoppedRevision=revision;
@@ -46,7 +47,7 @@ export function stopRuntimeSession(){
  const errors=cleanupPlay([
   ()=>physicsContactEvents2d.reset(),resetAnimationRuntime,()=>webScriptRuntime.stop(),
   ()=>{if(stopNative)Promise.resolve(requestNative('/stop',{revision:stoppedRevision})).catch(()=>{})},
-  ()=>warScriptRuntime.stop(),resetComponentRuntime,announce
+  ()=>warScriptRuntime.stop(),resetComponentRuntime,resetHorror,announce
  ]);
  if(errors.length)throw new AggregateError(errors,'Nettoyage du runtime incomplet');
 }

@@ -111,6 +111,8 @@ jobs:
         run: node scripts/test-authoring-integrity-browser.mjs
       - name: Unity-like dock layout and Hub visual regression in Chromium
         run: node scripts/test-unity-workspace-browser.mjs
+      - name: Project tree, Hierarchy and camera overlays in legacy and current projects
+        run: node scripts/test-editor-tree-browser.mjs
       - name: CHAMBRE 07 export and isolated Play
         run: npm run test:chambre07:browser
         env:
@@ -133,6 +135,8 @@ jobs:
             .validation-tools/authoring-integrity/*.png
             .validation-tools/authoring-integrity/report.json
             .validation-tools/unity-workspace/*.png
+            .validation-tools/editor-tree/*.png
+            .validation-tools/editor-tree/report.json
             .validation-tools/chambre07/chambre07-play.png
             .validation-tools/chambre07/chambre07-ending-*.png
             .validation-tools/chambre07/legacy-2d-outcome.png

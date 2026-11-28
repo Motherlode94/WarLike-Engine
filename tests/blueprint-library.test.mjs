@@ -17,8 +17,10 @@ test('library differentiates 2D and 3D platform movement but shares gameplay',()
   const items=presetsForWorkspace(mode);
   assert.ok(items.length>=12);
   assert.ok(items.every(p=>p.category&&p.modes.includes(mode)));
-  for(const id of ['pickup','trap','checkpoint','alarm','heal'])assert.ok(items.some(p=>p.id===id));
+  for(const id of ['BP_Collectible','BP_Damage_Receiver','BP_Checkpoint','BP_Quest_Giver','BP_Health'])assert.ok(items.some(p=>p.id===id));
  }
  assert.ok(!presetsForWorkspace('2d').some(p=>p.id==='platform3d'));
  assert.ok(!presetsForWorkspace('3d').some(p=>p.id==='platform2d'));
 });
+
+test('authoring library hides legacy templates but preserves their compatibility',()=>{for(const mode of ['2d','3d']){const options=presetsForWorkspace(mode);assert.ok(options.every(p=>p.id.startsWith('BP_')));assert.ok(!options.some(p=>p.id==='interact'));assert.equal(createBlueprintPreset('interact',mode).event,'interact');assert.equal(createBlueprintPreset('BP_Experience',mode).instructions[0].type,'giveExperience')}});

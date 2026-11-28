@@ -4,7 +4,8 @@ import {objectBlueprintVariables,addBlueprintVariable} from '../core/blueprint-v
 import {renderBlueprintVariableDetails,blueprintTypeLabels} from './blueprint-variable-details.js';
 import {blueprintDebugger,pauseBlueprint,resumeBlueprint,stepBlueprint} from '../core/blueprint-debugger.js';
 import {workspace} from '../core/workspaces.js';
-import {applyAdventureActorKit} from '../core/component-definitions.js';
+import {applyAdventureActorKit,addObjectComponent,hasObjectComponent} from '../core/component-definitions.js';
+import {INFECTION_VARIANTS,infectedVariantPreset} from '../core/horror-infection-variants.js';
 import {presetsForWorkspace,createBlueprintPreset} from '../core/blueprint-presets.js';
 import {active,state,notify} from '../core/state.js';
 import {sequenceEntries,newSequence,sequenceRuntime} from '../core/logic-sequences.js';
@@ -134,6 +135,26 @@ export function initBlueprintWorkspace(){
      render();
     },'bp-secondary');
     apply.disabled=!owner||state.playing;
+    kits.append(card);
+   }
+   const horrorCard=element('article','bp-template-card');
+   horrorCard.append(element('span','bp-template-category','Survival Horror'),element('h3','','BP_Horror_Infected'),element('p','','Applique un profil natif de créature à un modèle sélectionné.'));
+   let variant='ordinary';
+   select(horrorCard,'Variante',variant,Object.entries(INFECTION_VARIANTS).map(([value,v])=>({value,label:v.name})),v=>{variant=v});
+   button(horrorCard,'＋ Configurer l’infecté',()=>{
+    if(!owner||state.playing||active()!==owner)return;
+    const preset=infectedVariantPreset(variant);
+    if(owner.horrorCreature?.assets)preset.horrorCreature.assets=structuredClone(owner.horrorCreature.assets);
+    Object.assign(owner,preset);
+    if(!hasObjectComponent(owner,'stats'))addObjectComponent(owner,'stats',workspace.mode);
+    owner.behavior='patrol';
+    change('Configurer infecté '+variant);render();
+   },'bp-secondary').disabled=!owner||state.playing;
+   kits.append(horrorCard);
+   for(const [id,title,description] of [['horrorHideConfig','BP_Horror_HidingSpot','Cachette native : réduit la détection du joueur accroupi.'],['horrorFearConfig','BP_Horror_FearZone','Zone de peur native : rayon et intensité réglables.']]){
+    const card=element('article','bp-template-card');
+    card.append(element('span','bp-template-category','Survival Horror'),element('h3','',title),element('p','',description));
+    button(card,'＋ Ajouter le composant',()=>{if(!owner||state.playing||active()!==owner)return;if(addObjectComponent(owner,id,workspace.mode)){change('Ajouter '+title);render()}},'bp-secondary').disabled=!owner||state.playing||hasObjectComponent(owner||{},id);
     kits.append(card);
    }
    page.append(kits);

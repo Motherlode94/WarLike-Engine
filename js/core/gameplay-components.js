@@ -186,3 +186,10 @@ export function updateController3d(p,keys,dt,yaw,entities,{pressedKeys=new Set()
  p._support3d=p.grounded3d&&standing?{id:standing.id,x:n(standing.x),y:n(standing.y),z:n(standing.elevation3d)}:null;
  p.animation=p.grounded3d?(len?(sprint?'run':'walk'):'idle'):(p._verticalVelocity>0?'jump':'fall');
 }
+
+// Recover through the native health contract, respecting max health.
+export function healPlayer(actor,amount){
+ if(!actor||!Number.isFinite(amount)||amount<=0)return false;
+ const stats=ensureStats(actor);if(stats.health<=0)return false;
+ const before=stats.health;return setHealth(actor,before+amount)>before;
+}

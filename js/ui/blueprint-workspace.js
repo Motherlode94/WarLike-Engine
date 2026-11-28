@@ -4,6 +4,7 @@ import {objectBlueprintVariables,addBlueprintVariable} from '../core/blueprint-v
 import {renderBlueprintVariableDetails,blueprintTypeLabels} from './blueprint-variable-details.js';
 import {blueprintDebugger,pauseBlueprint,resumeBlueprint,stepBlueprint} from '../core/blueprint-debugger.js';
 import {workspace} from '../core/workspaces.js';
+import {createGameInputProfile,inspectInputActions} from '../core/input-actions.js';
 import {applyAdventureActorKit} from '../core/component-definitions.js';
 import {presetsForWorkspace,createBlueprintPreset} from '../core/blueprint-presets.js';
 import {active,state,notify} from '../core/state.js';
@@ -138,6 +139,24 @@ export function initBlueprintWorkspace(){
    }
    page.append(kits);
   }
+  const inputCard=element('section','bp-project-card');
+  inputCard.append(element('h3','','Configuration des touches'),element('p','bp-hint','Profil par objet · déplacement, sprint, saut, esquive, interaction et frein à main. Les touches de scripts et actions spéciales restent configurées dans leurs comportements.'));
+  let game='slime',layout='azerty';
+  select(inputCard,'Jeu',game,[{value:'slime',label:'Slime Adventure'},{value:'racing',label:'Racing'},{value:'horror',label:'Horror'}],v=>{game=v});
+  select(inputCard,'Clavier',layout,[{value:'azerty',label:'AZERTY'},{value:'qwerty',label:'QWERTY'}],v=>{layout=v});
+  button(inputCard,'Appliquer le profil',()=>{
+   if(!owner||state.playing||active()!==owner)return;
+   if(owner.inputActions&&!confirm('Remplacer les commandes de cet objet ?'))return;
+   owner.inputActions=createGameInputProfile(game,layout);change('Profil de touches '+game+' '+layout);render();
+  },'bp-secondary').disabled=!owner||state.playing;
+  if(owner?.inputActions){
+   for(const action of ['forward','backward','left','right','sprint','jump','dodge','interact','handbrake']){
+    const fieldRow=element('label','bp-field'),input=element('input');input.type='text';input.value=owner.inputActions[action]??'';input.disabled=state.playing;input.setAttribute('aria-label',action);
+    input.onchange=()=>{if(state.playing||active()!==owner)return;const next={...owner.inputActions,[action]:input.value};const errors=inspectInputActions(next);if(errors.length){alert(errors[0]);input.value=owner.inputActions[action]??'';return}owner.inputActions=next;change('Modifier touche '+action)};
+    fieldRow.append(element('span','',action),input);inputCard.append(fieldRow);
+   }
+  }
+  page.append(inputCard);
   const controls=element('div','bp-library-controls'),search=element('input');search.type='search';search.placeholder='Rechercher une mécanique, un objectif, une IA…';search.value=ui.search;search.setAttribute('aria-label','Rechercher un modèle');controls.append(search);
   const available=presetsForWorkspace(workspace.mode);const category=select(controls,'Catégorie',ui.category,['Toutes',...new Set(available.map(p=>p.category))],v=>{ui.category=v;draw()});
   const grid=element('div','bp-template-grid');

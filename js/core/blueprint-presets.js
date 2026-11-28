@@ -656,6 +656,261 @@ const adventureDefinitions=[
   }
  }
 ];
-export const blueprintPresets=adventureDefinitions.map(({id,label,category,description,event,instructions,extra})=>({id,label,category,description,modes:['2d','3d'],create:()=>({...newSequence(),event,instructions:structuredClone(instructions),...structuredClone(extra)})}));
+const horrorDefinitions=[
+ {
+  "id": "BP_Horror_Mission",
+  "label": "BP_Horror_Mission",
+  "category": "Survival Horror",
+  "event": "start",
+  "instructions": [
+   {
+    "type": "setObjective",
+    "key": "horror-fuses",
+    "value": "Récupérer trois fusibles",
+    "total": 3
+   }
+  ],
+  "extra": {
+   "once": true
+  },
+  "description": "Initialise la mission de survie."
+ },
+ {
+  "id": "BP_Horror_Fuse",
+  "label": "BP_Horror_Fuse",
+  "category": "Survival Horror",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "giveItem",
+    "targetRole": "player",
+    "key": "horror-fuse",
+    "value": 1
+   },
+   {
+    "type": "addObjectiveProgress",
+    "key": "horror-fuses",
+    "value": 1
+   },
+   {
+    "type": "setCollision",
+    "value": false
+   },
+   {
+    "type": "setVisibility",
+    "value": false
+   },
+   {
+    "type": "enableObject",
+    "value": false
+   }
+  ],
+  "extra": {
+   "once": true,
+   "conditions": [
+    {
+     "type": "objectiveActive",
+     "key": "horror-fuses"
+    },
+    {
+     "type": "inventoryHasRoom",
+     "targetRole": "player",
+     "key": "horror-fuse"
+    }
+   ]
+  },
+  "description": "Collecte unique et suppression visuelle et physique."
+ },
+ {
+  "id": "BP_Horror_Exit",
+  "label": "BP_Horror_Exit",
+  "category": "Survival Horror",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "winGame",
+    "value": "Tu as survécu."
+   }
+  ],
+  "extra": {
+   "once": true,
+   "conditions": [
+    {
+     "type": "objectiveComplete",
+     "key": "horror-fuses"
+    }
+   ]
+  },
+  "description": "Sortie après récupération des fusibles."
+ },
+ {
+  "id": "BP_Horror_Pursuer",
+  "label": "BP_Horror_Pursuer",
+  "category": "Survival Horror",
+  "event": "start",
+  "instructions": [
+   {
+    "type": "setAiEnabled",
+    "value": true
+   },
+   {
+    "type": "setAiLineOfSight",
+    "value": true
+   },
+   {
+    "type": "setAiDetection",
+    "value": 450
+   },
+   {
+    "type": "setAiFieldOfView",
+    "value": 120
+   },
+   {
+    "type": "setAiMemory",
+    "value": 6
+   },
+   {
+    "type": "setAiSearchDuration",
+    "value": 5
+   },
+   {
+    "type": "setBehavior",
+    "value": "patrol"
+   }
+  ],
+  "extra": {
+   "once": true
+  },
+  "description": "Configure la perception native d'un ennemi déjà équipé pour le combat."
+ },
+ {
+  "id": "BP_Horror_Alarm",
+  "label": "BP_Horror_Alarm",
+  "category": "Survival Horror",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "emitSignal",
+    "value": "horror:jumpscare"
+   }
+  ],
+  "extra": {
+   "once": true
+  },
+  "description": "Déclenche l'alerte du runtime Horror lorsque le mode est actif."
+ },
+ {
+  "id": "BP_Horror_LockedDoor",
+  "label": "BP_Horror_LockedDoor",
+  "category": "Survival Horror",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "branch",
+    "conditions": [
+     {
+      "type": "inventoryHas",
+      "targetRole": "player",
+      "key": "horror-key",
+      "value": 1
+     }
+    ],
+    "thenInstructions": [
+     {
+      "type": "setCollision",
+      "value": false
+     },
+     {
+      "type": "setVisibility",
+      "value": false
+     }
+    ],
+    "elseInstructions": [
+     {
+      "type": "message",
+      "value": "Une clé est nécessaire."
+     }
+    ]
+   }
+  ],
+  "extra": {},
+  "description": "Porte avec contrôle réel de l'inventaire."
+ },
+ {
+  "id": "BP_Horror_Key",
+  "label": "BP_Horror_Key",
+  "category": "Survival Horror",
+  "event": "interact",
+  "instructions": [
+   {
+    "type": "giveItem",
+    "targetRole": "player",
+    "key": "horror-key",
+    "value": 1
+   },
+   {
+    "type": "setCollision",
+    "value": false
+   },
+   {
+    "type": "setVisibility",
+    "value": false
+   },
+   {
+    "type": "enableObject",
+    "value": false
+   }
+  ],
+  "extra": {
+   "once": true,
+   "conditions": [
+    {
+     "type": "inventoryHasRoom",
+     "targetRole": "player",
+     "key": "horror-key"
+    }
+   ]
+  },
+  "description": "Clé récupérable une seule fois."
+ },
+ {
+  "id": "BP_Horror_Death",
+  "label": "BP_Horror_Death",
+  "category": "Survival Horror",
+  "event": "death",
+  "instructions": [
+   {
+    "type": "loseGame",
+    "value": "Tu n'as pas survécu."
+   }
+  ],
+  "extra": {
+   "once": true
+  },
+  "description": "Défaite à attacher au joueur."
+ },
+ {
+  "id": "BP_Horror_SafeRoom",
+  "label": "BP_Horror_SafeRoom",
+  "category": "Survival Horror",
+  "event": "enter",
+  "instructions": [
+   {
+    "type": "healObject",
+    "targetRole": "player",
+    "value": 20
+   },
+   {
+    "type": "setCheckpoint",
+    "targetRole": "player"
+   }
+  ],
+  "extra": {
+   "once": true
+  },
+  "description": "Salle sûre : soin et checkpoint."
+ }
+];
+export const blueprintPresets=[...adventureDefinitions,...horrorDefinitions].map(({id,label,category,description,event,instructions,extra})=>({id,label,category,description,modes:['2d','3d'],create:()=>({...newSequence(),event,instructions:structuredClone(instructions),...structuredClone(extra)})}));
 export function presetsForWorkspace(mode){return blueprintPresets.filter(p=>p.modes.includes(mode)).map(p=>({...p,category:p.category||'Essentiels'}))}
 export function createBlueprintPreset(id,mode){const preset=[...blueprintPresets,...legacyBlueprintPresets].find(p=>p.id===id&&p.modes.includes(mode));if(!preset)throw Error('Blueprint indisponible pour ce projet');return structuredClone(preset.create())}

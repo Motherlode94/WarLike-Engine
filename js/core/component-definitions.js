@@ -146,9 +146,11 @@ export const adventureActorKits=Object.freeze({
 });
 export function applyAdventureActorKit(object,kit,mode='3d'){
  if(mode!=='3d'||!object||!Object.hasOwn(adventureActorKits,kit))return false;
- const ids=adventureActorKits[kit],choices=componentChoices(mode);
+ const ids=adventureActorKits[kit],choices=componentChoices(mode),newRacingCamera=kit==='racing'&&!hasObjectComponent(object,'cameraRig');
  if(!ids.every(id=>choices.some(d=>d.id===id)))return false;
  for(const id of ids)if(!hasObjectComponent(object,id))addObjectComponent(object,id,mode);
+
+ if(newRacingCamera)Object.assign(object.cameraRig,{mode:'thirdPerson',distance:7.5,height:.9,followSharpness:8,collision:true});
  if(kit==='slime')object.playable3d=true;
  return true;
 }

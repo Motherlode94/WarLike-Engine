@@ -139,6 +139,19 @@ export function addObjectComponent(object,id,mode){
  }
  if(id==='collider3d')object.collision3d=true;if(['rigidbody2d','joint2d'].includes(id)){object.collider2d??=defaultCollider2d();object.collision2d=true;}if(id==='joint2d')object.rigidbody2d??=defaultRigidbody2d();if(id==='effector2d'){object.collider2d??={...defaultCollider2d(),isTrigger:true};object.collision2d=true;}return true;
 }
+// Reusable authoring kits assemble native components; existing settings are retained.
+export const adventureActorKits=Object.freeze({
+ slime:Object.freeze(['controller3d','stats','inventory','rpgProgression','cameraRig','animatorGraph']),
+ racing:Object.freeze(['groundVehiclePhysics','cameraRig'])
+});
+export function applyAdventureActorKit(object,kit,mode='3d'){
+ if(mode!=='3d'||!object||!Object.hasOwn(adventureActorKits,kit))return false;
+ const ids=adventureActorKits[kit],choices=componentChoices(mode);
+ if(!ids.every(id=>choices.some(d=>d.id===id)))return false;
+ for(const id of ids)if(!hasObjectComponent(object,id))addObjectComponent(object,id,mode);
+ if(kit==='slime')object.playable3d=true;
+ return true;
+}
 export function resetObjectComponent(object,id){const definition=[...webComponentDefinitions,...registeredComponentChoices('2d'),...registeredComponentChoices('3d')].find(d=>d.id===id);if(!definition||!hasObjectComponent(object,id))return false;object[id]=definition.create();return true}
 export function removeObjectComponent(object,id){if(![...webComponentDefinitions,...registeredComponentChoices('2d'),...registeredComponentChoices('3d')].some(d=>d.id===id)||!hasObjectComponent(object,id)||componentRemovalBlockers(object,id).length)return false;delete object[id];if(id==='collider2d')object.collision2d=false;if(id==='collider3d')object.collision3d=false;if(id==='superhero')delete object.heroState;if(id==='survival')delete object.survivalState;return true}
 export {webComponentKinds as webDataComponentKinds} from './runtime-capabilities.js';

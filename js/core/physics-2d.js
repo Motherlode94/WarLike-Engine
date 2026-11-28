@@ -91,3 +91,10 @@ export function walkPlatformer2d(player,dt,keys,entities,{pressedKeys=new Set()}
 }
 
 export function applyImpulse2d(o,x,y){const rb=o?.rigidbody2d;if(!rb?.enabled||rb.bodyType==='static'||rb.bodyType==='kinematic')return false;const mass=Math.max(.01,n(rb.mass,1));rb.vx=n(rb.vx)+n(x)/mass;rb.vy=n(rb.vy)+n(y)/mass;return true}
+
+ // A deterministic ping-pong trajectory; collision and rider transport use the native physics caller.
+export function samplePlatformMotion(origin,destination,elapsed,duration){
+ if(!origin||!destination||![origin.x,origin.y,destination.x,destination.y,elapsed,duration].every(Number.isFinite)||duration<=0)return null;
+ const phase=((elapsed/duration%2)+2)%2,t=phase<=1?phase:2-phase;
+ return {x:origin.x+(destination.x-origin.x)*t,y:origin.y+(destination.y-origin.y)*t};
+}
